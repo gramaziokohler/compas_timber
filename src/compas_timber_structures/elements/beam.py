@@ -9,7 +9,7 @@ import compas
 import compas.geometry
 from compas.datastructures.mesh import Mesh
 from compas.geometry import Transformation
-from compas.geometry.angles import angle_points, angle_vectors, angles_vectors
+from compas.geometry.angles import angle_vectors
 from compas.geometry.objects import Frame, Line, Point, Polygon, Vector
 from compas.geometry.objects.plane import Plane
 
@@ -258,10 +258,10 @@ class BeamSide(object):
     @property
     def dim(self):
         # // => distance to centreline
-        l = self.beam.length
+        d = self.beam.length
         w = self.beam.width/2
         h = self.beam.height/2
-        return [w, h, -w, -h, -l, l][self.nr]
+        return [w, h, -w, -h, -d, d][self.nr]
 
     @property
     def corner_indices(self):
