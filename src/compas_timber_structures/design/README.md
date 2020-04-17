@@ -1,2 +1,2 @@
-collection of popular connection types:
-* given input simple elements (e.g. two beams) - modify them to create a specific connection (e.g. a dovetail) 
+exemplary design generators
+e.g. for a layered structure, truss, reciprocal frame, folded structures ...

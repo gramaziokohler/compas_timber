@@ -1,5 +1,9 @@
-import Rhino.Geometry as rg
 import math
+
+import compas
+
+if compas.IPY:
+    import Rhino.Geometry as rg
 
 
 def full_threaded_screw(screw_length=0.300, diameter_shaft=0.006, diameter_thread=0.010, diameter_head=0.012, head_height=0.01):
@@ -17,9 +21,9 @@ def full_threaded_screw(screw_length=0.300, diameter_shaft=0.006, diameter_threa
     shaft = rg.Brep.CreatePipe(axis.ToNurbsCurve(), D1*0.5, False, 0, False, 1e-6, 1e-3)[0]
 
     # tip
-    #tc1 = rg.Circle(rg.Point3d(0,0,head_height+thread_length), D1*0.5).ToNurbsCurve()
-    #tc2 = rg.Ellipse(rg.Plane(rg.Point3d(0,0,L), rg.Vector3d(0,0,1)), D1*0.5*0.5, D1*0.5*0.1).ToNurbsCurve()
-    #tip = rg.Brep.CreateFromLoft([tc1,tc2], rg.Point3d.Unset, rg.Point3d.Unset, rg.LoftType.Normal, False)[0]
+    # tc1 = rg.Circle(rg.Point3d(0,0,head_height+thread_length), D1*0.5).ToNurbsCurve()
+    # tc2 = rg.Ellipse(rg.Plane(rg.Point3d(0,0,L), rg.Vector3d(0,0,1)), D1*0.5*0.5, D1*0.5*0.1).ToNurbsCurve()
+    # tip = rg.Brep.CreateFromLoft([tc1,tc2], rg.Point3d.Unset, rg.Point3d.Unset, rg.LoftType.Normal, False)[0]
     tip = rg.Cone(rg.Plane(rg.Point3d(0, 0, screw_length), rg.Vector3d(0, 0, -1)), tip_height, D1*0.5).ToBrep(False)
 
     # head

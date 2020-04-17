@@ -1,2 +1,2 @@
-* conversion between data formats 
-* import/export, serialization
+generalizable methods for:
+* e.g. structural design (create abstrac stick model, postprocess/evaluate results)

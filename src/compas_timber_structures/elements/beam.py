@@ -3,28 +3,26 @@ Classes for linear elements with a rectangular cross-section.
 
 """
 
+import copy
+
 import compas
 import compas.geometry
-from compas.geometry.objects import Line
-from compas.geometry.objects import Frame
-from compas.geometry.objects import Point
-from compas.geometry.objects import Vector
-from compas.geometry.objects.plane import Plane
-from compas.geometry.objects import Polygon
-from compas.geometry.angles import angle_points, angles_vectors, angle_vectors
 from compas.datastructures.mesh import Mesh
 from compas.geometry import Transformation
+from compas.geometry.angles import angle_points, angle_vectors, angles_vectors
+from compas.geometry.objects import Frame, Line, Point, Polygon, Vector
+from compas.geometry.objects.plane import Plane
 
 
 class Beam(object):
-    def __init__(self, beam_end1, beam_end2, width=0.0, height =0.0,z_dir=None ):
-        self.__set_end1(beam_end1)          #BeamEnd object
-        self.__set_end2(beam_end2)          #BeamEnd object
-        self.width = width                  #cross-section width, float
-        self.height = height                #cross-section height, float
-        self.__set_z_vec(z_dir)             #cross-section height direction, compas Vector, must be perpendicular to centreline
+    def __init__(self, beam_end1, beam_end2, width=0.0, height=0.0, z_dir=None):
+        self.__set_end1(beam_end1)  # BeamEnd object
+        self.__set_end2(beam_end2)  # BeamEnd object
+        self.width = width  # cross-section width, float
+        self.height = height  # cross-section height, float
+        self.__set_z_vec(z_dir)  # cross-section height direction, compas Vector, must be perpendicular to centreline
         self.userdictionary = {}
-        self.sides = [BeamSide(self,i) for i in range(6)] #generate BeamSide objects
+        self.sides = [BeamSide(self, i) for i in range(6)]  # generate BeamSide objects
 
     def __get_end1(self):
         return self.__end1
@@ -48,10 +46,13 @@ class Beam(object):
         return self.__z_vec
 
     def __set_z_vec(self, vec_coordinates):
-        #vec_coordinates: (x,y,z) tuple
-        if not vec_coordinates: return None
-        elif None in vec_coordinates: return None
-        else: vec = Vector(*vec_coordinates)
+        # vec_coordinates: (x,y,z) tuple
+        if not vec_coordinates:
+            return None
+        elif None in vec_coordinates:
+            return None
+        else:
+            vec = Vector(*vec_coordinates)
         self.__z_vec = self.__correct_z(vec)
     z_vec = property(__get_z_vec, __set_z_vec)
 
@@ -60,11 +61,12 @@ class Beam(object):
         vec: compas Vector
         z_vec: must be at all times perpendicular to the centreline (x_vec)
         """
-        if vec.length < 1e-4 :
-            #TODO: why woudl this happen???
+        if vec.length < 1e-4:
+            # TODO: why woudl this happen???
             return None
-        a = angle_vectors(vec, self.x_vec,True)
+        a = angle_vectors(vec, self.x_vec, True)
 
+        tol = 1e-8
         angtol = 0.01
         if a < tol or a > 180 - angtol:
             vec = Vector(vec[2], vec[0], vec[1])
@@ -77,7 +79,6 @@ class Beam(object):
         y.unitize()
         z = x.cross(y*-1)
         return z
-
 
     @property
     def x_vec(self):
@@ -99,7 +100,7 @@ class Beam(object):
     def frame(self):
         return Frame(self.midpt, self.x_vec, self.y_vec)
 
-    def transform(self,to_frame):
+    def transform(self, to_frame):
         """
         Transform end points and z from current frame to given frame
         """
@@ -116,8 +117,7 @@ class Beam(object):
 
     def move_endpoint(self, end, new_pt):
         end.pt = new_pt
-        #that's it - the rest happens automatically
-
+        # that's it - the rest happens automatically
 
     def __mid_two_points__(self, p1, p2):
         return Point((p1[0] + p2[0])/2, (p1[1] + p2[1])/2, (p1[2] + p2[2])/2)
@@ -134,7 +134,6 @@ class Beam(object):
     def length(self):
         return self.end1.pt.distance_to_point(self.end2.pt)
 
-
     @property
     def edges(self):
         """
@@ -149,7 +148,7 @@ class Beam(object):
         8 corners of the beam derived from cutting planes at both ends
         """
         plns = [self.end1.cut_pln, self.end2.cut_pln]
-        #TODO: add errortrap if cut_pln.normal is perpendicular to edges/axis => no intersection between cut_pln and edge lines
+        # TODO: add errortrap if cut_pln.normal is perpendicular to edges/axis => no intersection between cut_pln and edge lines
         return [compas.geometry.intersection_line_plane((line.start, line.end), (pln.point, pln.normal), 1e-6) for pln in plns for line in self.edges]
 
     @property
@@ -172,43 +171,41 @@ class Beam(object):
 
     @property
     def mesh_faces_quad(self):
-       return [
-                (0,4,7,3),
-                (1,5,6,2),
-                (2,6,7,3),
-                (3,7,4,0),
-                (0,1,2,3),
-                (4,5,6,7)
-            ]
+        return [
+            (0, 4, 7, 3),
+            (1, 5, 6, 2),
+            (2, 6, 7, 3),
+            (3, 7, 4, 0),
+            (0, 1, 2, 3),
+            (4, 5, 6, 7)
+        ]
 
     @property
     def mesh_faces_tri(self):
         return [
-                [2, 1, 0],
-                [3, 2, 0],
-                [6, 2, 3],
-                [7, 6, 3],
-                [5, 6, 7],
-                [4, 5, 7],
-                [1, 5, 4],
-                [0, 1, 4],
-                [1, 2, 6],
-                [5, 1, 6],
-                [3, 0, 4],
-                [7, 3, 4]
-                ]
-
+            [2, 1, 0],
+            [3, 2, 0],
+            [6, 2, 3],
+            [7, 6, 3],
+            [5, 6, 7],
+            [4, 5, 7],
+            [1, 5, 4],
+            [0, 1, 4],
+            [1, 2, 6],
+            [5, 1, 6],
+            [3, 0, 4],
+            [7, 3, 4]
+        ]
 
     @property
     def mesh(self):
         return Mesh.from_vertices_and_faces(self.corners, self.mesh_faces_tri)
 
 
-
 class BeamEnd(object):
-    def __init__(self, point=(None,None,None)):
+    def __init__(self, point=(None, None, None)):
         self.pt = Point(*point)  # coordinates
-        #self.beam = None #Beam object --> trying to avoid these refs!
+        # self.beam = None #Beam object --> trying to avoid these refs!
         self.connection = None
         self.userdictionary = {}
 
@@ -224,10 +221,9 @@ class BeamEnd(object):
     # cut_pln = property(__get_cut_pln, __set_cut_pln)
 
 
-
 class BeamSide(object):
     def __init__(self, beam, side_nr=-1):
-        self.beam = beam #--> trying to avoid these refs!
+        self.beam = beam  # --> trying to avoid these refs!
         self.nr = side_nr
         if side_nr not in range(6):
             raise KeyError
@@ -316,6 +312,6 @@ if __name__ == "__main__":
 
     B = Beam(e1, e2, 0.1, 0.2, v)
 
-    #B.end1.cut_pln_default(True)
-    #B.end2.cut_pln_default(True)
-    #print B.sides[1].outline
+    # B.end1.cut_pln_default(True)
+    # B.end2.cut_pln_default(True)
+    # print B.sides[1].outline

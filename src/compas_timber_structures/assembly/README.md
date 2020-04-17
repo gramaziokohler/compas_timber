@@ -1,2 +1,5 @@
-collection of popular connection types:
-* given input simple elements (e.g. two beams) - modify them to create a specific connection (e.g. a dovetail) 
+* data structures to keep semantic information between objects of the entire structure
+* both for design and fabrication
+* assembly sequence, interlocking checks
+* links to path-planning
+* etc.
