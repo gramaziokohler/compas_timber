@@ -1,4 +1,14 @@
 """
+import connections
+import design
+import elements
+import engineering
+import fabrication
+import interop
+import process
+import utils
+"""
+"""
 
 Intro to project ...
 
@@ -18,8 +28,7 @@ Describe typical classes found in project
    :members:
 
 
-"""
-
 from .sample_module import SampleClassName
 
 __all__ = ['SampleClassName']
+"""
