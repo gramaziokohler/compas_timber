@@ -54,7 +54,7 @@ Contributing
 
 Make sure you setup your local development environment correctly:
 
-* Clone the `compas_timber_structures <https://github.com/gramaziokohler/compas_timber_structures>`_ repository.
+* Clone the `compas_timber <https://github.com/gramaziokohler/compas_timber>`_ repository.
 * Install development dependencies and make the project accessible from Rhino:
 
 ::
