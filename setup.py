@@ -1,70 +1,69 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import, print_function
+# flake8: noqa
+from __future__ import absolute_import
+from __future__ import print_function
 
 import io
-import re
-from glob import glob
-from os.path import abspath, basename, dirname, join, splitext
+from os import path
 
-from setuptools import find_packages, setup
+from setuptools import setup
+from setuptools.command.develop import develop
+from setuptools.command.install import install
 
-# NOTE: Write dependencies (i.e. http://python-packaging.readthedocs.io/en/latest/dependencies.html)
-requirements = []
-# NOTE: Write a list of keywords (i.e. ['ros', 'ros-bridge', 'robotics', 'websockets'])
-keywords_list = []
 
-here = abspath(dirname(__file__))
+here = path.abspath(path.dirname(__file__))
 
 
 def read(*names, **kwargs):
     return io.open(
-        join(here, *names),
-        encoding=kwargs.get('encoding', 'utf8')
+        path.join(here, *names),
+        encoding=kwargs.get("encoding", "utf8")
     ).read()
 
 
-about = {}
-exec(read('src', 'compas_timber_structures', '__version__.py'), about)
+long_description = read("README.md")
+requirements = read("requirements.txt").split("\n")
+optional_requirements = {}
 
 setup(
-    name=about['__title__'],
-    version=about['__version__'],
-    license=about['__license__'],
-    description=about['__description__'],
-    author=about['__author__'],
-    author_email=about['__author_email__'],
-    url=about['__url__'],
-    long_description='%s\n%s' % (
-        re.compile('^.. start-badges.*^.. end-badges', re.M |
-                   re.S).sub('', read('README.rst')),
-        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
-    ),
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
+    name="compas_timber",
+    version="0.1.0",
+    description="Tools for modeling, designing and fabricating timber assemblies",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/@gramaziokohler/compas_timber",
+    author="Aleksandra Anna Apolinarska",
+    author_email="apolinarska@arch.ethz.ch",
+    license="MIT license",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Topic :: Scientific/Engineering",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: Unix",
+        "Operating System :: POSIX",
+        "Operating System :: Microsoft :: Windows",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: Implementation :: CPython",
+    ],
+    keywords=[],
+    project_urls={},
+    packages=["compas_timber"],
+    package_dir={"": "src"},
+    package_data={},
+    data_files=[],
     include_package_data=True,
     zip_safe=False,
-    classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: Unix',
-        'Operating System :: POSIX',
-        'Operating System :: Microsoft :: Windows',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: Implementation :: CPython',
-        'Topic :: Scientific/Engineering',
-    ],
-    keywords=keywords_list,
     install_requires=requirements,
-    extras_require={},
-    entry_points={},
+    python_requires=">=3.6",
+    extras_require=optional_requirements,
+    entry_points={
+        "console_scripts": [],
+    },
+    ext_modules=[],
 )
