@@ -145,7 +145,7 @@ def linkcode_resolve(domain, info):
     else:
         return None
 
-    return f"https://github.com/@gramaziokohler/compas_timber/blob/master/src/{filename}.py#L{lineno}"
+    return f"https://github.com/gramaziokohler/compas_timber/blob/master/src/{filename}.py#L{lineno}"
 
 # extlinks
 
@@ -161,9 +161,9 @@ html_theme_options = {
     "package_title"   : project,
     "package_version" : release,
     "package_author"  : "Aleksandra Anna Apolinarska",
-    "package_docs"    : "https://@gramaziokohler.github.io/compas_timber/",
-    "package_repo"    : "https://github.com/@gramaziokohler/compas_timber",
-    "package_old_versions_txt": "https://@gramaziokohler.github.io/compas_timber/doc_versions.txt"
+    "package_docs"    : "https://gramaziokohler.github.io/compas_timber/",
+    "package_repo"    : "https://github.com/gramaziokohler/compas_timber",
+    "package_old_versions_txt": "https://gramaziokohler.github.io/compas_timber/doc_versions.txt"
 }
 
 html_context = {}

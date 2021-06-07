@@ -32,7 +32,7 @@ setup(
     description="Tools for modeling, designing and fabricating timber assemblies",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/@gramaziokohler/compas_timber",
+    url="https://github.com/gramaziokohler/compas_timber",
     author="Aleksandra Anna Apolinarska",
     author_email="apolinarska@arch.ethz.ch",
     license="MIT license",
