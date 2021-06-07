@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
 # -- General configuration ------------------------------------------------
 
 project = "compas_timber"
-copyright = "2020-02-17 Gramazio Kohler Research"
+copyright = "Copyright (c) 2020-02-17 Gramazio Kohler Research"
 author = "Aleksandra Anna Apolinarska"
 release = "0.1.0"
 version = ".".join(release.split(".")[0:2])
