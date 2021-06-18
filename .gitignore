@@ -45,7 +45,6 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/
 
 # Translations
 *.mo
@@ -101,5 +100,23 @@ ENV/
 # mypy
 .mypy_cache/
 
-# Visual Studio Code
-.vscode/
+# ==============================================================================
+# compas_timber
+# ==============================================================================
+
+*.3dmbak
+*.rhl
+*.rui_bak
+
+temp/**
+!temp/PLACEHOLDER
+
+.DS_Store
+
+.vscode
+
+.idea
+
+docs/api/generated/
+
+conda.recipe/

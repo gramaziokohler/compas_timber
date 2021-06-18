@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import codecs
 import contextlib
 import glob
 import os
 import sys
 from shutil import rmtree
-from xml.dom.minidom import parse
 
-from invoke import Collection, Exit, task
+from invoke import Exit
+from invoke import task
 
 try:
     input = raw_input
 except NameError:
     pass
+
+
 BASE_FOLDER = os.path.dirname(__file__)
 
 
@@ -55,42 +56,6 @@ def confirm(question):
         print('Focus, kid! It is either (y)es or (n)o', file=sys.stderr)
 
 
-# The IronPython install code is based on gh_python_remote
-# https://github.com/Digital-Structures/ghpythonremote
-# MIT License
-# Copyright (c) 2017 Pierre Cuvilliers, Caitlin Mueller, Massachusetts Institute of Technology
-def get_ironpython_path(rhino_version):
-    appdata_path = os.getenv('APPDATA', '')
-    ironpython_settings_path = os.path.join(appdata_path, 'McNeel', 'Rhinoceros', rhino_version, 'Plug-ins',
-                                            'IronPython (814d908a-e25c-493d-97e9-ee3861957f49)', 'settings')
-
-    if not os.path.isdir(ironpython_settings_path):
-        return None
-
-    return ironpython_settings_path
-
-
-def replaceText(node, newText):
-    if node.firstChild.nodeType != node.TEXT_NODE:
-        raise Exception("Node does not contain text")
-
-    node.firstChild.replaceWholeText(newText)
-
-
-def updateSearchPaths(settings_file, python_source_path):
-    with codecs.open(settings_file, 'r', encoding="ascii", errors="ignore") as file_handle:
-        doc = parse(file_handle)
-
-    for entry in doc.getElementsByTagName('entry'):
-        if entry.getAttribute('key') == 'SearchPaths':
-            current_paths = entry.firstChild.data
-            if python_source_path not in current_paths:
-                replaceText(entry, current_paths + ';' + python_source_path)
-
-    with codecs.open(settings_file, 'w', encoding='utf-8') as file_handle:
-        doc.writexml(file_handle)
-
-
 @task(default=True)
 def help(ctx):
     """Lists available tasks and usage."""
@@ -99,130 +64,179 @@ def help(ctx):
 
 
 @task(help={
-    'docs': 'True to generate documentation, otherwise False',
+    'docs': 'True to clean up generated documentation, otherwise False',
     'bytecode': 'True to clean up compiled python files, otherwise False.',
     'builds': 'True to clean up build/packaging artifacts, otherwise False.'})
-def clean(ctx, docs=True, bytecode=True, builds=True):
+def clean(ctx, docs=True, bytecode=True, builds=True, ghuser=True):
     """Cleans the local copy from compiled artifacts."""
-    if builds:
-        ctx.run('python setup.py clean')
 
-    if bytecode:
-        for root, dirs, files in os.walk(BASE_FOLDER):
-            for f in files:
-                if f.endswith('.pyc'):
-                    os.remove(os.path.join(root, f))
-            if '.git' in dirs:
-                dirs.remove('.git')
+    with chdir(BASE_FOLDER):
+        if builds:
+            ctx.run('python setup.py clean')
 
-    folders = []
+        if bytecode:
+            for root, dirs, files in os.walk(BASE_FOLDER):
+                for f in files:
+                    if f.endswith('.pyc'):
+                        os.remove(os.path.join(root, f))
+                if '.git' in dirs:
+                    dirs.remove('.git')
 
-    if docs:
-        folders.append('docs/_build/')
+        folders = []
+
+        if docs:
+            folders.append('docs/api/generated')
+
         folders.append('dist/')
 
-    if bytecode:
-        folders.append('src/compas_timber_structures/__pycache__')
+        if bytecode:
+            for t in ('src', 'tests'):
+                folders.extend(glob.glob('{}/**/__pycache__'.format(t), recursive=True))
 
-    if builds:
-        folders.append('build/')
-        folders.append('src/compas_timber_structures.egg-info/')
+        if builds:
+            folders.append('build/')
+            folders.append('src/compas_timber.egg-info/')
 
-    for folder in folders:
-        rmtree(os.path.join(BASE_FOLDER, folder), ignore_errors=True)
+        if ghuser:
+            folders.append('src/ghpython/components/ghuser')
+
+        for folder in folders:
+            rmtree(os.path.join(BASE_FOLDER, folder), ignore_errors=True)
+
 
 @task(help={
       'rebuild': 'True to clean all previously built docs before starting, otherwise False.',
+      'doctest': 'True to run doctests, otherwise False.',
       'check_links': 'True to check all web links in docs for validity, otherwise False.'})
-def docs(ctx, rebuild=True, check_links=False):
+def docs(ctx, doctest=False, rebuild=False, check_links=False):
     """Builds package's HTML documentation."""
+
     if rebuild:
         clean(ctx)
-    ctx.run('sphinx-build -b doctest docs dist/docs')
-    ctx.run('sphinx-build -b html docs dist/docs')
-    if check_links:
-        ctx.run('sphinx-build -b linkcheck docs dist/docs')
+
+    with chdir(BASE_FOLDER):
+        if doctest:
+            testdocs(ctx)
+
+        opts = '-E' if rebuild else ''
+        ctx.run('sphinx-build {} -b html docs dist/docs'.format(opts))
+
+        if check_links:
+            linkcheck(ctx, rebuild=rebuild)
+
+
+@task()
+def lint(ctx):
+    """Check the consistency of coding style."""
+    log.write('Running flake8 python linter...')
+    ctx.run('flake8 src')
+
+
+@task()
+def testdocs(ctx):
+    """Test the examples in the docstrings."""
+    log.write('Running doctest...')
+    ctx.run('pytest --doctest-modules')
+
+
+@task()
+def linkcheck(ctx, rebuild=False):
+    """Check links in documentation."""
+    log.write('Running link check...')
+    opts = '-E' if rebuild else ''
+    ctx.run('sphinx-build {} -b linkcheck docs dist/docs'.format(opts))
 
 
 @task()
 def check(ctx):
     """Check the consistency of documentation, coding style and a few other things."""
-    log.write('Checking ReStructuredText formatting...')
-    ctx.run('python setup.py check --strict --metadata --restructuredtext')
 
-    log.write('Running flake8 python linter...')
-    ctx.run('flake8 src setup.py')
+    with chdir(BASE_FOLDER):
+        lint(ctx)
 
-    log.write('Checking python imports...')
-    ctx.run('isort --check-only --diff --recursive src tests setup.py')
+        log.write('Checking MANIFEST.in...')
+        ctx.run('check-manifest')
 
-    log.write('Checking MANIFEST.in...')
-    ctx.run('check-manifest')
+        log.write('Checking metadata...')
+        ctx.run('python setup.py check --strict --metadata')
 
 
 @task(help={
       'checks': 'True to run all checks before testing, otherwise False.'})
-def test(ctx, checks=True):
+def test(ctx, checks=False, doctest=False):
     """Run all tests."""
     if checks:
         check(ctx)
 
-    ctx.run('pytest --doctest-module')
+    with chdir(BASE_FOLDER):
+        cmd = ['pytest']
+        if doctest:
+            cmd.append('--doctest-modules')
+
+        ctx.run(' '.join(cmd))
+
+
+@task
+def prepare_changelog(ctx):
+    """Prepare changelog for next release."""
+    UNRELEASED_CHANGELOG_TEMPLATE = '## Unreleased\n\n### Added\n\n### Changed\n\n### Removed\n\n\n## '
+
+    with chdir(BASE_FOLDER):
+        # Preparing changelog for next release
+        with open('CHANGELOG.md', 'r+') as changelog:
+            content = changelog.read()
+            changelog.seek(0)
+            changelog.write(content.replace(
+                '## ', UNRELEASED_CHANGELOG_TEMPLATE, 1))
+
+        ctx.run('git add CHANGELOG.md && git commit -m "Prepare changelog for next release"')
+
 
 @task(help={
-      'release_type': 'Type of release follows semver rules. Must be one of: major, minor, patch.'})
+      'gh_io_folder': 'Folder where GH_IO.dll is located. Defaults to the Rhino 6.0 installation folder (platform-specific).',
+      'ironpython': 'Command for running the IronPython executable. Defaults to `ipy`.'})
+def build_ghuser_components(ctx, gh_io_folder=None, ironpython=None):
+    """Build Grasshopper user objects from source"""
+    clean(ctx, docs=False, bytecode=False, builds=False, ghuser=True)
+    with chdir(BASE_FOLDER):
+        with tempfile.TemporaryDirectory('actions.ghcomponentizer') as action_dir:
+            target_dir = os.path.abspath('src/ghpython/components')
+            source_dir = os.path.join(target_dir, 'ghuser')
+            ctx.run('git clone https://github.com/compas-dev/compas-actions.ghpython_components.git {}'.format(action_dir))
+            if not gh_io_folder:
+                import compas_ghpython
+                gh_io_folder = compas_ghpython.get_grasshopper_plugin_path('6.0')
+
+            if not ironpython:
+                ironpython = 'ipy'
+
+            gh_io_folder = os.path.abspath(gh_io_folder)
+            componentizer_script = os.path.join(action_dir, 'componentize.py')
+
+            ctx.run('{} {} {} {} --ghio "{}"'.format(ironpython, componentizer_script, source_dir, target_dir, gh_io_folder))
+
+
+@task(help={
+      'release_type': 'Type of release follows semver rules. Must be one of: major, minor, patch, major-rc, minor-rc, patch-rc, rc, release.'})
 def release(ctx, release_type):
     """Releases the project in one swift command!"""
-    if release_type not in ('patch', 'minor', 'major'):
-        raise Exit('The release type parameter is invalid.\nMust be one of: major, minor, patch')
+    if release_type not in ('patch', 'minor', 'major', 'major-rc', 'minor-rc', 'patch-rc', 'rc', 'release'):
+        raise Exit('The release type parameter is invalid.\nMust be one of: major, minor, patch, major-rc, minor-rc, patch-rc, rc, release')
 
-    ctx.run('bumpversion %s --verbose' % release_type)
-    ctx.run('invoke docs test')
-    ctx.run('python setup.py clean --all sdist bdist_wheel')
+    is_rc = release_type.find('rc') >= 0
+    release_type = release_type.split('-')[0]
 
-    if confirm('You are about to upload the release to pypi.org. Are you sure? [y/N]'):
-        files = ['dist/*.whl', 'dist/*.gz', 'dist/*.zip']
-        dist_files = ' '.join([pattern for f in files for pattern in glob.glob(f)])
+    # Run checks
+    ctx.run('invoke check')
 
-        if len(dist_files):
-            ctx.run('twine upload --skip-existing %s' % dist_files)
-        else:
-            raise Exit('No files found to release')
+    # Bump version and git tag it
+    if is_rc:
+        ctx.run('bump2version %s --verbose' % release_type)
+    elif release_type == 'release':
+        ctx.run('bump2version release --verbose')
     else:
-        raise Exit('Aborted release')
-
-
-@task()
-def add_to_rhino(ctx):
-    """Adds the current project to Rhino Python search paths."""
-    try:
-        python_source_path = os.path.join(os.getcwd(), 'src')
-        rhino_setting_per_version = [
-            ('5.0', 'settings.xml'), ('6.0', 'settings-Scheme__Default.xml')]
-        setting_files_updated = 0
-
-        for version, filename in rhino_setting_per_version:
-            ironpython_path = get_ironpython_path(version)
-
-            if not ironpython_path:
-                continue
-
-            settings_file = os.path.join(ironpython_path, filename)
-            if not os.path.isfile(settings_file):
-                log.warn('IronPython settings for Rhino ' + version + ' not found')
-            else:
-                updateSearchPaths(settings_file, python_source_path)
-                log.write('Updated search path for Rhino ' + version)
-                setting_files_updated += 1
-
-        if setting_files_updated == 0:
-            raise Exit('[ERROR] No Rhino settings file found\n' +
-                       'Could not automatically make this project available to IronPython\n' +
-                       'To add manually, open EditPythonScript on Rhinoceros, go to Tools -> Options\n' +
-                       'and add the project path to the module search paths')
-
-    except RuntimeError as error:
-        raise Exit(error)
+        ctx.run('bump2version %s --verbose --no-tag' % release_type)
+        ctx.run('bump2version release --verbose')
 
 
 @contextlib.contextmanager

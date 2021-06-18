@@ -1,40 +1,32 @@
-============================
-compas_timber_structures: COMPAS Timber Structures
-============================
+********************************************************************************
+COMPAS TIMBER
+********************************************************************************
 
-.. start-badges
+.. rst-class:: lead
 
-.. image:: https://img.shields.io/badge/License-MIT-blue.svg
-    :target: https://github.com/gramaziokohler/compas_timber_structures/blob/master/LICENSE
-    :alt: License MIT
+COMPAS package for modeling, designing and fabricating timber assemblies
 
-.. image:: https://travis-ci.org/gramaziokohler/compas_timber_structures.svg?branch=master
-    :target: https://travis-ci.org/gramaziokohler/compas_timber_structures
-    :alt: Travis CI
-
-.. end-badges
-
-.. Write project description
-
-**Tools for design, modelling, analysis, fabrication and assembly of timber frame structures.** ...
+.. .. figure:: /_images/
+     :figclass: figure
+     :class: figure-img img-fluid
 
 
-========
-Contents
-========
+Table of Contents
+=================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
+   :titlesonly:
 
-   readme
-   reference/index
-   contributing
-   authors
-   changelog
+   Introduction <self>
+   gettingstarted
+   tutorial
+   api
+   license
+
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
