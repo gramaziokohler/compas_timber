@@ -1,3 +1,3 @@
 # compas_timber
 
-Tools for modeling, designing and fabricating timber assemblies
+COMPAS package for modeling, designing and fabricating timber assemblies

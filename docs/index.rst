@@ -1,10 +1,10 @@
 ********************************************************************************
-compas_timber
+COMPAS TIMBER
 ********************************************************************************
 
 .. rst-class:: lead
 
-Tools for modeling, designing and fabricating timber assemblies
+COMPAS package for modeling, designing and fabricating timber assemblies
 
 .. .. figure:: /_images/
      :figclass: figure

@@ -21,7 +21,7 @@ In short, this is how that works.
    invoke test
    ```
 
-5. Start making your changes to the **master** branch (or branch off of it).
+5. Start making your changes to the **main** branch (or branch off of it).
 6. Make sure all tests still pass:
 
    ```bash

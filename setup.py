@@ -29,12 +29,12 @@ optional_requirements = {}
 setup(
     name="compas_timber",
     version="0.1.0",
-    description="Tools for modeling, designing and fabricating timber assemblies",
+    description="COMPAS package for modeling, designing and fabricating timber assemblies",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/gramaziokohler/compas_timber",
-    author="Aleksandra Anna Apolinarska",
-    author_email="apolinarska@arch.ethz.ch",
+    author="Gramazio Kohler Research",
+    author_email="gramaziokohler@arch.ethz.ch",
     license="MIT license",
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -16,9 +16,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
 
 # -- General configuration ------------------------------------------------
 
-project = "compas_timber"
-copyright = "Copyright (c) 2020-02-17 Gramazio Kohler Research"
-author = "Aleksandra Anna Apolinarska"
+project = "COMPAS TIMBER"
+year = "2021"
+author = "Gramazio Kohler Research"
+copyright = '{0}, {1}'.format(year, author)
 release = "0.1.0"
 version = ".".join(release.split(".")[0:2])
 
@@ -145,7 +146,7 @@ def linkcode_resolve(domain, info):
     else:
         return None
 
-    return f"https://github.com/gramaziokohler/compas_timber/blob/master/src/{filename}.py#L{lineno}"
+    return f"https://github.com/gramaziokohler/compas_timber/blob/main/src/{filename}.py#L{lineno}"
 
 # extlinks
 
@@ -160,7 +161,6 @@ html_theme_options = {
     "package_name"    : "compas_timber",
     "package_title"   : project,
     "package_version" : release,
-    "package_author"  : "Aleksandra Anna Apolinarska",
     "package_docs"    : "https://gramaziokohler.github.io/compas_timber/",
     "package_repo"    : "https://github.com/gramaziokohler/compas_timber",
     "package_old_versions_txt": "https://gramaziokohler.github.io/compas_timber/doc_versions.txt"
