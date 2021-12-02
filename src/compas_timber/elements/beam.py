@@ -9,9 +9,8 @@ import compas
 import compas.geometry
 from compas.datastructures.mesh import Mesh
 from compas.geometry import Transformation
-from compas.geometry.angles import angle_vectors
-from compas.geometry.objects import Frame, Line, Point, Polygon, Vector
-from compas.geometry.objects.plane import Plane
+from compas.geometry import angle_vectors
+from compas.geometry import Frame, Line, Point, Polygon, Vector, Plane
 
 
 class Beam(object):
@@ -114,6 +113,7 @@ class Beam(object):
         self.end1.pt = ps
         self.end2.pt = pe
         self.z_vec = z
+        self.key = None #will be set once the beam is added to an assembly
 
     def move_endpoint(self, end, new_pt):
         end.pt = new_pt
@@ -201,7 +201,6 @@ class Beam(object):
     def mesh(self):
         return Mesh.from_vertices_and_faces(self.corners, self.mesh_faces_tri)
 
-
 class BeamEnd(object):
     def __init__(self, point=(None, None, None)):
         self.pt = Point(*point)  # coordinates
@@ -209,16 +208,16 @@ class BeamEnd(object):
         self.connection = None
         self.userdictionary = {}
 
-    #     self.__cut_pln = None
+        self.__cut_pln = None
 
-    # def __get_cut_pln(self):
-    #     if self.__cut_pln: return self.__cut_pln
-    #     else: return Plane(self.pt, self.beam.x_vec)
+    def __get_cut_pln(self):
+        if self.__cut_pln: return self.__cut_pln
+        else: return Plane(self.pt, self.beam.x_vec)
 
-    # def __set_cut_pln(self, custom_pln):
-    #     self.__cut_pln = custom_pln
+    def __set_cut_pln(self, custom_pln):
+        self.__cut_pln = custom_pln
 
-    # cut_pln = property(__get_cut_pln, __set_cut_pln)
+    cut_pln = property(__get_cut_pln, __set_cut_pln)
 
 
 class BeamSide(object):
