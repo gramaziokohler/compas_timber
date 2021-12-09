@@ -21,16 +21,29 @@ def list2rLine(a):
     #tuple or list of two tuples/lists with 3 coordinates each
     return rg.Line(list2rPt(a[0]), list2rPt(a[1]))
 
-# Rhino.Geometry <> compas.geometry
-def cLine2rLine(L):
-    return rg.Line(list2rPt(L[0]),list2rPt(L[1]))
-def cPln2rPln(pln):
-    return rg.Plane(list2rPt(pln.point) ,list2rVec(pln.normal)  )
+# Rhino.Geometry <--> compas.geometry
 
 def cPt2rPt(cPt):
     return rg.Point3d(cPt['x'], cPt['y'], cPt['z'])
 def rPt2cPt(rPt):
     return cg.Point(rPt.X, rPt.Y, rPt.Z)
+def cVec2rVec(cVec):
+    return rg.Vector3d(cVec.x, cVec.y, cVec.z)
+def rVec2cVec(rVec):
+    return cg.Vector(rVec.X, rVec.Y, rVec.Z)
+
+def cLine2rLine(L):
+    return rg.Line(list2rPt(L[0]),list2rPt(L[1]))
+def cPln2rPln(pln):
+    return rg.Plane(list2rPt(pln.point) ,list2rVec(pln.normal)  )
+def cFrame2rPln(cFrame):
+    return rg.Plane(cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis))
+def rPln2cFrame(rPln):
+    return cg.Frame(rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis))
+
+
+def cBox2rBox(cbox):
+    return rg.Box(cFrame2rPln(cbox.frame), rg.Interval(0,cbox.width), rg.Interval(0,cbox.depth), rg.Interval(0,cbox.height))
 
 def rMesh2cMesh(rMesh):
     #converts a Rhino.Geometry.Mesh (rMesh) object into a compas.datastructures.Mesh (cMesh) object
@@ -97,4 +110,7 @@ def rMesh_from8points(pts):
 def brep_from8points(pts):
     B = rg.Brep.CreateFromBox(pts)
     return B
+
+
+
 #--------------------------------------------------
