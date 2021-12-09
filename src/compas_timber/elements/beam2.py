@@ -30,52 +30,49 @@ class Beam(object):
         Length of the beam. 
     
     centreline: :class:``compas.geometry.Line`
-    
 
     """
 
-    def __init__(self, frame = None, width = None, height = None, length = None):
-        self.frame = None
+    def __init__(self, frame = None, length = None, width = None, height = None):
+        self.frame = frame
         self.width = width
         self.height = height
         self.length = length
 
 
+    def __repr__(self):
+        return 'Beam %s x %s x %s at %s'%(self.width,self.height,self.length,self.frame)
+
     ### constructors ###
-
-    def from_frame(self, frame, width=None, height=None, length = None):
+    @classmethod
+    def from_frame(cls, frame, width=None, height=None, length = None):
         #needed? same as init
-        pass
-
-    def from_centreline(self, centreline, z_vector=None, width=None, height=None):
+        return cls(frame,length,width,height)
+    
+    @classmethod
+    def from_centreline(cls, centreline, z_vector=None, width=None, height=None):
         """
         Define the beam from its centreline. 
         z_vector: a vector indicating the height direction (z-axis) of the cross-section. If not specified, a default will be used.
         """
         x_vector = centreline.vector
-         
         if z_vector==None: z_vector = Vector(0,0,1)  #TODO: default, add other cases
         y_vector = cross_vectors(x_vector, z_vector) * -1.0
+        frame = Frame(centreline.p1, x_vector, y_vector)
+        length = centreline.length
 
-        # set:
-        self.frame = Frame(centreline.p1, x_vector, y_vector)
-        self.length = centreline.length
-        self.width = width
-        self.height = height
-        return self
+        return cls(frame,length,width,height)
 
-    def from_endpoints(self, point_start, point_end, z_vector=None, width=None, height=None):
+    @classmethod
+    def from_endpoints(cls, point_start, point_end, z_vector=None, width=None, height=None):
+        
         x_vector = Vector(point_start, point_end)
-         
         if z_vector==None: z_vector = Vector(0,0,1)  #TODO: default, add other cases
         y_vector = cross_vectors(x_vector, z_vector) * -1.0
+        frame = Frame(point_start, x_vector, y_vector)
+        length = distance_point_point(point_start, point_end)
 
-        # set:
-        self.frame = Frame(point_start, x_vector, y_vector)
-        self.length = distance_point_point(point_start, point_end)
-        self.width = width
-        self.height = height
-        return self
+        return cls(frame,length,width,height)
 
     ### main methods and properties ###
 
@@ -99,19 +96,26 @@ class Beam(object):
 
         pass
 
-
-
-
     ### utils ###
 
-    def move_endpoint(self, which_endpoint):
+    def move_endpoint(self, which_endpoint='start', vector=Vector(0,0,0)):
         # create & apply a transformation
         pass
+
+    def extend_length(self, d, option='both'):
+        """
+        options: 'start', 'end', 'both'
+        """
+        if option in ('start', 'both'): pass #move frame's origin by -d
+        if option=='end': pass #change length by d
+        if option=='both': pass #chane lenth by 2d 
+        return
 
     def rotate_around_centreline(self, angle, clockwise = False):
         # create & apply a transformation
         pass
 
-    
+    def align_z(self, vector):
+        pass
 
 

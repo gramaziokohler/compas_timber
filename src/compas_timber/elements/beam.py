@@ -219,7 +219,6 @@ class BeamEnd(object):
 
     cut_pln = property(__get_cut_pln, __set_cut_pln)
 
-
 class BeamSide(object):
     def __init__(self, beam, side_nr=-1):
         self.beam = beam  # --> trying to avoid these refs!
