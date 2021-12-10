@@ -1,15 +1,19 @@
 import Rhino.Geometry as rg
 from compas_timber.elements.beam2 import Beam
-from compas_timber.utils.rhino_compas import rPln2cFrame
+from compas_timber.utils.rhino_compas import rPln2cFrame, cBox2rBox
 
 L = 10
 W = 0.1
 H = 0.2
 
+beam = Beam(rPln2cFrame(rg.Plane.WorldXY),L,W,H)
 
-b1 = Beam(rPln2cFrame(rg.Plane.WorldXY),L,W,H)
+beam = Beam.from_frame(rPln2cFrame(rg.Plane.WorldXY),W,H,L)
 
-b1 = Beam.from_frame(rPln2cFrame(rg.Plane.WorldXY),W,H,L)
-print b1
+geometry = None
 
+shape = cBox2rBox(beam.shape)
+
+print beam
+print shape
 

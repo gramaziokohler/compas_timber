@@ -2,8 +2,7 @@ import Rhino.Geometry as rg
 import compas.geometry as cg
 from compas.datastructures import Mesh
 
-def helloworld():
-    print "hello world!!!"
+
 #--------------------------------------------------
 #WRAPPERS:
 # Rhino.Geometry <> list
@@ -24,23 +23,32 @@ def list2rLine(a):
 # Rhino.Geometry <--> compas.geometry
 
 def cPt2rPt(cPt):
-    return rg.Point3d(cPt['x'], cPt['y'], cPt['z'])
+    try: return rg.Point3d(cPt.x, cPt.y, cPt.z)
+    except: return None
 def rPt2cPt(rPt):
-    return cg.Point(rPt.X, rPt.Y, rPt.Z)
+    try: return cg.Point(rPt.X, rPt.Y, rPt.Z)
+    except: return None
 def cVec2rVec(cVec):
-    return rg.Vector3d(cVec.x, cVec.y, cVec.z)
+    try: return rg.Vector3d(cVec.x, cVec.y, cVec.z)
+    except: return None
 def rVec2cVec(rVec):
-    return cg.Vector(rVec.X, rVec.Y, rVec.Z)
-
+    try: return cg.Vector(rVec.X, rVec.Y, rVec.Z)
+    except: return None
 def cLine2rLine(L):
-    return rg.Line(list2rPt(L[0]),list2rPt(L[1]))
-def cPln2rPln(pln):
-    return rg.Plane(list2rPt(pln.point) ,list2rVec(pln.normal)  )
-def cFrame2rPln(cFrame):
-    return rg.Plane(cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis))
-def rPln2cFrame(rPln):
-    return cg.Frame(rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis))
+    try: return rg.Line(list2rPt(L[0]),list2rPt(L[1]))
+    except: return None
+def rLine2cLine(L):
+    return cg.Line(rPt2cPt(L.PointAt(0.0)), rPt2cPt(L.PointAt(1.0)))    
 
+def cPln2rPln(pln):
+    try: return rg.Plane(list2rPt(pln.point) ,list2rVec(pln.normal)  )
+    except: return None
+def cFrame2rPln(cFrame):
+    try: return rg.Plane(cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis))
+    except: return None
+def rPln2cFrame(rPln):
+    try: return cg.Frame(rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis))
+    except: return None
 
 def cBox2rBox(cbox):
     return rg.Box(cFrame2rPln(cbox.frame), rg.Interval(0,cbox.width), rg.Interval(0,cbox.depth), rg.Interval(0,cbox.height))
