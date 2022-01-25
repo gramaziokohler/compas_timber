@@ -1,5 +1,5 @@
 import Rhino.Geometry as rg
-from compas_timber.elements.beam2 import Beam
+from compas_timber.parts.beam2 import Beam
 from compas_timber.utils.rhino_compas import rPln2cFrame, cBox2rBox
 
 L = 10

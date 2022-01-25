@@ -1,4 +1,4 @@
-class T_Butt_joint(object):
+class TButtJoint(object):
     def __init__(self, crossbeam, beam_end, gap = 0.00):
         self.crossbeam = crossbeam
         self.beam_end = beam_end
