@@ -1,27 +1,41 @@
-class TButtJoint(object):
-    def __init__(self, crossbeam, beam_end, gap = 0.00):
-        self.crossbeam = crossbeam
-        self.beam_end = beam_end
-        self.gap = gap #float, additional gap, e.g. for glue
+from compas.geometry import intersection_line_line, distance_point_point, angle_vectors
+from compas.geometry import Vector
+from compas.data import Data
 
 
-    @property
-    def find_side(self):
-        """
-        calculate which side is the cutting side
-        """
-        #main beams x-direction outgoing from the connection (this end -> the other end)
-        
-        
-        
-        pass
-        #return beamside (index)
-    
+class TButtJoint(Data):
+    def __init__(self, connecting_beam, cross_beam):
+        super(TButtJoint, self).__init__()
+        self.main_beam = connecting_beam
+        self.cross_beam = cross_beam
+        # self.gap = gap #float, additional gap, e.g. for glue
 
     @property
-    def cut_plane(self):
+    def __find_side(self):
         """
-        find side, then get the side's plane, then move it along its z-axis by gap
+        calculate which side of the cross beam is the cutting side for the main beam
         """
-        pass
-        #return plane
+
+        # find the orientation of the mainbeam's centreline so that it's pointing outward of the joint
+        #   find the closest end
+        pm, pc = intersection_line_line(self.main_beam.centreline, self.cross_beam.centreline)
+        p1 = self.main_beam.centreline.start
+        p2 = self.main_beam.centreline.end
+        d1 = distance_point_point(pm, p1)
+        d2 = distance_point_point(pm, p2)
+
+        if d1 < d2:
+            centreline_vec = Vector.from_start_end(p1, p2)
+        else:
+            centreline_vec = Vector.from_start_end(p2, p1)
+
+        # compare with side normals
+        angles = [angle_vectors(self.cross_beam.side_frame(i).normal, centreline_vec) for i in range(4)]
+        x = list(zip(angles, range(4)))
+        x.sort()
+        side = x[0][1]
+        return side
+
+    @property
+    def cutting_plane(self):
+        return self.cross_beam.side_frame(self.__find_side)
