@@ -1,5 +1,5 @@
-from compas.geometry import intersection_line_line, distance_point_point, angle_vectors
-from compas.geometry import Vector
+from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
+from compas.geometry import Vector, Point, Plane
 from compas.data import Data
 
 
@@ -38,4 +38,8 @@ class TButtJoint(Data):
 
     @property
     def cutting_plane(self):
-        return self.cross_beam.side_frame(self.__find_side)
+        cfr = self.cross_beam.side_frame(self.__find_side)
+        #TODO: move the frame's center to the intersection
+        #cfr.point = Point(intersection_line_plane(self.main_beam.centreline, Plane.from_frame(cfr))[0], 1e-6)     
+        #TODO: flip normal 
+        return cfr

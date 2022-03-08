@@ -1,6 +1,6 @@
-from compas_timber.assembly.assembly2 import TimberAssembly
+from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.connections.t_butt import TButtJoint
-from compas_timber.parts.beam2 import Beam
+from compas_timber.parts.beam import Beam
 from compas.geometry import Point, Vector
 
 

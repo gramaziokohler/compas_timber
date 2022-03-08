@@ -1,31 +1,31 @@
-from compas.datastructures import Assembly
+from compas.datastructures import Network
 
 
-class TimberAssembly(Assembly):
+class Assembly(Network):
     def __init__(self,
                  _beams=None,
                  _connections=None):
 
-        super(TimberAssembly, self).__init__()
+        Network.__init__(self)   # currently working in Python 3
 
         self.verbose = True
         self._beams = {}
         self._connections = {}
-        self.allowance = 0.000  # [m] global tolerance for joints = the gap size
+        self.allowance = 0.000 #[m] global tolerance for joints = the gap size
 
         self.default_node_attributes = {
-            'type': None  # string id
-        }
+                                        'type': None  # string id
+                                        }
 
         self.default_edge_attributes = {
-            'type': None,  # string id
-            'features': None,
-            'location': None,
-            'side': None,
-            'motion': None,
-            'dof': None,
-            'locked': False
-        }
+                                        'type': None,  # string id
+                                        'features': None,
+                                        'location': None,
+                                        'side': None,
+                                        'motion': None,
+                                        'dof': None,
+                                        'locked': False
+                                        }
         if _beams:
             for beam in _beams:
                 self.add_beam(beam)
@@ -58,23 +58,27 @@ class TimberAssembly(Assembly):
     def connection_ids(self):
         return [connection.id for connection in self.connections]
 
-    def add_beam(self, beam, key=None):
-        key = self.add_part(beam, key, type="beam")
+    def add_beam(self, beam, key=None, attr_dict=None):
+        attr = attr_dict or {}
+
+        key = self.add_node(key=key, type="beam", attr_dict=attr)
         self._beams[key] = beam
         beam.key = key
         return key
 
-    def add_joint(self, connection, key=None):
-        key = self.add_part(connection, key, type="joint")
+    def add_connection(self, connection, key=None, attr_dict=None):
+        attr = attr_dict or {}
+
+        key = self.add_node(key=key, type="connection", attr_dict=attr)
         self._connections[key] = connection
-        connection.key = key
         return key
 
-    def connect(self, parts, joint, attr_dict=None):
+    def connect(self, key_u, key_v, key_c, attr_dict=None):
         attr = attr_dict or {}
-        for part in parts:
-            self.graph.add_edge(part.key, joint.key, attr_dict=attr)
-        return
+
+        u = self.add_edge(key_u, key_c, attr_dict=attr)
+        v = self.add_edge(key_v, key_c, attr_dict=attr)
+        return u, v
 
     def get_beam_keys_connected_to(self, beam_key):
         nbrs = self.neighbors(beam_key, ring=2)
