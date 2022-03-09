@@ -2,6 +2,7 @@ from compas.geometry import intersection_line_line, intersection_line_plane, dis
 from compas.geometry import Vector, Point, Plane
 from compas.data import Data
 
+#TODO: replace direct references to beam objects
 
 class TButtJoint(Data):
     def __init__(self, connecting_beam, cross_beam):
@@ -43,3 +44,7 @@ class TButtJoint(Data):
         #cfr.point = Point(intersection_line_plane(self.main_beam.centreline, Plane.from_frame(cfr))[0], 1e-6)     
         #TODO: flip normal 
         return cfr
+
+    def apply_feature(self):
+        #TODO: how to saveguard this being added multiple times? 
+        self.main_beam.add_feature(self.cutting_plane, 'trim')
