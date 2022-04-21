@@ -108,6 +108,7 @@ class TimberAssembly(Assembly):
         key = self.add_part(joint, key, type='joint')
         self._joints[key] = joint
         joint.key = key
+        joint.assembly = self
         return key
 
     def add_connection(self, connection, key=None): 
@@ -117,7 +118,7 @@ class TimberAssembly(Assembly):
         connection.key = key
         return key
 
-    def connect(self, parts, joint, attr_dict=None):
+    def connect(self, joint, parts, attr_dict=None):
         attr = attr_dict or {}
         for part in parts:
             self.graph.add_edge(part.key, joint.key, type='connection')  # attr_dict=attr)

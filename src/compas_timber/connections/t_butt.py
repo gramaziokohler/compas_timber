@@ -5,11 +5,24 @@ from compas.data import Data
 #TODO: replace direct references to beam objects
 
 class TButtJoint(Data):
-    def __init__(self, connecting_beam, cross_beam):
+    def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__()
-        self.main_beam = connecting_beam
-        self.cross_beam = cross_beam
+        self.assembly = assembly
+        self.main_beam_key = main_beam.key
+        self.cross_beam_key = cross_beam.key
         # self.gap = gap #float, additional gap, e.g. for glue
+
+        assembly.add_joint(self)
+        assembly.connect(self,[main_beam, cross_beam])
+
+
+    @property
+    def main_beam(self): 
+        return self.assembly.find_by_key(self.main_beam_key)
+
+    @property
+    def cross_beam(self): 
+        return self.assembly.find_by_key(self.cross_beam_key)
 
     @property
     def __find_side(self):
