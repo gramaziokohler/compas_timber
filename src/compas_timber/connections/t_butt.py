@@ -11,10 +11,16 @@ class TButtJoint(Data):
         self.main_beam_key = main_beam.key
         self.cross_beam_key = cross_beam.key
         # self.gap = gap #float, additional gap, e.g. for glue
+        self.joint_type_name = 'T-Butt'
+        self.frame = None # will be needed as coordinate system for structural calculations for the forces at the joint
 
         assembly.add_joint(self)
         assembly.connect(self,[main_beam, cross_beam])
 
+    # TODO: add this property to some joint template class
+    @property
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
 
     @property
     def main_beam(self): 
