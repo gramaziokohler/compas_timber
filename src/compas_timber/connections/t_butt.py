@@ -1,8 +1,10 @@
 from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
 from compas.geometry import Vector, Point, Plane
 from compas.data import Data
+from ..connections.joint import Joint
 
-#TODO: replace direct references to beam objects
+# TODO: replace direct references to beam objects
+
 
 class TButtJoint(Data):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
@@ -12,10 +14,10 @@ class TButtJoint(Data):
         self.cross_beam_key = cross_beam.key
         # self.gap = gap #float, additional gap, e.g. for glue
         self.joint_type_name = 'T-Butt'
-        self.frame = None # will be needed as coordinate system for structural calculations for the forces at the joint
+        self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
         assembly.add_joint(self)
-        assembly.connect(self,[main_beam, cross_beam])
+        assembly.connect(self, [main_beam, cross_beam])
 
     # TODO: add this property to some joint template class
     @property
@@ -23,11 +25,11 @@ class TButtJoint(Data):
         return [self.main_beam, self.cross_beam]
 
     @property
-    def main_beam(self): 
+    def main_beam(self):
         return self.assembly.find_by_key(self.main_beam_key)
 
     @property
-    def cross_beam(self): 
+    def cross_beam(self):
         return self.assembly.find_by_key(self.cross_beam_key)
 
     @property
@@ -59,11 +61,11 @@ class TButtJoint(Data):
     @property
     def cutting_plane(self):
         cfr = self.cross_beam.side_frame(self.__find_side)
-        #TODO: move the frame's center to the intersection
-        #cfr.point = Point(intersection_line_plane(self.main_beam.centreline, Plane.from_frame(cfr))[0], 1e-6)     
-        #TODO: flip normal 
+        # TODO: move the frame's center to the intersection
+        #cfr.point = Point(intersection_line_plane(self.main_beam.centreline, Plane.from_frame(cfr))[0], 1e-6)
+        # TODO: flip normal
         return cfr
 
     def apply_feature(self):
-        #TODO: how to saveguard this being added multiple times? 
+        # TODO: how to saveguard this being added multiple times?
         self.main_beam.add_feature(self.cutting_plane, 'trim')

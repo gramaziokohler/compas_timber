@@ -89,7 +89,7 @@ class TimberAssembly(Assembly):
 
     def add_joint(self, joint, key=None):
         """Add a joint object to the assembly. 
-        
+
         Parameters
         ----------
         joint : :class:`~compas_timber.parts.joint`
@@ -111,8 +111,8 @@ class TimberAssembly(Assembly):
         joint.assembly = self
         return key
 
-    def add_connection(self, connection, key=None): 
-        #TODO: do I need this?
+    def add_connection(self, connection, key=None):
+        # TODO: do I need this?
         key = self.add_connection(connection, key, type='connection')
         self._connections[key] = connection
         connection.key = key
