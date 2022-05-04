@@ -6,23 +6,15 @@ from ..connections.joint import Joint
 # TODO: replace direct references to beam objects
 
 
-class TButtJoint(Data):
+class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
-        super(TButtJoint, self).__init__()
+        super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
         self.assembly = assembly
         self.main_beam_key = main_beam.key
         self.cross_beam_key = cross_beam.key
-        # self.gap = gap #float, additional gap, e.g. for glue
         self.joint_type_name = 'T-Butt'
-        self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
-
-        assembly.add_joint(self)
-        assembly.connect(self, [main_beam, cross_beam])
-
-    # TODO: add this property to some joint template class
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
+        #self.gap = gap #float, additional gap, e.g. for glue
+        #self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
     @property
     def main_beam(self):
@@ -30,7 +22,7 @@ class TButtJoint(Data):
 
     @property
     def cross_beam(self):
-        return self.assembly.find_by_key(self.cross_beam_key)
+        return self.assembly.find_by_key(self.cross_beam_key)     
 
     @property
     def __find_side(self):
