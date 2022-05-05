@@ -1,4 +1,5 @@
-#from compas.datastructures.assembly import Part
+import copy
+
 from compas.geometry import Frame, Plane, Point, Line, Vector, Box
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
 from compas.datastructures.assembly import Part
@@ -15,9 +16,9 @@ class Beam(Part):
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`.
-        A local coordinate system of the beam: 
+        A local coordinate system of the beam:
         Origin is located at the starting point of the centreline.
-        x-axis corresponds to the centreline (major axis), usually also the fibre direction in solid wood beams. 
+        x-axis corresponds to the centreline (major axis), usually also the fibre direction in solid wood beams.
         y-axis corresponds to the width of the cross-section, usually the smaller dimension.
         z-axis corresponds to the height of the cross-section, usually the larger dimension.
 
@@ -30,7 +31,7 @@ class Beam(Part):
     ----------
 
     length : float.
-        Length of the beam. 
+        Length of the beam.
 
     centreline: :class:``compas.geometry.Line`
     """
@@ -46,12 +47,22 @@ class Beam(Part):
         self.frame = frame
         self.width = width
         self.height = height
-        self.length = length 
+        self.length = length
         self.joints = [] #a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
         self.features = []
 
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
+
+    def __copy__(self, *args, **kwargs):
+        return self.copy()
+
+    def __deepcopy__(self, *args, **kwargs):
+        result = object.__new__(self.__class__)
+        result.__init__(frame=copy.deepcopy(self.frame), width=self.width, height=self.height, length=self.length)
+        result.joints = copy.deepcopy(self.joints)
+        result.features = copy.deepcopy(self.features)
+        return result
 
     ### constructors ###
 
@@ -63,7 +74,7 @@ class Beam(Part):
     @classmethod
     def from_centreline(cls, centreline, z_vector=None, width=None, height=None):
         """
-        Define the beam from its centreline. 
+        Define the beam from its centreline.
         z_vector: a vector indicating the height direction (z-axis) of the cross-section. If not specified, a default will be used.
         """
         x_vector = centreline.vector
@@ -161,7 +172,7 @@ class Beam(Part):
     @property
     def __centreline_end(self):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length))
-    
+
     @property
     def midpoint(self):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length*0.5))
@@ -206,7 +217,7 @@ class Beam(Part):
         frame = Frame(self.frame.point, self.frame.xaxis, y_vector)
         self.frame = frame
         return
-    
+
 
     ### JOINTS ###
 
@@ -221,7 +232,7 @@ class Beam(Part):
         #TODO: add some descriptor attribute to identify the source/type/character of features later?
         self.features.append((shape, operation))
 
-    
+
     def clear_features(self):
         self.features = []
         return
