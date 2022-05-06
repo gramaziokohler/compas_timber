@@ -1,7 +1,8 @@
 import copy
 
 import pytest
-from compas.geometry import Point, Frame
+from compas.geometry import Point, Frame, Vector
+from numpy import isclose
 
 from compas_timber.parts.beam import Beam
 
@@ -40,3 +41,8 @@ def test_beam_deepcopy(test_frame, test_joints, test_features):
     assert b1.frame is not b2.frame
     assert b1.joints is not b2.joints
 
+
+def test_beam_constructor():
+    b = Beam.from_endpoints(Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200)
+    # test if length is =1
+    assert isclose(b.length, 1.0)
