@@ -59,7 +59,7 @@ class Beam(Part):
 
     def __deepcopy__(self, *args, **kwargs):
         result = object.__new__(self.__class__)
-        result.__init__(frame=copy.deepcopy(self.frame), width=self.width, height=self.height, length=self.length)
+        result.__init__(frame=self.frame.copy(), width=self.width, height=self.height, length=self.length)
         result.joints = copy.deepcopy(self.joints)
         result.features = copy.deepcopy(self.features)
         return result
