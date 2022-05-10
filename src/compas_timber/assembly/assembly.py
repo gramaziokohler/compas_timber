@@ -43,11 +43,7 @@ class TimberAssembly(Assembly):
 
         if _connections:
             for connection in _connections:
-                self.add_connection(connection)
-
-    def deepcopy(self):
-        #TODO: badly needed for grasshopper, copy.deepcopy(model) doesn't work in GH
-        NotImplementedError
+                self.add_connection(connection)      
 
     @property
     def beams(self):
