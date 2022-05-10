@@ -98,3 +98,6 @@ class Assembly(Network):
         beam = self._beams.get(beam_key)
         if beam:
             return beam.id
+
+    def new_method(self):
+        pass
