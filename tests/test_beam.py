@@ -21,9 +21,7 @@ def test_joints():
 
 @pytest.fixture()
 def test_features():
-    class FakeFeature(object):
-        pass
-    return [FakeFeature(), FakeFeature(), FakeFeature(), FakeFeature()]
+    return [(Frame.worldXY(), "trim")]
 
 
 def test_create_beam(test_frame):
