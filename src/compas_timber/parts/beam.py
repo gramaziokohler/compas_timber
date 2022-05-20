@@ -1,4 +1,5 @@
 import copy
+from collections import deque
 
 from compas.geometry import Frame, Plane, Point, Line, Vector, Box
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
@@ -57,16 +58,32 @@ class Beam(Part):
     def __copy__(self, *args, **kwargs):
         return self.copy()
 
-    def __deepcopy__(self, *args, **kwargs):
-        result = object.__new__(self.__class__)
-        result.__init__(frame=self.frame.copy(), width=self.width, height=self.height, length=self.length)
-        result.joints = copy.deepcopy(self.joints)
-        result.features = copy.deepcopy(self.features)
-        result.attributes = copy.deepcopy(self.attributes) #temporary, until Part can copy itself
-        result.key = self.key
-        return result
+    @property
+    def data(self):
+        """
+        Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
+        """
+        data = {
+            'attributes': self.attributes,
+            'key': self.key,
+            'frame': self.frame,
+            'shape': self.shape,
+            'features': [(shape, operation) for shape, operation in self.features],
+            'transformations': [T.data for T in self.transformations],
+        }
+        return data
 
-    ### constructors ###
+    @data.setter
+    def data(self, data):
+        """
+        Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
+        """
+        self.attributes.update(data['attributes'] or {})
+        self.key = data['key']
+        self.frame = data['frame']
+        self.shape = data['shape']
+        self.features = [(shape, operation) for shape, operation in data['features']]
+        self.transformations = deque([Transformation.from_data(T) for T in data['transformations']])
 
     @classmethod
     def from_frame(cls, frame, width=None, height=None, length=None):
