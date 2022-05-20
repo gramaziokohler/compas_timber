@@ -13,8 +13,22 @@ def test_create():
     A.add_beam(B2)
     J = TButtJoint(A,B1,B2)
     
+def test_identical():
+        J1 = TButtJoint()
+        J2 = TButtJoint()
+        J3 = Joint()
+        assert J1.is_identical(J3) == False
+        assert J1.is_identical(J2) == True
+        J1.gap = 0.1
+        J2.gap = 0.1
+        assert J1.is_identical(J2) == True
+        J2.gap = 0.2
+        assert J1.is_identical(J2) == False
+
+
 
 
 if __name__ == '__main__':
     test_create()
+    test_identical()
 

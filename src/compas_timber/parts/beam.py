@@ -4,7 +4,7 @@ from collections import deque
 from compas.geometry import Frame, Plane, Point, Line, Vector, Box
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
 from compas.datastructures.assembly import Part
-
+from compas_timber.utils.helpers import are_objects_identical
 
 
 # TODO: global tolerance settings?
@@ -45,7 +45,7 @@ class Beam(Part):
 
     def __init__(self, frame=None, length=None, width=None, height=None):
         super(Beam, self).__init__()
-        self.frame = frame
+        self.frame = frame #TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.length = length
@@ -125,6 +125,10 @@ class Beam(Part):
         beam = Beam(self.frame, self.length, self.width, self.height)
         beam.features = self.features
         return beam
+
+    def is_identical(self, other_beam, additional_attributes=[]):
+        attributes_to_compare = ['frame','width','height','length'] + additional_attributes
+        return are_objects_identical(self, other_beam, attributes_to_compare)
 
     def clear_features(self):
         # needed if geometry of the beam has changed but the features are not updated automatically

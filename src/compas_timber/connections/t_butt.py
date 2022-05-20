@@ -1,7 +1,9 @@
+from pprint import pprint
 from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
 from compas.geometry import Vector, Point, Plane
 from compas.data import Data
-from ..connections.joint import Joint
+from compas_timber.connections.joint import Joint
+from compas_timber.utils.helpers import are_objects_identical
 
 # TODO: replace direct references to beam objects
 
@@ -10,19 +12,40 @@ class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
         self.assembly = assembly
-        self.main_beam_key = main_beam.key
-        self.cross_beam_key = cross_beam.key
-        self.joint_type_name = 'T-Butt'
-        #self.gap = gap #float, additional gap, e.g. for glue
-        #self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
+        self.main_beam_key = None
+        self.cross_beam_key = None
+        self.gap = None
+
+        if main_beam: 
+            self.main_beam_key = main_beam.key
+        if cross_beam:
+            self.cross_beam_key = cross_beam.key
+
+        # self.gap = gap #float, additional gap, e.g. for glue
+        # self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the join
+
+    @property
+    def joint_type(self):
+        return 'T-Butt'
+
+    def is_identical(self, other_joint, additional_attributes=[]):
+        attributes_to_compare = ['cross_beam', 'main_beam','gap', 'assembly'] + additional_attributes
+        return are_objects_identical(self, other_joint, attributes_to_compare)
+
 
     @property
     def main_beam(self):
-        return self.assembly.find_by_key(self.main_beam_key)
+        try:
+            return self.assembly.find_by_key(self.main_beam_key)
+        except:
+            return None
 
     @property
     def cross_beam(self):
-        return self.assembly.find_by_key(self.cross_beam_key)     
+        try:
+            return self.assembly.find_by_key(self.cross_beam_key)
+        except:
+            return None
 
     @property
     def __find_side(self):
@@ -65,3 +88,9 @@ class TButtJoint(Joint):
         """
         # TODO: how to saveguard this being added multiple times?
         self.main_beam.add_feature(self.cutting_plane, 'trim')
+
+
+if __name__=="__main__":
+    
+    pass
+

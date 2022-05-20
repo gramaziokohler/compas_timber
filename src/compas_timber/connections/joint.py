@@ -10,21 +10,24 @@ class Joint(Data):
     def __init__(self, assembly=None, beams = []):
         super(Joint, self).__init__()
         self.assembly = assembly
-        self.beam_keys = []
-        self.beam_guids = []
-        self.joint_type_name = ''
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
         
-        if beams: 
-            self.beam_keys = [b.key for b in beams]
-            self.beam_guids = [b.guid for b in beams]  # WIP
 
+        #TODO: where should we error-catch if beams are None? 
+        self.beams_key = [b.key for b in beams if b]
+        self.beams_guid = [b.guid for b in beams if b]  # WIP
+
+        if assembly:
             assembly.add_joint(self)
-            assembly.connect(self, beams)
+            assembly.connect(self, [b for b in beams if b])
 
     @property
     def beams(self):
-        return [self.assembly.find_by_key(key) for key in self.beam_keys]
+        return [self.assembly.find_by_key(key) for key in self.beams_key]
+
+
+
+
 
     # ------------------------------------------------------------------------------------------------
     # WIP alternative way of defining joints without reference to assembly --> saving refs to guids
