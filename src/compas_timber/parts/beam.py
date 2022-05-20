@@ -62,6 +62,8 @@ class Beam(Part):
         result.__init__(frame=self.frame.copy(), width=self.width, height=self.height, length=self.length)
         result.joints = copy.deepcopy(self.joints)
         result.features = copy.deepcopy(self.features)
+        result.attributes = copy.deepcopy(self.attributes) #temporary, until Part can copy itself
+        result.key = self.key
         return result
 
     ### constructors ###

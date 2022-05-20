@@ -1,4 +1,5 @@
 from compas.datastructures import Assembly
+import copy
 
 
 class TimberAssembly(Assembly):
@@ -43,7 +44,22 @@ class TimberAssembly(Assembly):
 
         if _connections:
             for connection in _connections:
-                self.add_connection(connection)      
+                self.add_connection(connection)
+
+    # def __copy__(self, *args, **kwargs):
+    #     return self.copy()
+
+    # def __deepcopy__(self, *args, **kwargs):
+    #     result = object.__new__(self.__class__)
+    #     result.__init__()
+    #     result._beams = copy.deepcopy(self._beams)
+    #     result._joints = copy.deepcopy(self._joints)
+    #     result._connections = copy.deepcopy(self._connections)
+    #     result.default_node_attributes = copy.deepcopy(self.default_node_attributes)
+    #     result.default_edge_attributes = copy.deepcopy(self.default_edge_attributes)
+    #     result.allowance = self.allowance
+    #     result.verbose = self.verbose
+    #     return result
 
     @property
     def beams(self):
@@ -142,6 +158,3 @@ class TimberAssembly(Assembly):
         beam = self._beams.get(beam_key)
         if beam:
             return beam.id
-
-
-

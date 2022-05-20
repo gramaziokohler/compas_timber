@@ -2,7 +2,8 @@ from compas.geometry import intersection_line_line, intersection_line_plane, dis
 from compas.geometry import Vector, Point, Plane
 from compas.data import Data
 
-# TODO: replace direct references to beam objects
+
+# NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
 
 
 class Joint(Data):
@@ -28,8 +29,17 @@ class Joint(Data):
     # ------------------------------------------------------------------------------------------------
     # WIP alternative way of defining joints without reference to assembly --> saving refs to guids
 
+    def __del__(self):
+        """
+        Destroys the object
+        """
+        NotImplementedError
+
     @staticmethod
     def try_add_joint(joint, beams, override=True):
+        """
+        Tries to make the connection between the given joint object and the given beams, but checks for conflicts first.
+        """
         if Joint.__is_joint_already_defined(beams):
             if Joint.__is_same_joint(joint, beams):
                 print('Identical joint already set')
@@ -47,23 +57,46 @@ class Joint(Data):
     @staticmethod
     def __add_joint(joint, beams):
         """
-        Save guids in each other's attributes
-        joint: an instance of a Joint class or its derivative
-        beams: list of instances of a Beam class
+        Makes the connection between the given joint object and the given beams.
         """
-        #joint.beam_guids = [b.guid for b in beams]
-        #for beam in beams: beam.joints.append( {'joint': joint.guid, 'other_beams': [b.guid for b in beams if b=! beam]})
-
-        # NotImplementedError
+        NotImplementedError
 
     @staticmethod
     def __is_joint_already_defined(beams):
+        """
+        Checks if there is a joint already defined for the given beams.
+        """
         NotImplementedError
 
     @staticmethod
-    def __is_same_joint(joints, beams, joint_uuid, beams_uuid):
+    def __is_same_joint(joint, beams):
+        """
+        Checks if the given joint is the same as a joint already defined betwen the given beams.
+        """
         NotImplementedError
 
-    @staticmethod
-    def __remove_joint(joints, beams, joint_uuid, beams_uuid):
+    @staticmethod #
+    def __remove_joint(beams):
+        """
+        Remove any trace of a joint definition between given beams
+        (incl. features that were applied to the beams through the joint, or other joint-specific elements such as nails.)
+        TODO: if special joining elements present (screws, nails, plates) - should they be deleted?
+        Remove joint from assembly if applicable. 
+        Delete object.
+        """
+        NotImplementedError
+
+    def remove_joint(self):
+        """
+        Remove any trace of this joint from the involved beams (incl. features).
+        Remove joint from assembly if applicable. 
+        Delete object.
+        """
+        NotImplementedError
+    
+    def __remove_features(self):
+        """
+        Remove feature definitions that this joint added to the involved beams.
+        """
+        #TODO: can this be generalized here or should it be in the specific joint types?
         NotImplementedError
