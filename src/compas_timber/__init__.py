@@ -32,6 +32,38 @@ from .sample_module import SampleClassName
 
 __all__ = ['SampleClassName']
 """
+
+
+"""
+********************************************************************************
+compas_timber
+********************************************************************************
+
+.. currentmodule:: compas_timber
+
+Details
+------
+
+blabla:
+
+.. toctree::
+    :maxdepth: 1
+
+    compas_timber
+
+CAD integration
+---------------
+
+.. toctree::
+    :maxdepth: 1
+
+    compas_timber.ghpython
+    compas_timber.rhino
+
+"""
+
+
+
 __all_plugins__=[
    'compas_timber.rhino.install'
 ]
