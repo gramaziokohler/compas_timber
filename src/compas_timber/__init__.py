@@ -32,3 +32,6 @@ from .sample_module import SampleClassName
 
 __all__ = ['SampleClassName']
 """
+__all_plugins__=[
+   'compas_timber.rhino.install'
+]
