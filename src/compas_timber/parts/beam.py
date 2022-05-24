@@ -1,7 +1,7 @@
 import copy
 from collections import deque
 
-from compas.geometry import Frame, Plane, Point, Line, Vector, Transformation
+from compas.geometry import Frame, Plane, Point, Line, Vector, Box, Transformation
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
 from compas.datastructures.assembly import Part
 from compas_timber.utils.helpers import are_objects_identical
@@ -273,13 +273,6 @@ class Beam(Part):
         if angle_vectors(z, centreline_vector) < tol_angle:
             z = Vector(1, 0, 0)
         return z
-
-
-
-class Feature(object):
-    def __init__(self, shape, parent):
-        self.shape = shape  # global coordinates or in parent's coordinates? --> what if shared by multiple parents?
-        self.parent = parent  # connection? beam/part?
 
 if __name__ == "__main__":
     b = Beam()
