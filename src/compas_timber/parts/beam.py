@@ -45,14 +45,12 @@ class Beam(Part):
 
     def __init__(self, frame=None, length=None, width=None, height=None):
         super(Beam, self).__init__()
-        self.frame = frame #compas frames are orthonormal
+        self.frame = frame  # compas frames are orthonormal
         self.width = width
         self.height = height
         self.length = length
-        self.joints = [] #a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
+        self.joints = []  # a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
         self.features = []
-
-
 
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
@@ -62,14 +60,13 @@ class Beam(Part):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Beam) and 
-            self.width == other.width and 
+            isinstance(other, Beam) and
+            self.width == other.width and
             self.height == other.height and
             self.length == other.length and
             self.frame == other.frame
-            #TODO: skip joints and features ?
+            # TODO: skip joints and features ?
         )
-
 
     @property
     def data(self):
@@ -138,10 +135,6 @@ class Beam(Part):
         beam = Beam(self.frame, self.length, self.width, self.height)
         beam.features = self.features
         return beam
-
-    def is_identical(self, other_beam, additional_attributes=[]):
-        attributes_to_compare = ['frame','width','height','length'] + additional_attributes
-        return are_objects_identical(self, other_beam, attributes_to_compare)
 
     def clear_features(self):
         # needed if geometry of the beam has changed but the features are not updated automatically
@@ -254,9 +247,7 @@ class Beam(Part):
         self.frame = frame
         return
 
-
     ### JOINTS ###
-
 
     ### FEATURES ###
 
@@ -265,19 +256,19 @@ class Beam(Part):
         shape: compas geometry
         operation: 'bool_union', 'bool_difference', 'bool_intersection', 'trim'
         """
-        #TODO: add some descriptor attribute to identify the source/type/character of features later?
+        # TODO: add some descriptor attribute to identify the source/type/character of features later?
         self.features.append((shape, operation))
-
 
     def clear_features(self):
         self.features = []
         return
 
-
     @property
     def has_features(self):
-        if len(self.features)==0: return False
-        else: return True
+        if len(self.features) == 0:
+            return False
+        else:
+            return True
 
     ### hidden helpers ###
     @staticmethod
@@ -286,6 +277,7 @@ class Beam(Part):
         if angle_vectors(z, centreline_vector) < tol_angle:
             z = Vector(1, 0, 0)
         return z
+
 
 if __name__ == "__main__":
     b = Beam()
