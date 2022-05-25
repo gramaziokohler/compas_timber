@@ -1,5 +1,7 @@
 from compas.datastructures import Assembly
 import copy
+from pprint import pprint
+from compas_timber.connections.joint import Joint
 
 
 class TimberAssembly(Assembly):
@@ -101,15 +103,17 @@ class TimberAssembly(Assembly):
         key = self.add_part(beam, key, type='beam')
         self._beams[key] = beam
         beam.key = key
+        beam.assembly = self
         return key
 
-    def add_joint(self, joint, key=None):
+    def add_joint_with_parts(self, joint, key=None):
         """Add a joint object to the assembly. 
 
         Parameters
         ----------
         joint : :class:`~compas_timber.parts.joint`
             An instance of a Joint class. 
+            The Beams and other Parts involved in the joint must be already defined in the Joint instance.
         key : int | str, optional
             The identifier of the joint in the assembly.
             Note that the key is unique only in the context of the current assembly.
@@ -120,25 +124,43 @@ class TimberAssembly(Assembly):
         int | str
             The identifier of the joint in the current assembly graph.
         """
+        
 
+        # do not add a joint without parts, this doesn't make sense and will create a loose node
+        assert joint.part_keys != [], "Cannot add this joint to assembly, it has no parts"
+        assert joint.is_in_assembly(self) == False, "This joint has already been added to this assembly."
+
+        # create an unconnected node in the graph for the joint object
         key = self.add_part(joint, key, type='joint')
         self._joints[key] = joint
         joint.key = key
-        joint.assembly = self
-        return key
+        joint.assembly = self 
 
-    def add_connection(self, connection, key=None):
-        # TODO: do I need this?
-        key = self.add_connection(connection, key, type='connection')
-        self._connections[key] = connection
-        connection.key = key
-        return key
+        # adds links to the beams
+        for part in joint.parts:
+            self.graph.add_edge(part.key, joint.key, type='connection') 
+        return key     
 
-    def connect(self, joint, parts, attr_dict=None):
-        attr = attr_dict or {}
-        for part in parts:
-            self.graph.add_edge(part.key, joint.key, type='connection')  # attr_dict=attr)
-        return
+    def remove_joint(self, joint):
+        """
+        Removes a joint from the assembly, i.e. disconnects it from assembly and from its parts. Does not delete the object.
+        """
+        assert joint.key in self.joint_keys
+        self.graph.delete_node(joint.key)
+        joint.part_keys = []
+        joint.assembly = None
+
+    def are_parts_joined_already(self,part_keys):
+        """
+        Checks if there is already a(nother) joint defined for the same set of parts
+        """
+        # TODO: could also restrict the search to beam objects only
+
+        for j in self.joints:
+            if set(j.part_keys) == set(part_keys):
+                return True
+        return False
+
 
     def get_beam_keys_connected_to(self, beam_key):
         nbrs = self.neighbors(beam_key, ring=2)
@@ -158,3 +180,11 @@ class TimberAssembly(Assembly):
         beam = self._beams.get(beam_key)
         if beam:
             return beam.id
+
+
+    def print_structure(self):
+        pprint("Beams:\n",self.beam_keys)
+        pprint("Joints:\n",self.joint_keys)
+
+        for joint in self.joints:
+            print("[%s] %s: %s"%(joint.key, joint.type_name, joint.beam_keys))

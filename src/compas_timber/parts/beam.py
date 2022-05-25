@@ -51,6 +51,29 @@ class Beam(Part):
         self.length = length
         self.joints = [] #a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
         self.features = []
+        self.assembly = None
+    
+    def add_to_assembly(self, assembly = None, key = None):
+        """ 
+        Alternative way of adding a beam to assembly, equivalent to Assembly.add_beam(Beam)
+        """
+        if not assembly and not self.assembly: 
+            return None #TODO: add some exception / warning?
+        self.assembly = assembly
+        key = assembly.add_part(self, key, type='beam')
+        assembly._beams[key] = self
+        self.key = key
+        return key
+
+    def is_in_assembly(self, assembly):
+        """
+        Checks if this beam belongs to the given assembly.
+        Should not only compare the keys (these can repeat between two assemblies) but the actual assembly objects.
+        Returns False if assembly is None.
+        """
+        if not assembly: return False
+        return self.assembly is assembly
+    
 
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
@@ -79,6 +102,7 @@ class Beam(Part):
         Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
         """
         self.attributes.update(data['attributes'] or {})
+        self.assembly = data['assembly']
         self.key = data['key']
         self.frame = data['frame']
         self.shape = data['shape']
