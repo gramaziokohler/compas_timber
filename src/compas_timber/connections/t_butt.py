@@ -11,18 +11,29 @@ from compas_timber.utils.helpers import are_objects_identical
 class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.assembly = assembly
+        self.assembly = assembly #TODO: needed?
         self.main_beam_key = None
         self.cross_beam_key = None
-        self.gap = None
-
+        self.gap = None #float, additional gap, e.g. for glue
+        
         if main_beam: 
             self.main_beam_key = main_beam.key
         if cross_beam:
             self.cross_beam_key = cross_beam.key
 
-        # self.gap = gap #float, additional gap, e.g. for glue
-        # self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the join
+        
+
+    def __eq__(self, other):
+        return (
+            #TODO: are inherited attributes checked for automatically?
+            isinstance(other, TButtJoint) and 
+            self.assembly == other.assembly and  
+            self.main_beam_key == other.main_beam_key and
+            self.cross_beam_key == other.cross_beam_key and 
+            self.frame == other.frame and 
+            self.gap == self.gap #TODO: float tol check needed?
+        )
+
 
     @property
     def joint_type(self):
@@ -92,5 +103,7 @@ class TButtJoint(Joint):
 
 if __name__=="__main__":
     
+
+
     pass
 

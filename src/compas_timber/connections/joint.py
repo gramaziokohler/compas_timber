@@ -21,6 +21,15 @@ class Joint(Data):
             assembly.add_joint(self)
             assembly.connect(self, [b for b in beams if b])
 
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Joint) and 
+            self.assembly == other.assembly and 
+            self.frame == other.frame
+            #TODO: add generic comparison if two lists of beams are equal
+        )
+
     @property
     def beams(self):
         return [self.assembly.find_by_key(key) for key in self.beams_key]

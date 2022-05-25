@@ -45,18 +45,31 @@ class Beam(Part):
 
     def __init__(self, frame=None, length=None, width=None, height=None):
         super(Beam, self).__init__()
-        self.frame = frame #TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
+        self.frame = frame #compas frames are orthonormal
         self.width = width
         self.height = height
         self.length = length
         self.joints = [] #a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
         self.features = []
 
+
+
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
 
     def __copy__(self, *args, **kwargs):
         return self.copy()
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Beam) and 
+            self.width == other.width and 
+            self.height == other.height and
+            self.length == other.length and
+            self.frame == other.frame
+            #TODO: skip joints and features ?
+        )
+
 
     @property
     def data(self):
