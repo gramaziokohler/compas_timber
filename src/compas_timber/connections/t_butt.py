@@ -4,6 +4,7 @@ from compas.geometry import Vector, Point, Plane
 from compas.data import Data
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.helpers import are_objects_identical
+from compas.geometry import close
 
 # TODO: replace direct references to beam objects
 
@@ -11,38 +12,33 @@ from compas_timber.utils.helpers import are_objects_identical
 class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.assembly = assembly #TODO: needed?
+        self.assembly = assembly  # TODO: needed?
         self.main_beam_key = None
         self.cross_beam_key = None
-        self.gap = None #float, additional gap, e.g. for glue
-        
-        if main_beam: 
+        self.gap = None  # float, additional gap, e.g. for glue
+
+        if main_beam:
             self.main_beam_key = main_beam.key
         if cross_beam:
             self.cross_beam_key = cross_beam.key
 
-        
-
     def __eq__(self, other):
+        tol = self.assembly.tol
         return (
-            #TODO: are inherited attributes checked for automatically?
-            isinstance(other, TButtJoint) and 
-            self.assembly == other.assembly and  
+            isinstance(other, TButtJoint) and
+            super(TButtJoint, self).__eq__(other) and
             self.main_beam_key == other.main_beam_key and
-            self.cross_beam_key == other.cross_beam_key and 
-            self.frame == other.frame and 
-            self.gap == self.gap #TODO: float tol check needed?
+            self.cross_beam_key == other.cross_beam_key and
+            close(self.gap, other.gap, tol)
         )
-
 
     @property
     def joint_type(self):
         return 'T-Butt'
 
     def is_identical(self, other_joint, additional_attributes=[]):
-        attributes_to_compare = ['cross_beam', 'main_beam','gap', 'assembly'] + additional_attributes
+        attributes_to_compare = ['cross_beam', 'main_beam', 'gap', 'assembly'] + additional_attributes
         return are_objects_identical(self, other_joint, attributes_to_compare)
-
 
     @property
     def main_beam(self):
@@ -101,9 +97,6 @@ class TButtJoint(Joint):
         self.main_beam.add_feature(self.cutting_plane, 'trim')
 
 
-if __name__=="__main__":
-    
-
+if __name__ == "__main__":
 
     pass
-

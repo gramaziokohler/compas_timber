@@ -5,11 +5,12 @@ from compas.geometry import Frame, Plane, Point, Line, Vector, Box, Transformati
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
 from compas.datastructures.assembly import Part
 from compas_timber.utils.helpers import are_objects_identical
+from compas.geometry import close
 
 
 # TODO: global tolerance settings?
-tol = 1e-6  # [units]
-tol_angle = 1e-1  # [radians]
+tol_angle = 1e-3  # [radians]
+tol = 1e-6  # replace with tol = Beam.assembly.tol
 
 
 class Beam(Part):
@@ -51,6 +52,8 @@ class Beam(Part):
         self.length = length
         self.joints = []  # a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
         self.features = []
+        self.assembly = None
+        
 
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
@@ -59,14 +62,21 @@ class Beam(Part):
         return self.copy()
 
     def __eq__(self, other):
+        tol = self.tol
         return (
             isinstance(other, Beam) and
-            self.width == other.width and
-            self.height == other.height and
-            self.length == other.length and
+            close(self.width, other.width, tol) and
+            close(self.height, other.height, tol) and
+            close(self.length, other.length, tol) and
             self.frame == other.frame
             # TODO: skip joints and features ?
         )
+
+    @property
+    def tol(self):
+        try: tol = self.assembly.tol
+        except: tol = 1e-6
+        return tol
 
     @property
     def data(self):

@@ -14,16 +14,15 @@ class TimberAssembly(Assembly):
     """
 
     def __init__(self,
-                 _beams=None,
-                 _connections=None):
+                 _beams=None):
 
         super(TimberAssembly, self).__init__()
 
-        self.verbose = True
         self._beams = {}
         self._joints = {}
-        self._connections = {}
         self.allowance = 0.000  # [m] global tolerance for joints = the gap size
+        self._units = 'meters' #options: 'meters', 'millimeters'
+        
 
         self.default_node_attributes = {
             'type': None  # string id
@@ -31,35 +30,35 @@ class TimberAssembly(Assembly):
 
         self.default_edge_attributes = {
             'type': None,  # string id
-            'features': None,
-            'location': None,
-            'side': None,
-            'motion': None,
-            'dof': None,
-            'locked': False
         }
+
         if _beams:
             for beam in _beams:
                 self.add_beam(beam)
 
-        if _connections:
-            for connection in _connections:
-                self.add_connection(connection)
 
-    # def __copy__(self, *args, **kwargs):
-    #     return self.copy()
+    def __eq__(self,other):
+        NotImplementedError
 
-    # def __deepcopy__(self, *args, **kwargs):
-    #     result = object.__new__(self.__class__)
-    #     result.__init__()
-    #     result._beams = copy.deepcopy(self._beams)
-    #     result._joints = copy.deepcopy(self._joints)
-    #     result._connections = copy.deepcopy(self._connections)
-    #     result.default_node_attributes = copy.deepcopy(self.default_node_attributes)
-    #     result.default_edge_attributes = copy.deepcopy(self.default_edge_attributes)
-    #     result.allowance = self.allowance
-    #     result.verbose = self.verbose
-    #     return result
+
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, units_name):
+        if not units_name in ('meters', 'millimeters'):
+            raise ValueError("The units parameters must be one of the following strings: 'meters', 'millimeters'.")
+        else:
+            self._units = units_name
+    
+    @property
+    def tol(self):
+        #TODO: add some way for the user to define the precision for each units
+        #TODO: add angular precision
+        #TODO: is 1e-3mm enough?
+        if self.units == 'meters': return 1e-6 # = 1e-3 millimeter precision 
+        if self.units == 'millimeters': return 1e-3 
 
     @property
     def beams(self):
