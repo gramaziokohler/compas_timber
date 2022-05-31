@@ -49,32 +49,8 @@ class Beam(Part):
         self.width = width
         self.height = height
         self.length = length
-        self.joints = [] #a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
-        self.features = []
         self.assembly = None
     
-    def add_to_assembly(self, assembly = None, key = None):
-        """ 
-        Alternative way of adding a beam to assembly, equivalent to Assembly.add_beam(Beam)
-        """
-        if not assembly and not self.assembly: 
-            return None #TODO: add some exception / warning?
-        self.assembly = assembly
-        key = assembly.add_part(self, key, type='beam')
-        assembly._beams[key] = self
-        self.key = key
-        return key
-
-    def is_in_assembly(self, assembly):
-        """
-        Checks if this beam belongs to the given assembly.
-        Should not only compare the keys (these can repeat between two assemblies) but the actual assembly objects.
-        Returns False if assembly is None.
-        """
-        if not assembly: return False
-        return self.assembly is assembly
-    
-
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
 
@@ -149,15 +125,6 @@ class Beam(Part):
         beam = Beam(self.frame, self.length, self.width, self.height)
         beam.features = self.features
         return beam
-
-    def is_identical(self, other_beam, additional_attributes=[]):
-        attributes_to_compare = ['frame','width','height','length'] + additional_attributes
-        return are_objects_identical(self, other_beam, attributes_to_compare)
-
-    def clear_features(self):
-        # needed if geometry of the beam has changed but the features are not updated automatically
-        self.features = []
-        pass
 
     def side_frame(self, side_index):
         """
@@ -268,7 +235,16 @@ class Beam(Part):
 
     ### JOINTS ###
 
+    @property
+    def _joint_keys(self):
+        n = self.assembly.graph.neighbors[self.key] 
+        return [k for k in n if self.assembly.node_attribute('type')=='joint'] #just double-check in case the joint-node would be somehow connecting to smth else in the graph
 
+    @property
+    def joints(self):
+        return [self.assembly.find_by_key(key) for key in self._joint_keys]
+    
+    
     ### FEATURES ###
 
     def add_feature(self, shape, operation):

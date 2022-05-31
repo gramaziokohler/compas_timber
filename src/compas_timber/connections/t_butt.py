@@ -28,11 +28,6 @@ class TButtJoint(Joint):
     def joint_type(self):
         return 'T-Butt'
 
-    def is_identical(self, other_joint, additional_attributes=[]):
-        attributes_to_compare = ['cross_beam', 'main_beam','gap', 'assembly'] + additional_attributes
-        return are_objects_identical(self, other_joint, attributes_to_compare)
-
-
     @property
     def main_beam(self):
         try:

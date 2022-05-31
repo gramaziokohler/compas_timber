@@ -44,3 +44,5 @@ def test_beam_constructor():
     b = Beam.from_endpoints(Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200)
     # test if length is =1
     assert isclose(b.length, 1.0)
+    
+    print("\n *** all tests passed ***\n\n")
