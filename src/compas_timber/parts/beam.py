@@ -5,11 +5,11 @@ from compas.geometry import Frame, Plane, Point, Line, Vector, Box, Transformati
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
 from compas.datastructures.assembly import Part
 from compas_timber.utils.helpers import are_objects_identical
+from compas.geometry import close
 
 
-# TODO: global tolerance settings?
-tol = 1e-6  # [units]
-tol_angle = 1e-1  # [radians]
+# TODO: update to global compas PRECISION
+tol_angle = 1e-3  # [radians]
 
 
 class Beam(Part):
@@ -45,18 +45,34 @@ class Beam(Part):
 
     def __init__(self, frame=None, length=None, width=None, height=None):
         super(Beam, self).__init__()
-        self.frame = frame #TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
+        self.frame = frame  # compas frames are orthonormal
         self.width = width
         self.height = height
         self.length = length
-        self.joints = [] #a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
+        self.joints = []  # a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
         self.features = []
+        self.assembly = None
 
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
 
     def __copy__(self, *args, **kwargs):
         return self.copy()
+
+    def __eq__(self, other):
+        tol = self.tol
+        return (
+            isinstance(other, Beam) and
+            close(self.width, other.width, tol) and
+            close(self.height, other.height, tol) and
+            close(self.length, other.length, tol) and
+            self.frame == other.frame
+            # TODO: skip joints and features ?
+        )
+
+    @property
+    def tol(self):
+        return getattr(self.assembly, "tol", 1e-6)
 
     @property
     def data(self):
@@ -125,10 +141,6 @@ class Beam(Part):
         beam = Beam(self.frame, self.length, self.width, self.height)
         beam.features = self.features
         return beam
-
-    def is_identical(self, other_beam, additional_attributes=[]):
-        attributes_to_compare = ['frame','width','height','length'] + additional_attributes
-        return are_objects_identical(self, other_beam, attributes_to_compare)
 
     def clear_features(self):
         # needed if geometry of the beam has changed but the features are not updated automatically
@@ -241,9 +253,7 @@ class Beam(Part):
         self.frame = frame
         return
 
-
     ### JOINTS ###
-
 
     ### FEATURES ###
 
@@ -252,19 +262,19 @@ class Beam(Part):
         shape: compas geometry
         operation: 'bool_union', 'bool_difference', 'bool_intersection', 'trim'
         """
-        #TODO: add some descriptor attribute to identify the source/type/character of features later?
+        # TODO: add some descriptor attribute to identify the source/type/character of features later?
         self.features.append((shape, operation))
-
 
     def clear_features(self):
         self.features = []
         return
 
-
     @property
     def has_features(self):
-        if len(self.features)==0: return False
-        else: return True
+        if len(self.features) == 0:
+            return False
+        else:
+            return True
 
     ### hidden helpers ###
     @staticmethod
@@ -273,6 +283,7 @@ class Beam(Part):
         if angle_vectors(z, centreline_vector) < tol_angle:
             z = Vector(1, 0, 0)
         return z
+
 
 if __name__ == "__main__":
     b = Beam()
