@@ -7,14 +7,14 @@ from compas.data import Data
 
 
 class Joint(Data):
-    def __init__(self, beams = None, assembly=None):
+    def __init__(self, beams=None, assembly=None):
         super(Joint, self).__init__()
         self.assembly = assembly
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
-        
+
         beams = beams or []
 
-        #TODO: where should we error-catch if beams are None? 
+        # TODO: where should we error-catch if beams are None?
         self.beams_key = [b.key for b in beams if b]
         self.beams_guid = [b.guid for b in beams if b]  # WIP
 
@@ -22,12 +22,11 @@ class Joint(Data):
             assembly.add_joint(self)
             assembly.connect(self, [b for b in beams if b])
 
-
     def __eq__(self, other):
         return (
-            isinstance(other, Joint) and 
-            self.assembly == other.assembly and 
-            self.frame == other.frame 
+            isinstance(other, Joint) and
+            self.assembly == other.assembly and
+            self.frame == other.frame
             # TODO: add generic comparison if two lists of beams are equal
             # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
         )
@@ -35,8 +34,6 @@ class Joint(Data):
     @property
     def beams(self):
         return [self.assembly.find_by_key(key) for key in self.beams_key]
-
-
 
     # ------------------------------------------------------------------------------------------------
     # WIP alternative way of defining joints without reference to assembly --> saving refs to guids
@@ -87,7 +84,7 @@ class Joint(Data):
         """
         NotImplementedError
 
-    @staticmethod #
+    @staticmethod
     def __remove_joint(beams):
         """
         Remove any trace of a joint definition between given beams
@@ -105,10 +102,10 @@ class Joint(Data):
         Delete object.
         """
         NotImplementedError
-    
+
     def __remove_features(self):
         """
         Remove feature definitions that this joint added to the involved beams.
         """
-        #TODO: can this be generalized here or should it be in the specific joint types?
+        # TODO: can this be generalized here or should it be in the specific joint types?
         NotImplementedError

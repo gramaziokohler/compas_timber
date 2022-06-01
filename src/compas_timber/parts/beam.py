@@ -11,6 +11,7 @@ from compas.geometry import close
 # TODO: update to global compas PRECISION
 tol_angle = 1e-3  # [radians]
 
+
 class Beam(Part):
     """A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
     Parameters
@@ -51,7 +52,6 @@ class Beam(Part):
         self.joints = []  # a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
         self.features = []
         self.assembly = None
-        
 
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)

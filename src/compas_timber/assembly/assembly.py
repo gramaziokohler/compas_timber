@@ -21,13 +21,12 @@ class TimberAssembly(Assembly):
         self._beams = {}
         self._joints = {}
         self.allowance = 0.000  # [m] global tolerance for joints = the gap size
-        self._units = 'meters' #options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
-
+        self._units = 'meters'  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
 
         self._units_precision = {
-            'meters': 1e-9, 
+            'meters': 1e-9,
             'millimeters': 1e-6
-            }    
+        }
 
         self.default_node_attributes = {
             'type': None  # string id
@@ -41,10 +40,8 @@ class TimberAssembly(Assembly):
             for beam in _beams:
                 self.add_beam(beam)
 
-
-    def __eq__(self,other):
+    def __eq__(self, other):
         raise NotImplementedError
-
 
     @property
     def units(self):
@@ -53,13 +50,13 @@ class TimberAssembly(Assembly):
     @units.setter
     def units(self, units_name):
         if not units_name in self._units_precision.keys():
-            raise ValueError("The units parameters must be one of the following strings: %s."%self._units_precision.keys())
+            raise ValueError("The units parameters must be one of the following strings: %s." % self._units_precision.keys())
         else:
             self._units = units_name
-    
+
     @property
     def tol(self):
-        #TODO: change to compas PRECISION 
+        # TODO: change to compas PRECISION
         return self._units_precision[self.units]
 
     @property
