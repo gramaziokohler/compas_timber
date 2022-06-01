@@ -81,7 +81,7 @@ class TButtJoint(Joint):
         # TODO: flip normal
         return cfr
 
-    def add_features(self):
+    def add_feature(self):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
