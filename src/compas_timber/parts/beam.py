@@ -5,11 +5,11 @@ from compas.geometry import Frame, Plane, Point, Line, Vector, Box, Transformati
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
 from compas.datastructures.assembly import Part
 from compas_timber.utils.helpers import are_objects_identical
+from compas.geometry import close
 
 
-# TODO: global tolerance settings?
-tol = 1e-6  # [units]
-tol_angle = 1e-1  # [radians]
+# TODO: update to global compas PRECISION
+tol_angle = 1e-3  # [radians]
 
 
 class Beam(Part):
@@ -56,6 +56,21 @@ class Beam(Part):
 
     def __copy__(self, *args, **kwargs):
         return self.copy()
+
+    def __eq__(self, other):
+        tol = self.tol
+        return (
+            isinstance(other, Beam) and
+            close(self.width, other.width, tol) and
+            close(self.height, other.height, tol) and
+            close(self.length, other.length, tol) and
+            self.frame == other.frame
+            # TODO: skip joints and features ?
+        )
+
+    @property
+    def tol(self):
+        return getattr(self.assembly, "tol", 1e-6)
 
     @property
     def data(self):

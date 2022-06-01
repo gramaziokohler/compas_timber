@@ -7,7 +7,6 @@ from compas.datastructures import Part
 
 # NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
 
-
 class Joint(Data):
     """
     parts: beams and other parts of a joint, e.g. a dowel, a steel plate
@@ -21,6 +20,15 @@ class Joint(Data):
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
         assembly.add_joint(self, parts)
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Joint) and
+            self.assembly == other.assembly and
+            self.frame == other.frame
+            # TODO: add generic comparison if two lists of beams are equal
+            # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
+        )
 
     @property
     def _part_keys(self):

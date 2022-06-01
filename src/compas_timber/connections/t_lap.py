@@ -15,5 +15,5 @@ class TLapJoint(Joint):
     def joint_type(self):
         return 'T-Lap'
 
-    def apply_feature(self):
+    def add_feature(self):
         pass

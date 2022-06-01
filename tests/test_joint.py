@@ -1,7 +1,7 @@
-import pytest
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
+from compas.geometry import Point, Vector
 
 
 def test_create():
@@ -61,9 +61,24 @@ def test_joint_override_protection():
     assert A.are_parts_joined_already([b.key for b in [B1, B2]]) == False
 
 
+def test__eq__():
+
+    B1 = Beam.from_endpoints(Point(0, 0, 0), Point(2, 0, 0), Vector(0, 0, 1),  0.1, 0.2)
+    B2 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1),  0.1, 0.2)
+    B3 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1),  0.1, 0.2)  # same as B2
+    B4 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1),  0.1, 0.4)
+    A = TimberAssembly([B1, B2, B3, B4])
+
+    J1 = Joint([B1, B2], A)
+    J2 = Joint([B1, B2], A)
+
+    assert J1 == J2  # TODO: why is this failing???
+
+
 if __name__ == "__main__":
     print("\n-------------------------------")
     test_create()
     test_remove_joint()
     test_joint_override_protection()
+    test__eq__()
     print("\n *** all tests passed ***\n\n")
