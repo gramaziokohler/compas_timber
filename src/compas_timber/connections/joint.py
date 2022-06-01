@@ -1,26 +1,25 @@
 from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
 from compas.geometry import Vector, Point, Plane
 from compas.data import Data
+from compas_timber.parts.beam import Beam
+from compas.datastructures import Part
 
 
 # NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
 
-
 class Joint(Data):
-    def __init__(self, beams=None, assembly=None):
+    """
+    parts: beams and other parts of a joint, e.g. a dowel, a steel plate
+    assembly: TimberAssembly object to which the parts belong
+    """
+
+    def __init__(self, parts, assembly):
         super(Joint, self).__init__()
-        self.assembly = assembly
+        self.assembly = None
+        self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
-        beams = beams or []
-
-        # TODO: where should we error-catch if beams are None?
-        self.beams_key = [b.key for b in beams if b]
-        self.beams_guid = [b.guid for b in beams if b]  # WIP
-
-        if assembly:
-            assembly.add_joint(self)
-            assembly.connect(self, [b for b in beams if b])
+        assembly.add_joint(self, parts)
 
     def __eq__(self, other):
         return (
@@ -32,80 +31,14 @@ class Joint(Data):
         )
 
     @property
+    def _part_keys(self):
+        n = self.assembly.graph.neighbors(self.key)
+        return [k for k in n if self.assembly.node_attribute('type') == 'part']  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
+
+    @property
+    def parts(self):
+        return [self.assembly.find_by_key(key) for key in self._part_keys]
+
+    @property
     def beams(self):
-        return [self.assembly.find_by_key(key) for key in self.beams_key]
-
-    # ------------------------------------------------------------------------------------------------
-    # WIP alternative way of defining joints without reference to assembly --> saving refs to guids
-
-    def __del__(self):
-        """
-        Destroys the object
-        """
-        NotImplementedError
-
-    @staticmethod
-    def try_add_joint(joint, beams, override=True):
-        """
-        Tries to make the connection between the given joint object and the given beams, but checks for conflicts first.
-        """
-        if Joint.__is_joint_already_defined(beams):
-            if Joint.__is_same_joint(joint, beams):
-                print('Identical joint already set')
-                pass
-            else:
-                # could be a different joint of the same type, or of a different type
-                if override:
-                    Joint.__add_joint(joint, beams)
-                else:
-                    print('Another joint already set.. aborting.')
-                    pass
-        else:
-            Joint.__add_joint(joint, beams)
-
-    @staticmethod
-    def __add_joint(joint, beams):
-        """
-        Makes the connection between the given joint object and the given beams.
-        """
-        NotImplementedError
-
-    @staticmethod
-    def __is_joint_already_defined(beams):
-        """
-        Checks if there is a joint already defined for the given beams.
-        """
-        NotImplementedError
-
-    @staticmethod
-    def __is_same_joint(joint, beams):
-        """
-        Checks if the given joint is the same as a joint already defined betwen the given beams.
-        """
-        NotImplementedError
-
-    @staticmethod
-    def __remove_joint(beams):
-        """
-        Remove any trace of a joint definition between given beams
-        (incl. features that were applied to the beams through the joint, or other joint-specific elements such as nails.)
-        TODO: if special joining elements present (screws, nails, plates) - should they be deleted?
-        Remove joint from assembly if applicable. 
-        Delete object.
-        """
-        NotImplementedError
-
-    def remove_joint(self):
-        """
-        Remove any trace of this joint from the involved beams (incl. features).
-        Remove joint from assembly if applicable. 
-        Delete object.
-        """
-        NotImplementedError
-
-    def __remove_features(self):
-        """
-        Remove feature definitions that this joint added to the involved beams.
-        """
-        # TODO: can this be generalized here or should it be in the specific joint types?
-        NotImplementedError
+        return [part for part in self.parts if isinstance(part, Beam)]

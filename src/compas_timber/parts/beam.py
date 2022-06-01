@@ -45,12 +45,10 @@ class Beam(Part):
 
     def __init__(self, frame=None, length=None, width=None, height=None):
         super(Beam, self).__init__()
-        self.frame = frame  # compas frames are orthonormal
+        self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.length = length
-        self.joints = []  # a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
-        self.features = []
         self.assembly = None
 
     def __str__(self):
@@ -95,6 +93,7 @@ class Beam(Part):
         Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
         """
         self.attributes.update(data['attributes'] or {})
+        self.assembly = data['assembly']
         self.key = data['key']
         self.frame = data['frame']
         self.shape = data['shape']
@@ -141,11 +140,6 @@ class Beam(Part):
         beam = Beam(self.frame, self.length, self.width, self.height)
         beam.features = self.features
         return beam
-
-    def clear_features(self):
-        # needed if geometry of the beam has changed but the features are not updated automatically
-        self.features = []
-        pass
 
     def side_frame(self, side_index):
         """
@@ -254,6 +248,14 @@ class Beam(Part):
         return
 
     ### JOINTS ###
+
+    def _get_joint_keys(self):
+        n = self.assembly.graph.neighbors[self.key]
+        return [k for k in n if self.assembly.node_attribute('type') == 'joint']  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
+
+    @property
+    def joints(self):
+        return [self.assembly.find_by_key(key) for key in self._get_joint_keys]
 
     ### FEATURES ###
 
