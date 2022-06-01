@@ -24,8 +24,8 @@ class Joint(Data):
 
     @property
     def _part_keys(self):
-        n = self.assembly.graph.neighbors(self.key) 
-        return [k for k in n if self.assembly.node_attribute('type')=='part'] #just double-check in case the joint-node would be somehow connecting to smth else in the graph
+        n = self.assembly.graph.neighbors(self.key)
+        return [k for k in n if self.assembly.node_attribute('type') == 'part']  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
 
     @property
     def parts(self):
@@ -34,5 +34,3 @@ class Joint(Data):
     @property
     def beams(self):
         return [part for part in self.parts if isinstance(part, Beam)]
-
-

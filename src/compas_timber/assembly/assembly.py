@@ -1,7 +1,5 @@
-from msilib.schema import Error
-from compas.datastructures import Assembly
-import copy
 from pprint import pprint
+from compas.datastructures import Assembly
 from compas_timber.connections.joint import Joint
 
 
@@ -16,7 +14,7 @@ class TimberAssembly(Assembly):
     TODO: other model-level features/metadata, e.g. structural (loads, supports),..
     """
 
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
 
         super(TimberAssembly, self).__init__()
 
@@ -68,7 +66,7 @@ class TimberAssembly(Assembly):
 
     def add_part(self, part, type):
         if part.guid in self.object_guids:
-            raise Error("Cannot add part: this part is already in the assembly (%s)" % part)
+            raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
         key = self.graph.add_node(key=None, object=part, type=type)
         part.key = key
         part.assembly = self
@@ -79,10 +77,10 @@ class TimberAssembly(Assembly):
         return key
 
     def add_plate(self, plate):
-        NotImplementedError
+        raise NotImplementedError
 
-    def remove_part(self,part):
-        NotImplementedError
+    def remove_part(self, part):
+        raise NotImplementedError
 
     def add_joint(self, joint, parts):
         """Add a joint object to the assembly. 

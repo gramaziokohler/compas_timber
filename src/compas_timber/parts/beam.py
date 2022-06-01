@@ -45,12 +45,12 @@ class Beam(Part):
 
     def __init__(self, frame=None, length=None, width=None, height=None):
         super(Beam, self).__init__()
-        self.frame = frame #TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
+        self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.length = length
         self.assembly = None
-    
+
     def __str__(self):
         return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
 
@@ -232,19 +232,16 @@ class Beam(Part):
         self.frame = frame
         return
 
-
     ### JOINTS ###
 
-    @property
-    def _joint_keys(self):
-        n = self.assembly.graph.neighbors[self.key] 
-        return [k for k in n if self.assembly.node_attribute('type')=='joint'] #just double-check in case the joint-node would be somehow connecting to smth else in the graph
+    def _get_joint_keys(self):
+        n = self.assembly.graph.neighbors[self.key]
+        return [k for k in n if self.assembly.node_attribute('type') == 'joint']  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
 
     @property
     def joints(self):
-        return [self.assembly.find_by_key(key) for key in self._joint_keys]
-    
-    
+        return [self.assembly.find_by_key(key) for key in self._get_joint_keys]
+
     ### FEATURES ###
 
     def add_feature(self, shape, operation):
@@ -252,19 +249,19 @@ class Beam(Part):
         shape: compas geometry
         operation: 'bool_union', 'bool_difference', 'bool_intersection', 'trim'
         """
-        #TODO: add some descriptor attribute to identify the source/type/character of features later?
+        # TODO: add some descriptor attribute to identify the source/type/character of features later?
         self.features.append((shape, operation))
-
 
     def clear_features(self):
         self.features = []
         return
 
-
     @property
     def has_features(self):
-        if len(self.features)==0: return False
-        else: return True
+        if len(self.features) == 0:
+            return False
+        else:
+            return True
 
     ### hidden helpers ###
     @staticmethod
@@ -273,6 +270,7 @@ class Beam(Part):
         if angle_vectors(z, centreline_vector) < tol_angle:
             z = Vector(1, 0, 0)
         return z
+
 
 if __name__ == "__main__":
     b = Beam()
