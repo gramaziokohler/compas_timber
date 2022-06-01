@@ -19,6 +19,7 @@ from compas_timber.utils.helpers import close
 ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
+
 def _create_mesh_geometry(frame, length, width, height):
     boxframe = Frame(frame.point - frame.yaxis * width * 0.5 - frame.zaxis * height * 0.5, frame.xaxis, frame.yaxis)
     return MeshGeometry(Box(boxframe, length, width, height))
@@ -77,7 +78,7 @@ class Beam(Part):
             raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.GEOMETRY_FACTORIES.keys(), geometry_type))
 
     def __str__(self):
-        return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
+        return "Beam %s x %s x %s at %s" % (self.width, self.height, self.length, self.frame)
 
     def __copy__(self, *args, **kwargs):
         return self.copy()
@@ -85,11 +86,11 @@ class Beam(Part):
     def __eq__(self, other):
         tol = self.tol
         return (
-            isinstance(other, Beam) and
-            close(self.width, other.width, tol) and
-            close(self.height, other.height, tol) and
-            close(self.length, other.length, tol) and
-            self.frame == other.frame
+            isinstance(other, Beam)
+            and close(self.width, other.width, tol)
+            and close(self.height, other.height, tol)
+            and close(self.length, other.length, tol)
+            and self.frame == other.frame
             # TODO: skip joints and features ?
         )
 
@@ -135,7 +136,7 @@ class Beam(Part):
         return cls(frame, length, width, height)
 
     @classmethod
-    def from_endpoints(cls, point_start, point_end,width, height, z_vector=None):
+    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
 
         x_vector = Vector.from_start_end(point_start, point_end)
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
@@ -180,7 +181,7 @@ class Beam(Part):
         """
         Base shape of the beam, i.e. box with no features.
         """
-        boxframe = Frame(self.frame.point - self.frame.yaxis*self.width*0.5 - self.frame.zaxis*self.height*0.5, self.frame.xaxis, self.frame.yaxis)
+        boxframe = Frame(self.frame.point - self.frame.yaxis * self.width * 0.5 - self.frame.zaxis * self.height * 0.5, self.frame.xaxis, self.frame.yaxis)
         return Box(boxframe, self.length, self.width, self.height)
 
     @shape.setter
@@ -196,13 +197,13 @@ class Beam(Part):
 
     @property
     def __centreline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length))
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
     def midpoint(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length*0.5))
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
-    def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint='start'):
+    def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         # create & apply a transformation
         """
         which_endpoint: 'start' or 'end' or 'both'
@@ -210,9 +211,9 @@ class Beam(Part):
         z = self.frame.zaxis
         ps = self.__centreline_start
         pe = self.__centreline_end
-        if which_endpoint in ('start', 'both'):
+        if which_endpoint in ("start", "both"):
             ps = add_vectors(ps, vector)
-        if which_endpoint in ('end', 'both'):
+        if which_endpoint in ("end", "both"):
             pe = add_vectors(pe, vector)
         x = Vector.from_start_end(ps, pe)
         y = Vector(*cross_vectors(x, z)) * -1.0
@@ -221,15 +222,15 @@ class Beam(Part):
         self.length = distance_point_point(ps, pe)
         return
 
-    def extend_length(self, d, option='both'):
+    def extend_length(self, d, option="both"):
         """
         options: 'start', 'end', 'both'
         """
-        if option in ('start', 'both'):
+        if option in ("start", "both"):
             pass  # move frame's origin by -d
-        if option == 'end':
+        if option == "end":
             pass  # change length by d
-        if option == 'both':
+        if option == "both":
             pass  # chane lenth by 2d
         return
 
@@ -247,7 +248,7 @@ class Beam(Part):
 
     def _get_joint_keys(self):
         n = self.assembly.graph.neighbors[self.key]
-        return [k for k in n if self.assembly.node_attribute('type') == 'joint']  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
+        return [k for k in n if self.assembly.node_attribute("type") == "joint"]  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
 
     @property
     def joints(self):
