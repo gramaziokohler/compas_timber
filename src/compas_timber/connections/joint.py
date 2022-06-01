@@ -24,20 +24,21 @@ class Joint(Data):
     def __eq__(self, other):
         return (
             isinstance(other, Joint) and
-            self.assembly == other.assembly and
+            # self.assembly == other.assembly and #not implemented yet
             self.frame == other.frame
             # TODO: add generic comparison if two lists of beams are equal
             # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
         )
 
     @property
-    def _part_keys(self):
-        n = self.assembly.graph.neighbors(self.key)
-        return [k for k in n if self.assembly.node_attribute('type') == 'part']  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
+    def _get_part_keys(self):
+        neighbor_keys = self.assembly.graph.neighbors(self.key)
+        # just double-check in case the joint-node would be somehow connecting to smth else in the graph
+        return [k for k in neighbor_keys if self.assembly.graph.node_attribute(key=k, name='type') in ('part', 'beam')]
 
     @property
     def parts(self):
-        return [self.assembly.find_by_key(key) for key in self._part_keys]
+        return [self.assembly.find_by_key(key) for key in self._get_part_keys]
 
     @property
     def beams(self):

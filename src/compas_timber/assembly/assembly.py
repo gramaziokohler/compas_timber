@@ -36,10 +36,6 @@ class TimberAssembly(Assembly):
             'type': None,  # not being used at the moment
         }
 
-        if _beams:
-            for beam in _beams:
-                self.add_beam(beam)
-
     def __eq__(self, other):
         raise NotImplementedError
 
@@ -140,6 +136,7 @@ class TimberAssembly(Assembly):
         assert parts != [], "Cannot add this joint to assembly: no parts given."
         assert self.contains(joint) == False, "This joint has already been added to this assembly."
         assert all([self.contains(part) == True for part in parts]), "Cannot add this joint to assembly: some of the parts are not in this assembly."
+        # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
         assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
@@ -163,8 +160,8 @@ class TimberAssembly(Assembly):
         """
         Checks if there is already a joint defined for the same set of parts.
         """
-        set_part_keys = set([p.key for p in parts])
-        return any([set(j.part_keys) == set_part_keys for j in self.joint_keys])
+        part_keys = [p.key for p in parts]
+        return any([set(j._get_part_keys) == set(part_keys) for j in self.joints])
 
     def get_beam_keys_connected_to(self, beam_key):
         nbrs = self.neighbors(beam_key, ring=2)

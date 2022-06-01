@@ -1,3 +1,14 @@
+from math import fabs
+
+
+def close(x, y, tol=1e-12):
+    """
+    Shorthand for comparing two numbers or None.
+    """
+    if x == None and y == None:
+        return True
+    return fabs(x - y) < tol  # same as close() in compas.geometry
+
 
 def are_objects_identical(object1, object2, attributes_to_compare):
     """
@@ -9,8 +20,8 @@ def are_objects_identical(object1, object2, attributes_to_compare):
 
     def _get_val(obj, attr_name):
 
-        #if attr_name in obj.__dir__:
-        attrobj = getattr(obj.__class__, attr_name) #TODO: does not find defined attributes, only properties - why?
+        # if attr_name in obj.__dir__:
+        attrobj = getattr(obj.__class__, attr_name)  # TODO: does not find defined attributes, only properties - why?
         if isinstance(attrobj, property):
             val = attrobj.__get__(obj, obj.__class__)
             return val

@@ -1,11 +1,8 @@
-import copy
 from collections import deque
-
 from compas.geometry import Frame, Plane, Point, Line, Vector, Box, Transformation
 from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
 from compas.datastructures.assembly import Part
-from compas_timber.utils.helpers import are_objects_identical
-from compas.geometry import close
+from compas_timber.utils.helpers import close
 
 
 # TODO: update to global compas PRECISION
