@@ -10,7 +10,7 @@ from compas_timber.parts.beam import Beam
 def test_create_from_endpoints():
     P1 = Point(0, 0, 0)
     P2 = Point(1, 0, 0)
-    B = Beam.from_endpoints(P1, P2)
+    B = Beam.from_endpoints(P1, P2, width=10, height=2)
     # the resulting beam length should be 1.0
     assert isclose(B.length, 1.0)
 

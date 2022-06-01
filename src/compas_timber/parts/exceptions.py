@@ -1,0 +1,3 @@
+class BeamCreationException(Exception):
+    pass
+
