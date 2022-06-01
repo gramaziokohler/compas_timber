@@ -7,11 +7,12 @@ from compas.data import Data
 
 
 class Joint(Data):
-    def __init__(self, beams = [], assembly=None):
+    def __init__(self, beams = None, assembly=None):
         super(Joint, self).__init__()
         self.assembly = assembly
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
         
+        beams = beams or []
 
         #TODO: where should we error-catch if beams are None? 
         self.beams_key = [b.key for b in beams if b]

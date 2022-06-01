@@ -8,10 +8,8 @@ from compas_timber.utils.helpers import are_objects_identical
 from compas.geometry import close
 
 
-# TODO: global tolerance settings?
+# TODO: update to global compas PRECISION
 tol_angle = 1e-3  # [radians]
-tol = 1e-6  # replace with tol = Beam.assembly.tol
-
 
 class Beam(Part):
     """A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
@@ -74,9 +72,7 @@ class Beam(Part):
 
     @property
     def tol(self):
-        try: tol = self.assembly.tol
-        except: tol = 1e-6
-        return tol
+        return getattr(self.assembly, "tol", 1e-6)
 
     @property
     def data(self):
