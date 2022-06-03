@@ -7,9 +7,9 @@ from compas_timber.connections.joint import Joint
 
 class TimberAssembly(Assembly):
     """
-    A data structure for managing the assembly. Assembly consist of parts and joints. 
+    A data structure for managing the assembly. Assembly consist of parts and joints.
     Parts are entities with a substantial physical presence, for example: beams, dowels, screws.
-    Joints are abstract entities to describe how parts are joined together, for example: two beams joining through a lap joint with a screw or dowel through it. 
+    Joints are abstract entities to describe how parts are joined together, for example: two beams joining through a lap joint with a screw or dowel through it.
     Connections are low-level abstractions to link the joined parts, for example: beam1-beam2, beam1-dowel, beam2-dowel.
 
     Graph:
@@ -18,7 +18,7 @@ class TimberAssembly(Assembly):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(TimberAssembly, self).__init__()
 
         self.default_node_attributes = {
@@ -107,12 +107,12 @@ class TimberAssembly(Assembly):
         raise NotImplementedError
 
     def add_joint(self, joint, parts):
-        """Add a joint object to the assembly. 
+        """Add a joint object to the assembly.
 
         Parameters
         ----------
         joint : :class:`~compas_timber.parts.joint`
-            An instance of a Joint class. 
+            An instance of a Joint class.
 
         parts : A list of instances of e.g. a Beam class.
                 The Beams and other Parts (dowels, steel plates) involved in the joint.

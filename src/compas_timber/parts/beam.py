@@ -21,7 +21,13 @@ DEFAULT_TOLERANCE = 1e-6
 
 
 def _create_mesh_geometry(frame, length, width, height):
-    boxframe = Frame(frame.point - frame.yaxis * width * 0.5 - frame.zaxis * height * 0.5, frame.xaxis, frame.yaxis)
+    w_offset = frame.yaxis * width * 0.5
+    h_offset = frame.zaxis * height * 0.5
+    point_offset = w_offset + h_offset
+    boxframe = Frame(frame.point + point_offset, frame.xaxis, frame.yaxis)
+
+    # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
+    boxframe.transform(Transformation.from_frame_to_frame(boxframe, Frame.worldXY()))
     return MeshGeometry(Box(boxframe, length, width, height))
 
 
@@ -67,13 +73,13 @@ class Beam(Part):
         self.assembly = None
 
         geometry = self._create_geometry_from_params(frame, length, width, height)
-        super(Beam, self).__init__(geometry=geometry)
+        super(Beam, self).__init__(geometry=geometry, frame=frame)
 
     @staticmethod
     def _create_geometry_from_params(frame, length, width, height, geometry_type="mesh"):
         try:
-            func = Beam.GEOMETRY_FACTORIES[geometry_type]
-            return func(frame, length, width, height)
+            factory = Beam.GEOMETRY_FACTORIES[geometry_type]
+            return factory(frame, length, width, height)
         except KeyError:
             raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.GEOMETRY_FACTORIES.keys(), geometry_type))
 
@@ -104,11 +110,11 @@ class Beam(Part):
         Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
         """
         data = {
-            **super(Beam, self).data,
             "width": self.width,
             "height": self.height,
             "length": self.length,
         }
+        data.update(super(Beam, self).data)
         return data
 
     @data.setter
@@ -130,7 +136,7 @@ class Beam(Part):
         x_vector = centreline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        frame = Frame(centreline.start, x_vector, y_vector)
+        frame = Frame(centreline.midpoint, x_vector, y_vector)
         length = centreline.length
 
         return cls(frame, length, width, height)
