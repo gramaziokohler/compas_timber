@@ -14,25 +14,35 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
 
 from compas_timber.utils.helpers import close
+from compas_timber.parts.exceptions import BeamCreationException
+
+# TODO: not to do
+from compas_rhino.conversions import box_to_rhino
+from Rhino.Geometry import Brep
+
 
 # TODO: update to global compas PRECISION
 ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
 
-def _create_mesh_geometry(frame, length, width, height):
-    w_offset = frame.yaxis * width * 0.5
-    h_offset = frame.zaxis * height * 0.5
-    point_offset = w_offset + h_offset
-    boxframe = Frame(frame.point + point_offset, frame.xaxis, frame.yaxis)
-
+def _create_mesh_geometry(length, width, height):
     # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
-    boxframe.transform(Transformation.from_frame_to_frame(boxframe, Frame.worldXY()))
-    return MeshGeometry(Box(boxframe, length, width, height))
+    # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
+    return MeshGeometry(Box(Frame.worldXY(), length, width, height))
 
 
-def _create_brep_geometry(*args, **kwargs):
-    raise NotImplementedError
+def _create_brep_geometry(length, width, height):
+    boxframe = Frame.worldXY()
+
+    # Frame defines the start corner in RhinoBox, adjust height and width ot center
+    width_offset = boxframe.yaxis * width * 0.5
+    height_offset = boxframe.zaxis * height * 0.5
+    length_offset = boxframe.xaxis * length * 0.5
+    boxframe.point -= width_offset + height_offset + length_offset
+
+    rhino_box = box_to_rhino(Box(boxframe, length, width, height))
+    return BrepGeometry(rhino_box.ToBrep())
 
 
 class Beam(Part):
@@ -65,21 +75,21 @@ class Beam(Part):
         "brep": _create_brep_geometry,
     }
 
-    def __init__(self, frame, length, width, height):
+    def __init__(self, frame, length, width, height, geometry_type):
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.length = length
         self.assembly = None
 
-        geometry = self._create_geometry_from_params(frame, length, width, height)
+        geometry = self._create_geometry_from_params(length, width, height, geometry_type)
         super(Beam, self).__init__(geometry=geometry, frame=frame)
 
     @staticmethod
-    def _create_geometry_from_params(frame, length, width, height, geometry_type="mesh"):
+    def _create_geometry_from_params(length, width, height, geometry_type):
         try:
             factory = Beam.GEOMETRY_FACTORIES[geometry_type]
-            return factory(frame, length, width, height)
+            return factory(length, width, height)
         except KeyError:
             raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.GEOMETRY_FACTORIES.keys(), geometry_type))
 
@@ -128,7 +138,7 @@ class Beam(Part):
         self.length = data["length"]
 
     @classmethod
-    def from_centreline(cls, centreline, width, height, z_vector=None):
+    def from_centreline(cls, centreline, width, height, z_vector=None, geometry_type="mesh"):
         """
         Define the beam from its centreline.
         z_vector: a vector indicating the height direction (z-axis) of the cross-section. If not specified, a default will be used.
@@ -139,7 +149,7 @@ class Beam(Part):
         frame = Frame(centreline.midpoint, x_vector, y_vector)
         length = centreline.length
 
-        return cls(frame, length, width, height)
+        return cls(frame, length, width, height, geometry_type)
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
@@ -181,19 +191,6 @@ class Beam(Part):
     @property
     def centreline(self):
         return Line(self.__centreline_start, self.__centreline_end)
-
-    @property
-    def shape(self):
-        """
-        Base shape of the beam, i.e. box with no features.
-        """
-        boxframe = Frame(self.frame.point - self.frame.yaxis * self.width * 0.5 - self.frame.zaxis * self.height * 0.5, self.frame.xaxis, self.frame.yaxis)
-        return Box(boxframe, self.length, self.width, self.height)
-
-    @shape.setter
-    def shape(self, box):
-        # TODO: temp error catcher: calling Beam.shape throws an error in Part ("readonly attribute")
-        pass
 
     ### GEOMETRY ###
 
