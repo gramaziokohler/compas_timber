@@ -21,13 +21,13 @@ class Joint(Data):
     """
 
     def __init__(self, assembly, parts):
-
         super(Joint, self).__init__()
         self.assembly = assembly
         self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
         assembly.add_joint(self, parts)
+        self._apply_features()
 
     @property
     def data(self):
@@ -64,3 +64,6 @@ class Joint(Data):
     @property
     def beams(self):
         return [part for part in self.parts if isinstance(part, Beam)]
+
+    def _apply_features(self):
+        raise  NotImplementedError

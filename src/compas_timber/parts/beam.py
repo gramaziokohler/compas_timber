@@ -163,18 +163,9 @@ class Beam(Part):
         return cls(frame, length, width, height)
 
     ### main methods and properties ###
-
-    def side_frame(self, side_index):
-        """
-        Side index: sides of the beam's base shape (box) are numbered relative to the beam's coordinate system:
-        0: +y (side's frame normal is equal to the beam's Y positive direction)
-        1: +z
-        2: -y
-        3: -z
-        4: -x (side at the starting end)
-        5: +x (side at the end of the beam)
-        """
-        sides = [
+    @property
+    def faces(self):
+        return [
             Frame(Point(*add_vectors(self.frame.point, self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, -self.frame.zaxis),
             Frame(Point(*add_vectors(self.frame.point, -self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, -self.frame.yaxis),
             Frame(Point(*add_vectors(self.frame.point, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
@@ -183,28 +174,23 @@ class Beam(Part):
             Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)), self.frame.yaxis, self.frame.zaxis),
         ]
 
-        try:
-            return sides[side_index]
-        except IndexError:
-            return None
-
     @property
     def centreline(self):
-        return Line(self.__centreline_start, self.__centreline_end)
+        return Line(self._centreline_start, self._centreline_end)
 
     ### GEOMETRY ###
 
     @property
-    def __centreline_start(self):
-        return self.frame.point
+    def _centreline_start(self):
+        return Point(*add_vectors(self.frame.point, -self.frame.xaxis * self.length * 0.5))
 
     @property
-    def __centreline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
+    def _centreline_end(self):
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     @property
     def midpoint(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
+        return self.frame.point
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         # create & apply a transformation
