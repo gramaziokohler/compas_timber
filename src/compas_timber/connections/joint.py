@@ -15,7 +15,7 @@ class Joint(Data):
 
     def __init__(self, parts, assembly):
         super(Joint, self).__init__()
-        self.assembly = None
+        self.assembly = assembly
         self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
@@ -24,10 +24,10 @@ class Joint(Data):
     def __eq__(self, other):
         return (
             isinstance(other, Joint) and
-            # self.assembly == other.assembly and #not implemented yet
             self.frame == other.frame
+            # self.assembly == other.assembly and #not implemented yet
             # TODO: add generic comparison if two lists of beams are equal
-            # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
+            # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable         
         )
 
     @property
@@ -42,4 +42,5 @@ class Joint(Data):
 
     @property
     def beams(self):
-        return [part for part in self.parts if isinstance(part, Beam)]
+        #return [part for part in self.parts if isinstance(part, Beam)]
+        return [part for part in self.parts if type(part).__name__ == Beam.__name__] #temp workaround becaues of unload modules in GH

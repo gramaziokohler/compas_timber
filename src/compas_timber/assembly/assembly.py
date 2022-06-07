@@ -16,7 +16,7 @@ class TimberAssembly(Assembly):
 
     def __init__(self, **kwargs):
         super(TimberAssembly, self).__init__()
-
+        
         self._beams = {}
         self._joints = {}
         self.allowance = 0.000  # [m] global tolerance for joints = the gap size
@@ -35,6 +35,21 @@ class TimberAssembly(Assembly):
         self.default_edge_attributes = {
             'type': None,  # not being used at the moment
         }
+
+    @property
+    def data(self):
+        data = {
+            "attributes": self.attributes,
+            "graph": self.graph.data,
+        }
+        return data
+
+    @data.setter
+    def data(self, data):
+        self.attributes.update(data["attributes"] or {})
+        self.graph.data = data["graph"]
+        #self._parts = {part.guid: part.key for part in self.parts}
+
 
     def __eq__(self, other):
         raise NotImplementedError
@@ -137,7 +152,7 @@ class TimberAssembly(Assembly):
         assert self.contains(joint) == False, "This joint has already been added to this assembly."
         assert all([self.contains(part) == True for part in parts]), "Cannot add this joint to assembly: some of the parts are not in this assembly."
         # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
-        assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
+        #assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
         key = self.graph.add_node(key=None, object=joint, type='joint')

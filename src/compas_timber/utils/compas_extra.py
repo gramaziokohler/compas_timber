@@ -2,6 +2,11 @@ from compas.geometry import Line, Plane, Frame, Point
 from compas.geometry import subtract_vectors, cross_vectors, intersection_line_plane, distance_point_point
 
 
+def is_near_end(t, tol=1e-6):
+    if abs(t)<tol: return True #almost zero
+    if abs(1.0-t)<tol: return True #almost 1
+    return False
+
 def __get_t(p, v, pt):
     """
     p = start point of the line, at which t=0
@@ -17,7 +22,7 @@ def __get_t(p, v, pt):
     return None
 
 
-def intersection_line_line_3D(L1, L2, max_distance=1e-6, limit_to_segments=True, return_t=False, tol=1e-6):
+def intersection_line_line_3D(L1, L2, max_distance=1e-6, limit_to_segments=True, return_t=False, tol=1e-6, verbose=True):
 
     P1 = L1[0]
     V1 = subtract_vectors(L1[1], L1[0])
@@ -29,6 +34,8 @@ def intersection_line_line_3D(L1, L2, max_distance=1e-6, limit_to_segments=True,
 
     # check if lines are parallel
     if all([abs(x) < tol for x in N]):
+        print(V1,V2,N)
+        #raise UserWarning("The lines are parallel - no intersection.")
         return [None, None]
 
     pln1 = Plane.from_frame(Frame(P1, V1, N))

@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RhinoUI major_ver="3" minor_ver="0" guid="75c30cc0-6dab-4436-9d41-342146050b27" localize="False" default_language_id="1033" dpi_scale="125">
+  <extend_rhino_menus>
+    <menu guid="d58ceae7-fdb0-4104-80da-274b94ad44a9">
+      <text>
+        <locale_1033>Extend Rhino Menus</locale_1033>
+      </text>
+    </menu>
+  </extend_rhino_menus>
+  <menus />
+  <tool_bar_groups>
+    <tool_bar_group guid="2f8da7c8-b9f1-4d51-8652-cfb2f00320df" dock_bar_guid32="00000000-0000-0000-0000-000000000000" dock_bar_guid64="ee38bb0d-ee1c-449e-8ffd-e42217681fe6" active_tool_bar_group="bda5a1ac-0761-4d40-ba77-3ff2bf2ee07c" single_file="False" hide_single_tab="False" point_floating="832,285">
+      <text>
+        <locale_1033>Toolbar</locale_1033>
+      </text>
+      <tool_bar_group_item guid="bda5a1ac-0761-4d40-ba77-3ff2bf2ee07c" major_version="1" minor_version="1">
+        <text>
+          <locale_1033>Toolbar</locale_1033>
+        </text>
+        <tool_bar_id>8c4b66f6-8b3c-4bfc-a0ab-999ad6c08156</tool_bar_id>
+      </tool_bar_group_item>
+      <dock_bar_info dpi_scale="125" dock_bar="False" docking="True" horz="False" visible="False" floating="True" mru_float_style="8192" bar_id="59480" mru_width="868" point_pos="-2,-2" float_point="832,285" rect_mru_dock_pos="0,0,0,0" dock_location_u="59419" dock_location="top" float_size="459,65" />
+    </tool_bar_group>
+  </tool_bar_groups>
+  <tool_bars>
+    <tool_bar guid="8c4b66f6-8b3c-4bfc-a0ab-999ad6c08156">
+      <text>
+        <locale_1033>Toolbar</locale_1033>
+      </text>
+      <tool_bar_item guid="6cf46f30-7e61-4ec1-86d1-201160167626" button_display_mode="text_only" display_style_from_parent="False">
+        <text>
+          <locale_1033>Toolbar item</locale_1033>
+        </text>
+        <left_macro_id>e3006896-0fe6-4b85-a9ff-c4108a6e4ad8</left_macro_id>
+      </tool_bar_item>
+      <tool_bar_item guid="7bc80757-3223-45e5-b859-8253e11efc41" button_display_mode="text_only" display_style_from_parent="False">
+        <left_macro_id>3436d6bb-ad98-4167-a442-d0188b5cb694</left_macro_id>
+      </tool_bar_item>
+    </tool_bar>
+  </tool_bars>
+  <macros>
+    <macro_item guid="e3006896-0fe6-4b85-a9ff-c4108a6e4ad8" bitmap_id="8ddf0e3e-c29f-4ceb-93e1-821e6e91bfaf">
+      <text>
+        <locale_1033>Macro</locale_1033>
+      </text>
+      <tooltip>
+        <locale_1033>show&amp;edit object attributes</locale_1033>
+      </tooltip>
+      <button_text>
+        <locale_1033>attributes</locale_1033>
+      </button_text>
+      <script>! _-RunPythonScript "C:\Users\aapolina\CODE\misc\rhino\rhinoscript\attributes.py"</script>
+    </macro_item>
+    <macro_item guid="3436d6bb-ad98-4167-a442-d0188b5cb694" bitmap_id="e688e20f-38e7-489b-b7de-a224f5588e1e">
+      <text>
+        <locale_1033>Macro 00</locale_1033>
+      </text>
+      <tooltip>
+        <locale_1033>show or clear sticky dictionary</locale_1033>
+      </tooltip>
+      <button_text>
+        <locale_1033>sticky</locale_1033>
+      </button_text>
+      <script>! _-RunPythonScript "C:\Users\aapolina\CODE\compas_timber\scripts\Examples\rhinoscript\util_sticky.py"</script>
+    </macro_item>
+  </macros>
+  <bitmaps>
+    <small_bitmap item_width="16" item_height="16">
+      <bitmap_item guid="8ddf0e3e-c29f-4ceb-93e1-821e6e91bfaf" index="0" />
+      <bitmap_item guid="e688e20f-38e7-489b-b7de-a224f5588e1e" index="1" />
+      <bitmap>iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAABGdBTUEAALGPC/xhBQAAAAlwSFlz
+AAAScQAAEnEB89x6jgAAABlJREFUSEtjGAWjYBSMglEwCkbBKEABDAwACCAAAY1HgSwAAAAASUVO
+RK5CYIIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</bitmap>
+    </small_bitmap>
+    <normal_bitmap item_width="24" item_height="24">
+      <bitmap_item guid="8ddf0e3e-c29f-4ceb-93e1-821e6e91bfaf" index="0" />
+      <bitmap_item guid="e688e20f-38e7-489b-b7de-a224f5588e1e" index="1" />
+      <bitmap>iVBORw0KGgoAAAANSUhEUgAAABgAAAAwCAYAAAALiLqjAAAABGdBTUEAALGPC/xhBQAAAAlwSFlz
+AAAScQAAEnEB89x6jgAAABtJREFUWEftwTEBAAAAwqD1T+1nCiAAAAAAuBoSMAABMHgMFAAAAABJ
+RU5ErkJgggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</bitmap>
+    </normal_bitmap>
+    <large_bitmap item_width="32" item_height="32">
+      <bitmap_item guid="8ddf0e3e-c29f-4ceb-93e1-821e6e91bfaf" index="0" />
+      <bitmap_item guid="e688e20f-38e7-489b-b7de-a224f5588e1e" index="1" />
+      <bitmap>iVBORw0KGgoAAAANSUhEUgAAACAAAABACAYAAAB7jnWuAAAABGdBTUEAALGPC/xhBQAAAAlwSFlz
+AAAScQAAEnEB89x6jgAAAB5JREFUaEPtwQEBAAAAgiD/r25IQAAAAAAAAADAuRogQAABYEmBRgAA
+AABJRU5ErkJgggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</bitmap>
+    </large_bitmap>
+  </bitmaps>
+  <scripts />
+</RhinoUI>

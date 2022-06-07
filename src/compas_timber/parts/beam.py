@@ -79,6 +79,7 @@ class Beam(Part):
             'key': self.key,
             'frame': self.frame,
             'shape': self.shape,
+            'assembly': self.assembly,
             'features': [(shape, operation) for shape, operation in self.features],
             'transformations': [T.data for T in self.transformations],
         }
@@ -282,6 +283,17 @@ class Beam(Part):
         if angle_vectors(z, centreline_vector) < tol_angle:
             z = Vector(1, 0, 0)
         return z
+
+    def endpoint_closest_to_point(self,point):
+        ps = self.__centreline_start
+        pe = self.__centreline_end
+        ds = point.distance_to_point(ps)
+        de = point.distance_to_point(pe)
+        
+        if ds<=de: return ['start', ps]
+        else: return ['end', pe]
+
+
 
 
 if __name__ == "__main__":

@@ -5,11 +5,9 @@ from ..connections.joint import Joint
 
 
 class TLapJoint(Joint):
-    def __init__(self, assembly=None, beamA=None, beamB=None):
+    def __init__(self, beamA, beamB, assembly):
 
-        super(TLapJoint, self).__init__(assembly, [beamA, beamB])
-        self.assembly = assembly
-        #self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
+        super(TLapJoint, self).__init__([beamA, beamB], assembly)
 
     @property
     def joint_type(self):

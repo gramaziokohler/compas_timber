@@ -4,23 +4,18 @@ from compas.geometry import Vector, Point, Plane
 from compas.data import Data
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.helpers import are_objects_identical
-from compas.geometry import close
+from compas_timber.utils.helpers import close
 
 # TODO: replace direct references to beam objects
 
 
 class TButtJoint(Joint):
-    def __init__(self, assembly=None, main_beam=None, cross_beam=None):
-        super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.assembly = assembly  # TODO: needed?
-        self.main_beam_key = None
-        self.cross_beam_key = None
-        self.gap = None  # float, additional gap, e.g. for glue
+    def __init__(self, main_beam, cross_beam, assembly):
+        super(TButtJoint, self).__init__([main_beam, cross_beam], assembly)
 
-        if main_beam:
-            self.main_beam_key = main_beam.key
-        if cross_beam:
-            self.cross_beam_key = cross_beam.key
+        self.main_beam_key = main_beam.key
+        self.cross_beam_key = cross_beam.key
+        self.gap = 0.0  # float, additional gap, e.g. for glue
 
     def __eq__(self, other):
         tol = self.assembly.tol
