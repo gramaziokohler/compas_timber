@@ -1,4 +1,4 @@
-import pytest
+#import pytest
 from compas.geometry import Frame, Point, Vector
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.parts.beam import Beam

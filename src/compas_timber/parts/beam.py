@@ -289,7 +289,7 @@ class Beam(Part):
         pe = self.__centreline_end
         ds = point.distance_to_point(ps)
         de = point.distance_to_point(pe)
-        
+
         if ds<=de: return ['start', ps]
         else: return ['end', pe]
 
