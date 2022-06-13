@@ -34,7 +34,6 @@ def intersection_line_line_3D(L1, L2, max_distance=1e-6, limit_to_segments=True,
 
     # check if lines are parallel
     if all([abs(x) < tol for x in N]):
-        print(V1,V2,N)
         #raise UserWarning("The lines are parallel - no intersection.")
         return [None, None]
 

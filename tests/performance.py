@@ -1,0 +1,73 @@
+
+import copy
+import time
+
+from compas.geometry import Frame, Point, Vector
+from compas_timber.assembly.assembly import TimberAssembly
+from compas_timber.parts.beam import Beam
+from compas_timber.connections.joint import Joint
+from compas_timber.utils.workflow import set_defaul_joints
+
+import matplotlib.pyplot as plt
+
+
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if 'log_time' in kw:
+            name = kw.get('log_name', method.__name__.upper())
+            kw['log_time'][name] = int((te - ts) * 1000)
+        else:
+            print('%r  %2.2f ms' % (method.__name__, (te - ts) * 1000))
+        return result
+    return timed
+
+
+@timeit
+def large_assembly(size=100):
+
+    n = size-2
+    w = 0.1
+    h = 0.16
+    d = 0.5
+    y = 3.0
+    beams = []
+    for i in range(n):
+        # make studs
+        x = i*d
+        beam = Beam.from_endpoints(Point(x, 0, 0), Point(x, y, 0), width=w, height=h)
+        beams.append(beam)
+
+    # make sleepers
+    beams.append(Beam.from_endpoints(Point(0, 0, 0), Point(d*n, 0, 0), width=w, height=h))
+    beams.append(Beam.from_endpoints(Point(0, y, 0), Point(d*n, y, 0), width=w, height=h))
+
+    A = TimberAssembly()
+    for b in beams:
+        A.add_beam(b)
+
+    #set_defaul_joints(A) #-> ca 9s for 500 beams
+
+
+if __name__ == "__main__":
+    
+    model_sizes=[]
+    exec_times =[]
+
+    for i in range(20):
+        s = i*100
+        ts = time.time()
+        large_assembly(s)
+        te = time.time()
+        t = (te-ts)*1000
+
+        model_sizes.append(s)
+        exec_times.append(t)
+
+    print(exec_times)
+    plt.plot(model_sizes, exec_times)
+    plt.xlabel('no of beams')
+    plt.ylabel('[ms]')
+    plt.show()
