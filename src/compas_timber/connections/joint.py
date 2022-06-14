@@ -13,7 +13,7 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, parts, assembly):
+    def __init__(self, assembly, parts):
         super(Joint, self).__init__()
         self.assembly = None
         self.key = None
@@ -34,7 +34,7 @@ class Joint(Data):
     def _get_part_keys(self):
         neighbor_keys = self.assembly.graph.neighbors(self.key)
         # just double-check in case the joint-node would be somehow connecting to smth else in the graph
-        return [k for k in neighbor_keys if self.assembly.graph.node_attribute(key=k, name='type') in ('part', 'beam')]
+        return [k for k in neighbor_keys if 'part' in self.assembly.graph.node_attribute(key=k, name='type')]
 
     @property
     def parts(self):
