@@ -34,11 +34,11 @@ def _create_box(length, width, height):
     boxframe.point +=  length_offset
     return Box(boxframe, length, width, height)
 
-def _create_mesh_geometry(length, width, height):
+def _create_mesh_shape(length, width, height):
     return MeshGeometry(_create_box(length, width, height))
 
 
-def _create_brep_geometry(length, width, height):
+def _create_brep_shape(length, width, height):
     # Create a Rhino.Geometry.Box
     rhino_box = box_to_rhino(_create_box(length, width, height))
     return BrepGeometry(rhino_box.ToBrep())
@@ -69,9 +69,9 @@ class Beam(Part):
     centreline: :class:``compas.geometry.Line`
     """
 
-    GEOMETRY_FACTORIES = {
-        "mesh": _create_mesh_geometry,
-        "brep": _create_brep_geometry,
+    SHAPE_FACTORIES = {
+        "mesh": _create_mesh_shape,
+        "brep": _create_brep_shape,
     }
 
     def __init__(self, frame, length, width, height, geometry_type):
@@ -87,10 +87,10 @@ class Beam(Part):
     @staticmethod
     def _create_beam_shape_from_params(length, width, height, geometry_type):
         try:
-            factory = Beam.GEOMETRY_FACTORIES[geometry_type]
+            factory = Beam.SHAPE_FACTORIES[geometry_type]
             return factory(length, width, height)
         except KeyError:
-            raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.GEOMETRY_FACTORIES.keys(), geometry_type))
+            raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
 
     def __str__(self):
         return "Beam %s x %s x %s at %s" % (self.width, self.height, self.length, self.frame)
@@ -176,23 +176,22 @@ class Beam(Part):
             Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)), self.frame.yaxis, self.frame.zaxis),
         ]
 
+    ### GEOMETRY ###
     @property
     def centreline(self):
-        return Line(self._centreline_start, self._centreline_end)
-
-    ### GEOMETRY ###
+        return Line(self.centreline_start, self.centreline_end)
 
     @property
-    def _centreline_start(self):
-        return Point(*add_vectors(self.frame.point, -self.frame.xaxis * self.length * 0.5))
+    def centreline_start(self):
+        return self.frame.point
 
     @property
-    def _centreline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
+    def centreline_end(self):
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
     def midpoint(self):
-        return self.frame.point
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         # create & apply a transformation
