@@ -1,3 +1,4 @@
+from abc import ABCMeta
 from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
 from compas.geometry import Vector, Point, Plane
 from compas.data import Data
@@ -21,6 +22,20 @@ class Joint(Data):
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
         assembly.add_joint(self, parts)
+
+    @property
+    def data(self):
+        return {
+            "assembly": self.assembly,
+            "key": self.key,
+            "frame": self.frame
+        }
+
+    @data.setter
+    def data(self, value):
+        self.assembly = value["assembly"]
+        self.key = value["key"]
+        self.frame = value["frame"]
 
     def __eq__(self, other):
         return (

@@ -28,6 +28,27 @@ class TButtJoint(Joint):
         )
 
     @property
+    def data(self):
+        data_dict = {
+            "main_beam_key": self.main_beam_key,
+            "cross_beam_key": self.cross_beam_key,
+            "gap": self.gap,
+        }
+        data_dict.update(super(TButtJoint, self).data)
+        return data_dict
+
+    @data.setter
+    def data(self, value):
+        # TODO: why can't I call the data.setter of Joint
+        self.assembly = value["assembly"]
+        self.key = value["key"]
+        self.frame = value["frame"]
+
+        self.main_beam_key = value["main_beam_key"]
+        self.cross_beam_key = value["cross_beam_key"]
+        self.gap = value["gap"]
+
+    @property
     def joint_type(self):
         return 'T-Butt'
 
