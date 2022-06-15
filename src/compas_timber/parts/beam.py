@@ -26,22 +26,21 @@ ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
 
-def _create_mesh_geometry(length, width, height):
+def _create_box(length, width, height):
     # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
     # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
-    return MeshGeometry(Box(Frame.worldXY(), length, width, height))
+    boxframe = Frame.worldXY()
+    length_offset = boxframe.xaxis * length * 0.5
+    boxframe.point +=  length_offset
+    return Box(boxframe, length, width, height)
+
+def _create_mesh_geometry(length, width, height):
+    return MeshGeometry(_create_box(length, width, height))
 
 
 def _create_brep_geometry(length, width, height):
-    boxframe = Frame.worldXY()
-
-    # Frame defines the start corner in RhinoBox, adjust height and width ot center
-    width_offset = boxframe.yaxis * width * 0.5
-    height_offset = boxframe.zaxis * height * 0.5
-    length_offset = boxframe.xaxis * length * 0.5
-    boxframe.point -= width_offset + height_offset + length_offset
-
-    rhino_box = box_to_rhino(Box(boxframe, length, width, height))
+    # Create a Rhino.Geometry.Box
+    rhino_box = box_to_rhino(_create_box(length, width, height))
     return BrepGeometry(rhino_box.ToBrep())
 
 
@@ -82,11 +81,11 @@ class Beam(Part):
         self.length = length
         self.assembly = None
 
-        geometry = self._create_geometry_from_params(length, width, height, geometry_type)
+        geometry = self._create_beam_shape_from_params(length, width, height, geometry_type)
         super(Beam, self).__init__(geometry=geometry, frame=frame)
 
     @staticmethod
-    def _create_geometry_from_params(length, width, height, geometry_type):
+    def _create_beam_shape_from_params(length, width, height, geometry_type):
         try:
             factory = Beam.GEOMETRY_FACTORIES[geometry_type]
             return factory(length, width, height)
@@ -146,7 +145,7 @@ class Beam(Part):
         x_vector = centreline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        frame = Frame(centreline.midpoint, x_vector, y_vector)
+        frame = Frame(centreline.start, x_vector, y_vector)
         length = centreline.length
 
         return cls(frame, length, width, height, geometry_type)
@@ -165,6 +164,9 @@ class Beam(Part):
     ### main methods and properties ###
     @property
     def faces(self):
+        """
+        Face frames of the beam's base shape (box) are numbered relative to the beam's coordinate system
+        """
         return [
             Frame(Point(*add_vectors(self.frame.point, self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, -self.frame.zaxis),
             Frame(Point(*add_vectors(self.frame.point, -self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, -self.frame.yaxis),

@@ -61,14 +61,13 @@ class TButtJoint(Joint):
         """
         pm, pc = intersection_line_line(self.main_beam.centreline, self.cross_beam.centreline)
 
-        if not allclose(pm, pc, 1e-6):
-            raise Exception("Beams do not intersect!")
+        # TODO: check here if intersection is the one we want, if not raise some exception
 
         p1 = self.main_beam.centreline.start
         p2 = self.main_beam.centreline.end
         d1 = distance_point_point(pm, p1)
         d2 = distance_point_point(pm, p2)
-        centreline_vec = None
+
         if d1 < d2:
             centreline_vec = Vector.from_start_end(p1, p2)
         else:
