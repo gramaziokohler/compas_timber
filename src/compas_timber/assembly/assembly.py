@@ -70,10 +70,7 @@ class TimberAssembly(Assembly):
 
     @property
     def part_keys(self):
-        def _part_label(key,attr):
-            if 'part' in attr['type']: return True
-            else: return False
-        return list(self.graph.nodes_where_predicate(_part_label))
+        return list(self.graph.nodes_where_predicate(lambda _, attr: "part" in attr["type"]))
 
     @property
     def beam_keys(self):
