@@ -12,7 +12,6 @@ from compas.geometry import close
 class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.assembly = assembly  # TODO: needed?
         self.main_beam_key = None
         self.cross_beam_key = None
         self.gap = None  # float, additional gap, e.g. for glue
@@ -21,6 +20,23 @@ class TButtJoint(Joint):
             self.main_beam_key = main_beam.key
         if cross_beam:
             self.cross_beam_key = cross_beam.key
+
+    @property
+    def data(self):
+        data_dict = {
+            "main_beam_key": self.main_beam_key,
+            "cross_beam_key": self.cross_beam_key,
+            "gap": self.gap
+        }
+        data_dict.update(super(TButtJoint, self).data)
+        return data_dict
+
+    @data.setter
+    def data(self, value):
+        Joint.data.fset(self, value)
+        self.main_beam_key = value["main_beam_key"]
+        self.cross_beam_key = value["cross_beam_key"]
+        self.gap = value["gap"]
 
     def __eq__(self, other):
         tol = self.assembly.tol
