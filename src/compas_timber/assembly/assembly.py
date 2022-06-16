@@ -9,9 +9,11 @@ class TimberAssembly(Assembly):
     Parts are entities with a substantial physical presence, for example: beams, dowels, screws.
     Joints are abstract entities to describe how parts are joined together, for example: two beams joining through a lap joint with a screw or dowel through it. 
     Connections are low-level abstractions to link the joined parts, for example: beam1-beam2, beam1-dowel, beam2-dowel.
-    TODO: Features - are they only attached to parts? what if a feature is shared by multiple parts?
-    TODO: are nails parts? Glue?
-    TODO: other model-level features/metadata, e.g. structural (loads, supports),..
+
+    Graph:
+    Nodes store objects under 'object' attribute.
+    Keys of the nodes are strings equal to the guids of the objects stored in them.
+
     """
 
     def __init__(self, **kwargs):
@@ -19,7 +21,6 @@ class TimberAssembly(Assembly):
 
         self._beams = {}
         self._joints = {}
-        self.allowance = 0.000  # [m] global tolerance for joints = the gap size
         self._units = 'meters'  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
 
         self._units_precision = {
@@ -69,39 +70,34 @@ class TimberAssembly(Assembly):
 
     @property
     def part_keys(self):
-        # TODO: part should actually include all beams, plates, rods, dowels, and other joint sub-parts
-        return list(self.graph.nodes_where({'type': 'other_part'}))
+        return list(self.graph.nodes_where_predicate(lambda _, attr: "part" in attr["type"]))
 
     @property
     def beam_keys(self):
-        return list(self.graph.nodes_where({'type': 'beam'}))
+        return list(self.graph.nodes_where({'type': 'part_beam'}))
 
     @property
     def joint_keys(self):
         return list(self.graph.nodes_where({'type': 'joint'}))
 
-    @property
-    def object_guids(self):
-        return [self.find_by_key(key).guid for key in list(self.graph.nodes())]
-
-    def contains(self, object):
+    def contains(self, obj):
         """
         Checks if this assembly already contains a given part or joint.
         """
-        return (object.assembly is self and
-                object.guid in self.object_guids
-                )
+        # omitting (object.assembly is self) check for now
+        return obj.guid in self.graph.node.keys()
+
 
     def add_part(self, part, type):
-        if part.guid in self.object_guids:
+        if self.contains(part):
             raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
-        key = self.graph.add_node(key=None, object=part, type=type)
+        key = self.graph.add_node(key=part.guid, object=part, type=type)
         part.key = key
         part.assembly = self
         return key
 
     def add_beam(self, beam):
-        key = self.add_part(beam, type='beam')
+        key = self.add_part(beam, type='part_beam')
         return key
 
     def add_plate(self, plate):
@@ -140,7 +136,7 @@ class TimberAssembly(Assembly):
         assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
-        key = self.graph.add_node(key=None, object=joint, type='joint')
+        key = self.graph.add_node(key=joint.guid, object=joint, type='joint')
         joint.key = key
         joint.assembly = self
 

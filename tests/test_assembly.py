@@ -36,7 +36,6 @@ def test_add_joint():
     assert A.beams[0] == B1
     assert len(A.joints) == 1
 
-
 def test_remove_joint():
     A = TimberAssembly()
     B1 = Beam()

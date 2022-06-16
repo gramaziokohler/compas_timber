@@ -13,8 +13,7 @@ def test_create():
     A.add_beam(B1)
     A.add_beam(B2)
     J = Joint([B1, B2], A)
-    print(J._get_part_keys)
-
+    
     assert B1 in J.beams
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
