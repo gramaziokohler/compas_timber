@@ -12,8 +12,8 @@ def test_create():
     B2 = Beam()
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint([B1, B2], A)
-    
+    J = Joint(A, [B1, B2])
+
     assert B1 in J.beams
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
@@ -26,7 +26,7 @@ def test_remove_joint():
     B2 = Beam()
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint([B1, B2], A)
+    J = Joint(A, [B1, B2])
 
     assert A.contains(J) == True
 
@@ -47,7 +47,7 @@ def test_joint_override_protection():
     A.add_beam(B1)
     A.add_beam(B2)
     A.add_beam(B3)
-    J = Joint([B1, B2], A)
+    J = Joint(A, [B1, B2])
 
     assert A.are_parts_joined([B1, B2]) == True
     assert A.are_parts_joined([B1, B3]) == False
@@ -66,7 +66,7 @@ def test__eq__():
     for b in [B1, B2, B3, B4]:
         A.add_beam(b)
 
-    J1 = Joint([B1, B2], A)
+    J1 = Joint(A, [B1, B2])
     # J2 = Joint([B1, B2], A) # this is failing because B1 and B2 are already joined
     #assert J1 == J2
 

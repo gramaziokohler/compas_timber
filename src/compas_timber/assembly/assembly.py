@@ -19,15 +19,6 @@ class TimberAssembly(Assembly):
     def __init__(self, **kwargs):
         super(TimberAssembly, self).__init__()
 
-        self._beams = {}
-        self._joints = {}
-        self._units = 'meters'  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
-
-        self._units_precision = {
-            'meters': 1e-9,
-            'millimeters': 1e-6
-        }
-
         self.default_node_attributes = {
             'type': None,  # string 'beam', 'joint', 'other_part'
             'object': None  # instance of the given object
@@ -35,6 +26,13 @@ class TimberAssembly(Assembly):
 
         self.default_edge_attributes = {
             'type': None,  # not being used at the moment
+        }
+
+        self._units = 'meters'  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
+
+        self._units_precision = {
+            'meters': 1e-9,
+            'millimeters': 1e-6
         }
 
     def __eq__(self, other):

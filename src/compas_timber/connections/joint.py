@@ -6,6 +6,7 @@ from compas_timber.parts.beam import Beam
 
 # NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
 
+
 class Joint(Data):
     """
     parts: beams and other parts of a joint, e.g. a dowel, a steel plate
@@ -15,11 +16,11 @@ class Joint(Data):
     def __init__(self, assembly, parts):
 
         super(Joint, self).__init__()
-        self.key = None
-        self.frame = frame or Frame.worldXY()  # will be needed as coordinate system for structural calculations for the forces at the joint
         self.assembly = assembly
+        self.key = None
+        self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
-        self.assembly.add_joint(self, parts)
+        assembly.add_joint(self, parts)
 
     @property
     def data(self):

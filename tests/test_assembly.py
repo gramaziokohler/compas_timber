@@ -29,12 +29,13 @@ def test_add_joint():
 
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint([B1, B2], A)
+    J = Joint(A, [B1, B2])
 
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
     assert A.beams[0] == B1
     assert len(A.joints) == 1
+
 
 def test_remove_joint():
     A = TimberAssembly()
@@ -43,7 +44,7 @@ def test_remove_joint():
 
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint([B1, B2], A)
+    J = Joint(A, [B1, B2])
 
     A.remove_joint(J)
     assert len(list(A.graph.nodes())) == 2
