@@ -33,7 +33,7 @@ class TButtJoint(Joint):
 
     @data.setter
     def data(self, value):
-        Joint.data.fset(value)
+        Joint.data.fset(self, value)
         self.main_beam_key = value["main_beam_key"]
         self.cross_beam_key = value["cross_beam_key"]
         self.gap = value["gap"]
