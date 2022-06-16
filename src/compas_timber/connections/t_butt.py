@@ -9,6 +9,24 @@ class TButtJoint(Joint):
         self.cross_beam_key = cross_beam.key
         self.gap = 0.0  # float, additional gap, e.g. for glue
 
+
+    @property
+    def data(self):
+        data_dict = {
+            "main_beam_key": self.main_beam_key,
+            "cross_beam_key": self.cross_beam_key,
+            "gap": self.gap
+        }
+        data_dict.update(super(TButtJoint, self).data)
+        return data_dict
+
+    @data.setter
+    def data(self, value):
+        Joint.data.fset(self, value)
+        self.main_beam_key = value["main_beam_key"]
+        self.cross_beam_key = value["cross_beam_key"]
+        self.gap = value["gap"]
+
     def __eq__(self, other):
         tol = self.assembly.tol
         return (
