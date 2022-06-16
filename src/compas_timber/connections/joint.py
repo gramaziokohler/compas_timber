@@ -13,13 +13,24 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, parts, assembly):
+    def __init__(self, assembly, parts):
         super(Joint, self).__init__()
-        self.assembly = None
         self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
         assembly.add_joint(self, parts)
+
+    @property
+    def data(self):
+        return {
+            "frame": self.frame,
+            "key": self.key
+        }
+
+    @data.setter
+    def data(self, value):
+        self.frame = value["frame"]
+        self.key = value["key"]
 
     def __eq__(self, other):
         return (
