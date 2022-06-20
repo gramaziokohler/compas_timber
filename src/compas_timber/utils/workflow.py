@@ -4,10 +4,10 @@ from compas_timber.connections.l_miter import LMiterJoint
 from compas_timber.connections.x_lap import XLapJoint
 
 
-def guess_joint_topology_2beams(beamA, beamB):
+def guess_joint_topology_2beams(beamA, beamB, tol = 1e-6):
 
     max_distance = beamA.height + beamB.height
-    tol = 1e-6
+    
     ti, tj = intersection_line_line_3D(beamA.centreline, beamB.centreline, max_distance, True, True, tol)
 
     def is_near_end(t, tol=tol):

@@ -54,17 +54,11 @@ class TButtJoint(Joint):
 
     @property
     def main_beam(self):
-        try:
-            return self.assembly.find_by_key(self.main_beam_key)
-        except:
-            return None
+        return self.assembly.find_by_key(self.main_beam_key)
 
     @property
     def cross_beam(self):
-        try:
-            return self.assembly.find_by_key(self.cross_beam_key)
-        except:
-            return None
+        return self.assembly.find_by_key(self.cross_beam_key)
 
     @property
     def __find_side(self):
