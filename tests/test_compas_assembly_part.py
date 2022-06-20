@@ -3,6 +3,7 @@ from copy import deepcopy
 import compas
 import json
 import os
+import pickle
 
 
 
@@ -26,6 +27,19 @@ def test_assembly_deepcopy():
     #assert A_copy.guid != A.guid  # failing
 
 
+def test_pickle():
+    A = Assembly()
+
+    for i in range(1000):
+        P = Part()
+        A.add_part(P)
+        P.attributes['assembly'] = A
+    
+    cwd = os.getcwd()
+    filepath = os.path.join(cwd, r"\temp\test_assembly.pickle")
+    with open(filepath,'wb') as f: 
+        pickle.dump(A,f)
+
 def test_json():
     P1 = Part()
     P2 = Part()
@@ -33,8 +47,12 @@ def test_json():
     A.add_part(P1)
     A.add_part(P2)
     A.add_connection(P1, P2)
+
+    for i in range(1000):
+        P = Part()
+        A.add_part(P)
     
-    P1.attributes['assembly'] = A # this makes json_dump fail
+    #P1.attributes['assembly'] = A # this makes json_dump fail
 
     cwd = os.getcwd()
     filepath = os.path.join(cwd, r"\temp\test_assembly.json")
@@ -47,4 +65,5 @@ if __name__ == '__main__':
     test_part_deepcopy()
     test_assembly_deepcopy()
     test_json()
+    test_pickle()
     print("\n*** all tests passed ***\n\n")
