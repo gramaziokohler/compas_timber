@@ -1,5 +1,5 @@
 from copy import deepcopy
-import pytest
+#import pytest
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
@@ -66,7 +66,13 @@ def test_deepcopy():
     J = Joint(A, [B1, B2])
 
     A_copy = deepcopy(A)
-
+    assert A_copy is not A
+    #assert A_copy.guid != A.guid
+    assert A_copy.parts()[0] == A.parts()[0]
+    assert A_copy.parts()[0] is not A.parts()[0]
+    assert A_copy.parts()[0].assembly is not A.parts()[0].assembly
+    assert A_copy.parts()[0].assembly is A_copy.parts()[1].assembly #different parts in the assembly should point back to the same assembly 
+    
 
 if __name__ == "__main__":
     test_create()

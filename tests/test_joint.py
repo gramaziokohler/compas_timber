@@ -83,6 +83,9 @@ def test_deepcopy():
     J = Joint(A, [B1, B2])
     J_copy = deepcopy(J)
 
+    assert J_copy.beams[0] == J.beams[0]
+    #assert J_copy.assembly == J.assembly #failing
+
 
 
 if __name__ == "__main__":

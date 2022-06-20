@@ -36,7 +36,8 @@ class TimberAssembly(Assembly):
         }
 
     def __eq__(self, other):
-        raise NotImplementedError
+        return self is other #TODO: by ref comparison for now
+        #raise NotImplementedError
 
     @property
     def units(self):
@@ -54,7 +55,7 @@ class TimberAssembly(Assembly):
         # TODO: change to compas PRECISION
         return self._units_precision[self.units]
 
-    @property
+    #NOTE:cannot be @property, because of implementation in compas.Assembly
     def parts(self):
         return [self.find_by_key(key) for key in self.part_keys]
 
@@ -83,13 +84,13 @@ class TimberAssembly(Assembly):
         Checks if this assembly already contains a given part or joint.
         """
         # omitting (object.assembly is self) check for now
-        return obj.guid in self.graph.node.keys()
+        return str(obj.guid) in self.graph.node.keys()
 
 
     def add_part(self, part, type):
         if self.contains(part):
             raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
-        key = self.graph.add_node(key=part.guid, object=part, type=type)
+        key = self.graph.add_node(key=str(part.guid), object=part, type=type)
         part.key = key
         part.assembly = self
         return key
@@ -134,7 +135,7 @@ class TimberAssembly(Assembly):
         assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
-        key = self.graph.add_node(key=joint.guid, object=joint, type='joint')
+        key = self.graph.add_node(key=str(joint.guid), object=joint, type='joint')
         joint.key = key
         joint.assembly = self
 
@@ -184,6 +185,7 @@ class TimberAssembly(Assembly):
             print("[%s] %s: %s" % (joint.key, joint.type_name, joint.beam_keys))
 
     def find_by_key(self, key):
+        key = str(key)
         if key not in self.graph.node:
             return None
         return self.graph.node_attribute(key, 'object')
