@@ -1,6 +1,8 @@
 from collections import deque
 
 from compas.datastructures.assembly import Part
+from compas.datastructures.assembly.part import BrepGeometry
+from compas.datastructures.assembly.part import MeshGeometry
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -10,8 +12,9 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
-from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
+from compas.geometry import close
+from compas.geometry import cross_vectors
 
 from compas_timber.utils.helpers import close
 from compas_timber.parts.exceptions import BeamCreationException
@@ -98,7 +101,7 @@ class Beam(Part):
     def __copy__(self, *args, **kwargs):
         return self.copy()
 
-    def __eq__(self, other):
+    def is_identical(self, other):
         tol = self.tol
         return (
             isinstance(other, Beam)

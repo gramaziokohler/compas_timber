@@ -1,6 +1,14 @@
+from pprint import pprint
+
+from compas.data import Data
+from compas.datastructures.assembly.part import BrepGeometry
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import allclose
 from compas.geometry import angle_vectors
 from compas.geometry import close
 from compas.geometry import distance_point_point
@@ -8,6 +16,7 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 
 from compas_timber.connections.joint import Joint
+from compas_timber.utils.helpers import are_objects_identical
 
 
 class TButtJoint(Joint):
