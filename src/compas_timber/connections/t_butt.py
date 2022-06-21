@@ -88,6 +88,7 @@ class TButtJoint(Joint):
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
         """
         # TODO: how to saveguard this being added multiple times?
+        # TODO: Joint should eventually know nothing about BrepGeometry or MeshGeometry
         self.main_beam.add_feature(BrepGeometry(self.cutting_plane), 'trim')
 
 

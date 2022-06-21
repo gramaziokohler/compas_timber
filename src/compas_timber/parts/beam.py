@@ -26,21 +26,21 @@ ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
 
-def _create_box(length, width, height):
+def _create_box(width, height, depth):
     # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
     # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
     boxframe = Frame.worldXY()
-    length_offset = boxframe.xaxis * length * 0.5
-    boxframe.point +=  length_offset
-    return Box(boxframe, length, width, height)
+    depth_offset = boxframe.xaxis * depth * 0.5
+    boxframe.point +=  depth_offset
+    return Box(boxframe, depth, width, height)
 
-def _create_mesh_shape(length, width, height):
-    return MeshGeometry(_create_box(length, width, height))
+def _create_mesh_shape(width, height, depth):
+    return MeshGeometry(_create_box(width, height, depth))
 
 
-def _create_brep_shape(length, width, height):
+def _create_brep_shape(width, height, depth):
     # Create a Rhino.Geometry.Box
-    rhino_box = box_to_rhino(_create_box(length, width, height))
+    rhino_box = box_to_rhino(_create_box(width, height, depth))
     return BrepGeometry(rhino_box.ToBrep())
 
 
@@ -50,8 +50,8 @@ class Beam(Part):
     ----------
     frame : :class:`compas.geometry.Frame`.
         A local coordinate system of the beam:
-        Origin is located at the starting point of the centreline.
-        x-axis corresponds to the centreline (major axis), usually also the fibre direction in solid wood beams.
+        Origin is located at the starting point of the centerline.
+        x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
         y-axis corresponds to the width of the cross-section, usually the smaller dimension.
         z-axis corresponds to the height of the cross-section, usually the larger dimension.
 
@@ -66,7 +66,7 @@ class Beam(Part):
     length : float.
         Length of the beam.
 
-    centreline: :class:``compas.geometry.Line`
+    centerline: :class:``compas.geometry.Line`
     """
 
     SHAPE_FACTORIES = {
@@ -74,26 +74,26 @@ class Beam(Part):
         "brep": _create_brep_shape,
     }
 
-    def __init__(self, frame, length, width, height, geometry_type):
+    def __init__(self, frame, width, height, depth, geometry_type):
+        geometry = self._create_beam_shape_from_params(width, height, depth, geometry_type)
+        super(Beam, self).__init__(geometry=geometry, frame=frame)
+
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
-        self.length = length
+        self.depth = depth
         self.assembly = None
 
-        geometry = self._create_beam_shape_from_params(length, width, height, geometry_type)
-        super(Beam, self).__init__(geometry=geometry, frame=frame)
-
     @staticmethod
-    def _create_beam_shape_from_params(length, width, height, geometry_type):
+    def _create_beam_shape_from_params(width, height, depth, geometry_type):
         try:
             factory = Beam.SHAPE_FACTORIES[geometry_type]
-            return factory(length, width, height)
+            return factory(width, height, depth)
         except KeyError:
             raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
 
     def __str__(self):
-        return "Beam %s x %s x %s at %s" % (self.width, self.height, self.length, self.frame)
+        return "Beam %s x %s x %s at %s" % (self.width, self.height, self.depth, self.frame)
 
     def __copy__(self, *args, **kwargs):
         return self.copy()
@@ -104,7 +104,7 @@ class Beam(Part):
             isinstance(other, Beam)
             and close(self.width, other.width, tol)
             and close(self.height, other.height, tol)
-            and close(self.length, other.length, tol)
+            and close(self.depth, other.depth, tol)
             and self.frame == other.frame
             # TODO: skip joints and features ?
         )
@@ -121,7 +121,7 @@ class Beam(Part):
         data = {
             "width": self.width,
             "height": self.height,
-            "length": self.length,
+            "depth": self.depth,
         }
         data.update(super(Beam, self).data)
         return data
@@ -134,21 +134,21 @@ class Beam(Part):
         super(Beam, self).data = data
         self.width = data["width"]
         self.height = data["height"]
-        self.length = data["length"]
+        self.depth = data["depth"]
 
     @classmethod
-    def from_centreline(cls, centreline, width, height, z_vector=None, geometry_type="mesh"):
+    def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="mesh"):
         """
-        Define the beam from its centreline.
+        Define the beam from its centerline.
         z_vector: a vector indicating the height direction (z-axis) of the cross-section. If not specified, a default will be used.
         """
-        x_vector = centreline.vector
+        x_vector = centerline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        frame = Frame(centreline.start, x_vector, y_vector)
-        length = centreline.length
+        frame = Frame(centerline.start, x_vector, y_vector)
+        depth = centerline.length
 
-        return cls(frame, length, width, height, geometry_type)
+        return cls(frame, width, height, depth, geometry_type)
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
@@ -157,9 +157,9 @@ class Beam(Part):
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
         frame = Frame(point_start, x_vector, y_vector)
-        length = distance_point_point(point_start, point_end)
+        depth = distance_point_point(point_start, point_end)
 
-        return cls(frame, length, width, height)
+        return cls(frame, width, height, depth)
 
     ### main methods and properties ###
     @property
@@ -173,25 +173,25 @@ class Beam(Part):
             Frame(Point(*add_vectors(self.frame.point, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
             Frame(Point(*add_vectors(self.frame.point, self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, self.frame.yaxis),
             Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),
-            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)), self.frame.yaxis, self.frame.zaxis),
+            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth)), self.frame.yaxis, self.frame.zaxis),
         ]
 
     ### GEOMETRY ###
     @property
-    def centreline(self):
-        return Line(self.centreline_start, self.centreline_end)
+    def centerline(self):
+        return Line(self.centerline_start, self.centerline_end)
 
     @property
-    def centreline_start(self):
+    def centerline_start(self):
         return self.frame.point
 
     @property
-    def centreline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
+    def centerline_end(self):
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth))
 
     @property
     def midpoint(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth * 0.5))
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         # create & apply a transformation
@@ -199,8 +199,8 @@ class Beam(Part):
         which_endpoint: 'start' or 'end' or 'both'
         """
         z = self.frame.zaxis
-        ps = self.__centreline_start
-        pe = self.__centreline_end
+        ps = self.__centerline_start
+        pe = self.__centerline_end
         if which_endpoint in ("start", "both"):
             ps = add_vectors(ps, vector)
         if which_endpoint in ("end", "both"):
@@ -209,7 +209,7 @@ class Beam(Part):
         y = Vector(*cross_vectors(x, z)) * -1.0
         frame = Frame(ps, x, y)
         self.frame = frame
-        self.length = distance_point_point(ps, pe)
+        self.depth = distance_point_point(ps, pe)
         return
 
     def extend_length(self, d, option="both"):
@@ -224,7 +224,7 @@ class Beam(Part):
             pass  # chane lenth by 2d
         return
 
-    def rotate_around_centreline(self, angle, clockwise=False):
+    def rotate_around_centerline(self, angle, clockwise=False):
         # create & apply a transformation
         pass
 
@@ -252,9 +252,9 @@ class Beam(Part):
 
     ### hidden helpers ###
     @staticmethod
-    def _calculate_z_vector_from_centerline(centreline_vector):
+    def _calculate_z_vector_from_centerline(centerline_vector):
         z = Vector(0, 0, 1)
-        if angle_vectors(z, centreline_vector) < ANGLE_TOLERANCE:
+        if angle_vectors(z, centerline_vector) < ANGLE_TOLERANCE:
             z = Vector(1, 0, 0)
         return z
 
