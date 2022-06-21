@@ -56,4 +56,7 @@ class Joint(Data):
 
     @property
     def beams(self):
-        return [part for part in self.parts if isinstance(part, Beam)]
+
+        return [part for part in self.parts if part.__class__.__name__ == Beam.__name__]
+        #return [part for part in self.parts if isinstance(part, Beam)]
+        #return [part for part in self.parts if self.assembly.graph.node[part.key]['type']=='part_beam']
