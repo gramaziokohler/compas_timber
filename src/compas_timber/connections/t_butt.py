@@ -55,26 +55,26 @@ class TButtJoint(Joint):
         """
         calculate which side of the cross beam is the cutting side for the main beam
 
-        Finds the orientation of the mainbeam's centreline so that it's pointing outward of the joint,
+        Finds the orientation of the mainbeam's centerline so that it's pointing outward of the joint,
         then finds the crossbeam's closest face by finding the one whose normal has the smallest angle
         with the centerline vector.
         """
-        pm, pc = intersection_line_line(self.main_beam.centreline, self.cross_beam.centreline)
+        pm, pc = intersection_line_line(self.main_beam.centerline, self.cross_beam.centerline)
 
         # TODO: check here if intersection is the one we want, if not raise some exception
 
-        p1 = self.main_beam.centreline.start
-        p2 = self.main_beam.centreline.end
+        p1 = self.main_beam.centerline.start
+        p2 = self.main_beam.centerline.end
         d1 = distance_point_point(pm, p1)
         d2 = distance_point_point(pm, p2)
 
         if d1 < d2:
-            centreline_vec = Vector.from_start_end(p1, p2)
+            centerline_vec = Vector.from_start_end(p1, p2)
         else:
-            centreline_vec = Vector.from_start_end(p2, p1)
+            centerline_vec = Vector.from_start_end(p2, p1)
 
         # map faces to their angle with centerline, choose smallest
-        angle_face = {angle_vectors(side.normal, centreline_vec): side for side in self.cross_beam.faces}
+        angle_face = {angle_vectors(side.normal, centerline_vec): side for side in self.cross_beam.faces}
         return angle_face[min(angle_face.keys())]
 
     @property
