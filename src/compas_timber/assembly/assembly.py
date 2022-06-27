@@ -57,10 +57,6 @@ class TimberAssembly(Assembly):
         return self._units_precision[self.units]
 
     @property
-    def parts(self):
-        return [self.find_by_key(key) for key in self.part_keys]
-
-    @property
     def beams(self):
         return [self.find_by_key(key) for key in self.beam_keys]
 
@@ -85,16 +81,16 @@ class TimberAssembly(Assembly):
         Checks if this assembly already contains a given part or joint.
         """
         # omitting (object.assembly is self) check for now
-        return obj.guid in self.graph.node.keys()
+        return obj.key in self.graph.node.keys()
 
 
-    def add_part(self, part, type):
-        if self.contains(part):
-            raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
-        key = self.graph.add_node(key=part.guid, object=part, type=type)
-        part.key = key
-        part.assembly = self
-        return key
+    # def add_part(self, part, type):
+    #     if self.contains(part):
+    #         raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
+    #     key = self.graph.add_node(object=part, type=type)
+    #     part.key = key
+    #     part.assembly = self
+    #     return key
 
     def add_beam(self, beam):
         key = self.add_part(beam, type='part_beam')
@@ -129,14 +125,14 @@ class TimberAssembly(Assembly):
             The identifier of the joint in the current assembly graph.
         """
 
-        assert parts != [], "Cannot add this joint to assembly: no parts given."
-        assert self.contains(joint) == False, "This joint has already been added to this assembly."
-        assert all([self.contains(part) == True for part in parts]), "Cannot add this joint to assembly: some of the parts are not in this assembly."
-        # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
-        assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
+        # assert parts != [], "Cannot add this joint to assembly: no parts given."
+        # assert self.contains(joint) == False, "This joint has already been added to this assembly."
+        # assert all([self.contains(part) == True for part in parts]), "Cannot add this joint to assembly: some of the parts are not in this assembly."
+        # # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
+        # assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
-        key = self.graph.add_node(key=joint.guid, object=joint, type='joint')
+        key = self.graph.add_node(object=joint, type='joint')
         joint.key = key
         joint.assembly = self
 

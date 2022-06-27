@@ -20,7 +20,7 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, assembly, parts):
+    def __init__(self, assembly, *beams):
         super(Joint, self).__init__()
         self.assembly = assembly
         self.key = None
