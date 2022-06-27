@@ -11,7 +11,7 @@ from compas_timber.connections.joint import Joint
 
 
 class TButtJoint(Joint):
-    def __init__(self, assembly, main_beam, cross_beam):
+    def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
         self.main_beam_key = main_beam.key
         self.cross_beam_key = cross_beam.key
@@ -91,6 +91,7 @@ class TButtJoint(Joint):
         # TODO: flip normal
         return cfr
 
+    # TODO: rename to apply_features?
     def add_feature(self):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.

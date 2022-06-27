@@ -100,7 +100,6 @@ class Beam(Part):
         Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
         """
         self.attributes.update(data['attributes'] or {})
-        self.assembly = data['assembly']
         self.key = data['key']
         self.frame = data['frame']
         self.shape = data['shape']

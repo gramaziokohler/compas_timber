@@ -20,14 +20,19 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, assembly, parts):
-
+    def __init__(self, assembly, *beams):
         super(Joint, self).__init__()
         self.assembly = assembly
         self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
-        assembly.add_joint(self, parts)
+    @classmethod
+    def join_beams(cls, assembly, beams):
+        if len(kwargs) < 2:
+            raise ValueError("At least 2 beams expected per joint. {} given".format(len(kwargs)))
+        joint = cls(assembly, *beams)
+        assembly.add_joint(joint, beams)
+        return joint
 
     @property
     def data(self):
@@ -64,3 +69,6 @@ class Joint(Data):
     @property
     def beams(self):
         return [part for part in self.parts if isinstance(part, Beam)]
+
+    def apply_features(self):
+        pass
