@@ -20,8 +20,11 @@ from compas_timber.utils.helpers import close
 from compas_timber.parts.exceptions import BeamCreationException
 
 # TODO: not to do
-from compas_rhino.conversions import box_to_rhino
-from Rhino.Geometry import Brep
+try:
+    from compas_rhino.conversions import box_to_rhino
+    from Rhino.Geometry import Brep
+except ImportError:
+    pass
 
 
 # TODO: update to global compas PRECISION

@@ -26,8 +26,14 @@ class Joint(Data):
         self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
-        assembly.add_joint(self, parts)
-        self._apply_features()
+    @classmethod
+    def join_beams(cls, assembly, *beams):
+        if len(beams) < 2:
+            raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
+
+        assembly.add_joint(assembly, beams)
+        joint = cls(assembly, *beams)
+        return joint
 
     @property
     def data(self):
@@ -65,5 +71,5 @@ class Joint(Data):
     def beams(self):
         return [part for part in self.parts if isinstance(part, Beam)]
 
-    def _apply_features(self):
+    def apply_features(self):
         raise  NotImplementedError
