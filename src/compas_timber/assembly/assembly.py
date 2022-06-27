@@ -1,5 +1,7 @@
 from pprint import pprint
+
 from compas.datastructures import Assembly
+
 from compas_timber.connections.joint import Joint
 
 
