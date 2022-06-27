@@ -1,6 +1,13 @@
-from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors, Vector, Point, Plane, Frame
 from compas.data import Data
 from compas.datastructures import Part
+from compas.geometry import Frame
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_line_plane
 
 from compas_timber.parts.beam import Beam
 
