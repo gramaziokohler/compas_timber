@@ -1,6 +1,14 @@
-from compas.geometry import Vector, Point, Plane
-from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors, close
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import close
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_line_plane
+
 from compas_timber.connections.joint import Joint
+
 
 class TButtJoint(Joint):
     def __init__(self, assembly, main_beam, cross_beam):

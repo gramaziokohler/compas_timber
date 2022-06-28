@@ -1,9 +1,19 @@
 from collections import deque
-from compas.geometry import Frame, Plane, Point, Line, Vector, Box, Transformation
-from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
-from compas.datastructures.assembly import Part
-from compas_timber.utils.helpers import close
 
+from compas.datastructures.assembly import Part
+from compas.geometry import Box
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas.geometry import add_vectors
+from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
+from compas.geometry import distance_point_point
+
+from compas_timber.utils.helpers import close
 
 # TODO: update to global compas PRECISION
 tol_angle = 1e-3  # [radians]
