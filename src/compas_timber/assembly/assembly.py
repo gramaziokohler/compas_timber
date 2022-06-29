@@ -14,12 +14,13 @@ class TimberAssembly(Assembly):
 
     Graph:
     Nodes store objects under 'object' attribute.
-    Keys of the nodes are strings equal to the guids of the objects stored in them.
 
     """
 
     def __init__(self, **kwargs):
         super(TimberAssembly, self).__init__()
+
+        self._guid_key_map = {} #dictionary mapping obj.guid:obj.key / uses UUID object as keys, not string
 
         self.default_node_attributes = {
             'type': None,  # string 'beam', 'joint', 'other_part'
@@ -37,9 +38,21 @@ class TimberAssembly(Assembly):
             'millimeters': 1e-6
         }
 
-    def __eq__(self, other):
-        return self is other #TODO: by ref comparison for now
-        #raise NotImplementedError
+
+    @property
+    def data(self):
+        data = {
+            "attributes": self.attributes,
+            "graph": self.graph.data,
+        }
+        return data
+
+    @data.setter
+    def data(self, data):
+        self.attributes.update(data["attributes"] or {})
+        self.graph.data = data["graph"]
+        self._guid_key_map = {obj.guid: obj.key for obj in self.objects}
+
 
     @property
     def units(self):
@@ -62,6 +75,10 @@ class TimberAssembly(Assembly):
         return [self.find_by_key(key) for key in self.part_keys]
 
     @property
+    def objects(self):
+        return [self.find_by_key(key) for key in self.object_keys]
+
+    @property
     def beams(self):
         return [self.find_by_key(key) for key in self.beam_keys]
 
@@ -81,20 +98,24 @@ class TimberAssembly(Assembly):
     def joint_keys(self):
         return list(self.graph.nodes_where({'type': 'joint'}))
 
+    @property
+    def object_keys(self):
+        return list(self.graph.nodes_where_predicate(lambda _, attr: "object" != None))
+    
     def contains(self, obj):
         """
         Checks if this assembly already contains a given part or joint.
         """
         # omitting (object.assembly is self) check for now
-        return str(obj.guid) in self.graph.node.keys()
-
+        return obj.guid in self._guid_key_map
 
     def add_part(self, part, type):
         if self.contains(part):
             raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
-        key = self.graph.add_node(key=str(part.guid), object=part, type=type)
+        key = self.graph.add_node(object=part, type=type)
         part.key = key
         part.assembly = self
+        self._guid_key_map[part.guid] = part.key
         return key
 
     def add_beam(self, beam):
@@ -137,9 +158,10 @@ class TimberAssembly(Assembly):
         assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
-        key = self.graph.add_node(key=str(joint.guid), object=joint, type='joint')
+        key = self.graph.add_node(object=joint, type='joint')
         joint.key = key
         joint.assembly = self
+        self._guid_key_map[joint.guid] = joint.key
 
         # adds links to the beams
         for part in parts:
@@ -150,6 +172,7 @@ class TimberAssembly(Assembly):
         """
         Removes a joint from the assembly, i.e. disconnects it from assembly and from its parts. Does not delete the object.
         """
+        del self._guid_key_map[joint.guid]
         self.graph.delete_node(joint.key)
         joint.assembly = None
 
@@ -187,7 +210,26 @@ class TimberAssembly(Assembly):
             print("[%s] %s: %s" % (joint.key, joint.type_name, joint.beam_keys))
 
     def find_by_key(self, key):
-        key = str(key)
         if key not in self.graph.node:
             return None
         return self.graph.node_attribute(key, 'object')
+
+    def find(self, guid):
+        """Find a part in the assembly by its GUID.
+        Parameters
+        ----------
+        guid : str
+            A globally unique identifier.
+            This identifier is automatically assigned when parts are created.
+        Returns
+        -------
+        :class:`~compas.datastructures.Part` | None
+            The identified part,
+            or None if the part can't be found.
+        """
+        key = self._guid_key_map.get(guid)
+
+        if key is None:
+            return None
+
+        return self.graph.node_attribute(key, "object")
