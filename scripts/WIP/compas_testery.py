@@ -1,4 +1,9 @@
-from compas.geometry import Line, Plane, Frame
-from compas.geometry import intersection_line_line, subtract_vectors, cross_vectors, intersection_plane_plane, intersection_line_plane, distance_point_point
-
-
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import cross_vectors
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_plane_plane
+from compas.geometry import subtract_vectors

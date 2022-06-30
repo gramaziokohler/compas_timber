@@ -1,5 +1,6 @@
 import Rhino.Geometry as rg
-from utils.rhino_compas import cFrame2rPln, cBox2rBox
+from utils.rhino_compas import cBox2rBox
+from utils.rhino_compas import cFrame2rPln
 
 
 def trim_beam_with_plane(beam, cutting_plane):

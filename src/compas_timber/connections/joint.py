@@ -32,10 +32,7 @@ class Joint(Data):
     @property
     def data(self):
         # omitting self.assembly to avoid circular reference
-        return {
-            "frame": self.frame,
-            "key": self.key
-        }
+        return {"frame": self.frame, "key": self.key}
 
     @data.setter
     def data(self, value):
@@ -44,7 +41,8 @@ class Joint(Data):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Joint) and
+            isinstance(other, Joint)
+            and
             # self.assembly == other.assembly and #not implemented yet
             self.frame == other.frame
             # TODO: add generic comparison if two lists of beams are equal
@@ -55,7 +53,11 @@ class Joint(Data):
     def _get_part_keys(self):
         neighbor_keys = self.assembly.graph.neighbors(self.key)
         # just double-check in case the joint-node would be somehow connecting to smth else in the graph
-        return [k for k in neighbor_keys if 'part' in self.assembly.graph.node_attribute(key=k, name='type')]
+        return [
+            k
+            for k in neighbor_keys
+            if "part" in self.assembly.graph.node_attribute(key=k, name="type")
+        ]
 
     @property
     def parts(self):
@@ -65,5 +67,5 @@ class Joint(Data):
     def beams(self):
 
         return [part for part in self.parts if part.__class__.__name__ == Beam.__name__]
-        #return [part for part in self.parts if isinstance(part, Beam)]
-        #return [part for part in self.parts if self.assembly.graph.node[part.key]['type']=='part_beam']
+        # return [part for part in self.parts if isinstance(part, Beam)]
+        # return [part for part in self.parts if self.assembly.graph.node[part.key]['type']=='part_beam']
