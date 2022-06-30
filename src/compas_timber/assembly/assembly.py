@@ -14,22 +14,16 @@ class TimberAssembly(Assembly):
 
     Graph:
     Nodes store objects under 'object' attribute.
+        default node attributes:
+            'type': None,  # string 'beam', 'joint', 'other_part'
+        
+        default edge attributes:
+            'type': None,  # not being used at the moment
 
     """
 
     def __init__(self, **kwargs):
         super(TimberAssembly, self).__init__()
-
-        self._guid_key_map = {} #dictionary mapping obj.guid:obj.key / uses UUID object as keys, not string
-
-        self.default_node_attributes = {
-            'type': None,  # string 'beam', 'joint', 'other_part'
-            'object': None  # instance of the given object
-        }
-
-        self.default_edge_attributes = {
-            'type': None,  # not being used at the moment
-        }
 
         self._units = 'meters'  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
 
@@ -37,22 +31,6 @@ class TimberAssembly(Assembly):
             'meters': 1e-9,
             'millimeters': 1e-6
         }
-
-
-    @property
-    def data(self):
-        data = {
-            "attributes": self.attributes,
-            "graph": self.graph.data,
-        }
-        return data
-
-    @data.setter
-    def data(self, data):
-        self.attributes.update(data["attributes"] or {})
-        self.graph.data = data["graph"]
-        self._guid_key_map = {obj.guid: obj.key for obj in self.objects}
-
 
     @property
     def units(self):
@@ -69,14 +47,6 @@ class TimberAssembly(Assembly):
     def tol(self):
         # TODO: change to compas PRECISION
         return self._units_precision[self.units]
-
-    #NOTE:cannot be @property, because of implementation in compas.Assembly
-    def parts(self):
-        return [self.find_by_key(key) for key in self.part_keys]
-
-    @property
-    def objects(self):
-        return [self.find_by_key(key) for key in self.object_keys]
 
     @property
     def beams(self):
@@ -97,29 +67,17 @@ class TimberAssembly(Assembly):
     @property
     def joint_keys(self):
         return list(self.graph.nodes_where({'type': 'joint'}))
-
-    @property
-    def object_keys(self):
-        return list(self.graph.nodes_where_predicate(lambda _, attr: "object" != None))
-    
+ 
     def contains(self, obj):
         """
         Checks if this assembly already contains a given part or joint.
         """
         # omitting (object.assembly is self) check for now
-        return obj.guid in self._guid_key_map
-
-    def add_part(self, part, type):
-        if self.contains(part):
-            raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
-        key = self.graph.add_node(object=part, type=type)
-        part.key = key
-        part.assembly = self
-        self._guid_key_map[part.guid] = part.key
-        return key
+        return obj.guid in self._parts
 
     def add_beam(self, beam):
-        key = self.add_part(beam, type='part_beam')
+        key = self.add_part(part=beam, type='part_beam')
+        beam.assembly = self
         return key
 
     def add_plate(self, plate):
@@ -158,23 +116,21 @@ class TimberAssembly(Assembly):
         assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
-        key = self.graph.add_node(object=joint, type='joint')
-        joint.key = key
+        key = self.add_part(part=joint, type='joint')
         joint.assembly = self
-        self._guid_key_map[joint.guid] = joint.key
 
         # adds links to the beams
         for part in parts:
-            self.graph.add_edge(part.key, joint.key)
+            self.add_connection(part, joint)
         return key
 
     def remove_joint(self, joint):
         """
         Removes a joint from the assembly, i.e. disconnects it from assembly and from its parts. Does not delete the object.
         """
-        del self._guid_key_map[joint.guid]
+        del self._parts[joint.guid]
         self.graph.delete_node(joint.key)
-        joint.assembly = None
+        joint.assembly = None #TODO: should not be needed
 
     def are_parts_joined(self, parts):
         """
@@ -183,53 +139,9 @@ class TimberAssembly(Assembly):
         part_keys = [p.key for p in parts]
         return any([set(j._get_part_keys) == set(part_keys) for j in self.joints])
 
-    def get_beam_keys_connected_to(self, beam_key):
-        nbrs = self.neighbors(beam_key, ring=2)
-        return [n for n in nbrs if n in self.beam_keys and n != beam_key]
-
-    def get_beam_ids_connected_to(self, beam_id):
-        beam_key = self.get_beam_key_from_id(beam_id)
-        nbrs = self.get_beam_keys_connected_to(beam_key)
-        return [self.get_beam_id_from_key(n) for n in nbrs]
-
-    def get_beam_key_from_id(self, beam_id):
-        for beam_key, beam in self._beams.items():
-            if beam.id == beam_id:
-                return beam_key
-
-    def get_beam_id_from_key(self, beam_key):
-        beam = self._beams.get(beam_key)
-        if beam:
-            return beam.id
-
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)
         pprint("Joints:\n", self.joint_keys)
 
         for joint in self.joints:
             print("[%s] %s: %s" % (joint.key, joint.type_name, joint.beam_keys))
-
-    def find_by_key(self, key):
-        if key not in self.graph.node:
-            return None
-        return self.graph.node_attribute(key, 'object')
-
-    def find(self, guid):
-        """Find a part in the assembly by its GUID.
-        Parameters
-        ----------
-        guid : str
-            A globally unique identifier.
-            This identifier is automatically assigned when parts are created.
-        Returns
-        -------
-        :class:`~compas.datastructures.Part` | None
-            The identified part,
-            or None if the part can't be found.
-        """
-        key = self._guid_key_map.get(guid)
-
-        if key is None:
-            return None
-
-        return self.graph.node_attribute(key, "object")

@@ -68,10 +68,10 @@ def test_deepcopy():
     A_copy = deepcopy(A)
     assert A_copy is not A
     #assert A_copy.guid != A.guid
-    assert A_copy.parts()[0] == A.parts()[0]
-    assert A_copy.parts()[0] is not A.parts()[0]
-    assert A_copy.parts()[0].assembly is not A.parts()[0].assembly
-    assert A_copy.parts()[0].assembly is A_copy.parts()[1].assembly #different parts in the assembly should point back to the same assembly 
+    assert A_copy.beams[0] == A.beams[0]
+    assert A_copy.beams[0] is not A.beams[0]
+    assert A_copy.beams[0].assembly is not A.beams[0].assembly
+    assert A_copy.beams[0].assembly is A_copy.beams[1].assembly #different parts in the assembly should point back to the same assembly 
     
 
 if __name__ == "__main__":
