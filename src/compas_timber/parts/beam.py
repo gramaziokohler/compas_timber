@@ -86,6 +86,7 @@ class Beam(Part):
         """
         data = {
             'attributes': self.attributes,
+            'assembly':self.assembly,
             'key': self.key,
             'frame': self.frame,
             'shape': self.shape,

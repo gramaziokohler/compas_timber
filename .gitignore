@@ -119,3 +119,4 @@ temp/**
 docs/api/generated/
 
 conda.recipe/
+tests/temp/

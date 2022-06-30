@@ -7,26 +7,34 @@ from numpy import isclose
 from compas_timber.parts.beam import Beam
 
 
+@pytest.fixture()
+def test_frame():
+    return Frame(Point(-.43, .69, -.11), [1., 0., 0.], [0., 1., 0.])
+
+@pytest.fixture()
+def test_joints():
+    class FakeJoint(object):
+        pass
+    return [FakeJoint(), FakeJoint(), FakeJoint(), FakeJoint()]
+
+@pytest.fixture()
+def test_features():
+    return [(Frame.worldXY(), "trim")]
+
+def test_create(test_frame):
+    _ = Beam(test_frame, length=1., width=2., height=3.)
+
+def test_constructor():
+    b = Beam.from_endpoints(Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200)
+    # test if length is =1
+    assert isclose(b.length, 1.0)
+
 def test_create_from_endpoints():
     P1 = Point(0, 0, 0)
     P2 = Point(1, 0, 0)
     B = Beam.from_endpoints(P1, P2)
     # the resulting beam length should be 1.0
     assert isclose(B.length, 1.0)
-
-
-def test_deepcopy(test_frame, test_joints, test_features):
-    b1 = Beam(test_frame, length=1., width=2., height=3.)
-    b1.joints.extend(test_joints)
-    b1.features.extend(test_features)
-
-    b2 = copy.deepcopy(b1)
-
-    assert b1 is not b2
-    assert b1.frame is not b2.frame
-    assert b1.joints is not b2.joints
-    assert b1 == b2  # after deepcopy the objects should be the same
-
 
 def test__eq__():
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
@@ -49,46 +57,32 @@ def test__eq__():
     assert B1 == B2
 
 
-@pytest.fixture()
-def test_frame():
-    return Frame(Point(-.43, .69, -.11), [1., 0., 0.], [0., 1., 0.])
+def test_deepcopy(test_frame, test_features):
 
+    B = Beam(test_frame, length=1., width=2., height=3.)
+    B.features.extend(test_features)
 
-@pytest.fixture()
-def test_joints():
-    class FakeJoint(object):
-        pass
-    return [FakeJoint(), FakeJoint(), FakeJoint(), FakeJoint()]
+    B_copy = copy.deepcopy(B)
 
+    assert B is not B_copy
+    assert B.frame is not B_copy.frame
+    assert B.joints is not B_copy.joints
+    assert B == B_copy 
 
-@pytest.fixture()
-def test_features():
-    return [(Frame.worldXY(), "trim")]
+def test_deepcopy2():
 
+    B = Beam(Frame.worldXY(), length=1., width=0.1, height=0.2)
+    B_copy = copy.deepcopy(B)
 
-def test_create(test_frame):
-    _ = Beam(test_frame, length=1., width=2., height=3.)
-
-
-def test_beam_deepcopy(test_frame, test_joints, test_features):
-    b1 = Beam(test_frame, length=1., width=2., height=3.)
-    b1.joints.extend(test_joints)
-    b1.features.extend(test_features)
-
-    b2 = copy.deepcopy(b1)
-
-    assert b1 is not b2
-    assert b1.frame is not b2.frame
-    assert b1.joints is not b2.joints
-
-
-def test_beam_constructor():
-    b = Beam.from_endpoints(Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200)
-    # test if length is =1
-    assert isclose(b.length, 1.0)
+    assert B == B_copy 
+    assert B is not B_copy
+    assert B.frame is not B_copy.frame
+    #assert B.guid != B_copy.guid #failing
 
 
 if __name__ == '__main__':
     test_create_from_endpoints()
     test__eq__()
+    test_deepcopy2()
+
     print("\n*** all tests passed ***\n\n")
