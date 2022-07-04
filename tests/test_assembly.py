@@ -78,6 +78,25 @@ def test_deepcopy():
         A_copy.beams[0].assembly is A_copy.beams[1].assembly
     )  # different parts in the assembly should point back to the same assembly
 
+def test_find():
+    A = TimberAssembly()
+    B = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    A.add_beam(B)
+    A.find(B.guid)
+
+def test_parts_joined():
+    A = TimberAssembly()
+    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
+    B3 = Beam(Frame.worldZX, length=1.0, width=0.1, height=0.1)
+
+    A.add_beam(B1)
+    A.add_beam(B2)
+    A.add_beam(B3)
+    J = Joint(A, [B1, B2])
+    assert A.are_parts_joined([B1,B2]) == True
+    assert A.are_parts_joined([B1,B3]) == False
+
 
 if __name__ == "__main__":
     test_create()
@@ -85,4 +104,6 @@ if __name__ == "__main__":
     test_add_joint()
     test_remove_joint()
     test_deepcopy()
+    test_find()
+    test_parts_joined()
     print("\n *** all tests passed ***\n\n")

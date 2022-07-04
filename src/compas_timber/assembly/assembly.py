@@ -144,8 +144,27 @@ class TimberAssembly(Assembly):
         """
         Checks if there is already a joint defined for the same set of parts.
         """
-        part_keys = [p.key for p in parts]
-        return any([set(j._get_part_keys) == set(part_keys) for j in self.joints])
+
+        # method 1
+        n = len(parts)
+        neighbor_keys = [set(self.graph.neighborhood(self._parts[part.guid], ring=1)) for part in parts]
+        for i in range(n-1):
+            nki = neighbor_keys[i]
+            for j in range(i + 1, n):
+                nkj = neighbor_keys[j]
+                nkx = nki.intersection(nkj)
+                for x in nkx:
+                    if self.graph.node[x]['type']=='joint':
+                        return True
+        return False
+
+        # # method 2: assuming that every part is joined through a Joint object, i.e. assume that parts are 2nd-ring neighbours.
+        # n = len(parts)
+        # for i in range(n - 1):
+        #     neighbor_keys = self.graph.neighborhood(self._parts[parts[i].guid], ring=2)
+        #     for j in range(i + 1, n):
+        #         if self._parts[parts[j].guid] in neighbor_keys: return True
+        # return False
 
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)
