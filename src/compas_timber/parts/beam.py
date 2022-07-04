@@ -132,14 +132,7 @@ class Beam(Part):
         return cls(frame, length, width, height)
 
     @classmethod
-    def from_endpoints(
-        cls,
-        point_start,
-        point_end,
-        z_vector,
-        width,
-        height
-    ):
+    def from_endpoints(cls, point_start, point_end, z_vector, width, height):
 
         line = Line(point_start, point_end)
 
@@ -338,16 +331,16 @@ class Beam(Part):
             z = Vector(1, 0, 0)
         return z
 
-    def endpoint_closest_to_point(self,point):
+    def endpoint_closest_to_point(self, point):
         ps = self.__centreline_start
         pe = self.__centreline_end
         ds = point.distance_to_point(ps)
         de = point.distance_to_point(pe)
 
-        if ds<=de: return ['start', ps]
-        else: return ['end', pe]
-
-
+        if ds <= de:
+            return ["start", ps]
+        else:
+            return ["end", pe]
 
 
 if __name__ == "__main__":

@@ -10,9 +10,9 @@ from ..connections.joint import Joint
 
 
 class TLapJoint(Joint):
-    def __init__(self, beamA, beamB, assembly):
+    def __init__(self, assembly, beamA, beamB):
 
-        super(TLapJoint, self).__init__([beamA, beamB], assembly)
+        super(TLapJoint, self).__init__(assembly, [beamA, beamB])
 
     @property
     def joint_type(self):

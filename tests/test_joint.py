@@ -1,8 +1,8 @@
 from copy import deepcopy
 
+from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import Frame
 
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.connections.joint import Joint

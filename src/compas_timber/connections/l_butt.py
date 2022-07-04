@@ -1,7 +1,14 @@
 from pprint import pprint
-from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
-from compas.geometry import Vector, Point, Plane
+
 from compas.data import Data
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_line_plane
+
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.helpers import are_objects_identical
 from compas_timber.utils.helpers import close
@@ -10,8 +17,8 @@ from compas_timber.utils.helpers import close
 
 
 class LButtJoint(Joint):
-    def __init__(self, main_beam, cross_beam, assembly):
-        super(LButtJoint, self).__init__([main_beam, cross_beam], assembly)
+    def __init__(self, assembly, main_beam, cross_beam):
+        super(LButtJoint, self).__init__(assembly, [main_beam, cross_beam])
 
         self.main_beam_key = main_beam.key
         self.cross_beam_key = cross_beam.key
@@ -20,11 +27,11 @@ class LButtJoint(Joint):
     def __eq__(self, other):
         tol = self.assembly.tol
         return (
-            isinstance(other, LButtJoint) and
-            super(LButtJoint, self).__eq__(other) and
-            self.main_beam_key == other.main_beam_key and
-            self.cross_beam_key == other.cross_beam_key and
-            close(self.gap, other.gap, tol)
+            isinstance(other, LButtJoint)
+            and super(LButtJoint, self).__eq__(other)
+            and self.main_beam_key == other.main_beam_key
+            and self.cross_beam_key == other.cross_beam_key
+            and close(self.gap, other.gap, tol)
         )
 
     @property
@@ -50,7 +57,7 @@ class LButtJoint(Joint):
 
     @property
     def joint_type(self):
-        return 'L-Butt'
+        return "L-Butt"
 
     @property
     def main_beam(self):
