@@ -16,7 +16,7 @@ def test_create():
 
 def test_add_beam():
     A = TimberAssembly()
-    B = Beam()
+    B = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
     A.add_beam(B)
 
     assert B.key in A.beam_keys
@@ -30,8 +30,8 @@ def test_add_beam():
 
 def test_add_joint():
     A = TimberAssembly()
-    B1 = Beam()
-    B2 = Beam()
+    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
 
     A.add_beam(B1)
     A.add_beam(B2)
@@ -45,8 +45,8 @@ def test_add_joint():
 
 def test_remove_joint():
     A = TimberAssembly()
-    B1 = Beam()
-    B2 = Beam()
+    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
 
     A.add_beam(B1)
     A.add_beam(B2)
@@ -71,10 +71,9 @@ def test_deepcopy():
 
     A_copy = deepcopy(A)
     assert A_copy is not A
-    # assert A_copy.guid != A.guid
     assert A_copy.beams[0] == A.beams[0]
     assert A_copy.beams[0] is not A.beams[0]
-    assert A_copy.beams[0].assembly is not A.beams[0].assembly
+    assert A_copy.beams[0].assembly is not A
     assert (
         A_copy.beams[0].assembly is A_copy.beams[1].assembly
     )  # different parts in the assembly should point back to the same assembly

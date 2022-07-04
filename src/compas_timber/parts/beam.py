@@ -46,7 +46,7 @@ class Beam(Part):
 
     operations = ["union" "difference" "intersection" "planar_trim"]
 
-    def __init__(self, frame=None, length=None, width=None, height=None):
+    def __init__(self, frame, length, width, height):
         super(Beam, self).__init__()
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
@@ -112,12 +112,12 @@ class Beam(Part):
         )
 
     @classmethod
-    def from_frame(cls, frame, width=None, height=None, length=None):
+    def from_frame(cls, frame, width, height, length):
         # needed? same as init
         return cls(frame, length, width, height)
 
     @classmethod
-    def from_centreline(cls, centreline, z_vector=None, width=None, height=None):
+    def from_centreline(cls, centreline, z_vector, width, height):
         """
         Define the beam from its centreline.
         z_vector: a vector indicating the height direction (z-axis) of the cross-section. If not specified, a default will be used.
@@ -125,7 +125,6 @@ class Beam(Part):
         x_vector = centreline.vector
         if not z_vector:
             z_vector = cls.__default_z(x_vector)
-        print(z_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
         frame = Frame(centreline.start, x_vector, y_vector)
         length = centreline.length
@@ -134,17 +133,17 @@ class Beam(Part):
 
     @classmethod
     def from_endpoints(
-        cls, point_start, point_end, z_vector=None, width=None, height=None
+        cls,
+        point_start,
+        point_end,
+        z_vector,
+        width,
+        height
     ):
 
-        x_vector = Vector.from_start_end(point_start, point_end)
-        if not z_vector:
-            z_vector = cls.__default_z(x_vector)
-        y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        frame = Frame(point_start, x_vector, y_vector)
-        length = distance_point_point(point_start, point_end)
+        line = Line(point_start, point_end)
 
-        return cls(frame, length, width, height)
+        return cls.from_centreline(line, z_vector, width, height)
 
     ### main methods and properties ###
 
@@ -353,4 +352,3 @@ class Beam(Part):
 
 if __name__ == "__main__":
     b = Beam()
-    print(b)
