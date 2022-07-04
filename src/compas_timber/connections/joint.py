@@ -1,13 +1,18 @@
-from abc import ABCMeta
-from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
-from compas.geometry import Vector, Point, Plane
 from compas.data import Data
-from compas_timber.parts.beam import Beam
 from compas.datastructures import Part
-from compas_timber.utils.compas_extra import intersection_line_line_3D
+from compas.geometry import Frame
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_line_plane
 
+from compas_timber.parts.beam import Beam
 
 # NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
+
 
 class Joint(Data):
     """
@@ -15,7 +20,8 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, parts, assembly):
+    def __init__(self, assembly, parts):
+
         super(Joint, self).__init__()
         self.assembly = assembly
         self.key = None
@@ -50,7 +56,11 @@ class Joint(Data):
     def _get_part_keys(self):
         neighbor_keys = self.assembly.graph.neighbors(self.key)
         # just double-check in case the joint-node would be somehow connecting to smth else in the graph
-        return [k for k in neighbor_keys if self.assembly.graph.node_attribute(key=k, name='type') in ('part', 'beam')]
+        return [
+            k
+            for k in neighbor_keys
+            if "part" in self.assembly.graph.node_attribute(key=k, name="type")
+        ]
 
     @property
     def parts(self):
@@ -58,5 +68,7 @@ class Joint(Data):
 
     @property
     def beams(self):
+
+        return [part for part in self.parts if part.__class__.__name__ == Beam.__name__]
         # return [part for part in self.parts if isinstance(part, Beam)]
-        return [part for part in self.parts if type(part).__name__ == Beam.__name__]  # temp workaround becaues of unload modules in GH
+        # return [part for part in self.parts if self.assembly.graph.node[part.key]['type']=='part_beam']

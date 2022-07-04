@@ -63,7 +63,4 @@ CAD integration
 """
 
 
-
-__all_plugins__=[
-   'compas_timber.rhino.install'
-]
+__all_plugins__ = ["compas_timber.rhino.install"]

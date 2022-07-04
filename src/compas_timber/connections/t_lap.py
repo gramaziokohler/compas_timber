@@ -1,6 +1,11 @@
-from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
-from compas.geometry import Vector, Point, Plane
-from compas.data import Data
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_line_plane
+
 from ..connections.joint import Joint
 
 
@@ -11,7 +16,7 @@ class TLapJoint(Joint):
 
     @property
     def joint_type(self):
-        return 'T-Lap'
+        return "T-Lap"
 
     def add_feature(self):
         pass

@@ -1,9 +1,19 @@
 from collections import deque
-from compas.geometry import Frame, Plane, Point, Line, Vector, Box, Transformation
-from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
-from compas.datastructures.assembly import Part
-from compas_timber.utils.helpers import close
 
+from compas.datastructures.assembly import Part
+from compas.geometry import Box
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas.geometry import add_vectors
+from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
+from compas.geometry import distance_point_point
+
+from compas_timber.utils.helpers import close
 
 # TODO: update to global compas PRECISION
 tol_angle = 1e-3  # [radians]
@@ -34,11 +44,7 @@ class Beam(Part):
     centreline: :class:``compas.geometry.Line`
     """
 
-    operations = [
-        'union'
-        'difference'
-        'intersection'
-        'planar_trim']
+    operations = ["union" "difference" "intersection" "planar_trim"]
 
     def __init__(self, frame=None, length=None, width=None, height=None):
         super(Beam, self).__init__()
@@ -49,7 +55,12 @@ class Beam(Part):
         self.assembly = None
 
     def __str__(self):
-        return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
+        return "Beam %s x %s x %s at %s" % (
+            self.width,
+            self.height,
+            self.length,
+            self.frame,
+        )
 
     def __copy__(self, *args, **kwargs):
         return self.copy()
@@ -57,11 +68,11 @@ class Beam(Part):
     def __eq__(self, other):
         tol = self.tol
         return (
-            isinstance(other, Beam) and
-            close(self.width, other.width, tol) and
-            close(self.height, other.height, tol) and
-            close(self.length, other.length, tol) and
-            self.frame == other.frame
+            isinstance(other, Beam)
+            and close(self.width, other.width, tol)
+            and close(self.height, other.height, tol)
+            and close(self.length, other.length, tol)
+            and self.frame == other.frame
             # TODO: skip joints and features ?
         )
 
@@ -75,13 +86,13 @@ class Beam(Part):
         Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
         """
         data = {
-            'attributes': self.attributes,
-            'key': self.key,
-            'frame': self.frame,
-            'shape': self.shape,
-            'assembly': self.assembly,
-            'features': [(shape, operation) for shape, operation in self.features],
-            'transformations': [T.data for T in self.transformations],
+            "attributes": self.attributes,
+            "assembly": self.assembly,
+            "key": self.key,
+            "frame": self.frame,
+            "shape": self.shape,
+            "features": [(shape, operation) for shape, operation in self.features],
+            "transformations": [T.data for T in self.transformations],
         }
         return data
 
@@ -90,13 +101,15 @@ class Beam(Part):
         """
         Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
         """
-        self.attributes.update(data['attributes'] or {})
-        self.assembly = data['assembly']
-        self.key = data['key']
-        self.frame = data['frame']
-        self.shape = data['shape']
-        self.features = [(shape, operation) for shape, operation in data['features']]
-        self.transformations = deque([Transformation.from_data(T) for T in data['transformations']])
+        self.attributes.update(data["attributes"] or {})
+        self.assembly = data["assembly"]
+        self.key = data["key"]
+        self.frame = data["frame"]
+        self.shape = data["shape"]
+        self.features = [(shape, operation) for shape, operation in data["features"]]
+        self.transformations = deque(
+            [Transformation.from_data(T) for T in data["transformations"]]
+        )
 
     @classmethod
     def from_frame(cls, frame, width=None, height=None, length=None):
@@ -120,7 +133,9 @@ class Beam(Part):
         return cls(frame, length, width, height)
 
     @classmethod
-    def from_endpoints(cls, point_start, point_end, z_vector=None, width=None, height=None):
+    def from_endpoints(
+        cls, point_start, point_end, z_vector=None, width=None, height=None
+    ):
 
         x_vector = Vector.from_start_end(point_start, point_end)
         if not z_vector:
@@ -150,17 +165,47 @@ class Beam(Part):
         5: +x (side at the end of the beam)
         """
         if side_index == 0:
-            return Frame(Point(*add_vectors(self.frame.point, self.frame.yaxis*self.width*0.5)),    self.frame.xaxis, -self.frame.zaxis)
+            return Frame(
+                Point(
+                    *add_vectors(self.frame.point, self.frame.yaxis * self.width * 0.5)
+                ),
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            )
         if side_index == 1:
-            return Frame(Point(*add_vectors(self.frame.point, -self.frame.zaxis*self.height*0.5)),   self.frame.xaxis, -self.frame.yaxis)
+            return Frame(
+                Point(
+                    *add_vectors(
+                        self.frame.point, -self.frame.zaxis * self.height * 0.5
+                    )
+                ),
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            )
         if side_index == 2:
-            return Frame(Point(*add_vectors(self.frame.point, -self.frame.yaxis*self.width*0.5)),    self.frame.xaxis, self.frame.zaxis)
+            return Frame(
+                Point(
+                    *add_vectors(self.frame.point, -self.frame.yaxis * self.width * 0.5)
+                ),
+                self.frame.xaxis,
+                self.frame.zaxis,
+            )
         if side_index == 3:
-            return Frame(Point(*add_vectors(self.frame.point, self.frame.zaxis*self.height*0.5)),   self.frame.xaxis, self.frame.yaxis)
+            return Frame(
+                Point(
+                    *add_vectors(self.frame.point, self.frame.zaxis * self.height * 0.5)
+                ),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            )
         if side_index == 4:
-            return Frame(self.frame.point,                   -self.frame.yaxis,                     self.frame.zaxis)
+            return Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis)
         if side_index == 5:
-            return Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length)),       self.frame.yaxis, self.frame.zaxis)
+            return Frame(
+                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
+                self.frame.yaxis,
+                self.frame.zaxis,
+            )
 
     @property
     def centreline(self):
@@ -171,7 +216,13 @@ class Beam(Part):
         """
         Base shape of the beam, i.e. box with no features.
         """
-        boxframe = Frame(self.frame.point - self.frame.yaxis*self.width*0.5 - self.frame.zaxis*self.height*0.5, self.frame.xaxis, self.frame.yaxis)
+        boxframe = Frame(
+            self.frame.point
+            - self.frame.yaxis * self.width * 0.5
+            - self.frame.zaxis * self.height * 0.5,
+            self.frame.xaxis,
+            self.frame.yaxis,
+        )
         return Box(boxframe, self.length, self.width, self.height)
 
     @shape.setter
@@ -180,7 +231,7 @@ class Beam(Part):
         pass
 
     @property
-    def geometry(self, geometry_representation='brep'):
+    def geometry(self, geometry_representation="brep"):
         """
         Geometry of the beam with all features (e.g. trims, cuts, notches, holes etc.)
         geometry_representation: 'mesh', 'brep'
@@ -198,13 +249,15 @@ class Beam(Part):
 
     @property
     def __centreline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length))
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
     def midpoint(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length*0.5))
+        return Point(
+            *add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5)
+        )
 
-    def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint='start'):
+    def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         # create & apply a transformation
         """
         which_endpoint: 'start' or 'end' or 'both'
@@ -212,9 +265,9 @@ class Beam(Part):
         z = self.frame.zaxis
         ps = self.__centreline_start
         pe = self.__centreline_end
-        if which_endpoint in ('start', 'both'):
+        if which_endpoint in ("start", "both"):
             ps = add_vectors(ps, vector)
-        if which_endpoint in ('end', 'both'):
+        if which_endpoint in ("end", "both"):
             pe = add_vectors(pe, vector)
         x = Vector.from_start_end(ps, pe)
         y = Vector(*cross_vectors(x, z)) * -1.0
@@ -223,15 +276,15 @@ class Beam(Part):
         self.length = distance_point_point(ps, pe)
         return
 
-    def extend_length(self, d, option='both'):
+    def extend_length(self, d, option="both"):
         """
         options: 'start', 'end', 'both'
         """
-        if option in ('start', 'both'):
+        if option in ("start", "both"):
             pass  # move frame's origin by -d
-        if option == 'end':
+        if option == "end":
             pass  # change length by d
-        if option == 'both':
+        if option == "both":
             pass  # chane lenth by 2d
         return
 
@@ -249,7 +302,9 @@ class Beam(Part):
 
     def _get_joint_keys(self):
         n = self.assembly.graph.neighbors[self.key]
-        return [k for k in n if self.assembly.node_attribute('type') == 'joint']  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
+        return [
+            k for k in n if self.assembly.node_attribute("type") == "joint"
+        ]  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
 
     @property
     def joints(self):

@@ -1,9 +1,13 @@
-#import pytest
-from compas.geometry import Frame, Point, Vector
+from copy import deepcopy
+
+from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Vector
+
+# import pytest
 from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
-import copy
+from compas_timber.parts.beam import Beam
 
 
 def test_create():
@@ -31,7 +35,7 @@ def test_add_joint():
 
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint([B1, B2], A)
+    J = Joint(A, [B1, B2])
 
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
@@ -46,7 +50,7 @@ def test_remove_joint():
 
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint([B1, B2], A)
+    J = Joint(A, [B1, B2])
 
     A.remove_joint(J)
     assert len(list(A.graph.nodes())) == 2
@@ -55,16 +59,25 @@ def test_remove_joint():
 
 
 def test_deepcopy():
-    A = TimberAssembly()
+
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    B1 = Beam(F1, width = 0.1, height = 0.2, length = 1.0)
-    B2 = Beam(F1, width = 0.2, height = 0.4, length = 1.0)
+    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
+    A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
+    J = Joint(A, [B1, B2])
 
-    Acopy = copy.deepcopy(A)
-    #TODO: Frame throws an error when Frame is None
-    #TODO: assembly KeyError
+    A_copy = deepcopy(A)
+    assert A_copy is not A
+    # assert A_copy.guid != A.guid
+    assert A_copy.beams[0] == A.beams[0]
+    assert A_copy.beams[0] is not A.beams[0]
+    assert A_copy.beams[0].assembly is not A.beams[0].assembly
+    assert (
+        A_copy.beams[0].assembly is A_copy.beams[1].assembly
+    )  # different parts in the assembly should point back to the same assembly
 
 
 if __name__ == "__main__":
@@ -74,4 +87,3 @@ if __name__ == "__main__":
     test_remove_joint()
     test_deepcopy()
     print("\n *** all tests passed ***\n\n")
-
