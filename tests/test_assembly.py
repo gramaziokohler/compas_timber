@@ -1,9 +1,13 @@
 from copy import deepcopy
-#import pytest
+
+from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Vector
+
+# import pytest
 from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
-from compas.geometry import Frame, Point, Vector
+from compas_timber.parts.beam import Beam
 
 
 def test_create():
@@ -55,7 +59,7 @@ def test_remove_joint():
 
 
 def test_deepcopy():
-   
+
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
@@ -67,12 +71,14 @@ def test_deepcopy():
 
     A_copy = deepcopy(A)
     assert A_copy is not A
-    #assert A_copy.guid != A.guid
+    # assert A_copy.guid != A.guid
     assert A_copy.beams[0] == A.beams[0]
     assert A_copy.beams[0] is not A.beams[0]
     assert A_copy.beams[0].assembly is not A.beams[0].assembly
-    assert A_copy.beams[0].assembly is A_copy.beams[1].assembly #different parts in the assembly should point back to the same assembly 
-    
+    assert (
+        A_copy.beams[0].assembly is A_copy.beams[1].assembly
+    )  # different parts in the assembly should point back to the same assembly
+
 
 if __name__ == "__main__":
     test_create()

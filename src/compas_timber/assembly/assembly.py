@@ -7,16 +7,16 @@ from compas_timber.connections.joint import Joint
 
 class TimberAssembly(Assembly):
     """
-    A data structure for managing the assembly. Assembly consist of parts and joints. 
+    A data structure for managing the assembly. Assembly consist of parts and joints.
     Parts are entities with a substantial physical presence, for example: beams, dowels, screws.
-    Joints are abstract entities to describe how parts are joined together, for example: two beams joining through a lap joint with a screw or dowel through it. 
+    Joints are abstract entities to describe how parts are joined together, for example: two beams joining through a lap joint with a screw or dowel through it.
     Connections are low-level abstractions to link the joined parts, for example: beam1-beam2, beam1-dowel, beam2-dowel.
 
     Graph:
     Nodes store objects under 'object' attribute.
         default node attributes:
             'type': None,  # string 'beam', 'joint', 'other_part'
-        
+
         default edge attributes:
             'type': None,  # not being used at the moment
 
@@ -25,12 +25,9 @@ class TimberAssembly(Assembly):
     def __init__(self, **kwargs):
         super(TimberAssembly, self).__init__()
 
-        self._units = 'meters'  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
+        self._units = "meters"  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
 
-        self._units_precision = {
-            'meters': 1e-9,
-            'millimeters': 1e-6
-        }
+        self._units_precision = {"meters": 1e-9, "millimeters": 1e-6}
 
     @property
     def units(self):
@@ -39,7 +36,10 @@ class TimberAssembly(Assembly):
     @units.setter
     def units(self, units_name):
         if not units_name in self._units_precision.keys():
-            raise ValueError("The units parameters must be one of the following strings: %s." % self._units_precision.keys())
+            raise ValueError(
+                "The units parameters must be one of the following strings: %s."
+                % self._units_precision.keys()
+            )
         else:
             self._units = units_name
 
@@ -58,16 +58,18 @@ class TimberAssembly(Assembly):
 
     @property
     def part_keys(self):
-        return list(self.graph.nodes_where_predicate(lambda _, attr: "part" in attr["type"]))
+        return list(
+            self.graph.nodes_where_predicate(lambda _, attr: "part" in attr["type"])
+        )
 
     @property
     def beam_keys(self):
-        return list(self.graph.nodes_where({'type': 'part_beam'}))
+        return list(self.graph.nodes_where({"type": "part_beam"}))
 
     @property
     def joint_keys(self):
-        return list(self.graph.nodes_where({'type': 'joint'}))
- 
+        return list(self.graph.nodes_where({"type": "joint"}))
+
     def contains(self, obj):
         """
         Checks if this assembly already contains a given part or joint.
@@ -76,7 +78,7 @@ class TimberAssembly(Assembly):
         return obj.guid in self._parts
 
     def add_beam(self, beam):
-        key = self.add_part(part=beam, type='part_beam')
+        key = self.add_part(part=beam, type="part_beam")
         beam.assembly = self
         return key
 
@@ -87,12 +89,12 @@ class TimberAssembly(Assembly):
         raise NotImplementedError
 
     def add_joint(self, joint, parts):
-        """Add a joint object to the assembly. 
+        """Add a joint object to the assembly.
 
         Parameters
         ----------
         joint : :class:`~compas_timber.parts.joint`
-            An instance of a Joint class. 
+            An instance of a Joint class.
 
         parts : A list of instances of e.g. a Beam class.
                 The Beams and other Parts (dowels, steel plates) involved in the joint.
@@ -110,13 +112,19 @@ class TimberAssembly(Assembly):
         """
 
         assert parts != [], "Cannot add this joint to assembly: no parts given."
-        assert self.contains(joint) == False, "This joint has already been added to this assembly."
-        assert all([self.contains(part) == True for part in parts]), "Cannot add this joint to assembly: some of the parts are not in this assembly."
+        assert (
+            self.contains(joint) == False
+        ), "This joint has already been added to this assembly."
+        assert all(
+            [self.contains(part) == True for part in parts]
+        ), "Cannot add this joint to assembly: some of the parts are not in this assembly."
         # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
-        assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
+        assert (
+            self.are_parts_joined(parts) == False
+        ), "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
-        key = self.add_part(part=joint, type='joint')
+        key = self.add_part(part=joint, type="joint")
         joint.assembly = self
 
         # adds links to the beams
@@ -130,7 +138,7 @@ class TimberAssembly(Assembly):
         """
         del self._parts[joint.guid]
         self.graph.delete_node(joint.key)
-        joint.assembly = None #TODO: should not be needed
+        joint.assembly = None  # TODO: should not be needed
 
     def are_parts_joined(self, parts):
         """

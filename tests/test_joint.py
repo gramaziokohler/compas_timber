@@ -1,8 +1,11 @@
 from copy import deepcopy
+
+from compas.geometry import Point
+from compas.geometry import Vector
+
 from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
-from compas.geometry import Point, Vector
+from compas_timber.parts.beam import Beam
 
 
 def test_create():
@@ -59,33 +62,35 @@ def test_joint_override_protection():
 
 def test__eq__():
 
-    B1 = Beam.from_endpoints(Point(0, 0, 0), Point(2, 0, 0), Vector(0, 0, 1),  0.1, 0.2)
-    B2 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1),  0.1, 0.2)
-    B3 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1),  0.1, 0.2)  # same as B2
-    B4 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1),  0.1, 0.4)
+    B1 = Beam.from_endpoints(Point(0, 0, 0), Point(2, 0, 0), Vector(0, 0, 1), 0.1, 0.2)
+    B2 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1), 0.1, 0.2)
+    B3 = Beam.from_endpoints(
+        Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1), 0.1, 0.2
+    )  # same as B2
+    B4 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1), 0.1, 0.4)
     A = TimberAssembly()
     for b in [B1, B2, B3, B4]:
         A.add_beam(b)
 
     J1 = Joint(A, [B1, B2])
     # J2 = Joint([B1, B2], A) # this is failing because B1 and B2 are already joined
-    #assert J1 == J2
+    # assert J1 == J2
+
 
 def test_deepcopy():
-    #TODO: not sure this make sense at all? 
+    # TODO: not sure this make sense at all?
     # Normally you wouldn't deepcopy individual joints (duplicate protection in assembly),
     # but maybe it's needed for deepcopy of assembly?
     A = TimberAssembly()
-    B1 = Beam.from_endpoints(Point(0, 0, 0), Point(2, 0, 0), Vector(0, 0, 1),  0.1, 0.2)
-    B2 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1),  0.1, 0.2)
+    B1 = Beam.from_endpoints(Point(0, 0, 0), Point(2, 0, 0), Vector(0, 0, 1), 0.1, 0.2)
+    B2 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), Vector(0, 0, 1), 0.1, 0.2)
     A.add_beam(B1)
     A.add_beam(B2)
     J = Joint(A, [B1, B2])
     J_copy = deepcopy(J)
 
     assert J_copy.beams[0] == J.beams[0]
-    #assert J_copy.assembly == J.assembly #failing
-
+    # assert J_copy.assembly == J.assembly #failing
 
 
 if __name__ == "__main__":
