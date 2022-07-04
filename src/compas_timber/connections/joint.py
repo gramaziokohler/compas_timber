@@ -24,28 +24,28 @@ class Joint(Data):
 
         super(Joint, self).__init__()
         self.assembly = assembly
-        self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
+        self.key = None
 
         assembly.add_joint(self, parts)
 
     @property
     def data(self):
         # omitting self.assembly to avoid circular reference
-        return {"frame": self.frame, "key": self.key}
+        return {"assembly": self.assembly, "frame": self.frame, "key": self.key}
 
     @data.setter
     def data(self, value):
+        self.assembly = value["assembly"]
         self.frame = value["frame"]
         self.key = value["key"]
 
     def __eq__(self, other):
         return (
             isinstance(other, Joint)
-            and
-            # self.assembly == other.assembly and #not implemented yet
-            self.frame == other.frame
+            and self.frame == other.frame
             # TODO: add generic comparison if two lists of beams are equal
+            # self.assembly == other.assembly and #not implemented yet
             # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
         )
 

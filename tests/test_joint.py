@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Frame
 
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.connections.joint import Joint
@@ -12,8 +13,8 @@ def test_create():
 
     # try create with beams
     A = TimberAssembly()
-    B1 = Beam()
-    B2 = Beam()
+    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
     J = Joint(A, [B1, B2])
@@ -26,8 +27,8 @@ def test_create():
 
 def test_remove_joint():
     A = TimberAssembly()
-    B1 = Beam()
-    B2 = Beam()
+    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
     J = Joint(A, [B1, B2])
@@ -45,9 +46,9 @@ def test_remove_joint():
 
 def test_joint_override_protection():
     A = TimberAssembly()
-    B1 = Beam()
-    B2 = Beam()
-    B3 = Beam()
+    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
+    B3 = Beam(Frame.worldZX, length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
     A.add_beam(B3)
