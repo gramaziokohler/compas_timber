@@ -14,10 +14,11 @@ def update_rhinodocobject_attributes_name(
     obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
 
     current_name = obj.Attributes.Name
+    print("current name:",current_name)
     new_name = update_attribute(
-        current_name or "", attribute, value, separator_entry, separator_keyval
+        current_name or "", str(attribute), str(value), separator_entry, separator_keyval
     )
-
+    print("new name:",new_name)
     obj.Attributes.Name = new_name
     obj.CommitChanges()
 
@@ -28,11 +29,14 @@ def update_rhinodocobject_attributes_name(
 
 
 def update_attribute(name_str, attr, val, separator_entry="_", separator_keyval=":"):
+    print("name_str:",name_str)
     if name_str == "":
         d = {}
     else:
         d = get_dict_from_str(name_str, separator_entry, separator_keyval)
+        print("*",d)
     d[attr] = val  # if attr key exists, will be overwritten
+    print(d)
     return get_str_from_dict(d, separator_entry, separator_keyval)
 
 
@@ -60,7 +64,7 @@ def get_str_from_dict(name_dict, separator_entry="_", separator_keyval=":"):
         value = name_dict[key]
         name_str += separator_entry + str(key) + separator_keyval + str(value)
 
-    if name_str[0] == "_":
+    if name_str[0] == separator_entry:
         name_str = name_str[1:]
     return name_str
 
@@ -69,18 +73,18 @@ def get_dict_from_str(name_str, separator_entry="_", separator_keyval=":"):
     """
     Generates a dictionary from a string of key:value pairs encoded with given separators.
     """
-    name_str = cast_str(name_str)
+    #name_str = cast_str(name_str)
 
     data = name_str.split(separator_entry)
     dic = {}
-    if len(data) > 1:
+    if len(data) > 0:
         for d in data:
             a = d.split(separator_keyval)
             if len(a) == 2:
                 key, value = a
                 dic[key] = value
 
-    return cast_dict(dic)
+    return dic#cast_dict(dic)
 
 
 def cast_dict(dic):
@@ -88,8 +92,8 @@ def cast_dict(dic):
     Checks if dic values are strings maade of allowed chars only.
     """
     for k, v in dic.items():
-        k = cast_str(k)
-        v = cast_str(v)
+        #k = cast_str(k)
+        #v = cast_str(v)
         dic[k] = v
     return dic
 
