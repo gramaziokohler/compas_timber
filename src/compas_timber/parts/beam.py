@@ -80,7 +80,7 @@ class Beam(Part):
         "brep": _create_brep_shape,
     }
 
-    def __init__(self, frame, width, height, depth, geometry_type):
+    def __init__(self, frame, width, height, depth, geometry_type, **kwargs):
         geometry = self._create_beam_shape_from_params(width, height, depth, geometry_type)
         super(Beam, self).__init__(geometry=geometry, frame=frame)
 
@@ -88,6 +88,7 @@ class Beam(Part):
         self.width = width
         self.height = height
         self.depth = depth
+        self.geometry_type = geometry_type
         self.assembly = None
 
     @staticmethod
@@ -128,6 +129,7 @@ class Beam(Part):
             "width": self.width,
             "height": self.height,
             "depth": self.depth,
+            "geometry_type": self.geometry_type
         }
         data.update(super(Beam, self).data)
         return data
@@ -137,10 +139,17 @@ class Beam(Part):
         """
         Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
         """
-        super(Beam, self).data = data
+        Part.data.fset(self, data)
         self.width = data["width"]
         self.height = data["height"]
         self.depth = data["depth"]
+        self.geometry_type = data["geometry_type"]
+
+    @classmethod
+    def from_data(cls, data):
+        instance = cls(**data)
+        instance.data = data
+        return instance
 
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="mesh"):

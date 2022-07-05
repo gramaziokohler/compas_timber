@@ -22,7 +22,7 @@ from compas_timber.utils.helpers import are_objects_identical
 class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.assembly = assembly  # TODO: needed?
+        # self.assembly = assembly  # TODO: needed?
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = None

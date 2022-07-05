@@ -22,7 +22,7 @@ class Joint(Data):
 
     def __init__(self, assembly, *beams):
         super(Joint, self).__init__()
-        self.assembly = assembly
+        # self.assembly = assembly
         self.key = None
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
@@ -31,8 +31,8 @@ class Joint(Data):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
 
-        assembly.add_joint(assembly, beams)
         joint = cls(assembly, *beams)
+        assembly.add_joint(joint, beams)
         return joint
 
     @property
@@ -62,10 +62,6 @@ class Joint(Data):
         neighbor_keys = self.assembly.graph.neighbors(self.key)
         # just double-check in case the joint-node would be somehow connecting to smth else in the graph
         return [k for k in neighbor_keys if 'part' in self.assembly.graph.node_attribute(key=k, name='type')]
-
-    @property
-    def parts(self):
-        return [self.assembly.find_by_key(key) for key in self._get_part_keys]
 
     @property
     def beams(self):
