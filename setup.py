@@ -20,7 +20,7 @@ def read(*names, **kwargs):
     ).read()
 
 
-long_description = read("README.md")
+long_description = read("README.rst")
 requirements = read("requirements.txt").split("\n")
 optional_requirements = {}
 
@@ -29,7 +29,6 @@ setup(
     version="0.1.0",
     description="COMPAS package for modeling, designing and fabricating timber assemblies",
     long_description=long_description,
-    long_description_content_type="text/markdown",
     url="https://github.com/gramaziokohler/compas_timber",
     author="Gramazio Kohler Research",
     author_email="gramaziokohler@arch.ethz.ch",
