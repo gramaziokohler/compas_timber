@@ -37,12 +37,11 @@ class LMiterJoint(Joint):
         vB = Vector(*self.beamB.frame.xaxis)
 
         # intersection point (average) of both centrelines
-        pxA, pxB = intersection_line_line_3D(
+        [pxA,tA], [pxB,tB] = intersection_line_line_3D(
             self.beamA.centreline,
             self.beamB.centreline,
             max_distance=self.beamA.height + self.beamB.height,
             limit_to_segments=False,
-            return_t=False,
             tol=self.assembly.tol,
         )
 

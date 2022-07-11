@@ -4,81 +4,126 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
-from compas.geometry import intersection_line_plane
 from compas.geometry import subtract_vectors
-
-
-def is_near_end(t, tol=1e-6):
-    if abs(t) < tol:
-        return True  # almost zero
-    if abs(1.0 - t) < tol:
-        return True  # almost 1
-    return False
-
-
-def __get_t(p, v, pt):
-    """
-    p = start point of the line, at which t=0
-    v = direction of the line, t=1 at p+v
-    pt = point on the line for which you want to find the t parameter
-    """
-    if v[0] != 0:
-        return (pt[0] - p[0]) / v[0]
-    if v[1] != 0:
-        return (pt[1] - p[1]) / v[1]
-    if v[2] != 0:
-        return (pt[2] - p[2]) / v[2]
-    return None
+from compas.geometry import length_vector, add_vectors, scale_vector, dot_vectors
+from math import fabs
+from compas.geometry import normalize_vector
 
 
 def intersection_line_line_3D(
-    L1, L2, max_distance=1e-6, limit_to_segments=True, return_t=False, tol=1e-6
+    line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6
 ):
+    # adapted from: https://github.com/compas-dev/compas/blob/9052b90cad5a8d2ddbdbaae91712c568f3d3c926/src/compas/geometry/intersections/intersections.py
+    """
+    inputs:
+        * two Lines (compas)
+        * max_distance: between the lines to count as an apparent intersection
+        * tol: numerical precision
 
-    P1 = L1[0]
-    V1 = subtract_vectors(L1[1], L1[0])
+    for each, returns:
+        * None if no intersection with the other line (if lines parallel or outside of segment if limit_to_segments=True)
+        * Point of the apparent intersection on this line
+        * t parameter of the line (if return_t = True)
+    """
 
-    P2 = L2[0]
-    V2 = subtract_vectors(L2[1], L2[0])
+    a, b = line1
+    c, d = line2
 
-    N = cross_vectors(V1, V2)
+    ab = subtract_vectors(b, a)
+    cd = subtract_vectors(d, c)
+
+    n = cross_vectors(ab, cd)
 
     # check if lines are parallel
-    if all([abs(x) < tol for x in N]):
-        # raise UserWarning("The lines are parallel - no intersection.")
-        return [None, None]
+    if length_vector(n) < tol:  # if any([abs(x)<tol for x in n]):
+        return [None, None], [None, None]
 
-    pln1 = Plane.from_frame(Frame(P1, V1, N))
-    pln2 = Plane.from_frame(Frame(P2, V2, N))
+    n1 = normalize_vector(cross_vectors(ab, n))
+    n2 = normalize_vector(cross_vectors(cd, n))
 
-    # get intersection points
-    X1 = intersection_line_plane(L1, pln2, tol)
-    X2 = intersection_line_plane(L2, pln1, tol)
-    X1 = Point(*X1)
-    X2 = Point(*X2)
+    pln1 = Plane(a, n1)
+    pln2 = Plane(c, n2)
+
+    # get intersection points (should never be None, only if parallel, which was errorcatched before)
+    x1, t1 = intersection_line_plane(line1, pln2, tol)
+    x2, t2 = intersection_line_plane(line2, pln1, tol)
+
+    # double-check for parallels, should not happen:
+    if t1 == None or t2 == None:
+        print("intersection_line_plane detected parallel lines")
+        return [None, None], [None, None]
 
     # is intersection exact / within some max_distance?
-    d = distance_point_point(X1, X2)
+    d = distance_point_point(x1, x2)
     if d > max_distance:
-        return [None, None]
-
-    # get t parameters (t parameter: 0 at start point, 1 at end point of the line segment)
-    if return_t or limit_to_segments:
-        # t1 = distance_point_point(P1, X1) / L1.length
-        # t2 = distance_point_point(P2, X2) / L2.length
-        t1 = __get_t(P1, V1, X1)
-        t2 = __get_t(P2, V2, X2)
+        return [None, None], [None, None]
 
     # is intersection within the line segment? if not, override results with None
     if limit_to_segments:
-        if t1 < 0.0 or t1 > 1.0:
-            X1 = None
+        if t1 < 0.0 - tol or t1 > 1.0 + tol:
+            x1 = None
             t1 = None
-        if t2 < 0.0 or t2 > 1.0:
-            X2 = None
+        if t2 < 0.0 - tol or t2 > 1.0 + tol:
+            x2 = None
             t2 = None
+    return [x1, t1], [x2, t2]
 
-    if return_t:
-        return [t1, t2]
-    else:
-        return [X1, X2]
+
+def intersection_line_plane(line, plane, tol=1e-6):
+    """Computes the intersection point of a line and a plane
+    Parameters
+    ----------
+    line : [point, point] | :class:`~compas.geometry.Line`
+        Two points defining the line.
+    plane : [point, vector] | :class:`~compas.geometry.Plane`
+        The base point and normal defining the plane.
+    tol : float, optional
+        A tolerance for membership verification.
+    Returns
+    -------
+    [float, float, float] | None
+        The intersection point between the line and the plane,
+        or None if the line and the plane are parallel.
+    """
+    a, b = line
+    o, n = plane
+
+    ab = subtract_vectors(b, a)
+    dotv = dot_vectors(n, ab)
+
+    if fabs(dotv) <= tol:
+        # if the dot product (cosine of the angle between segment and plane)
+        # is close to zero the line and the normal are almost perpendicular
+        # hence there is no intersection
+        return None, None
+
+    # based on the ratio = -dot_vectors(n, ab) / dot_vectors(n, oa)
+    # there are three scenarios
+    # 1) 0.0 < ratio < 1.0: the intersection is between a and b
+    # 2) ratio < 0.0: the intersection is on the other side of a
+    # 3) ratio > 1.0: the intersection is on the other side of b
+    oa = subtract_vectors(a, o)
+    t = -dot_vectors(n, oa) / dotv
+    ab = scale_vector(ab, t)
+    return Point(*add_vectors(a, ab)), t
+
+
+if __name__ == "__main__":
+
+    import random
+    import time
+
+    # def randomx():
+    #     return random.random()*2.0-1.0
+
+    # t0 = time.time()
+    # for i in range(250000):
+    #     p1 = Point(randomx(), randomx(), randomx())
+    #     p2 = Point(randomx(), randomx(), randomx())
+    #     p3 = Point(randomx(), randomx(), randomx())
+    #     p4 = Point(randomx(), randomx(), randomx())
+    #     intersection_line_line_3D(Line(p1,p2), Line(p3,p4), max_distance=random.random()*0.1, limit_to_segments = random.choice([True, False]), tol = random.random()*1e-3)
+
+    # t1 = time.time()
+    # dt = (t1 - t0)
+    # print(dt,"s")

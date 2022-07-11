@@ -8,10 +8,9 @@ def guess_joint_topology_2beams(beamA, beamB, tol=1e-6):
 
     max_distance = beamA.height + beamB.height
 
-    ti, tj = intersection_line_line_3D(
-        beamA.centreline, beamB.centreline, max_distance, True, True, tol
+    [pi,ti], [pj,tj] = intersection_line_line_3D(
+        beamA.centreline, beamB.centreline, max_distance, True, tol
     )
-
     def is_near_end(t, tol=tol):
         if abs(t) < tol:
             return True  # almost zero
