@@ -7,18 +7,37 @@ try:
 except:
     pass
 
+def get_rhobj(guid):
+    """
+    guid: a GUID object, not string
+    """
+    obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
+    return obj
 
-def update_rhinodocobject_attributes_name(
+
+def get_rhobj_name(guid):
+    obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
+    current_name = obj.Attributes.Name
+    return current_name
+
+def set_rhobj_name(guid, new_name):
+    obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
+    obj.Attributes.Name = new_name
+    obj.CommitChanges()
+    return
+
+
+def update_rhobj_attributes_name(
     guid, attribute, value, separator_entry="_", separator_keyval=":"
 ):
     obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
 
     current_name = obj.Attributes.Name
-    print("current name:",current_name)
+    #print("current name:",current_name)
     new_name = update_attribute(
         current_name or "", str(attribute), str(value), separator_entry, separator_keyval
     )
-    print("new name:",new_name)
+    #print("new name:",new_name)
     obj.Attributes.Name = new_name
     obj.CommitChanges()
 
