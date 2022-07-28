@@ -10,6 +10,7 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import Brep
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import distance_point_point
@@ -18,13 +19,6 @@ from compas.geometry import cross_vectors
 
 from compas_timber.utils.helpers import close
 from compas_timber.parts.exceptions import BeamCreationException
-
-# TODO: not to do
-try:
-    from compas_rhino.conversions import box_to_rhino
-    from Rhino.Geometry import Brep
-except ImportError:
-    pass
 
 
 # TODO: update to global compas PRECISION
@@ -46,8 +40,8 @@ def _create_mesh_shape(width, height, depth):
 
 def _create_brep_shape(width, height, depth):
     # Create a Rhino.Geometry.Box
-    rhino_box = box_to_rhino(_create_box(width, height, depth))
-    return BrepGeometry(rhino_box.ToBrep())
+    brep_box = Brep.from_box(_create_box(width, height, depth))
+    return BrepGeometry(brep_box)
 
 
 class Beam(Part):
@@ -183,12 +177,12 @@ class Beam(Part):
         Face frames of the beam's base shape (box) are numbered relative to the beam's coordinate system
         """
         return [
-            Frame(Point(*add_vectors(self.frame.point, self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, -self.frame.zaxis),
-            Frame(Point(*add_vectors(self.frame.point, -self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, -self.frame.yaxis),
-            Frame(Point(*add_vectors(self.frame.point, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
-            Frame(Point(*add_vectors(self.frame.point, self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, self.frame.yaxis),
-            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),
-            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth)), self.frame.yaxis, self.frame.zaxis),
+            Frame(Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, -self.frame.zaxis),
+            Frame(Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, -self.frame.yaxis),
+            Frame(Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
+            Frame(Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, self.frame.yaxis),
+            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
+            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth)), self.frame.yaxis, self.frame.zaxis),  # small face at end point
         ]
 
     ### GEOMETRY ###

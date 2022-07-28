@@ -27,7 +27,7 @@ class Joint(Data):
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
 
     @classmethod
-    def join_beams(cls, assembly, *beams):
+    def create(cls, assembly, *beams):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
 

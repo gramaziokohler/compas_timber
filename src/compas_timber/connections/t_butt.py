@@ -28,6 +28,7 @@ class TButtJoint(Joint):
         self.main_beam_key = None
         self.cross_beam_key = None
         self.gap = 0.0  # float, additional gap, e.g. for glue
+        self.features = []
 
     @property
     def data(self):
@@ -98,7 +99,10 @@ class TButtJoint(Joint):
         """
         # TODO: how to saveguard this being added multiple times?
         # TODO: Joint should eventually know nothing about BrepGeometry or MeshGeometry
-        self.main_beam.add_feature(BrepGeometry(self.cutting_plane), 'trim')
+        if not self.features:
+            feature = self.main_beam.add_feature(self.cutting_plane, 'trim')
+            self.features.append(feature)
+            # self.main_beam.apply_features()
 
 
 if __name__ == "__main__":
