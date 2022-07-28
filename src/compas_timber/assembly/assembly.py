@@ -14,31 +14,20 @@ class TimberAssembly(Assembly):
 
     Graph:
     Nodes store objects under 'object' attribute.
-    Keys of the nodes are strings equal to the guids of the objects stored in them.
+        default node attributes:
+            'type': None,  # string 'beam', 'joint', 'other_part'
+
+        default edge attributes:
+            'type': None,  # not being used at the moment
 
     """
 
     def __init__(self, *args, **kwargs):
         super(TimberAssembly, self).__init__()
 
-        self.default_node_attributes = {
-            'type': None,  # string 'beam', 'joint', 'other_part'
-            'object': None  # instance of the given object
-        }
+        self._units = "meters"  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
 
-        self.default_edge_attributes = {
-            'type': None,  # not being used at the moment
-        }
-
-        self._units = 'meters'  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
-
-        self._units_precision = {
-            'meters': 1e-9,
-            'millimeters': 1e-6
-        }
-
-    def __eq__(self, other):
-        raise NotImplementedError
+        self._units_precision = {"meters": 1e-9, "millimeters": 1e-6}
 
     @property
     def units(self):
@@ -47,7 +36,10 @@ class TimberAssembly(Assembly):
     @units.setter
     def units(self, units_name):
         if not units_name in self._units_precision.keys():
-            raise ValueError("The units parameters must be one of the following strings: %s." % self._units_precision.keys())
+            raise ValueError(
+                "The units parameters must be one of the following strings: %s."
+                % self._units_precision.keys()
+            )
         else:
             self._units = units_name
 
@@ -66,34 +58,28 @@ class TimberAssembly(Assembly):
 
     @property
     def part_keys(self):
-        return list(self.graph.nodes_where_predicate(lambda _, attr: "part" in attr["type"]))
+        return list(
+            self.graph.nodes_where_predicate(lambda _, attr: "part" in attr["type"])
+        )
 
     @property
     def beam_keys(self):
-        return list(self.graph.nodes_where({'type': 'part_beam'}))
+        return list(self.graph.nodes_where({"type": "part_beam"}))
 
     @property
     def joint_keys(self):
-        return list(self.graph.nodes_where({'type': 'joint'}))
+        return list(self.graph.nodes_where({"type": "joint"}))
 
     def contains(self, obj):
         """
         Checks if this assembly already contains a given part or joint.
         """
         # omitting (object.assembly is self) check for now
-        return obj.key in self.graph.node.keys()
-
-
-    # def add_part(self, part, type):
-    #     if self.contains(part):
-    #         raise UserWarning("This part will not be added: it is already in the assembly (%s)" % part)
-    #     key = self.graph.add_node(object=part, type=type)
-    #     part.key = key
-    #     part.assembly = self
-    #     return key
+        return obj.guid in self._parts
 
     def add_beam(self, beam):
-        key = self.add_part(beam, type='part_beam')
+        key = self.add_part(part=beam, type="part_beam")
+        beam.assembly = self
         return key
 
     def add_plate(self, plate):
@@ -125,54 +111,60 @@ class TimberAssembly(Assembly):
             The identifier of the joint in the current assembly graph.
         """
 
-        # assert parts != [], "Cannot add this joint to assembly: no parts given."
-        # assert self.contains(joint) == False, "This joint has already been added to this assembly."
-        # assert all([self.contains(part) == True for part in parts]), "Cannot add this joint to assembly: some of the parts are not in this assembly."
-        # # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
-        # assert self.are_parts_joined(parts) == False, "Cannot add this joint to assembly: some of the parts are already joined."
+        assert parts != [], "Cannot add this joint to assembly: no parts given."
+        assert (
+            self.contains(joint) == False
+        ), "This joint has already been added to this assembly."
+        assert all(
+            [self.contains(part) == True for part in parts]
+        ), "Cannot add this joint to assembly: some of the parts are not in this assembly."
+        # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
+        assert (
+            self.are_parts_joined(parts) == False
+        ), "Cannot add this joint to assembly: some of the parts are already joined."
 
         # create an unconnected node in the graph for the joint object
-        key = self.graph.add_node(object=joint, type='joint')
-        joint.key = key
+        key = self.add_part(part=joint, type="joint")
         joint.assembly = self
 
         # adds links to the beams
         for part in parts:
-            self.graph.add_edge(part.key, joint.key)
+            self.add_connection(part, joint)
         return key
 
     def remove_joint(self, joint):
         """
         Removes a joint from the assembly, i.e. disconnects it from assembly and from its parts. Does not delete the object.
         """
+        del self._parts[joint.guid]
         self.graph.delete_node(joint.key)
-        joint.assembly = None
+        joint.assembly = None  # TODO: should not be needed
 
     def are_parts_joined(self, parts):
         """
         Checks if there is already a joint defined for the same set of parts.
         """
-        part_keys = [p.key for p in parts]
-        return any([set(j._get_part_keys) == set(part_keys) for j in self.joints])
 
-    def get_beam_keys_connected_to(self, beam_key):
-        nbrs = self.neighbors(beam_key, ring=2)
-        return [n for n in nbrs if n in self.beam_keys and n != beam_key]
+        # method 1
+        n = len(parts)
+        neighbor_keys = [set(self.graph.neighborhood(self._parts[part.guid], ring=1)) for part in parts]
+        for i in range(n-1):
+            nki = neighbor_keys[i]
+            for j in range(i + 1, n):
+                nkj = neighbor_keys[j]
+                nkx = nki.intersection(nkj)
+                for x in nkx:
+                    if self.graph.node[x]['type']=='joint':
+                        return True
+        return False
 
-    def get_beam_ids_connected_to(self, beam_id):
-        beam_key = self.get_beam_key_from_id(beam_id)
-        nbrs = self.get_beam_keys_connected_to(beam_key)
-        return [self.get_beam_id_from_key(n) for n in nbrs]
-
-    def get_beam_key_from_id(self, beam_id):
-        for beam_key, beam in self._beams.items():
-            if beam.id == beam_id:
-                return beam_key
-
-    def get_beam_id_from_key(self, beam_key):
-        beam = self._beams.get(beam_key)
-        if beam:
-            return beam.id
+        # # method 2: assuming that every part is joined through a Joint object, i.e. assume that parts are 2nd-ring neighbours.
+        # n = len(parts)
+        # for i in range(n - 1):
+        #     neighbor_keys = self.graph.neighborhood(self._parts[parts[i].guid], ring=2)
+        #     for j in range(i + 1, n):
+        #         if self._parts[parts[j].guid] in neighbor_keys: return True
+        # return False
 
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)
@@ -180,8 +172,3 @@ class TimberAssembly(Assembly):
 
         for joint in self.joints:
             print("[%s] %s: %s" % (joint.key, joint.type_name, joint.beam_keys))
-
-    def find_by_key(self, key):
-        if key not in self.graph.node:
-            return None
-        return self.graph.node_attribute(key, 'object')

@@ -1,8 +1,10 @@
-import rhinoscript as rs
 import Rhino
+import rhinoscript as rs
 
 
-def cmd_string_options(message="Choose:", oplist=["Option1", "Option2"], default_index=0):
+def cmd_string_options(
+    message="Choose:", oplist=["Option1", "Option2"], default_index=0
+):
     """
     message: [str] prompt to the user
     oplist: [str] list of options to display

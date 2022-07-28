@@ -77,7 +77,6 @@ class Beam(Part):
     def __init__(self, frame, width, height, depth, geometry_type, **kwargs):
         geometry = self._create_beam_shape_from_params(width, height, depth, geometry_type)
         super(Beam, self).__init__(geometry=geometry, frame=frame)
-
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height

@@ -35,7 +35,7 @@ class TButtJoint(Joint):
         data_dict = {
             "main_beam_key": self.main_beam_key,
             "cross_beam_key": self.cross_beam_key,
-            "gap": self.gap
+            "gap": self.gap,
         }
         data_dict.update(super(TButtJoint, self).data)
         return data_dict
@@ -50,21 +50,19 @@ class TButtJoint(Joint):
     def __eq__(self, other):
         tol = self.assembly.tol
         return (
-            isinstance(other, TButtJoint) and
-            super(TButtJoint, self).__eq__(other) and
-            self.main_beam_key == other.main_beam_key and
-            self.cross_beam_key == other.cross_beam_key and
-            close(self.gap, other.gap, tol)
+            isinstance(other, TButtJoint)
+            and super(TButtJoint, self).__eq__(other)
+            and self.main_beam_key == other.main_beam_key
+            and self.cross_beam_key == other.cross_beam_key
+            and close(self.gap, other.gap, tol)
         )
 
     @property
     def joint_type(self):
-        return 'T-Butt'
+        return "T-Butt"
 
     def _find_side(self):
         """
-        calculate which side of the cross beam is the cutting side for the main beam
-
         Finds the orientation of the mainbeam's centerline so that it's pointing outward of the joint,
         then finds the crossbeam's closest face by finding the one whose normal has the smallest angle
         with the centerline vector.
@@ -97,8 +95,7 @@ class TButtJoint(Joint):
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
         """
-        # TODO: how to saveguard this being added multiple times?
-        # TODO: Joint should eventually know nothing about BrepGeometry or MeshGeometry
+        # TODO: how to safeguard this being added multiple times?
         if not self.features:
             feature = self.main_beam.add_feature(self.cutting_plane, 'trim')
             self.features.append(feature)

@@ -1,11 +1,15 @@
+from compas.geometry import Point
+from compas.geometry import Vector
+
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.parts.beam import Beam
-from compas.geometry import Point, Vector
 
 
 def create_beam():
-    B = Beam.from_endpoints(Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200)
+    B = Beam.from_endpoints(
+        Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200
+    )
     print(B)
     pass
 
@@ -17,8 +21,12 @@ def create_assembly():
 
 
 def mini_design():
-    B1 = Beam.from_endpoints(Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200)
-    B2 = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), Vector(0, 0, 1), 0.100, 0.200)
+    B1 = Beam.from_endpoints(
+        Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200
+    )
+    B2 = Beam.from_endpoints(
+        Point(0, 0.5, 0), Point(1, 0.5, 0), Vector(0, 0, 1), 0.100, 0.200
+    )
 
     A = TimberAssembly()
     A.add_beam(B1)
