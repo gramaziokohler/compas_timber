@@ -1,6 +1,7 @@
 from pprint import pprint
 
 from compas.datastructures import Assembly
+from compas.datastructures import AssemblyError
 
 from compas_timber.connections.joint import Joint
 
@@ -24,10 +25,11 @@ class TimberAssembly(Assembly):
 
     def __init__(self, *args, **kwargs):
         super(TimberAssembly, self).__init__()
-
         self._units = "meters"  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
-
         self._units_precision = {"meters": 1e-9, "millimeters": 1e-6}
+
+        self._beams = []
+        self._joints = []
 
     @property
     def units(self):
@@ -36,10 +38,7 @@ class TimberAssembly(Assembly):
     @units.setter
     def units(self, units_name):
         if not units_name in self._units_precision.keys():
-            raise ValueError(
-                "The units parameters must be one of the following strings: %s."
-                % self._units_precision.keys()
-            )
+            raise ValueError("The units parameters must be one of the following strings: {}.".format(self._units_precision.keys()))
         else:
             self._units = units_name
 
@@ -50,35 +49,90 @@ class TimberAssembly(Assembly):
 
     @property
     def beams(self):
-        return [self.find_by_key(key) for key in self.beam_keys]
+        """
+        Returns all Beam objects which are part of this assembly.
+
+        Returns
+        -------
+        List[:class:`~compas_timber.parts.Beam`]
+        """
+        return self._beams
 
     @property
     def joints(self):
-        return [self.find_by_key(key) for key in self.joint_keys]
+        """
+        Returns all Joint objects which are part of this assembly.
+
+        Returns
+        -------
+        List[:class:`~compas_timber.connections.Joint`]
+        """
+        return self._joints
 
     @property
     def part_keys(self):
-        return list(
-            self.graph.nodes_where_predicate(lambda _, attr: "part" in attr["type"])
-        )
+        """
+        Returns a list of the grahp keys of all the parts associated with this assembly.
+
+        Returns
+        -------
+        List[int]
+        """
+        return [part.key for part in self.parts()]
 
     @property
     def beam_keys(self):
-        return list(self.graph.nodes_where({"type": "part_beam"}))
+        """
+        Returns a list of the grahp keys of all the Beam objects associated with this assembly.
+
+        Returns
+        -------
+        List[int]
+        """
+        return [beam.key for beam in self._beams]
 
     @property
     def joint_keys(self):
-        return list(self.graph.nodes_where({"type": "joint"}))
+        """
+        Returns a list of the grahp keys of all the Joint objects associated with this assembly.
+
+        Returns
+        -------
+        List[int]
+        """
+        return [joint.key for joint in self._joints]
 
     def contains(self, obj):
         """
-        Checks if this assembly already contains a given part or joint.
+        Returns True if this assembly contains the given object, False otherwise.
+
+        Parameters
+        ----------
+        obj: :class:`~compas.data.Data`
+            The object to look for.
+
+        Returns
+        -------
+        bool
         """
-        # omitting (object.assembly is self) check for now
         return obj.guid in self._parts
 
     def add_beam(self, beam):
+        """
+        Adds a Beam to this assembly.
+
+        Parameters
+        ----------
+        beam: :class:`~compas_timber.parts.Beam`
+            The beam to add
+
+        Returns
+        -------
+        int
+            The graph key identifier of the added beam.
+        """
         key = self.add_part(part=beam, type="part_beam")
+        self._beams.append(beam)
         beam.assembly = self
         return key
 
@@ -110,27 +164,30 @@ class TimberAssembly(Assembly):
         int | str
             The identifier of the joint in the current assembly graph.
         """
-
-        assert parts != [], "Cannot add this joint to assembly: no parts given."
-        assert (
-            self.contains(joint) == False
-        ), "This joint has already been added to this assembly."
-        assert all(
-            [self.contains(part) == True for part in parts]
-        ), "Cannot add this joint to assembly: some of the parts are not in this assembly."
-        # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
-        assert (
-            self.are_parts_joined(parts) == False
-        ), "Cannot add this joint to assembly: some of the parts are already joined."
-
+        self._validate_joining_operation(joint, parts)
         # create an unconnected node in the graph for the joint object
         key = self.add_part(part=joint, type="joint")
+        self._joints.append(joint)
         joint.assembly = self
 
         # adds links to the beams
         for part in parts:
             self.add_connection(part, joint)
         return key
+
+    def _validate_joining_operation(self, joint, parts):
+        if not parts:
+            raise AssemblyError("Cannot add this joint to assembly: no parts given.")
+
+        if self.contains(joint):
+            raise AssemblyError("This joint has already been added to this assembly.")
+
+        # TODO: rethink this assertion, maybe it should be possible to have more than 1 joint for the same set of parts
+        if not [self.contains(part) for part in parts]:
+            raise AssemblyError("Cannot add this joint to assembly: some of the parts are not in this assembly.")
+
+        if self.are_parts_joined(parts):
+            raise AssemblyError("Cannot add this joint to assembly: some of the parts are already joined.")
 
     def remove_joint(self, joint):
         """
