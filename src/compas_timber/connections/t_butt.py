@@ -22,7 +22,6 @@ from compas_timber.utils.helpers import are_objects_identical
 class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        # self.assembly = assembly  # TODO: needed?
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = None
@@ -33,8 +32,8 @@ class TButtJoint(Joint):
     @property
     def data(self):
         data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
+            "main_beam_key": self.main_beam.key,
+            "cross_beam_key": self.cross_beam.key,
             "gap": self.gap,
         }
         data_dict.update(super(TButtJoint, self).data)
@@ -60,6 +59,12 @@ class TButtJoint(Joint):
     @property
     def joint_type(self):
         return "T-Butt"
+
+    @Joint.assembly.setter
+    def assembly(self, assembly):
+        Joint.assembly.fset(self, assembly)
+        self.main_beam = assembly.find_by_key(self.main_beam_key)
+        self.cross_beam = assembly.find_by_key(self.cross_beam_key)
 
     def _find_side(self):
         """

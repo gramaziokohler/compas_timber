@@ -4,6 +4,7 @@ from compas.datastructures import Assembly
 from compas.datastructures import AssemblyError
 
 from compas_timber.connections.joint import Joint
+from compas_timber.parts import Beam
 
 
 class TimberAssembly(Assembly):
@@ -30,6 +31,16 @@ class TimberAssembly(Assembly):
 
         self._beams = []
         self._joints = []
+
+    @Assembly.data.setter
+    def data(self, value):
+        Assembly.data.fset(self, value)
+        for part in self.parts():
+            if isinstance(part, Beam):
+                self._beams.append(part)
+            if isinstance(part, Joint):
+                self._joints.append(part)
+            part.assembly = self
 
     @property
     def units(self):
@@ -168,7 +179,6 @@ class TimberAssembly(Assembly):
         # create an unconnected node in the graph for the joint object
         key = self.add_part(part=joint, type="joint")
         self._joints.append(joint)
-        joint.assembly = self
 
         # adds links to the beams
         for part in parts:

@@ -22,7 +22,7 @@ class Joint(Data):
 
     def __init__(self, assembly, *beams):
         super(Joint, self).__init__()
-        self.assembly = assembly
+        self._assembly = assembly
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
         self.key = None
 
@@ -38,13 +38,20 @@ class Joint(Data):
     @property
     def data(self):
         # omitting self.assembly to avoid circular reference
-        return {"assembly": self.assembly, "frame": self.frame, "key": self.key}
+        return {"frame": self.frame, "key": self.key}
 
     @data.setter
     def data(self, value):
-        self.assembly = value["assembly"]
         self.frame = value["frame"]
         self.key = value["key"]
+
+    @property
+    def assembly(self):
+        return self._assembly
+
+    @assembly.setter
+    def assembly(self, assembly):
+        self._assembly = assembly
 
     def __eq__(self, other):
         return (
