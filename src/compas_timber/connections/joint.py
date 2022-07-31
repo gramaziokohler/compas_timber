@@ -26,6 +26,12 @@ class Joint(Data):
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
         self.key = None
 
+    def __deepcopy__(self, memodict):
+        # Having a refernce to assembly here causes very weird behavior
+        # when copying using data.copy()
+        self._assembly = None
+        return self.copy()
+
     @classmethod
     def create(cls, assembly, *beams):
         if len(beams) < 2:

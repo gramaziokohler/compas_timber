@@ -1,3 +1,4 @@
+import copy
 from collections import deque
 
 from compas.datastructures.assembly import Part
@@ -96,6 +97,12 @@ class Beam(Part):
         return "Beam %s x %s x %s at %s" % (self.width, self.height, self.depth, self.frame)
 
     def __copy__(self, *args, **kwargs):
+        return self.copy()
+
+    def __deepcopy__(self, memodict):
+        # Having a refernce to assembly here causes very weird behavior
+        # when copying using data.copy()
+        self.assembly = None
         return self.copy()
 
     def is_identical(self, other):

@@ -36,7 +36,7 @@ class TButtJoint(Joint):
             "cross_beam_key": self.cross_beam.key,
             "gap": self.gap,
         }
-        data_dict.update(super(TButtJoint, self).data)
+        data_dict.update(Joint.data.fget(self))
         return data_dict
 
     @data.setter
