@@ -83,7 +83,7 @@ class Joint(Data):
         return [self.assembly.find_by_key(key) for key in self._get_part_keys]
 
     def apply_features(self):
-        raise  NotImplementedError
+        raise NotImplementedError
 
     @property
     def beams(self):

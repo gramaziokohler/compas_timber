@@ -102,9 +102,9 @@ class TButtJoint(Joint):
         """
         # TODO: how to safeguard this being added multiple times?
         if not self.features:
-            feature = self.main_beam.add_feature(self.cutting_plane, 'trim')
+            feature = self.main_beam.add_feature(self.cutting_plane, "trim")
+            feature.apply()
             self.features.append(feature)
-            # self.main_beam.apply_features()
 
 
 if __name__ == "__main__":

@@ -233,6 +233,17 @@ class TimberAssembly(Assembly):
         #         if self._parts[parts[j].guid] in neighbor_keys: return True
         # return False
 
+    def apply_joint_features(self):
+        """
+        Triggers the application of the joint features to their associated beams.
+
+        Returns
+        -------
+        None
+        """
+        for joint in self.joints:
+            joint.apply_features()
+
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)
         pprint("Joints:\n", self.joint_keys)
