@@ -40,6 +40,7 @@ class TimberAssembly(Assembly):
             part.assembly = self
             if isinstance(part, Beam):
                 self._beams.append(part)
+                part.clear_features()
             if isinstance(part, Joint):
                 self._joints.append(part)
                 part.add_features(apply=False)

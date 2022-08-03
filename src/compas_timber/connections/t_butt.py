@@ -100,9 +100,11 @@ class TButtJoint(Joint):
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
         """
-        # TODO: how to safeguard this being added multiple times?
+        # TODO: joint should only remove the features it has created!
+        # TODO: i.e. self.main_beam.clear_features(self.features)
+        # TODO: but that doesn't seem to work for some reason.. WIP
         if self.features:
-            self.main_beam.clear_features(self.features)
+            self.main_beam.clear_features()
 
         feature = self.main_beam.add_feature(self.cutting_plane, "trim")
         self.features.append(feature)
