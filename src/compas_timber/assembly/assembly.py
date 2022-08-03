@@ -35,12 +35,14 @@ class TimberAssembly(Assembly):
     @Assembly.data.setter
     def data(self, value):
         Assembly.data.fset(self, value)
+        # restore what got removed to avoid circular reference
         for part in self.parts():
+            part.assembly = self
             if isinstance(part, Beam):
                 self._beams.append(part)
             if isinstance(part, Joint):
                 self._joints.append(part)
-            part.assembly = self
+                part.add_features(apply=False)
 
     @property
     def units(self):
@@ -242,7 +244,7 @@ class TimberAssembly(Assembly):
         None
         """
         for joint in self.joints:
-            joint.apply_features()
+            joint.add_features()
 
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)

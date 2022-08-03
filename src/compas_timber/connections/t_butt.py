@@ -95,16 +95,19 @@ class TButtJoint(Joint):
         cfr = self._find_side()
         return cfr
 
-    def apply_features(self):
+    def add_features(self, apply=True):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
         """
         # TODO: how to safeguard this being added multiple times?
-        if not self.features:
-            feature = self.main_beam.add_feature(self.cutting_plane, "trim")
+        if self.features:
+            self.main_beam.clear_features(self.features)
+
+        feature = self.main_beam.add_feature(self.cutting_plane, "trim")
+        self.features.append(feature)
+        if apply:
             feature.apply()
-            self.features.append(feature)
 
 
 if __name__ == "__main__":

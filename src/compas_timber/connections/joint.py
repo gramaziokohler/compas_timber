@@ -82,7 +82,7 @@ class Joint(Data):
     def parts(self):
         return [self.assembly.find_by_key(key) for key in self._get_part_keys]
 
-    def apply_features(self):
+    def add_features(self, apply=True):
         raise NotImplementedError
 
     @property
