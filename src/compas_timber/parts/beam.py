@@ -27,26 +27,27 @@ ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
 
-def _create_box(width, height, depth):
+def _create_box(width, height, length):
     # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
     # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
     boxframe = Frame.worldXY()
-    depth_offset = boxframe.xaxis * depth * 0.5
-    boxframe.point +=  depth_offset
-    return Box(boxframe, depth, width, height)
+    length_offset = boxframe.xaxis * length * 0.5
+    boxframe.point +=  length_offset
+    return Box(boxframe, length, width, height)
 
-def _create_mesh_shape(width, height, depth):
-    return MeshGeometry(_create_box(width, height, depth))
+def _create_mesh_shape(width, height, length):
+    return MeshGeometry(_create_box(width, height, length))
 
 
-def _create_brep_shape(width, height, depth):
+def _create_brep_shape(width, height, length):
     # Create a Rhino.Geometry.Box
-    brep_box = Brep.from_box(_create_box(width, height, depth))
+    brep_box = Brep.from_box(_create_box(width, height, length))
     return BrepGeometry(brep_box)
 
 
 class Beam(Part):
-    """A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
+    """A class to represent timber beams (studs, slats, etc.), straight with rectangular cross-sections.
+    
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`.
@@ -57,17 +58,19 @@ class Beam(Part):
         z-axis corresponds to the height of the cross-section, usually the larger dimension.
 
     width : float.
-        Width of the cross-section
+        Width of the cross-section.
     height : float.
-        Height of the cross-section
+        Height of the cross-section.
+    length : float.
+        Length of the beam.
+    geometry_type : string
+        Type of the output geometry: 'brep' for Brep or 'mesh' for mesh.
 
     Attributes
     ----------
 
-    length : float.
-        Length of the beam.
-
     centerline: :class:``compas.geometry.Line`
+
     """
 
     SHAPE_FACTORIES = {
@@ -75,26 +78,26 @@ class Beam(Part):
         "brep": _create_brep_shape,
     }
 
-    def __init__(self, frame, width, height, depth, geometry_type, **kwargs):
-        geometry = self._create_beam_shape_from_params(width, height, depth, geometry_type)
+    def __init__(self, frame, width, height, length, geometry_type, **kwargs):
+        geometry = self._create_beam_shape_from_params(width, height, length, geometry_type)
         super(Beam, self).__init__(geometry=geometry, frame=frame)
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
-        self.depth = depth
+        self.length = length
         self.geometry_type = geometry_type
         self.assembly = None
 
     @staticmethod
-    def _create_beam_shape_from_params(width, height, depth, geometry_type):
+    def _create_beam_shape_from_params(width, height, length, geometry_type):
         try:
             factory = Beam.SHAPE_FACTORIES[geometry_type]
-            return factory(width, height, depth)
+            return factory(width, height, length)
         except KeyError:
             raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
 
     def __str__(self):
-        return "Beam %s x %s x %s at %s" % (self.width, self.height, self.depth, self.frame)
+        return "Beam %s x %s x %s at %s" % (self.width, self.height, self.length, self.frame)
 
     def __copy__(self, *args, **kwargs):
         return self.copy()
@@ -111,7 +114,7 @@ class Beam(Part):
             isinstance(other, Beam)
             and close(self.width, other.width, tol)
             and close(self.height, other.height, tol)
-            and close(self.depth, other.depth, tol)
+            and close(self.length, other.length, tol)
             and self.frame == other.frame
             # TODO: skip joints and features ?
         )
@@ -128,7 +131,7 @@ class Beam(Part):
         data = {
             "width": self.width,
             "height": self.height,
-            "depth": self.depth,
+            "length": self.length,
             "geometry_type": self.geometry_type
         }
         data.update(super(Beam, self).data)
@@ -142,7 +145,7 @@ class Beam(Part):
         Part.data.fset(self, data)
         self.width = data["width"]
         self.height = data["height"]
-        self.depth = data["depth"]
+        self.length = data["length"]
         self.geometry_type = data["geometry_type"]
 
     @classmethod
@@ -161,9 +164,9 @@ class Beam(Part):
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
         frame = Frame(centerline.start, x_vector, y_vector)
-        depth = centerline.length
+        length = centerline.length
 
-        return cls(frame, width, height, depth, geometry_type)
+        return cls(frame, width, height, length, geometry_type)
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
@@ -172,9 +175,9 @@ class Beam(Part):
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
         frame = Frame(point_start, x_vector, y_vector)
-        depth = distance_point_point(point_start, point_end)
+        length = distance_point_point(point_start, point_end)
 
-        return cls(frame, width, height, depth)
+        return cls(frame, width, height, length)
 
     ### main methods and properties ###
     @property
@@ -188,7 +191,7 @@ class Beam(Part):
             Frame(Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
             Frame(Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, self.frame.yaxis),
             Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
-            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth)), self.frame.yaxis, self.frame.zaxis),  # small face at end point
+            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)), self.frame.yaxis, self.frame.zaxis),  # small face at end point
         ]
 
     ### GEOMETRY ###
@@ -202,11 +205,11 @@ class Beam(Part):
 
     @property
     def centerline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth))
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
     def midpoint(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.depth * 0.5))
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         # create & apply a transformation
@@ -224,7 +227,7 @@ class Beam(Part):
         y = Vector(*cross_vectors(x, z)) * -1.0
         frame = Frame(ps, x, y)
         self.frame = frame
-        self.depth = distance_point_point(ps, pe)
+        self.length = distance_point_point(ps, pe)
         return
 
     def extend_length(self, d, option="both"):
@@ -275,5 +278,5 @@ class Beam(Part):
 
 
 if __name__ == "__main__":
-    b = Beam(Frame.worldXY(), 10, 5, 13)
+    b = Beam(Frame.worldXY(), 10, 5, 13,'brep')
     print(b.geometry)
