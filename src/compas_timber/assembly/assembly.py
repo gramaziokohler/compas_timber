@@ -45,6 +45,11 @@ class TimberAssembly(Assembly):
                 self._joints.append(part)
                 part.add_features(apply=False)
 
+
+    def __str__(self):
+        tpl = "<TimberAssembly with {} beam(s) and {} joint(s)>"
+        return tpl.format(len(self.beams), len(self.joints))
+
     @property
     def units(self):
         return self._units

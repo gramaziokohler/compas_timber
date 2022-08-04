@@ -99,6 +99,11 @@ class TButtJoint(Joint):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
+
+        apply : Bool
+            If True, the operations defined by the features will be executed.
+
+
         """
         # TODO: joint should only remove the features it has created!
         # TODO: i.e. self.main_beam.clear_features(self.features)
