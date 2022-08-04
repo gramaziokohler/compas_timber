@@ -209,9 +209,7 @@ class Beam(Part):
         Base shape of the beam, i.e. box with no features.
         """
         boxframe = Frame(
-            self.frame.point
-            - self.frame.yaxis * self.width * 0.5
-            - self.frame.zaxis * self.height * 0.5,
+            self.frame.point + self.frame.xaxis*self.length*0.5,
             self.frame.xaxis,
             self.frame.yaxis,
         )
@@ -244,6 +242,22 @@ class Beam(Part):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
+    def long_edges(self):
+        y = self.frame.yaxis
+        z = self.frame.zaxis
+        w = self.width*0.5
+        h = self.height*0.5
+        ps = self.__centreline_start
+        pe = self.__centreline_end
+
+
+        return [Line(ps+v, pe+v) for v in 
+                                                        ( y*w+z*h, 
+                                                         -y*w+z*h,  
+                                                         -y*w-z*h,
+                                                          y*w-z*h,)]
+
+    @property
     def midpoint(self):
         return Point(
             *add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5)
@@ -267,18 +281,18 @@ class Beam(Part):
         self.frame = frame
         self.length = distance_point_point(ps, pe)
         return
+    
+    def extend_ends(self, d_start, d_end):
+        """
+        Extensions at the start of the centerline should have a negative value.
+        Extenshions at the end of the centerline should have a positive value.
+        Otherwise the centerline will be shortend, not extended.
+        """
+        ps = self.__centreline_start
+        pe = self.__centreline_end
+        self.frame.point += self.frame.xaxis*d_start
+        self.length += -d_start+d_end
 
-    def extend_length(self, d, option="both"):
-        """
-        options: 'start', 'end', 'both'
-        """
-        if option in ("start", "both"):
-            pass  # move frame's origin by -d
-        if option == "end":
-            pass  # change length by d
-        if option == "both":
-            pass  # chane lenth by 2d
-        return
 
     def rotate_around_centreline(self, angle, clockwise=False):
         # create & apply a transformation

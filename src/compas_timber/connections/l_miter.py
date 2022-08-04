@@ -4,20 +4,41 @@ from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
 from compas_timber.utils.compas_extra import intersection_line_line_3D
+from compas_timber.utils.compas_extra import intersection_line_plane
 
 from ..connections.joint import Joint
 
 
 class LMiterJoint(Joint):
-    def __init__(self, assembly, beamA, beamB):
+    def __init__(self, assembly, beamA, beamB, cutoff = None):
 
         super(LMiterJoint, self).__init__(assembly, [beamA, beamB])
         self.beamA = beamA
         self.beamB = beamB
+        self.cutoff = cutoff #for very acute angles, limit the extension of the tip/beak of the joint 
 
     @property
     def joint_type(self):
         return "L-Miter"
+
+    def calc_extension(self,beam,pln):
+        edges = beam.long_edges
+        
+        x = {}
+        for e in edges:
+            p,t = intersection_line_plane(e,pln)
+            x[t]=p
+        
+        tmin=min(x.keys())
+        tmax=max(x.keys())
+        ds=0.0
+        de=0.0
+        if tmin<0.0:
+            ds = x[tmin].distance_to_point(beam.__centerline_start)
+        if tmax>1.0:
+            de = x[tmax].distance_to_point(beam.frame.point+beam.frame.xaxis*beam.length)
+        return (ds,de)
+
 
     def add_feature(self):
         """
@@ -26,9 +47,13 @@ class LMiterJoint(Joint):
         """
         # TODO: how to saveguard this being added multiple times?
         plnA, plnB = self.cutting_planes
+
+        self.beamA.add_feature(self.calc_extension(self.beamA,plnA), "extend")
+        self.beamB.add_feature(self.calc_extension(self.beamB,plnB), "extend")
+
         self.beamA.add_feature(plnA, "trim")
         self.beamB.add_feature(plnB, "trim")
-        # pass
+
 
     @property
     def cutting_planes(self):
@@ -67,3 +92,6 @@ class LMiterJoint(Joint):
         plnB = Plane(p, v_normal)
 
         return [plnA, plnB]
+
+    
+
