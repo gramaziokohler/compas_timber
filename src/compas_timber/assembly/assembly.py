@@ -14,11 +14,12 @@ class TimberAssembly(Assembly):
 
     Graph:
     Nodes store objects under 'object' attribute.
-        default node attributes:
-            'type': None,  # string 'beam', 'joint', 'other_part'
 
-        default edge attributes:
-            'type': None,  # not being used at the moment
+    Default node attributes:
+    'type': None,  # string 'beam', 'joint', 'other_part'
+
+    Default edge attributes:
+    'type': None,  # not being used at the moment
 
     """
 

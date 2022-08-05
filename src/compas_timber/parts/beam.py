@@ -20,28 +20,28 @@ tol_angle = 1e-3  # [radians]
 
 
 class Beam(Part):
-    """A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
+    """
+    A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
+
     Parameters
     ----------
-    frame : :class:`compas.geometry.Frame`.
+    frame : :class:`compas.geometry.Frame`
         A local coordinate system of the beam:
         Origin is located at the starting point of the centreline.
         x-axis corresponds to the centreline (major axis), usually also the fibre direction in solid wood beams.
         y-axis corresponds to the width of the cross-section, usually the smaller dimension.
         z-axis corresponds to the height of the cross-section, usually the larger dimension.
 
-    width : float.
+    width : float
         Width of the cross-section
-    height : float.
+    height : float
         Height of the cross-section
 
     Attributes
     ----------
-
-    length : float.
+    length : float
         Length of the beam.
-
-    centreline: :class:``compas.geometry.Line`
+    centreline : :class:`compas.geometry.Line`
     """
 
     operations = ["union" "difference" "intersection" "planar_trim"]
