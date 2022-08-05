@@ -2,7 +2,11 @@
 API Reference
 ********************************************************************************
 
+Packages
+========
+
 .. toctree::
     :maxdepth: 1
+    :titlesonly:
 
     api/compas_timber
