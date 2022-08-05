@@ -7,9 +7,9 @@ Create Joint
     assembly = TimberAssembly()
 
     frame = Frame.worldXY()
-    beam1 = Beam(frame, width=0.1, height=0.2, depth=1.0, geometry_type="mesh")
-    beam2 = Beam(frame, width=0.2, height=0.4, depth=1.0, geometry_type="mesh")
-    assembly.add_beam(beam1)
-    assembly.add_beam(beam2)
+    main_beam = Beam(frame, width=0.1, height=0.2, depth=1.0, geometry_type="mesh")
+    cross_beam = Beam(frame, width=0.2, height=0.4, depth=1.0, geometry_type="mesh")
+    assembly.add_beam(main_beam)
+    assembly.add_beam(cross_beam)
 
-    TButtJoint.create(assembly, beam1, beam2)
+    TButtJoint.create(assembly, main_beam, cross_beam)
