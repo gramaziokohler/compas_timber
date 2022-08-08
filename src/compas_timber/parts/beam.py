@@ -209,7 +209,7 @@ class Beam(Part):
         Base shape of the beam, i.e. box with no features.
         """
         boxframe = Frame(
-            self.frame.point + self.frame.xaxis*self.length*0.5,
+            self.frame.point - self.frame.yaxis*self.width*0.5 - self.frame.zaxis*self.height*0.5,
             self.frame.xaxis,
             self.frame.yaxis,
         )

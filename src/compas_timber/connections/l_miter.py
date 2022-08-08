@@ -23,7 +23,6 @@ class LMiterJoint(Joint):
 
     def calc_extension(self,beam,pln):
         edges = beam.long_edges
-        
         x = {}
         for e in edges:
             p,t = intersection_line_plane(e,pln)
@@ -34,7 +33,7 @@ class LMiterJoint(Joint):
         ds=0.0
         de=0.0
         if tmin<0.0:
-            ds = x[tmin].distance_to_point(beam.__centerline_start)
+            ds = x[tmin].distance_to_point(beam.frame.point)
         if tmax>1.0:
             de = x[tmax].distance_to_point(beam.frame.point+beam.frame.xaxis*beam.length)
         return (ds,de)
