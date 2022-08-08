@@ -36,32 +36,33 @@ def large_assembly(size=100):
     h = 0.16
     d = 0.5
     y = 3.0
+    v = Vector(0,0,1)
     beams = []
     for i in range(n):
         # make studs
         x = i * d
-        beam = Beam.from_endpoints(Point(x, 0, 0), Point(x, y, 0), width=w, height=h)
+        beam = Beam.from_endpoints(Point(x, 0, 0), Point(x, y, 0), v, width=w, height=h)
         beams.append(beam)
 
     # make sleepers
     beams.append(
-        Beam.from_endpoints(Point(0, 0, 0), Point(d * n, 0, 0), width=w, height=h)
+        Beam.from_endpoints(Point(0, 0, 0), Point(d * n, 0, 0), v, width=w, height=h)
     )
     beams.append(
-        Beam.from_endpoints(Point(0, y, 0), Point(d * n, y, 0), width=w, height=h)
+        Beam.from_endpoints(Point(0, y, 0), Point(d * n, y, 0), v, width=w, height=h)
     )
     t1 = time.time()
 
     A = TimberAssembly()
     for b in beams:
         A.add_beam(b)
-    print(A.find(beams[0]))
+    #print(A.find(beams[0]))
 
     t2 = time.time()
     # set_defaul_joints(A) #-> ca 9s for 500 beams
     for i in range(n):
-        TButtJoint(beams[i], beams[n], A)
-        TButtJoint(beams[i], beams[n + 1], A)
+        TButtJoint(A, beams[i], beams[n])
+        TButtJoint(A, beams[i], beams[n + 1])
 
     t3 = time.time()
     return [t0, t1, t2, t3]
@@ -72,7 +73,7 @@ if __name__ == "__main__":
     model_sizes = []
     exec_times = []
 
-    for i in range(1):
+    for i in range(10):
         s = i * 100
         # ts = time.time()
         t = large_assembly(s)
