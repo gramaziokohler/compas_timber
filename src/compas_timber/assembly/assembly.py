@@ -45,7 +45,6 @@ class TimberAssembly(Assembly):
                 self._joints.append(part)
                 part.add_features(apply=False)
 
-
     def __str__(self):
         tpl = "<TimberAssembly with {} beam(s) and {} joint(s)>"
         return tpl.format(len(self.beams), len(self.joints))
@@ -223,13 +222,13 @@ class TimberAssembly(Assembly):
         # method 1
         n = len(parts)
         neighbor_keys = [set(self.graph.neighborhood(self._parts[part.guid], ring=1)) for part in parts]
-        for i in range(n-1):
+        for i in range(n - 1):
             nki = neighbor_keys[i]
             for j in range(i + 1, n):
                 nkj = neighbor_keys[j]
                 nkx = nki.intersection(nkj)
                 for x in nkx:
-                    if self.graph.node[x]['type']=='joint':
+                    if self.graph.node[x]["type"] == "joint":
                         return True
         return False
 

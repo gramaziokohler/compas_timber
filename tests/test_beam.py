@@ -39,8 +39,7 @@ def test__eq__():
 
     # checking if beams from equivalent imput values are identical
     B1 = Beam.from_frame(F1, length=1.0, width=0.1, height=0.2)
-    B2 = Beam.from_endpoints(
-        Point(0, 0, 0), Point(1, 0, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2 )
+    B2 = Beam.from_endpoints(Point(0, 0, 0), Point(1, 0, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2)
     assert B1 == B2
 
 

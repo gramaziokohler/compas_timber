@@ -76,11 +76,7 @@ class Joint(Data):
     def _get_part_keys(self):
         neighbor_keys = self.assembly.graph.neighbors(self.key)
         # just double-check in case the joint-node would be somehow connecting to smth else in the graph
-        return [
-            k
-            for k in neighbor_keys
-            if "part" in self.assembly.graph.node_attribute(key=k, name="type")
-        ]
+        return [k for k in neighbor_keys if "part" in self.assembly.graph.node_attribute(key=k, name="type")]
 
     @property
     def parts(self):

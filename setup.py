@@ -15,9 +15,7 @@ here = path.abspath(path.dirname(__file__))
 
 
 def read(*names, **kwargs):
-    return io.open(
-        path.join(here, *names), encoding=kwargs.get("encoding", "utf8")
-    ).read()
+    return io.open(path.join(here, *names), encoding=kwargs.get("encoding", "utf8")).read()
 
 
 long_description = read("README.rst")

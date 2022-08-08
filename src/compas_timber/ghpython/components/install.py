@@ -44,9 +44,7 @@ def install():
             )
         )
     except PermissionError:
-        raise Exception(
-            "Please close first all instances of Rhino and then rerun the command"
-        )
+        raise Exception("Please close first all instances of Rhino and then rerun the command")
 
     return results
 
@@ -78,9 +76,7 @@ def uninstall():
             )
         )
     except PermissionError:
-        raise Exception(
-            "Please close first all instances of Rhino and then rerun the command"
-        )
+        raise Exception("Please close first all instances of Rhino and then rerun the command")
 
     return results
 

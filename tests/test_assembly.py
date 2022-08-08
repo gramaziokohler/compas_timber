@@ -74,15 +74,15 @@ def test_deepcopy():
     assert A_copy.beams[0] == A.beams[0]
     assert A_copy.beams[0] is not A.beams[0]
     assert A_copy.beams[0].assembly is not A
-    assert (
-        A_copy.beams[0].assembly is A_copy.beams[1].assembly
-    )  # different parts in the assembly should point back to the same assembly
+    assert A_copy.beams[0].assembly is A_copy.beams[1].assembly  # different parts in the assembly should point back to the same assembly
+
 
 def test_find():
     A = TimberAssembly()
     B = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
     A.add_beam(B)
     A.find(B.guid)
+
 
 def test_parts_joined():
     A = TimberAssembly()
@@ -94,8 +94,8 @@ def test_parts_joined():
     A.add_beam(B2)
     A.add_beam(B3)
     J = Joint(A, [B1, B2])
-    assert A.are_parts_joined([B1,B2]) == True
-    assert A.are_parts_joined([B1,B3]) == False
+    assert A.are_parts_joined([B1, B2]) == True
+    assert A.are_parts_joined([B1, B3]) == False
 
 
 if __name__ == "__main__":

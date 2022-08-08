@@ -5,22 +5,21 @@ from compas.datastructures.assembly import Part
 from compas.datastructures.assembly.part import BrepGeometry
 from compas.datastructures.assembly.part import MeshGeometry
 from compas.geometry import Box
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import Brep
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
-from compas.geometry import distance_point_point
 from compas.geometry import close
 from compas.geometry import cross_vectors
+from compas.geometry import distance_point_point
 
-from compas_timber.utils.helpers import close
 from compas_timber.parts.exceptions import BeamCreationException
-
+from compas_timber.utils.helpers import close
 
 # TODO: update to global compas PRECISION
 ANGLE_TOLERANCE = 1e-3  # [radians]
@@ -32,8 +31,9 @@ def _create_box(width, height, length):
     # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
     boxframe = Frame.worldXY()
     length_offset = boxframe.xaxis * length * 0.5
-    boxframe.point +=  length_offset
+    boxframe.point += length_offset
     return Box(boxframe, length, width, height)
+
 
 def _create_mesh_shape(width, height, length):
     return MeshGeometry(_create_box(width, height, length))
@@ -47,7 +47,7 @@ def _create_brep_shape(width, height, length):
 
 class Beam(Part):
     """A class to represent timber beams (studs, slats, etc.), straight with rectangular cross-sections.
-    
+
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`.
@@ -128,12 +128,7 @@ class Beam(Part):
         """
         Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
         """
-        data = {
-            "width": self.width,
-            "height": self.height,
-            "length": self.length,
-            "geometry_type": self.geometry_type
-        }
+        data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
         data.update(super(Beam, self).data)
         return data
 
@@ -278,5 +273,5 @@ class Beam(Part):
 
 
 if __name__ == "__main__":
-    b = Beam(Frame.worldXY(), 10, 5, 13,'brep')
+    b = Beam(Frame.worldXY(), 10, 5, 13, "brep")
     print(b.geometry)

@@ -18,11 +18,9 @@ class LMiterJoint(Joint):
         self.beamB_key = None
         self.features = []
 
-        
     @property
     def joint_type(self):
         return "L-Miter"
-
 
     @property
     def data(self):
@@ -38,7 +36,6 @@ class LMiterJoint(Joint):
         Joint.data.fset(self, value)
         self.beamA_key = value["beamA_key"]
         self.beamB_key = value["beamB_key"]
-
 
     def add_feature(self):
         """
@@ -58,7 +55,7 @@ class LMiterJoint(Joint):
         vB = Vector(*self.beamB.frame.xaxis)
 
         # intersection point (average) of both centrelines
-        [pxA,tA], [pxB,tB] = intersection_line_line_3D(
+        [pxA, tA], [pxB, tB] = intersection_line_line_3D(
             self.beamA.centreline,
             self.beamB.centreline,
             max_distance=self.beamA.height + self.beamB.height,

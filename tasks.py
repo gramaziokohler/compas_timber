@@ -185,9 +185,7 @@ def test(ctx, checks=False, doctest=False):
 @task
 def prepare_changelog(ctx):
     """Prepare changelog for next release."""
-    UNRELEASED_CHANGELOG_TEMPLATE = (
-        "## Unreleased\n\n### Added\n\n### Changed\n\n### Removed\n\n\n## "
-    )
+    UNRELEASED_CHANGELOG_TEMPLATE = "## Unreleased\n\n### Added\n\n### Changed\n\n### Removed\n\n\n## "
 
     with chdir(BASE_FOLDER):
         # Preparing changelog for next release
@@ -196,9 +194,7 @@ def prepare_changelog(ctx):
             changelog.seek(0)
             changelog.write(content.replace("## ", UNRELEASED_CHANGELOG_TEMPLATE, 1))
 
-        ctx.run(
-            'git add CHANGELOG.md && git commit -m "Prepare changelog for next release"'
-        )
+        ctx.run('git add CHANGELOG.md && git commit -m "Prepare changelog for next release"')
 
 
 @task(
@@ -214,11 +210,7 @@ def build_ghuser_components(ctx, gh_io_folder=None, ironpython=None):
         with tempfile.TemporaryDirectory("actions.ghcomponentizer") as action_dir:
             source_dir = os.path.abspath("src/compas_timber/ghpython/components")
             target_dir = os.path.join(source_dir, "ghuser")
-            ctx.run(
-                "git clone https://github.com/compas-dev/compas-actions.ghpython_components.git {}".format(
-                    action_dir
-                )
-            )
+            ctx.run("git clone https://github.com/compas-dev/compas-actions.ghpython_components.git {}".format(action_dir))
 
             if not gh_io_folder:
                 gh_io_folder = "temp"
@@ -243,11 +235,7 @@ def build_ghuser_components(ctx, gh_io_folder=None, ironpython=None):
             )
 
 
-@task(
-    help={
-        "release_type": "Type of release follows semver rules. Must be one of: major, minor, patch, major-rc, minor-rc, patch-rc, rc, release."
-    }
-)
+@task(help={"release_type": "Type of release follows semver rules. Must be one of: major, minor, patch, major-rc, minor-rc, patch-rc, rc, release."})
 def release(ctx, release_type):
     """Releases the project in one swift command!"""
     if release_type not in (
@@ -260,9 +248,7 @@ def release(ctx, release_type):
         "rc",
         "release",
     ):
-        raise Exit(
-            "The release type parameter is invalid.\nMust be one of: major, minor, patch, major-rc, minor-rc, patch-rc, rc, release"
-        )
+        raise Exit("The release type parameter is invalid.\nMust be one of: major, minor, patch, major-rc, minor-rc, patch-rc, rc, release")
 
     is_rc = release_type.find("rc") >= 0
     release_type = release_type.split("-")[0]

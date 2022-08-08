@@ -26,9 +26,7 @@ class RoundHole(object):
         self.cap_type = "flat"  # later add round cap, conical cap
 
     def __repr__(self):
-        return "RoundHole({0!r}, {1!r}, Radius={2!r})".format(
-            self.endpoint, self.axis, self.radius
-        )
+        return "RoundHole({0!r}, {1!r}, Radius={2!r})".format(self.endpoint, self.axis, self.radius)
 
     @property
     def auto_height(self):

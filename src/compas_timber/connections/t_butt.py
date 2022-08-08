@@ -5,9 +5,6 @@ from compas.datastructures.assembly.part import BrepGeometry
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import Vector
 from compas.geometry import allclose
 from compas.geometry import angle_vectors
 from compas.geometry import close

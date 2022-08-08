@@ -78,18 +78,14 @@ def cPln2rPln(pln):
 
 def cFrame2rPln(cFrame):
     try:
-        return rg.Plane(
-            cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis)
-        )
+        return rg.Plane(cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis))
     except:
         return None
 
 
 def rPln2cFrame(rPln):
     try:
-        return cg.Frame(
-            rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis)
-        )
+        return cg.Frame(rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis))
     except:
         return None
 
@@ -149,9 +145,7 @@ def cMesh2rMesh(cMesh):
         for face in faces:
             rMesh.Faces.AddFace(*face)
     rMesh.Normals.ComputeNormals()
-    rMesh.Unweld(
-        0.01, True
-    )  # makes sharp edges rendered nicely again / splits vertex normals
+    rMesh.Unweld(0.01, True)  # makes sharp edges rendered nicely again / splits vertex normals
     rMesh.Compact()
     return rMesh
 
