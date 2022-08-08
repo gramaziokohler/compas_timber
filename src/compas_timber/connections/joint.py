@@ -29,8 +29,12 @@ class Joint(Data):
     def __deepcopy__(self, memodict):
         # Having a refernce to assembly here causes very weird behavior
         # when copying using data.copy()
+        # get rid of it for the sake of copying then restore so that the original is still valid
+        assembly = self._assembly
         self._assembly = None
-        return self.copy()
+        c = self.copy()
+        self._assembly = assembly
+        return c
 
     @classmethod
     def create(cls, assembly, *beams):
