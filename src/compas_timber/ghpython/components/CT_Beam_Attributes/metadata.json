@@ -1,0 +1,32 @@
+{
+    "name": "Beam Attributes",
+    "nickname": "Beam Attributes",
+    "category": "COMPAS Timber",
+    "subcategory": "Parts",
+    "description": "Lets define custom attributes of a Beam.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "name",
+                "description": "Name of a custom attribute.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "value",
+                "description": "Value of a custom attribute.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }  
+        ],
+        "outputParameters": [
+            {
+                "name": "attribute",
+                "description": "Custom attribute to be added to a Beam."
+            }
+        ]
+    }
+}

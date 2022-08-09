@@ -1,0 +1,57 @@
+{
+    "name": "Beam",
+    "nickname": "Beam",
+    "category": "COMPAS Timber",
+    "subcategory": "Parts",
+    "description": "Creates a Beam.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "curve_guid",
+                "description": "Guid of a curve or line in the active Rhino document.",
+                "typeHintID": "guid",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "z_vector",
+                "description": "Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
+                "typeHintID": "vector",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "width",
+                "description": "Width of the cross-section (usually the smaller dimension).",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "height",
+                "description": "Height of the cross-section (usually the larger dimension).",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "attributes",
+                "description": "Additional attributes of a beam.",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "reload",
+                "description": "Prompts the component to re-run.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }   
+
+
+        ],
+        "outputParameters": [
+            {
+                "name": "beam",
+                "description": "Beam object."
+            }
+        ]
+    }
+}

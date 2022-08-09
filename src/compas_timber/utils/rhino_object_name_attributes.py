@@ -48,14 +48,11 @@ def update_rhobj_attributes_name(
 
 
 def update_attribute(name_str, attr, val, separator_entry="_", separator_keyval=":"):
-    print("name_str:",name_str)
     if name_str == "":
         d = {}
     else:
         d = get_dict_from_str(name_str, separator_entry, separator_keyval)
-        print("*",d)
     d[attr] = val  # if attr key exists, will be overwritten
-    print(d)
     return get_str_from_dict(d, separator_entry, separator_keyval)
 
 
