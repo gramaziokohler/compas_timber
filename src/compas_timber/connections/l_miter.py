@@ -38,16 +38,21 @@ class LMiterJoint(Joint):
         self.beamA_key = value["beamA_key"]
         self.beamB_key = value["beamB_key"]
 
-
     @Joint.assembly.setter
     def assembly(self, assembly):
         Joint.assembly.fset(self, assembly)
         self.beamA = self.assembly.find_by_key(self.beamA_key)
         self.beamB = self.assembly.find_by_key(self.beamB_key)
 
+    @Joint.assembly.setter
+    def assembly(self, assembly):
+        Joint.assembly.fset(self, assembly)
+        self.beamA = assembly.find_by_key(self.beamA_key)
+        self.beamB = assembly.find_by_key(self.beamB_key)
+
+
 
     def add_features(self, apply = False):
-
         plnA, plnB = self.cutting_planes
 
         plnA = Frame.from_plane(plnA)
