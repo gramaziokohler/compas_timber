@@ -249,7 +249,8 @@ class TimberAssembly(Assembly):
         None
         """
         for joint in self.joints:
-            joint.add_features()
+            for feature in joint.features: feature.apply()
+            #joint.add_features(apply = True)
 
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)

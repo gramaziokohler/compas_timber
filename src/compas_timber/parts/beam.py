@@ -271,6 +271,16 @@ class Beam(Part):
             z = Vector(1, 0, 0)
         return z
 
+    def endpoint_closest_to_point(self, point):
+        ps = self.centerline_start
+        pe = self.centerline_end
+        ds = point.distance_to_point(ps)
+        de = point.distance_to_point(pe)
+
+        if ds <= de:
+            return ["start", ps]
+        else:
+            return ["end", pe]
 
 if __name__ == "__main__":
     b = Beam(Frame.worldXY(), 10, 5, 13, "brep")

@@ -2,6 +2,7 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
+from compas.geometry import Frame
 
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
@@ -9,7 +10,7 @@ from ..connections.joint import Joint
 
 
 class LMiterJoint(Joint):
-    def __init__(self, assembly, beamA, beamB):
+    def __init__(self, assembly=None, beamA=None, beamB=None):
 
         super(LMiterJoint, self).__init__(assembly, [beamA, beamB])
         self.beamA = beamA
@@ -37,16 +38,29 @@ class LMiterJoint(Joint):
         self.beamA_key = value["beamA_key"]
         self.beamB_key = value["beamB_key"]
 
-    def add_feature(self):
-        """
-        Adds the feature definitions (geometry, operation) to the involved beams.
-        In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
-        """
-        # TODO: how to saveguard this being added multiple times?
+
+    @Joint.assembly.setter
+    def assembly(self, assembly):
+        Joint.assembly.fset(self, assembly)
+        self.beamA = self.assembly.find_by_key(self.beamA_key)
+        self.beamB = self.assembly.find_by_key(self.beamB_key)
+
+
+    def add_features(self, apply = False):
+
         plnA, plnB = self.cutting_planes
-        self.beamA.add_feature(plnA, "trim")
-        self.beamB.add_feature(plnB, "trim")
-        # pass
+
+        plnA = Frame.from_plane(plnA)
+        plnB = Frame.from_plane(plnB)
+
+        feature = self.beamA.add_feature(plnA, "trim")
+        self.features.append(feature)
+
+        feature = self.beamB.add_feature(plnB, "trim")
+        self.features.append(feature)
+
+        if apply:
+            [feature.apply() for feature in self.features]
 
     @property
     def cutting_planes(self):
@@ -56,8 +70,8 @@ class LMiterJoint(Joint):
 
         # intersection point (average) of both centrelines
         [pxA, tA], [pxB, tB] = intersection_line_line_3D(
-            self.beamA.centreline,
-            self.beamB.centreline,
+            self.beamA.centerline,
+            self.beamB.centerline,
             max_distance=self.beamA.height + self.beamB.height,
             limit_to_segments=False,
             tol=self.assembly.tol,
