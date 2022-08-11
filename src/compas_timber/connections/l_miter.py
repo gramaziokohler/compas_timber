@@ -9,8 +9,7 @@ from ..connections.joint import Joint
 
 
 class LMiterJoint(Joint):
-    def __init__(self, assembly, beamA, beamB):
-
+    def __init__(self, assembly=None, beamA=None, beamB=None):
         super(LMiterJoint, self).__init__(assembly, [beamA, beamB])
         self.beamA = beamA
         self.beamB = beamB
@@ -37,7 +36,13 @@ class LMiterJoint(Joint):
         self.beamA_key = value["beamA_key"]
         self.beamB_key = value["beamB_key"]
 
-    def add_feature(self):
+    @Joint.assembly.setter
+    def assembly(self, assembly):
+        Joint.assembly.fset(self, assembly)
+        self.beamA = assembly.find_by_key(self.beamA_key)
+        self.beamB = assembly.find_by_key(self.beamB_key)
+
+    def add_features(self, apply=True):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
@@ -56,8 +61,8 @@ class LMiterJoint(Joint):
 
         # intersection point (average) of both centrelines
         [pxA, tA], [pxB, tB] = intersection_line_line_3D(
-            self.beamA.centreline,
-            self.beamB.centreline,
+            self.beamA.centerline,
+            self.beamB.centerline,
             max_distance=self.beamA.height + self.beamB.height,
             limit_to_segments=False,
             tol=self.assembly.tol,
