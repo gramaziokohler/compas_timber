@@ -106,7 +106,7 @@ class TButtJoint(Joint):
         if self.features:
             self.main_beam.clear_features()
 
-        feature = self.main_beam.add_feature(self.cutting_plane, "trim")
+        feature = self.main_beam.add_geometry_feature(self.cutting_plane, "trim")
         self.features.append(feature)
         if apply:
             feature.apply()
