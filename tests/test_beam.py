@@ -1,12 +1,14 @@
 import copy
-
 import pytest
+
+from numpy import isclose
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
-from numpy import isclose
 
-from compas_timber.parts.beam import Beam
+from compas_timber.parts import Beam
+from compas_timber.parts import BeamDimensionFeature
+
 
 
 def test_create(test_frame):
@@ -70,6 +72,18 @@ def test_deepcopy():
     @pytest.fixture()
     def test_features():
         return [(Frame.worldXY(), "trim")]
+
+
+def test_dimension_feature():
+    b = Beam(Frame.worldXY(), 5., 5., 5., "mesh")
+    f = BeamDimensionFeature(b, "depth", 5)
+    b.add_feature(f, apply=True)
+
+    assert isclose(b.depth, 10.)
+
+    f.restore()
+
+    assert isclose(b.depth, 5.)
 
 
 if __name__ == "__main__":

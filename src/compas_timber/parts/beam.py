@@ -5,6 +5,7 @@ from compas.datastructures.assembly import Part
 from compas.datastructures.assembly.part import BrepGeometry
 from compas.datastructures.assembly.part import MeshGeometry
 from compas.datastructures import Feature
+from compas.datastructures import FeatureError
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -47,7 +48,43 @@ def _create_brep_shape(width, height, depth):
 
 
 class BeamDimensionFeature(Feature):
-    pass
+    """This class represents a feature which inflicts changes to the parametric shape of a Beam.
+
+    Parameters
+    ----------
+    beam : :class:`~compas_timber.parts.Beam`
+        The Beam to which this feature will get added.
+    attribute_name : str
+        The name of the attribute of Beam this feature will be modifying.
+    by_value: int|float
+        The value by which the attribute shall be modified. Numerical only. Use positive values to increase and negative to decrease.
+
+    """
+    def __init__(self, beam, attibute_name, by_value):
+        super(BeamDimensionFeature, self).__init__(part=beam)
+
+        if not hasattr(beam, attibute_name):
+            raise FeatureError("Beam has no attribute: {}".format(attibute_name))
+
+        current_value = getattr(beam, attibute_name)
+        if not isinstance(current_value,(int, float)):
+            raise FeatureError("Attribute {} cannot be used by Feature. Only numerical attributes are currently supported!".format(attribute_name))
+
+        self.attribute_name = attibute_name
+        self.by_value = by_value
+
+    def apply(self):
+        """Applies this feature to the associated Beam."""
+        self._update_attribute_by(self.by_value)
+
+    def restore(self):
+        """Performs the inverse operation in order to restore the the attribute modified by this feature to its original value."""
+        self._update_attribute_by(-self.by_value)
+
+    def _update_attribute_by(self, by_value):
+        current_value = getattr(self.part, self.attribute_name)
+        setattr(self.part, self.attribute_name, current_value+by_value)
+        self.part.update_beam_geometry()
 
 
 class Beam(Part):
