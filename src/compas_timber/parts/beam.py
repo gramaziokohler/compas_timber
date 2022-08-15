@@ -4,6 +4,7 @@ from collections import deque
 from compas.datastructures.assembly import Part
 from compas.datastructures.assembly.part import BrepGeometry
 from compas.datastructures.assembly.part import MeshGeometry
+from compas.datastructures import Feature
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -45,6 +46,10 @@ def _create_brep_shape(width, height, depth):
     return BrepGeometry(brep_box)
 
 
+class BeamDimensionFeature(Feature):
+    pass
+
+
 class Beam(Part):
     """A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
     Parameters
@@ -76,14 +81,15 @@ class Beam(Part):
     }
 
     def __init__(self, frame, width, height, depth, geometry_type, **kwargs):
-        geometry = self._create_beam_shape_from_params(width, height, depth, geometry_type)
-        super(Beam, self).__init__(geometry=geometry, frame=frame)
+        super(Beam, self).__init__(frame=frame)
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.depth = depth
         self.geometry_type = geometry_type
         self.assembly = None
+
+        self.update_beam_geometry()
 
     @staticmethod
     def _create_beam_shape_from_params(width, height, depth, geometry_type):
@@ -104,6 +110,9 @@ class Beam(Part):
         # when copying using data.copy()
         self.assembly = None
         return self.copy()
+
+    def update_beam_geometry(self):
+        self.geometry = self._create_beam_shape_from_params(self.width, self.height, self.depth, self.geometry_type)
 
     def is_identical(self, other):
         tol = self.tol
