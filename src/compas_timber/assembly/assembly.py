@@ -145,6 +145,8 @@ class TimberAssembly(Assembly):
         int
             The graph key identifier of the added beam.
         """
+        if beam.assembly:
+            raise AssemblyError("Beam is already associated with an Assembly! Cannot be added to an additional one.")
         key = self.add_part(part=beam, type="part_beam")
         self._beams.append(beam)
         beam.assembly = self

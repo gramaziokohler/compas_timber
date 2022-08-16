@@ -1,5 +1,6 @@
 import copy
 import pytest
+from compas.datastructures import AssemblyError
 
 from numpy import isclose
 from compas.geometry import Frame
@@ -8,7 +9,7 @@ from compas.geometry import Vector
 
 from compas_timber.parts import Beam
 from compas_timber.parts import BeamDimensionFeature
-
+from compas_timber.assembly import TimberAssembly
 
 
 def test_create(test_frame):
@@ -84,6 +85,16 @@ def test_dimension_feature():
     f.restore()
 
     assert isclose(b.depth, 5.)
+
+
+def test_add_to_multiple_assemblies():
+    b = Beam(Frame.worldXY(), 5., 5., 5., "mesh")
+    a = TimberAssembly()
+    a.add_beam(b)
+
+    a2 = TimberAssembly()
+    with pytest.raises(AssemblyError):
+        a2.add_beam(b)
 
 
 if __name__ == "__main__":
