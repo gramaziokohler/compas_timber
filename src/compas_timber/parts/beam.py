@@ -53,6 +53,7 @@ class Beam(Part):
         self.height = height
         self.length = length
         self.assembly = None
+        self.brep = None
 
     def __str__(self):
         return "Beam %s x %s x %s at %s" % (
@@ -209,7 +210,7 @@ class Beam(Part):
         Base shape of the beam, i.e. box with no features.
         """
         boxframe = Frame(
-            self.frame.point - self.frame.yaxis*self.width*0.5 - self.frame.zaxis*self.height*0.5,
+            self.frame.point + self.frame.xaxis*self.length*0.5 ,
             self.frame.xaxis,
             self.frame.yaxis,
         )
@@ -220,7 +221,7 @@ class Beam(Part):
         # TODO: temp error catcher: calling Beam.shape throws an error in Part ("readonly attribute")
         pass
 
-    @property
+
     def geometry(self, geometry_representation="brep"):
         """
         Geometry of the beam with all features (e.g. trims, cuts, notches, holes etc.)
@@ -321,7 +322,7 @@ class Beam(Part):
     def add_feature(self, shape, operation):
         """
         shape: compas geometry
-        operation: 'bool_union', 'bool_difference', 'bool_intersection', 'trim'
+        operation: 'bool_union', 'bool_difference', 'bool_intersection', 'trim', 'extend'
         """
         # TODO: add some descriptor attribute to identify the source/type/character of features later?
         self.features.append((shape, operation))
@@ -350,7 +351,7 @@ class Beam(Part):
         pe = self.__centreline_end
         ds = point.distance_to_point(ps)
         de = point.distance_to_point(pe)
-
+        
         if ds <= de:
             return ["start", ps]
         else:

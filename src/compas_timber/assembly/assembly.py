@@ -77,8 +77,8 @@ class TimberAssembly(Assembly):
         # omitting (object.assembly is self) check for now
         return obj.guid in self._parts
 
-    def add_beam(self, beam):
-        key = self.add_part(part=beam, type="part_beam")
+    def add_beam(self, beam, key = None):
+        key = self.add_part(part=beam, type="part_beam", key=key)
         beam.assembly = self
         return key
 

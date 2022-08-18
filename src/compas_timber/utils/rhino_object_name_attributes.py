@@ -41,6 +41,14 @@ def update_rhobj_attributes_name(
     obj.Attributes.Name = new_name
     obj.CommitChanges()
 
+def get_obj_attributes(guid,separator_entry="_", separator_keyval=":"):
+    name = get_rhobj_name(guid)
+    if name:
+        return get_dict_from_str(name, separator_entry="_", separator_keyval=":")
+    else:
+        return None
+
+
 
 # =======================================================================================
 # GENERIC PYTHON-ONLY METHODS

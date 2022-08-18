@@ -2,6 +2,7 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
+from compas.geometry import Frame
 
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 from compas_timber.utils.compas_extra import intersection_line_plane
@@ -24,27 +25,32 @@ class LMiterJoint(Joint):
     def calc_extension(self,beam,pln):
         edges = beam.long_edges
         x = {}
+        pln = Plane.from_frame(pln)
         for e in edges:
             p,t = intersection_line_plane(e,pln)
             x[t]=p
         
-        tmin=min(x.keys())
-        tmax=max(x.keys())
+        px = intersection_line_plane(beam.centreline,pln)[0]
+        side, _ = beam.endpoint_closest_to_point(px)
+
         ds=0.0
         de=0.0
-        if tmin<0.0:
-            ds = x[tmin].distance_to_point(beam.frame.point)
-        if tmax>1.0:
-            de = x[tmax].distance_to_point(beam.frame.point+beam.frame.xaxis*beam.length)
+        if side == "start":
+            tmin = min(x.keys())
+            if tmin<0.0: 
+                ds = tmin * beam.length #should be negative
+        elif side == "end":
+            tmax=max(x.keys())
+            if tmax>1.0:
+                de = (tmax-1.0) * beam.length
+
         return (ds,de)
 
 
-    def add_feature(self):
+    def add_features(self):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
-        In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
         """
-        # TODO: how to saveguard this being added multiple times?
         plnA, plnB = self.cutting_planes
 
         self.beamA.add_feature(self.calc_extension(self.beamA,plnA), "extend")
@@ -68,6 +74,7 @@ class LMiterJoint(Joint):
             limit_to_segments=False,
             tol=self.assembly.tol,
         )
+        #TODO: add error-trap + solution for I-miter joints
 
         p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
 
@@ -90,6 +97,9 @@ class LMiterJoint(Joint):
         plnA = Plane(p, v_normal * -1.0)
         plnB = Plane(p, v_normal)
 
+        plnA = Frame.from_plane(plnA)
+        plnB = Frame.from_plane(plnB)
+        print(plnA,plnB)
         return [plnA, plnB]
 
     
