@@ -6,7 +6,7 @@
     "description": "Read attributes encoded in the referenced object's name.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": true,
+        "isAdvancedMode": false,
         "iconDisplay": 2,
         "inputParameters": [
             {
