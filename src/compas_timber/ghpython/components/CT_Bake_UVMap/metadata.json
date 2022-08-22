@@ -1,0 +1,35 @@
+{
+    "name": "BakeUVMap",
+    "nickname": "BakeUVMap",
+    "category": "COMPAS Timber",
+    "subcategory": "Utils",
+    "description": "Bake Assembly objects and add a UVMapping.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [
+             
+            {
+                "name": "Assembly",
+                "description": "Assembly object.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },           
+            {
+                "name": "MapSize",
+                "description": "Scaling of the UVMap in x,y,z directions (List of three positive values).",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Bake",
+                "description": "Set to True to Bake. Nothing happens if None or False.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+        ]
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "name": "JointDef: T-Butt",
+    "nickname": "JointDef: T-Butt",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "Defines a T-Butt joint for the given two Beams.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [   
+            {
+                "name": "B1",
+                "description": "First (main) Beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },           
+            {
+                "name": "B2",
+                "description": "Second (cross) Beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "TButt",
+                "description": "T-Butt joint definition."
+            }
+        ]
+    }
+}

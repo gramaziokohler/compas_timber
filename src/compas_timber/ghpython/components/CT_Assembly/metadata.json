@@ -1,0 +1,49 @@
+{
+    "name": "Assembly",
+    "nickname": "Assembly",
+    "category": "COMPAS Timber",
+    "subcategory": "Assembly",
+    "description": "Creates an Assembly. If Apply: geometry operations defined by joints and features will be executed.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [   
+            {
+                "name": "BeamsCollection",
+                "description": "Collection of Beams",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },           
+            {
+                "name": "JointsCollection",
+                "description": "Collection of joint definitions.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "FeaturesCollection",
+                "description": "Collection of feature definitions.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "apply",
+                "description": "If True, geometry operations on beams defined by joints and features will be executed (e.g. trims, notches).",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Assembly",
+                "description": "An Assembly object."
+            },
+            {
+                "name": "Breps",
+                "description": "Brep geometry of the beams."
+            }
+
+        ]
+    }
+}

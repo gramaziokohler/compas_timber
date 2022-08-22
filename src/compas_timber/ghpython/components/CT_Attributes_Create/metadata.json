@@ -1,0 +1,33 @@
+{
+    "name": "Attribute",
+    "nickname": "Attribute",
+    "category": "COMPAS Timber",
+    "subcategory": "Utils",
+    "description": "Constructs an attribute with a given Name and Value.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Name",
+                "description": "Name of the Attribute as a string.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Value",
+                "description": "Value of the Attribute as a string.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            }
+
+        ],
+        "outputParameters": [
+            {
+                "name": "Attr",
+                "description": "An Attribute object."
+            }
+        ]
+    }
+}

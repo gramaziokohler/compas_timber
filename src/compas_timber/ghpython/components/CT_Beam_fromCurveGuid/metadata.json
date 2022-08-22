@@ -6,51 +6,56 @@
     "description": "Creates a Beam.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": true,
+        "isAdvancedMode": false,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "curve_guid",
-                "description": "Guid of a curve or line in the active Rhino document.",
+                "name": "refCrv",
+                "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "guid",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "z_vector",
-                "description": "Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
-                "typeHintID": "vector",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "width",
-                "description": "Width of the cross-section (usually the smaller dimension).",
-                "typeHintID": "float",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "height",
-                "description": "Height of the cross-section (usually the larger dimension).",
-                "typeHintID": "float",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "attributes",
-                "description": "Additional attributes of a beam.",
                 "scriptParamAccess": 1
             },
             {
-                "name": "reload",
-                "description": "Prompts the component to re-run.",
+                "name":"ZV",
+                "description": "Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
+                "typeHintID": "vector",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "W",
+                "description": "Width of the cross-section (usually the smaller dimension).",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "H",
+                "description": "Height of the cross-section (usually the larger dimension).",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Cat",
+                "description": "Category of a beam.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Gr",
+                "description": "Name of a group or subassembly.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "update_attrs",
+                "description": "If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
-            }   
-
-
+            }
         ],
         "outputParameters": [
             {
-                "name": "beam",
-                "description": "Beam object."
+                "name": "Beam",
+                "description": "(List of) Beam object(s)."
             }
         ]
     }
