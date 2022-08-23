@@ -3,9 +3,10 @@ import Rhino.Geometry as rg
 from compas_rhino.conversions import point_to_rhino, vector_to_rhino, frame_to_rhino 
 from compas_rhino.conversions import box_to_rhino
 
-from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.connections.t_butt import TButtJoint 
-from compas_timber.connections.l_miter import LMiterJoint
+from compas_timber.assembly import TimberAssembly
+from compas_timber.connections import TButtJoint 
+from compas_timber.connections import LMiterJoint
+from compas_timber.connections import LButtJoint
 
 from copy import deepcopy
 
@@ -58,6 +59,8 @@ for joint_type, beams in joints_list:
         TButtJoint(assembly, beamA, beamB)
     elif joint_type == 'L-Miter':
         LMiterJoint(assembly, beamA, beamB)
+    elif joint_type == 'L-Butt':
+        LButtJoint(assembly, beamA, beamB)
 
 print "Created following joints:"
 for j in assembly.joints: print "    ",j

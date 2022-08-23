@@ -13,17 +13,17 @@
                 "name": "refObj",
                 "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "guid",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
-                "name": "ZV",
+                "name": "ZVec",
                 "description": "Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken."
 
             },
             {
-                "name": "V",
+                "name": "W",
                 "description": "Width of the cross-section (usually the smaller dimension)."
 
             },
