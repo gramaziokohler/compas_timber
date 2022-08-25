@@ -62,6 +62,8 @@ class Beam(Part):
             self.length,
             self.frame,
         )
+    def __hash__(self):
+        return hash(str(self))
 
     def __copy__(self, *args, **kwargs):
         return self.copy()

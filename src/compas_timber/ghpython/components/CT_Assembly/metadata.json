@@ -3,7 +3,7 @@
     "nickname": "Assembly",
     "category": "COMPAS Timber",
     "subcategory": "Assembly",
-    "description": "Creates an Assembly. If Apply: geometry operations defined by joints and features will be executed.",
+    "description": "Creates an Assembly",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": false,
@@ -37,7 +37,7 @@
         "outputParameters": [
             {
                 "name": "Assembly",
-                "description": "An Assembly object."
+                "description": "Assembly object."
             },
             {
                 "name": "Breps",

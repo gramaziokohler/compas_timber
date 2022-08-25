@@ -16,7 +16,7 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "attribute",
+                "name": "Attribute",
                 "description": "Attribute.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1

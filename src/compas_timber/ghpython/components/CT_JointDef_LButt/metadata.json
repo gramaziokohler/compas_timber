@@ -25,7 +25,7 @@
         "outputParameters": [
             {
                 "name": "LButt",
-                "description": "L-Butt joint definition."
+                "description": "L-Butt JointDefinition."
             }
         ]
     }

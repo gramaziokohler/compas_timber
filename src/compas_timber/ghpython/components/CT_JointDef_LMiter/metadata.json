@@ -25,7 +25,7 @@
         "outputParameters": [
             {
                 "name": "LMiter",
-                "description": "L-Miter joint definition."
+                "description": "L-Miter JointDefinition."
             }
         ]
     }

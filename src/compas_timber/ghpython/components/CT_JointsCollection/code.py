@@ -1,26 +1,33 @@
-
 from compas_timber.utils.workflow import CollectionDef
+import Grasshopper.Kernel as ghk
+
+warning = ghk.GH_RuntimeMessageLevel.Warning
+error = ghk.GH_RuntimeMessageLevel.Error
+
 
 def same_beams(beams1, beams2):
     return set(beams1) == set(beams2)
 joints = []
 
-joint_defaults = Defaults
-joint_overrides = Overrides
+#clean all Nones
+joint_defaults = [_ for _ in Defaults if _]
+joint_overrides = [_ for _ in Overrides if _]
 
-if joint_defaults and not joint_overrides:
+
+if not joint_defaults and not joint_overrides:
+    ghenv.Component.AddRuntimeMessage(warning, "Input parameters Defaults and Overrides both failed to collect data")
+
+elif joint_defaults and not joint_overrides:
     joints = joint_defaults
 
 elif not joint_defaults and joint_overrides: 
     joints = joint_overrides
 
 elif joint_defaults and joint_overrides:
-    
-    
+
     jd_jo = {k:[] for k in joint_defaults}
     jo_jd = {k:[] for k in joint_overrides}
-    
-    
+
     for jd in joint_defaults:
         for jo in joint_overrides:
             if same_beams(jd.beams, jo.beams):
@@ -38,4 +45,4 @@ elif joint_defaults and joint_overrides:
 
 
 
-JointsCollection = CollectionDef(joints)
+    JointsCollection = CollectionDef(joints)

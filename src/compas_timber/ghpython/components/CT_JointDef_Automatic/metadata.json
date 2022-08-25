@@ -16,25 +16,25 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "Dmax",
-                "description": "Maximum distance between centerlines of two Beams (limited to segments) to consider the Beams as connecting. Optional (if omitted, a default value equal to the average beam height will be taken.)",
-                "typeHintID": "float",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "JRules",
+                "name": "JointRules",
                 "description": "Pre-defined rules for default joint types based on 'Category' attribute of the Beams.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "Dmax",
+                "description": "(optional) Maximum distance between centerlines of two Beams (limited to segments) to consider the Beams as connecting. Optional (if omitted, a default value equal to the average beam height will be taken.)",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
-                "name": "JD",
+                "name": "Joints",
                 "description": "List of JointDefinitions"
             },
             {
-                "name": "T",
+                "name": "Info",
                 "description": "Report and analysis of the found connections and any issues."
             }
         ]

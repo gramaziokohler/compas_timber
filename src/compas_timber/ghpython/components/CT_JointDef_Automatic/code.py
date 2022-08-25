@@ -1,6 +1,16 @@
-
 from compas_timber.utils.workflow import guess_joint_topology_2beams
 from compas_timber.utils.workflow import JointDefinition
+
+import Grasshopper.Kernel as ghk
+
+warning = ghk.GH_RuntimeMessageLevel.Warning
+error = ghk.GH_RuntimeMessageLevel.Error
+
+if not BeamsCollection:
+    ghenv.Component.AddRuntimeMessage(warning, "Input parameter BeamsCollection failed to ceollect data")
+if not JointRules:
+    ghenv.Component.AddRuntimeMessage(warning, "Input parameter JointRules failed to ceollect data")
+
 
 tol = 1e-3
 
@@ -10,7 +20,7 @@ connectivity = {'L':[],
                 'T':[],
                 'X':[]}
 
-if BeamsCollection and JRules:
+if BeamsCollection and JointRules:
     
     beams = BeamsCollection.objs
     groups = set([beam.attributes['group'] for beam in beams])
@@ -30,7 +40,7 @@ if BeamsCollection and JRules:
     
     #Rephrase joint rules into a dict of {'cat+cat':type,}==========================
     joint_rules_dict = {}
-    for jr in JRules: 
+    for jr in JointRules: 
         key = "%s+%s"%(jr[0],jr[1])
         if key in joint_rules_dict.keys():
             raise UserWarning("Conflicting rules detected for %s"%key)
@@ -83,7 +93,7 @@ if BeamsCollection and JRules:
     
     
     #output
-    JD = joints_def
+    Joints = joints_def
     
     #print logs
     log_no_def = set(log_no_def)
@@ -105,4 +115,4 @@ if BeamsCollection and JRules:
         for t,c1,c2,b1,b2,d in log_topo_mismatch:
             txt+="%s+%s (%s+%s) is %s --> cannot apply %s\n"%(c1,c2,b1,b2,t,d)
     
-    T = topo_txt+txt
+    Info = topo_txt+txt

@@ -18,7 +18,7 @@
             {
                 "name": "Pln",
                 "description": "List of cutting Planes (one or more).",
-                "typeHintID": "none",
+                "typeHintID": "plane",
                 "scriptParamAccess": 1
             }
         ],

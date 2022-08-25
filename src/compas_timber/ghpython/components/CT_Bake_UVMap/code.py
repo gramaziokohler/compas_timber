@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import Rhino.Geometry as rg
 import scriptcontext as sc
 import math
@@ -9,6 +8,16 @@ import Rhino
 import random
 
 from compas_rhino.conversions import frame_to_rhino
+
+import Grasshopper.Kernel as ghk
+
+warning = ghk.GH_RuntimeMessageLevel.Warning
+error = ghk.GH_RuntimeMessageLevel.Error
+
+if not Assembly:
+    ghenv.Component.AddRuntimeMessage(warning, "Input parameter Assembly faild to collect data")
+elif not Assembly.beams:
+    ghenv.Component.AddRuntimeMessage(warning, "No Beams in the Assembly")
 
 def create_box_map(pln,sx,sy,sz):
     """
@@ -52,19 +61,22 @@ else:
     dimx,dimy,dimz = MapSize
 
 if Bake:
-    
     frames = [frame_to_rhino(beam.frame) for beam in Assembly.beams]
     breps = [beam.brep for beam in Assembly.beams]
     
+    if frames and breps:
+        rs.EnableRedraw(False)
+        sc.doc = Rhino.RhinoDoc.ActiveDoc
     
-    rs.EnableRedraw(False)
-    sc.doc = Rhino.RhinoDoc.ActiveDoc
+        for brep, frame in zip(breps,frames):
+            attributes = None
+            guid = sc.doc.Objects.Add(brep, attributes)
+            boxmap,map_pln = create_box_map(frame,dimx,dimy,dimz)
+            sc.doc.Objects.ModifyTextureMapping(guid, 1, boxmap)
 
-    for brep, frame in zip(breps,frames):
-        attributes = None
-        guid = sc.doc.Objects.Add(brep, attributes)
-        boxmap,map_pln = create_box_map(frame,dimx,dimy,dimz)
-        sc.doc.Objects.ModifyTextureMapping(guid, 1, boxmap)
+        sc.doc = ghdoc
+        rs.EnableRedraw(True)
+        rs.Redraw()
 
 else:
     sc.doc = ghdoc

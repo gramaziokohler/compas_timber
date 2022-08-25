@@ -13,13 +13,15 @@
                 "name": "Defaults",
                 "description": "List of JointDefinitions that serve as default.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten":true
             },
             {
                 "name": "Overrides",
                 "description": "List of JointDefinitions that serve as overrides or extras. If there is a JointDefinition for the same pair of Beams in Defaults, the JointType will be overwritten. If not, a new JointDefinition will be added.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten": true
             }
         ],
         "outputParameters": [

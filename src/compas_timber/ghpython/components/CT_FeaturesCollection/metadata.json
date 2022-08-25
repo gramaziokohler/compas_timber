@@ -13,7 +13,8 @@
                 "name": "Features",
                 "description": "List of pre-defined features.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten":true
             }
         ],
         "outputParameters": [

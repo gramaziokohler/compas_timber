@@ -1,22 +1,23 @@
-__author__ = "aapolina"
-__version__ = "2022.08.16"
-
-
 import Rhino
 from compas_timber.utils.rhino_object_name_attributes import get_obj_attributes
 
-guid = refObj
+import Grasshopper.Kernel as ghk
+warning = ghk.GH_RuntimeMessageLevel.Warning
+error = ghk.GH_RuntimeMessageLevel.Error
+remark = ghk.GH_RuntimeMessageLevel.Remark
 
+if not refCrv:
+    ghenv.Component.AddRuntimeMessage(warning, "Input parameter refCrv failed to collect data")
+
+guid = refCrv
 if guid:
-
     # get attributes from the name string ==========================================
     attr = get_obj_attributes(guid)
     if attr:
-        if 'width' in attr: W = float(attr['width']) 
-        if 'height' in attr: H = float(attr['height'])
-        if 'category' in attr: Cat = attr['category']
-        if 'zaxis' in attr: 
-            ZVec = attr['zaxis']
+        if 'width' in attr:     Width = float(attr['width']) 
+        if 'height' in attr:    Height = float(attr['height'])
+        if 'category' in attr:  Category = attr['category']
+        if 'zaxis' in attr:     ZVector = attr['zaxis']
 
     # get the group if objects are grouped =========================================
     obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
@@ -25,10 +26,8 @@ if guid:
     if gl: 
         gl = list(gl)
         if len(gl)>1: 
-            print("This object () belongs to more than one group! (I will pick the first group I find.)")
-        group = gl[0]
+            ghenv.Component.AddRuntimeMessage(remark, "Some objects belong to more than one group! (I will pick the first group I find.)")
+        Group = gl[0]
+        
     else:
-        group = None
-
-
-    Gr = group
+        Group = None
