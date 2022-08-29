@@ -1,6 +1,6 @@
 {
-    "name": "ShowBeamIndex",
-    "nickname": "ShowBeamIndex",
+    "name": "ShowPlaneAxes",
+    "nickname": "ShowPlaneAxes",
     "category": "COMPAS Timber",
     "subcategory": "Show",
     "description": "Shows the coordinate system (XYZ axes) represented by the plane.",

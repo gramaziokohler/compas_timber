@@ -1,0 +1,33 @@
+{
+    "name": "FindByIndex",
+    "nickname": "FindByIndex",
+    "category": "COMPAS Timber",
+    "subcategory": "Utils",
+    "description": "Find a part in a Collection of parts, that corresponds with the given index.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [
+             
+            {
+                "name": "Collection",
+                "description": "A Collection of parts, e.g. Beams.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },           
+            {
+                "name": "Index",
+                "description": "Index (number) of the objec in the collection.",
+                "typeHintID": "int",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Obj",
+                "description": "Found parts, if any."
+            }
+        ]
+    }
+}
