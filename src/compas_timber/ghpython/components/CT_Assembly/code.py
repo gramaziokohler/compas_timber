@@ -1,6 +1,6 @@
 import Rhino.Geometry as rg
 
-from compas_rhino.conversions import point_to_rhino, vector_to_rhino, frame_to_rhino 
+from compas_rhino.conversions import frame_to_rhino 
 from compas_rhino.conversions import box_to_rhino
 
 from compas_timber.assembly import TimberAssembly
@@ -65,8 +65,8 @@ else:
         elif joint_type == 'L-Butt':
             LButtJoint(assembly, beamA, beamB)
 
-    print "Created following joints:"
-    for j in assembly.joints: print "    ",j
+    #print "Created following joints:"
+    #for j in assembly.joints: print "    ",j
 
     #add features===================================================================
     L_joints = [j for j in assembly.joints if j.joint_type[0]=="L"]
@@ -87,7 +87,7 @@ else:
     else:
         brep_model = []
         for beam in assembly.beams:
-            print "-----------------\n beam %s --> %s feature(s)"%( beam.key, len(beam.features))
+            #print "-----------------\n beam %s --> %s feature(s)"%( beam.key, len(beam.features))
             for f in beam.features: print "    ", f
             #consolidate and apply extend features first
             extend_features = [f for f in beam.features if f[1] == "extend"] #f: [ds,de],'extend'
@@ -101,7 +101,7 @@ else:
             def trim_brep(brep,plns):
                 bi = brep
                 for pi in plns:
-                    pi.Flip()
+                    #in Rhino, the part of the breao on the positive side of the planes's normal (z) will be removed.
                     bx = rg.Brep.Trim(bi,pi,1e-6)
                     if len(bx)==0:
                         print("trim failed - nothing trimmed?")

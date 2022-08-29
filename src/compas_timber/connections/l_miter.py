@@ -22,39 +22,14 @@ class LMiterJoint(Joint):
     def joint_type(self):
         return "L-Miter"
 
-    def calc_extension(self,beam,pln):
-        edges = beam.long_edges
-        x = {}
-        pln = Plane.from_frame(pln)
-        for e in edges:
-            p,t = intersection_line_plane(e,pln)
-            x[t]=p
-        
-        px = intersection_line_plane(beam.centreline,pln)[0]
-        side, _ = beam.endpoint_closest_to_point(px)
-
-        ds=0.0
-        de=0.0
-        if side == "start":
-            tmin = min(x.keys())
-            if tmin<0.0: 
-                ds = tmin * beam.length #should be negative
-        elif side == "end":
-            tmax=max(x.keys())
-            if tmax>1.0:
-                de = (tmax-1.0) * beam.length
-
-        return (ds,de)
-
-
     def add_features(self):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         """
         plnA, plnB = self.cutting_planes
 
-        self.beamA.add_feature(self.calc_extension(self.beamA,plnA), "extend")
-        self.beamB.add_feature(self.calc_extension(self.beamB,plnB), "extend")
+        self.beamA.add_feature(self.beamA.extension_to_plane(plnA), "extend")
+        self.beamB.add_feature(self.beamB.extension_to_plane(plnB), "extend")
 
         self.beamA.add_feature(plnA, "trim")
         self.beamB.add_feature(plnB, "trim")
@@ -94,12 +69,11 @@ class LMiterJoint(Joint):
         v_perp = Vector(*cross_vectors(v_bisector, vA))
         v_normal = Vector(*cross_vectors(v_bisector, v_perp))
 
-        plnA = Plane(p, v_normal * -1.0)
-        plnB = Plane(p, v_normal)
+        plnA = Plane(p, v_normal )
+        plnB = Plane(p, v_normal * -1.0)
 
         plnA = Frame.from_plane(plnA)
         plnB = Frame.from_plane(plnB)
-        print(plnA,plnB)
         return [plnA, plnB]
 
     

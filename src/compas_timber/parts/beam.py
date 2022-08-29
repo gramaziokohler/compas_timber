@@ -14,6 +14,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
 
 from compas_timber.utils.helpers import close
+from compas_timber.utils.compas_extra import intersection_line_plane
 
 # TODO: update to global compas PRECISION
 tol_angle = 1e-3  # [radians]
@@ -44,7 +45,7 @@ class Beam(Part):
     centreline: :class:``compas.geometry.Line`
     """
 
-    operations = ["union" "difference" "intersection" "planar_trim"]
+    operations = ["trim", "extend"]
 
     def __init__(self, frame, length, width, height):
         super(Beam, self).__init__()
@@ -149,7 +150,8 @@ class Beam(Part):
         beam.features = self.features
         return beam
 
-    def side_frame(self, side_index):
+    @property
+    def faces(self):
         """
         Side index: sides of the beam's base shape (box) are numbered relative to the beam's coordinate system:
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -159,48 +161,27 @@ class Beam(Part):
         4: -x (side at the starting end)
         5: +x (side at the end of the beam)
         """
-        if side_index == 0:
-            return Frame(
-                Point(
-                    *add_vectors(self.frame.point, self.frame.yaxis * self.width * 0.5)
-                ),
-                self.frame.xaxis,
-                -self.frame.zaxis,
-            )
-        if side_index == 1:
-            return Frame(
-                Point(
-                    *add_vectors(
-                        self.frame.point, -self.frame.zaxis * self.height * 0.5
-                    )
-                ),
-                self.frame.xaxis,
-                -self.frame.yaxis,
-            )
-        if side_index == 2:
-            return Frame(
-                Point(
-                    *add_vectors(self.frame.point, -self.frame.yaxis * self.width * 0.5)
-                ),
-                self.frame.xaxis,
-                self.frame.zaxis,
-            )
-        if side_index == 3:
-            return Frame(
-                Point(
-                    *add_vectors(self.frame.point, self.frame.zaxis * self.height * 0.5)
-                ),
-                self.frame.xaxis,
-                self.frame.yaxis,
-            )
-        if side_index == 4:
-            return Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis)
-        if side_index == 5:
-            return Frame(
-                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
-                self.frame.yaxis,
-                self.frame.zaxis,
-            )
+        return [
+            Frame(Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, -self.frame.zaxis),
+            Frame(Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, -self.frame.yaxis),
+            Frame(Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
+            Frame(Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, self.frame.yaxis),
+            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
+            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)), self.frame.yaxis, self.frame.zaxis),  # small face at end point
+        ]
+
+    def side_frame(self, side_index):
+        #TODO: depricated
+        """
+        Side index: sides of the beam's base shape (box) are numbered relative to the beam's coordinate system:
+        0: +y (side's frame normal is equal to the beam's Y positive direction)
+        1: +z
+        2: -y
+        3: -z
+        4: -x (side at the starting end)
+        5: +x (side at the end of the beam)
+        """
+        return self.faces[side_index] 
 
     @property
     def centreline(self):
@@ -285,6 +266,29 @@ class Beam(Part):
         self.length = distance_point_point(ps, pe)
         return
     
+    def extension_to_plane(self,pln):
+        x = {}
+        pln = Plane.from_frame(pln)
+        for e in self.long_edges:
+            p,t = intersection_line_plane(e,pln)
+            x[t]=p
+        
+        px = intersection_line_plane(self.centreline,pln)[0]
+        side, _ = self.endpoint_closest_to_point(px)
+
+        ds=0.0
+        de=0.0
+        if side == "start":
+            tmin = min(x.keys())
+            if tmin<0.0: 
+                ds = tmin * self.length #should be negative
+        elif side == "end":
+            tmax=max(x.keys())
+            if tmax>1.0:
+                de = (tmax-1.0) * self.length
+
+        return (ds,de)
+
     def extend_ends(self, d_start, d_end):
         """
         Extensions at the start of the centerline should have a negative value.
@@ -358,6 +362,7 @@ class Beam(Part):
             return ["start", ps]
         else:
             return ["end", pe]
+
 
 
 if __name__ == "__main__":

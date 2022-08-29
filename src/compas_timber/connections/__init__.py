@@ -1,7 +1,7 @@
 """
 Connections are a collection of tools to generate joint geometries.
 """
-from .joint import Joint
+from .joint import Joint, beam_side_incidence
 from .t_butt import TButtJoint
 from .t_lap import TLapJoint
 from .l_butt import LButtJoint
