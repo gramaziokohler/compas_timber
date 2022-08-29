@@ -1,0 +1,23 @@
+{
+    "name": "ShowBeamIndex",
+    "nickname": "ShowBeamIndex",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "Shows the coordinate system (XYZ axes) represented by the plane.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+             
+            {
+                "name": "Pln",
+                "description": "Plane",
+                "typeHintID": "plane",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+        ]
+    }
+}
