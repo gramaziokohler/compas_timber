@@ -45,4 +45,4 @@ elif joint_defaults and joint_overrides:
 
 
 
-    JointsCollection = CollectionDef(joints)
+JointsCollection = CollectionDef(joints)

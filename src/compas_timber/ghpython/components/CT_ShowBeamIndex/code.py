@@ -9,10 +9,11 @@ import Rhino.Geometry as rg
 class MyComponent(component):
     
     def RunScript(self, BeamsCollection):
-        if not BeamsCollection: return
+        
         self.pt = []
         self.txt = []
         
+        if not BeamsCollection: return
         for i,beam in BeamsCollection.keys_map.items():
             self.pt.append(point_to_rhino(beam.midpoint))
             self.txt.append(str(i))

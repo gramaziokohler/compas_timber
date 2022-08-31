@@ -11,8 +11,6 @@ class MyComponent(component):
     def RunScript(self, Beam):
         
         self.frame = [frame_to_rhino(b.frame) for b in Beam]
-        if not self.frame: return
-        
         self.scale = [b.width+b.height for b in Beam]
 
     def DrawViewportWires(self,arg):
