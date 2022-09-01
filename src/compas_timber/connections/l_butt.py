@@ -76,7 +76,7 @@ class LButtJoint(Joint):
         self.main_beam.add_feature(self.main_beam.extension_to_plane(cfr_main), "extend")
         self.main_beam.add_feature(cfr_main, "trim")        
         self.cross_beam.add_feature(self.cross_beam.extension_to_plane(cfr_cross), "extend")
-        self.cross_beam.add_feature(cfr_cross, "trim")
+        #self.cross_beam.add_feature(cfr_cross, "trim")
 
 
 
