@@ -242,6 +242,11 @@ def build_ghuser_components(ctx, gh_io_folder=None, ironpython=None):
                 )
             )
 
+        # Also copy manually created GH user components
+        source_dir = os.path.abspath("src/compas_timber/ghpython/ghuser_manual")
+        for manual_ghuserfile in glob.glob(os.path.join(source_dir, '*.ghuser')):
+            shutil.copy(manual_ghuserfile, target_dir)
+
 
 @task(
     help={
