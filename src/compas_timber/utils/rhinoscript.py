@@ -1,11 +1,11 @@
+__author__ = "Aleksandra Anna Apolinarska"
+__copyright__ = "Gramazio Kohler Research, ETH Zurich, 2022"
+__credits__ = ["Aleksandra Anna Apolinarska"]
+__license__ = "MIT"
+__version__ = "20.09.2022"
+
 import Rhino
 import rhinoscript as rs
-
-
-
-
-
-
 
 
 def cmd_string_options(

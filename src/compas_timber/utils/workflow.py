@@ -1,3 +1,9 @@
+__author__ = "Aleksandra Anna Apolinarska"
+__copyright__ = "Gramazio Kohler Research, ETH Zurich, 2022"
+__credits__ = ["Aleksandra Anna Apolinarska"]
+__license__ = "MIT"
+__version__ = "20.09.2022"
+
 from compas_timber.connections.l_miter import LMiterJoint
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.x_lap import XLapJoint
@@ -8,71 +14,93 @@ from compas.geometry import subtract_vectors
 from compas.geometry import length_vector, add_vectors, scale_vector, dot_vectors
 from compas_timber.parts import Beam
 
-class CollectionDef():
+
+class CollectionDef:
     def __init__(self, objs):
         objs = [_ for _ in objs if _]
-        
+
         self.objs = objs
         self.keys_map = {}
-        
-        for i,obj in enumerate(objs):
-            self.keys_map[i]=obj
-    def __str__(self):
-        return "Collection with %s items."%len(self.objs)
 
-class JointDefinition():
-    joint_types = ['T-Butt', 'L-Miter', 'L-Butt']
+        for i, obj in enumerate(objs):
+            self.keys_map[i] = obj
+
+    def __str__(self):
+        return "Collection with %s items." % len(self.objs)
+
+
+class JointDefinition:
+    joint_types = ["T-Butt", "L-Miter", "L-Butt"]
 
     def __init__(self, joint_type, beams):
 
-        if joint_type not in self.joint_types: raise UserWarning("Wrong 'joint_type'. Instead of %s it should be one of the following strings: %s"%(joint_type, self.joint_types))
-        beams_clean = [b for b in beams if b.__class__.__name__ == Beam.__name__ ]
-        if len(beams_clean)!=2: raise UserWarning("Expected to get two Beams, got %s: %s."%(len(beams_clean),beams))
+        if joint_type not in self.joint_types:
+            raise UserWarning(
+                "Wrong 'joint_type'. Instead of %s it should be one of the following strings: %s"
+                % (joint_type, self.joint_types)
+            )
+        beams_clean = [b for b in beams if b.__class__.__name__ == Beam.__name__]
+        if len(beams_clean) != 2:
+            raise UserWarning(
+                "Expected to get two Beams, got %s: %s." % (len(beams_clean), beams)
+            )
 
         self.joint_type = joint_type
         self.beams = beams
+
     def __str__(self):
-        return "JointDef: %s %s"%(self.joint_type, self.beams)
+        return "JointDef: %s %s" % (self.joint_type, self.beams)
+
     def __hash__(self):
         return hash(str(self))
-    
-    def __eq__(self,other):
+
+    def __eq__(self, other):
         return (
-            isinstance(other, JointDefinition) and
-            self.joint_type == other.joint_type and
-            self.beams[0] in other.beams and
-            self.beams[1] in other.beams
+            isinstance(other, JointDefinition)
+            and self.joint_type == other.joint_type
+            and self.beams[0] in other.beams
+            and self.beams[1] in other.beams
         )
 
-class FeatureDefinition():
-    operations = ['trim']
+
+class FeatureDefinition:
+    operations = ["trim"]
+
     def __init__(self, feature_type, feature_shape, beam):
 
-        if feature_type not in self.operations: raise UserWarning("Wrong 'feature_type'. Instead of %s it should be one of the following strings: %s"%(feature_type, self.operations))
-        if beam.__class__.__name__ != Beam.__name__ : raise UserWarning("Expected to get a Beam, got %s."%beam)
+        if feature_type not in self.operations:
+            raise UserWarning(
+                "Wrong 'feature_type'. Instead of %s it should be one of the following strings: %s"
+                % (feature_type, self.operations)
+            )
+        if beam.__class__.__name__ != Beam.__name__:
+            raise UserWarning("Expected to get a Beam, got %s." % beam)
 
-        self.feature_type=feature_type
+        self.feature_type = feature_type
         self.beam = beam
         self.feature_shape = feature_shape
 
     def __str__(self):
-        return "FeatureDef: %s %s %s"%(self.feature_type, self.feature_shape, self.beam)
+        return "FeatureDef: %s %s %s" % (
+            self.feature_type,
+            self.feature_shape,
+            self.beam,
+        )
 
-class Attribute():
-    def __init__(self,attr_name, attr_value):
+
+class Attribute:
+    def __init__(self, attr_name, attr_value):
         self.name = attr_name
         self.value = attr_value
 
     def __str__(self):
-        return "Attribute %s: %s" % (self.name,self.value)
+        return "Attribute %s: %s" % (self.name, self.value)
 
 
+def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=None):
 
-def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
-
-    if not max_distance: 
+    if not max_distance:
         max_distance = beamA.height + beamB.height
-
 
     # #check if lines parallel (could be an I-joint)
     # def lines_parallel(line1, line2):
@@ -85,7 +113,7 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     #     n = cross_vectors(ab, cd)
 
     #     # check if lines are parallel
-    #     if length_vector(n) < tol: 
+    #     if length_vector(n) < tol:
     #         return True
     #     else:
     #         return False
@@ -102,17 +130,16 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     # if lines_parallel(beamA.centreline, beamB.centreline):
     #     if contact_points(beamA.centreline,beamB.centreline):
     #         #TODO: add a check if the angle between beams is 0 degrees or 180 degrees.  Return None if 0 degrees.
-    #         #TODO: replace with 'I' 
+    #         #TODO: replace with 'I'
     #         return ['L',(beamA, beamB)]
 
-    [pa,ta], [pb,tb] = intersection_line_line_3D(
+    [pa, ta], [pb, tb] = intersection_line_line_3D(
         beamA.centreline, beamB.centreline, max_distance, True, tol
     )
 
     if ta == None or tb == None:
-        #lines do not intersect within max distance or they are parallel
+        # lines do not intersect within max distance or they are parallel
         return [None, None]
-
 
     def is_near_end(t, tol=tol):
         if abs(t) < tol:
@@ -138,6 +165,7 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     else:
         # X-joint (both meeting somewhere along the line)
         return ["X", (beamA, beamB)]
+
 
 def set_defaul_joints(
     model, x_default="x-lap", t_default="t-butt", l_default="l-miter"

@@ -1,3 +1,10 @@
+__author__ = "Aleksandra Anna Apolinarska"
+__copyright__ = "Gramazio Kohler Research, ETH Zurich, 2022"
+__credits__ = ["Aleksandra Anna Apolinarska", "Chen Kasirer", "Gonzalo Casas"]
+__license__ = "MIT"
+__version__ = "20.09.2022"
+
+
 from pprint import pprint
 
 from compas.datastructures import Assembly
@@ -157,14 +164,6 @@ class TimberAssembly(Assembly):
                     if self.graph.node[x]['type']=='joint':
                         return True
         return False
-
-        # # method 2: assuming that every part is joined through a Joint object, i.e. assume that parts are 2nd-ring neighbours.
-        # n = len(parts)
-        # for i in range(n - 1):
-        #     neighbor_keys = self.graph.neighborhood(self._parts[parts[i].guid], ring=2)
-        #     for j in range(i + 1, n):
-        #         if self._parts[parts[j].guid] in neighbor_keys: return True
-        # return False
 
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)

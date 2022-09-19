@@ -1,3 +1,9 @@
+__author__ = "Aleksandra Anna Apolinarska"
+__copyright__ = "Gramazio Kohler Research, ETH Zurich, 2022"
+__credits__ = ["Aleksandra Anna Apolinarska", "Chen Kasirer", "Gonzalo Casas"]
+__license__ = "MIT"
+__version__ = "20.09.2022"
+
 from compas.data import Data
 from compas.datastructures import Part
 from compas.geometry import Frame
@@ -13,9 +19,6 @@ from compas_timber.parts.beam import Beam
 
 import math
 
-# NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
-
-
 class Joint(Data):
     """
     parts: beams and other parts of a joint, e.g. a dowel, a steel plate
@@ -26,14 +29,13 @@ class Joint(Data):
 
         super(Joint, self).__init__()
         self.assembly = assembly
-        self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
+        self.frame = None  
         self.key = None
 
         assembly.add_joint(self, parts)
 
     @property
     def data(self):
-        # omitting self.assembly to avoid circular reference
         return {"assembly": self.assembly, "frame": self.frame, "key": self.key}
 
     @data.setter
@@ -46,9 +48,6 @@ class Joint(Data):
         return (
             isinstance(other, Joint)
             and self.frame == other.frame
-            # TODO: add generic comparison if two lists of beams are equal
-            # self.assembly == other.assembly and #not implemented yet
-            # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
         )
 
     @property

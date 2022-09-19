@@ -4,10 +4,10 @@ __description__ = (
 )
 __url__ = "https://github.com/gramaziokohler/compas_timber_structures"
 __version__ = "0.1.0"
-__author__ = "Gramazio Kohler Research"
-__author_email__ = "gramaziokohler@arch.ethz.ch"
+__author__ = "Aleksandra Anna Apolinarska, Gramazio Kohler Research, ETH Zurich"
+__author_email__ = "apolinarska@arch.ethz.ch"
 __license__ = "MIT license"
-__copyright__ = "Copyright 2021 Gramazio Kohler Research"
+__copyright__ = "Copyright 2022 Gramazio Kohler Research"
 
 __all__ = [
     "__author__",
