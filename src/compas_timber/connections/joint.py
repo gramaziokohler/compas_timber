@@ -11,8 +11,6 @@ from compas.geometry import intersection_line_plane
 
 from compas_timber.parts.beam import Beam
 
-import math
-
 # NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
 
 
@@ -22,25 +20,48 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, assembly, parts):
-
+    def __init__(self, assembly, *beams):
         super(Joint, self).__init__()
-        self.assembly = assembly
+        self._assembly = assembly
         self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
         self.key = None
 
-        assembly.add_joint(self, parts)
+    def __deepcopy__(self, memodict):
+        # Having a refernce to assembly here causes very weird behavior
+        # when copying using data.copy()
+        # get rid of it for the sake of copying then restore so that the original is still valid
+        assembly = self._assembly
+        self._assembly = None
+        c = self.copy()
+        self._assembly = assembly
+        return c
+
+    @classmethod
+    def create(cls, assembly, *beams):
+        if len(beams) < 2:
+            raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
+
+        joint = cls(assembly, *beams)
+        assembly.add_joint(joint, beams)
+        return joint
 
     @property
     def data(self):
         # omitting self.assembly to avoid circular reference
-        return {"assembly": self.assembly, "frame": self.frame, "key": self.key}
+        return {"frame": self.frame, "key": self.key}
 
     @data.setter
     def data(self, value):
-        self.assembly = value["assembly"]
         self.frame = value["frame"]
         self.key = value["key"]
+
+    @property
+    def assembly(self):
+        return self._assembly
+
+    @assembly.setter
+    def assembly(self, assembly):
+        self._assembly = assembly
 
     def __eq__(self, other):
         return (
@@ -50,6 +71,8 @@ class Joint(Data):
             # self.assembly == other.assembly and #not implemented yet
             # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
         )
+    
+    #TODO: def __neq()
 
     @property
     def _get_part_keys(self):
@@ -65,9 +88,11 @@ class Joint(Data):
     def parts(self):
         return [self.assembly.find_by_key(key) for key in self._get_part_keys]
 
+    def add_features(self, apply=True):
+        raise NotImplementedError
+
     @property
     def beams(self):
-
         return [part for part in self.parts if part.__class__.__name__ == Beam.__name__]
         # return [part for part in self.parts if isinstance(part, Beam)]
         # return [part for part in self.parts if self.assembly.graph.node[part.key]['type']=='part_beam']

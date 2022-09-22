@@ -5,20 +5,27 @@ from compas_timber.connections.joint import Joint
 from compas_timber.connections import beam_side_incidence
 
 class TButtJoint(Joint):
-    def __init__(self, assembly, main_beam, cross_beam):
+    def __init__(self, assembly=None, main_beam=None, cross_beam=None):
+    	#TODO: try if possible remove default Nones
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.main_beam_key = main_beam.key
-        self.cross_beam_key = cross_beam.key
-        self.gap = 0.0  # float, additional gap, e.g. for glue
+        #TODO: make it protected attribute?
+        self.main_beam_key = None
+        self.cross_beam_key = None
+        
+        #TODO: remove direct ref, replace with assembly look up
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
+        
+        self.features = []
 
     @property
     def data(self):
         data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
+            "main_beam_key": self.main_beam.key,
+            "cross_beam_key": self.cross_beam.key,
             "gap": self.gap,
         }
-        data_dict.update(super(TButtJoint, self).data)
+        data_dict.update(Joint.data.fget(self))
         return data_dict
 
     @data.setter
@@ -42,13 +49,20 @@ class TButtJoint(Joint):
     def joint_type(self):
         return "T-Butt"
 
-    @property
-    def main_beam(self):
-        return self.assembly.find_by_key(self.main_beam_key)
+    @Joint.assembly.setter
+    def assembly(self, assembly):
+        Joint.assembly.fset(self, assembly)
+        self.main_beam = assembly.find_by_key(self.main_beam_key)
+        self.cross_beam = assembly.find_by_key(self.cross_beam_key)
 
-    @property
-    def cross_beam(self):
-        return self.assembly.find_by_key(self.cross_beam_key)
+
+    #@property
+    #def main_beam(self):
+    #    return self.assembly.find_by_key(self.main_beam_key)
+
+    #@property
+    #def cross_beam(self):
+    #    return self.assembly.find_by_key(self.cross_beam_key)
 
     @property
     def cutting_plane(self):
@@ -57,14 +71,28 @@ class TButtJoint(Joint):
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis*-1.0) #flip normal
         return cfr
 
-    def add_features(self):
+    def add_features(self, apply=False):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
+        In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
         """
-        cfr_main = self.cutting_plane
+        # TODO: joint should only remove the features it has created!
+        # TODO: i.e. self.main_beam.clear_features(self.features)
+        # TODO: but that doesn't seem to work for some reason.. WIP
+        if self.features:
+            self.main_beam.clear_features()
 
-        self.main_beam.add_feature(self.main_beam.extension_to_plane(cfr_main), "extend")
-        self.main_beam.add_feature(cfr_main, "trim")        
+
+        #TODO: add extension
+        #self.main_beam.add_feature(self.main_beam.extension_to_plane(cfr_main), "extend")
+        
+        feature = self.main_beam.add_geometry_feature(self.cutting_plane, "trim")
+        self.features.append(feature)
+        
+        if apply:
+            feature.apply()
+
+    
 
 if __name__ == "__main__":
 
