@@ -33,7 +33,7 @@ jobs:
             python-version: 3.9
           - name: "ubuntu-py310"
             os: ubuntu-latest
-            python-version: 3.10
+            python-version: "3.10"
     steps:
     - uses: actions/checkout@v2
 
