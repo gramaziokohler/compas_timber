@@ -24,13 +24,13 @@ jobs:
         include:
           - name: "windows-py38"
             os: windows-latest
-            python-version: 3.8
+            python-version: "3.8"
           - name: "macos-py37"
             os: macos-latest
-            python-version: 3.7
+            python-version: "3.7"
           - name: "ubuntu-py39"
             os: ubuntu-latest
-            python-version: 3.9
+            python-version: "3.9"
           - name: "ubuntu-py310"
             os: ubuntu-latest
             python-version: "3.10"
