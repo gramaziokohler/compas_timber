@@ -71,8 +71,9 @@ class Joint(Data):
             # self.assembly == other.assembly and #not implemented yet
             # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
         )
-    
-    #TODO: def __neq()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def _get_part_keys(self):
@@ -114,7 +115,7 @@ def beam_side_incidence(beam1, beam2):
     List of tuples (angle, frame)
         For each side of Beam2, the angle (in radians) between the x-axis of Beam1 and normal vector of the side frame.
     """
-    
+
     # find the orientation of beam1's centreline so that it's pointing outward of the joint
     #   find the closest end
     p1x, p2x = intersection_line_line(beam1.centreline, beam2.centreline)

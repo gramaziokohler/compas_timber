@@ -185,7 +185,7 @@ class TimberAssembly(Assembly):
         # create an unconnected node in the graph for the joint object
         key = self.add_part(part=joint, type="joint")
         #joint.assembly = self
-		self._joints.append(joint)
+        self._joints.append(joint)
 
         # adds links to the beams
         for part in parts:
