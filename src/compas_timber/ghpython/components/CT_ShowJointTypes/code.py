@@ -24,11 +24,13 @@ class MyComponent(component):
         for jd in JointsCollection.objs:
             L1,L2 = [b.centreline for b in jd.beams]
             [p1,t1],[p2,t2] = intersection_line_line_3D(L1,L2, 0.2, False, 1e-3)
-            p1 = point_to_rhino(p1)
-            p2 = point_to_rhino(p2)
+            #TODO: add smth to display I-joints or L-joints with 180 deg (parallel lines) where no line-line intersection found
+            if p1 and p2:
+                p1 = point_to_rhino(p1)
+                p2 = point_to_rhino(p2)
             
-            self.pt.append((p2+p1)/2)
-            self.txt.append(jd.joint_type)
+                self.pt.append((p2+p1)/2)
+                self.txt.append(jd.joint_type)
 
     def DrawViewportWires(self,arg):
         if ghenv.Component.Locked: return

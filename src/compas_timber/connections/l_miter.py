@@ -56,7 +56,10 @@ class LMiterJoint(Joint):
             tol=self.assembly.tol,
         )
         #TODO: add error-trap + solution for I-miter joints
-
+        if not (pxA and pxB):
+            print("Lines are parallel, no cuttin plane can be found")
+            return [None, None]
+            
         p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
 
         # makes sure they point outward of a joint point

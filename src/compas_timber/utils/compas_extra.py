@@ -16,6 +16,16 @@ from math import fabs
 from compas.geometry import normalize_vector
 
 
+def intersection_line_line_parallel(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
+    """
+    Assumes the lines are parallel - check prior to calling this method.
+    """
+    #TODO
+    #if not limit to segments: take any point on one line and check the distance to the other line
+
+    #if limit to segments: check both end points of each line for distance to the other two points and the other line 
+    #  
+
 def intersection_line_line_3D(
     line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6
 ):
