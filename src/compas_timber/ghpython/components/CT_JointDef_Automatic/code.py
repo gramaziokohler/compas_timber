@@ -1,3 +1,4 @@
+"""Finds joints between Beams based on the incidence of their centerlines and matching predefined rules."""
 __author__ = "Aleksandra Anna Apolinarska"
 __copyright__ = "Gramazio Kohler Research, ETH Zurich, 2022"
 __credits__ = ["Aleksandra Anna Apolinarska", "Chen Kasirer", "Gonzalo Casas"]
@@ -39,10 +40,10 @@ if BeamsCollection and JointRules:
             
             for j in range(i+1,n):
                 if beams[j].attributes['group']!=gr: continue
-                jointtype, beams_pair = guess_joint_topology_2beams(beams[i], beams[j], tol=tol, max_distance = Dmax)
-                if jointtype:
-                    connectivity[jointtype].append(beams_pair)
-    
+                joint_topo, beams_pair = guess_joint_topology_2beams(beams[i], beams[j], tol=tol, max_distance = Dmax)
+                if joint_topo:
+                    connectivity[joint_topo].append(beams_pair)
+
     
     #Rephrase joint rules into a dict of {'cat+cat':type,}==========================
     joint_rules_dict = {}
@@ -51,7 +52,7 @@ if BeamsCollection and JointRules:
         if key in joint_rules_dict.keys():
             raise UserWarning("Conflicting rules detected for %s"%key)
         joint_rules_dict[key]=jr[2]
-        
+
     joint_rules_dict = (joint_rules_dict )
     
     
@@ -76,22 +77,36 @@ if BeamsCollection and JointRules:
     
     for beamA,beamB in connectivity['L']:
         catA, catB = (beamA.attributes['category'],beamB.attributes['category'])
-        key = "%s+%s"%(catA,catB)
-        try: joint_type = joint_rules_dict[key]
-        except: log_no_def.append(('L', catA, catB))
-        else:
+        keyAB = "%s+%s"%(catA,catB)
+        keyBA = "%s+%s"%(catB,catA)
+        key = None
+        if      keyAB in joint_rules_dict: 
+            key = keyAB
+            beams_pair = [beamA,beamB]
+        elif    keyBA in joint_rules_dict: 
+            key = keyBA
+            beams_pair = [beamB,beamA]
+        else:   log_no_def.append(('L', catA, catB))
+
+        if key:
+            joint_type = joint_rules_dict[key]
             if joint_type[0]!='L': 
                 log_topo_mismatch.append(('L', catA, catB, beams.index(beamA),beams.index(beamB), joint_rules_dict[key]))
             else:
-                joints_def.append(JointDefinition(joint_type, (beamA,beamB)) ) #L-Miter, L-Butt
+                joints_def.append(JointDefinition(joint_type, beams_pair) ) #L-Miter, L-Butt
     
     
     for beamA,beamB in connectivity['X']:
         catA, catB = (beamA.attributes['category'],beamB.attributes['category'])
-        key = "%s+%s"%(catA,catB)
-        try: joint_type = joint_rules_dict[key]
-        except: log_no_def.append(('X', catA, catB))
-        else:
+        keyAB = "%s+%s"%(catA,catB)
+        keyBA = "%s+%s"%(catB,catA)
+        key = None
+        if      keyAB in joint_rules_dict: key = keyAB
+        elif    keyBA in joint_rules_dict: key = keyBA
+        else:   log_no_def.append(('L', catA, catB))
+            
+        if key:
+            joint_type = joint_rules_dict[key]
             if joint_type[0]!='X': 
                 log_topo_mismatch.append(('X', catA, catB, beams.index(beamA),beams.index(beamB), joint_rules_dict[key]))
             else:
