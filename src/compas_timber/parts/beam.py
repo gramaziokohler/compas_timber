@@ -21,6 +21,7 @@ from compas.geometry import distance_point_point
 
 from compas_timber.utils.helpers import close
 from compas_timber.utils.compas_extra import intersection_line_plane
+import math
 
 # TODO: update to global compas PRECISION
 tol_angle = 1e-3  # [radians]
@@ -69,6 +70,7 @@ class Beam(Part):
             self.length,
             self.frame,
         )
+
     def __hash__(self):
         return hash(str(self))
 
@@ -143,9 +145,7 @@ class Beam(Part):
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, z_vector, width, height):
-
         line = Line(point_start, point_end)
-
         return cls.from_centreline(line, z_vector, width, height)
 
     ### main methods and properties ###
@@ -168,16 +168,44 @@ class Beam(Part):
         5: +x (side at the end of the beam)
         """
         return [
-            Frame(Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, -self.frame.zaxis),
-            Frame(Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, -self.frame.yaxis),
-            Frame(Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
-            Frame(Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, self.frame.yaxis),
-            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
-            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)), self.frame.yaxis, self.frame.zaxis),  # small face at end point
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            ),
+            Frame(
+                Point(
+                    *add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)
+                ),
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            ),
+            Frame(
+                Point(
+                    *add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)
+                ),
+                self.frame.xaxis,
+                self.frame.zaxis,
+            ),
+            Frame(
+                Point(
+                    *add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)
+                ),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
+            Frame(
+                self.frame.point, -self.frame.yaxis, self.frame.zaxis
+            ),  # small face at start point
+            Frame(
+                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
+                self.frame.yaxis,
+                self.frame.zaxis,
+            ),  # small face at end point
         ]
 
     def side_frame(self, side_index):
-        #TODO: depricated
+        # TODO: depricated
         """
         Side index: sides of the beam's base shape (box) are numbered relative to the beam's coordinate system:
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -187,7 +215,7 @@ class Beam(Part):
         4: -x (side at the starting end)
         5: +x (side at the end of the beam)
         """
-        return self.faces[side_index] 
+        return self.faces[side_index]
 
     @property
     def centreline(self):
@@ -199,7 +227,7 @@ class Beam(Part):
         Base shape of the beam, i.e. box with no features.
         """
         boxframe = Frame(
-            self.frame.point + self.frame.xaxis*self.length*0.5 ,
+            self.frame.point + self.frame.xaxis * self.length * 0.5,
             self.frame.xaxis,
             self.frame.yaxis,
         )
@@ -209,7 +237,6 @@ class Beam(Part):
     def shape(self, box):
         # TODO: temp error catcher: calling Beam.shape throws an error in Part ("readonly attribute")
         pass
-
 
     def geometry(self, geometry_representation="brep"):
         """
@@ -235,17 +262,20 @@ class Beam(Part):
     def long_edges(self):
         y = self.frame.yaxis
         z = self.frame.zaxis
-        w = self.width*0.5
-        h = self.height*0.5
+        w = self.width * 0.5
+        h = self.height * 0.5
         ps = self.__centreline_start
         pe = self.__centreline_end
 
-
-        return [Line(ps+v, pe+v) for v in 
-                                                        ( y*w+z*h, 
-                                                         -y*w+z*h,  
-                                                         -y*w-z*h,
-                                                          y*w-z*h,)]
+        return [
+            Line(ps + v, pe + v)
+            for v in (
+                 y * w + z * h,
+                -y * w + z * h,
+                -y * w - z * h,
+                 y * w - z * h,
+            )
+        ]
 
     @property
     def midpoint(self):
@@ -271,29 +301,29 @@ class Beam(Part):
         self.frame = frame
         self.length = distance_point_point(ps, pe)
         return
-    
-    def extension_to_plane(self,pln):
+
+    def extension_to_plane(self, pln):
         x = {}
         pln = Plane.from_frame(pln)
         for e in self.long_edges:
-            p,t = intersection_line_plane(e,pln)
-            x[t]=p
-        
-        px = intersection_line_plane(self.centreline,pln)[0]
+            p, t = intersection_line_plane(e, pln)
+            x[t] = p
+
+        px = intersection_line_plane(self.centreline, pln)[0]
         side, _ = self.endpoint_closest_to_point(px)
 
-        ds=0.0
-        de=0.0
+        ds = 0.0
+        de = 0.0
         if side == "start":
             tmin = min(x.keys())
-            if tmin<0.0: 
-                ds = tmin * self.length #should be negative
+            if tmin < 0.0:
+                ds = tmin * self.length  # should be negative
         elif side == "end":
-            tmax=max(x.keys())
-            if tmax>1.0:
-                de = (tmax-1.0) * self.length
+            tmax = max(x.keys())
+            if tmax > 1.0:
+                de = (tmax - 1.0) * self.length
 
-        return (ds,de)
+        return (ds, de)
 
     def extend_ends(self, d_start, d_end):
         """
@@ -303,9 +333,8 @@ class Beam(Part):
         """
         ps = self.__centreline_start
         pe = self.__centreline_end
-        self.frame.point += self.frame.xaxis*d_start
-        self.length += -d_start+d_end
-
+        self.frame.point += self.frame.xaxis * d_start
+        self.length += -d_start + d_end
 
     def rotate_around_centreline(self, angle, clockwise=False):
         # create & apply a transformation
@@ -354,7 +383,8 @@ class Beam(Part):
     @staticmethod
     def __default_z(centreline_vector):
         z = Vector(0, 0, 1)
-        if angle_vectors(z, centreline_vector) < tol_angle:
+        a = angle_vectors(z, centreline_vector)  # radians
+        if a - tol_angle < 0.0 or a + tol_angle > math.pi:
             z = Vector(1, 0, 0)
         return z
 
@@ -363,13 +393,11 @@ class Beam(Part):
         pe = self.__centreline_end
         ds = point.distance_to_point(ps)
         de = point.distance_to_point(pe)
-        
         if ds <= de:
             return ["start", ps]
         else:
             return ["end", pe]
 
 
-
 if __name__ == "__main__":
-    b = Beam()
+    pass
