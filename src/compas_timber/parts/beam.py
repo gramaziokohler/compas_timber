@@ -21,7 +21,7 @@ from compas.geometry import close
 from compas.geometry import cross_vectors
 
 from compas_timber.utils.helpers import close
-from compas_timber.parts.exceptions import BeamCreationException
+from compas_timber.parts.exceptions import BeamCreationException #TODO: where did it move to?
 from compas_timber.utils.compas_extra import intersection_line_plane
 
 # TODO: update to global compas PRECISION
@@ -118,7 +118,7 @@ class Beam(Part):
         "brep": _create_brep_shape,
     }
 
-    def __init__(self, frame, length, width, height, geometry_type, **kwargs):
+    def __init__(self, frame=None, length=None, width=None, height=None, geometry_type=None, **kwargs):
         super(Beam, self).__init__(frame=frame)
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
@@ -130,12 +130,12 @@ class Beam(Part):
         self.update_beam_geometry()
 
     @staticmethod
-    def _create_beam_shape_from_params(width, height, depth, geometry_type):
+    def _create_beam_shape_from_params(width, height, length, geometry_type):
         try:
             factory = Beam.SHAPE_FACTORIES[geometry_type]
-            return factory(width, height, depth)
+            return factory(width, height, length)
         except KeyError:
-            raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
+            pass#raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
 
     def __str__(self):
         return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
@@ -151,6 +151,7 @@ class Beam(Part):
         return self.copy()
 
     def __deepcopy__(self, memodict):
+        #TODO:
         # Having a refernce to assembly here causes very weird behavior
         # when copying using data.copy()
         self.assembly = None
@@ -182,7 +183,7 @@ class Beam(Part):
         data = {
             "width": self.width,
             "height": self.height,
-            "depth": self.depth,
+            "length": self.length,
             "geometry_type": self.geometry_type
         }
         data.update(super(Beam, self).data)
@@ -196,14 +197,14 @@ class Beam(Part):
         Part.data.fset(self, data)
         self.width = data["width"]
         self.height = data["height"]
-        self.depth = data["depth"]
+        self.length = data["length"]
         self.geometry_type = data["geometry_type"]
 
-    @classmethod
-    def from_data(cls, data):
-        instance = cls(**data)
-        instance.data = data
-        return instance
+    # @classmethod
+    # def from_data(cls, data):
+    #     instance = cls(**data)
+    #     instance.data = data
+    #     return instance
 
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):

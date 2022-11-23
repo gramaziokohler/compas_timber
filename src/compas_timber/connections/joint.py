@@ -116,22 +116,22 @@ def beam_side_incidence(beam1, beam2):
         For each side of Beam2, the angle (in radians) between the x-axis of Beam1 and normal vector of the side frame.
     """
 
-    # find the orientation of beam1's centreline so that it's pointing outward of the joint
+    # find the orientation of beam1's centerline so that it's pointing outward of the joint
     #   find the closest end
-    p1x, p2x = intersection_line_line(beam1.centreline, beam2.centreline)
+    p1x, p2x = intersection_line_line(beam1.centerline, beam2.centerline)
     which,_ = beam1.endpoint_closest_to_point(Point(*p1x))
 
     if which == 'start':
-        centreline_vec = beam1.centreline.vector
+        centerline_vec = beam1.centerline.vector
     else:
-        centreline_vec = beam1.centreline.vector*-1
+        centerline_vec = beam1.centerline.vector*-1
 
     # compare with side normals
     angles = [
-        angle_vectors(beam2.side_frame(i).normal, centreline_vec)
+        angle_vectors(beam2.faces[i].normal, centerline_vec)
         for i in range(4)
         ]
 
     # map faces to their angle with centerline, choose smallest
-    angle_face = [(angle_vectors(side.normal, centreline_vec), side) for side in beam2.faces[:4]]
+    angle_face = [(angle_vectors(side.normal, centerline_vec), side) for side in beam2.faces[:4]]
     return angle_face

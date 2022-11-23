@@ -62,6 +62,9 @@ class TimberAssembly(Assembly):
         # TODO: change to compas PRECISION
         return self._units_precision[self.units]
 
+    def __str__(self):
+        return "Timber Assembly ({}) with {} beam(s) and {} joint(s).".format(self.guid, len(self.beams),len(self.joints))
+
     @property
     def beams(self):
         """

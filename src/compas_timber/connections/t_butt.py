@@ -15,7 +15,7 @@ class TButtJoint(Joint):
         #TODO: remove direct ref, replace with assembly look up
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        
+        self.gap = None
         self.features = []
 
     @property
@@ -36,13 +36,11 @@ class TButtJoint(Joint):
         self.gap = value["gap"]
 
     def __eq__(self, other):
-        tol = self.assembly.tol
         return (
             isinstance(other, TButtJoint)
             and super(TButtJoint, self).__eq__(other)
             and self.main_beam_key == other.main_beam_key
             and self.cross_beam_key == other.cross_beam_key
-            and close(self.gap, other.gap, tol)
         )
 
     @property
@@ -68,7 +66,7 @@ class TButtJoint(Joint):
     def cutting_plane(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
         cfr = min(angles_faces, key = lambda x: x[0])[1]
-        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis*-1.0) #flip normal
+        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis)
         return cfr
 
     def add_features(self, apply=False):
@@ -79,8 +77,7 @@ class TButtJoint(Joint):
         # TODO: joint should only remove the features it has created!
         # TODO: i.e. self.main_beam.clear_features(self.features)
         # TODO: but that doesn't seem to work for some reason.. WIP
-        if self.features:
-            self.main_beam.clear_features()
+        #if self.features: self.main_beam.clear_features()
 
 
         #TODO: add extension
