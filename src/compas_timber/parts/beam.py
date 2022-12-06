@@ -161,12 +161,11 @@ class Beam(Part):
         self.geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
 
     def is_identical(self, other):
-        tol = self.tol
         return (
             isinstance(other, Beam)
-            and close(self.width, other.width, tol)
-            and close(self.height, other.height, tol)
-            and close(self.length, other.length, tol)
+            and close(self.width, other.width, DEFAULT_TOLERANCE)
+            and close(self.height, other.height, DEFAULT_TOLERANCE)
+            and close(self.length, other.length, DEFAULT_TOLERANCE)
             and self.frame == other.frame
             # TODO: skip joints and features ?
         )
@@ -225,7 +224,7 @@ class Beam(Part):
 
         line = Line(point_start, point_end)
 
-        return cls.from_centreline(line, width, height, z_vector, geometry_type)
+        return cls.from_centerline(line, width, height, z_vector, geometry_type)
 
     ### main methods and properties ###
     @property

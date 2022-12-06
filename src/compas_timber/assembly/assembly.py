@@ -215,7 +215,9 @@ class TimberAssembly(Assembly):
         """
         del self._parts[joint.guid]
         self.graph.delete_node(joint.key)
+        self._joints.remove(joint) #TODO: make it automatic
         joint.assembly = None  # TODO: should not be needed
+        #TODO: distroy joint?
 
     def are_parts_joined(self, parts):
         """

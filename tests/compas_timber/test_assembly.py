@@ -16,7 +16,7 @@ def test_create():
 
 def test_add_beam():
     A = TimberAssembly()
-    B = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
     A.add_beam(B)
 
     assert B.key in A.beam_keys
@@ -30,33 +30,53 @@ def test_add_beam():
 
 def test_add_joint():
     A = TimberAssembly()
-    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
-    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
 
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint(A, [B1, B2])
+    J = Joint.create(A, [B1, B2])
 
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
     assert A.beams[0] == B1
     assert len(A.joints) == 1
 
-
 def test_remove_joint():
     A = TimberAssembly()
-    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
-    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
-
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint(A, [B1, B2])
-
+    
+    J = Joint.create(A, [B1, B2])
+    assert A.contains(J) == True
+    
     A.remove_joint(J)
     assert len(list(A.graph.nodes())) == 2
     assert len(list(A.graph.edges())) == 0
     assert len(A.joints) == 0
+    assert J.assembly == None
 
+def test_copy():
+    F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
+    A = TimberAssembly()
+    A.add_beam(B1)
+    A.add_beam(B2)
+    J = Joint.create(A, [B1, B2])
+
+    A_copy = A.copy()
+    assert A_copy is not A
+    assert A_copy.beams[0].is_identical(A.beams[0])
+    assert A_copy.beams[0] is not A.beams[0]
+    assert A_copy.beams[0].assembly is not A
+    assert (
+        A_copy.beams[0].assembly is A_copy.beams[1].assembly
+    )  # different parts in the assembly should point back to the same assembly
+  
 
 def test_deepcopy():
 
@@ -67,11 +87,11 @@ def test_deepcopy():
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint(A, [B1, B2])
+    J = Joint.create(A, [B1, B2])
 
     A_copy = deepcopy(A)
     assert A_copy is not A
-    assert A_copy.beams[0] == A.beams[0]
+    assert A_copy.beams[0].is_identical(A.beams[0])
     assert A_copy.beams[0] is not A.beams[0]
     assert A_copy.beams[0].assembly is not A
     assert (
@@ -80,20 +100,20 @@ def test_deepcopy():
 
 def test_find():
     A = TimberAssembly()
-    B = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
+    B = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B)
-    A.find(B.guid)
+    assert B == A.find(B.guid)
 
 def test_parts_joined():
     A = TimberAssembly()
-    B1 = Beam(Frame.worldXY, length=1.0, width=0.1, height=0.1)
-    B2 = Beam(Frame.worldYZ, length=1.0, width=0.1, height=0.1)
-    B3 = Beam(Frame.worldZX, length=1.0, width=0.1, height=0.1)
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    B3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1)
 
     A.add_beam(B1)
     A.add_beam(B2)
     A.add_beam(B3)
-    J = Joint(A, [B1, B2])
+    J = Joint.create(A, [B1, B2])
     assert A.are_parts_joined([B1,B2]) == True
     assert A.are_parts_joined([B1,B3]) == False
 
@@ -103,7 +123,8 @@ if __name__ == "__main__":
     test_add_beam()
     test_add_joint()
     test_remove_joint()
-    test_deepcopy()
+    #test_copy()
+    #test_deepcopy()
     test_find()
     test_parts_joined()
     print("\n *** all tests passed ***\n\n")

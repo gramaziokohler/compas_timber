@@ -6,14 +6,11 @@ from compas_timber.connections.t_butt import Joint
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.parts.beam import Beam
 
+geometry_type = "mesh"
 
 def test_create():
-    B1 = Beam.from_endpoints(
-        Point(0, 0.5, 0), Point(1, 0.5, 0), Vector(0, 0, 1), 0.100, 0.200
-    )
-    B2 = Beam.from_endpoints(
-        Point(0, 0, 0), Point(0, 1, 0), Vector(0, 0, 1), 0.100, 0.200
-    )
+    B1 = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), z_vector=Vector(0, 0, 1), width=0.100, height=0.200, geometry_type=geometry_type)
+    B2 = Beam.from_endpoints(Point(0, 0.0, 0), Point(0, 1.0, 0), z_vector=Vector(0, 0, 1), width=0.100, height=0.200, geometry_type=geometry_type)
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
@@ -52,6 +49,6 @@ def test__eq__():
 if __name__ == "__main__":
     test_create()
     # test_identical()
-    test__eq__()
+    #test__eq__()
 
     print("\n*** all tests passed ***\n\n")

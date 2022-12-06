@@ -37,7 +37,7 @@ class Joint(Data):
         return c
 
     @classmethod
-    def create(cls, assembly, *beams):
+    def create(cls, assembly, beams):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
 
