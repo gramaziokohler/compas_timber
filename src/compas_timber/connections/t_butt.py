@@ -1,8 +1,10 @@
 from compas.geometry import close
 from compas.geometry import Frame
+from compas.geometry import BrepTrimmingError
 
-from compas_timber.connections.joint import Joint
+from compas_timber.connections import Joint
 from compas_timber.connections import beam_side_incidence
+from compas_timber.connections import BeamJoinningError
 
 class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
@@ -87,8 +89,13 @@ class TButtJoint(Joint):
         self.features.append(feature)
         
         if apply:
-            feature.apply()
-
+            try:
+                feature.apply()
+            except BrepTrimmingError:
+                msg = "Failed trimming beam: {} with cutting plane: {}. Does it intersect with beam: {}".format(
+                    self.main_beam, self.cutting_plane, self.cross_beam
+                )
+                raise BeamJoinningError(msg)
     
 
 if __name__ == "__main__":
