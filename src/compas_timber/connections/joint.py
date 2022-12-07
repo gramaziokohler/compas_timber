@@ -1,5 +1,5 @@
+from compas_future.datastructures import Part
 from compas.data import Data
-from compas.datastructures import Part
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -13,6 +13,10 @@ from compas_timber.parts.beam import Beam
 
 # NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
 
+
+class BeamJoinningError(BaseException):
+    """Indicates that an error has occurred while trying to join two or more beams."""
+    
 
 class Joint(Data):
     """

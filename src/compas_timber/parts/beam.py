@@ -1,11 +1,11 @@
 import copy
 from collections import deque
 
-from compas.datastructures.assembly import Part
-from compas.datastructures.assembly.part import BrepGeometry
-from compas.datastructures.assembly.part import MeshGeometry
-from compas.datastructures import Feature
-from compas.datastructures import FeatureError
+from compas_future.datastructures import Part
+from compas_future.datastructures import BrepGeometry
+from compas_future.datastructures import MeshGeometry
+from compas_future.datastructures import Feature
+from compas_future.datastructures import FeatureError
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
