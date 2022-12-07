@@ -20,7 +20,7 @@ def read(*names, **kwargs):
     ).read()
 
 
-long_description = read("README.rst")
+long_description = read("README.md")
 requirements = read("requirements.txt").split("\n")
 optional_requirements = {}
 
