@@ -7,6 +7,7 @@ from compas.geometry import Vector
 # import pytest
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.connections.joint import Joint
+from compas_timber.connections import TButtJoint
 from compas_timber.parts.beam import Beam
 
 
@@ -58,11 +59,13 @@ def test_remove_joint():
     assert len(A.joints) == 0
     assert J.assembly == None
 
-def test_copy():
+def test_copy(mocker):
+    mocker.patch("compas_timber.parts.Beam.update_beam_geometry")
+    mocker.patch("compas_timber.connections.Joint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
-    B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12, geometry_type="brep")
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12, geometry_type="brep")
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
@@ -73,13 +76,13 @@ def test_copy():
     assert A_copy.beams[0].is_identical(A.beams[0])
     assert A_copy.beams[0] is not A.beams[0]
     assert A_copy.beams[0].assembly is not A
-    assert (
-        A_copy.beams[0].assembly is A_copy.beams[1].assembly
-    )  # different parts in the assembly should point back to the same assembly
+     # different parts in the assembly should point back to the same assembly
+    assert (A_copy.beams[0].assembly is A_copy.beams[1].assembly) 
   
 
-def test_deepcopy():
-
+def test_deepcopy(mocker):
+    mocker.patch("compas_timber.parts.Beam.update_beam_geometry")
+    mocker.patch("compas_timber.connections.Joint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
@@ -119,6 +122,7 @@ def test_parts_joined():
 
 
 if __name__ == "__main__":
+    # TODO: run with `invoke test` instead
     test_create()
     test_add_beam()
     test_add_joint()

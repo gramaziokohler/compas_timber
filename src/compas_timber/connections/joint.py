@@ -24,10 +24,12 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, assembly, *beams):
+    def __init__(self, assembly=None, *args, **kwargs):
         super(Joint, self).__init__()
-        self._assembly = assembly
-        self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
+        self._assembly = assembly  # TODO: CK: not sure we need this here
+        # will be needed as coordinate system for structural calculations for the forces at the joint
+        # TODO: CK: who's supposed to sets these?
+        self.frame = None  
         self.key = None
 
     def __deepcopy__(self, memodict):
