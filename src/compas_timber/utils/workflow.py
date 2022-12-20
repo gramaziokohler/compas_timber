@@ -106,7 +106,7 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     #         return ['L',(beamA, beamB)]
 
     [pa,ta], [pb,tb] = intersection_line_line_3D(
-        beamA.centreline, beamB.centreline, max_distance, True, tol
+        beamA.centerline, beamB.centerline, max_distance, True, tol
     )
 
     if ta == None or tb == None:
