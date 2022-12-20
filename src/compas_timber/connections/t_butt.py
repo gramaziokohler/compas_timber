@@ -1,10 +1,13 @@
 from compas.geometry import close
 from compas.geometry import Frame
 from compas.geometry import BrepTrimmingError
+from compas_future.datastructures import ParametricFeature
 
 from compas_timber.connections import Joint
 from compas_timber.connections import beam_side_incidence
 from compas_timber.connections import BeamJoinningError
+from compas_timber.parts import BeamTrimmingFeature
+
 
 class TButtJoint(Joint):
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
@@ -49,21 +52,6 @@ class TButtJoint(Joint):
     def joint_type(self):
         return "T-Butt"
 
-    @Joint.assembly.setter
-    def assembly(self, assembly):
-        Joint.assembly.fset(self, assembly)
-        self.main_beam = assembly.find_by_key(self.main_beam_key)
-        self.cross_beam = assembly.find_by_key(self.cross_beam_key)
-
-
-    #@property
-    #def main_beam(self):
-    #    return self.assembly.find_by_key(self.main_beam_key)
-
-    #@property
-    #def cross_beam(self):
-    #    return self.assembly.find_by_key(self.cross_beam_key)
-
     @property
     def cutting_plane(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
@@ -71,33 +59,30 @@ class TButtJoint(Joint):
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis)
         return cfr
 
-    def add_features(self, apply=False):
+    def restore_beams_from_keys(self, assemly):
+        self.main_beam = assemly.find_by_key(self.main_beam_key)
+        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+
+    def add_features(self):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
-        """
-        # TODO: joint should only remove the features it has created!
-        # TODO: i.e. self.main_beam.clear_features(self.features)
-        # TODO: but that doesn't seem to work for some reason.. WIP
-        #if self.features: self.main_beam.clear_features()
-
-
-        #TODO: add extension
-        #self.main_beam.add_feature(self.main_beam.extension_to_plane(cfr_main), "extend")
         
-        feature = self.main_beam.add_geometry_feature(self.cutting_plane, "trim")
-        self.features.append(feature)
-        
-        if apply:
-            try:
-                feature.apply()
-            except BrepTrimmingError:
-                msg = "Failed trimming beam: {} with cutting plane: {}. Does it intersect with beam: {}".format(
-                    self.main_beam, self.cutting_plane, self.cross_beam
-                )
-                raise BeamJoinningError(msg)
+        """      
+        if self.features:
+            self.main_beam.clear_features(self.features)
+
+        trim_feature = BeamTrimmingFeature(self.cutting_plane)        
+        try:
+            self.main_beam.add_feature(trim_feature)       
+            self.features.append(trim_feature)
+            print("added feature {} to beam {}".format(trim_feature, self.main_beam))    
+        except BrepTrimmingError:
+            msg = "Failed trimming beam: {} with cutting plane: {}. Does it intersect with beam: {}".format(
+                self.main_beam, self.cutting_plane, self.cross_beam
+            )
+            raise BeamJoinningError(msg)
     
 
 if __name__ == "__main__":
-
     pass

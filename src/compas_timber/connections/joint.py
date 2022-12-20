@@ -24,26 +24,15 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    def __init__(self, assembly=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(Joint, self).__init__()
-        self._assembly = assembly  # TODO: CK: not sure we need this here
         # will be needed as coordinate system for structural calculations for the forces at the joint
         # TODO: CK: who's supposed to sets these?
         self.frame = None  
         self.key = None
 
-    def __deepcopy__(self, memodict):
-        # Having a refernce to assembly here causes very weird behavior
-        # when copying using data.copy()
-        # get rid of it for the sake of copying then restore so that the original is still valid
-        assembly = self._assembly
-        self._assembly = None
-        c = self.copy()
-        self._assembly = assembly
-        return c
-
     @classmethod
-    def create(cls, assembly, beams):
+    def create(cls, assembly, *beams):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
 
@@ -60,14 +49,6 @@ class Joint(Data):
     def data(self, value):
         self.frame = value["frame"]
         self.key = value["key"]
-
-    @property
-    def assembly(self):
-        return self._assembly
-
-    @assembly.setter
-    def assembly(self, assembly):
-        self._assembly = assembly
 
     def __eq__(self, other):
         return (

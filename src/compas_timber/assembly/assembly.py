@@ -38,13 +38,12 @@ class TimberAssembly(Assembly):
         Assembly.data.fset(self, value)
         # restore what got removed to avoid circular reference
         for part in self.parts():
-            part.assembly = self
             if isinstance(part, Beam):
                 self._beams.append(part)
-                part.clear_features()
             if isinstance(part, Joint):
                 self._joints.append(part)
-                part.add_features(apply=False)
+                part.restore_beams_from_keys(self)
+                part.add_features()
 
     @property
     def units(self):
@@ -149,11 +148,11 @@ class TimberAssembly(Assembly):
         int
             The graph key identifier of the added beam.
         """
-        if beam.assembly:
+        if beam.is_added_to_assembly:
             raise AssemblyError("Beam is already associated with an Assembly! Cannot be added to an additional one.")
         key = self.add_part(part=beam, type="part_beam")
         self._beams.append(beam)
-        beam.assembly = self
+        beam.is_added_to_assembly = True
         return key
 
     def add_plate(self, plate):
@@ -244,17 +243,6 @@ class TimberAssembly(Assembly):
         #     for j in range(i + 1, n):
         #         if self._parts[parts[j].guid] in neighbor_keys: return True
         # return False
-
-    def apply_joint_features(self):
-        """
-        Triggers the application of the joint features to their associated beams.
-
-        Returns
-        -------
-        None
-        """
-        for joint in self.joints:
-            joint.add_features(True)
 
     def print_structure(self):
         pprint("Beams:\n", self.beam_keys)

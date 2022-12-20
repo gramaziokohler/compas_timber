@@ -19,8 +19,9 @@ Classes
     Beam
 """
 from .beam import Beam
-from .beam import BeamDimensionFeature
+from .features import BeamTrimmingFeature
 
 __all__ = [
     "Beam",
+    "BeamTrimmingFeature",
 ]

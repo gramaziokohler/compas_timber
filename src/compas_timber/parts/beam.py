@@ -1,17 +1,11 @@
-import copy
-from collections import deque
-
 from compas_future.datastructures import Part
-from compas_future.datastructures import BrepGeometry
-from compas_future.datastructures import MeshGeometry
-from compas_future.datastructures import Feature
-from compas_future.datastructures import FeatureError
+from compas.datastructures import Mesh
+from compas.geometry import Transformation
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import Brep
 from compas.geometry import add_vectors
@@ -21,7 +15,6 @@ from compas.geometry import close
 from compas.geometry import cross_vectors
 
 from compas_timber.utils.helpers import close
-from compas_timber.parts.exceptions import BeamCreationException #TODO: where did it move to?
 from compas_timber.utils.compas_extra import intersection_line_plane
 
 # TODO: update to global compas PRECISION
@@ -37,54 +30,15 @@ def _create_box(xsize, ysize, zsize):
     boxframe.point +=  depth_offset
     return Box(boxframe, xsize, ysize, zsize)
 
+
 def _create_mesh_shape(xsize, ysize, zsize):
-    return MeshGeometry(_create_box(xsize, ysize, zsize))
+    box = _create_box(xsize, ysize, zsize)
+    return Mesh.from_vertices_and_faces(box.to_vertices_and_faces(True))
 
 
 def _create_brep_shape(xsize, ysize, zsize):
-    # Create a Rhino.Geometry.Box
-    brep_box = Brep.from_box(_create_box(xsize, ysize, zsize))
-    return BrepGeometry(brep_box)
-
-
-class BeamDimensionFeature(Feature):
-    """This class represents a feature which inflicts changes to the parametric shape of a Beam.
-
-    Parameters
-    ----------
-    beam : :class:`~compas_timber.parts.Beam`
-        The Beam to which this feature will get added.
-    attribute_name : str
-        The name of the attribute of Beam this feature will be modifying.
-    by_value: int|float
-        The value by which the attribute shall be modified. Numerical only. Use positive values to increase and negative to decrease.
-
-    """
-    def __init__(self, beam, attibute_name, by_value):
-        super(BeamDimensionFeature, self).__init__(part=beam)
-
-        if not hasattr(beam, attibute_name):
-            raise FeatureError("Beam has no attribute: {}".format(attibute_name))
-
-        current_value = getattr(beam, attibute_name)
-        if not isinstance(current_value,(int, float)):
-            raise FeatureError("Attribute {} cannot be used by Feature. Only numerical attributes are currently supported!".format(attribute_name))
-
-        self.attribute_name = attibute_name
-        self.by_value = by_value
-
-    def apply(self):
-        """Applies this feature to the associated Beam."""
-        self._update_attribute_by(self.by_value)
-
-    def restore(self):
-        """Performs the inverse operation in order to restore the the attribute modified by this feature to its original value."""
-        self._update_attribute_by(-self.by_value)
-
-    def _update_attribute_by(self, by_value):
-        current_value = getattr(self.part, self.attribute_name)
-        setattr(self.part, self.attribute_name, current_value+by_value)
-        self.part.update_beam_geometry()
+    box = _create_box(xsize, ysize, zsize)
+    return Brep.from_box(box)
 
 
 class Beam(Part):
@@ -118,15 +72,18 @@ class Beam(Part):
         "brep": _create_brep_shape,
     }
 
-    def __init__(self, frame=None, length=None, width=None, height=None, geometry_type=None, **kwargs):
+    def __init__(self, frame, length, width, height, geometry_type, **kwargs):
         super(Beam, self).__init__(frame=frame)
         self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.length = length
         self.geometry_type = geometry_type
-        self.assembly = None
- 
+        self.is_added_to_assembly = False
+        
+        self._geometry = None
+        self._geometry_with_features = None
+
         self.update_beam_geometry()
 
     @staticmethod
@@ -135,7 +92,7 @@ class Beam(Part):
             factory = Beam.SHAPE_FACTORIES[geometry_type]
             return factory(width, height, length)
         except KeyError:
-            pass#raise BeamCreationException("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
+            raise ValueError("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
 
     def __str__(self):
         return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
@@ -147,18 +104,10 @@ class Beam(Part):
     def __hash__(self):
         return self.sha256()
 
-    def __copy__(self, *args, **kwargs):
-        return self.copy()
-
-    def __deepcopy__(self, memodict):
-        #TODO:
-        # Having a refernce to assembly here causes very weird behavior
-        # when copying using data.copy()
-        self.assembly = None
-        return self.copy()
-
     def update_beam_geometry(self):
-        self.geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
+        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
+        if self._geometry_with_features is None:
+            self._geometry_with_features = self._geometry.copy()
 
     def is_identical(self, other):
         return (
@@ -199,11 +148,33 @@ class Beam(Part):
         self.length = data["length"]
         self.geometry_type = data["geometry_type"]
 
-    # @classmethod
-    # def from_data(cls, data):
-    #     instance = cls(**data)
-    #     instance.data = data
-    #     return instance
+    @classmethod
+    def from_data(cls, data):
+        obj = cls(**data)
+        obj.data = data
+        return obj
+
+    def get_geometry(self, with_features=False):
+        if not self._geometry:
+            self.update_beam_geometry()
+        transformation = Transformation.from_frame(self.frame)
+        if not with_features or not self.features:
+            g_copy = self._geometry.copy()
+        else:
+            g_copy = self._geometry_with_features.copy()
+        g_copy.transform(transformation)
+        return g_copy
+
+    def add_feature(self, feature, apply=False):
+        self.features.append(feature)
+        self._geometry_with_features = feature.apply(self)  # featured is applied to the transformed beam geometry.
+        self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
+
+    def clear_features(self, features_to_clear=None):
+        self.features = [f for f in self.features if f not in features_to_clear]
+        for f in self.features:
+            self._geometry_with_features = f.apply(self)
+            self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
 
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):
