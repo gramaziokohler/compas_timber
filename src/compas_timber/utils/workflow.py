@@ -99,8 +99,8 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     #                 return a,b
     #     return None
 
-    # if lines_parallel(beamA.centreline, beamB.centreline):
-    #     if contact_points(beamA.centreline,beamB.centreline):
+    # if lines_parallel(beamA.centerline, beamB.centerline):
+    #     if contact_points(beamA.centerline,beamB.centerline):
     #         #TODO: add a check if the angle between beams is 0 degrees or 180 degrees.  Return None if 0 degrees.
     #         #TODO: replace with 'I' 
     #         return ['L',(beamA, beamB)]
@@ -147,7 +147,7 @@ def set_defaul_joints(
 
     connectivity = {"L": [], "T": [], "X": []}
 
-    # find what kind of joint topology it looks like based on centrelines
+    # find what kind of joint topology it looks like based on centerlines
     for i in range(n - 1):
         for j in range(i + 1, n):
             jointtype, beams_pair = guess_joint_topology_2beams(beams[i], beams[j])
