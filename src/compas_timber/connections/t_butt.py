@@ -1,7 +1,5 @@
-from compas.geometry import close
 from compas.geometry import Frame
 from compas.geometry import BrepTrimmingError
-from compas_future.datastructures import ParametricFeature
 
 from compas_timber.connections import Joint
 from compas_timber.connections import beam_side_incidence
@@ -56,7 +54,7 @@ class TButtJoint(Joint):
     def cutting_plane(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
         cfr = min(angles_faces, key = lambda x: x[0])[1]
-        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis)
+        cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     def restore_beams_from_keys(self, assemly):
