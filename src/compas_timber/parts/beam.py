@@ -1,4 +1,6 @@
 from compas_future.datastructures import Part
+from compas_future.datastructures import ParametricFeature
+from compas_future.datastructures import GeometricFeature
 from compas.datastructures import Mesh
 from compas.geometry import Transformation
 from compas.geometry import Box
@@ -106,8 +108,7 @@ class Beam(Part):
 
     def update_beam_geometry(self):
         self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
-        if self._geometry_with_features is None:
-            self._geometry_with_features = self._geometry.copy()
+        self._geometry_with_features = self._geometry.copy()  # features get reset
 
     def is_identical(self, other):
         return (
@@ -167,14 +168,26 @@ class Beam(Part):
 
     def add_feature(self, feature, apply=False):
         self.features.append(feature)
-        self._geometry_with_features = feature.apply(self)  # featured is applied to the transformed beam geometry.
-        self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
+        if apply:
+            self.apply_features()
+
+    def apply_features(self):
+        """
+        Iterate over features:
+            if is_cumulative:
+                
+        """
+        para_features = [f for f in self.features if isinstance(f, ParametricFeature)]        
+        geo_features = [f for f in self.features if isinstance(f, GeometricFeature)]        
+        for f in para_features:
+            f.apply(self)
+        for f in geo_features:
+            self._geometry_with_features = f.apply(self)
+            self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
 
     def clear_features(self, features_to_clear=None):
         self.features = [f for f in self.features if f not in features_to_clear]
-        for f in self.features:
-            self._geometry_with_features = f.apply(self)
-            self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
+        self._geometry_with_features = self._geometry.copy()
 
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):
@@ -232,6 +245,13 @@ class Beam(Part):
 
     @property
     def long_edges(self):
+        """Returns a list of lines representing the long edges of the beam's bounding box
+         
+        Returns
+        -------
+        list(:class:`~compas.geometry.Line`)
+
+        """
         y = self.frame.yaxis
         z = self.frame.zaxis
         w = self.width*0.5
@@ -239,12 +259,7 @@ class Beam(Part):
         ps = self.centerline_start
         pe = self.centerline_end
 
-
-        return [Line(ps+v, pe+v) for v in 
-                                                        ( y*w+z*h, 
-                                                         -y*w+z*h,  
-                                                         -y*w-z*h,
-                                                          y*w-z*h,)]
+        return [Line(ps+v, pe+v) for v in (y*w+z*h, -y*w+z*h, -y*w-z*h, y*w-z*h)]
 
 	
     @property
@@ -273,13 +288,25 @@ class Beam(Part):
         return
     
     def extension_to_plane(self,pln):
+        """Returns the amount by which to extend the beam in each direction using metric units.
+
+        TODO: verify this is true
+        The extension is the minimum amount which allows all long faces of the beam to pass through 
+        the given plane.
+
+        Returns
+        -------
+        tuple(float, float)
+            Extension amount at start of beam, Extension amount at end of beam
+
+        """
         x = {}
         pln = Plane.from_frame(pln)
         for e in self.long_edges:
             p,t = intersection_line_plane(e,pln)
             x[t]=p
         
-        px = intersection_line_plane(self.centreline,pln)[0]
+        px = intersection_line_plane(self.centerline,pln)[0]
         side, _ = self.endpoint_closest_to_point(px)
 
         ds=0.0
@@ -293,7 +320,7 @@ class Beam(Part):
             if tmax>1.0:
                 de = (tmax-1.0) * self.length
 
-        return (ds,de)
+        return -ds, de
 
     def extend_ends(self, d_start, d_end):
     	#TODO: revise if needed, compare to ParametricFeature
@@ -302,11 +329,10 @@ class Beam(Part):
         Extenshions at the end of the centerline should have a positive value.
         Otherwise the centerline will be shortend, not extended.
         """
-        ps = self.__centreline_start
-        pe = self.__centreline_end
-        self.frame.point += self.frame.xaxis*d_start
-        self.length += -d_start+d_end
-
+        self.frame.point += -self.frame.xaxis * d_start  # "extension" to the start edge
+        extension = d_start + d_end
+        self.length += extension
+        self.update_beam_geometry()
 
     def rotate_around_centerline(self, angle, clockwise=False):
         # create & apply a transformation

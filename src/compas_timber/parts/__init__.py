@@ -20,8 +20,10 @@ Classes
 """
 from .beam import Beam
 from .features import BeamTrimmingFeature
+from .features import BeamExtensionFeature
 
 __all__ = [
     "Beam",
     "BeamTrimmingFeature",
+    "BeamExtensionFeature",
 ]
