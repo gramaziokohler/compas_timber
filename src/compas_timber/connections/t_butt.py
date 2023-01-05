@@ -6,8 +6,13 @@ from compas_timber.connections import beam_side_incidence
 from compas_timber.connections import BeamJoinningError
 from compas_timber.parts import BeamTrimmingFeature
 
+from .solver import JointTopology
+
 
 class TButtJoint(Joint):
+
+    SUPPORTED_TOPOLOGY = JointTopology.T
+
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
     	#TODO: try if possible remove default Nones
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
@@ -37,6 +42,10 @@ class TButtJoint(Joint):
         self.main_beam_key = value["main_beam_key"]
         self.cross_beam_key = value["cross_beam_key"]
         self.gap = value["gap"]
+
+    @property
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
 
     def __eq__(self, other):
         return (
@@ -74,7 +83,6 @@ class TButtJoint(Joint):
         try:
             self.main_beam.add_feature(trim_feature)       
             self.features.append(trim_feature)
-            print("added feature {} to beam {}".format(trim_feature, self.main_beam))    
         except BrepTrimmingError:
             msg = "Failed trimming beam: {} with cutting plane: {}. Does it intersect with beam: {}".format(
                 self.main_beam, self.cutting_plane, self.cross_beam
