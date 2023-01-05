@@ -3,61 +3,103 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import Frame
+from compas.geometry import BrepTrimmingError
 
 from compas_timber.utils.compas_extra import intersection_line_line_3D
-from compas_timber.utils.compas_extra import intersection_line_plane
+from compas_timber.parts import BeamTrimmingFeature
+from compas_timber.parts import BeamExtensionFeature
+from compas_timber.connections import BeamJoinningError
 
-from ..connections.joint import Joint
+from .joint import Joint
+from .solver import JointTopology
+
 
 
 class LMiterJoint(Joint):
-    def __init__(self, assembly, beamA, beamB, cutoff = None):
 
-        super(LMiterJoint, self).__init__(assembly, [beamA, beamB])
-        self.beamA = beamA
-        self.beamB = beamB
+    SUPPORTED_TOPOLOGY = JointTopology.L
+    
+    def __init__(self, assembly, beam_a, beam_b, cutoff = None):
+        super(LMiterJoint, self).__init__(assembly, [beam_a, beam_b])
+        self.beam_a = beam_a
+        self.beam_b = beam_b
+        self.beam_a_key = None
+        self.beam_b_key = None
         self.cutoff = cutoff #for very acute angles, limit the extension of the tip/beak of the joint 
+
+    @property
+    def data(self):
+        data_dict = {
+            "beam_a": self.beam_a.key,
+            "beam_b": self.beam_b.key,
+            "cutoff": self.cutoff,
+        }
+        data_dict.update(Joint.data.fget(self))
+        return data_dict
+
+    @data.setter
+    def data(self, value):
+        Joint.data.fset(self, value)
+        self.beam_a_key = value["beam_a"]
+        self.beam_b_key = value["beam_b"]
+        self.cutoff = value["cutoff"]
 
     @property
     def joint_type(self):
         return "L-Miter"
 
+    @property
+    def beams(self):
+        return [self.beam_a, self.beam_b]
+
     def add_features(self):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         """
-        plnA, plnB = self.cutting_planes
+        plane_a, plane_b = self.cutting_planes
+        
+        trim_a = BeamTrimmingFeature(plane_a)
+        extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
+        self.beam_a.add_feature(extension_a)
+        self.beam_a.add_feature(trim_a)
+        
+        trim_b = BeamTrimmingFeature(plane_b)
+        extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
+        self.beam_b.add_feature(extension_b)
+        self.beam_b.add_feature(trim_b)
 
-        self.beamA.add_feature(self.beamA.extension_to_plane(plnA), "extend")
-        self.beamB.add_feature(self.beamB.extension_to_plane(plnB), "extend")
-
-        self.beamA.add_feature(plnA, "trim")
-        self.beamB.add_feature(plnB, "trim")
-
+    def restore_beams_from_keys(self, assemly):
+        self.beam_a = assemly.find_by_key(self.beam_a_key)
+        self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     @property
     def cutting_planes(self):
+        """Returns a 45 degree angle cutting plane for each beam in this Miter joint.
 
-        vA = Vector(*self.beamA.frame.xaxis)  # frame.axis gives a reference, not a copy
-        vB = Vector(*self.beamB.frame.xaxis)
+        Returns
+        -------
+        
+        """
+
+        vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
+        vB = Vector(*self.beam_b.frame.xaxis)
 
         # intersection point (average) of both centrelines
         [pxA,tA], [pxB,tB] = intersection_line_line_3D(
-            self.beamA.centreline,
-            self.beamB.centreline,
-            max_distance=self.beamA.height + self.beamB.height,
-            limit_to_segments=False,
-            tol=self.assembly.tol,
+            self.beam_a.centerline,
+            self.beam_b.centerline,
+            max_distance=self.beam_a.height + self.beam_b.height,
+            limit_to_segments=False
         )
         #TODO: add error-trap + solution for I-miter joints
 
         p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
 
         # makes sure they point outward of a joint point
-        tA, _ = self.beamA.endpoint_closest_to_point(pxA)
+        tA, _ = self.beam_a.endpoint_closest_to_point(pxA)
         if tA == "end":
             vA *= -1.0
-        tB, _ = self.beamB.endpoint_closest_to_point(pxB)
+        tB, _ = self.beam_b.endpoint_closest_to_point(pxB)
         if tB == "end":
             vB *= -1.0
 
@@ -74,7 +116,7 @@ class LMiterJoint(Joint):
 
         plnA = Frame.from_plane(plnA)
         plnB = Frame.from_plane(plnB)
-        return [plnA, plnB]
+        return plnA, plnB
 
     
 
