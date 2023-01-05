@@ -86,7 +86,7 @@ class Beam(Part):
         self._geometry = None
         self._geometry_with_features = None
 
-        self.update_beam_geometry()
+        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
 
     @staticmethod
     def _create_beam_shape_from_params(width, height, length, geometry_type):
@@ -107,8 +107,7 @@ class Beam(Part):
         return self.sha256()
 
     def update_beam_geometry(self):
-        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
-        self._geometry_with_features = self._geometry.copy()  # features get reset
+        self._geometry_with_features = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
 
     def is_identical(self, other):
         return (
@@ -156,8 +155,6 @@ class Beam(Part):
         return obj
 
     def get_geometry(self, with_features=False):
-        if not self._geometry:
-            self.update_beam_geometry()
         transformation = Transformation.from_frame(self.frame)
         if not with_features or not self.features:
             g_copy = self._geometry.copy()
