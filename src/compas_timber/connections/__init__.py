@@ -26,6 +26,8 @@ from .t_lap import TLapJoint
 from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
 from .x_lap import XLapJoint
+from .solver import JointTopology
+from .solver import ConnectionSolver
 
 
 __all__ = [
@@ -37,4 +39,6 @@ __all__ = [
     "LMiterJoint",
     "XLapJoint",
     "beam_side_incidence",
+    "JointTopology",
+    "ConnectionSolver",
 ]

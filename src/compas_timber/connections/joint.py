@@ -11,6 +11,8 @@ from compas.geometry import intersection_line_plane
 
 from compas_timber.parts.beam import Beam
 
+from .solver import JointTopology
+
 # NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
 
 
@@ -23,7 +25,9 @@ class Joint(Data):
     parts: beams and other parts of a joint, e.g. a dowel, a steel plate
     assembly: TimberAssembly object to which the parts belong
     """
-
+    
+    SUPPORTED_TOPOLOGY = JointTopology.X
+    
     def __init__(self, *args, **kwargs):
         super(Joint, self).__init__()
         # will be needed as coordinate system for structural calculations for the forces at the joint
@@ -38,6 +42,7 @@ class Joint(Data):
 
         joint = cls(assembly, *beams)
         assembly.add_joint(joint, beams)
+        joint.add_features()
         return joint
 
     @property
@@ -73,18 +78,11 @@ class Joint(Data):
         ]
 
     @property
-    def parts(self):
-        return [self.assembly.find_by_key(key) for key in self._get_part_keys]
+    def beams(self):
+        raise NotImplemented
 
     def add_features(self, apply=True):
         raise NotImplementedError
-
-    @property
-    def beams(self):
-        return [part for part in self.parts if part.__class__.__name__ == Beam.__name__]
-        # return [part for part in self.parts if isinstance(part, Beam)]
-        # return [part for part in self.parts if self.assembly.graph.node[part.key]['type']=='part_beam']
-
 
 
 def beam_side_incidence(beam1, beam2):
