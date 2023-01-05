@@ -15,3 +15,10 @@ Classes
     :nosignatures:
 
 """
+
+from .compas_extra import intersection_line_line_3D
+
+
+__all__ = [
+    "intersection_line_line_3D",
+]
