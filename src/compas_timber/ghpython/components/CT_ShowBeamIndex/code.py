@@ -8,15 +8,16 @@ import Rhino.Geometry as rg
 
 class MyComponent(component):
     
-    def RunScript(self, BeamsCollection):
+    def RunScript(self, assembly):
         
         self.pt = []
         self.txt = []
         
-        if not BeamsCollection: return
-        for i,beam in BeamsCollection.keys_map.items():
+        if not assembly: 
+            return
+        for beam in assembly.beams:
             self.pt.append(point_to_rhino(beam.midpoint))
-            self.txt.append(str(i))
+            self.txt.append(str(beam.key))
 
     def DrawViewportWires(self,arg):
         if ghenv.Component.Locked: return

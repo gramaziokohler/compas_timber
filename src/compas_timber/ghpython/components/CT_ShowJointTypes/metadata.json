@@ -11,7 +11,7 @@
         "inputParameters": [
              
             {
-                "name": "JointsCollection",
+                "name": "assembly",
                 "description": "A Collection of parts, e.g. JointDefinitions.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
