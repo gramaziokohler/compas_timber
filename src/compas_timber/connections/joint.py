@@ -55,18 +55,6 @@ class Joint(Data):
         self.frame = value["frame"]
         self.key = value["key"]
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, Joint)
-            and self.frame == other.frame
-            # TODO: add generic comparison if two lists of beams are equal
-            # self.assembly == other.assembly and #not implemented yet
-            # set(self.beams)==set(other.beams) #doesn't work because Beam not hashable
-        )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     @property
     def _get_part_keys(self):
         neighbor_keys = self.assembly.graph.neighbors(self.key)
