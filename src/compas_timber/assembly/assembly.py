@@ -43,7 +43,6 @@ class TimberAssembly(Assembly):
             if isinstance(part, Joint):
                 self._joints.append(part)
                 part.restore_beams_from_keys(self)
-                part.add_features()
 
     @property
     def units(self):
