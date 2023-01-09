@@ -26,6 +26,7 @@ class LMiterJoint(Joint):
         self.beam_a_key = None
         self.beam_b_key = None
         self.cutoff = cutoff #for very acute angles, limit the extension of the tip/beak of the joint 
+        self.features = []
 
     @property
     def data(self):
@@ -56,6 +57,11 @@ class LMiterJoint(Joint):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         """
+        if self.features:
+            self.beam_a.clear_features(self.features)
+            self.beam_b.clear_features(self.features)
+            self.features = []
+
         plane_a, plane_b = self.cutting_planes
         
         trim_a = BeamTrimmingFeature(plane_a)
@@ -67,6 +73,8 @@ class LMiterJoint(Joint):
         extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
         self.beam_b.add_feature(extension_b)
         self.beam_b.add_feature(trim_b)
+        
+        self.features.extend([trim_a, extension_a, trim_b, extension_b])
 
     def restore_beams_from_keys(self, assemly):
         self.beam_a = assemly.find_by_key(self.beam_a_key)
