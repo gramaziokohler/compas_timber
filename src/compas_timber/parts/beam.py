@@ -87,6 +87,7 @@ class Beam(Part):
         self._geometry_with_features = None
 
         self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
+        self._geometry_with_features = self._geometry.copy()
 
     @staticmethod
     def _create_beam_shape_from_params(width, height, length, geometry_type):
