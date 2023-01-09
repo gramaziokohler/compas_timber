@@ -78,6 +78,7 @@ class TButtJoint(Joint):
         """      
         if self.features:
             self.main_beam.clear_features(self.features)
+            self.features = []
 
         trim_feature = BeamTrimmingFeature(self.cutting_plane)        
         try:
