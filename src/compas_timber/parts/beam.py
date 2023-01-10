@@ -36,7 +36,7 @@ def _create_box(frame, xsize, ysize, zsize):
 
 def _create_mesh_shape(xsize, ysize, zsize):
     box = _create_box(Frame.worldXY(), xsize, ysize, zsize)
-    return Mesh.from_vertices_and_faces(box.to_vertices_and_faces(True))
+    return Mesh.from_vertices_and_faces(*box.to_vertices_and_faces(True))
 
 
 def _create_brep_shape(xsize, ysize, zsize):
