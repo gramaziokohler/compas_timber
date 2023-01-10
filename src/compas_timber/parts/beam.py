@@ -25,22 +25,22 @@ ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
 
-def _create_box(xsize, ysize, zsize):
+def _create_box(frame, xsize, ysize, zsize):
     # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
     # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
-    boxframe = Frame.worldXY()
+    boxframe = frame.copy()
     depth_offset = boxframe.xaxis * xsize * 0.5
     boxframe.point +=  depth_offset
     return Box(boxframe, xsize, ysize, zsize)
 
 
 def _create_mesh_shape(xsize, ysize, zsize):
-    box = _create_box(xsize, ysize, zsize)
+    box = _create_box(Frame.worldXY(), xsize, ysize, zsize)
     return Mesh.from_vertices_and_faces(box.to_vertices_and_faces(True))
 
 
 def _create_brep_shape(xsize, ysize, zsize):
-    box = _create_box(xsize, ysize, zsize)
+    box = _create_box(Frame.worldXY(), xsize, ysize, zsize)
     return Brep.from_box(box)
 
 
@@ -149,6 +149,17 @@ class Beam(Part):
         self.height = data["height"]
         self.length = data["length"]
         self.geometry_type = data["geometry_type"]
+
+    @property
+    def shape(self):
+        """Returns a Box made using the parametric properties of this beam.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Box`
+
+        """
+        return _create_box(self.frame, self.length, self.width, self.height)
 
     @classmethod
     def from_data(cls, data):
