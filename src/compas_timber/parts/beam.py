@@ -15,6 +15,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import distance_point_point
 from compas.geometry import close
 from compas.geometry import cross_vectors
+from compas.geometry import BrepTrimmingError
 
 from compas_timber.utils.helpers import close
 from compas_timber.utils.compas_extra import intersection_line_plane

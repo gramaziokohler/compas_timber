@@ -105,6 +105,11 @@ def test_deepcopy():
         return [(Frame.worldXY(), "trim")]
 
 
+def test_extension_to_plane():
+    frame = Frame(Point(3.000, 0.000, 0.000), Vector(-1.000, 0.000, 0.000), Vector(0.000, -1.000, 0.000))
+    beam = Beam(frame, 3.00, 0.12, 0.06, "mesh")
+    plane = 
+
 if __name__ == "__main__":
     create_empty()
     #test_create()

@@ -21,9 +21,11 @@ Classes
 from .beam import Beam
 from .features import BeamTrimmingFeature
 from .features import BeamExtensionFeature
+from .features import BeamBooleanSubtraction
 
 __all__ = [
     "Beam",
     "BeamTrimmingFeature",
     "BeamExtensionFeature",
+    "BeamBooleanSubtraction",
 ]

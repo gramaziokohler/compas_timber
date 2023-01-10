@@ -68,7 +68,7 @@ class LMiterJoint(Joint):
         extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
         self.beam_a.add_feature(extension_a)
         self.beam_a.add_feature(trim_a)
-        
+
         trim_b = BeamTrimmingFeature(plane_b)
         extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
         self.beam_b.add_feature(extension_b)
