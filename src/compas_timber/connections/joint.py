@@ -1,15 +1,7 @@
-from compas_future.datastructures import Part
 from compas.data import Data
-from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Vector
 from compas.geometry import angle_vectors
-from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
-from compas.geometry import intersection_line_plane
-
-from compas_timber.parts.beam import Beam
 
 from .solver import JointTopology
 
@@ -18,21 +10,21 @@ from .solver import JointTopology
 
 class BeamJoinningError(BaseException):
     """Indicates that an error has occurred while trying to join two or more beams."""
-    
+
 
 class Joint(Data):
     """
     parts: beams and other parts of a joint, e.g. a dowel, a steel plate
     assembly: TimberAssembly object to which the parts belong
     """
-    
+
     SUPPORTED_TOPOLOGY = JointTopology.X
-    
+
     def __init__(self, *args, **kwargs):
         super(Joint, self).__init__()
         # will be needed as coordinate system for structural calculations for the forces at the joint
         # TODO: CK: who's supposed to sets these?
-        self.frame = None  
+        self.frame = None
         self.key = None
 
     @classmethod

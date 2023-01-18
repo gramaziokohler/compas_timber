@@ -1,4 +1,4 @@
-from ..connections.joint import Joint
+from .joint import Joint
 
 
 class XLapJoint(Joint):

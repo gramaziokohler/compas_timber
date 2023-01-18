@@ -1,11 +1,11 @@
 from compas.geometry import Frame
 from compas.geometry import BrepTrimmingError
 
-from compas_timber.connections import Joint
-from compas_timber.connections import beam_side_incidence
-from compas_timber.connections import BeamJoinningError
 from compas_timber.parts import BeamTrimmingFeature
 
+from .joint import Joint
+from .joint import beam_side_incidence
+from .joint import BeamJoinningError
 from .solver import JointTopology
 
 
@@ -19,7 +19,7 @@ class TButtJoint(Joint):
         #TODO: make it protected attribute?
         self.main_beam_key = None
         self.cross_beam_key = None
-        
+
         #TODO: remove direct ref, replace with assembly look up
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -74,22 +74,22 @@ class TButtJoint(Joint):
         """
         Adds the feature definitions (geometry, operation) to the involved beams.
         In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
-        
-        """      
+
+        """
         if self.features:
             self.main_beam.clear_features(self.features)
             self.features = []
 
-        trim_feature = BeamTrimmingFeature(self.cutting_plane)        
+        trim_feature = BeamTrimmingFeature(self.cutting_plane)
         try:
-            self.main_beam.add_feature(trim_feature)       
+            self.main_beam.add_feature(trim_feature)
             self.features.append(trim_feature)
         except BrepTrimmingError:
             msg = "Failed trimming beam: {} with cutting plane: {}. Does it intersect with beam: {}".format(
                 self.main_beam, self.cutting_plane, self.cross_beam
             )
             raise BeamJoinningError(msg)
-    
+
 
 if __name__ == "__main__":
     pass

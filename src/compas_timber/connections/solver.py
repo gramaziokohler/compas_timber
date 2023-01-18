@@ -1,12 +1,9 @@
 import itertools
-from collections import namedtuple
 
 from compas.geometry import intersection_segment_segment
 
 from compas_timber.utils import intersection_line_line_3D
 
-
-JointRule = namedtuple("JointRule", ["cat_a", "cat_b", "joint_type"])
 
 class JointTopology:
     """Enumeration of the possible joint topologies."""
@@ -19,7 +16,7 @@ class ConnectionSolver(object):
     """Provides tools for detecting beam intersections and joint topologies."""
 
     TOLERANCE = 1e-6
-    
+
     @classmethod
     def find_intersecting_pairs(cls, beams):
         """Naive implementation, can/should be optimized

@@ -1,31 +1,28 @@
+from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
-from compas.geometry import Frame
-from compas.geometry import BrepTrimmingError
 
-from compas_timber.utils.compas_extra import intersection_line_line_3D
-from compas_timber.parts import BeamTrimmingFeature
 from compas_timber.parts import BeamExtensionFeature
-from compas_timber.connections import BeamJoinningError
+from compas_timber.parts import BeamTrimmingFeature
+from compas_timber.utils import intersection_line_line_3D
 
 from .joint import Joint
 from .solver import JointTopology
 
 
-
 class LMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.L
-    
+
     def __init__(self, assembly, beam_a, beam_b, cutoff = None):
         super(LMiterJoint, self).__init__(assembly, [beam_a, beam_b])
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = None
         self.beam_b_key = None
-        self.cutoff = cutoff #for very acute angles, limit the extension of the tip/beak of the joint 
+        self.cutoff = cutoff #for very acute angles, limit the extension of the tip/beak of the joint
         self.features = []
 
     @property
@@ -63,7 +60,7 @@ class LMiterJoint(Joint):
             self.features = []
 
         plane_a, plane_b = self.cutting_planes
-        
+
         trim_a = BeamTrimmingFeature(plane_a)
         extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
         self.beam_a.add_feature(extension_a)
@@ -73,7 +70,7 @@ class LMiterJoint(Joint):
         extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
         self.beam_b.add_feature(extension_b)
         self.beam_b.add_feature(trim_b)
-        
+
         self.features.extend([trim_a, extension_a, trim_b, extension_b])
 
     def restore_beams_from_keys(self, assemly):
@@ -86,7 +83,7 @@ class LMiterJoint(Joint):
 
         Returns
         -------
-        
+
         """
 
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
@@ -126,5 +123,5 @@ class LMiterJoint(Joint):
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
 
-    
+
 
