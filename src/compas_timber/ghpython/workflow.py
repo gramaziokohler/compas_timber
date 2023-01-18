@@ -1,48 +1,105 @@
-from compas_timber.connections.l_miter import LMiterJoint
-from compas_timber.connections.t_butt import TButtJoint
-from compas_timber.connections.x_lap import XLapJoint
-from compas_timber.utils.compas_extra import intersection_line_line_3D
-from compas.geometry import cross_vectors
-from compas.geometry import distance_point_point
-from compas.geometry import subtract_vectors
-from compas.geometry import length_vector, add_vectors, scale_vector, dot_vectors
+from compas_timber.connections import LMiterJoint
+from compas_timber.connections import TButtJoint
+from compas_timber.connections import XLapJoint
 from compas_timber.parts import Beam
+from compas_timber.utils.compas_extra import intersection_line_line_3D
 
-class CollectionDef():
+
+class CollectionDef(object):
+    """ TODO: this should be removed since it's essentially a list.
+    """
     def __init__(self, objs):
         objs = [_ for _ in objs if _]
-        
+
         self.objs = objs
         self.keys_map = {}
-        
+
         for i,obj in enumerate(objs):
             self.keys_map[i]=obj
     def __str__(self):
         return "Collection with %s items."%len(self.objs)
 
-class JointDefinition():
-    joint_types = ['T-Butt', 'L-Miter', 'L-Butt']
+
+class JointRule(object):
+
+    def comply(self, beams):
+        """Returns True if the provided beams comply with the rule defined by this instance. False otherwise.
+
+        Parameters
+        ----------
+        beams : list(:class:`~compas_timber.parts.Beam`)
+
+        Returns
+        -------
+        bool
+
+        """
+        raise NotImplementedError
+
+
+class CategoryRule(JointRule):
+    """Based on the category attribute attached to the beams, this rule assigns
+    """
+    def __init__(self, joint_type, category_a, category_b):
+        self.joint_type = joint_type
+        self.category_a = category_a
+        self.category_b = category_b
+
+    def ToString(self):
+        # GH doesn't know
+        return repr(self)
+
+    def __repr__(self):
+        return "{}({}, {}, {})".format(
+                CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b
+            )
+
+    def comply(self, beams):
+        try:
+            beam_cats = set([b.attributes["category"] for b in beams])
+            return beam_cats == set([self.category_a, self.category_b])
+        except KeyError:
+            return False
+
+
+class JointDefinition(object):
+    """Container for a joint type and the beam that shall be joined.
+
+    This allows delaying the actual joining of the beams to a downstream component.
+
+    """
 
     def __init__(self, joint_type, beams):
-
-        if joint_type not in self.joint_types: raise UserWarning("Wrong 'joint_type'. Instead of %s it should be one of the following strings: %s"%(joint_type, self.joint_types))
-        beams_clean = [b for b in beams if b.__class__.__name__ == Beam.__name__ ]
-        if len(beams_clean)!=2: raise UserWarning("Expected to get two Beams, got %s: %s."%(len(beams_clean),beams))
+        # if not issubclass(joint_type, Joint):
+        #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
+        if len(beams) != 2:
+            raise UserWarning("Expected to get two Beams, got {}.".format(len(beams)))
 
         self.joint_type = joint_type
         self.beams = beams
-    def __str__(self):
-        return "JointDef: %s %s"%(self.joint_type, self.beams)
+
+    def __repr__(self):
+        return "{}({}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.beams)
+
+    def ToString(self):
+        return repr(self)
+
     def __hash__(self):
-        return hash(str(self))
-    
-    def __eq__(self,other):
+        return hash((self.joint_type, self.beams))
+
+    def is_identical(self, other):
         return (
             isinstance(other, JointDefinition) and
             self.joint_type == other.joint_type and
-            self.beams[0] in other.beams and
-            self.beams[1] in other.beams
+            set([b.key for b in self.beams]) == set([b.key for b in other.beams])
         )
+
+    def match(self, beams):
+        """Returns True if beams are defined within this JointDefinition."""
+        set_a = set([id(b) for b in beams])
+        set_b = set([id(b) for b in self.beams])
+        return set_a == set_b
+
 
 class FeatureDefinition():
     operations = ['trim']
@@ -70,7 +127,7 @@ class Attribute():
 
 def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
 
-    if not max_distance: 
+    if not max_distance:
         max_distance = beamA.height + beamB.height
 
 
@@ -85,7 +142,7 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     #     n = cross_vectors(ab, cd)
 
     #     # check if lines are parallel
-    #     if length_vector(n) < tol: 
+    #     if length_vector(n) < tol:
     #         return True
     #     else:
     #         return False
@@ -102,7 +159,7 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     # if lines_parallel(beamA.centerline, beamB.centerline):
     #     if contact_points(beamA.centerline,beamB.centerline):
     #         #TODO: add a check if the angle between beams is 0 degrees or 180 degrees.  Return None if 0 degrees.
-    #         #TODO: replace with 'I' 
+    #         #TODO: replace with 'I'
     #         return ['L',(beamA, beamB)]
 
     [pa,ta], [pb,tb] = intersection_line_line_3D(
