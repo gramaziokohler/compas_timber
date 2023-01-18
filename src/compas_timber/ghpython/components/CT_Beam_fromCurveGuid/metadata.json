@@ -6,41 +6,41 @@
     "description": "Creates a Beam from a referenced Line or LineCurve.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "refCrv",
+                "name": "curve_ids",
                 "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "guid",
                 "scriptParamAccess": 1
             },
             {
-                "name":"ZVector",
-                "description":  "(optional) Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
-                "typeHintID": "vector",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "Width",
+                "name": "width",
                 "description": "Width of the cross-section (usually the smaller dimension).",
                 "typeHintID": "float",
                 "scriptParamAccess": 1
             },
             {
-                "name": "Height",
+                "name": "height",
                 "description": "Height of the cross-section (usually the larger dimension).",
                 "typeHintID": "float",
                 "scriptParamAccess": 1
             },
             {
-                "name": "Category",
+                "name":"z_vector",
+                "description":  "(optional) Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
+                "typeHintID": "vector",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "category",
                 "description": "(optional) Category of a beam.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             },
             {
-                "name": "Group",
+                "name": "group",
                 "description": "(optional) Name of a group or subassembly.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
@@ -54,7 +54,7 @@
         ],
         "outputParameters": [
             {
-                "name": "Beam",
+                "name": "beams",
                 "description": "Beam object(s)."
             }
         ]

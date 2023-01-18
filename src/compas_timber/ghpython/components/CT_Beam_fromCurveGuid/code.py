@@ -1,70 +1,69 @@
 import Rhino
-import Rhino.Geometry as rg
-import rhinoscriptsyntax as rs
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 
-from compas_rhino.geometry import RhinoCurve
-from compas_rhino.conversions import vector_to_compas, line_to_compas
-from compas_ghpython.utilities import unload_modules
-from compas_timber.parts.beam import Beam as ctBeam
+from compas_rhino.conversions import RhinoCurve
+from compas_rhino.conversions import vector_to_compas
+
+from compas_timber.parts.beam import Beam
 from compas_timber.utils.rhino_object_name_attributes import update_rhobj_attributes_name
 
-import Grasshopper.Kernel as ghk
-warning = ghk.GH_RuntimeMessageLevel.Warning
-error = ghk.GH_RuntimeMessageLevel.Error
 
-if not refCrv:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter refCrv failed to collect data")
-if not Width: 
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter Width failed to collect data")
-if not Height: 
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter Height failed to collect data")
+class BeamFromCurveGuid(component):
 
-#=============================
+    def RunScript(self, curve_ids, width, height, z_vector, category, group, update_attrs):
 
+        if not curve_ids:
+            self.AddRuntimeMessage(Warning, "Input parameter curve_ids failed to collect data")
+        if not width:
+            self.AddRuntimeMessage(Warning, "Input parameter width failed to collect data")
+        if not height:
+            self.AddRuntimeMessage(Warning, "Input parameter height failed to collect data")
 
-if not ZVector: ZVector=[None]
-if not Category: Category=[None]
-if not Group: Group=[None]
+        if not (curve_ids and width and height):
+            # minimal required input
+            return
 
+        z_vector = z_vector or [None]
+        category = category or [None]
+        group = group or [None]
 
-if refCrv and Height and Width:
-    #check list lengths for consistency
-    n = len(refCrv)
-    if len(ZVector) not in (0,1,n): 
-        ghenv.Component.AddRuntimeMessage(error, " In 'ZVector' I need either none, one or the same number of inputs as the refCrv parameter.")
-    if len(Width) not in (1,n): 
-        ghenv.Component.AddRuntimeMessage(error, " In 'W' I need either one or the same number of inputs as the refCrv parameter.")
-    if len(Height) not in (1,n): 
-        ghenv.Component.AddRuntimeMessage(error, " In 'H' I need either one or the same number of inputs as the refCrv parameter.")
-    if len(Category) not in (0,1,n): 
-        ghenv.Component.AddRuntimeMessage(error, " In 'Category' I need either none, one or the same number of inputs as the refCrv parameter.")
-    if len(Group) not in (0,1,n): 
-        ghenv.Component.AddRuntimeMessage(error, " In 'Group' I need either none, one or the same number of inputs as the refCrv parameter.")
+        if curve_ids and height and height:
+            #check list lengths for consistency
+            curve_num = len(curve_ids)
+            if len(z_vector) not in (0, 1 , curve_num):
+                self.AddRuntimeMessage(Error, " In 'z_vector' I need either none, one or the same number of inputs as the refCrv parameter.")
+            if len(width) not in (1, curve_num):
+                self.AddRuntimeMessage(Error, " In 'width' I need either one or the same number of inputs as the refCrv parameter.")
+            if len(height) not in (1, curve_num):
+                self.AddRuntimeMessage(Error, " In 'height' I need either one or the same number of inputs as the refCrv parameter.")
+            if len(category) not in (0, 1, curve_num):
+                self.AddRuntimeMessage(Error, " In 'category' I need either none, one or the same number of inputs as the refCrv parameter.")
+            if len(group) not in (0, 1, curve_num):
+                self.AddRuntimeMessage(Error, " In 'group' I need either none, one or the same number of inputs as the refCrv parameter.")
 
-    #duplicate data
-    if len(ZVector)!=n: ZVector = [ZVector[0] for _ in range(n)]
-    if len(Width)!=n: Width = [Width[0] for _ in range(n)]
-    if len(Height)!=n: Height = [Height[0] for _ in range(n)]
-    if len(Category)!=n: Category = [Category[0] for _ in range(n)]
-    if len(Group)!=n: Group = [Group[0] for _ in range(n)]
+        # match number of elemets to number of curves
+        if len(z_vector) != curve_num:
+            z_vector = [z_vector[0]] * curve_num
+        if len(width) != curve_num:
+            width = [width[0]] * curve_num
+        if len(height) != curve_num:
+            height = [height[0]] * curve_num
+        if len(category) != curve_num:
+            category = [category[0]] * curve_num
+        if len(group) != curve_num:
+            group = [group[0]] * curve_num
 
-
-    Beam = []
-    for guid,z,w,h,c,g  in zip(refCrv, ZVector,Width, Height, Category, Group):
-        if guid==None or w==None or h==None:
-            ghenv.Component.AddRuntimeMessage(warning, "Some of the input values are Null")
-        else:
-            crv = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid).Geometry
-            line = rg.Line(crv.PointAtStart,crv.PointAtEnd)
-            
-            line = line_to_compas(line)
-            if z: z = vector_to_compas(z) 
-            else: None
-            
-            beam = ctBeam.from_centreline(line,z,w,h)
-
-            beam.attributes['rhino_guid']= guid
-            beam.attributes['category']= c
+        beams = []
+        for guid, z, w, h, c, g  in zip(curve_ids, z_vector, width, height, category, group):
+            curve = RhinoCurve.from_object(Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid))
+            line = curve.to_compas_line()
+            if z:
+                z = vector_to_compas(z)
+            beam = Beam.from_centerline(line, w, h, z_vector=z)
+            beam.attributes["rhino_guid"] = str(guid)
+            beam.attributes["category"] = c
             beam.attributes['group'] = g
 
             if update_attrs:
@@ -72,5 +71,6 @@ if refCrv and Height and Width:
                 update_rhobj_attributes_name(guid,"height", str(h))
                 update_rhobj_attributes_name(guid,"zaxis", str(list(beam.frame.zaxis)))
                 update_rhobj_attributes_name(guid,"category", c)
-            
-            Beam.append(beam)
+
+            beams.append(beam)
+        return beams
