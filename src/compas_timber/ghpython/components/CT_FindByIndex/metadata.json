@@ -6,26 +6,26 @@
     "description": "Find a part in a Collection of parts, that corresponds with the given index.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
-             
+
             {
-                "name": "Collection",
+                "name": "beams",
                 "description": "A Collection of parts, e.g. Beams.",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
-            },           
+                "scriptParamAccess": 1
+            },
             {
-                "name": "Index",
-                "description": "Index (number) of the objec in the collection.",
+                "name": "indices",
+                "description": "Index (one or more) of the desired beams",
                 "typeHintID": "int",
                 "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
             {
-                "name": "Obj",
+                "name": "found_beams",
                 "description": "Found parts, if any."
             }
         ]
