@@ -10,6 +10,7 @@ class Assembly(component):
         assembly = TimberAssembly()
         if beams:
             for beam in beams:
+                beam.clear_features()  # since we're editing the beams
                 assembly.add_beam(beam)
 
         if joints:
@@ -17,6 +18,9 @@ class Assembly(component):
                 joint.joint_type.create(assembly, *joint.beams)
 
         if features:
-            pass
+            for f_def in features:
+                for beam in f_def.beams:
+                    print(beam.features)
+                    beam.add_feature(f_def.feature)
 
         return assembly
