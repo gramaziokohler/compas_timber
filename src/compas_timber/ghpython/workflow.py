@@ -1,7 +1,6 @@
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.parts import Beam
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
@@ -101,19 +100,22 @@ class JointDefinition(object):
         return set_a == set_b
 
 
-class FeatureDefinition():
-    operations = ['trim']
-    def __init__(self, feature_type, feature_shape, beam):
+class FeatureDefinition(object):
+    """Container linking a feature for the beams on which it should be applied.
 
-        if feature_type not in self.operations: raise UserWarning("Wrong 'feature_type'. Instead of %s it should be one of the following strings: %s"%(feature_type, self.operations))
-        if beam.__class__.__name__ != Beam.__name__ : raise UserWarning("Expected to get a Beam, got %s."%beam)
+    This allows delaying the actual applying of features to a downstream component.
 
-        self.feature_type=feature_type
-        self.beam = beam
-        self.feature_shape = feature_shape
+    """
+    def __init__(self, feature, beams):
+        self.feature = feature
+        self.beams = beams
 
-    def __str__(self):
-        return "FeatureDef: %s %s %s"%(self.feature_type, self.feature_shape, self.beam)
+    def __repr__(self):
+        return "{}({}, {})".format(FeatureDefinition.__name__, repr(self.feature), self.beams)
+
+    def ToString(self):
+        return repr(self)
+
 
 class Attribute():
     def __init__(self,attr_name, attr_value):
