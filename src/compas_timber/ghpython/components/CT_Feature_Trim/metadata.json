@@ -6,26 +6,26 @@
     "description": "Creates a Trim Feature definition. If more than one Beam and Plane: each Beam will be cut with every Plane.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Beam",
+                "name": "beams",
                 "description": "List of Beams (one or more).",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "Pln",
-                "description": "List of cutting Planes (one or more).",
+                "name": "planes",
+                "description": "Cutting planes (one or more)",
                 "typeHintID": "plane",
                 "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
             {
-                "name": "Ft",
-                "description": "List of Features."
+                "name": "feature_defs",
+                "description": "List of feature definitions"
             }
         ]
     }
