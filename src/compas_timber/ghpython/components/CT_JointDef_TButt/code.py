@@ -1,22 +1,24 @@
-from compas_timber.utils.workflow import JointDefinition
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-import Grasshopper.Kernel as ghk
-
-w = ghk.GH_RuntimeMessageLevel.Warning
-e = ghk.GH_RuntimeMessageLevel.Error
-
-if not B1:
-    ghenv.Component.AddRuntimeMessage(w, "Input parameter B1 failed to collect data")
-if not B2:
-    ghenv.Component.AddRuntimeMessage(w, "Input parameter B2 failed to collect data")
-if (B1 and B2) and (len(B1) != len(B2)):
-    ghenv.Component.AddRuntimeMessage(e, " I need an equal number of Beams in B1 and B2")
+from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import TButtJoint
+from compas_timber.ghpython import JointDefinition
 
 
-else:
-    TButt = []
-    for beam1, beam2 in zip(B1, B2):
-        if beam1 and beam2:
-            TButt.append(JointDefinition("T-Butt", (beam1, beam2)))
-        else:
-            ghenv.Component.AddRuntimeMessage(w, "Some of the inputs are Null")
+class TButtDefinition(component):
+    def RunScript(self, main_beam, cross_beam):
+        if not (main_beam and cross_beam):
+            return
+
+        topology, _, _ = ConnectionSolver().find_topology(main_beam, cross_beam)
+
+        if topology != TButtJoint.SUPPORTED_TOPOLOGY:
+            self.AddRuntimeMessage(
+                    Warning, "Beams meet with topology: {} which does not agree with joint of type: {}".format(
+                        topology, TButtJoint.__name__
+                    )
+                )
+
+        return JointDefinition(TButtJoint, [main_beam, cross_beam])
+

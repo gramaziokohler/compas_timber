@@ -1,23 +1,23 @@
 {
-    "name": "FindByGuid",
-    "nickname": "FindByGuid",
+    "name": "FindBeamByRhinoGuid",
+    "nickname": "FindBeamByRhinoGuid",
     "category": "COMPAS Timber",
     "subcategory": "Utils",
     "description": "Find a part in a Collection of parts, that corresponds with the given referenced object.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
-             
+
             {
-                "name": "Collection",
-                "description": "A Collection of parts, e.g. Beams.",
+                "name": "beams",
+                "description": "A Collection of Beams.",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
-            },           
+                "scriptParamAccess": 1
+            },
             {
-                "name": "refObj",
+                "name": "ref_objs",
                 "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "guid",
                 "scriptParamAccess": 1
@@ -25,8 +25,8 @@
         ],
         "outputParameters": [
             {
-                "name": "Obj",
-                "description": "Found parts, if any."
+                "name": "found_beams",
+                "description": "Found beams, if any."
             }
         ]
     }

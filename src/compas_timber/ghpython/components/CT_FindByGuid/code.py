@@ -1,25 +1,22 @@
-import Grasshopper.Kernel as ghk
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-warning = ghk.GH_RuntimeMessageLevel.Warning
-error = ghk.GH_RuntimeMessageLevel.Error
 
-def find_part_with_rhino_id(parts, guid):
-    for g in guid:
-        for part in parts:
-            if part.attributes.get("rhino_guid", None) == g:
-                return part
+class FindBeamByRhinoGuid(component):
+    def RunScript(self, beams, guids):
+        if not (beams and guids):
+            return
 
-if not Collection:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter Collection failed to collect data")
-elif not Collection.objs:
-    ghenv.Component.AddRuntimeMessage(warning, "There are no objects in the Collection")
+        if not isinstance(guids, list):
+            guids = [guids]
 
-if not refObj:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter refObj failed to collect data")
+        found_beams = []
+        for beam in beams:
+            if beam.attributes.get("rhino_guid", None) in guids:
+                found_beams.append(beam)
 
-if Collection and refObj:
-    found = find_part_with_rhino_id(Collection.objs, refObj)
-    if found: 
-        Obj=found
-    else:
-        ghenv.Component.AddRuntimeMessage(warning, "No objects found")
+        if not found_beams:
+            self.AddRuntimeMessage(Warning, "No beams found!")
+
+        return found_beams
+

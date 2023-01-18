@@ -1,2 +1,14 @@
-if CatB1 and CatB2 and JType :
-    JRule = [(CatB1, CatB2, JType)]
+from ghpythonlib.componentbase import executingcomponent as component
+
+from compas_timber.ghpython import CategoryRule
+from compas_timber.connections import TButtJoint
+from compas_timber.connections import LMiterJoint
+
+
+class JointCategoryRule(component):
+
+    MAP = {"T-Butt": TButtJoint, "L-Miter": LMiterJoint}
+
+    def RunScript(self, joint_type, category_a, category_b):
+        if joint_type and category_a and category_b:
+            return CategoryRule(self.MAP[joint_type], category_a, category_b)

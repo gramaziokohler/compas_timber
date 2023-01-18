@@ -6,25 +6,25 @@
     "description": "Defines a T-Butt joint for the given two Beams.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
-        "inputParameters": [   
+        "inputParameters": [
             {
-                "name": "B1",
+                "name": "main_beam",
                 "description": "First (main) Beam.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
-            },           
+                "scriptParamAccess": 0
+            },
             {
-                "name": "B2",
+                "name": "cross_beam",
                 "description": "Second (cross) Beam.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
-                "name": "TButt",
+                "name": "t_butt_def",
                 "description": "T-Butt JointDefinition."
             }
         ]

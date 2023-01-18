@@ -6,44 +6,33 @@
     "description": "Creates an Assembly",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
-        "inputParameters": [   
+        "inputParameters": [
             {
-                "name": "BeamsCollection",
+                "name": "beams",
                 "description": "Collection of Beams",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
-            },           
+                "scriptParamAccess": 1
+            },
             {
-                "name": "JointsCollection",
+                "name": "joints",
                 "description": "Collection of joint definitions.",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             },
             {
-                "name": "FeaturesCollection",
+                "name": "features",
                 "description": "Collection of feature definitions.",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "apply",
-                "description": "If True, geometry operations on beams defined by joints and features will be executed (e.g. trims, notches).",
-                "typeHintID": "bool",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
             {
-                "name": "Assembly",
+                "name": "assembly",
                 "description": "Assembly object."
-            },
-            {
-                "name": "Breps",
-                "description": "Brep geometry of the beams."
             }
-
         ]
     }
 }
