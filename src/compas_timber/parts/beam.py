@@ -82,8 +82,7 @@ class Beam(Part):
         self.height = height
         self.length = length
         self.geometry_type = geometry_type
-        self.is_added_to_assembly = False
-        
+
         self._geometry = None
         self._geometry_with_features = None
 
@@ -185,10 +184,10 @@ class Beam(Part):
         """
         Iterate over features:
             if is_cumulative:
-                
+
         """
-        para_features = [f for f in self.features if isinstance(f, ParametricFeature)]        
-        geo_features = [f for f in self.features if isinstance(f, GeometricFeature)]        
+        para_features = [f for f in self.features if isinstance(f, ParametricFeature)]
+        geo_features = [f for f in self.features if isinstance(f, GeometricFeature)]
         for f in para_features:
             f.apply(self)
         for f in geo_features:
@@ -196,7 +195,10 @@ class Beam(Part):
             self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
 
     def clear_features(self, features_to_clear=None):
-        self.features = [f for f in self.features if f not in features_to_clear]
+        if features_to_clear:
+            self.features = [f for f in self.features if f not in features_to_clear]
+        else:
+            self.features = []
         self._geometry_with_features = self._geometry.copy()
 
     @classmethod
@@ -256,7 +258,7 @@ class Beam(Part):
     @property
     def long_edges(self):
         """Returns a list of lines representing the long edges of the beam's bounding box
-         
+
         Returns
         -------
         list(:class:`~compas.geometry.Line`)
@@ -271,7 +273,7 @@ class Beam(Part):
 
         return [Line(ps+v, pe+v) for v in (y*w+z*h, -y*w+z*h, -y*w-z*h, y*w-z*h)]
 
-	
+
     @property
     def midpoint(self):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
@@ -294,14 +296,14 @@ class Beam(Part):
         frame = Frame(ps, x, y)
         self.frame = frame
         self.length = distance_point_point(ps, pe)
-        
+
         return
-    
+
     def extension_to_plane(self,pln):
         """Returns the amount by which to extend the beam in each direction using metric units.
 
         TODO: verify this is true
-        The extension is the minimum amount which allows all long faces of the beam to pass through 
+        The extension is the minimum amount which allows all long faces of the beam to pass through
         the given plane.
 
         Returns
@@ -315,7 +317,7 @@ class Beam(Part):
         for e in self.long_edges:
             p,t = intersection_line_plane(e,pln)
             x[t]=p
-        
+
         px = intersection_line_plane(self.centerline,pln)[0]
         side, _ = self.endpoint_closest_to_point(px)
 
@@ -323,7 +325,7 @@ class Beam(Part):
         de=0.0
         if side == "start":
             tmin = min(x.keys())
-            if tmin<0.0: 
+            if tmin<0.0:
                 ds = tmin * self.length #should be negative
         elif side == "end":
             tmax=max(x.keys())
@@ -384,7 +386,7 @@ class Beam(Part):
         pe = self.centerline_end
         ds = point.distance_to_point(ps)
         de = point.distance_to_point(pe)
-        
+
         if ds <= de:
             return ["start", ps]
         else:
