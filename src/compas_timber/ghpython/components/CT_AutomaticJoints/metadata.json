@@ -22,12 +22,6 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "overrides",
-                "description": "(optional) Pre-defined joint definitions. These override the joint found by the automatic solver.",
-                "typeHintID": "none",
-                "scriptParamAccess": 1
-            },
-            {
                 "name": "d_max",
                 "description": "(optional) Maximum distance between centerlines of two Beams (limited to segments) to consider the Beams as connecting. Optional (if omitted, a default value equal to the average beam height will be taken.)",
                 "typeHintID": "float",

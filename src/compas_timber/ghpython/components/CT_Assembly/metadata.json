@@ -19,7 +19,8 @@
                 "name": "joints",
                 "description": "Collection of joint definitions.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten": true
             },
             {
                 "name": "features",
