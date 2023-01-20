@@ -13,10 +13,11 @@ class ShowAssembly(component):
         assembly = assembly.copy()  # we're gonna be making changes to upstream objects
 
         geometry = []
+        errors = []
         for beam in assembly.beams:
             if show_features:
-                beam.apply_features()
+                errors.extend(beam.apply_features())
             brep = beam.get_geometry(show_features)
             geometry.append(Artist(brep).draw())
 
-        return geometry
+        return geometry, errors

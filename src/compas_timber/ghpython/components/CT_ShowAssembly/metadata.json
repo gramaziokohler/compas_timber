@@ -27,6 +27,10 @@
             {
                 "name": "geometry",
                 "description": "Brep geometry of the Beams"
+            },
+            {
+                "name": "errors",
+                "description": "Error log of the feature application process."
             }
         ]
     }

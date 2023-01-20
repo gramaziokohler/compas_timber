@@ -186,13 +186,24 @@ class Beam(Part):
             if is_cumulative:
 
         """
+        error_log = []
         para_features = [f for f in self.features if isinstance(f, ParametricFeature)]
         geo_features = [f for f in self.features if isinstance(f, GeometricFeature)]
         for f in para_features:
-            f.apply(self)
+            success, _ = f.apply(self)
+            if not success:
+                error_log.append(self._create_feature_error_msg(f, self))
         for f in geo_features:
-            self._geometry_with_features = f.apply(self)
+            success, self._geometry_with_features = f.apply(self)
             self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
+            if not success:
+                error_log.append(self._create_feature_error_msg(f, self))
+        return error_log
+
+    @staticmethod
+    def _create_feature_error_msg(feature, part):
+        msg = "Failed applying feature: {!r} with owner: {!r} to beam: {!r}"
+        return msg.format(feature, getattr(feature, "_owner", None), part)
 
     def clear_features(self, features_to_clear=None):
         if features_to_clear:

@@ -22,10 +22,12 @@ from .beam import Beam
 from .features import BeamTrimmingFeature
 from .features import BeamExtensionFeature
 from .features import BeamBooleanSubtraction
+from .features import FeatureApplicationError
 
 __all__ = [
     "Beam",
     "BeamTrimmingFeature",
     "BeamExtensionFeature",
     "BeamBooleanSubtraction",
+    "FeatureApplicationError",
 ]
