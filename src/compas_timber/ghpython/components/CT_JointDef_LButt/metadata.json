@@ -6,17 +6,17 @@
     "description": "Defines an L-Butt joint for the given two Beams. The order matters: the first beam will be trimmed with the side of the second beam.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
-        "inputParameters": [   
+        "inputParameters": [
             {
-                "name": "B1",
+                "name": "main_beam",
                 "description": "First (main) Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
-            },           
+            },
             {
-                "name": "B2",
+                "name": "cross_beam",
                 "description": "Second (cross) Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "LButt",
+                "name": "l_butt_def",
                 "description": "L-Butt JointDefinition."
             }
         ]

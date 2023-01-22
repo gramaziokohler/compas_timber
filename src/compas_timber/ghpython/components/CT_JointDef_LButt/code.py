@@ -1,22 +1,37 @@
-from compas_timber.utils.workflow import JointDefinition
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 
-import Grasshopper.Kernel as ghk
-
-w = ghk.GH_RuntimeMessageLevel.Warning
-e = ghk.GH_RuntimeMessageLevel.Error
-
-if not B1:
-    ghenv.Component.AddRuntimeMessage(w, "Input parameter B1 failed to collect data")
-if not B2:
-    ghenv.Component.AddRuntimeMessage(w, "Input parameter B2 failed to collect data")
-if (B1 and B2) and (len(B1) != len(B2)):
-    ghenv.Component.AddRuntimeMessage(e, " I need an equal number of Beams in B1 and B2")
+from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import LButtJoint
+from compas_timber.ghpython import JointDefinition
 
 
-else:
-    LButt = []
-    for beam1, beam2 in zip(B1, B2):
-        if beam1 and beam2:
-            LButt.append(JointDefinition("L-Butt", (beam1, beam2)))
-        else:
-            ghenv.Component.AddRuntimeMessage(w, "Some of the inputs are Null")
+class LButtDefinition(component):
+    def RunScript(self, main_beam, cross_beam):
+        if not main_beam:
+            self.AddRuntimeMessage(Warning, "Input parameter main_beam failed to collect data.")
+        if not cross_beam:
+            self.AddRuntimeMessage(Warning, "Input parameter cross_beam failed to collect data.")
+        if not (main_beam and cross_beam):
+            return
+        if not isinstance(main_beam, list):
+            main_beam = [main_beam]
+        if not isinstance(cross_beam, list):
+            cross_beam = [cross_beam]
+        if len(main_beam) != len(cross_beam):
+            self.AddRuntimeMessage(Error, "Number of items in main_beam and cross_beam must match!")
+            return
+
+        joint_defs = []
+        for main, cross in zip(main_beam, cross_beam):
+            topology, _, _ = ConnectionSolver().find_topology(main, cross)
+            if topology != LButtJoint.SUPPORTED_TOPOLOGY:
+                self.AddRuntimeMessage(
+                        Warning, "Beams meet with topology: {} which does not agree with joint of type: {}".format(
+                            topology, LButtJoint.__name__
+                        )
+                    )
+                continue
+            joint_defs.append(JointDefinition(LButtJoint, [main_beam, cross_beam]))
+        return joint_defs
