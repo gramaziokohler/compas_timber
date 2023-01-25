@@ -9,7 +9,7 @@ class FindBeamByRhinoGuid(component):
 
         if not isinstance(guids, list):
             guids = [guids]
-
+        guids = [str(g) for g in guids]
         found_beams = []
         for beam in beams:
             if beam.attributes.get("rhino_guid", None) in guids:
