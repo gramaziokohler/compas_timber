@@ -182,7 +182,7 @@ class TimberAssembly(Assembly):
         int | str
             The identifier of the joint in the current assembly graph.
         """
-        # self._validate_joining_operation(joint, parts)
+        self._validate_joining_operation(joint, parts)
         # create an unconnected node in the graph for the joint object
         key = self.add_part(part=joint, type="joint")
         #joint.assembly = self
