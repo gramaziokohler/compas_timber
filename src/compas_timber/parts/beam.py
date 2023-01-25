@@ -1,24 +1,26 @@
-from compas_future.datastructures import Part
-from compas_future.datastructures import ParametricFeature
-from compas_future.datastructures import GeometricFeature
+import math
+
 from compas.datastructures import Mesh
-from compas.geometry import Transformation
 from compas.geometry import Box
+from compas.geometry import Brep
+from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import Brep
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
-from compas.geometry import distance_point_point
 from compas.geometry import close
 from compas.geometry import cross_vectors
-from compas.geometry import BrepTrimmingError
+from compas.geometry import distance_point_point
+from compas_future.datastructures import GeometricFeature
+from compas_future.datastructures import ParametricFeature
+from compas_future.datastructures import Part
 
-from compas_timber.utils.helpers import close
 from compas_timber.utils.compas_extra import intersection_line_plane
+from compas_timber.utils.helpers import close
 
 # TODO: update to global compas PRECISION
 ANGLE_TOLERANCE = 1e-3  # [radians]
@@ -82,10 +84,6 @@ class Beam(Part):
         self.height = height
         self.length = length
         self.geometry_type = geometry_type
-
-        self._geometry = None
-        self._geometry_with_features = None
-
         self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
         self._geometry_with_features = self._geometry.copy()
 
@@ -221,6 +219,8 @@ class Beam(Part):
         x_vector = centerline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
+        if y_vector.length < DEFAULT_TOLERANCE:
+            raise ValueError("The given z_vector seems to be parallel to the given centerline.")
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
 
@@ -388,7 +388,8 @@ class Beam(Part):
     @staticmethod
     def _calculate_z_vector_from_centerline(centerline_vector):
         z = Vector(0, 0, 1)
-        if angle_vectors(z, centerline_vector) < ANGLE_TOLERANCE:
+        angle = angle_vectors(z, centerline_vector)
+        if  angle < ANGLE_TOLERANCE or angle > math.pi - ANGLE_TOLERANCE:
             z = Vector(1, 0, 0)
         return z
 
