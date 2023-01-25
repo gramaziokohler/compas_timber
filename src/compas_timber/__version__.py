@@ -1,7 +1,5 @@
 __title__ = "compas_timber_structures"
-__description__ = (
-    "COMPAS package for modeling, designing and fabricating timber assemblies."
-)
+__description__ = "COMPAS package for modeling, designing and fabricating timber assemblies."
 __url__ = "https://github.com/gramaziokohler/compas_timber_structures"
 __version__ = "0.1.0"
 __author__ = "Gramazio Kohler Research"

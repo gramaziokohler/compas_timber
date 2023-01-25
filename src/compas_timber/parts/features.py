@@ -34,9 +34,7 @@ class BeamTrimmingFeature(GeometricFeature):
 
     @property
     def data(self):
-        return {
-            "trimming_frame": self._geometry.data
-        }
+        return {"trimming_frame": self._geometry.data}
 
     @data.setter
     def data(self, value):
@@ -104,10 +102,7 @@ class BeamExtensionFeature(ParametricFeature):
 
     @property
     def data(self):
-        return {
-            "start": self._extend_start,
-            "end": self._extend_end
-        }
+        return {"start": self._extend_start, "end": self._extend_end}
 
     @data.setter
     def data(self, value):

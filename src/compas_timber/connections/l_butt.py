@@ -53,14 +53,14 @@ class LButtJoint(Joint):
     @property
     def cutting_plane_main(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
-        cfr = min(angles_faces, key = lambda x: x[0])[1]
-        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis*-1.0) #flip normal
+        cfr = min(angles_faces, key=lambda x: x[0])[1]
+        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         return cfr
 
     @property
     def cutting_plane_cross(self):
         angles_faces = beam_side_incidence(self.cross_beam, self.main_beam)
-        cfr = max(angles_faces, key = lambda x: x[0])[1]
+        cfr = max(angles_faces, key=lambda x: x[0])[1]
         return cfr
 
     def add_features(self):

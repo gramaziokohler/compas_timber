@@ -43,21 +43,23 @@ def test_add_joint():
     assert A.beams[0] == B1
     assert len(A.joints) == 1
 
+
 def test_remove_joint():
     A = TimberAssembly()
     B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
-    
+
     J = Joint.create(A, [B1, B2])
     assert A.contains(J) == True
-    
+
     A.remove_joint(J)
     assert len(list(A.graph.nodes())) == 2
     assert len(list(A.graph.edges())) == 0
     assert len(A.joints) == 0
     assert J.assembly == None
+
 
 def test_copy(mocker):
     mocker.patch("compas_timber.parts.Beam.update_beam_geometry")
@@ -76,9 +78,9 @@ def test_copy(mocker):
     assert A_copy.beams[0].is_identical(A.beams[0])
     assert A_copy.beams[0] is not A.beams[0]
     assert A_copy.beams[0].assembly is not A
-     # different parts in the assembly should point back to the same assembly
-    assert (A_copy.beams[0].assembly is A_copy.beams[1].assembly) 
-  
+    # different parts in the assembly should point back to the same assembly
+    assert A_copy.beams[0].assembly is A_copy.beams[1].assembly
+
 
 def test_deepcopy(mocker):
     mocker.patch("compas_timber.parts.Beam.update_beam_geometry")
@@ -101,11 +103,13 @@ def test_deepcopy(mocker):
         A_copy.beams[0].assembly is A_copy.beams[1].assembly
     )  # different parts in the assembly should point back to the same assembly
 
+
 def test_find():
     A = TimberAssembly()
     B = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B)
     assert B == A.find(B.guid)
+
 
 def test_parts_joined():
     A = TimberAssembly()
@@ -117,8 +121,8 @@ def test_parts_joined():
     A.add_beam(B2)
     A.add_beam(B3)
     J = Joint.create(A, [B1, B2])
-    assert A.are_parts_joined([B1,B2]) == True
-    assert A.are_parts_joined([B1,B3]) == False
+    assert A.are_parts_joined([B1, B2]) == True
+    assert A.are_parts_joined([B1, B3]) == False
 
 
 if __name__ == "__main__":
@@ -127,8 +131,8 @@ if __name__ == "__main__":
     test_add_beam()
     test_add_joint()
     test_remove_joint()
-    #test_copy()
-    #test_deepcopy()
+    # test_copy()
+    # test_deepcopy()
     test_find()
     test_parts_joined()
     print("\n *** all tests passed ***\n\n")

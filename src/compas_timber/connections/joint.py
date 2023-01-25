@@ -51,11 +51,7 @@ class Joint(Data):
     def _get_part_keys(self):
         neighbor_keys = self.assembly.graph.neighbors(self.key)
         # just double-check in case the joint-node would be somehow connecting to smth else in the graph
-        return [
-            k
-            for k in neighbor_keys
-            if "part" in self.assembly.graph.node_attribute(key=k, name="type")
-        ]
+        return [k for k in neighbor_keys if "part" in self.assembly.graph.node_attribute(key=k, name="type")]
 
     @property
     def beams(self):
@@ -84,18 +80,15 @@ def beam_side_incidence(beam1, beam2):
     # find the orientation of beam1's centerline so that it's pointing outward of the joint
     #   find the closest end
     p1x, p2x = intersection_line_line(beam1.centerline, beam2.centerline)
-    which,_ = beam1.endpoint_closest_to_point(Point(*p1x))
+    which, _ = beam1.endpoint_closest_to_point(Point(*p1x))
 
-    if which == 'start':
+    if which == "start":
         centerline_vec = beam1.centerline.vector
     else:
-        centerline_vec = beam1.centerline.vector*-1
+        centerline_vec = beam1.centerline.vector * -1
 
     # compare with side normals
-    angles = [
-        angle_vectors(beam2.faces[i].normal, centerline_vec)
-        for i in range(4)
-        ]
+    angles = [angle_vectors(beam2.faces[i].normal, centerline_vec) for i in range(4)]
 
     # map faces to their angle with centerline, choose smallest
     angle_face = [(angle_vectors(side.normal, centerline_vec), side) for side in beam2.faces[:4]]

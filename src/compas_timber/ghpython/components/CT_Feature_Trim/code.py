@@ -6,8 +6,8 @@ from compas_rhino.conversions import plane_to_compas_frame
 from compas_timber.parts import BeamTrimmingFeature
 from compas_timber.ghpython import FeatureDefinition
 
-class TrimmingFeature(component):
 
+class TrimmingFeature(component):
     def RunScript(self, beams, planes):
 
         if not beams:

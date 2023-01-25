@@ -1,3 +1,4 @@
+# flake8: noqa
 from compas_timber.utils.workflow import JointDefinition
 
 import Grasshopper.Kernel as ghk

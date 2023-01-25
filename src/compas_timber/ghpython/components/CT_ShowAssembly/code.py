@@ -3,8 +3,8 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas.artists import Artist
 
-class ShowAssembly(component):
 
+class ShowAssembly(component):
     def RunScript(self, assembly, show_features):
 
         if not assembly:

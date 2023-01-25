@@ -33,29 +33,38 @@ def list2rLine(a):
 def cPt2rPt(cPt):
     return rg.Point3d(cPt.x, cPt.y, cPt.z)
 
+
 def rPt2cPt(rPt):
     return cg.Point(rPt.X, rPt.Y, rPt.Z)
+
 
 def cVec2rVec(cVec):
     return rg.Vector3d(cVec.x, cVec.y, cVec.z)
 
+
 def rVec2cVec(rVec):
     return cg.Vector(rVec.X, rVec.Y, rVec.Z)
+
 
 def cLine2rLine(L):
     return rg.Line(list2rPt(L[0]), list2rPt(L[1]))
 
+
 def rLine2cLine(L):
     return cg.Line(rPt2cPt(L.PointAt(0.0)), rPt2cPt(L.PointAt(1.0)))
+
 
 def cPln2rPln(pln):
     return rg.Plane(list2rPt(pln.point), list2rVec(pln.normal))
 
+
 def cFrame2rPln(cFrame):
     return rg.Plane(cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis))
 
+
 def rPln2cFrame(rPln):
     return cg.Frame(rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis))
+
 
 def cBox2rBox(cbox):
     return rg.Box(
@@ -112,9 +121,7 @@ def cMesh2rMesh(cMesh):
         for face in faces:
             rMesh.Faces.AddFace(*face)
     rMesh.Normals.ComputeNormals()
-    rMesh.Unweld(
-        0.01, True
-    )  # makes sharp edges rendered nicely again / splits vertex normals
+    rMesh.Unweld(0.01, True)  # makes sharp edges rendered nicely again / splits vertex normals
     rMesh.Compact()
     return rMesh
 

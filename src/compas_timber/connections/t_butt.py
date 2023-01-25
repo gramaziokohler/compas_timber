@@ -14,13 +14,13 @@ class TButtJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.T
 
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
-    	#TODO: try if possible remove default Nones
+        # TODO: try if possible remove default Nones
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        #TODO: make it protected attribute?
+        # TODO: make it protected attribute?
         self.main_beam_key = None
         self.cross_beam_key = None
 
-        #TODO: remove direct ref, replace with assembly look up
+        # TODO: remove direct ref, replace with assembly look up
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.gap = None
@@ -62,7 +62,7 @@ class TButtJoint(Joint):
     @property
     def cutting_plane(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
-        cfr = min(angles_faces, key = lambda x: x[0])[1]
+        cfr = min(angles_faces, key=lambda x: x[0])[1]
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 

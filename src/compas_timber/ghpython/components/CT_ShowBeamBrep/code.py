@@ -1,3 +1,4 @@
+# flake8: noqa
 from compas_timber.utils.ghpython import list_input_valid
 from compas_rhino.conversions import box_to_rhino
 

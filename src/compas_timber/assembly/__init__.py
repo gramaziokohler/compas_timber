@@ -22,6 +22,4 @@ Classes
 
 from .assembly import TimberAssembly
 
-__all__ = [
-    "TimberAssembly"
-]
+__all__ = ["TimberAssembly"]

@@ -32,7 +32,7 @@ def _create_box(frame, xsize, ysize, zsize):
     # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
     boxframe = frame.copy()
     depth_offset = boxframe.xaxis * xsize * 0.5
-    boxframe.point +=  depth_offset
+    boxframe.point += depth_offset
     return Box(boxframe, xsize, ysize, zsize)
 
 
@@ -79,7 +79,9 @@ class Beam(Part):
 
     def __init__(self, frame, length, width, height, geometry_type, **kwargs):
         super(Beam, self).__init__(frame=frame)
-        self.frame = frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
+        self.frame = (
+            frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
+        )
         self.width = width
         self.height = height
         self.length = length
@@ -102,11 +104,14 @@ class Beam(Part):
             self.length,
             self.frame,
         )
+
     def __hash__(self):
         return self.sha256()
 
     def update_beam_geometry(self):
-        self._geometry_with_features = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
+        self._geometry_with_features = self._create_beam_shape_from_params(
+            self.length, self.width, self.height, self.geometry_type
+        )
 
     def is_identical(self, other):
         return (
@@ -127,12 +132,7 @@ class Beam(Part):
         """
         Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
         """
-        data = {
-            "width": self.width,
-            "height": self.height,
-            "length": self.length,
-            "geometry_type": self.geometry_type
-        }
+        data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
         data.update(super(Beam, self).data)
         return data
 
@@ -227,7 +227,7 @@ class Beam(Part):
         return cls(frame, length, width, height, geometry_type)
 
     @classmethod
-    def from_endpoints(cls, point_start, point_end,  width, height, z_vector=None, geometry_type="brep"):
+    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None, geometry_type="brep"):
 
         line = Line(point_start, point_end)
 
@@ -246,12 +246,32 @@ class Beam(Part):
         5: +x (side at the end of the beam)
         """
         return [
-            Frame(Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, -self.frame.zaxis),
-            Frame(Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, -self.frame.yaxis),
-            Frame(Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)), self.frame.xaxis, self.frame.zaxis),
-            Frame(Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)), self.frame.xaxis, self.frame.yaxis),
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
             Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
-            Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)), self.frame.yaxis, self.frame.zaxis),  # small face at end point
+            Frame(
+                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
+                self.frame.yaxis,
+                self.frame.zaxis,
+            ),  # small face at end point
         ]
 
     @property
@@ -277,20 +297,19 @@ class Beam(Part):
         """
         y = self.frame.yaxis
         z = self.frame.zaxis
-        w = self.width*0.5
-        h = self.height*0.5
+        w = self.width * 0.5
+        h = self.height * 0.5
         ps = self.centerline_start
         pe = self.centerline_end
 
-        return [Line(ps+v, pe+v) for v in (y*w+z*h, -y*w+z*h, -y*w-z*h, y*w-z*h)]
-
+        return [Line(ps + v, pe + v) for v in (y * w + z * h, -y * w + z * h, -y * w - z * h, y * w - z * h)]
 
     @property
     def midpoint(self):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
-        #TODO: revise if needed, compare to ParametricFeature
+        # TODO: revise if needed, compare to ParametricFeature
         # create & apply a transformation
         """
         which_endpoint: 'start' or 'end' or 'both'
@@ -310,7 +329,7 @@ class Beam(Part):
 
         return
 
-    def extension_to_plane(self,pln):
+    def extension_to_plane(self, pln):
         """Returns the amount by which to extend the beam in each direction using metric units.
 
         TODO: verify this is true
@@ -326,27 +345,27 @@ class Beam(Part):
         x = {}
         pln = Plane.from_frame(pln)
         for e in self.long_edges:
-            p,t = intersection_line_plane(e,pln)
-            x[t]=p
+            p, t = intersection_line_plane(e, pln)
+            x[t] = p
 
-        px = intersection_line_plane(self.centerline,pln)[0]
+        px = intersection_line_plane(self.centerline, pln)[0]
         side, _ = self.endpoint_closest_to_point(px)
 
-        ds=0.0
-        de=0.0
+        ds = 0.0
+        de = 0.0
         if side == "start":
             tmin = min(x.keys())
-            if tmin<0.0:
-                ds = tmin * self.length #should be negative
+            if tmin < 0.0:
+                ds = tmin * self.length  # should be negative
         elif side == "end":
-            tmax=max(x.keys())
-            if tmax>1.0:
-                de = (tmax-1.0) * self.length
+            tmax = max(x.keys())
+            if tmax > 1.0:
+                de = (tmax - 1.0) * self.length
 
         return -ds, de
 
     def extend_ends(self, d_start, d_end):
-    	#TODO: revise if needed, compare to ParametricFeature
+        # TODO: revise if needed, compare to ParametricFeature
         """
         Extensions at the start of the centerline should have a negative value.
         Extenshions at the end of the centerline should have a positive value.
@@ -371,7 +390,9 @@ class Beam(Part):
 
     def _get_joint_keys(self):
         n = self.assembly.graph.neighbors[self.key]
-        return [k for k in n if self.assembly.node_attribute("type") == "joint"]  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
+        return [
+            k for k in n if self.assembly.node_attribute("type") == "joint"
+        ]  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
 
     @property
     def joints(self):
@@ -381,7 +402,7 @@ class Beam(Part):
 
     @property
     def has_features(self):
-    	#TODO: move to compas_future... Part
+        # TODO: move to compas_future... Part
         return len(self.features) > 0
 
     ### hidden helpers ###
@@ -389,7 +410,7 @@ class Beam(Part):
     def _calculate_z_vector_from_centerline(centerline_vector):
         z = Vector(0, 0, 1)
         angle = angle_vectors(z, centerline_vector)
-        if  angle < ANGLE_TOLERANCE or angle > math.pi - ANGLE_TOLERANCE:
+        if angle < ANGLE_TOLERANCE or angle > math.pi - ANGLE_TOLERANCE:
             z = Vector(1, 0, 0)
         return z
 
@@ -403,7 +424,6 @@ class Beam(Part):
             return ["start", ps]
         else:
             return ["end", pe]
-
 
 
 if __name__ == "__main__":

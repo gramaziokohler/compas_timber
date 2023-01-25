@@ -10,6 +10,7 @@ from compas_timber.parts.beam import Beam
 
 geometry_type = "mesh"
 
+
 def test_create():
 
     # try create with beams
@@ -24,6 +25,7 @@ def test_create():
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
     assert A.joints[0] == J
+
 
 def test_joint_override_protection():
     A = TimberAssembly()
@@ -44,16 +46,24 @@ def test_joint_override_protection():
 
 def test__eq__():
 
-    B1 = Beam.from_endpoints(Point(0, 0, 0), Point(2, 0, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=geometry_type)
-    B2 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=geometry_type)
-    B3 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=geometry_type)  # same as B2
-    B4 = Beam.from_endpoints(Point(1, 0, 0), Point(1, 1, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.4, geometry_type=geometry_type)
+    B1 = Beam.from_endpoints(
+        Point(0, 0, 0), Point(2, 0, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=geometry_type
+    )
+    B2 = Beam.from_endpoints(
+        Point(1, 0, 0), Point(1, 1, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=geometry_type
+    )
+    B3 = Beam.from_endpoints(
+        Point(1, 0, 0), Point(1, 1, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=geometry_type
+    )  # same as B2
+    B4 = Beam.from_endpoints(
+        Point(1, 0, 0), Point(1, 1, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.4, geometry_type=geometry_type
+    )
     A = TimberAssembly()
     for b in [B1, B2, B3, B4]:
         A.add_beam(b)
 
     J1 = Joint.create(A, [B1, B2])
-    J2 = Joint.create(A, [B1, B3]) # this is failing because B1 and B2 are already joined
+    J2 = Joint.create(A, [B1, B3])  # this is failing because B1 and B2 are already joined
     assert J1 == J2
 
 
@@ -80,5 +90,5 @@ if __name__ == "__main__":
     test_create()
     test_joint_override_protection()
     test__eq__()
-    #test_deepcopy()
+    # test_deepcopy()
     print("\n *** all tests passed ***\n\n")

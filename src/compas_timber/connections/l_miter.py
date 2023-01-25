@@ -16,13 +16,13 @@ class LMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.L
 
-    def __init__(self, assembly, beam_a, beam_b, cutoff = None):
+    def __init__(self, assembly, beam_a, beam_b, cutoff=None):
         super(LMiterJoint, self).__init__(assembly, [beam_a, beam_b])
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = None
         self.beam_b_key = None
-        self.cutoff = cutoff #for very acute angles, limit the extension of the tip/beak of the joint
+        self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
         self.features = []
 
     @property
@@ -90,13 +90,13 @@ class LMiterJoint(Joint):
         vB = Vector(*self.beam_b.frame.xaxis)
 
         # intersection point (average) of both centrelines
-        [pxA,tA], [pxB,tB] = intersection_line_line_3D(
+        [pxA, tA], [pxB, tB] = intersection_line_line_3D(
             self.beam_a.centerline,
             self.beam_b.centerline,
             max_distance=self.beam_a.height + self.beam_b.height,
-            limit_to_segments=False
+            limit_to_segments=False,
         )
-        #TODO: add error-trap + solution for I-miter joints
+        # TODO: add error-trap + solution for I-miter joints
 
         p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
 
@@ -116,12 +116,9 @@ class LMiterJoint(Joint):
         v_perp = Vector(*cross_vectors(v_bisector, vA))
         v_normal = Vector(*cross_vectors(v_bisector, v_perp))
 
-        plnA = Plane(p, v_normal )
+        plnA = Plane(p, v_normal)
         plnB = Plane(p, v_normal * -1.0)
 
         plnA = Frame.from_plane(plnA)
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
-
-
-

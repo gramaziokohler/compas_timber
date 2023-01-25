@@ -15,10 +15,10 @@ class TButtDefinition(component):
 
         if topology != TButtJoint.SUPPORTED_TOPOLOGY:
             self.AddRuntimeMessage(
-                    Warning, "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                        topology, TButtJoint.__name__
-                    )
-                )
+                Warning,
+                "Beams meet with topology: {} which does not agree with joint of type: {}".format(
+                    topology, TButtJoint.__name__
+                ),
+            )
 
         return JointDefinition(TButtJoint, [main_beam, cross_beam])
-

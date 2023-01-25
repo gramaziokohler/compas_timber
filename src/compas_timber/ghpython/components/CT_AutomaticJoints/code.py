@@ -6,7 +6,6 @@ from compas_timber.ghpython import JointDefinition
 
 
 class AutotomaticJoints(component):
-
     def RunScript(self, beams, rules, max_distance):
 
         if not beams:
@@ -22,7 +21,7 @@ class AutotomaticJoints(component):
 
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(beams)
-        joint_defs= []
+        joint_defs = []
         info = []
         # rules have to be resolved into joint definitions
         for pair in found_pairs:

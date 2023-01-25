@@ -19,4 +19,3 @@ class FindBeamByRhinoGuid(component):
             self.AddRuntimeMessage(Warning, "No beams found!")
 
         return found_beams
-

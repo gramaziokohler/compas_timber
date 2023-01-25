@@ -7,8 +7,8 @@ from compas_rhino.conversions import plane_to_compas_frame
 from compas_timber.parts import BeamBooleanSubtraction
 from compas_timber.ghpython import FeatureDefinition
 
-class BrepSubtractionFeature(component):
 
+class BrepSubtractionFeature(component):
     def RunScript(self, beams, breps):
 
         if not beams:

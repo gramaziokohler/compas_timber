@@ -7,6 +7,7 @@ from compas_timber.utils import intersection_line_line_3D
 
 class JointTopology:
     """Enumeration of the possible joint topologies."""
+
     L = 0
     T = 1
     X = 2
@@ -19,8 +20,7 @@ class ConnectionSolver(object):
 
     @classmethod
     def find_intersecting_pairs(cls, beams):
-        """Naive implementation, can/should be optimized
-        """
+        """Naive implementation, can/should be optimized"""
         intersecting_pairs = []
         for beam_pair in itertools.combinations(beams, 2):
             beam_a, beam_b = beam_pair
@@ -29,13 +29,13 @@ class ConnectionSolver(object):
                 intersecting_pairs.append(beam_pair)
         return intersecting_pairs
 
-    def find_topology(self, beam_a, beam_b,  tol=TOLERANCE, max_distance=None):
+    def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         if max_distance is None:
             max_distance = beam_a.height + beam_b.height
 
-        (_,ta), (_,tb) = intersection_line_line_3D(
+        (_, ta), (_, tb) = intersection_line_line_3D(
             beam_a.centerline, beam_b.centerline, max_distance, limit_to_segments=True, tol=self.TOLERANCE
-            )
+        )
 
         xa = self.is_near_end(ta)
         xb = self.is_near_end(tb)

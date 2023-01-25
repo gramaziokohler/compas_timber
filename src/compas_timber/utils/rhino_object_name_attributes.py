@@ -7,6 +7,7 @@ try:
 except:
     pass
 
+
 def get_rhobj(guid):
     """
     guid: a GUID object, not string
@@ -20,6 +21,7 @@ def get_rhobj_name(guid):
     current_name = obj.Attributes.Name
     return current_name
 
+
 def set_rhobj_name(guid, new_name):
     obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
     obj.Attributes.Name = new_name
@@ -27,27 +29,23 @@ def set_rhobj_name(guid, new_name):
     return
 
 
-def update_rhobj_attributes_name(
-    guid, attribute, value, separator_entry="_", separator_keyval=":"
-):
+def update_rhobj_attributes_name(guid, attribute, value, separator_entry="_", separator_keyval=":"):
     obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
 
     current_name = obj.Attributes.Name
-    #print("current name:",current_name)
-    new_name = update_attribute(
-        current_name or "", str(attribute), str(value), separator_entry, separator_keyval
-    )
-    #print("new name:",new_name)
+    # print("current name:",current_name)
+    new_name = update_attribute(current_name or "", str(attribute), str(value), separator_entry, separator_keyval)
+    # print("new name:",new_name)
     obj.Attributes.Name = new_name
     obj.CommitChanges()
 
-def get_obj_attributes(guid,separator_entry="_", separator_keyval=":"):
+
+def get_obj_attributes(guid, separator_entry="_", separator_keyval=":"):
     name = get_rhobj_name(guid)
     if name:
         return get_dict_from_str(name, separator_entry="_", separator_keyval=":")
     else:
         return None
-
 
 
 # =======================================================================================
@@ -97,7 +95,7 @@ def get_dict_from_str(name_str, separator_entry="_", separator_keyval=":"):
     """
     Generates a dictionary from a string of key:value pairs encoded with given separators.
     """
-    #name_str = cast_str(name_str)
+    # name_str = cast_str(name_str)
 
     data = name_str.split(separator_entry)
     dic = {}
@@ -108,7 +106,7 @@ def get_dict_from_str(name_str, separator_entry="_", separator_keyval=":"):
                 key, value = a
                 dic[key] = value
 
-    return dic#cast_dict(dic)
+    return dic  # cast_dict(dic)
 
 
 def cast_dict(dic):
@@ -116,8 +114,8 @@ def cast_dict(dic):
     Checks if dic values are strings maade of allowed chars only.
     """
     for k, v in dic.items():
-        #k = cast_str(k)
-        #v = cast_str(v)
+        # k = cast_str(k)
+        # v = cast_str(v)
         dic[k] = v
     return dic
 
@@ -126,9 +124,7 @@ def cast_str(s):
     """
     Checks if string s consists solely of the allowed chars.
     """
-    allowed_chars = set(
-        "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_- /;"
-    )
+    allowed_chars = set("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_- /;")
     # Check if integer
     # if s.isdigit(): return int(s)
     # Check if set is string

@@ -5,22 +5,22 @@ from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
 class CollectionDef(object):
-    """ TODO: this should be removed since it's essentially a list.
-    """
+    """TODO: this should be removed since it's essentially a list."""
+
     def __init__(self, objs):
         objs = [_ for _ in objs if _]
 
         self.objs = objs
         self.keys_map = {}
 
-        for i,obj in enumerate(objs):
-            self.keys_map[i]=obj
+        for i, obj in enumerate(objs):
+            self.keys_map[i] = obj
+
     def __str__(self):
-        return "Collection with %s items."%len(self.objs)
+        return "Collection with %s items." % len(self.objs)
 
 
 class JointRule(object):
-
     def comply(self, beams):
         """Returns True if the provided beams comply with the rule defined by this instance. False otherwise.
 
@@ -37,8 +37,8 @@ class JointRule(object):
 
 
 class CategoryRule(JointRule):
-    """Based on the category attribute attached to the beams, this rule assigns
-    """
+    """Based on the category attribute attached to the beams, this rule assigns"""
+
     def __init__(self, joint_type, category_a, category_b):
         self.joint_type = joint_type
         self.category_a = category_a
@@ -50,8 +50,8 @@ class CategoryRule(JointRule):
 
     def __repr__(self):
         return "{}({}, {}, {})".format(
-                CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b
-            )
+            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b
+        )
 
     def comply(self, beams):
         try:
@@ -88,9 +88,9 @@ class JointDefinition(object):
 
     def is_identical(self, other):
         return (
-            isinstance(other, JointDefinition) and
-            self.joint_type == other.joint_type and
-            set([b.key for b in self.beams]) == set([b.key for b in other.beams])
+            isinstance(other, JointDefinition)
+            and self.joint_type == other.joint_type
+            and set([b.key for b in self.beams]) == set([b.key for b in other.beams])
         )
 
     def match(self, beams):
@@ -106,6 +106,7 @@ class FeatureDefinition(object):
     This allows delaying the actual applying of features to a downstream component.
 
     """
+
     def __init__(self, feature, beams):
         self.feature = feature
         self.beams = beams
@@ -117,21 +118,19 @@ class FeatureDefinition(object):
         return repr(self)
 
 
-class Attribute():
-    def __init__(self,attr_name, attr_value):
+class Attribute:
+    def __init__(self, attr_name, attr_value):
         self.name = attr_name
         self.value = attr_value
 
     def __str__(self):
-        return "Attribute %s: %s" % (self.name,self.value)
+        return "Attribute %s: %s" % (self.name, self.value)
 
 
-
-def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
+def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=None):
 
     if not max_distance:
         max_distance = beamA.height + beamB.height
-
 
     # #check if lines parallel (could be an I-joint)
     # def lines_parallel(line1, line2):
@@ -164,14 +163,11 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
     #         #TODO: replace with 'I'
     #         return ['L',(beamA, beamB)]
 
-    [pa,ta], [pb,tb] = intersection_line_line_3D(
-        beamA.centerline, beamB.centerline, max_distance, True, tol
-    )
+    [pa, ta], [pb, tb] = intersection_line_line_3D(beamA.centerline, beamB.centerline, max_distance, True, tol)
 
     if ta == None or tb == None:
-        #lines do not intersect within max distance or they are parallel
+        # lines do not intersect within max distance or they are parallel
         return [None, None]
-
 
     def is_near_end(t, tol=tol):
         if abs(t) < tol:
@@ -198,9 +194,8 @@ def guess_joint_topology_2beams(beamA, beamB,  tol=1e-6, max_distance = None):
         # X-joint (both meeting somewhere along the line)
         return ["X", (beamA, beamB)]
 
-def set_defaul_joints(
-    model, x_default="x-lap", t_default="t-butt", l_default="l-miter"
-):
+
+def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l-miter"):
     beams = model.beams
     n = len(beams)
 

@@ -36,7 +36,7 @@ def large_assembly(size=100):
     h = 0.16
     d = 0.5
     y = 3.0
-    v = Vector(0,0,1)
+    v = Vector(0, 0, 1)
     beams = []
     for i in range(n):
         # make studs
@@ -45,18 +45,14 @@ def large_assembly(size=100):
         beams.append(beam)
 
     # make sleepers
-    beams.append(
-        Beam.from_endpoints(Point(0, 0, 0), Point(d * n, 0, 0), v, width=w, height=h)
-    )
-    beams.append(
-        Beam.from_endpoints(Point(0, y, 0), Point(d * n, y, 0), v, width=w, height=h)
-    )
+    beams.append(Beam.from_endpoints(Point(0, 0, 0), Point(d * n, 0, 0), v, width=w, height=h))
+    beams.append(Beam.from_endpoints(Point(0, y, 0), Point(d * n, y, 0), v, width=w, height=h))
     t1 = time.time()
 
     A = TimberAssembly()
     for b in beams:
         A.add_beam(b)
-    #print(A.find(beams[0]))
+    # print(A.find(beams[0]))
 
     t2 = time.time()
     # set_defaul_joints(A) #-> ca 9s for 500 beams

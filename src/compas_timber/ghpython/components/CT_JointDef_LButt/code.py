@@ -28,10 +28,11 @@ class LButtDefinition(component):
             topology, _, _ = ConnectionSolver().find_topology(main, cross)
             if topology != LButtJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
-                        Warning, "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                            topology, LButtJoint.__name__
-                        )
-                    )
+                    Warning,
+                    "Beams meet with topology: {} which does not agree with joint of type: {}".format(
+                        topology, LButtJoint.__name__
+                    ),
+                )
                 continue
             joint_defs.append(JointDefinition(LButtJoint, [main_beam, cross_beam]))
         return joint_defs

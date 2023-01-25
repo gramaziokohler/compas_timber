@@ -10,9 +10,7 @@ from math import fabs
 from compas.geometry import normalize_vector
 
 
-def intersection_line_line_3D(
-    line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6
-):
+def intersection_line_line_3D(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
     # adapted from: https://github.com/compas-dev/compas/blob/9052b90cad5a8d2ddbdbaae91712c568f3d3c926/src/compas/geometry/intersections/intersections.py
     """
     inputs:

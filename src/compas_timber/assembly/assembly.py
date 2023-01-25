@@ -51,7 +51,9 @@ class TimberAssembly(Assembly):
     @units.setter
     def units(self, units_name):
         if not units_name in self._units_precision.keys():
-            raise ValueError("The units parameters must be one of the following strings: {}.".format(self._units_precision.keys()))
+            raise ValueError(
+                "The units parameters must be one of the following strings: {}.".format(self._units_precision.keys())
+            )
         else:
             self._units = units_name
 
@@ -61,7 +63,9 @@ class TimberAssembly(Assembly):
         return self._units_precision[self.units]
 
     def __str__(self):
-        return "Timber Assembly ({}) with {} beam(s) and {} joint(s).".format(self.guid, len(self.beams),len(self.joints))
+        return "Timber Assembly ({}) with {} beam(s) and {} joint(s).".format(
+            self.guid, len(self.beams), len(self.joints)
+        )
 
     @property
     def beams(self):
@@ -185,7 +189,7 @@ class TimberAssembly(Assembly):
         self._validate_joining_operation(joint, parts)
         # create an unconnected node in the graph for the joint object
         key = self.add_part(part=joint, type="joint")
-        #joint.assembly = self
+        # joint.assembly = self
         self._joints.append(joint)
 
         # adds links to the beams
@@ -213,9 +217,9 @@ class TimberAssembly(Assembly):
         """
         del self._parts[joint.guid]
         self.graph.delete_node(joint.key)
-        self._joints.remove(joint) #TODO: make it automatic
+        self._joints.remove(joint)  # TODO: make it automatic
         joint.assembly = None  # TODO: should not be needed
-        #TODO: distroy joint?
+        # TODO: distroy joint?
 
     def are_parts_joined(self, parts):
         """
@@ -225,13 +229,13 @@ class TimberAssembly(Assembly):
         # method 1
         n = len(parts)
         neighbor_keys = [set(self.graph.neighborhood(self._parts[part.guid], ring=1)) for part in parts]
-        for i in range(n-1):
+        for i in range(n - 1):
             nki = neighbor_keys[i]
             for j in range(i + 1, n):
                 nkj = neighbor_keys[j]
                 nkx = nki.intersection(nkj)
                 for x in nkx:
-                    if self.graph.node[x]['type']=='joint':
+                    if self.graph.node[x]["type"] == "joint":
                         return True
         return False
 
