@@ -20,5 +20,6 @@ twine
 matplotlib
 Rtree
 compas_invocations
+git+https://github.com/compas-dev/compas.git@main#egg=compas
 git+https://github.com/compas-dev/compas_future.git@main#egg=compas_future
 -e .
