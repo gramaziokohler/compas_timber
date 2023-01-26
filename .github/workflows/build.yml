@@ -55,7 +55,7 @@ jobs:
         invoke lint
     - name: Run unittests
       run: |
-        invoke tests
+        invoke test
   build-ironpython:
     name: windows-ironpython
     runs-on: windows-latest
