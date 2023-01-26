@@ -4,7 +4,7 @@ import pytest
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
-from numpy import isclose
+from compas.geometry import close
 
 from compas_timber.parts.beam import Beam
 
@@ -32,9 +32,9 @@ def test_create_mesh(mocker, frame, mesh_geometry):
     mock_ceate_geo = mocker.patch("compas_timber.parts.Beam._create_beam_shape_from_params")
     beam = Beam(frame, length=1.0, width=2.0, height=3.0, geometry_type=mesh_geometry)
 
-    assert isclose(beam.length, 1.0)
-    assert isclose(beam.width, 2.0)
-    assert isclose(beam.height, 3.0)
+    assert close(beam.length, 1.0)
+    assert close(beam.width, 2.0)
+    assert close(beam.height, 3.0)
     assert beam.frame == frame
     mock_ceate_geo.assert_called_with(1.0, 2.0, 3.0, mesh_geometry)
 
@@ -43,9 +43,9 @@ def test_create_brep(mocker, frame, brep_geometry):
     mock_ceate_geo = mocker.patch("compas_timber.parts.Beam._create_beam_shape_from_params")
     beam = Beam(frame, length=1.0, width=2.0, height=3.0, geometry_type=brep_geometry)
 
-    assert isclose(beam.length, 1.0)
-    assert isclose(beam.width, 2.0)
-    assert isclose(beam.height, 3.0)
+    assert close(beam.length, 1.0)
+    assert close(beam.width, 2.0)
+    assert close(beam.height, 3.0)
     assert beam.frame == frame
     mock_ceate_geo.assert_called_with(1.0, 2.0, 3.0, brep_geometry)
 
@@ -54,7 +54,7 @@ def test_create_from_endpoints(mesh_geometry):
     P1 = Point(0, 0, 0)
     P2 = Point(1, 0, 0)
     B = Beam.from_endpoints(P1, P2, width=0.1, height=0.2, geometry_type=mesh_geometry)
-    assert isclose(B.length, 1.0)  # the resulting beam length should be 1.0
+    assert close(B.length, 1.0)  # the resulting beam length should be 1.0
 
 
 def test__eq__(mesh_geometry):
