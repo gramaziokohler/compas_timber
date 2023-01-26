@@ -1,16 +1,12 @@
-import copy
 import time
 
 import matplotlib.pyplot as plt
-from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.connections.joint import Joint
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.parts.beam import Beam
-from compas_timber.utils.workflow import set_defaul_joints
 
 
 def timeit(method):

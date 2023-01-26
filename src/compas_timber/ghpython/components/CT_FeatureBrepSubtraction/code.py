@@ -2,7 +2,6 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas.geometry import Brep
-from compas_rhino.conversions import plane_to_compas_frame
 
 from compas_timber.parts import BeamBooleanSubtraction
 from compas_timber.ghpython import FeatureDefinition

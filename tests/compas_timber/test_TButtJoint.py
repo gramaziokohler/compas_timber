@@ -2,7 +2,6 @@ from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.connections.t_butt import Joint
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.parts.beam import Beam
 
@@ -29,7 +28,7 @@ def test_create():
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
-    J = TButtJoint(A, B1, B2)
+    _ = TButtJoint(A, B1, B2)
 
 
 def test__eq__():
@@ -49,7 +48,7 @@ def test__eq__():
     try:
         J2 = TButtJoint(A1, B1, B2)
         raise UserWarning("This should not be possible")
-    except:
+    except Exception:
         pass
 
     # beams look identical but are different beams

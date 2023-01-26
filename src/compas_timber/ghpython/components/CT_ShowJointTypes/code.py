@@ -1,8 +1,6 @@
+# flake8: noqa
 from ghpythonlib.componentbase import executingcomponent as component
-import Grasshopper, GhPython
 import System
-import Rhino
-import rhinoscriptsyntax as rs
 from compas_rhino.conversions import point_to_rhino
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 

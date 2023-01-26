@@ -4,7 +4,7 @@
 
 try:
     import Rhino
-except:
+except Exception:
     pass
 
 
@@ -133,7 +133,7 @@ def cast_str(s):
     # filter for arrays and floats
     try:
         return s  # eval(s)
-    except:
+    except Exception:
         x = [_ for _ in set(s) if _ not in allowed_chars]
         raise Exception("The string contains forbidden characters: %s" % x)
 

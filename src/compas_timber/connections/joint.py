@@ -55,7 +55,7 @@ class Joint(Data):
 
     @property
     def beams(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def add_features(self, apply=True):
         raise NotImplementedError
@@ -86,9 +86,6 @@ def beam_side_incidence(beam1, beam2):
         centerline_vec = beam1.centerline.vector
     else:
         centerline_vec = beam1.centerline.vector * -1
-
-    # compare with side normals
-    angles = [angle_vectors(beam2.faces[i].normal, centerline_vec) for i in range(4)]
 
     # map faces to their angle with centerline, choose smallest
     angle_face = [(angle_vectors(side.normal, centerline_vec), side) for side in beam2.faces[:4]]

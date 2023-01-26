@@ -5,7 +5,7 @@ def close(x, y, tol=1e-12):
     """
     Shorthand for comparing two numbers or None.
     """
-    if x == None and y == None:
+    if x is None and y is None:
         return True
     return fabs(x - y) < tol  # same as close() in compas.geometry
 

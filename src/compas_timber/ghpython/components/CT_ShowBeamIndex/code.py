@@ -1,10 +1,7 @@
+# flake8: noqa
 from ghpythonlib.componentbase import executingcomponent as component
-import Grasshopper, GhPython
 import System
-import Rhino
-import rhinoscriptsyntax as rs
 from compas_rhino.conversions import point_to_rhino
-import Rhino.Geometry as rg
 
 
 class MyComponent(component):

@@ -50,7 +50,7 @@ class TimberAssembly(Assembly):
 
     @units.setter
     def units(self, units_name):
-        if not units_name in self._units_precision.keys():
+        if units_name not in self._units_precision.keys():
             raise ValueError(
                 "The units parameters must be one of the following strings: {}.".format(self._units_precision.keys())
             )

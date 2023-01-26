@@ -1,9 +1,5 @@
 from ghpythonlib.componentbase import executingcomponent as component
-import Grasshopper, GhPython
 import System
-import Rhino
-import rhinoscriptsyntax as rs
-from compas_rhino.conversions import point_to_rhino
 import Rhino.Geometry as rg
 
 
@@ -15,7 +11,7 @@ class MyComponent(component):
             return
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:
+        if ghenv.Component.Locked:  # noqa: F821
             return
 
         colorX = System.Drawing.Color.FromArgb(255, 255, 100, 100)

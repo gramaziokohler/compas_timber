@@ -1,5 +1,3 @@
-from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import cross_vectors
@@ -47,7 +45,7 @@ def intersection_line_line_3D(line1, line2, max_distance=1e-6, limit_to_segments
     x2, t2 = intersection_line_plane(line2, pln1, tol)
 
     # double-check for parallels, should not happen:
-    if t1 == None or t2 == None:
+    if t1 is None or t2 is None:
         print("intersection_line_plane detected parallel lines")
         return [None, None], [None, None]
 
@@ -104,24 +102,3 @@ def intersection_line_plane(line, plane, tol=1e-6):
     t = -dot_vectors(n, oa) / dotv
     ab = scale_vector(ab, t)
     return Point(*add_vectors(a, ab)), t
-
-
-if __name__ == "__main__":
-
-    import random
-    import time
-
-    # def randomx():
-    #     return random.random()*2.0-1.0
-
-    # t0 = time.time()
-    # for i in range(250000):
-    #     p1 = Point(randomx(), randomx(), randomx())
-    #     p2 = Point(randomx(), randomx(), randomx())
-    #     p3 = Point(randomx(), randomx(), randomx())
-    #     p4 = Point(randomx(), randomx(), randomx())
-    #     intersection_line_line_3D(Line(p1,p2), Line(p3,p4), max_distance=random.random()*0.1, limit_to_segments = random.choice([True, False]), tol = random.random()*1e-3)
-
-    # t1 = time.time()
-    # dt = (t1 - t0)
-    # print(dt,"s")

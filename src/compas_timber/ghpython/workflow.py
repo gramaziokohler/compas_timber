@@ -165,7 +165,7 @@ def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=None):
 
     [pa, ta], [pb, tb] = intersection_line_line_3D(beamA.centerline, beamB.centerline, max_distance, True, tol)
 
-    if ta == None or tb == None:
+    if ta is None or tb is None:
         # lines do not intersect within max distance or they are parallel
         return [None, None]
 

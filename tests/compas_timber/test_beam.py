@@ -8,6 +8,7 @@ from numpy import isclose
 
 from compas_timber.parts.beam import Beam
 
+
 @pytest.fixture
 def mesh_geometry():
     return "mesh"
@@ -22,13 +23,15 @@ def brep_geometry():
 def frame():
     return Frame([0.23, -0.19, 5.00], [1.0, 0.0, 0.0], [0.0, 0.1, 0.0])
 
+
 def create_empty():
     _ = Beam()
+
 
 def test_create_mesh(mocker, frame, mesh_geometry):
     mock_ceate_geo = mocker.patch("compas_timber.parts.Beam._create_beam_shape_from_params")
     beam = Beam(frame, length=1.0, width=2.0, height=3.0, geometry_type=mesh_geometry)
-    
+
     assert isclose(beam.length, 1.0)
     assert isclose(beam.width, 2.0)
     assert isclose(beam.height, 3.0)
@@ -39,7 +42,7 @@ def test_create_mesh(mocker, frame, mesh_geometry):
 def test_create_brep(mocker, frame, brep_geometry):
     mock_ceate_geo = mocker.patch("compas_timber.parts.Beam._create_beam_shape_from_params")
     beam = Beam(frame, length=1.0, width=2.0, height=3.0, geometry_type=brep_geometry)
-    
+
     assert isclose(beam.length, 1.0)
     assert isclose(beam.width, 2.0)
     assert isclose(beam.height, 3.0)
@@ -47,39 +50,40 @@ def test_create_brep(mocker, frame, brep_geometry):
     mock_ceate_geo.assert_called_with(1.0, 2.0, 3.0, brep_geometry)
 
 
-def test_create_from_endpoints():
+def test_create_from_endpoints(mesh_geometry):
     P1 = Point(0, 0, 0)
     P2 = Point(1, 0, 0)
-    B = Beam.from_endpoints(P1, P2, width=0.1, height=0.2, geometry_type=geometry_type)
-    assert isclose(B.length, 1.0)     # the resulting beam length should be 1.0
+    B = Beam.from_endpoints(P1, P2, width=0.1, height=0.2, geometry_type=mesh_geometry)
+    assert isclose(B.length, 1.0)  # the resulting beam length should be 1.0
 
 
-def test__eq__():
+def test__eq__(mesh_geometry):
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
 
     # checking if beams from identical input values are identical
-    B1 = Beam(F1, length=1.0, width=0.1, height=0.17, geometry_type=geometry_type)
-    B2 = Beam(F2, length=1.0, width=0.1, height=0.17, geometry_type=geometry_type)
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.17, geometry_type=mesh_geometry)
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.17, geometry_type=mesh_geometry)
     assert B1 is not B2
     assert B1.is_identical(B2)
 
     # checking for numerical imprecision artefacts
     # algebraically it equals 0.17, but numerically 0.16999999999999993,  https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
     h = 10.1 - 9.93
-    B2 = Beam(F2, length=1.0, width=0.1, height=h, geometry_type=geometry_type)
-    assert B1.is_identical(B2) # will the current tolerance setting of 1e-6 should return equal
+    B2 = Beam(F2, length=1.0, width=0.1, height=h, geometry_type=mesh_geometry)
+    assert B1.is_identical(B2)  # will the current tolerance setting of 1e-6 should return equal
 
     # checking if beams from equivalent imput values are identical
-    B1 = Beam(F1, length=1.0, width=0.1, height=0.2, geometry_type=geometry_type)
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.2, geometry_type=mesh_geometry)
     B2 = Beam.from_endpoints(
-        Point(0, 0, 0), Point(1, 0, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=geometry_type)
+        Point(0, 0, 0), Point(1, 0, 0), z_vector=Vector(0, 0, 1), width=0.1, height=0.2, geometry_type=mesh_geometry
+    )
     assert B1.is_identical(B2)
 
 
 def test_deepcopy():
 
-    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2, geometry_type=geometry_type)
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2, geometry_type="mesh")
     B2 = copy.deepcopy(B1)
 
     assert B1.is_identical(B2)
@@ -107,12 +111,11 @@ def test_deepcopy():
 
 def test_extension_to_plane():
     frame = Frame(Point(3.000, 0.000, 0.000), Vector(-1.000, 0.000, 0.000), Vector(0.000, -1.000, 0.000))
-    beam = Beam(frame, 3.00, 0.12, 0.06, "mesh")
-    plane = 
+    _ = Beam(frame, 3.00, 0.12, 0.06, "mesh")
+
 
 if __name__ == "__main__":
     create_empty()
-    #test_create()
     test_create_from_endpoints()
     test__eq__()
     test_deepcopy()

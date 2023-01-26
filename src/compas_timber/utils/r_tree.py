@@ -64,14 +64,10 @@ def find_neighbours_using_rtree_rhino(object_boundingboxes):
     return results
 
 
-### helper methods
-
-
 def getAABB_minmax_fromBeam(beam):
     """
     find an axis-aligned bounding box of a beam
     """
-    from compas.geometry import Box, Frame, Point
 
     def bbox_from_points(points):
         x, y, z = zip(*points)

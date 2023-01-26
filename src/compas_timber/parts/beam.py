@@ -3,7 +3,6 @@ import math
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -12,7 +11,6 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
-from compas.geometry import close
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
 from compas_future.datastructures import GeometricFeature
@@ -20,7 +18,7 @@ from compas_future.datastructures import ParametricFeature
 from compas_future.datastructures import Part
 
 from compas_timber.utils.compas_extra import intersection_line_plane
-from compas_timber.utils.helpers import close
+from compas_timber.utils.helpers import close  # TODO: remove this
 
 # TODO: update to global compas PRECISION
 ANGLE_TOLERANCE = 1e-3  # [radians]
@@ -233,7 +231,6 @@ class Beam(Part):
 
         return cls.from_centerline(line, width, height, z_vector, geometry_type)
 
-    ### main methods and properties ###
     @property
     def faces(self):
         """
@@ -386,8 +383,6 @@ class Beam(Part):
         self.frame = frame
         return
 
-    ### JOINTS ###
-
     def _get_joint_keys(self):
         n = self.assembly.graph.neighbors[self.key]
         return [
@@ -398,14 +393,11 @@ class Beam(Part):
     def joints(self):
         return [self.assembly.find_by_key(key) for key in self._get_joint_keys]
 
-    ### FEATURES ###
-
     @property
     def has_features(self):
         # TODO: move to compas_future... Part
         return len(self.features) > 0
 
-    ### hidden helpers ###
     @staticmethod
     def _calculate_z_vector_from_centerline(centerline_vector):
         z = Vector(0, 0, 1)

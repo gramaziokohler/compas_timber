@@ -7,7 +7,6 @@ from compas.geometry import Vector
 # import pytest
 from compas_timber.assembly.assembly import TimberAssembly
 from compas_timber.connections.joint import Joint
-from compas_timber.connections import TButtJoint
 from compas_timber.parts.beam import Beam
 
 
@@ -36,7 +35,7 @@ def test_add_joint():
 
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint.create(A, [B1, B2])
+    _ = Joint.create(A, [B1, B2])
 
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
@@ -52,13 +51,13 @@ def test_remove_joint():
     A.add_beam(B2)
 
     J = Joint.create(A, [B1, B2])
-    assert A.contains(J) == True
+    assert A.contains(J)
 
     A.remove_joint(J)
     assert len(list(A.graph.nodes())) == 2
     assert len(list(A.graph.edges())) == 0
     assert len(A.joints) == 0
-    assert J.assembly == None
+    assert J.assembly is None
 
 
 def test_copy(mocker):
@@ -71,7 +70,7 @@ def test_copy(mocker):
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint.create(A, [B1, B2])
+    _ = Joint.create(A, [B1, B2])
 
     A_copy = A.copy()
     assert A_copy is not A
@@ -92,7 +91,7 @@ def test_deepcopy(mocker):
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
-    J = Joint.create(A, [B1, B2])
+    _ = Joint.create(A, [B1, B2])
 
     A_copy = deepcopy(A)
     assert A_copy is not A
@@ -120,9 +119,9 @@ def test_parts_joined():
     A.add_beam(B1)
     A.add_beam(B2)
     A.add_beam(B3)
-    J = Joint.create(A, [B1, B2])
-    assert A.are_parts_joined([B1, B2]) == True
-    assert A.are_parts_joined([B1, B3]) == False
+    _ = Joint.create(A, [B1, B2])
+    assert A.are_parts_joined([B1, B2])
+    assert not A.are_parts_joined([B1, B3])
 
 
 if __name__ == "__main__":

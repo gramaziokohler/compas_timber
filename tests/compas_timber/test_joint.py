@@ -37,11 +37,11 @@ def test_joint_override_protection():
     A.add_beam(B3)
     J = Joint.create(A, [B1, B2])
 
-    assert A.are_parts_joined([B1, B2]) == True
-    assert A.are_parts_joined([B1, B3]) == False
+    assert A.are_parts_joined([B1, B2])
+    assert A.are_parts_joined([B1, B3]) is False
 
     A.remove_joint(J)
-    assert A.are_parts_joined([B1, B2]) == False
+    assert A.are_parts_joined([B1, B2]) is False
 
 
 def test__eq__():

@@ -1,5 +1,4 @@
 import Rhino
-import rhinoscript as rs
 
 
 def cmd_string_options(message="Choose:", oplist=["Option1", "Option2"], default_index=0):
