@@ -60,6 +60,10 @@ class Joint(Data):
     def add_features(self, apply=True):
         raise NotImplementedError
 
+    def restore_beams_from_keys(self):
+        """Restores the reference to the beams associate with this joint."""
+        raise NotImplementedError
+
 
 def beam_side_incidence(beam1, beam2):
     """

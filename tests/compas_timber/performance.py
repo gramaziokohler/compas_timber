@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 from compas.geometry import Point
 from compas.geometry import Vector
 
-from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.connections.t_butt import TButtJoint
-from compas_timber.parts.beam import Beam
+from compas_timber.assembly import TimberAssembly
+from compas_timber.connections import TButtJoint
+from compas_timber.parts import Beam
 
 
 def timeit(method):
