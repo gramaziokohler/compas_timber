@@ -5,6 +5,7 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import close
+from compas.datastructures import Mesh
 
 from compas_timber.parts.beam import Beam
 
@@ -12,11 +13,6 @@ from compas_timber.parts.beam import Beam
 @pytest.fixture
 def mesh_geometry():
     return "mesh"
-
-
-@pytest.fixture
-def brep_geometry():
-    return "brep"
 
 
 @pytest.fixture
@@ -29,25 +25,13 @@ def create_empty():
 
 
 def test_create_mesh(mocker, frame, mesh_geometry):
-    mock_ceate_geo = mocker.patch("compas_timber.parts.Beam._create_beam_shape_from_params")
     beam = Beam(frame, length=1.0, width=2.0, height=3.0, geometry_type=mesh_geometry)
 
     assert close(beam.length, 1.0)
     assert close(beam.width, 2.0)
     assert close(beam.height, 3.0)
     assert beam.frame == frame
-    mock_ceate_geo.assert_called_with(1.0, 2.0, 3.0, mesh_geometry)
-
-
-def test_create_brep(mocker, frame, brep_geometry):
-    mock_ceate_geo = mocker.patch("compas_timber.parts.Beam._create_beam_shape_from_params")
-    beam = Beam(frame, length=1.0, width=2.0, height=3.0, geometry_type=brep_geometry)
-
-    assert close(beam.length, 1.0)
-    assert close(beam.width, 2.0)
-    assert close(beam.height, 3.0)
-    assert beam.frame == frame
-    mock_ceate_geo.assert_called_with(1.0, 2.0, 3.0, brep_geometry)
+    assert isinstance(beam.get_geometry(), Mesh)
 
 
 def test_create_from_endpoints(mesh_geometry):
@@ -93,31 +77,8 @@ def test_deepcopy():
 
     # ---------------------------------------------
 
-    @pytest.fixture()
-    def test_frame():
-        return Frame(Point(-0.43, 0.69, -0.11), [1.0, 0.0, 0.0], [0.0, 1.0, 0.0])
-
-    @pytest.fixture()
-    def test_joints():
-        class FakeJoint(object):
-            pass
-
-        return [FakeJoint(), FakeJoint(), FakeJoint(), FakeJoint()]
-
-    @pytest.fixture()
-    def test_features():
-        return [(Frame.worldXY(), "trim")]
 
 
 def test_extension_to_plane():
     frame = Frame(Point(3.000, 0.000, 0.000), Vector(-1.000, 0.000, 0.000), Vector(0.000, -1.000, 0.000))
-    _ = Beam(frame, 3.00, 0.12, 0.06, "mesh")
-
-
-if __name__ == "__main__":
-    create_empty()
-    test_create_from_endpoints()
-    test__eq__()
-    test_deepcopy()
-
-    print("\n*** all tests passed ***\n\n")
+    _ = Beam(frame, length=3.00, width=0.12, height=0.06, geometry_type="mesh")

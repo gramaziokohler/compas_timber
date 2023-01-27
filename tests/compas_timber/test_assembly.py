@@ -5,8 +5,8 @@ from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.assembly import TimberAssembly
-from compas_timber.connections.joint import Joint
-from compas_timber.parts.beam import Beam
+from compas_timber.connections import Joint
+from compas_timber.parts import Beam
 
 
 def test_create():
@@ -61,13 +61,12 @@ def test_remove_joint(mocker):
 
 
 def test_copy(mocker):
-    mocker.patch("compas_timber.parts.Beam._create_beam_shape_from_params")
     mocker.patch("compas_timber.connections.Joint.add_features")
     mocker.patch("compas_timber.connections.Joint.restore_beams_from_keys")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    B1 = Beam(F1, length=1.0, width=0.1, height=0.12, geometry_type="brep")
-    B2 = Beam(F2, length=1.0, width=0.1, height=0.12, geometry_type="brep")
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12, geometry_type="mesh")
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12, geometry_type="mesh")
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
@@ -80,7 +79,6 @@ def test_copy(mocker):
 
 
 def test_deepcopy(mocker):
-    mocker.patch("compas_timber.parts.Beam.update_beam_geometry")
     mocker.patch("compas_timber.connections.Joint.add_features")
     mocker.patch("compas_timber.connections.Joint.restore_beams_from_keys")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))

@@ -4,9 +4,9 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 
-from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.connections.joint import Joint
-from compas_timber.parts.beam import Beam
+from compas_timber.assembly import TimberAssembly
+from compas_timber.connections import Joint
+from compas_timber.parts import Beam
 
 geometry_type = "mesh"
 
