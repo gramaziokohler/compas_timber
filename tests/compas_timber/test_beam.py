@@ -75,9 +75,6 @@ def test_deepcopy():
     assert B2.frame is not B1.frame
     assert B2.width is B1.width
 
-    # ---------------------------------------------
-
-
 
 def test_extension_to_plane():
     frame = Frame(Point(3.000, 0.000, 0.000), Vector(-1.000, 0.000, 0.000), Vector(0.000, -1.000, 0.000))
