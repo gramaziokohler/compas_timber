@@ -1,0 +1,38 @@
+{
+    "name": "JointCategoryRule",
+    "nickname": "JointRule",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "Defines a rule for a default joint type based on 'Category' attribute of the beams.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "joint_type",
+                "description": "Default joint type.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "category_a",
+                "description": "Categeory of the first Beam",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "category_b",
+                "description": "Category of the sectond Beam.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "rule",
+                "description": "A joint rule."
+            }
+        ]
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "name": "ShowBeamIndex",
+    "nickname": "ShowBeamIndex",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "Show the key of the beam in the Assembly",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+             
+            {
+                "name": "assembly",
+                "description": "A Collection of parts, e.g. Beams.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+        ]
+    }
+}

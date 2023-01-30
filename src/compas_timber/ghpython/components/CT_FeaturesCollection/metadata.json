@@ -1,0 +1,27 @@
+{
+    "name": "FeaturesCollection",
+    "nickname": "FeaturesCollection",
+    "category": "COMPAS Timber",
+    "subcategory": "Features",
+    "description": "Creates a Collection of Features.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Features",
+                "description": "List of pre-defined features.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1,
+                "flatten":true
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "FeaturesCollection",
+                "description": "A Collection of Features."
+            }
+        ]
+    }
+}

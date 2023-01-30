@@ -1,16 +1,12 @@
-import copy
 import time
 
 import matplotlib.pyplot as plt
-from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 
-from compas_timber.assembly.assembly import TimberAssembly
-from compas_timber.connections.joint import Joint
-from compas_timber.connections.t_butt import TButtJoint
-from compas_timber.parts.beam import Beam
-from compas_timber.utils.workflow import set_defaul_joints
+from compas_timber.assembly import TimberAssembly
+from compas_timber.connections import TButtJoint
+from compas_timber.parts import Beam
 
 
 def timeit(method):
@@ -36,7 +32,7 @@ def large_assembly(size=100):
     h = 0.16
     d = 0.5
     y = 3.0
-    v = Vector(0,0,1)
+    v = Vector(0, 0, 1)
     beams = []
     for i in range(n):
         # make studs
@@ -45,18 +41,14 @@ def large_assembly(size=100):
         beams.append(beam)
 
     # make sleepers
-    beams.append(
-        Beam.from_endpoints(Point(0, 0, 0), Point(d * n, 0, 0), v, width=w, height=h)
-    )
-    beams.append(
-        Beam.from_endpoints(Point(0, y, 0), Point(d * n, y, 0), v, width=w, height=h)
-    )
+    beams.append(Beam.from_endpoints(Point(0, 0, 0), Point(d * n, 0, 0), v, width=w, height=h))
+    beams.append(Beam.from_endpoints(Point(0, y, 0), Point(d * n, y, 0), v, width=w, height=h))
     t1 = time.time()
 
     A = TimberAssembly()
     for b in beams:
         A.add_beam(b)
-    #print(A.find(beams[0]))
+    # print(A.find(beams[0]))
 
     t2 = time.time()
     # set_defaul_joints(A) #-> ca 9s for 500 beams

@@ -1,12 +1,4 @@
-from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import angle_vectors
-from compas.geometry import distance_point_point
-from compas.geometry import intersection_line_line
-from compas.geometry import intersection_line_plane
-
-from ..connections.joint import Joint
+from .joint import Joint
 
 
 class TLapJoint(Joint):

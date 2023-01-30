@@ -19,6 +19,4 @@ compas_timber
 __all_plugins__ = ["compas_timber.rhino.install"]
 
 
-__all__ = [
-
-]
+__all__ = []

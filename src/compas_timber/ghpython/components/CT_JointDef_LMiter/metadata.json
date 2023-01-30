@@ -1,0 +1,32 @@
+{
+    "name": "JointDef: L-Miter",
+    "nickname": "JointDef: L-Miter",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "Defines an L-Miter joint for the given two Beams (order doesn't matter).",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [   
+            {
+                "name": "B1",
+                "description": "First Beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },           
+            {
+                "name": "B2",
+                "description": "Second Beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "LMiter",
+                "description": "L-Miter JointDefinition."
+            }
+        ]
+    }
+}

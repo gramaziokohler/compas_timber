@@ -31,38 +31,23 @@ def list2rLine(a):
 
 
 def cPt2rPt(cPt):
-    try:
-        return rg.Point3d(cPt.x, cPt.y, cPt.z)
-    except:
-        return None
+    return rg.Point3d(cPt.x, cPt.y, cPt.z)
 
 
 def rPt2cPt(rPt):
-    try:
-        return cg.Point(rPt.X, rPt.Y, rPt.Z)
-    except:
-        return None
+    return cg.Point(rPt.X, rPt.Y, rPt.Z)
 
 
 def cVec2rVec(cVec):
-    try:
-        return rg.Vector3d(cVec.x, cVec.y, cVec.z)
-    except:
-        return None
+    return rg.Vector3d(cVec.x, cVec.y, cVec.z)
 
 
 def rVec2cVec(rVec):
-    try:
-        return cg.Vector(rVec.X, rVec.Y, rVec.Z)
-    except:
-        return None
+    return cg.Vector(rVec.X, rVec.Y, rVec.Z)
 
 
 def cLine2rLine(L):
-    try:
-        return rg.Line(list2rPt(L[0]), list2rPt(L[1]))
-    except:
-        return None
+    return rg.Line(list2rPt(L[0]), list2rPt(L[1]))
 
 
 def rLine2cLine(L):
@@ -70,28 +55,15 @@ def rLine2cLine(L):
 
 
 def cPln2rPln(pln):
-    try:
-        return rg.Plane(list2rPt(pln.point), list2rVec(pln.normal))
-    except:
-        return None
+    return rg.Plane(list2rPt(pln.point), list2rVec(pln.normal))
 
 
 def cFrame2rPln(cFrame):
-    try:
-        return rg.Plane(
-            cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis)
-        )
-    except:
-        return None
+    return rg.Plane(cPt2rPt(cFrame.point), cVec2rVec(cFrame.xaxis), cVec2rVec(cFrame.yaxis))
 
 
 def rPln2cFrame(rPln):
-    try:
-        return cg.Frame(
-            rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis)
-        )
-    except:
-        return None
+    return cg.Frame(rPt2cPt(rPln.Origin), rVec2cVec(rPln.XAxis), rVec2cVec(rPln.YAxis))
 
 
 def cBox2rBox(cbox):
@@ -149,9 +121,7 @@ def cMesh2rMesh(cMesh):
         for face in faces:
             rMesh.Faces.AddFace(*face)
     rMesh.Normals.ComputeNormals()
-    rMesh.Unweld(
-        0.01, True
-    )  # makes sharp edges rendered nicely again / splits vertex normals
+    rMesh.Unweld(0.01, True)  # makes sharp edges rendered nicely again / splits vertex normals
     rMesh.Compact()
     return rMesh
 

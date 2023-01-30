@@ -1,0 +1,27 @@
+{
+    "name": "BeamsCollection",
+    "nickname": "BeamsCollection",
+    "category": "COMPAS Timber",
+    "subcategory": "Parts",
+    "description": "Creates a Collection of Beams.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beams",
+                "description": "Name of the Attribute as a string.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1,
+                "flatten":true
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "BeamsCollection",
+                "description": "A Collection of Beams."
+            }
+        ]
+    }
+}

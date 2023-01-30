@@ -1,0 +1,114 @@
+[
+    {
+        "dtype": "compas.geometry/Line",
+        "value": {
+            "start": [
+                3.0,
+                0.0,
+                0.0
+            ],
+            "end": [
+                0.0,
+                0.0,
+                0.0
+            ]
+        },
+        "guid": "8ff21348-f55c-46e6-82d5-a9542830f4be"
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "value": {
+            "start": [
+                3.0,
+                2.0,
+                0.0
+            ],
+            "end": [
+                3.0,
+                0.0,
+                0.0
+            ]
+        },
+        "guid": "7b3f783e-6a2f-46fa-86b4-2d1cbb15b754"
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "value": {
+            "start": [
+                0.0,
+                2.0,
+                0.0
+            ],
+            "end": [
+                3.0,
+                2.0,
+                0.0
+            ]
+        },
+        "guid": "e1d4c133-6670-4a98-a7da-30472903ffc6"
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "value": {
+            "start": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "end": [
+                0.0,
+                2.0,
+                0.0
+            ]
+        },
+        "guid": "31745ab4-9181-424a-9a44-1ab30fe1f1d6"
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "value": {
+            "start": [
+                1.3073011262590537,
+                1.0,
+                0.0
+            ],
+            "end": [
+                3.0,
+                1.0,
+                0.0
+            ]
+        },
+        "guid": "9c9876bd-183f-4333-9053-cb582092f3ab"
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "value": {
+            "start": [
+                1.1146022525181074,
+                2.0,
+                0.0
+            ],
+            "end": [
+                1.5,
+                0.0,
+                0.0
+            ]
+        },
+        "guid": "6c2576ec-c87b-4084-98a9-14beac674402"
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "value": {
+            "start": [
+                0.77180331565990912,
+                2.0,
+                0.0
+            ],
+            "end": [
+                0.27664929575362163,
+                0.0,
+                0.0
+            ]
+        },
+        "guid": "bfdd9ed2-1f50-46a8-91dc-e3dd5908e54e"
+    }
+]
