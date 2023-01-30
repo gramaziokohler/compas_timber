@@ -68,6 +68,10 @@ class Beam(Part):
         Length of the beam.
 
     centreline : :class:`compas.geometry.Line`
+
+    aabb : tuple(float, float, float, float, float, float)
+        an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box.
+
     """
 
     SHAPE_FACTORIES = {
@@ -286,7 +290,7 @@ class Beam(Part):
     @property
     def aabb(self):
         """Returns an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box."""
-        vertices = b.shape.vertices
+        vertices = self.shape.vertices
         x = [p.x for p in vertices]
         y = [p.y for p in vertices]
         z = [p.z for p in vertices]
@@ -428,7 +432,4 @@ class Beam(Part):
 
 
 if __name__ == "__main__":
-    b = Beam(Frame.worldXY(), 10, 5, 13, "mesh")
-    line = Line([0, 0, 0], [1, 2, 3])
-    b = Beam.from_centerline(centerline=line, width=0.1, height=0.1, z_vector=Vector(0, 0, 1), geometry_type="mesh")
-    print(b.aabb)
+    pass
