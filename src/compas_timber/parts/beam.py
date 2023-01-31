@@ -68,6 +68,10 @@ class Beam(Part):
         Length of the beam.
 
     centreline : :class:`compas.geometry.Line`
+
+    aabb : tuple(float, float, float, float, float, float)
+        an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box.
+
     """
 
     SHAPE_FACTORIES = {
@@ -284,6 +288,15 @@ class Beam(Part):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
+    def aabb(self):
+        """Returns an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box."""
+        vertices = self.shape.vertices
+        x = [p.x for p in vertices]
+        y = [p.y for p in vertices]
+        z = [p.z for p in vertices]
+        return (min(x), min(y), min(z), max(x), max(y), max(z))
+
+    @property
     def long_edges(self):
         """Returns a list of lines representing the long edges of the beam's bounding box
 
@@ -419,5 +432,4 @@ class Beam(Part):
 
 
 if __name__ == "__main__":
-    b = Beam(Frame.worldXY(), 10, 5, 13)
-    print(b.geometry)
+    pass
