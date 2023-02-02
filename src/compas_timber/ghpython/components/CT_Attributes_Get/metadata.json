@@ -2,7 +2,7 @@
     "name": "GetAttributes",
     "nickname": "GetAttributes",
     "category": "COMPAS Timber",
-    "subcategory": "Utils",
+    "subcategory": "Attributes",
     "description": "Read standard attributes encoded in the referenced object's name.",
     "exposure": 4,
     "ghpython": {

@@ -29,7 +29,9 @@ def set_rhobj_name(guid, new_name):
     return
 
 
-def update_rhobj_attributes_name(guid, attribute=None, value=None, separator_entry="_", separator_keyval=":", operation="update"):
+def update_rhobj_attributes_name(
+    guid, attribute=None, value=None, separator_entry="_", separator_keyval=":", operation="update"
+):
     """Add or remove an attribute (key:value pair) to/form the Rhino object's name, or clears the name"""
 
     obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
