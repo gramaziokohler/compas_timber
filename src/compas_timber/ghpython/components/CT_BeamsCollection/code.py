@@ -1,7 +1,7 @@
 """Creates a Collection of Beams."""
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 
-from compas_timber.utils.ghpython import list_input_valid
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 from compas_timber.utils.workflow import CollectionDef
 
 if list_input_valid(ghenv, Beams, "Beams"):

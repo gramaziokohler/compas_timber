@@ -3,7 +3,7 @@ import rhinoscriptsyntax as rs
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.utils.rhino_object_name_attributes import get_obj_attributes
+from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attributes
 
 
 class MyComponent(component):

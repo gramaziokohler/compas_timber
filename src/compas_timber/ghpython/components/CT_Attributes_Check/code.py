@@ -5,8 +5,8 @@ import Rhino.Geometry as rg
 import System
 from ghpythonlib.componentbase import executingcomponent as component
 
-from compas_timber.utils.ghpython import list_input_valid
-from compas_timber.utils.rhino_object_name_attributes import get_obj_attributes
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
+from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attributes
 
 
 class MyComponent(component):

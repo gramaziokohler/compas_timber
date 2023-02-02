@@ -6,7 +6,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.parts.beam import Beam
-from compas_timber.utils.rhino_object_name_attributes import update_rhobj_attributes_name
+from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
 
 
 class BeamFromCurveGuid(component):

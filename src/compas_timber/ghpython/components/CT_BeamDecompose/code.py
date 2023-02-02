@@ -6,7 +6,7 @@ from compas_rhino.conversions import line_to_rhino_curve
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.utils.ghpython import list_input_valid
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
 
 class MyComponent(component):

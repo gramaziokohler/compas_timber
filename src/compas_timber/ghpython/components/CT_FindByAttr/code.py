@@ -1,6 +1,6 @@
 # flake8: noqa
-from compas_timber.utils.ghpython import item_input_valid
-from compas_timber.utils.ghpython import list_input_valid
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
 Beams = []
 if (

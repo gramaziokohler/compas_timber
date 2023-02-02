@@ -9,7 +9,7 @@ from compas.artists import Artist
 from compas_rhino.conversions import frame_to_rhino
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 
-from compas_timber.utils.ghpython import list_input_valid
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
 
 def create_box_map(pln, sx, sy, sz):
