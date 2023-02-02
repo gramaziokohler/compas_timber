@@ -30,6 +30,7 @@ class MyComponent(component):
         if not Group:
             Group = [None]
         
+        Beam = []
         
         if Centerline and Height and Width:
             # check list lengths for consistency
@@ -67,7 +68,7 @@ class MyComponent(component):
             if len(Group) != N:
                 Group = [Group[0] for _ in range(N)]
         
-            Beam = []
+            
             for crv, z, w, h, c, g in zip(Centerline, ZVector, Width, Height, Category, Group):
                 if crv == None or w == None or h == None:
                     ghenv.Component.AddRuntimeMessage(Warning, "Some of the input values are Null")

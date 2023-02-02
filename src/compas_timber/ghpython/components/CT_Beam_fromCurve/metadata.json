@@ -6,7 +6,7 @@
     "description": "Creates a Beam from a LineCurve.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
