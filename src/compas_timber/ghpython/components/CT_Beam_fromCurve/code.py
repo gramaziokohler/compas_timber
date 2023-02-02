@@ -1,24 +1,17 @@
 import Rhino.Geometry as rg
-import rhinoscriptsyntax as rs
+from compas_rhino.conversions import line_to_compas
+from compas_rhino.conversions import vector_to_compas
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-# flake8: noqa
-from compas_rhino.geometry import RhinoCurve
-from compas_rhino.conversions import vector_to_compas, line_to_compas
-from compas_ghpython.utilities import unload_modules
 from compas_timber.parts.beam import Beam as ctBeam
-from compas_timber.utils.rhino_object_name_attributes import update_rhobj_attributes_name
-
-import Grasshopper.Kernel as ghk
-
-warning = ghk.GH_RuntimeMessageLevel.Warning
-error = ghk.GH_RuntimeMessageLevel.Error
 
 if not LineCrv:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter LineCrv failed to collect data")
+    ghenv.Component.AddRuntimeMessage(Warning, "Input parameter LineCrv failed to collect data")
 if not Width:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter Width failed to collect data")
+    ghenv.Component.AddRuntimeMessage(Warning, "Input parameter Width failed to collect data")
 if not Height:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter Height failed to collect data")
+    ghenv.Component.AddRuntimeMessage(Warning, "Input parameter Height failed to collect data")
 
 # =============================
 
@@ -35,23 +28,23 @@ if LineCrv and Height and Width:
     n = len(LineCrv)
     if len(ZVector) not in (0, 1, n):
         ghenv.Component.AddRuntimeMessage(
-            error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter."
+            Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter."
         )
     if len(Width) not in (1, n):
         ghenv.Component.AddRuntimeMessage(
-            error, " In 'W' I need either one or the same number of inputs as the Crv parameter."
+            Error, " In 'W' I need either one or the same number of inputs as the Crv parameter."
         )
     if len(Height) not in (1, n):
         ghenv.Component.AddRuntimeMessage(
-            error, " In 'H' I need either one or the same number of inputs as the Crv parameter."
+            Error, " In 'H' I need either one or the same number of inputs as the Crv parameter."
         )
     if len(Category) not in (0, 1, n):
         ghenv.Component.AddRuntimeMessage(
-            error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
+            Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
         )
     if len(Group) not in (0, 1, n):
         ghenv.Component.AddRuntimeMessage(
-            error, " In 'Group' I need either none, one or the same number of inputs as the Crv parameter."
+            Error, " In 'Group' I need either none, one or the same number of inputs as the Crv parameter."
         )
 
     # duplicate data
@@ -69,7 +62,7 @@ if LineCrv and Height and Width:
     Beam = []
     for crv, z, w, h, c, g in zip(LineCrv, ZVector, Width, Height, Category, Group):
         if crv == None or w == None or h == None:
-            ghenv.Component.AddRuntimeMessage(warning, "Some of the input values are Null")
+            ghenv.Component.AddRuntimeMessage(Warning, "Some of the input values are Null")
         else:
             line = rg.Line(crv.PointAtStart, crv.PointAtEnd)
 
@@ -79,7 +72,7 @@ if LineCrv and Height and Width:
             else:
                 None
 
-            beam = ctBeam.from_centreline(line, z, w, h)
+            beam = ctBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z, geometry_type="brep")
 
             beam.attributes["rhino_guid"] = None
             beam.attributes["category"] = c

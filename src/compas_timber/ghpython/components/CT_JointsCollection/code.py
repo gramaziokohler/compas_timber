@@ -1,6 +1,7 @@
 # flake8: noqa
-from compas_timber.utils.workflow import CollectionDef
 import Grasshopper.Kernel as ghk
+
+from compas_timber.utils.workflow import CollectionDef
 
 warning = ghk.GH_RuntimeMessageLevel.Warning
 error = ghk.GH_RuntimeMessageLevel.Error

@@ -1,7 +1,7 @@
 # flake8: noqa
-from ghpythonlib.componentbase import executingcomponent as component
 import System
 from compas_rhino.conversions import point_to_rhino
+from ghpythonlib.componentbase import executingcomponent as component
 
 
 class MyComponent(component):

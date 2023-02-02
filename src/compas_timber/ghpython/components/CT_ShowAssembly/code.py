@@ -1,7 +1,6 @@
+from compas.artists import Artist
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-
-from compas.artists import Artist
 
 
 class ShowAssembly(component):
@@ -17,7 +16,8 @@ class ShowAssembly(component):
         for beam in assembly.beams:
             if show_features:
                 errors.extend(beam.apply_features())
-            brep = beam.get_geometry(show_features)
-            geometry.append(Artist(brep).draw())
+
+            # geometry.append(Artist(beam.get_geometry(show_features)).draw())
+            geometry.append(beam.get_geometry().native_brep)
 
         return geometry, errors

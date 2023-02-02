@@ -1,8 +1,8 @@
 # flake8: noqa
-from ghpythonlib.componentbase import executingcomponent as component
+import Rhino.Geometry as rg
 import System
 from compas_rhino.conversions import frame_to_rhino
-import Rhino.Geometry as rg
+from ghpythonlib.componentbase import executingcomponent as component
 
 
 class MyComponent(component):

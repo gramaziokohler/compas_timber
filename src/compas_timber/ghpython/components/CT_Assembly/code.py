@@ -1,6 +1,5 @@
 from ghpythonlib.componentbase import executingcomponent as component
 
-
 from compas_timber.assembly import TimberAssembly
 
 

@@ -1,16 +1,13 @@
 # flake8: noqa
-from compas_timber.utils.workflow import guess_joint_topology_2beams
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+
 from compas_timber.utils.workflow import JointDefinition
-
-import Grasshopper.Kernel as ghk
-
-warning = ghk.GH_RuntimeMessageLevel.Warning
-error = ghk.GH_RuntimeMessageLevel.Error
+from compas_timber.utils.workflow import guess_joint_topology_2beams
 
 if not BeamsCollection:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter BeamsCollection failed to ceollect data")
+    ghenv.Component.AddRuntimeMessage(Warning, "Input parameter BeamsCollection failed to ceollect data")
 if not JointRules:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter JointRules failed to ceollect data")
+    ghenv.Component.AddRuntimeMessage(Warning, "Input parameter JointRules failed to ceollect data")
 
 
 tol = 1e-3

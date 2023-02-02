@@ -1,6 +1,6 @@
-from ghpythonlib.componentbase import executingcomponent as component
-import System
 import Rhino.Geometry as rg
+import System
+from ghpythonlib.componentbase import executingcomponent as component
 
 
 class MyComponent(component):

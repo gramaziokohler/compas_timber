@@ -1,10 +1,9 @@
+from compas_rhino.conversions import plane_to_compas_frame
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_rhino.conversions import plane_to_compas_frame
-
-from compas_timber.parts import BeamTrimmingFeature
 from compas_timber.ghpython import FeatureDefinition
+from compas_timber.parts import BeamTrimmingFeature
 
 
 class TrimmingFeature(component):
