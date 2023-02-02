@@ -5,82 +5,84 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.parts.beam import Beam
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
+from compas_timber.parts.beam import Beam as ctBeam
 
 
 class BeamFromCurveGuid(component):
-    def RunScript(self, curve_ids, width, height, z_vector, category, group, update_attrs):
+    def RunScript(self, RefCenterline, ZVector, Width, Height, Category, Group, updateRefObj):
 
-        if not curve_ids:
-            self.AddRuntimeMessage(Warning, "Input parameter curve_ids failed to collect data")
-        if not width:
-            self.AddRuntimeMessage(Warning, "Input parameter width failed to collect data")
-        if not height:
-            self.AddRuntimeMessage(Warning, "Input parameter height failed to collect data")
+        if not RefCenterline:
+            self.AddRuntimeMessage(Warning, "Input parameter RefCenterline failed to collect data")
+        if not Width:
+            self.AddRuntimeMessage(Warning, "Input parameter Width failed to collect data")
+        if not Height:
+            self.AddRuntimeMessage(Warning, "Input parameter Height failed to collect data")
 
-        if not (curve_ids and width and height):
+        if not (RefCenterline and Width and Height):
             # minimal required input
             return
 
-        z_vector = z_vector or [None]
-        category = category or [None]
-        group = group or [None]
+        ZVector = ZVector or [None]
+        Category = Category or [None]
+        Group = Group or [None]
 
-        if curve_ids and height and height:
+        if RefCenterline and Height and Height:
             # check list lengths for consistency
-            curve_num = len(curve_ids)
-            if len(z_vector) not in (0, 1, curve_num):
+            N = len(RefCenterline)
+            if len(ZVector) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error,
-                    " In 'z_vector' I need either none, one or the same number of inputs as the refCrv parameter.",
+                    " In 'ZVector' I need either none, one or the same number of inputs as the refCrv parameter.",
                 )
-            if len(width) not in (1, curve_num):
+            if len(Width) not in (1, N):
                 self.AddRuntimeMessage(
-                    Error, " In 'width' I need either one or the same number of inputs as the refCrv parameter."
+                    Error, " In 'Width' I need either one or the same number of inputs as the refCrv parameter."
                 )
-            if len(height) not in (1, curve_num):
+            if len(Height) not in (1, N):
                 self.AddRuntimeMessage(
-                    Error, " In 'height' I need either one or the same number of inputs as the refCrv parameter."
+                    Error, " In 'Height' I need either one or the same number of inputs as the refCrv parameter."
                 )
-            if len(category) not in (0, 1, curve_num):
+            if len(Category) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error,
-                    " In 'category' I need either none, one or the same number of inputs as the refCrv parameter.",
+                    " In 'Category' I need either none, one or the same number of inputs as the refCrv parameter.",
                 )
-            if len(group) not in (0, 1, curve_num):
+
+            if len(Group) not in (0, 1, N):
                 self.AddRuntimeMessage(
-                    Error, " In 'group' I need either none, one or the same number of inputs as the refCrv parameter."
+                    Error, " In 'Group' I need either none, one or the same number of inputs as the refCrv parameter."
                 )
 
         # match number of elemets to number of curves
-        if len(z_vector) != curve_num:
-            z_vector = [z_vector[0]] * curve_num
-        if len(width) != curve_num:
-            width = [width[0]] * curve_num
-        if len(height) != curve_num:
-            height = [height[0]] * curve_num
-        if len(category) != curve_num:
-            category = [category[0]] * curve_num
-        if len(group) != curve_num:
-            group = [group[0]] * curve_num
+        if len(ZVector) != N:
+            ZVector = [ZVector[0]] * N
+        if len(Width) != N:
+            Width = [Width[0]] * N
+        if len(Height) != N:
+            Height = [Height[0]] * N
+        if len(Category) != N:
+            Category = [Category[0]] * N
+        if len(Group) != N:
+            Group = [Group[0]] * N
 
         beams = []
-        for guid, z, w, h, c, g in zip(curve_ids, z_vector, width, height, category, group):
+        for guid, z, w, h, c, g in zip(RefCenterline, ZVector, Width, Height, Category, Group):
             curve = RhinoCurve.from_object(Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid))
             line = curve.to_compas_line()
             if z:
                 z = vector_to_compas(z)
-            beam = Beam.from_centerline(line, w, h, z_vector=z)
+            beam = ctBeam.from_centerline(line, w, h, z_vector=z)
             beam.attributes["rhino_guid"] = str(guid)
             beam.attributes["category"] = c
             beam.attributes["group"] = g
 
-            if update_attrs:
+            if updateRefObj:
                 update_rhobj_attributes_name(guid, "width", str(w))
                 update_rhobj_attributes_name(guid, "height", str(h))
-                update_rhobj_attributes_name(guid, "zaxis", str(list(beam.frame.zaxis)))
+                update_rhobj_attributes_name(guid, "zvector", str(list(beam.frame.zaxis)))
                 update_rhobj_attributes_name(guid, "category", c)
 
             beams.append(beam)
-        return beams
+        Beam = beams
+        return Beam

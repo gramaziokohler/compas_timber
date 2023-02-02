@@ -10,7 +10,7 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "LineCrv",
+                "name": "Centerline",
                 "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "curve",
                 "scriptParamAccess": 1
