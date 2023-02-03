@@ -28,6 +28,7 @@ from .l_miter import LMiterJoint
 from .x_lap import XLapJoint
 from .solver import JointTopology
 from .solver import ConnectionSolver
+from .solver import find_neighboring_beams
 
 
 __all__ = [
@@ -41,4 +42,5 @@ __all__ = [
     "beam_side_incidence",
     "JointTopology",
     "ConnectionSolver",
+    "find_neighboring_beams",
 ]

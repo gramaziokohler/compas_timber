@@ -1,8 +1,16 @@
-import itertools
-
 from compas.geometry import intersection_segment_segment
+from compas.plugins import pluggable
 
 from compas_timber.utils import intersection_line_line_3D
+
+
+@pluggable(category="solvers")
+def find_neighboring_beams(beams):
+    """Uses RTree to find neighboring pairs of beams in the given list of beams.
+    The returned elements are sets containing pairs of Beam objects.
+
+    """
+    raise NotImplementedError
 
 
 class JointTopology:
@@ -22,8 +30,9 @@ class ConnectionSolver(object):
     def find_intersecting_pairs(cls, beams):
         """Naive implementation, can/should be optimized"""
         intersecting_pairs = []
-        for beam_pair in itertools.combinations(beams, 2):
-            beam_a, beam_b = beam_pair
+        combinations = find_neighboring_beams(beams)
+        for beam_pair in combinations:
+            beam_a, beam_b = tuple(beam_pair)  # beam_pair is a set
             p1, p2 = intersection_segment_segment(beam_a.centerline, beam_b.centerline)
             if p1 and p2:
                 intersecting_pairs.append(beam_pair)
