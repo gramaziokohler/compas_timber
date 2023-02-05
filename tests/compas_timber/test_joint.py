@@ -1,14 +1,32 @@
+import os
 from copy import deepcopy
 
+import pytest
+from compas.data import json_load
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.assembly import TimberAssembly
 from compas_timber.connections import Joint
+from compas_timber.connections import find_neighboring_beams
 from compas_timber.parts import Beam
 
 geometry_type = "mesh"
+
+
+@pytest.fixture
+def example_beams():
+    path = os.path.abspath(r"data/lines.json")
+    centerlines = json_load(path)
+    w = 0.12
+    h = 0.06
+    beams = []
+    for index, line in enumerate(centerlines):
+        b = Beam.from_centerline(line, w, h, geometry_type="mesh")
+        b.key = index
+        beams.append(b)
+    return beams
 
 
 def test_create(mocker):
@@ -59,3 +77,28 @@ def test_deepcopy(mocker):
     J_copy = deepcopy(J)
 
     assert J_copy is not J
+
+
+def test_find_neighbors(example_beams):
+    expected_result = [
+        set([0, 3]),
+        set([0, 6]),
+        set([0, 1]),
+        set([0, 5]),
+        set([1, 2]),
+        set([1, 4]),
+        set([2, 3]),
+        set([2, 6]),
+        set([2, 5]),
+        set([4, 5])
+    ]
+    result = find_neighboring_beams(example_beams)
+    # beam objects => sets of keys for easy comparison
+    key_sets = []
+    for pair in result:
+        pair = tuple(pair)
+        key_sets.append({pair[0].key, pair[1].key})
+
+    assert len(expected_result) == len(result)
+    for pair in key_sets:
+        assert pair in expected_result
