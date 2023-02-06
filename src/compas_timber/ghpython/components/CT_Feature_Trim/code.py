@@ -9,7 +9,6 @@ from compas_timber.ghpython import FeatureDefinition
 
 class TrimmingFeature(component):
     def RunScript(self, beams, planes):
-
         if not beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beam failed to collect data")
         if not planes:

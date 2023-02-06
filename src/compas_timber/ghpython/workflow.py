@@ -128,7 +128,6 @@ class Attribute:
 
 
 def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=None):
-
     if not max_distance:
         max_distance = beamA.height + beamB.height
 

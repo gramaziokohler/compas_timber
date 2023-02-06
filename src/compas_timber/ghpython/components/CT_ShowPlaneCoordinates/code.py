@@ -5,7 +5,6 @@ import Rhino.Geometry as rg
 
 class MyComponent(component):
     def RunScript(self, Pln):
-
         self.plane = Pln
         if not self.plane:
             return

@@ -139,7 +139,6 @@ def cast_str(s):
 
 
 if __name__ == "__main__":
-
     n1 = "color:blue_shape:triangle"
     print(n1)
     n2 = update_attribute(n1, "color", "grey")

@@ -66,7 +66,6 @@ def test__eq__(mesh_geometry):
 
 
 def test_deepcopy():
-
     B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2, geometry_type="mesh")
     B2 = copy.deepcopy(B1)
 

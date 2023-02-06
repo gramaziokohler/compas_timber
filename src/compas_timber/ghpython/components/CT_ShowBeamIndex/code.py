@@ -6,7 +6,6 @@ from compas_rhino.conversions import point_to_rhino
 
 class MyComponent(component):
     def RunScript(self, assembly):
-
         self.pt = []
         self.txt = []
 

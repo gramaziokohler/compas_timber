@@ -27,7 +27,6 @@ elif not joint_defaults and joint_overrides:
     joints = joint_overrides
 
 elif joint_defaults and joint_overrides:
-
     jd_jo = {k: [] for k in joint_defaults}
     jo_jd = {k: [] for k in joint_overrides}
 

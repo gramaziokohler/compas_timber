@@ -34,7 +34,6 @@ def find_neighbours_using_rtree_cpython(object_boundingboxes):
 
 
 def find_neighbours_using_rtree_rhino(object_boundingboxes):
-
     """
     Rhino version using Rhino.Geometry.RTree
     object_boundingboxes: list of Rhino.Geometry.BoundingBox objects

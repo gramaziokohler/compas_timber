@@ -20,7 +20,6 @@ tol = 1e-3
 connectivity = {"L": [], "T": [], "X": []}
 
 if BeamsCollection and JointRules:
-
     beams = BeamsCollection.objs
     groups = set([beam.attributes["group"] for beam in beams])
 

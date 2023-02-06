@@ -6,7 +6,6 @@ remark = ghk.GH_RuntimeMessageLevel.Remark
 
 
 def list_input_valid(ghenv, Param, name):
-
     if not Param:
         ghenv.Component.AddRuntimeMessage(warning, "Input parameter %s failed to collect data" % name)
     else:
@@ -21,7 +20,6 @@ def list_input_valid(ghenv, Param, name):
 
 
 def item_input_valid(ghenv, Param, name):
-
     if not Param:
         ghenv.Component.AddRuntimeMessage(warning, "Input parameter %s failed to collect data" % name)
     else:
