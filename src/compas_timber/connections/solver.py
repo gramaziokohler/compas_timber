@@ -32,7 +32,7 @@ class ConnectionSolver(object):
         intersecting_pairs = []
         combinations = find_neighboring_beams(beams)
         for beam_pair in combinations:
-            beam_a, beam_b = tuple(beam_pair)  # beam_pair is a set
+            beam_a, beam_b = beam_pair
             p1, p2 = intersection_segment_segment(beam_a.centerline, beam_b.centerline)
             if p1 and p2:
                 intersecting_pairs.append(beam_pair)

@@ -28,7 +28,7 @@ def find_neighboring_beams(beams):
     neighbors = []
     for index, beam in enumerate(beams):
         for found_index in r_tree.intersection(beam.aabb):
-            pair = set((beams[index], beams[found_index]))
+            pair = {beams[index], beams[found_index]}
             if found_index != index and pair not in neighbors:
                 neighbors.append(pair)
 

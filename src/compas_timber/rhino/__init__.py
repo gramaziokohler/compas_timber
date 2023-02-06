@@ -2,7 +2,6 @@ import Rhino
 from compas.plugins import plugin
 
 
-
 @plugin(category="solvers", requires=["Rhino"])
 def find_neighboring_beams(beams):
     """Uses the Rhino.Geometry.RTree implementation of RTree to find neighboring beams.
@@ -26,7 +25,7 @@ def find_neighboring_beams(beams):
         found_id = e_args.Id
 
         # eliminate duplicates (1, 2) == (2, 1)
-        pair = set((beams[searched_id], beams[found_id]))
+        pair = {beams[searched_id], beams[found_id]}
         if searched_id != found_id and pair not in neighbors:
             neighbors.append(pair)
 
