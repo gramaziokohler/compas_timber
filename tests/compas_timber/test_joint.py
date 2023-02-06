@@ -90,7 +90,7 @@ def test_find_neighbors(example_beams):
         set([2, 3]),
         set([2, 6]),
         set([2, 5]),
-        set([4, 5])
+        set([4, 5]),
     ]
     result = find_neighboring_beams(example_beams)
     # beam objects => sets of keys for easy comparison
