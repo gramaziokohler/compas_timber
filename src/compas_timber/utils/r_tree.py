@@ -7,20 +7,23 @@ from compas.plugins import plugin
 def find_neighboring_beams(beams):
     """Uses RTree implementation from the CPython `rtree` library: https://pypi.org/project/Rtree/.
 
+    Returns a list of sets. Each set contains a pair of neighboring beams.
+    The beams are returned as sets as the order within each pair of beams doesn't matter.
+    That way there are no duplicates i.e. (beam_a, beam_b) == (beam_b, beam_a).
+
     Parameters
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
 
-
     Returns
     -------
-    list(set(:class:`compas_timber.parts.Beam`))
-        List containing sets or neightboring pairs beams.
+    list(set(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`))
+        List containing sets of two neightboring beams each.
 
     """
-    p = Property()
-    p.dimension = 3
-    r_tree = Index(properties=p, interleaved=True)
+    # insert and search three dimensional data (bounding boxes).
+    p = Property(dimension=3)
+    r_tree = Index(properties=p, interleaved=True)  # interleaved => x_min, y_min, z_min, x_max, y_max, z_max
 
     for index, beam in enumerate(beams):
         r_tree.insert(index, beam.aabb)
