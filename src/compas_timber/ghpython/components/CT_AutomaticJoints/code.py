@@ -34,7 +34,8 @@ class AutotomaticJoints(component):
                     msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule assigns: {}"
                     info.append(msg.format(beam_a.key, beam_b.key, detected_topo, rule.joint_type.__name__))
                     continue
-                # find_topology reorders beams if needed
+                # sort by category to allow beam role by order (main beam first, cross beam second)
+                beam_a, beam_b = rule.reorder([beam_a, beam_b])
                 joint_defs.append(JointDefinition(rule.joint_type, [beam_a, beam_b]))
                 break  # first matching rule
 
