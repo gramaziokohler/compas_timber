@@ -32,10 +32,28 @@ class ConnectionSolver(object):
     TOLERANCE = 1e-6
 
     @classmethod
-    def find_intersecting_pairs(cls, beams):
-        """Naive implementation, can/should be optimized"""
+    def find_intersecting_pairs(cls, beams, rtree=False):
+        """Finds pairs of intersecting beams in the given list of beams.
+
+        Parameters
+        ----------
+        beams : list(:class:`compas_timber.parts.Beam`)
+            A list of beam objects.
+        rtree : bool
+            When set to True RTree will be used to search for neighboring beams.
+
+        Returns
+        -------
+        list(set(:class:`compas_timber.parts.Beam`, :class:`compas_timber.parts.Beam`))
+            List containing sets or neightboring pairs beams.
+
+        """
         intersecting_pairs = []
-        combinations = find_neighboring_beams(beams)
+
+        if rtree:
+            combinations = find_neighboring_beams(beams)
+        else:
+            combinations = itertools.combinations(beams, 2)
         for beam_pair in combinations:
             beam_a, beam_b = beam_pair
             if cls._intersect_with_tolerance(beam_a.centerline, beam_b.centerline):
