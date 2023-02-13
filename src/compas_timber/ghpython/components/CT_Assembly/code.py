@@ -17,7 +17,6 @@ class Assembly(component):
         return new_beams
 
     def RunScript(self, beams, joints, features):
-
         assembly = TimberAssembly()
 
         if beams:

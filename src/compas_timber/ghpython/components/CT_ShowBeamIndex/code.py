@@ -6,7 +6,6 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 class ShowBeamIndex(component):
     def RunScript(self, assembly):
-
         self.pt = []
         self.txt = []
 

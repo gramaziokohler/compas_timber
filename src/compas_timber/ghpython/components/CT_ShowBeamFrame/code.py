@@ -7,7 +7,6 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 class ShowBeamFrame(component):
     def RunScript(self, Beam):
-
         self.frame = [frame_to_rhino(b.frame) for b in Beam]
         self.scale = [b.width + b.height for b in Beam]
 

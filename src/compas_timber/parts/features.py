@@ -24,7 +24,6 @@ class FeatureApplicationError(BaseException):
 
 
 class BeamTrimmingFeature(GeometricFeature):
-
     OPERATIONS = {Brep: _trim_brep_with_frame}
 
     def __init__(self, trimming_plane, owner=None):
@@ -58,7 +57,6 @@ class BeamTrimmingFeature(GeometricFeature):
 
 
 class BeamBooleanSubtraction(GeometricFeature):
-
     OPERATIONS = {Brep: _boolean_subtract_breps}
 
     def __init__(self, brep, owner=None):

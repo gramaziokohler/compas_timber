@@ -8,7 +8,6 @@ from compas_timber.parts import BeamBooleanSubtraction
 
 class BrepSubtractionFeature(component):
     def RunScript(self, beams, breps):
-
         if not beams:
             self.AddRuntimeMessage(Warning, "Input parameter beams failed to collect data")
         if not breps:

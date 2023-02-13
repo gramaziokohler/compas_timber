@@ -7,7 +7,6 @@ from compas_timber.ghpython import CategoryRule
 
 
 class JointCategoryRule(component):
-
     MAP = {"T-Butt": TButtJoint, "L-Miter": LMiterJoint, "L-Butt": LButtJoint}
 
     def RunScript(self, joint_type, category_a, category_b):

@@ -4,7 +4,6 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 class ShowAssembly(component):
     def RunScript(self, assembly, show_features):
-
         if not assembly:
             self.AddRuntimeMessage(Warning, "Input parameter assembly failed to collect data")
             return

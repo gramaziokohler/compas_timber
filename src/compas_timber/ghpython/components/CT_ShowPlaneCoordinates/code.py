@@ -5,7 +5,6 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 class ShowPlaneCoordinates(component):
     def RunScript(self, Pln):
-
         self.plane = Pln
         if not self.plane:
             return
