@@ -10,7 +10,6 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 class Attributes_Set(component):
     def RunScript(self, RefObj, ZVector, Width, Height, Category, update):
-
         _o = list_input_valid(self, RefObj, "RefObj")
         if not _o:
             return

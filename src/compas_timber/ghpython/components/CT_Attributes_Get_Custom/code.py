@@ -7,7 +7,6 @@ from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attribut
 
 class Attributes_Get_Custom(component):
     def RunScript(self, refCrv):
-
         if not refCrv:
             self.AddRuntimeMessage(Warning, "Input parameter refCrv failed to collect data")
 

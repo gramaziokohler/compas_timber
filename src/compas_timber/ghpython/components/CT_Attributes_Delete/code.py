@@ -6,7 +6,6 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 class Attributes_Delete(component):
     def RunScript(self, RefObj, AttributeName, update):
-
         if not item_input_valid(self, RefObj, "RefObj"):
             return
 

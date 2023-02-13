@@ -6,7 +6,6 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 class Attributes_Set_Custom(component):
     def RunScript(self, RefObj, Attribute, update):
-
         o = list_input_valid(self, RefObj, "RefObj")
         a = list_input_valid(self, Attribute, "Attribute")
 

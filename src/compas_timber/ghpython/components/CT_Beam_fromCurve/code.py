@@ -11,7 +11,6 @@ from compas_timber.parts.beam import Beam as ctBeam
 
 class Beam_fromCurve(component):
     def RunScript(self, Centerline, ZVector, Width, Height, Category, Group):
-
         # minimum inputs required
         if not Centerline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")

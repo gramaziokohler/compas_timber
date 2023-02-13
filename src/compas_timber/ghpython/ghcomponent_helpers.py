@@ -3,7 +3,6 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 
 def list_input_valid(component, Param, name):
-
     if not Param:
         component.AddRuntimeMessage(Warning, "Input parameter %s failed to collect data" % name)
     else:
@@ -18,7 +17,6 @@ def list_input_valid(component, Param, name):
 
 
 def item_input_valid(component, Param, name):
-
     if not Param:
         component.AddRuntimeMessage(Warning, "Input parameter %s failed to collect data" % name)
     else:

@@ -11,7 +11,6 @@ from compas_timber.parts.beam import Beam as ctBeam
 
 class Beam_fromCurveGuid(component):
     def RunScript(self, RefCenterline, ZVector, Width, Height, Category, Group, updateRefObj):
-
         if not RefCenterline:
             self.AddRuntimeMessage(Warning, "Input parameter RefCenterline failed to collect data")
         if not Width:
