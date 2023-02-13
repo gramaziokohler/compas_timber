@@ -1,6 +1,6 @@
 {
-    "name": "Beam",
-    "nickname": "Beam",
+    "name": "BeamFromCurveGuid",
+    "nickname": "BeamFromGuid",
     "category": "COMPAS Timber",
     "subcategory": "Parts",
     "description": "Creates a Beam from a referenced Line or LineCurve.",
@@ -10,43 +10,43 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "curve_ids",
+                "name": "CurveIds",
                 "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "guid",
                 "scriptParamAccess": 1
             },
             {
-                "name": "width",
-                "description": "Width of the cross-section (usually the smaller dimension).",
-                "typeHintID": "float",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "height",
-                "description": "Height of the cross-section (usually the larger dimension).",
-                "typeHintID": "float",
-                "scriptParamAccess": 1
-            },
-            {
-                "name":"z_vector",
+                "name":"ZVector",
                 "description":  "(optional) Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
                 "typeHintID": "vector",
                 "scriptParamAccess": 1
             },
             {
-                "name": "category",
+                "name": "Width",
+                "description": "Width of the cross-section (usually the smaller dimension).",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Height",
+                "description": "Height of the cross-section (usually the larger dimension).",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Category",
                 "description": "(optional) Category of a beam.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             },
             {
-                "name": "group",
+                "name": "Group",
                 "description": "(optional) Name of a group or subassembly.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             },
             {
-                "name": "update_attrs",
+                "name": "Update_attrs",
                 "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
@@ -54,7 +54,7 @@
         ],
         "outputParameters": [
             {
-                "name": "beams",
+                "name": "Beams",
                 "description": "Beam object(s)."
             }
         ]
