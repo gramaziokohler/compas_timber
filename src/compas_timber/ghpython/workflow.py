@@ -1,6 +1,5 @@
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import XLapJoint
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
@@ -216,4 +215,4 @@ def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l
         LMiterJoint(beamA, beamB, model)
 
     for beamA, beamB in connectivity["X"]:
-        XLapJoint(beamA, beamB, model)
+        pass
