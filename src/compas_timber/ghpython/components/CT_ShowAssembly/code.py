@@ -15,8 +15,6 @@ class ShowAssembly(component):
         for beam in assembly.beams:
             if show_features:
                 errors.extend(beam.apply_features())
-
-            # geometry.append(Artist(beam.get_geometry(show_features)).draw())
-            geometry.append(beam.get_geometry().native_brep)
+            geometry.append(beam.get_geometry(True).native_brep)
 
         return geometry, errors
