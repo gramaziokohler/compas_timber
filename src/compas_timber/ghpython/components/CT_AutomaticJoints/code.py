@@ -7,7 +7,6 @@ from compas_timber.ghpython import JointDefinition
 
 class AutotomaticJoints(component):
     def RunScript(self, Beams, Rules, MaxDistance):
-
         if not Beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
         if not Rules:
