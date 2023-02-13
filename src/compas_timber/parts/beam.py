@@ -230,7 +230,6 @@ class Beam(Part):
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None, geometry_type="brep"):
-
         line = Line(point_start, point_end)
 
         return cls.from_centerline(line, width, height, z_vector, geometry_type)

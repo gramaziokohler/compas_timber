@@ -12,7 +12,6 @@ from compas_timber.utils.rhino_object_name_attributes import update_rhobj_attrib
 
 class BeamFromCurveGuid(component):
     def RunScript(self, curve_ids, width, height, z_vector, category, group, update_attrs):
-
         if not curve_ids:
             self.AddRuntimeMessage(Warning, "Input parameter curve_ids failed to collect data")
         if not width:
