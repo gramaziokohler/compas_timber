@@ -5,7 +5,7 @@ from compas_rhino.conversions import point_to_rhino
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
-class MyComponent(component):
+class CT_ShowJointTypes(component):
     def RunScript(self, assembly):
         self.pt = []
         self.txt = []
@@ -14,7 +14,7 @@ class MyComponent(component):
             return
 
         for joint in assembly.joints:
-            line_a, line_b = joint.beams[0].centerline, joint.beams[0].centerline
+            line_a, line_b = joint.beams[0].centerline, joint.beams[1].centerline
             [p1, t1], [p2, t2] = intersection_line_line_3D(line_a, line_b, 0.2, False, 1e-3)
             p1 = point_to_rhino(p1)
             p2 = point_to_rhino(p2)
@@ -23,7 +23,7 @@ class MyComponent(component):
             self.txt.append(joint.joint_type)
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:
+        if self.Locked:
             return
         col = System.Drawing.Color.FromArgb(255, 0, 0, 0)
         # https://developer.rhino3d.com/api/RhinoCommon/html/M_Rhino_Display_DisplayPipeline_Draw2dText_5.htm
