@@ -1,4 +1,3 @@
-from compas.artists import Artist
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 

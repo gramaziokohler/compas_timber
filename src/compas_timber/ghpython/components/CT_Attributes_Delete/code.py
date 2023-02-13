@@ -1,5 +1,4 @@
 from ghpythonlib.componentbase import executingcomponent as component
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 
 from compas_timber.ghpython.ghcomponent_helpers import item_input_valid
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
@@ -8,7 +7,7 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 class Attributes_Delete(component):
     def RunScript(self, RefObj, AttributeName, update):
 
-        if not item_input_valid(ghenv, RefObj, "RefObj"):
+        if not item_input_valid(self, RefObj, "RefObj"):
             return
 
         if update and RefObj:

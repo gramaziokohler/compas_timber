@@ -12,7 +12,7 @@ class ShowBeamFrame(component):
         self.scale = [b.width + b.height for b in Beam]
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:
+        if self.Locked:
             return
 
         colorX = System.Drawing.Color.FromArgb(255, 255, 100, 100)

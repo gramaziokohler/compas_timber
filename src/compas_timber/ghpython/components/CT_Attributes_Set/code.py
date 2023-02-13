@@ -1,6 +1,5 @@
 """Set attributes to the referenced object by encoding them in the objects's name."""
 
-import rhinoscriptsyntax as rs
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
@@ -12,7 +11,7 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 class Attributes_Set(component):
     def RunScript(self, RefObj, ZVector, Width, Height, Category, update):
 
-        _o = list_input_valid(ghenv, RefObj, "RefObj")
+        _o = list_input_valid(self, RefObj, "RefObj")
         if not _o:
             return
 
@@ -20,7 +19,7 @@ class Attributes_Set(component):
         if ZVector or Width or Height or Category:
             pass
         else:
-            ghenv.Component.AddRuntimeMessage(
+            self.AddRuntimeMessage(
                 Warning, "None of the input parameters 'ZVector', 'Width', 'Height', 'Category' collected any data."
             )
 
@@ -28,25 +27,25 @@ class Attributes_Set(component):
 
         if ZVector:
             if len(ZVector) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(
+                self.AddRuntimeMessage(
                     Error,
                     " Input parameter 'ZVector' requires either none, one or the same number of values as in refObj.",
                 )
         if Width:
             if len(Width) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(
+                self.AddRuntimeMessage(
                     Error,
                     " Input parameter 'Width' requires either none, one or the same number of values as in refObj.",
                 )
         if Height:
             if len(Height) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(
+                self.AddRuntimeMessage(
                     Error,
                     " Input parameter 'Height' requires either none, one or the same number of values as in refObj.",
                 )
         if Category:
             if len(Category) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(
+                self.AddRuntimeMessage(
                     Error,
                     " Input parameter 'Category' requires either none, one or the same number of values as in refObj.",
                 )

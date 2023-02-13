@@ -11,7 +11,7 @@ class Attributes_Get(component):
     def RunScript(self, refCrv):
 
         if not refCrv:
-            ghenv.Component.AddRuntimeMessage(Warning, "Input parameter refCrv failed to collect data")
+            self.AddRuntimeMessage(Warning, "Input parameter refCrv failed to collect data")
 
         ZVector = []
         Width = []
@@ -41,7 +41,7 @@ class Attributes_Get(component):
             if gl:
                 gl = list(gl)
                 if len(gl) > 1:
-                    ghenv.Component.AddRuntimeMessage(
+                    self.AddRuntimeMessage(
                         Remark, "Some objects belong to more than one group! (I will pick the first group I find.)"
                     )
                 Group = gl[0]

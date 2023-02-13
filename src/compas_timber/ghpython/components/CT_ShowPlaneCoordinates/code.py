@@ -11,7 +11,7 @@ class ShowPlaneCoordinates(component):
             return
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:  # noqa: F821
+        if self.Locked:  # noqa: F821
             return
 
         colorX = System.Drawing.Color.FromArgb(255, 255, 100, 100)

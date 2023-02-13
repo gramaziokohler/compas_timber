@@ -13,7 +13,7 @@ class Attributes_Check(component):
     def RunScript(self, RefObj):
         self.data = []
 
-        list_input_valid(ghenv, RefObj, "RefObj")
+        list_input_valid(self, RefObj, "RefObj")
 
         for obj in RefObj:
             d = {"refobj": RefObj, "crv": None, "msg": [], "ok": None, "pln": None, "pt": None}
@@ -48,7 +48,7 @@ class Attributes_Check(component):
             self.data.append(d)
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:
+        if self.Locked:
             return
 
         colorOK = System.Drawing.Color.FromArgb(255, 0, 150, 100)
@@ -85,7 +85,7 @@ class Attributes_Check(component):
                 x = float(w)
                 if x <= 0.0:
                     msg.append("width: wrong value: %s" % w)
-            except:
+            except Exception:
                 msg.append("width: wrong value: %s" % w)
         else:
             msg.append("width: unset")
@@ -96,7 +96,7 @@ class Attributes_Check(component):
                 x = float(h)
                 if x <= 0.0:
                     msg.append("height: wrong value: %s" % h)
-            except:
+            except Exception:
                 msg.append("height: wrong value: %s" % h)
         else:
             msg.append("height: unset")

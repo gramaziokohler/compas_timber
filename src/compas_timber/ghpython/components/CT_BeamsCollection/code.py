@@ -1,3 +1,4 @@
+# flake8: noqa
 """Creates a Collection of Beams."""
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 

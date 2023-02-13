@@ -1,5 +1,4 @@
 """Extracts main geometric characteristics of a beam."""
-from compas.artists import Artist
 from compas_rhino.conversions import box_to_rhino
 from compas_rhino.conversions import frame_to_rhino
 from compas_rhino.conversions import line_to_rhino_curve
@@ -20,7 +19,7 @@ class BeamDecompose(component):
         Brep = []
         Width = []
         Height = []
-        if list_input_valid(ghenv, Beam, "Beam"):
+        if list_input_valid(self, Beam, "Beam"):
             Frame = [frame_to_rhino(b.frame) for b in Beam]
             Centerline = [line_to_rhino_curve(b.centerline) for b in Beam]
             Box = [box_to_rhino(b.shape) for b in Beam]

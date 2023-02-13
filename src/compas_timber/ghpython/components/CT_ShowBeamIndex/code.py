@@ -17,7 +17,7 @@ class ShowBeamIndex(component):
             self.txt.append(str(beam.key))
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:
+        if self.Locked:
             return
         col = System.Drawing.Color.FromArgb(255, 255, 255, 255)
         # https://developer.rhino3d.com/api/RhinoCommon/html/M_Rhino_Display_DisplayPipeline_Draw2dText_5.htm

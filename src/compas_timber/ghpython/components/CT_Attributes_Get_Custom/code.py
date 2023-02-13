@@ -1,5 +1,4 @@
 """Read all attributes encoded in the referenced object's name."""
-import rhinoscriptsyntax as rs
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
@@ -10,7 +9,7 @@ class Attributes_Get_Custom(component):
     def RunScript(self, refCrv):
 
         if not refCrv:
-            ghenv.Component.AddRuntimeMessage(Warning, "Input parameter refCrv failed to collect data")
+            self.AddRuntimeMessage(Warning, "Input parameter refCrv failed to collect data")
 
         AttributeName = []
         AttributeValue = []
