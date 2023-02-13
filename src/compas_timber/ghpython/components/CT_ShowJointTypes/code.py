@@ -1,11 +1,12 @@
 # flake8: noqa
-from ghpythonlib.componentbase import executingcomponent as component
 import System
 from compas_rhino.conversions import point_to_rhino
+from ghpythonlib.componentbase import executingcomponent as component
+
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
-class MyComponent(component):
+class ShowJointTypes(component):
     def RunScript(self, assembly):
         self.pt = []
         self.txt = []
@@ -14,7 +15,7 @@ class MyComponent(component):
             return
 
         for joint in assembly.joints:
-            line_a, line_b = joint.beams[0].centerline, joint.beams[0].centerline
+            line_a, line_b = joint.beams[0].centerline, joint.beams[1].centerline
             [p1, t1], [p2, t2] = intersection_line_line_3D(line_a, line_b, 0.2, False, 1e-3)
             p1 = point_to_rhino(p1)
             p2 = point_to_rhino(p2)

@@ -3,7 +3,7 @@
     "nickname": "BakeUVMap",
     "category": "COMPAS Timber",
     "subcategory": "Utils",
-    "description": "Bake Assembly objects and add a UVMapping.",
+    "description": "Bake Beam objects and add a UVMapping.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": false,
@@ -11,10 +11,10 @@
         "inputParameters": [
              
             {
-                "name": "Assembly",
-                "description": "Assembly object.",
+                "name": "Beam",
+                "description": "A (list of) Beam object(s).",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             },           
             {
                 "name": "MapSize",

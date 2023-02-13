@@ -1,0 +1,33 @@
+{
+    "name": "RemoveAttributes",
+    "nickname": "RemoveAttributes",
+    "category": "COMPAS Timber",
+    "subcategory": "Attributes",
+    "description": "Remove indicated attributes or clear all (if not attribute names specified) encoded in the referenced objects's name.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "RefObj",
+                "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
+                "typeHintID": "guid",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "AttributeName",
+                "description": "The name(s) of the attribute(s) to remove. If None, all attributes will be cleared.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "update",
+                "description": "Set to True to apply. Nothing happens if None or False.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": []
+    }
+}

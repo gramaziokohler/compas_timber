@@ -1,0 +1,36 @@
+{
+    "name": "SetAttributesCustom",
+    "nickname": "SetAttributesCustom",
+    "category": "COMPAS Timber",
+    "subcategory": "Attributes",
+    "description": "Set custom attributes to the referenced object by encoding them in the objects's name.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "RefObj",
+                "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
+                "typeHintID": "guid",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Attribute",
+                "description": "Attribute.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "update",
+                "description": "Set to True to apply. Nothing happens if None or False.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+            
+        ],
+        "outputParameters": [
+
+        ]
+    }
+}
