@@ -33,11 +33,11 @@ class ConnectionSolver(object):
 
     @staticmethod
     def _intersect_with_tolerance(line_a, line_b, tolerance=TOLERANCE):
-            p1, p2 = intersection_segment_segment(line_a, line_b)
-            if p1 is None or p2 is None:
-                return False
-            distance = distance_point_point(p1, p2)
-            return close(distance, tolerance)
+        p1, p2 = intersection_segment_segment(line_a, line_b)
+        if p1 is None or p2 is None:
+            return False
+        distance = distance_point_point(p1, p2)
+        return close(distance, tolerance)
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         if max_distance is None:
