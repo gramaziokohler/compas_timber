@@ -10,14 +10,14 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "CurveIds",
+                "name": "RefCenterline",
                 "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "guid",
                 "scriptParamAccess": 1
             },
             {
-                "name":"ZVector",
-                "description":  "(optional) Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
+                "name": "ZVector",
+                "description": "(optional) Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken.",
                 "typeHintID": "vector",
                 "scriptParamAccess": 1
             },
@@ -54,7 +54,7 @@
         ],
         "outputParameters": [
             {
-                "name": "Beams",
+                "name": "Beam",
                 "description": "Beam object(s)."
             }
         ]

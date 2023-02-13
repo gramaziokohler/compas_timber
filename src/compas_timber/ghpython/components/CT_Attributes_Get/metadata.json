@@ -2,11 +2,11 @@
     "name": "GetAttributes",
     "nickname": "GetAttributes",
     "category": "COMPAS Timber",
-    "subcategory": "Utils",
-    "description": "Read attributes encoded in the referenced object's name.",
+    "subcategory": "Attributes",
+    "description": "Read standard attributes encoded in the referenced object's name.",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 2,
         "inputParameters": [
             {
@@ -20,17 +20,14 @@
             {
                 "name": "ZVector",
                 "description": "Vector defining the orientation of the cross-section (corresponds to the height dimension). If None, a default will be taken."
-
             },
             {
                 "name": "Width",
                 "description": "Width of the cross-section (usually the smaller dimension)."
-
             },
             {
                 "name": "Height",
                 "description": "Height of the cross-section (usually the larger dimension)."
-
             },
             {
                 "name": "Category",

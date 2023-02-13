@@ -1,16 +1,16 @@
-from ghpythonlib.componentbase import executingcomponent as component
-import System
 import Rhino.Geometry as rg
+import System
+from ghpythonlib.componentbase import executingcomponent as component
 
 
-class MyComponent(component):
+class ShowPlaneCoordinates(component):
     def RunScript(self, Pln):
         self.plane = Pln
         if not self.plane:
             return
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:  # noqa: F821
+        if self.Locked:  # noqa: F821
             return
 
         colorX = System.Drawing.Color.FromArgb(255, 255, 100, 100)

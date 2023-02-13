@@ -1,7 +1,7 @@
 # flake8: noqa
-from compas_timber.utils.workflow import JointDefinition
-
 import Grasshopper.Kernel as ghk
+
+from compas_timber.utils.workflow import JointDefinition
 
 w = ghk.GH_RuntimeMessageLevel.Warning
 e = ghk.GH_RuntimeMessageLevel.Error
