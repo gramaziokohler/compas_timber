@@ -16,16 +16,21 @@ Classes
     :toctree: generated/
     :nosignatures:
 
+    Joint
     TButtJoint
+
+Functions
+=========
+
+    beam_side_incidence
+
 """
 from .joint import Joint
 from .joint import beam_side_incidence
 from .joint import BeamJoinningError
 from .t_butt import TButtJoint
-from .t_lap import TLapJoint
 from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
-from .x_lap import XLapJoint
 from .solver import JointTopology
 from .solver import ConnectionSolver
 from .solver import find_neighboring_beams
@@ -33,13 +38,11 @@ from .solver import find_neighboring_beams
 
 __all__ = [
     "Joint",
+    "beam_side_incidence",
     "BeamJoinningError",
     "TButtJoint",
-    "TLapJoint",
     "LButtJoint",
     "LMiterJoint",
-    "XLapJoint",
-    "beam_side_incidence",
     "JointTopology",
     "ConnectionSolver",
     "find_neighboring_beams",

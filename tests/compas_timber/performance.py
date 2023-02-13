@@ -61,7 +61,6 @@ def large_assembly(size=100):
 
 
 if __name__ == "__main__":
-
     model_sizes = []
     exec_times = []
 

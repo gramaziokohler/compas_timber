@@ -1,24 +1,16 @@
 # flake8: noqa
-import Rhino.Geometry as rg
-import scriptcontext as sc
 import math
-import copy
-import Rhino.Render as rr
-import rhinoscriptsyntax as rs
-import Rhino
 import random
 
+import Rhino
+import Rhino.Geometry as rg
+import rhinoscriptsyntax as rs
+import scriptcontext as sc
+from compas.artists import Artist
 from compas_rhino.conversions import frame_to_rhino
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 
-import Grasshopper.Kernel as ghk
-
-warning = ghk.GH_RuntimeMessageLevel.Warning
-error = ghk.GH_RuntimeMessageLevel.Error
-
-if not Assembly:
-    ghenv.Component.AddRuntimeMessage(warning, "Input parameter Assembly faild to collect data")
-elif not Assembly.beams:
-    ghenv.Component.AddRuntimeMessage(warning, "No Beams in the Assembly")
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
 
 def create_box_map(pln, sx, sy, sz):
@@ -59,12 +51,19 @@ if not MapSize:
     dimx = 0.2
     dimy = 0.2
     dimz = 1.0
+
+elif len(MapSize) != 3:
+    ghenv.Component.AddRuntimeMessage(
+        Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
+    )
 else:
     dimx, dimy, dimz = MapSize
 
-if Bake:
-    frames = [frame_to_rhino(beam.frame) for beam in Assembly.beams]
-    breps = [beam.brep for beam in Assembly.beams]
+_inputok = list_input_valid(ghenv, Beam, "Beam")
+
+if _inputok and Bake:
+    frames = [frame_to_rhino(b.frame) for b in Beam]
+    breps = [Artist(b.get_geometry(True)).draw() for b in Beam]
 
     if frames and breps:
         rs.EnableRedraw(False)

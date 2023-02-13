@@ -1,6 +1,5 @@
 from ghpythonlib.componentbase import executingcomponent as component
 
-
 from compas_timber.assembly import TimberAssembly
 
 
@@ -18,7 +17,6 @@ class Assembly(component):
         return new_beams
 
     def RunScript(self, beams, joints, features):
-
         assembly = TimberAssembly()
 
         if beams:

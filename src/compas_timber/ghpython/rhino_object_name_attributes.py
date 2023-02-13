@@ -29,15 +29,28 @@ def set_rhobj_name(guid, new_name):
     return
 
 
-def update_rhobj_attributes_name(guid, attribute, value, separator_entry="_", separator_keyval=":"):
+def update_rhobj_attributes_name(
+    guid, attribute=None, value=None, separator_entry="_", separator_keyval=":", operation="update"
+):
+    """Add or remove an attribute (key:value pair) to/form the Rhino object's name, or clears the name"""
+
     obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid)
 
     current_name = obj.Attributes.Name
     # print("current name:",current_name)
-    new_name = update_attribute(current_name or "", str(attribute), str(value), separator_entry, separator_keyval)
+
+    if operation == "clear":
+        new_name = ""
+    elif operation in ("update", "add") and attribute and value:
+        new_name = update_attribute(current_name or "", str(attribute), str(value), separator_entry, separator_keyval)
+    elif operation == "remove" and attribute:
+        new_name = remove_attribute(current_name or "", str(attribute), separator_entry, separator_keyval)
+    else:
+        return
     # print("new name:",new_name)
     obj.Attributes.Name = new_name
     obj.CommitChanges()
+    return new_name
 
 
 def get_obj_attributes(guid, separator_entry="_", separator_keyval=":"):
@@ -54,11 +67,15 @@ def get_obj_attributes(guid, separator_entry="_", separator_keyval=":"):
 
 
 def update_attribute(name_str, attr, val, separator_entry="_", separator_keyval=":"):
+    """
+    Updates an existing attribute with the new value, or adds a new attribute if it doesn't exist.
+    """
     if name_str == "":
         d = {}
     else:
         d = get_dict_from_str(name_str, separator_entry, separator_keyval)
     d[attr] = val  # if attr key exists, will be overwritten
+
     return get_str_from_dict(d, separator_entry, separator_keyval)
 
 
@@ -139,7 +156,6 @@ def cast_str(s):
 
 
 if __name__ == "__main__":
-
     n1 = "color:blue_shape:triangle"
     print(n1)
     n2 = update_attribute(n1, "color", "grey")
