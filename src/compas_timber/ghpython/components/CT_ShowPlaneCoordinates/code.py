@@ -3,7 +3,7 @@ import System
 from ghpythonlib.componentbase import executingcomponent as component
 
 
-class MyComponent(component):
+class ShowPlaneCoordinates(component):
     def RunScript(self, Pln):
 
         self.plane = Pln

@@ -9,7 +9,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
 
-class MyComponent(component):
+class BeamDecompose(component):
     def RunScript(self, Beam):
         if not Beam:
             self.AddRuntimeMessage(Warning, "Input parameter Beam failed to collect data")

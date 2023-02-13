@@ -5,7 +5,7 @@ from compas_timber.ghpython.ghcomponent_helpers import item_input_valid
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
 
 
-class MyComponent(component):
+class Attributes_Delete(component):
     def RunScript(self, RefObj, AttributeName, update):
 
         if not item_input_valid(ghenv, RefObj, "RefObj"):

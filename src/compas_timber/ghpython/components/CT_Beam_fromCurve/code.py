@@ -10,7 +10,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas_timber.parts.beam import Beam as ctBeam
 
 
-class MyComponent(component):
+class Beam_fromCurve(component):
     
     def RunScript(self, Centerline, ZVector, Width, Height, Category, Group):
 

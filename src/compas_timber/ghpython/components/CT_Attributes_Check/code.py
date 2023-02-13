@@ -9,7 +9,7 @@ from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attributes
 
 
-class MyComponent(component):
+class Attributes_Check(component):
     def RunScript(self, RefObj):
         self.data = []
 

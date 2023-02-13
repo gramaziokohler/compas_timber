@@ -2,7 +2,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 
-class FindBeamByRhinoGuid(component):
+class FindBeamByIndex(component):
     def RunScript(self, beams, indices):
         if not beams:
             self.AddRuntimeMessage(Warning, "Input parameter beams failed to collect data")

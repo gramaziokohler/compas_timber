@@ -5,7 +5,7 @@ from compas_rhino.conversions import frame_to_rhino
 from ghpythonlib.componentbase import executingcomponent as component
 
 
-class MyComponent(component):
+class ShowBeamFrame(component):
     def RunScript(self, Beam):
 
         self.frame = [frame_to_rhino(b.frame) for b in Beam]

@@ -9,7 +9,7 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 from compas_timber.parts.beam import Beam as ctBeam
 
 
-class BeamFromCurveGuid(component):
+class Beam_fromCurveGuid(component):
     def RunScript(self, RefCenterline, ZVector, Width, Height, Category, Group, updateRefObj):
 
         if not RefCenterline:

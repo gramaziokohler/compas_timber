@@ -6,7 +6,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attributes
 
 
-class MyComponent(component):
+class Attributes_Get_Custom(component):
     def RunScript(self, refCrv):
 
         if not refCrv:

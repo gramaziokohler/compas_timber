@@ -4,7 +4,7 @@ from compas_rhino.conversions import point_to_rhino
 from ghpythonlib.componentbase import executingcomponent as component
 
 
-class MyComponent(component):
+class ShowBeamIndex(component):
     def RunScript(self, assembly):
 
         self.pt = []
