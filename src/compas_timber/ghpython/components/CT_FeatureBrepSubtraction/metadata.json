@@ -10,13 +10,13 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "beams",
+                "name": "Beams",
                 "description": "List of Beams (one or more).",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "brep",
+                "name": "Breps",
                 "description": "Breps to subtract form Beams (one or more)",
                 "typeHintID": "brep",
                 "scriptParamAccess": 1
@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "feature_defs",
+                "name": "FeatureDefs",
                 "description": "List of feature definitions"
             }
         ]

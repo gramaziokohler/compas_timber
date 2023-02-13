@@ -8,22 +8,22 @@ from compas_timber.ghpython import FeatureDefinition
 
 
 class TrimmingFeature(component):
-    def RunScript(self, beams, planes):
-        if not beams:
+    def RunScript(self, Beams, Planes):
+        if not Beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beam failed to collect data")
-        if not planes:
+        if not Planes:
             self.AddRuntimeMessage(Warning, "Input parameter Pln failed to collect data")
-        if not (beams and planes):
+        if not (Beams and Planes):
             return
 
-        if not isinstance(beams, list):
-            beams = [beams]
-        if not isinstance(planes, list):
-            planes = [planes]
+        if not isinstance(Beams, list):
+            Beams = [Beams]
+        if not isinstance(Planes, list):
+            Planes = [Planes]
 
-        feautre_defs = []
-        for plane in planes:
+        FeatureDefs = []
+        for plane in Planes:
             feature = BeamTrimmingFeature(plane_to_compas_frame(plane))
-            feautre_defs.append(FeatureDefinition(feature, beams))
+            FeatureDefs.append(FeatureDefinition(feature, Beams))
 
-        return feautre_defs
+        return FeatureDefs

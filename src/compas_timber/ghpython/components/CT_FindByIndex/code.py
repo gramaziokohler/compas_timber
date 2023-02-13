@@ -2,26 +2,26 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 
-class FindBeamByRhinoGuid(component):
-    def RunScript(self, beams, indices):
-        if not beams:
-            self.AddRuntimeMessage(Warning, "Input parameter beams failed to collect data")
-        if not indices:
-            self.AddRuntimeMessage(Warning, "Input parameter indices failed to collect data")
-        if not (beams and indices):
+class FindBeamByBeamIndex(component):
+    def RunScript(self, Beams, Indices):
+        if not Beams:
+            self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
+        if not Indices:
+            self.AddRuntimeMessage(Warning, "Input parameter Indices failed to collect data")
+        if not (Beams and Indices):
             return
 
-        if not isinstance(indices, list):
-            indices = [indices]
-        indices = [int(i) for i in indices]
+        if not isinstance(Indices, list):
+            Indices = [Indices]
+        Indices = [int(i) for i in Indices]
 
-        found_beams = []
-        for index in indices:
+        FoundBeams = []
+        for index in Indices:
             try:
-                found_beams.append(beams[index])
+                FoundBeams.append(Beams[index])
             except IndexError:
                 pass
-        if not found_beams:
+        if not FoundBeams:
             self.AddRuntimeMessage(Warning, "No objects found!")
 
-        return found_beams
+        return FoundBeams

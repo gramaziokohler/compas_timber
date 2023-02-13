@@ -9,9 +9,9 @@
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
-             
+
             {
-                "name": "assembly",
+                "name": "Assembly",
                 "description": "A Collection of parts, e.g. JointDefinitions.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0

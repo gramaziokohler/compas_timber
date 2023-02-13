@@ -10,19 +10,19 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "joint_type",
+                "name": "JointType",
                 "description": "Default joint type.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             },
             {
-                "name": "category_a",
+                "name": "CatA",
                 "description": "Categeory of the first Beam",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             },
             {
-                "name": "category_b",
+                "name": "CatB",
                 "description": "Category of the sectond Beam.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
@@ -30,7 +30,7 @@
         ],
         "outputParameters": [
             {
-                "name": "rule",
+                "name": "Rule",
                 "description": "A joint rule."
             }
         ]

@@ -8,22 +8,22 @@ from compas_timber.ghpython import FeatureDefinition
 
 
 class BrepSubtractionFeature(component):
-    def RunScript(self, beams, breps):
-        if not beams:
-            self.AddRuntimeMessage(Warning, "Input parameter beams failed to collect data")
-        if not breps:
-            self.AddRuntimeMessage(Warning, "Input parameter breps failed to collect data")
-        if not (beams and breps):
+    def RunScript(self, Beams, Breps):
+        if not Beams:
+            self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
+        if not Breps:
+            self.AddRuntimeMessage(Warning, "Input parameter Breps failed to collect data")
+        if not (Beams and Breps):
             return
 
-        if not isinstance(beams, list):
-            beams = [beams]
-        if not isinstance(breps, list):
-            breps = [breps]
+        if not isinstance(Beams, list):
+            Beams = [Beams]
+        if not isinstance(Breps, list):
+            Breps = [Breps]
 
-        feature_defs = []
-        for brep in breps:
+        FeatureDefs = []
+        for brep in Breps:
             feature = BeamBooleanSubtraction(Brep.from_native(brep))
-            feature_defs.append(FeatureDefinition(feature, beams))
+            FeatureDefs.append(FeatureDefinition(feature, Beams))
 
-        return feature_defs
+        return FeatureDefs

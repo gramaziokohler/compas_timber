@@ -7,11 +7,11 @@ from compas_timber.ghpython import JointDefinition
 
 
 class TButtDefinition(component):
-    def RunScript(self, main_beam, cross_beam):
-        if not (main_beam and cross_beam):
+    def RunScript(self, MainBeams, CrossBeams):
+        if not (MainBeams and CrossBeams):
             return
 
-        topology, _, _ = ConnectionSolver().find_topology(main_beam, cross_beam)
+        topology, _, _ = ConnectionSolver().find_topology(MainBeams, CrossBeams)
 
         if topology != TButtJoint.SUPPORTED_TOPOLOGY:
             self.AddRuntimeMessage(
@@ -21,4 +21,4 @@ class TButtDefinition(component):
                 ),
             )
 
-        return JointDefinition(TButtJoint, [main_beam, cross_beam])
+        return JointDefinition(TButtJoint, [MainBeams, CrossBeams])

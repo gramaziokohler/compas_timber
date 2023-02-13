@@ -5,18 +5,18 @@ from compas.artists import Artist
 
 
 class ShowAssembly(component):
-    def RunScript(self, assembly, show_features):
-        if not assembly:
-            self.AddRuntimeMessage(Warning, "Input parameter assembly failed to collect data")
+    def RunScript(self, Assembly, ShowFeatures):
+        if not Assembly:
+            self.AddRuntimeMessage(Warning, "Input parameter Assembly failed to collect data")
             return
-        assembly = assembly.copy()  # we're gonna be making changes to upstream objects
+        Assembly = Assembly.copy()  # we're gonna be making changes to upstream objects
 
-        geometry = []
-        errors = []
-        for beam in assembly.beams:
-            if show_features:
-                errors.extend(beam.apply_features())
-            brep = beam.get_geometry(show_features)
-            geometry.append(Artist(brep).draw())
+        Geometry = []
+        Errors = []
+        for beam in Assembly.beams:
+            if ShowFeatures:
+                Errors.extend(beam.apply_features())
+            brep = beam.get_geometry(ShowFeatures)
+            Geometry.append(Artist(brep).draw())
 
-        return geometry, errors
+        return Geometry, Errors

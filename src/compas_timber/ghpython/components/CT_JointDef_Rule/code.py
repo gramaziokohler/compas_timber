@@ -7,8 +7,9 @@ from compas_timber.connections import LButtJoint
 
 
 class JointCategoryRule(component):
+    # TODO: auto fill with subclasses of Joint
     MAP = {"T-Butt": TButtJoint, "L-Miter": LMiterJoint, "L-Butt": LButtJoint}
 
-    def RunScript(self, joint_type, category_a, category_b):
-        if joint_type and category_a and category_b:
-            return CategoryRule(self.MAP[joint_type], category_a, category_b)
+    def RunScript(self, JointType, CatA, CatB):
+        if JointType and CatA and CatB:
+            return CategoryRule(self.MAP[JointType], CatA, CatB)
