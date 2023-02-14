@@ -1,4 +1,3 @@
-import Rhino
 from compas.plugins import plugin
 
 
@@ -17,6 +16,8 @@ def find_neighboring_beams(beams):
         List containing sets or neightboring pairs beams.
 
     """
+    import Rhino
+
     neighbors = []
 
     def found_handler(sender, e_args):
