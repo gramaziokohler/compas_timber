@@ -48,7 +48,7 @@ class JointTopology(object):
 
         """
         try:
-            {v: k for k, v in JointTopology.__dict__.items() if k.startswith("TOPO_")}[value]
+            return {v: k for k, v in JointTopology.__dict__.items() if k.startswith("TOPO_")}[value]
         except KeyError:
             return "TOPO_UNKNOWN"
 
