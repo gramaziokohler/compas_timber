@@ -20,7 +20,7 @@ class AutotomaticJoints(component):
         rules = [r for r in rules if r is not None]
 
         solver = ConnectionSolver()
-        check_pairs = solver._find_pair_candidates(beams, True)
+        check_pairs = solver._find_pair_candidates(beams, True, max_distance)
         joint_defs = []
         info = []
         # rules have to be resolved into joint definitions
@@ -34,10 +34,8 @@ class AutotomaticJoints(component):
                     continue
                 if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
                     msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule assigns: {}"
-                    info.append(msg.format(beam_a.key, beam_b.key, detected_topo, rule.joint_type.__name__))
+                    info.append(msg.format(pair[0].key, pair[1].key, detected_topo, rule.joint_type.__name__))
                     continue
-                # sort by category to allow beam role by order (main beam first, cross beam second)
-                # beam_a, beam_b = rule.reorder([beam_a, beam_b])
                 joint_defs.append(JointDefinition(rule.joint_type, pair))
                 break  # first matching rule
 

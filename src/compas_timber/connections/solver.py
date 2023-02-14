@@ -46,10 +46,10 @@ class ConnectionSolver(object):
                 connections.append([topo, beams_pair])
         return connections
 
-    def _find_pair_candidates(self, beams, rtree=False):
+    def _find_pair_candidates(self, beams, rtree=False, max_distance=None):
         """From a list of beams, find beam pairs to later check if their intersect. Uses R-Tree or simple two-combinations."""
         if rtree:
-            pairs = find_neighboring_beams(beams)
+            pairs = find_neighboring_beams(beams, max_distance)
         else:
             pairs = itertools.combinations(beams, 2)
         return pairs

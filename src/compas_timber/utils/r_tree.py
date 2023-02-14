@@ -1,10 +1,10 @@
+from compas.plugins import plugin
 from rtree.index import Index
 from rtree.index import Property
-from compas.plugins import plugin
 
 
 @plugin(category="solvers", requires=["rtree"])
-def find_neighboring_beams(beams):
+def find_neighboring_beams(beams, max_distance=None):
     """Uses RTree implementation from the CPython `rtree` library: https://pypi.org/project/Rtree/.
 
     Returns a list of sets. Each set contains a pair of neighboring beams.
@@ -25,8 +25,12 @@ def find_neighboring_beams(beams):
     p = Property(dimension=3)
     r_tree = Index(properties=p, interleaved=True)  # interleaved => x_min, y_min, z_min, x_max, y_max, z_max
 
+    d = max_distance or 0.0
+    d *= 0.5
     for index, beam in enumerate(beams):
-        r_tree.insert(index, beam.aabb)
+        x1, y1, z1, x2, y2, z2 = beam.aabb
+        aabb_with_padding = [x1 - d, y1 - d, z1 - d, x2 + d, y2 + d, z2 + d]
+        r_tree.insert(index, aabb_with_padding)
 
     neighbors = []
     for index, beam in enumerate(beams):
