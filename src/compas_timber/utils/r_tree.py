@@ -44,6 +44,7 @@ def find_neighboring_beams(beams, inflate_by=None):
 
     return neighbors
 
+
 def _inflate_bbox(bbox, d):
     x1, y1, z1, x2, y2, z2 = bbox
     return (x1 - d, y1 - d, z1 - d, x2 + d, y2 + d, z2 + d)
