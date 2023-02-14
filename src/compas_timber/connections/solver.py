@@ -6,7 +6,7 @@ from compas_timber.utils import intersection_line_line_3D
 
 
 @pluggable(category="solvers")
-def find_neighboring_beams(beams):
+def find_neighboring_beams(beams, inflate_by=None):
     """Uses RTree to find neighboring pairs of beams in the given list of beams.
     The returned elements are sets containing pairs of Beam objects.
 
@@ -51,7 +51,7 @@ class ConnectionSolver(object):
     TOLERANCE = 1e-6
 
     @classmethod
-    def find_intersecting_pairs(cls, beams, rtree=False):
+    def find_intersecting_pairs(cls, beams, rtree=False, max_distance=None):
         """Finds pairs of intersecting beams in the given list of beams.
 
         Parameters
@@ -60,6 +60,9 @@ class ConnectionSolver(object):
             A list of beam objects.
         rtree : bool
             When set to True RTree will be used to search for neighboring beams.
+        max_distance : float, optional
+            When rtree is True, an additional distance apart with which
+            non-touching beams are still considered intersecting.
 
         Returns
         -------
@@ -67,7 +70,7 @@ class ConnectionSolver(object):
             List containing sets or neightboring pairs beams.
 
         """
-        return find_neighboring_beams(beams) if rtree else itertools.combinations(beams, 2)
+        return find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         if max_distance is None:

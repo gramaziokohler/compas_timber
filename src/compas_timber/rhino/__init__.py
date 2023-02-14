@@ -2,13 +2,15 @@ from compas.plugins import plugin
 
 
 @plugin(category="solvers", requires=["Rhino"])
-def find_neighboring_beams(beams):
+def find_neighboring_beams(beams, inflate_by=None):
     """Uses the Rhino.Geometry.RTree implementation of RTree to find neighboring beams.
 
     Parameters
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
-
+        The collection of beams to check.
+    inflate_by : float
+        If set, inflate bounding boxes by this amount in all directions prior to adding to the RTree.
 
     Returns
     -------
@@ -34,6 +36,8 @@ def find_neighboring_beams(beams):
     bboxes = []
     for index, beam in enumerate(beams):
         bb = Rhino.Geometry.BoundingBox(*beam.aabb)
+        if inflate_by is not None:
+            bb.Inflate(inflate_by)
         bboxes.append(bb)
         rtree.Insert(bb, index)
 

@@ -20,7 +20,7 @@ class AutotomaticJoints(component):
         rules = [r for r in rules if r is not None]
 
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(beams, rtree=True)
+        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         joint_defs = []
         info = []
         # rules have to be resolved into joint definitions
