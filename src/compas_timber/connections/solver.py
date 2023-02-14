@@ -24,6 +24,7 @@ def find_neighboring_beams(beams, inflate_by=None):
 
 class JointTopology(object):
     """Enumeration of the possible joint topologies."""
+
     TOPO_UNKNOWN = 0
     TOPO_I = 1
     TOPO_L = 2
