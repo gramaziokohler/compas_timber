@@ -9,7 +9,7 @@ from .solver import JointTopology
 
 
 class LButtJoint(Joint):
-    SUPPORTED_TOPOLOGY = JointTopology.L
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         super(LButtJoint, self).__init__(assembly, [main_beam, cross_beam])

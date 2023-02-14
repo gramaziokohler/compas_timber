@@ -1,8 +1,5 @@
 import itertools
 
-from compas.geometry import close
-from compas.geometry import distance_point_point
-from compas.geometry import intersection_segment_segment
 from compas.plugins import pluggable
 
 from compas_timber.utils import intersection_line_line_3D
@@ -20,10 +17,32 @@ def find_neighboring_beams(beams):
 class JointTopology(object):
     """Enumeration of the possible joint topologies."""
 
-    L = 0
-    T = 1
-    X = 2
-    NO_INTERSECTION = 3
+    TOPO_L = 0
+    TOPO_T = 1
+    TOPO_X = 2
+    TOPO_UNKNOWN = 3
+
+    @classmethod
+    def get_name(cls, value):
+        """Should be used for debug/logging purposes only!
+
+        Returns the string representation of given topology value.
+
+        Parameters
+        ----------
+        value : int
+            One of [JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_UNKNOWN]
+
+        Returns
+        -------
+        str
+            One of ["TOPO_L", "TOPO_T", "TOPO_X", "TOPO_UNKNOWN"]
+
+        """
+        try:
+            {v: k for k, v in JointTopology.__dict__.items() if k.startswith("TOPO_")}[value]
+        except KeyError:
+            return "TOPO_UNKNOWN"
 
 
 class ConnectionSolver(object):
@@ -48,25 +67,7 @@ class ConnectionSolver(object):
             List containing sets or neightboring pairs beams.
 
         """
-        intersecting_pairs = []
-
-        if rtree:
-            combinations = find_neighboring_beams(beams)
-        else:
-            combinations = itertools.combinations(beams, 2)
-        for beam_pair in combinations:
-            beam_a, beam_b = beam_pair
-            if cls._intersect_with_tolerance(beam_a.centerline, beam_b.centerline):
-                intersecting_pairs.append(beam_pair)
-        return intersecting_pairs
-
-    @staticmethod
-    def _intersect_with_tolerance(line_a, line_b, tolerance=TOLERANCE):
-            p1, p2 = intersection_segment_segment(line_a, line_b)
-            if p1 is None or p2 is None:
-                return False
-            distance = distance_point_point(p1, p2)
-            return close(distance, tolerance)
+        return find_neighboring_beams(beams) if rtree else itertools.combinations(beams, 2)
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         if max_distance is None:
@@ -77,23 +78,23 @@ class ConnectionSolver(object):
         )
 
         if ta is None or tb is None:
-            return JointTopology.NO_INTERSECTION
+            return JointTopology.TOPO_UNKNOWN, beam_a, beam_b
 
         xa = self.is_near_end(ta, tol)
         xb = self.is_near_end(tb, tol)
 
         if xa and xb:
             # L-joint (both meeting at ends) TODO: this could also be an I-joint (splice) -> will need to check for angle between beams
-            return JointTopology.L, beam_a, beam_b
+            return JointTopology.TOPO_L, beam_a, beam_b
         # T-joint (one meeting with the end along the other)
         if xa:
             # A:main, B:cross
-            return JointTopology.T, beam_a, beam_b
+            return JointTopology.TOPO_T, beam_a, beam_b
         if xb:
             # B:main, A:cross
-            return JointTopology.T, beam_b, beam_a
+            return JointTopology.TOPO_T, beam_b, beam_a
         # X-joint (both meeting somewhere along the line)
-        return JointTopology.X, beam_a, beam_b
+        return JointTopology.TOPO_X, beam_a, beam_b
 
     @staticmethod
     def is_near_end(t, tol=TOLERANCE):

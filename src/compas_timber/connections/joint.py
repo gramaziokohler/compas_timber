@@ -18,7 +18,7 @@ class Joint(Data):
     assembly: TimberAssembly object to which the parts belong
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.X
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
 
     def __init__(self, *args, **kwargs):
         super(Joint, self).__init__()

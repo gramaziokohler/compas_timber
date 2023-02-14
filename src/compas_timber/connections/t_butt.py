@@ -10,7 +10,7 @@ from .solver import JointTopology
 
 
 class TButtJoint(Joint):
-    SUPPORTED_TOPOLOGY = JointTopology.T
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
         # TODO: try if possible remove default Nones
