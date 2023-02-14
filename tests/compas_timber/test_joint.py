@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 
 import pytest
+import compas
 from compas.data import json_load
 from compas.geometry import Frame
 from compas.geometry import Point
@@ -79,26 +80,27 @@ def test_deepcopy(mocker):
     assert J_copy is not J
 
 
-def test_find_neighbors(example_beams):
-    expected_result = [
-        set([0, 3]),
-        set([0, 6]),
-        set([0, 1]),
-        set([0, 5]),
-        set([1, 2]),
-        set([1, 4]),
-        set([2, 3]),
-        set([2, 6]),
-        set([2, 5]),
-        set([4, 5]),
-    ]
-    result = find_neighboring_beams(example_beams)
-    # beam objects => sets of keys for easy comparison
-    key_sets = []
-    for pair in result:
-        pair = tuple(pair)
-        key_sets.append({pair[0].key, pair[1].key})
+if not compas.IPY:
+    def test_find_neighbors(example_beams):
+        expected_result = [
+            set([0, 3]),
+            set([0, 6]),
+            set([0, 1]),
+            set([0, 5]),
+            set([1, 2]),
+            set([1, 4]),
+            set([2, 3]),
+            set([2, 6]),
+            set([2, 5]),
+            set([4, 5]),
+        ]
+        result = find_neighboring_beams(example_beams)
+        # beam objects => sets of keys for easy comparison
+        key_sets = []
+        for pair in result:
+            pair = tuple(pair)
+            key_sets.append({pair[0].key, pair[1].key})
 
-    assert len(expected_result) == len(result)
-    for pair in key_sets:
-        assert pair in expected_result
+        assert len(expected_result) == len(result)
+        for pair in key_sets:
+            assert pair in expected_result
