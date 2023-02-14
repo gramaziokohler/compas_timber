@@ -81,6 +81,7 @@ def test_deepcopy(mocker):
 
 
 if not compas.IPY:
+
     def test_find_neighbors(example_beams):
         expected_result = [
             set([0, 3]),
