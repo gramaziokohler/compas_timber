@@ -5,7 +5,7 @@ from compas.artists import Artist
 
 
 class ShowAssembly(component):
-    def RunScript(self, Assembly, ShowFeatures):
+    def RunScript(self, Assembly, showFeatures):
         if not Assembly:
             self.AddRuntimeMessage(Warning, "Input parameter Assembly failed to collect data")
             return
@@ -14,9 +14,9 @@ class ShowAssembly(component):
         Geometry = []
         Errors = []
         for beam in Assembly.beams:
-            if ShowFeatures:
+            if showFeatures:
                 Errors.extend(beam.apply_features())
-            brep = beam.get_geometry(ShowFeatures)
+            brep = beam.get_geometry(showFeatures)
             Geometry.append(Artist(brep).draw())
 
         return Geometry, Errors

@@ -10,13 +10,13 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "assembly",
+                "name": "Assembly",
                 "description": "Assembly to show",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             },
             {
-                "name": "show_features",
+                "name": "showFeatures",
                 "description": "True shows the beams geometry with features applied.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
@@ -25,11 +25,11 @@
         ],
         "outputParameters": [
             {
-                "name": "geometry",
+                "name": "Geometry",
                 "description": "Brep geometry of the Beams"
             },
             {
-                "name": "errors",
+                "name": "Errors",
                 "description": "Error log of the feature application process."
             }
         ]

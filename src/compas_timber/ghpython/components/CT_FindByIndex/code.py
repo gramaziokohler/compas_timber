@@ -3,25 +3,25 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 
 class FindBeamByBeamIndex(component):
-    def RunScript(self, Beams, indices):
+    def RunScript(self, Beams, index):
         if not Beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-        if not indices:
+        if not index:
             self.AddRuntimeMessage(Warning, "Input parameter indices failed to collect data")
-        if not (Beams and indices):
+        if not (Beams and index):
             return
 
-        if not isinstance(indices, list):
-            indices = [indices]
-        indices = [int(i) for i in indices]
+        if not isinstance(index, list):
+            index = [index]
+        index = [int(i) for i in index]
 
-        FoundBeams = []
-        for index in indices:
+        FoundBeam = []
+        for i in index:
             try:
-                FoundBeams.append(Beams[index])
+                FoundBeam.append(Beams[i])
             except IndexError:
                 pass
-        if not FoundBeams:
+        if not FoundBeam:
             self.AddRuntimeMessage(Warning, "No objects found!")
 
-        return FoundBeams
+        return FoundBeam
