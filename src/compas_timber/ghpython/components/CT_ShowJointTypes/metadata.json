@@ -3,7 +3,7 @@
     "nickname": "ShowJointTypes",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Show the names of the defined Joints",
+    "description": "Shows the names of the defined Joints.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -12,7 +12,7 @@
 
             {
                 "name": "Assembly",
-                "description": "A Collection of parts, e.g. JointDefinitions.",
+                "description": "Assembly object.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             }

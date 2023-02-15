@@ -3,7 +3,7 @@
     "nickname": "FindByIndex",
     "category": "COMPAS Timber",
     "subcategory": "Utils",
-    "description": "Find a part in a Collection of parts, that corresponds with the given index.",
+    "description": "Finds a Beam at the given index in the list of Beams.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -12,13 +12,13 @@
 
             {
                 "name": "Beams",
-                "description": "A Collection of parts, e.g. Beams.",
+                "description": "A list of Beams.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
                 "name": "index",
-                "description": "Index (one or more) of the desired beams",
+                "description": "Index (one or more) of the desired Beams.",
                 "typeHintID": "int",
                 "scriptParamAccess": 1
             }

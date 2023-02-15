@@ -19,7 +19,7 @@
         "outputParameters": [
             {
                 "name": "Frame",
-                "description": "A plane (frame) representing the Beam's local coordinate system"
+                "description": "A plane (frame) representing the Beam's local coordinate system."
             },
             {
                 "name": "Centerline",
@@ -39,7 +39,7 @@
             },
             {
                 "name": "Height",
-                "description": "The height of the Beam's cross-section"
+                "description": "The height of the Beam's cross-section."
             }
 
         ]

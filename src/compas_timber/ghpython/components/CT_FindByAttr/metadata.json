@@ -1,9 +1,9 @@
 {
-    "name": "FindByAttribute",
-    "nickname": "FindByAttribute",
+    "name": "FindBeamByAttribute",
+    "nickname": "FindBeamByAttribute",
     "category": "COMPAS Timber",
     "subcategory": "Utils",
-    "description": "Find Beam(s) that has the given attribute.",
+    "description": "Finds Beam(s) that has the given Attribute.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": false,
@@ -18,21 +18,21 @@
             },           
             {
                 "name": "AttrName",
-                "description": "Name of the attribute.",
+                "description": "Name of the Attribute.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             },
             {
                 "name": "AttrValue",
-                "description": "Value of the attribute (can be multiple).",
+                "description": "Value of the Attribute (can be multiple).",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
             {
-                "name": "Beams",
-                "description": "Found Beams, if any."
+                "name": "FoundBeam",
+                "description": "Found Beam(s), if any."
             }
         ]
     }

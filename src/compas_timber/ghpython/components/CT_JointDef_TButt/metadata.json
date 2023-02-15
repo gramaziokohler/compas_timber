@@ -3,7 +3,7 @@
     "nickname": "JointDef: T-Butt",
     "category": "COMPAS Timber",
     "subcategory": "Joints",
-    "description": "Defines a T-Butt joint for the given two Beams.",
+    "description": "Defines an T-Butt Joint for the given two Beams. The order matters: the MainBeam will be trimmed with the side of the CrossBeam.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
