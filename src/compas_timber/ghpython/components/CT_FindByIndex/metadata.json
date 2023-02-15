@@ -11,13 +11,13 @@
         "inputParameters": [
 
             {
-                "name": "beams",
+                "name": "Beams",
                 "description": "A Collection of parts, e.g. Beams.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "indices",
+                "name": "index",
                 "description": "Index (one or more) of the desired beams",
                 "typeHintID": "int",
                 "scriptParamAccess": 1
@@ -25,8 +25,8 @@
         ],
         "outputParameters": [
             {
-                "name": "found_beams",
-                "description": "Found parts, if any."
+                "name": "FoundBeam",
+                "description": "Found beam(s), if any."
             }
         ]
     }

@@ -10,13 +10,13 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "beams",
+                "name": "Beam",
                 "description": "List of Beams (one or more).",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "planes",
+                "name": "Plane",
                 "description": "Cutting planes (one or more)",
                 "typeHintID": "plane",
                 "scriptParamAccess": 1
@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "feature_defs",
+                "name": "Feature",
                 "description": "List of feature definitions"
             }
         ]

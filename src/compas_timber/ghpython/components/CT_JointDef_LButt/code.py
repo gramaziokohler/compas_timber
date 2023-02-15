@@ -8,23 +8,23 @@ from compas_timber.ghpython import JointDefinition
 
 
 class LButtDefinition(component):
-    def RunScript(self, main_beam, cross_beam):
-        if not main_beam:
-            self.AddRuntimeMessage(Warning, "Input parameter main_beam failed to collect data.")
-        if not cross_beam:
-            self.AddRuntimeMessage(Warning, "Input parameter cross_beam failed to collect data.")
-        if not (main_beam and cross_beam):
+    def RunScript(self, MainBeam, CrossBeam):
+        if not MainBeam:
+            self.AddRuntimeMessage(Warning, "Input parameter MainBeams failed to collect data.")
+        if not CrossBeam:
+            self.AddRuntimeMessage(Warning, "Input parameter CrossBeams failed to collect data.")
+        if not (MainBeam and CrossBeam):
             return
-        if not isinstance(main_beam, list):
-            main_beam = [main_beam]
-        if not isinstance(cross_beam, list):
-            cross_beam = [cross_beam]
-        if len(main_beam) != len(cross_beam):
-            self.AddRuntimeMessage(Error, "Number of items in main_beam and cross_beam must match!")
+        if not isinstance(MainBeam, list):
+            MainBeam = [MainBeam]
+        if not isinstance(CrossBeam, list):
+            CrossBeam = [CrossBeam]
+        if len(MainBeam) != len(CrossBeam):
+            self.AddRuntimeMessage(Error, "Number of items in MainBeams and CrossBeams must match!")
             return
 
-        joint_defs = []
-        for main, cross in zip(main_beam, cross_beam):
+        Joint = []
+        for main, cross in zip(MainBeam, CrossBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, cross)
             if topology != LButtJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
@@ -34,5 +34,5 @@ class LButtDefinition(component):
                     ),
                 )
                 continue
-            joint_defs.append(JointDefinition(LButtJoint, [main_beam, cross_beam]))
-        return joint_defs
+            Joint.append(JointDefinition(LButtJoint, [main, cross]))
+        return Joint

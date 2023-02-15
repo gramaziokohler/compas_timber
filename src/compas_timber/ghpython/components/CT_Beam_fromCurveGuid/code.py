@@ -20,7 +20,7 @@ class Beam_fromCurveGuid(component):
 
         if not (RefCenterline and Width and Height):
             # minimal required input
-            return
+            return None
 
         ZVector = ZVector or [None]
         Category = Category or [None]

@@ -7,22 +7,22 @@ from compas_timber.parts import BeamTrimmingFeature
 
 
 class TrimmingFeature(component):
-    def RunScript(self, beams, planes):
-        if not beams:
+    def RunScript(self, Beam, Plane):
+        if not Beam:
             self.AddRuntimeMessage(Warning, "Input parameter Beam failed to collect data")
-        if not planes:
-            self.AddRuntimeMessage(Warning, "Input parameter Pln failed to collect data")
-        if not (beams and planes):
+        if not Plane:
+            self.AddRuntimeMessage(Warning, "Input parameter Plane failed to collect data")
+        if not (Beam and Plane):
             return
 
-        if not isinstance(beams, list):
-            beams = [beams]
-        if not isinstance(planes, list):
-            planes = [planes]
+        if not isinstance(Beam, list):
+            Beam = [Beam]
+        if not isinstance(Plane, list):
+            Plane = [Plane]
 
-        feautre_defs = []
-        for plane in planes:
+        Feature = []
+        for plane in Plane:
             feature = BeamTrimmingFeature(plane_to_compas_frame(plane))
-            feautre_defs.append(FeatureDefinition(feature, beams))
+            Feature.append(FeatureDefinition(feature, Beam))
 
-        return feautre_defs
+        return Feature

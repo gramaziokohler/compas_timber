@@ -10,13 +10,13 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "main_beam",
+                "name": "MainBeam",
                 "description": "First (main) Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "cross_beam",
+                "name": "CrossBeam",
                 "description": "Second (cross) Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "l_butt_def",
+                "name": "JointDef",
                 "description": "L-Butt JointDefinition."
             }
         ]

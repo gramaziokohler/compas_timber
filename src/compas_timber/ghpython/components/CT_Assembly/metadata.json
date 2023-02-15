@@ -10,20 +10,20 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "beams",
+                "name": "Beams",
                 "description": "Collection of Beams",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "joints",
+                "name": "Joints",
                 "description": "Collection of joint definitions.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1,
                 "flatten": true
             },
             {
-                "name": "features",
+                "name": "Features",
                 "description": "Collection of feature definitions.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
@@ -31,7 +31,7 @@
         ],
         "outputParameters": [
             {
-                "name": "assembly",
+                "name": "Assembly",
                 "description": "Assembly object."
             }
         ]

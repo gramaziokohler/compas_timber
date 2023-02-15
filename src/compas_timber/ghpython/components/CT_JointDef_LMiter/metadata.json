@@ -6,17 +6,17 @@
     "description": "Defines an L-Miter joint for the given two Beams (order doesn't matter).",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
-        "inputParameters": [   
+        "inputParameters": [
             {
-                "name": "B1",
+                "name": "BeamA",
                 "description": "First Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
-            },           
+            },
             {
-                "name": "B2",
+                "name": "BeamB",
                 "description": "Second Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "LMiter",
+                "name": "Joint",
                 "description": "L-Miter JointDefinition."
             }
         ]

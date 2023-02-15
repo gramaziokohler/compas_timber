@@ -1,6 +1,6 @@
 {
-    "name": "Beam",
-    "nickname": "Beam",
+    "name": "BeamFromCurveGuid",
+    "nickname": "BeamFromGuid",
     "category": "COMPAS Timber",
     "subcategory": "Parts",
     "description": "Creates a Beam from a referenced Line or LineCurve.",
@@ -46,7 +46,7 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "update_attrs",
+                "name": "updateRefObj",
                 "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0

@@ -10,19 +10,19 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "beams",
+                "name": "Beams",
                 "description": "Collection of Beams.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "rules",
+                "name": "Rules",
                 "description": "Pre-defined rules for default joint types based on 'Category' attribute of the Beams.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "d_max",
+                "name": "MaxDistance",
                 "description": "(optional) Maximum distance between centerlines of two Beams (limited to segments) to consider the Beams as connecting. Optional (if omitted, a default value equal to the average beam height will be taken.)",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
@@ -30,11 +30,11 @@
         ],
         "outputParameters": [
             {
-                "name": "joint_defs",
+                "name": "Joints",
                 "description": "List of JointDefinitions"
             },
             {
-                "name": "info",
+                "name": "Info",
                 "description": "Report and analysis of the found connections and any issues."
             }
         ]
