@@ -17,7 +17,7 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "Indices",
+                "name": "indices",
                 "description": "Index (one or more) of the desired beams",
                 "typeHintID": "int",
                 "scriptParamAccess": 1

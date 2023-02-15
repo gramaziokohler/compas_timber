@@ -46,7 +46,7 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "Update_attrs",
+                "name": "updateRefObj",
                 "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
