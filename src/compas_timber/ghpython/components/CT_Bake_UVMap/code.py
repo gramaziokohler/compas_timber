@@ -9,6 +9,7 @@ import scriptcontext as sc
 from compas.artists import Artist
 from compas_rhino.conversions import frame_to_rhino
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
@@ -59,7 +60,15 @@ elif len(MapSize) != 3:
 else:
     dimx, dimy, dimz = MapSize
 
-_inputok = list_input_valid(ghenv, Beam, "Beam")
+Beams = Beam  # Beam is a list of Beams or an empty list
+if Assembly:
+    Beams.extend(Assembly.beams)
+
+if not Beams:
+    ghenv.Component.AddRuntimeMessage(Warning, "Input parameters Assembly and Beam failed to collect any Beam objects.")
+    _inputok = False
+else:
+    _inputok = True
 
 if _inputok and Bake:
     frames = [frame_to_rhino(b.frame) for b in Beam]
@@ -78,7 +87,6 @@ if _inputok and Bake:
         sc.doc = ghdoc
         rs.EnableRedraw(True)
         rs.Redraw()
-
 else:
     sc.doc = ghdoc
     rs.EnableRedraw(True)

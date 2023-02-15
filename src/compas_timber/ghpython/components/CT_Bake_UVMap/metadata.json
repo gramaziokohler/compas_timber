@@ -1,24 +1,29 @@
 {
-    "name": "BakeUVMap",
-    "nickname": "BakeUVMap",
+    "name": "BakeWithBoxMap",
+    "nickname": "BakeWithBoxMap",
     "category": "COMPAS Timber",
     "subcategory": "Utils",
-    "description": "Bake Beam objects and add a UVMapping.",
+    "description": "Bakes Beam objects with a BoxMapping (by default the material is applied 'by layer' and has to be defined in the layer the objects are baked to).",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": false,
         "iconDisplay": 0,
         "inputParameters": [
-             
+            {
+                "name": "Assembly",
+                "description": "Assembly object (optional).",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },              
             {
                 "name": "Beam",
-                "description": "A (list of) Beam object(s).",
+                "description": "Beam object(s) (optional).",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },           
             {
                 "name": "MapSize",
-                "description": "Scaling of the UVMap in x,y,z directions (List of three positive values).",
+                "description": "Scaling of the BoxMap in x,y,z directions (list of three positive values) (optional).",
                 "typeHintID": "float",
                 "scriptParamAccess": 1
             },
