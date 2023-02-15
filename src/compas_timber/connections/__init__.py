@@ -33,6 +33,7 @@ from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
 from .solver import JointTopology
 from .solver import ConnectionSolver
+from .solver import find_neighboring_beams
 
 
 __all__ = [
@@ -44,4 +45,5 @@ __all__ = [
     "LMiterJoint",
     "JointTopology",
     "ConnectionSolver",
+    "find_neighboring_beams",
 ]
