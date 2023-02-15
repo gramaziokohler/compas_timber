@@ -24,7 +24,7 @@ class LMiterDefinition(component):
             self.AddRuntimeMessage(Error, "Number of items in MainBeam and CrossBeam must match!")
             return
 
-        JointDefs = []
+        Joint = []
         for main, cross in zip(MainBeam, CrossBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, cross)
             if topology != TButtJoint.SUPPORTED_TOPOLOGY:
@@ -35,5 +35,5 @@ class LMiterDefinition(component):
                     ),
                 )
                 continue
-            JointDefs.append(JointDefinition(TButtJoint, [main, cross]))
-        return JointDefs
+            Joint.append(JointDefinition(TButtJoint, [main, cross]))
+        return Joint

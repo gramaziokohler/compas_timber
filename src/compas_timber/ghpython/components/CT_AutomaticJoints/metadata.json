@@ -30,7 +30,7 @@
         ],
         "outputParameters": [
             {
-                "name": "JointDefs",
+                "name": "Joints",
                 "description": "List of JointDefinitions"
             },
             {

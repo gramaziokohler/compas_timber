@@ -20,9 +20,9 @@ class TrimmingFeature(component):
         if not isinstance(Plane, list):
             Plane = [Plane]
 
-        FeatureDef = []
+        Feature = []
         for plane in Plane:
             feature = BeamTrimmingFeature(plane_to_compas_frame(plane))
-            FeatureDef.append(FeatureDefinition(feature, Beam))
+            Feature.append(FeatureDefinition(feature, Beam))
 
-        return FeatureDef
+        return Feature

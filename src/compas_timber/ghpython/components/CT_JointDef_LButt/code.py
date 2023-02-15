@@ -23,7 +23,7 @@ class LButtDefinition(component):
             self.AddRuntimeMessage(Error, "Number of items in MainBeams and CrossBeams must match!")
             return
 
-        JointDef = []
+        Joint = []
         for main, cross in zip(MainBeam, CrossBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, cross)
             if topology != LButtJoint.SUPPORTED_TOPOLOGY:
@@ -34,5 +34,5 @@ class LButtDefinition(component):
                     ),
                 )
                 continue
-            JointDef.append(JointDefinition(LButtJoint, [main, cross]))
-        return JointDef
+            Joint.append(JointDefinition(LButtJoint, [main, cross]))
+        return Joint

@@ -21,7 +21,7 @@ class AutotomaticJoints(component):
 
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
-        JointDefs = []
+        Joints = []
         Info = []
         # rules have to be resolved into joint definitions
         for pair in found_pairs:
@@ -42,7 +42,7 @@ class AutotomaticJoints(component):
                     continue
                 # sort by category to allow beam role by order (main beam first, cross beam second)
                 beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                JointDefs.append(JointDefinition(rule.joint_type, [beam_a, beam_b]))
+                Joints.append(JointDefinition(rule.joint_type, [beam_a, beam_b]))
                 break  # first matching rule
 
-        return JointDefs, Info
+        return Joints, Info

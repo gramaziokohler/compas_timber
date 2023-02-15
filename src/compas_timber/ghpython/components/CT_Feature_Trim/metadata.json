@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "FeatureDef",
+                "name": "Feature",
                 "description": "List of feature definitions"
             }
         ]

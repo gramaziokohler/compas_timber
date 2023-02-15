@@ -24,7 +24,7 @@ class LMiterDefinition(component):
             self.AddRuntimeMessage(Error, "Number of items in BeamA and BeamB must match!")
             return
 
-        JointDef = []
+        Joint = []
         for beam_a, beam_b in zip(BeamA, BeamB):
             topology, _, _ = ConnectionSolver().find_topology(beam_a, beam_b)
             if topology != LMiterJoint.SUPPORTED_TOPOLOGY:
@@ -35,5 +35,5 @@ class LMiterDefinition(component):
                     ),
                 )
                 continue
-            JointDef.append(JointDefinition(LMiterJoint, [beam_a, beam_b]))
-        return JointDef
+            Joint.append(JointDefinition(LMiterJoint, [beam_a, beam_b]))
+        return Joint
