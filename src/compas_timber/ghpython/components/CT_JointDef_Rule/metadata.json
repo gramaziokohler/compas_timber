@@ -1,9 +1,9 @@
 {
     "name": "JointCategoryRule",
-    "nickname": "JointRule",
+    "nickname": "JointCategoryRule",
     "category": "COMPAS Timber",
     "subcategory": "Joints",
-    "description": "Defines a rule for a default joint type based on 'Category' attribute of the beams.",
+    "description": "Defines which Joint type will be applied in the Automatic Joints component for connecting Beams with the given Category attributes.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -11,13 +11,13 @@
         "inputParameters": [
             {
                 "name": "JointType",
-                "description": "Default joint type.",
+                "description": "Joint type.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             },
             {
                 "name": "CatA",
-                "description": "Categeory of the first Beam",
+                "description": "Categeory of the first Beam.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             },
