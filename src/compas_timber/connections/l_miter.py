@@ -13,7 +13,7 @@ from .solver import JointTopology
 
 
 class LMiterJoint(Joint):
-    SUPPORTED_TOPOLOGY = JointTopology.L
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     def __init__(self, assembly, beam_a, beam_b, cutoff=None):
         super(LMiterJoint, self).__init__(assembly, [beam_a, beam_b])

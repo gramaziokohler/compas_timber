@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Integrated RTree search for neighboring beams using Rhino and CPython plugins.
+
 ### Changed
 
 ### Removed

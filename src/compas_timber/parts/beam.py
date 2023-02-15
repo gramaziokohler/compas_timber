@@ -107,9 +107,6 @@ class Beam(Part):
             self.frame,
         )
 
-    def __hash__(self):
-        return self.sha256()
-
     def update_beam_geometry(self):
         self._geometry_with_features = self._create_beam_shape_from_params(
             self.length, self.width, self.height, self.geometry_type

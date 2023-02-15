@@ -24,7 +24,7 @@ class ShowJointTypes(component):
             self.txt.append(joint.joint_type)
 
     def DrawViewportWires(self, arg):
-        if ghenv.Component.Locked:
+        if self.Locked:
             return
         col = System.Drawing.Color.FromArgb(255, 0, 0, 0)
         # https://developer.rhino3d.com/api/RhinoCommon/html/M_Rhino_Display_DisplayPipeline_Draw2dText_5.htm

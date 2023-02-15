@@ -59,6 +59,29 @@ class CategoryRule(JointRule):
         except KeyError:
             return False
 
+    def reorder(self, beams):
+        """Returns the given beams in a sorted order.
+
+        The beams are sorted according to their category attribute, first the beams with `catergory_a` and second the
+        one with `category_b`.
+        This allows using the category to determine the role of the beams.
+
+        Parameters
+        ----------
+        beams : tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+            A tuple containing two beams to sort.
+
+        Returns
+        -------
+        tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+
+        """
+        beam_a, beam_b = beams
+        if beam_a.attributes["category"] == self.category_a:
+            return beam_a, beam_b
+        else:
+            return beam_b, beam_a
+
 
 class JointDefinition(object):
     """Container for a joint type and the beam that shall be joined.
