@@ -4,7 +4,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 
 class ShowAssembly(component):
-    def RunScript(self, Assembly, showFeatures):
+    def RunScript(self, Assembly):
         if not Assembly:
             self.AddRuntimeMessage(Warning, "Input parameter Assembly failed to collect data")
             return
@@ -13,9 +13,6 @@ class ShowAssembly(component):
         Geometry = []
         Errors = []
         for beam in Assembly.beams:
-            if showFeatures:
-                Errors.extend(beam.apply_features())
-            brep = beam.get_geometry(showFeatures)
-            Geometry.append(Artist(brep).draw())
+            Geometry.append(Artist(beam.get_geometry(True)).draw())
 
-        return Geometry, Errors
+        return Geometry
