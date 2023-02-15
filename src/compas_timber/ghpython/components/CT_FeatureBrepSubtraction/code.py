@@ -7,22 +7,22 @@ from compas_timber.parts import BeamBooleanSubtraction
 
 
 class BrepSubtractionFeature(component):
-    def RunScript(self, Beams, Breps):
-        if not Beams:
+    def RunScript(self, Beam, Geometry):
+        if not Beam:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-        if not Breps:
-            self.AddRuntimeMessage(Warning, "Input parameter Breps failed to collect data")
-        if not (Beams and Breps):
+        if not Geometry:
+            self.AddRuntimeMessage(Warning, "Input parameter Geometry failed to collect data")
+        if not (Beam and Geometry):
             return
 
-        if not isinstance(Beams, list):
-            Beams = [Beams]
-        if not isinstance(Breps, list):
-            Breps = [Breps]
+        if not isinstance(Beam, list):
+            Beam = [Beam]
+        if not isinstance(Geometry, list):
+            Geometry = [Geometry]
 
         FeatureDefs = []
-        for brep in Breps:
+        for brep in Geometry:
             feature = BeamBooleanSubtraction(Brep.from_native(brep))
-            FeatureDefs.append(FeatureDefinition(feature, Beams))
+            FeatureDefs.append(FeatureDefinition(feature, Beam))
 
         return FeatureDefs

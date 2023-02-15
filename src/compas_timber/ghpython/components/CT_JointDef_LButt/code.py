@@ -8,23 +8,23 @@ from compas_timber.ghpython import JointDefinition
 
 
 class LButtDefinition(component):
-    def RunScript(self, MainBeams, CrossBeams):
-        if not MainBeams:
+    def RunScript(self, MainBeam, CrossBeam):
+        if not MainBeam:
             self.AddRuntimeMessage(Warning, "Input parameter MainBeams failed to collect data.")
-        if not CrossBeams:
+        if not CrossBeam:
             self.AddRuntimeMessage(Warning, "Input parameter CrossBeams failed to collect data.")
-        if not (MainBeams and CrossBeams):
+        if not (MainBeam and CrossBeam):
             return
-        if not isinstance(MainBeams, list):
-            MainBeams = [MainBeams]
-        if not isinstance(CrossBeams, list):
-            CrossBeams = [CrossBeams]
-        if len(MainBeams) != len(CrossBeams):
+        if not isinstance(MainBeam, list):
+            MainBeam = [MainBeam]
+        if not isinstance(CrossBeam, list):
+            CrossBeam = [CrossBeam]
+        if len(MainBeam) != len(CrossBeam):
             self.AddRuntimeMessage(Error, "Number of items in MainBeams and CrossBeams must match!")
             return
 
         JointDefs = []
-        for main, cross in zip(MainBeams, CrossBeams):
+        for main, cross in zip(MainBeam, CrossBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, cross)
             if topology != LButtJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
@@ -34,5 +34,5 @@ class LButtDefinition(component):
                     ),
                 )
                 continue
-            JointDefs.append(JointDefinition(LButtJoint, [MainBeams, CrossBeams]))
+            JointDefs.append(JointDefinition(LButtJoint, [MainBeam, CrossBeam]))
         return JointDefs

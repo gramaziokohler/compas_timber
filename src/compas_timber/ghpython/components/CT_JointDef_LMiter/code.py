@@ -1,23 +1,39 @@
-# flake8: noqa
-import Grasshopper.Kernel as ghk
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.utils.workflow import JointDefinition
-
-w = ghk.GH_RuntimeMessageLevel.Warning
-e = ghk.GH_RuntimeMessageLevel.Error
-
-if not B1:
-    ghenv.Component.AddRuntimeMessage(w, "Input parameter B1 failed to collect data")
-if not B2:
-    ghenv.Component.AddRuntimeMessage(w, "Input parameter B2 failed to collect data")
-if (B1 and B2) and (len(B1) != len(B2)):
-    ghenv.Component.AddRuntimeMessage(e, " I need an equal number of Beams in B1 and B2")
+from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import LMiterJoint
+from compas_timber.connections import JointTopology
+from compas_timber.ghpython import JointDefinition
 
 
-else:
-    LMiter = []
-    for beam1, beam2 in zip(B1, B2):
-        if beam1 and beam2:
-            LMiter.append(JointDefinition("L-Miter", (beam1, beam2)))
-        else:
-            ghenv.Component.AddRuntimeMessage(w, "Some of the inputs are Null")
+class LMiterDefinition(component):
+    def RunScript(self, BeamA, BeamB):
+        if not BeamA:
+            self.AddRuntimeMessage(Warning, "Input parameter BeamA failed to collect data.")
+        if not BeamB:
+            self.AddRuntimeMessage(Warning, "Input parameter BeamB failed to collect data.")
+        if not (BeamA and BeamB):
+            return
+        if not isinstance(BeamA, list):
+            BeamA = [BeamA]
+        if not isinstance(BeamB, list):
+            BeamB = [BeamB]
+        if len(BeamA) != len(BeamB):
+            self.AddRuntimeMessage(Error, "Number of items in BeamA and BeamB must match!")
+            return
+
+        JointDefs = []
+        for main, cross in zip(BeamA, BeamB):
+            topology, _, _ = ConnectionSolver().find_topology(main, cross)
+            if topology != LMiterJoint.SUPPORTED_TOPOLOGY:
+                self.AddRuntimeMessage(
+                    Warning,
+                    "Beams meet with topology: {} which does not agree with joint of type: {}".format(
+                        JointTopology.get_name(topology), LMiterJoint.__name__
+                    ),
+                )
+                continue
+            JointDefs.append(JointDefinition(LMiterJoint, [BeamA, BeamB]))
+        return JointDefs
