@@ -1,6 +1,6 @@
+from compas.plugins import plugin
 from rtree.index import Index
 from rtree.index import Property
-from compas.plugins import plugin
 
 
 @plugin(category="solvers", requires=["rtree"])

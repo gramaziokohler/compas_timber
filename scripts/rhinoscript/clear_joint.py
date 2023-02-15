@@ -9,12 +9,8 @@ if "manual_joints" in sc.sticky.keys():
         print("No joints defined yet.")
     else:
         print("Clear joint type")
-        beamA = rs.GetObject(
-            "Select the centreline of the first beam...", 4, False, False
-        )
-        beamB = rs.GetObject(
-            "Select the centreline of the second beam...", 4, False, False
-        )
+        beamA = rs.GetObject("Select the centreline of the first beam...", 4, False, False)
+        beamB = rs.GetObject("Select the centreline of the second beam...", 4, False, False)
 
         for item in sc.sticky["manual_joints"][:]:
             a, b, t = item

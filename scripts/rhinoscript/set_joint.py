@@ -11,10 +11,7 @@ if "manual_joints" not in sc.sticky.keys():
 tol = 1e-6
 
 
-def detect_connection_topology(
-    centrelineA_guid, centrelineB_guid, max_distance=0.0, tol=tol
-):
-
+def detect_connection_topology(centrelineA_guid, centrelineB_guid, max_distance=0.0, tol=tol):
     centrelineA = rs.coerceline(centrelineA_guid)
     centrelineB = rs.coerceline(centrelineB_guid)
 
@@ -27,9 +24,7 @@ def detect_connection_topology(
 
     result = ()
 
-    tA, tB = intersection_line_line_3D(
-        centrelineA, centrelineB, max_distance, True, True, tol
-    )
+    tA, tB = intersection_line_line_3D(centrelineA, centrelineB, max_distance, True, True, tol)
 
     if tA == None or tB == None:
         return None
@@ -53,9 +48,7 @@ def detect_connection_topology(
     return result
 
 
-def cmd_string_options(
-    message="Choose:", oplist=["Option1", "Option2"], default_index=0
-):
+def cmd_string_options(message="Choose:", oplist=["Option1", "Option2"], default_index=0):
     """
     message: [str] prompt to the user
     oplist: [str] list of options to display
@@ -108,36 +101,25 @@ def set_T_mortisetenon_joint(mainbeam, otherbeam):
 
 
 if __name__ == "__main__":
-
     # object filters https://developer.rhino3d.com/api/rhinoscript/selection_methods/getobject.htm
     print("Set the joint type...")
-    LineA_guid = rs.GetObject(
-        "Select the centreline of the first beam...", 4, False, False
-    )
-    LineB_guid = rs.GetObject(
-        "Select the centreline of the second beam...", 4, False, False
-    )
+    LineA_guid = rs.GetObject("Select the centreline of the first beam...", 4, False, False)
+    LineB_guid = rs.GetObject("Select the centreline of the second beam...", 4, False, False)
 
     rs.SelectObjects([LineA_guid, LineB_guid])
 
-    max_distance = rs.GetReal(
-        "Maximum allowed distance between lines...", 1e-3, 0, None
-    )
+    max_distance = rs.GetReal("Maximum allowed distance between lines...", 1e-3, 0, None)
     if not max_distance:
         max_distance = tol
     connecting = detect_connection_topology(LineA_guid, LineB_guid, max_distance)
     if not connecting:
-        print(
-            "These centreline do not intersect... aborting! (Try increasing the max_distance next time)"
-        )
+        print("These centreline do not intersect... aborting! (Try increasing the max_distance next time)")
     else:
         joint_topo, [mainbeam, otherbeam], [tA, tB] = connecting
         print("This is a %s type of joint." % joint_topo)
 
         if joint_topo == "T":
-            joint_type = cmd_string_options(
-                "Select joint type:..", ["Butt", "Lap", "Mortise-Tenon"], 0
-            )
+            joint_type = cmd_string_options("Select joint type:..", ["Butt", "Lap", "Mortise-Tenon"], 0)
             if joint_type == "Butt":
                 set_T_butt_joint(mainbeam, otherbeam)
             if joint_type == "Lap":
@@ -145,13 +127,9 @@ if __name__ == "__main__":
             if joint_type == "Mortise-Tenon":
                 set_T_mortisetenon_joint(mainbeam, otherbeam)
         elif joint_topo == "L":
-            joint_type = cmd_string_options(
-                "Select joint type:...", ["Butt", "Lap", "Miter", "Bridle"], 0
-            )
+            joint_type = cmd_string_options("Select joint type:...", ["Butt", "Lap", "Miter", "Bridle"], 0)
         elif joint_topo == "X":
-            joint_type = cmd_string_options(
-                "Select joint type:...", ["Lap", "Smth else"], 0
-            )
+            joint_type = cmd_string_options("Select joint type:...", ["Lap", "Smth else"], 0)
         elif joint_topo == "I":
             joint_type = None
 

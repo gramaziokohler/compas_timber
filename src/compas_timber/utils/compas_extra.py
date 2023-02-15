@@ -1,11 +1,15 @@
+from math import fabs
+
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import add_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
-from compas.geometry import subtract_vectors
-from compas.geometry import length_vector, add_vectors, scale_vector, dot_vectors
-from math import fabs
+from compas.geometry import dot_vectors
+from compas.geometry import length_vector
 from compas.geometry import normalize_vector
+from compas.geometry import scale_vector
+from compas.geometry import subtract_vectors
 
 
 def intersection_line_line_3D(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):

@@ -1,11 +1,11 @@
 import copy
 
 import pytest
+from compas.datastructures import Mesh
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import close
-from compas.datastructures import Mesh
 
 from compas_timber.parts.beam import Beam
 
