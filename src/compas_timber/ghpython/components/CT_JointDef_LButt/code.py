@@ -34,5 +34,5 @@ class LButtDefinition(component):
                     ),
                 )
                 continue
-            JointDef.append(JointDefinition(LButtJoint, [MainBeam, CrossBeam]))
+            JointDef.append(JointDefinition(LButtJoint, [main, cross]))
         return JointDef

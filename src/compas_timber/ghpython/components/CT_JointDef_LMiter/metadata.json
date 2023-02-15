@@ -6,7 +6,7 @@
     "description": "Defines an L-Miter joint for the given two Beams (order doesn't matter).",
     "exposure": 4,
     "ghpython": {
-        "isAdvancedMode": false,
+        "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {

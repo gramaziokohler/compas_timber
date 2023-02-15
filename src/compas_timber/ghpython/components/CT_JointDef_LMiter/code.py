@@ -25,8 +25,8 @@ class LMiterDefinition(component):
             return
 
         JointDef = []
-        for main, cross in zip(BeamA, BeamB):
-            topology, _, _ = ConnectionSolver().find_topology(main, cross)
+        for beam_a, beam_b in zip(BeamA, BeamB):
+            topology, _, _ = ConnectionSolver().find_topology(beam_a, beam_b)
             if topology != LMiterJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
                     Warning,
@@ -35,5 +35,5 @@ class LMiterDefinition(component):
                     ),
                 )
                 continue
-            JointDef.append(JointDefinition(LMiterJoint, [BeamA, BeamB]))
+            JointDef.append(JointDefinition(LMiterJoint, [beam_a, beam_b]))
         return JointDef

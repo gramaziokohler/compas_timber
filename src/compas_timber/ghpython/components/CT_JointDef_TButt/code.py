@@ -35,5 +35,5 @@ class LMiterDefinition(component):
                     ),
                 )
                 continue
-            JointDefs.append(JointDefinition(TButtJoint, [MainBeam, CrossBeam]))
+            JointDefs.append(JointDefinition(TButtJoint, [main, cross]))
         return JointDefs
