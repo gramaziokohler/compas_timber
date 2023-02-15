@@ -20,9 +20,9 @@ class BrepSubtractionFeature(component):
         if not isinstance(Geometry, list):
             Geometry = [Geometry]
 
-        FeatureDefs = []
+        FeatureDef = []
         for brep in Geometry:
             feature = BeamBooleanSubtraction(Brep.from_native(brep))
-            FeatureDefs.append(FeatureDefinition(feature, Beam))
+            FeatureDef.append(FeatureDefinition(feature, Beam))
 
-        return FeatureDefs
+        return FeatureDef

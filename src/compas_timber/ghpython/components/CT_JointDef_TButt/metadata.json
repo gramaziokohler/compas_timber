@@ -10,13 +10,13 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "MainBeams",
+                "name": "MainBeam",
                 "description": "First (main) Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             },
             {
-                "name": "CrossBeams",
+                "name": "MainBeam",
                 "description": "Second (cross) Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0

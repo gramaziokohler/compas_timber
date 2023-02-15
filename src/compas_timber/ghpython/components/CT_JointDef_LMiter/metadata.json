@@ -8,15 +8,15 @@
     "ghpython": {
         "isAdvancedMode": false,
         "iconDisplay": 0,
-        "inputParameters": [   
+        "inputParameters": [
             {
-                "name": "B1",
+                "name": "BeamA",
                 "description": "First Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
-            },           
+            },
             {
-                "name": "B2",
+                "name": "BeamB",
                 "description": "Second Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "LMiter",
+                "name": "JointDef",
                 "description": "L-Miter JointDefinition."
             }
         ]
