@@ -1,8 +1,8 @@
 import os
 from copy import deepcopy
 
-import pytest
 import compas
+import pytest
 from compas.data import json_load
 from compas.geometry import Frame
 from compas.geometry import Point

@@ -2,8 +2,8 @@
     "name": "FindBeamByRhinoGuid",
     "nickname": "FindBeamByRhinoGuid",
     "category": "COMPAS Timber",
-    "subcategory": "Utils",
-    "description": "Find a part in a Collection of parts, that corresponds with the given referenced object.",
+    "subcategory": "Beams",
+    "description": "Finds a Beam that was created with the given referenced curve or line.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -12,7 +12,7 @@
 
             {
                 "name": "Beams",
-                "description": "A Collection of Beams.",
+                "description": "A list of Beams.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },

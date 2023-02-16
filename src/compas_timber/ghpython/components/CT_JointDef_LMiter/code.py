@@ -3,8 +3,8 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import LMiterJoint
 from compas_timber.connections import JointTopology
+from compas_timber.connections import LMiterJoint
 from compas_timber.ghpython import JointDefinition
 
 

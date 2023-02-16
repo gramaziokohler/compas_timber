@@ -10,7 +10,7 @@ from compas_timber.parts.beam import Beam as ctBeam
 
 
 class Beam_fromCurveGuid(component):
-    def RunScript(self, RefCenterline, ZVector, Width, Height, Category, Group, updateRefObj):
+    def RunScript(self, RefCenterline, ZVector, Width, Height, Category, updateRefObj):
         if not RefCenterline:
             self.AddRuntimeMessage(Warning, "Input parameter RefCenterline failed to collect data")
         if not Width:
@@ -24,7 +24,6 @@ class Beam_fromCurveGuid(component):
 
         ZVector = ZVector or [None]
         Category = Category or [None]
-        Group = Group or [None]
 
         if RefCenterline and Height and Height:
             # check list lengths for consistency
@@ -48,11 +47,6 @@ class Beam_fromCurveGuid(component):
                     " In 'Category' I need either none, one or the same number of inputs as the refCrv parameter.",
                 )
 
-            if len(Group) not in (0, 1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'Group' I need either none, one or the same number of inputs as the refCrv parameter."
-                )
-
         # match number of elemets to number of curves
         if len(ZVector) != N:
             ZVector = [ZVector[0]] * N
@@ -62,11 +56,9 @@ class Beam_fromCurveGuid(component):
             Height = [Height[0]] * N
         if len(Category) != N:
             Category = [Category[0]] * N
-        if len(Group) != N:
-            Group = [Group[0]] * N
 
         beams = []
-        for guid, z, w, h, c, g in zip(RefCenterline, ZVector, Width, Height, Category, Group):
+        for guid, z, w, h, c, g in zip(RefCenterline, ZVector, Width, Height, Category):
             curve = RhinoCurve.from_object(Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid))
             line = curve.to_compas_line()
             if z:
@@ -74,7 +66,6 @@ class Beam_fromCurveGuid(component):
             beam = ctBeam.from_centerline(line, w, h, z_vector=z)
             beam.attributes["rhino_guid"] = str(guid)
             beam.attributes["category"] = c
-            beam.attributes["group"] = g
 
             if updateRefObj:
                 update_rhobj_attributes_name(guid, "width", str(w))

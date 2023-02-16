@@ -27,13 +27,24 @@
                 "description": "Collection of feature definitions.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "applyFeatures",
+                "description": "If True, Joints and Features will be applied. Nothing happens if None or False.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
                 "name": "Assembly",
                 "description": "Assembly object."
+            },
+            {
+                "name": "Errors",
+                "description": "Error log of the feature application process."
             }
+
         ]
     }
 }

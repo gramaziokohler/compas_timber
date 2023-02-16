@@ -3,7 +3,7 @@
     "nickname": "ShowAssembly",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Shows the assembly geometry, with or without features",
+    "description": "Retrieves Geometry of the Beams in an Assembly.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -11,14 +11,8 @@
         "inputParameters": [
             {
                 "name": "Assembly",
-                "description": "Assembly to show",
+                "description": "Assembly object.",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "showFeatures",
-                "description": "True shows the beams geometry with features applied.",
-                "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
 
@@ -26,11 +20,7 @@
         "outputParameters": [
             {
                 "name": "Geometry",
-                "description": "Brep geometry of the Beams"
-            },
-            {
-                "name": "Errors",
-                "description": "Error log of the feature application process."
+                "description": "Brep Geometry of the Beams."
             }
         ]
     }

@@ -2,9 +2,9 @@
     "name": "BeamFromCurveGuid",
     "nickname": "BeamFromGuid",
     "category": "COMPAS Timber",
-    "subcategory": "Parts",
+    "subcategory": "Beams",
     "description": "Creates a Beam from a referenced Line or LineCurve.",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
@@ -36,12 +36,6 @@
             {
                 "name": "Category",
                 "description": "(optional) Category of a beam.",
-                "typeHintID": "str",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "Group",
-                "description": "(optional) Name of a group or subassembly.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             },

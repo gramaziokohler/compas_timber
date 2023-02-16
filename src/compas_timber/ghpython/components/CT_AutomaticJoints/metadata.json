@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Joints",
     "description": "Finds joints between Beams based on the incidence of their centerlines and matching predefined rules.",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
@@ -23,7 +23,7 @@
             },
             {
                 "name": "MaxDistance",
-                "description": "(optional) Maximum distance between centerlines of two Beams (limited to segments) to consider the Beams as connecting. Optional (if omitted, a default value equal to the average beam height will be taken.)",
+                "description": "(optional) Maximum distance between centerlines of two Beams (limited to segments) to consider the Beams as connecting. Optional (if omitted, a default value equal to the average beam height will be taken).",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             }
@@ -31,7 +31,7 @@
         "outputParameters": [
             {
                 "name": "Joints",
-                "description": "List of JointDefinitions"
+                "description": "List of JointDefinitions."
             },
             {
                 "name": "Info",

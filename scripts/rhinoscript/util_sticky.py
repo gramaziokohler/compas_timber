@@ -8,7 +8,6 @@ keys.sort()
 if keys == []:
     print("The sticky is empty.")
 else:
-
     g0 = Rhino.Input.Custom.GetOption()
     g0.SetCommandPrompt("Select option:..")
     for func in ["Show", "Clear", "ShowAll", "ClearAll"]:
@@ -36,7 +35,6 @@ else:
             if result == Rhino.Input.GetResult.Cancel:
                 pass
             else:
-
                 selected_key = g1.Option().EnglishName
                 print("[%s]: %s" % (selected_key, sc.sticky[selected_key]))
             break

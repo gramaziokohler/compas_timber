@@ -3,7 +3,7 @@
     "nickname": "ShowBeamShape",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Shows the original shape of the Beam (brep).",
+    "description": "Shows the original shape of the Beam.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": false,
@@ -19,7 +19,7 @@
         "outputParameters": [
             {
                 "name": "Brep",
-                "description": "Brep geometry of the Beam (uncut)"
+                "description": "Brep geometry of the Beam (without Joints and Features)."
             }
         ]
     }

@@ -3,7 +3,7 @@
     "nickname": "ShowBeamFrame",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Shows the XYZ axes of the Beam's frame.",
+    "description": "Shows the XYZ axes of the Beam's local coordinate system.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,

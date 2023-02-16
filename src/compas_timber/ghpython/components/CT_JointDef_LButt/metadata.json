@@ -3,7 +3,7 @@
     "nickname": "JointDef: L-Butt",
     "category": "COMPAS Timber",
     "subcategory": "Joints",
-    "description": "Defines an L-Butt joint for the given two Beams. The order matters: the first beam will be trimmed with the side of the second beam.",
+    "description": "Defines an L-Butt Joint for the given two Beams. The order matters: the MainBeam will be trimmed with the side of the CrossBeam.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
