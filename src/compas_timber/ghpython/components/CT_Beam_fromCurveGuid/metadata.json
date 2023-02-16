@@ -40,12 +40,6 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "Group",
-                "description": "(optional) Name of a group or subassembly.",
-                "typeHintID": "str",
-                "scriptParamAccess": 1
-            },
-            {
                 "name": "updateRefObj",
                 "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
                 "typeHintID": "bool",
