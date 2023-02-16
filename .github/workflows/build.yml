@@ -56,6 +56,20 @@ jobs:
     - name: Run unittests
       run: |
         invoke test
+    - name: Componentize
+      uses: compas-dev/compas-actions.ghpython_components@v2
+      with:
+        source: src/compas_timber/ghpython/components
+        target: src/compas_timber/ghpython/components/ghuser
+        prefix: "(COMPAS_TIMBER)"
+    - name: Build
+      run: |
+        python setup.py clean --all sdist bdist_wheel
+    - uses: actions/upload-artifact@v2
+        with:
+          name: compas_timber_wheel
+          path: dist/
+
   build-ironpython:
     name: windows-ironpython
     runs-on: windows-latest
