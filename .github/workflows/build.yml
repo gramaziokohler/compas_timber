@@ -89,6 +89,7 @@ jobs:
 
       - name: Install dependecies
         run: |
+          pip install wheel
           choco install ironpython --version=2.7.8.1
       - name: Componentize
         uses: compas-dev/compas-actions.ghpython_components@v2
