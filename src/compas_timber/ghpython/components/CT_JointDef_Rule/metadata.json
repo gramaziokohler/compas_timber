@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Joints",
     "description": "Defines which Joint type will be applied in the Automatic Joints component for connecting Beams with the given Category attributes.",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

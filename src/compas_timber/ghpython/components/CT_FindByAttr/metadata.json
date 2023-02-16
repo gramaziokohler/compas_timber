@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Utils",
     "description": "Finds Beam(s) that has the given Attribute.",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": false,
         "iconDisplay": 0,

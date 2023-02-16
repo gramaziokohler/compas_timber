@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Utils",
     "description": "Finds a Beam that was created with the given referenced curve or line.",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
