@@ -47,7 +47,6 @@ class Beam_fromCurveGuid(component):
                     " In 'Category' I need either none, one or the same number of inputs as the refCrv parameter.",
                 )
 
-
         # match number of elemets to number of curves
         if len(ZVector) != N:
             ZVector = [ZVector[0]] * N
