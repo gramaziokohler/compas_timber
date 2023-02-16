@@ -3,7 +3,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 from compas_timber.assembly import TimberAssembly
 
 
-class XAssembly(component):
+class Assembly(component):
     def __init__(self):
         # maintains relationship of old_beam.id => new_beam_obj for referencing
         # lets us modify copies of the beams while referencing them using their old identities.
