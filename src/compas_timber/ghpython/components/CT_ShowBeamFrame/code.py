@@ -24,3 +24,7 @@ class ShowBeamFrame(component):
             arg.Display.DrawArrow(rg.Line(f.Origin, f.XAxis * s), colorX, screensize, relativesize)
             arg.Display.DrawArrow(rg.Line(f.Origin, f.YAxis * s), colorY, screensize, relativesize)
             arg.Display.DrawArrow(rg.Line(f.Origin, f.ZAxis * s), colorZ, screensize, relativesize)
+
+            arg.Display.Draw2dText("X", colorX, f.Origin + f.XAxis * s * 1.1, True, 16, "Verdana")
+            arg.Display.Draw2dText("Y", colorY, f.Origin + f.YAxis * s * 1.1, True, 16, "Verdana")
+            arg.Display.Draw2dText("Z", colorZ, f.Origin + f.ZAxis * s * 1.1, True, 16, "Verdana")
