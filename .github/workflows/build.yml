@@ -77,6 +77,19 @@ jobs:
           IRONPYTHONPATH: ./src
         run: |
           ipy tests/ipy_test_runner.py
+
+  upload-wheel:
+    name: componentize-upload-wheel
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+          with:
+            python-version: "3.10"
+
+      - name: Install dependecies
+        run: |
+          choco install ironpython --version=2.7.8.1
       - name: Componentize
         uses: compas-dev/compas-actions.ghpython_components@v2
         with:
