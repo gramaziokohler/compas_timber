@@ -66,9 +66,9 @@ jobs:
       run: |
         python setup.py clean --all sdist bdist_wheel
     - uses: actions/upload-artifact@v2
-        with:
-          name: compas_timber_wheel
-          path: dist/
+      with:
+        name: compas_timber_wheel
+        path: dist/
 
   build-ironpython:
     name: windows-ironpython
