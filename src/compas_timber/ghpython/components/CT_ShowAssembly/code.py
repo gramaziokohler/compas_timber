@@ -11,7 +11,6 @@ class ShowAssembly(component):
         Assembly = Assembly.copy()  # we're gonna be making changes to upstream objects
 
         Geometry = []
-        Errors = []
         for beam in Assembly.beams:
             Geometry.append(Artist(beam.get_geometry(True)).draw())
 
