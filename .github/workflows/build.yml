@@ -99,7 +99,7 @@ jobs:
           prefix: "(COMPAS_TIMBER)"
       - name: Copy manual components
         run: |
-          cp src/compas_timber/ghpython/components/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
+          cp src/compas_timber/ghpython/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
       - name: Build
         run: |
           python setup.py clean --all sdist bdist_wheel
