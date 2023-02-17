@@ -58,7 +58,7 @@ class Beam_fromCurveGuid(component):
             Category = [Category[0]] * N
 
         beams = []
-        for guid, z, w, h, c, g in zip(RefCenterline, ZVector, Width, Height, Category):
+        for guid, z, w, h, c in zip(RefCenterline, ZVector, Width, Height, Category):
             curve = RhinoCurve.from_object(Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid))
             line = curve.to_compas_line()
             if z:
