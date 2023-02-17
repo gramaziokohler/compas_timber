@@ -5,13 +5,10 @@ import random
 import Rhino
 import Rhino.Geometry as rg
 import rhinoscriptsyntax as rs
-import scriptcontext as sc
 from compas.artists import Artist
 from compas_rhino.conversions import frame_to_rhino
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-
-from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
 
 def create_box_map(pln, sx, sy, sz):
@@ -70,24 +67,20 @@ if not Beams:
 else:
     _inputok = True
 
-if _inputok and Bake:
-    frames = [frame_to_rhino(b.frame) for b in Beam]
-    breps = [Artist(b.get_geometry(True)).draw() for b in Beam]
+try:
+    if _inputok and Bake:
+        frames = [frame_to_rhino(b.frame) for b in Beam]
+        breps = [Artist(b.get_geometry(True)).draw() for b in Beam]
 
-    if frames and breps:
-        rs.EnableRedraw(False)
-        sc.doc = Rhino.RhinoDoc.ActiveDoc
+        if frames and breps:
+            rs.EnableRedraw(False)
+            rhino_doc = Rhino.RhinoDoc.ActiveDoc
 
-        for brep, frame in zip(breps, frames):
-            attributes = None
-            guid = sc.doc.Objects.Add(brep, attributes)
-            boxmap, map_pln = create_box_map(frame, dimx, dimy, dimz)
-            sc.doc.Objects.ModifyTextureMapping(guid, 1, boxmap)
-
-        sc.doc = ghdoc
-        rs.EnableRedraw(True)
-        rs.Redraw()
-else:
-    sc.doc = ghdoc
+            for brep, frame in zip(breps, frames):
+                attributes = None
+                guid = rhino_doc.Objects.Add(brep, attributes)
+                boxmap, map_pln = create_box_map(frame, dimx, dimy, dimz)
+                rhino_doc.Objects.ModifyTextureMapping(guid, 1, boxmap)
+finally:
     rs.EnableRedraw(True)
     rs.Redraw()
