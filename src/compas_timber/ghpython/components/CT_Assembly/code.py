@@ -1,4 +1,5 @@
 from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.assembly import TimberAssembly
 
@@ -17,15 +18,18 @@ class Assembly(component):
         return new_beams
 
     def RunScript(self, Beams, Joints, Features, applyFeatures):
+        if not Beams:
+            self.AddRuntimeMessage(Warning, "Input parameter 'Beams' failed to collect data")
+            return
+
         Assembly = TimberAssembly()
-        if Beams:
-            self._beam_map = {}
-            beams = [b for b in Beams if b is not None]
-            for beam in beams:
-                c_beam = beam.copy()
-                Assembly.add_beam(c_beam)
-                self._beam_map[id(beam)] = c_beam
-            beams = Assembly.beams
+        self._beam_map = {}
+        beams = [b for b in Beams if b is not None]
+        for beam in beams:
+            c_beam = beam.copy()
+            Assembly.add_beam(c_beam)
+            self._beam_map[id(beam)] = c_beam
+        beams = Assembly.beams
 
         if Joints:
             handled_beams = []
