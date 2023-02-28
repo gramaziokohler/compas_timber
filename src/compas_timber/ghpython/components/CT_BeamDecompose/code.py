@@ -16,7 +16,6 @@ class BeamDecompose(component):
         Frame = []
         Centerline = []
         Box = []
-        Brep = []
         Width = []
         Height = []
         if list_input_valid(self, Beam, "Beam"):
