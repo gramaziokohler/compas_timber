@@ -1,9 +1,9 @@
 {
-    "name": "ShowAssembly",
-    "nickname": "ShowAssembly",
+    "name": "AssemblyExtractBeams",
+    "nickname": "AssemblyBeams",
     "category": "COMPAS Timber",
-    "subcategory": "Show",
-    "description": "Retrieves Geometry of the Beams in an Assembly.",
+    "subcategory": "Assembly",
+    "description": "Retrieves Beams from an Assembly.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -19,8 +19,8 @@
         ],
         "outputParameters": [
             {
-                "name": "Geometry",
-                "description": "Brep Geometry of the Beams."
+                "name": "Beams",
+                "description": "List the Beams."
             }
         ]
     }
