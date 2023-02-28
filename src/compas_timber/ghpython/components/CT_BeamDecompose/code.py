@@ -23,8 +23,7 @@ class BeamDecompose(component):
             Frame = [frame_to_rhino(b.frame) for b in Beam]
             Centerline = [line_to_rhino_curve(b.centerline) for b in Beam]
             Box = [box_to_rhino(b.shape) for b in Beam]
-            Brep = [b.get_geometry(True).native_brep for b in Beam]
             Width = [b.width for b in Beam]
             Height = [b.height for b in Beam]
 
-        return (Frame, Centerline, Box, Brep, Width, Height)
+        return (Frame, Centerline, Box, Width, Height)

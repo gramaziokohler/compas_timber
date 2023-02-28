@@ -19,8 +19,8 @@
         ],
         "outputParameters": [
             {
-                "name": "Geometry",
-                "description": "Brep Geometry of the Beams."
+                "name": "Brep",
+                "description": "Brep geometry of the Beams."
             }
         ]
     }
