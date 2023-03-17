@@ -27,11 +27,7 @@
             },
             {
                 "name": "Box",
-                "description": "Box representing the original shape of the Beam (before applying any features)."
-            },
-            {
-                "name": "Brep",
-                "description": "Brep representing the geometry of the Beam with features."
+                "description": "Box representing the original shape of the Beam."
             },
             {
                 "name": "Width",

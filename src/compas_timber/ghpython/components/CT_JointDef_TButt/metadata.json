@@ -16,7 +16,7 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "MainBeam",
+                "name": "CrossBeam",
                 "description": "Second (cross) Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0

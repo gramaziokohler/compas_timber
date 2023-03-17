@@ -10,8 +10,8 @@ class ShowAssembly(component):
             return
         Assembly = Assembly.copy()  # we're gonna be making changes to upstream objects
 
-        Geometry = []
+        Brep = []
         for beam in Assembly.beams:
-            Geometry.append(Artist(beam.get_geometry(True)).draw())
+            Brep.append(Artist(beam.get_geometry(True)).draw())
 
-        return Geometry
+        return Brep

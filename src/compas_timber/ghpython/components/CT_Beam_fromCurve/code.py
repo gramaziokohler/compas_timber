@@ -10,7 +10,7 @@ from compas_timber.parts.beam import Beam as ctBeam
 
 
 class Beam_fromCurve(component):
-    def RunScript(self, Centerline, ZVector, Width, Height, Category, Group):
+    def RunScript(self, Centerline, ZVector, Width, Height, Category):
         # minimum inputs required
         if not Centerline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")
@@ -24,8 +24,6 @@ class Beam_fromCurve(component):
             ZVector = [None]
         if not Category:
             Category = [None]
-        if not Group:
-            Group = [None]
 
         Beam = []
 
@@ -48,10 +46,6 @@ class Beam_fromCurve(component):
                 self.AddRuntimeMessage(
                     Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
                 )
-            if len(Group) not in (0, 1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'Group' I need either none, one or the same number of inputs as the Crv parameter."
-                )
 
             # duplicate data if None or single value
             if len(ZVector) != N:
@@ -62,10 +56,8 @@ class Beam_fromCurve(component):
                 Height = [Height[0] for _ in range(N)]
             if len(Category) != N:
                 Category = [Category[0] for _ in range(N)]
-            if len(Group) != N:
-                Group = [Group[0] for _ in range(N)]
 
-            for crv, z, w, h, c, g in zip(Centerline, ZVector, Width, Height, Category, Group):
+            for crv, z, w, h, c in zip(Centerline, ZVector, Width, Height, Category):
                 if crv is None or w is None or h is None:
                     self.AddRuntimeMessage(Warning, "Some of the input values are Null")
                 else:
@@ -81,7 +73,6 @@ class Beam_fromCurve(component):
 
                     beam.attributes["rhino_guid"] = None
                     beam.attributes["category"] = c
-                    beam.attributes["group"] = g
 
                     Beam.append(beam)
 
