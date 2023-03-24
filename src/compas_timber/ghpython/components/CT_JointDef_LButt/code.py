@@ -4,6 +4,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import LButtJoint
+from compas_timber.connections import JointTopology
 from compas_timber.ghpython import JointDefinition
 
 
@@ -30,7 +31,7 @@ class LButtDefinition(component):
                 self.AddRuntimeMessage(
                     Warning,
                     "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                        topology, LButtJoint.__name__
+                        JointTopology.get_name(topology), LButtJoint.__name__
                     ),
                 )
                 continue

@@ -33,9 +33,9 @@ class JointTopology(object):
 
     @classmethod
     def get_name(cls, value):
-        """Should be used for debug/logging purposes only!
+        """Returns the string representation of given topology value.
 
-        Returns the string representation of given topology value.
+        For use in logging.
 
         Parameters
         ----------
