@@ -56,7 +56,8 @@ class Beam(Part):
         x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
         y-axis corresponds to the width of the cross-section, usually the smaller dimension.
         z-axis corresponds to the height of the cross-section, usually the larger dimension.
-
+    length : float
+        Length of the beam
     width : float
         Width of the cross-section
     height : float
@@ -64,13 +65,40 @@ class Beam(Part):
 
     Attributes
     ----------
+    frame : :class:`~compas.geometry.Frame`
+        The coordinate system (frame) of this beam.
     length : float
         Length of the beam.
-
-    centreline : :class:`compas.geometry.Line`
-
+    width : float
+        Width of the cross-section
+    height : float
+        Height of the cross-section
+    geometry_type : str
+        The type of geometry created by this beam. Either 'mesh' or 'brep'.
+    tolerance : float
+    shape : :class:`~compas.geometry.Box`
+        A feature-less box representing the parametric geometry of this beam.
+        The default tolerance used in operations performed on this beam.
+    faces : list(:class:`~compas.geometry.Frame`)
+        A list of frames representing the 6 faces of this beam.
+        0: +y (side's frame normal is equal to the beam's Y positive direction)
+        1: +z
+        2: -y
+        3: -z
+        4: -x (side at the starting end)
+        5: +x (side at the end of the beam)
+    centerline : :class:`~compas.geometry.Line`
+        A line representing the centerline of this beam.
+    centerline_start : :class:`~compas.geometry.Point`
+        The point at the start of the centerline of this beam.
+    centerline_end : :class:`~compas.geometry.Point`
+        The point at the end of the centerline of this beam.
     aabb : tuple(float, float, float, float, float, float)
-        an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box.
+        An axis-aligned bounding box of this beam as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
+    long_edges : list(:class:`~compas.geometry.Line`)
+        A list containing the 4 lines along the long axis of this beam.
+    midpoint : :class:`~compas.geometry.Point`
+        The point at the middle of the centerline of this beam.
 
     """
 
@@ -90,6 +118,105 @@ class Beam(Part):
         self.geometry_type = geometry_type
         self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
         self._geometry_with_features = self._geometry.copy()
+
+    @property
+    def data(self):
+        """
+        Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
+        """
+        data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
+        data.update(super(Beam, self).data)
+        return data
+
+    @data.setter
+    def data(self, data):
+        """
+        Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
+        """
+        Part.data.fset(self, data)
+        self.width = data["width"]
+        self.height = data["height"]
+        self.length = data["length"]
+        self.geometry_type = data["geometry_type"]
+
+    @property
+    def tolerance(self):
+        return DEFAULT_TOLERANCE
+
+    @property
+    def shape(self):
+        return _create_box(self.frame, self.length, self.width, self.height)
+
+    @property
+    def faces(self):
+        return [
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
+            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
+            Frame(
+                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
+                self.frame.yaxis,
+                self.frame.zaxis,
+            ),  # small face at end point
+        ]
+
+    @property
+    def centerline(self):
+        return Line(self.centerline_start, self.centerline_end)
+
+    @property
+    def centerline_start(self):
+        return self.frame.point
+
+    @property
+    def centerline_end(self):
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
+
+    @property
+    def aabb(self):
+        vertices = self.shape.vertices
+        x = [p.x for p in vertices]
+        y = [p.y for p in vertices]
+        z = [p.z for p in vertices]
+        return tuple(min(x), min(y), min(z), max(x), max(y), max(z))
+
+    @property
+    def long_edges(self):
+        y = self.frame.yaxis
+        z = self.frame.zaxis
+        w = self.width * 0.5
+        h = self.height * 0.5
+        ps = self.centerline_start
+        pe = self.centerline_end
+
+        return [Line(ps + v, pe + v) for v in (y * w + z * h, -y * w + z * h, -y * w - z * h, y * w - z * h)]
+
+    @property
+    def midpoint(self):
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
+
+    @property
+    def has_features(self):
+        # TODO: move to compas_future... Part
+        return len(self.features) > 0
 
     @staticmethod
     def _create_beam_shape_from_params(width, height, length, geometry_type):
@@ -121,41 +248,6 @@ class Beam(Part):
             and self.frame == other.frame
             # TODO: skip joints and features ?
         )
-
-    @property
-    def tolerance(self):
-        return getattr(self.assembly, "tol", DEFAULT_TOLERANCE)
-
-    @property
-    def data(self):
-        """
-        Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
-        """
-        data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
-        data.update(super(Beam, self).data)
-        return data
-
-    @data.setter
-    def data(self, data):
-        """
-        Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
-        """
-        Part.data.fset(self, data)
-        self.width = data["width"]
-        self.height = data["height"]
-        self.length = data["length"]
-        self.geometry_type = data["geometry_type"]
-
-    @property
-    def shape(self):
-        """Returns a Box made using the parametric properties of this beam.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Box`
-
-        """
-        return _create_box(self.frame, self.length, self.width, self.height)
 
     @classmethod
     def from_data(cls, data):
@@ -230,89 +322,6 @@ class Beam(Part):
         line = Line(point_start, point_end)
 
         return cls.from_centerline(line, width, height, z_vector, geometry_type)
-
-    @property
-    def faces(self):
-        """
-        Side index: sides of the beam's base shape (box) are numbered relative to the beam's coordinate system:
-        0: +y (side's frame normal is equal to the beam's Y positive direction)
-        1: +z
-        2: -y
-        3: -z
-        4: -x (side at the starting end)
-        5: +x (side at the end of the beam)
-        """
-        return [
-            Frame(
-                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
-                self.frame.xaxis,
-                -self.frame.zaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
-                self.frame.xaxis,
-                -self.frame.yaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
-                self.frame.xaxis,
-                self.frame.zaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
-                self.frame.xaxis,
-                self.frame.yaxis,
-            ),
-            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
-            Frame(
-                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
-                self.frame.yaxis,
-                self.frame.zaxis,
-            ),  # small face at end point
-        ]
-
-    @property
-    def centerline(self):
-        return Line(self.centerline_start, self.centerline_end)
-
-    @property
-    def centerline_start(self):
-        return self.frame.point
-
-    @property
-    def centerline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
-
-    @property
-    def aabb(self):
-        """Returns an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box."""
-        vertices = self.shape.vertices
-        x = [p.x for p in vertices]
-        y = [p.y for p in vertices]
-        z = [p.z for p in vertices]
-        return (min(x), min(y), min(z), max(x), max(y), max(z))
-
-    @property
-    def long_edges(self):
-        """Returns a list of lines representing the long edges of the beam's bounding box
-
-        Returns
-        -------
-        list(:class:`~compas.geometry.Line`)
-
-        """
-        y = self.frame.yaxis
-        z = self.frame.zaxis
-        w = self.width * 0.5
-        h = self.height * 0.5
-        ps = self.centerline_start
-        pe = self.centerline_end
-
-        return [Line(ps + v, pe + v) for v in (y * w + z * h, -y * w + z * h, -y * w - z * h, y * w - z * h)]
-
-    @property
-    def midpoint(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         # TODO: revise if needed, compare to ParametricFeature
@@ -391,21 +400,6 @@ class Beam(Part):
         frame = Frame(self.frame.point, self.frame.xaxis, y_vector)
         self.frame = frame
         return
-
-    def _get_joint_keys(self):
-        n = self.assembly.graph.neighbors[self.key]
-        return [
-            k for k in n if self.assembly.node_attribute("type") == "joint"
-        ]  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
-
-    @property
-    def joints(self):
-        return [self.assembly.find_by_key(key) for key in self._get_joint_keys]
-
-    @property
-    def has_features(self):
-        # TODO: move to compas_future... Part
-        return len(self.features) > 0
 
     @staticmethod
     def _calculate_z_vector_from_centerline(centerline_vector):
