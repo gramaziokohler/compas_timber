@@ -4,7 +4,7 @@ COMPAS TIMBER
 
 .. rst-class:: lead
 
-COMPAS package for modeling, designing and fabricating timber assemblies
+COMPAS package for modeling, designing and fabricating timber assemblies.
 
 .. .. figure:: /_images/
      :figclass: figure
@@ -19,11 +19,13 @@ Table of Contents
    :titlesonly:
 
    Introduction <self>
+   installation
    gettingstarted
    tutorials
    api
    examples
    license
+   citing
 
 
 Indices and tables
