@@ -264,9 +264,7 @@ class Beam(Part):
 
     @classmethod
     def from_data(cls, data):
-        """Alternative to None default __init__ parameters.
-
-        """
+        """Alternative to None default __init__ parameters."""
         obj = cls(**data)
         obj.data = data
         return obj
@@ -423,9 +421,7 @@ class Beam(Part):
         return cls.from_centerline(line, width, height, z_vector, geometry_type)
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
-        """Deprecated?
-
-        """
+        """Deprecated?"""
         z = self.frame.zaxis
         ps = self.centerline_start
         pe = self.centerline_end
