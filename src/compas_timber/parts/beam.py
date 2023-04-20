@@ -197,7 +197,7 @@ class Beam(Part):
         x = [p.x for p in vertices]
         y = [p.y for p in vertices]
         z = [p.z for p in vertices]
-        return tuple(min(x), min(y), min(z), max(x), max(y), max(z))
+        return min(x), min(y), min(z), max(x), max(y), max(z)
 
     @property
     def long_edges(self):
