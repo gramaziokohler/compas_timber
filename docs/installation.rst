@@ -4,7 +4,7 @@ Installation
 
 .. rst-class:: lead
 
-    Installation guide.
+    Your options are:
 
     Contents
     ========
