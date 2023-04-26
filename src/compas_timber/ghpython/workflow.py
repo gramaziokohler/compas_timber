@@ -149,40 +149,8 @@ class Attribute:
         return "Attribute %s: %s" % (self.name, self.value)
 
 
-def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=None):
-    if not max_distance:
-        max_distance = beamA.height + beamB.height
-
-    # #check if lines parallel (could be an I-joint)
-    # def lines_parallel(line1, line2):
-    #     a, b = line1
-    #     c, d = line2
-
-    #     ab = subtract_vectors(b, a)
-    #     cd = subtract_vectors(d, c)
-
-    #     n = cross_vectors(ab, cd)
-
-    #     # check if lines are parallel
-    #     if length_vector(n) < tol:
-    #         return True
-    #     else:
-    #         return False
-
-    # def contact_points(lineA,lineB):
-    #     a1,a2 = lineA
-    #     b1,b2 = lineB
-    #     for a in [a1,a2]:
-    #         for b in [b1,b2]:
-    #             if distance_point_point(a,b)<max_distance:
-    #                 return a,b
-    #     return None
-
-    # if lines_parallel(beamA.centerline, beamB.centerline):
-    #     if contact_points(beamA.centerline,beamB.centerline):
-    #         #TODO: add a check if the angle between beams is 0 degrees or 180 degrees.  Return None if 0 degrees.
-    #         #TODO: replace with 'I'
-    #         return ['L',(beamA, beamB)]
+def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=1e-6):
+    #TODO: replace default max_distance ~ zero with global project precision
 
     [pa, ta], [pb, tb] = intersection_line_line_3D(beamA.centerline, beamB.centerline, max_distance, True, tol)
 
