@@ -15,7 +15,7 @@ from compas.plugins import pluggable
 
 @pluggable(category="solvers")
 def find_neighboring_beams(beams, inflate_by=None):
-    """Uses RTree to find neighboring pairs of beams in the given list of beams.
+    """Finds neighboring pairs of beams in the given list of beams.
 
     The returned elements are sets containing pairs of Beam objects.
 
@@ -29,6 +29,10 @@ def find_neighboring_beams(beams, inflate_by=None):
     Returns
     -------
     list(set(:class:`~compas_timber.part.Beam`, :class:`~compas_timber.part.Beam`))
+
+    Notes
+    -----
+    This is a `pluggable`. In order to use this function, a compatible `plugin` has to be available.
 
     """
     raise NotImplementedError
