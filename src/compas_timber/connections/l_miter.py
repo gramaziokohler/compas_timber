@@ -92,7 +92,7 @@ class LMiterJoint(Joint):
         [pxA, tA], [pxB, tB] = intersection_line_line_3D(
             self.beam_a.centerline,
             self.beam_b.centerline,
-            max_distance=self.beam_a.height + self.beam_b.height,
+            max_distance=float("inf"),
             limit_to_segments=False,
         )
         # TODO: add error-trap + solution for I-miter joints
