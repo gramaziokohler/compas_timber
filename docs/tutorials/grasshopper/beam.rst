@@ -10,7 +10,7 @@ The *origin* is located at the start of the centerline.
 .. image:: ../images/beam_01png.png
     :width: 40%
 
-A Beam can be created from a `Line` or `LineCurve`, or from `Guid` of a `Line` object referenced from an active Rhino document:
+A :code:`Beam` can be created from a `Line` or `LineCurve`, or from `Guid` of a `Line` object referenced from an active Rhino document:
 
 
 .. image:: ../images/beam_02.png
@@ -18,7 +18,7 @@ A Beam can be created from a `Line` or `LineCurve`, or from `Guid` of a `Line` o
 
 |
 
-*	`Centerline` : the centerline of the Beam, also called the major axis
+*	`Centerline` : the centerline of the beam, also called the major axis
 * 	`ZVector`: (optional) a vector used to define the rotation of the cross-section around the centerline. 
 	Together with the centerline it indicates the plane in which the Z-axis of the beam lies, 
 	which is to say that :code:`ZVector` does not have to be perpendicular, but cannot be parallel, to the centerline.  

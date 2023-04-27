@@ -65,7 +65,7 @@ If the defined joint type has a different topology than the beams, no joint is a
 
 * `Beams`: list of beams. To avoid unintended results, it should be the same list that is later used as an input to :code:`Assembly`
 * `Rules`: rules defined using :code:`JointCategoryRule` components
-* `MaxDistance`: (optional) tolerance for finding connecting beams if the centerlines to not intersect exactly but are at a certain distance from each other.
+* `MaxDistance`: (optional) tolerance for finding connecting beams if the centerlines to not intersect exactly but are at a certain distance from each other. Default is 0.000001.
 
 .. image:: ../images/Joints4Categories_diagramm.png
     :width: 50%
