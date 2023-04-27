@@ -31,7 +31,6 @@ from .helpers import are_objects_identical
 __all__ = [
     "intersection_line_line_3D",
     "intersection_line_plane",
-
     "close",
     "are_objects_identical",
 ]

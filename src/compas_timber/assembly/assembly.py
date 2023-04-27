@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from compas.datastructures import Assembly
 from compas.datastructures import AssemblyError
 
@@ -76,7 +74,6 @@ class TimberAssembly(Assembly):
     def tol(self):
         # TODO: change to compas PRECISION
         return self._units_precision[self.units]
-
 
     @property
     def beams(self):
