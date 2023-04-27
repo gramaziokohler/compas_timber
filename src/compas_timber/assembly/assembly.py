@@ -8,20 +8,24 @@ from compas_timber.parts import Beam
 
 
 class TimberAssembly(Assembly):
-    """
-    A data structure for managing the assembly. Assembly consist of parts and joints.
-    Parts are entities with a substantial physical presence, for example: beams, dowels, screws.
-    Joints are abstract entities to describe how parts are joined together, for example: two beams joining through a lap joint with a screw or dowel through it.
-    Connections are low-level abstractions to link the joined parts, for example: beam1-beam2, beam1-dowel, beam2-dowel.
+    """Represents a timber assembly containing beams and joints etc.
 
-    Graph:
-    Nodes store objects under 'object' attribute.
-
-    Default node attributes:
-    'type': None,  # string 'beam', 'joint', 'other_part'
-
-    Default edge attributes:
-    'type': None,  # not being used at the moment
+    Attributes
+    ----------
+    units : literal("meters"|"millimiters")
+        Returns the currently selected unit type used in this assembly.
+    tol : float
+        The used tolerance for floating point operations, this is a function of the selected unit type.
+    beams : list(:class:`~compas_timber.parts.Beam`)
+        A list of beams assigned to this assembly.
+    joints : list(:class:`~compas_timber.connections.Joint`)
+        A list of joints assigned to this assembly.
+    part_keys : list(int)
+        A list of the keys of the parts included in this assembly.
+    beam_keys :  list(int)
+        A list of the keys of the beams included in this assembly.
+    joint_keys :  list(int)
+        A list of the keys of the joints included in this assembly.
 
     """
 
@@ -29,9 +33,20 @@ class TimberAssembly(Assembly):
         super(TimberAssembly, self).__init__()
         self._units = "meters"  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
         self._units_precision = {"meters": 1e-9, "millimeters": 1e-6}
-
         self._beams = []
         self._joints = []
+
+    def __str__(self):
+        """Returns a formatted string representation of this assembly.
+
+        Return
+        ------
+        str
+
+        """
+        return "Timber Assembly ({}) with {} beam(s) and {} joint(s).".format(
+            self.guid, len(self.beams), len(self.joints)
+        )
 
     @Assembly.data.setter
     def data(self, value):
@@ -62,69 +77,29 @@ class TimberAssembly(Assembly):
         # TODO: change to compas PRECISION
         return self._units_precision[self.units]
 
-    def __str__(self):
-        return "Timber Assembly ({}) with {} beam(s) and {} joint(s).".format(
-            self.guid, len(self.beams), len(self.joints)
-        )
 
     @property
     def beams(self):
-        """
-        Returns all Beam objects which are part of this assembly.
-
-        Returns
-        -------
-        List[:class:`~compas_timber.parts.Beam`]
-        """
         return self._beams
 
     @property
     def joints(self):
-        """
-        Returns all Joint objects which are part of this assembly.
-
-        Returns
-        -------
-        List[:class:`~compas_timber.connections.Joint`]
-        """
         return self._joints
 
     @property
     def part_keys(self):
-        """
-        Returns a list of the grahp keys of all the parts associated with this assembly.
-
-        Returns
-        -------
-        List[int]
-        """
         return [part.key for part in self.parts()]
 
     @property
     def beam_keys(self):
-        """
-        Returns a list of the grahp keys of all the Beam objects associated with this assembly.
-
-        Returns
-        -------
-        List[int]
-        """
         return [beam.key for beam in self._beams]
 
     @property
     def joint_keys(self):
-        """
-        Returns a list of the grahp keys of all the Joint objects associated with this assembly.
-
-        Returns
-        -------
-        List[int]
-        """
         return [joint.key for joint in self._joints]
 
     def contains(self, obj):
-        """
-        Returns True if this assembly contains the given object, False otherwise.
+        """Returns True if this assembly contains the given object, False otherwise.
 
         Parameters
         ----------
@@ -134,22 +109,23 @@ class TimberAssembly(Assembly):
         Returns
         -------
         bool
+
         """
         return obj.guid in self._parts
 
     def add_beam(self, beam):
-        """
-        Adds a Beam to this assembly.
+        """Adds a Beam to this assembly.
 
         Parameters
         ----------
-        beam: :class:`~compas_timber.parts.Beam`
-            The beam to add
+        beam : :class:`~compas_timber.parts.Beam`
+            The beam to add.
 
         Returns
         -------
         int
             The graph key identifier of the added beam.
+
         """
         if beam in self._beams:
             raise AssemblyError("This beam has already been added to this assembly!")
@@ -157,12 +133,6 @@ class TimberAssembly(Assembly):
         self._beams.append(beam)
         beam.is_added_to_assembly = True
         return key
-
-    def add_plate(self, plate):
-        raise NotImplementedError
-
-    def remove_part(self, part):
-        raise NotImplementedError
 
     def add_joint(self, joint, parts):
         """Add a joint object to the assembly.
@@ -172,19 +142,14 @@ class TimberAssembly(Assembly):
         joint : :class:`~compas_timber.parts.joint`
             An instance of a Joint class.
 
-        parts : A list of instances of e.g. a Beam class.
-                The Beams and other Parts (dowels, steel plates) involved in the joint.
-
-        key : int | str, optional
-            The identifier of the joint in the assembly.
-            Note that the key is unique only in the context of the current assembly.
-            Nested assemblies may have the same `key` value for one of their parts.
-            Default is None, in which case the key will be an automatically assigned integer value.
+        parts : list(:class:`~compas.datastructure.Part`)
+            Beams or other Parts (dowels, steel plates) involved in the joint.
 
         Returns
         -------
-        int | str
+        int
             The identifier of the joint in the current assembly graph.
+
         """
         self._validate_joining_operation(joint, parts)
         # create an unconnected node in the graph for the joint object
@@ -212,8 +177,15 @@ class TimberAssembly(Assembly):
             raise AssemblyError("Cannot add this joint to assembly: some of the parts are already joined.")
 
     def remove_joint(self, joint):
-        """
-        Removes a joint from the assembly, i.e. disconnects it from assembly and from its parts. Does not delete the object.
+        """Removes a joint from the assembly, i.e. disconnects it from assembly and from its parts.
+
+        Does not delete the object.
+
+        Parameters
+        ----------
+        joint : :class:`~compas_timber.connections.Joint`
+            The joint to remove.
+
         """
         del self._parts[joint.guid]
         self.graph.delete_node(joint.key)
@@ -222,11 +194,18 @@ class TimberAssembly(Assembly):
         # TODO: distroy joint?
 
     def are_parts_joined(self, parts):
-        """
-        Checks if there is already a joint defined for the same set of parts.
-        """
+        """Checks if there is already a joint defined for the same set of parts.
 
-        # method 1
+        Parameters
+        ----------
+        parts : list(:class:`~compas.datastructure.Part`)
+            The parts to check.
+
+        Returns
+        -------
+        bool
+
+        """
         n = len(parts)
         neighbor_keys = [set(self.graph.neighborhood(self._parts[part.guid], ring=1)) for part in parts]
         for i in range(n - 1):
@@ -238,18 +217,3 @@ class TimberAssembly(Assembly):
                     if self.graph.node[x]["type"] == "joint":
                         return True
         return False
-
-        # # method 2: assuming that every part is joined through a Joint object, i.e. assume that parts are 2nd-ring neighbours.
-        # n = len(parts)
-        # for i in range(n - 1):
-        #     neighbor_keys = self.graph.neighborhood(self._parts[parts[i].guid], ring=2)
-        #     for j in range(i + 1, n):
-        #         if self._parts[parts[j].guid] in neighbor_keys: return True
-        # return False
-
-    def print_structure(self):
-        pprint("Beams:\n", self.beam_keys)
-        pprint("Joints:\n", self.joint_keys)
-
-        for joint in self.joints:
-            print("[%s] %s: %s" % (joint.key, joint.type_name, joint.beam_keys))
