@@ -7,7 +7,7 @@ utils
 
 .. rst-class:: lead
 
-Classes
+Functions
 =======
 
 .. autosummary::
