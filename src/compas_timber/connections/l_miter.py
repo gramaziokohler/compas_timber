@@ -20,7 +20,7 @@ class LMiterJoint(Joint):
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.Assembly`
+    assembly : :class:`~compas_timber.assembly.TimberAssembly`
         The assembly associated with the beams to be joined.
     beam_a : :class:`~compas_timber.parts.Beam`
         First beam to be joined.

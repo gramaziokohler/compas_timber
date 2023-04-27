@@ -15,7 +15,7 @@ class LButtJoint(Joint):
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.Assembly`
+    assembly : :class:`~compas_timber.assembly.TimberAssembly`
         The assembly associated with the beams to be joined.
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
