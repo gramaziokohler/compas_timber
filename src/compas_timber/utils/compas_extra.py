@@ -13,19 +13,35 @@ from compas.geometry import subtract_vectors
 
 
 def intersection_line_line_3D(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
-    # adapted from: https://github.com/compas-dev/compas/blob/9052b90cad5a8d2ddbdbaae91712c568f3d3c926/src/compas/geometry/intersections/intersections.py
-    """
-    inputs:
-        * two Lines (compas)
-        * max_distance: between the lines to count as an apparent intersection
-        * tol: numerical precision
+    """Find, if exists, the intersection point of `line1` and `line2` and returns parametric information about it.
 
-    for each, returns:
-        * None if no intersection with the other line (if lines parallel or outside of segment if limit_to_segments=True)
-        * Point of the apparent intersection on this line
-        * t parameter of the line (if return_t = True)
-    """
+    For each of the lines, the point of intersection and a `t` parameter are returned.
 
+    The `t` parameter is the normalized parametric value (0.0 -> 1.0) of the location of the intersection point
+    in relation to the line's starting point.
+    0.0 indicates intersaction near the starting point, 1.0 indicates intersection near the end.
+
+    If no intersection is detected within the max_distance, or the intersection falls outside either of the line segments,
+    [None, None], [None, None] is returned.
+
+    Parameters
+    ----------
+    line1 : :class:`~compas.geometry.Line`
+        First line.
+    line2 : :class:`~compas.geometry.Line`
+        Second line.
+    max_distance : float
+        Maximum distance between the lines to still consider as intersection.
+    limit_to_segments : bool, defualt is True
+        If True, the lines are considered intersection only if the intersection point falls whithin the given line segments for both lines.
+    tol : float, default is 1e-6
+        The tolerance used for floating point operations.
+
+    Returns
+    -------
+    tuple(:class:`~compas.geometry.Point`, float), tuple(:class:`~compas.geometry.Point`, float)
+
+    """
     a, b = line1
     c, d = line2
 
@@ -70,20 +86,29 @@ def intersection_line_line_3D(line1, line2, max_distance=1e-6, limit_to_segments
 
 
 def intersection_line_plane(line, plane, tol=1e-6):
-    """Computes the intersection point of a line and a plane
+    """Computes the intersection point of a line and a plane.
+
+    A tuple containing the intersection point and a `t` value are returned.
+
+    The `t` parameter is the normalized parametric value (0.0 -> 1.0) of the location of the intersection point
+    in relation to the line's starting point.
+    0.0 indicates intersaction near the starting point, 1.0 indicates intersection near the end.
+
+    If no intersection is found, [None, None] is returned.
+
     Parameters
     ----------
-    line : [point, point] | :class:`~compas.geometry.Line`
+    line : :class:`~compas.geometry.Line`
         Two points defining the line.
-    plane : [point, vector] | :class:`~compas.geometry.Plane`
+    plane : :class:`~compas.geometry.Plane`
         The base point and normal defining the plane.
-    tol : float, optional
+    tol : float, optional. Default is 1e-6.
         A tolerance for membership verification.
+
     Returns
     -------
-    [float, float, float] | None
-        The intersection point between the line and the plane,
-        or None if the line and the plane are parallel.
+    tuple(:class:`~compas.geometry.Point`, float)
+
     """
     a, b = line
     o, n = plane
