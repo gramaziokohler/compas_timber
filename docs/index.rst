@@ -4,7 +4,8 @@ COMPAS TIMBER
 
 .. rst-class:: lead
 
-COMPAS package for modeling, designing and fabricating timber assemblies.
+This is the documentation of COMPAS TIMBER - an open-source package for modeling, designing and fabricating timber frame structures.
+
 
 
 
@@ -34,9 +35,9 @@ Table of Contents
    Introduction <self>
    installation
    gettingstarted
-   tutorials
    api
    examples
+   tutorials
    license
    citing
 

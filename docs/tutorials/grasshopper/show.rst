@@ -2,7 +2,7 @@
 Show
 ****
 
-Tools for previewing,inspecting and extracting geometry:
+Tools for previewing, inspecting and extracting geometry:
 
 * **ShowBeam**: returns the *Box* geometry of the original beam object, i.e. before any joints and features are applied.
 * **ShowBeamFrame**: display the local coordinate system of the beam.
