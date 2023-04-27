@@ -16,14 +16,36 @@ from compas.plugins import pluggable
 @pluggable(category="solvers")
 def find_neighboring_beams(beams, inflate_by=None):
     """Uses RTree to find neighboring pairs of beams in the given list of beams.
+
     The returned elements are sets containing pairs of Beam objects.
+
+    Parameters
+    ----------
+    beams : list(:class:`compas_timer.part.Beam`)
+        The list of beams in which neighboring beams should be identified.
+    inflate_by : float
+        A value in design units by which the regarded bounding boxes should be inflated.
+
+    Returns
+    -------
+    list(set(:class:`~compas_timber.part.Beam`, :class:`~compas_timber.part.Beam`))
 
     """
     raise NotImplementedError
 
 
 class JointTopology(object):
-    """Enumeration of the possible joint topologies."""
+    """Enumeration of the possible joint topologies.
+
+    Attributes
+    ----------
+    TOPO_UNKNOWN
+    TOPO_I
+    TOPO_L
+    TOPO_T
+    TOPO_X
+
+    """
 
     TOPO_UNKNOWN = 0
     TOPO_I = 1
@@ -82,7 +104,29 @@ class ConnectionSolver(object):
         return find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
-        """For a pair of beams, checks if their centerlines intersect (within a max_distance, optional), and determines topology of this intersection (using max_distance cutoff, optional)."""
+        """If beam_a and beam_b intersect within the given `max_distance`, return the topology type of the intersection.
+
+        If the topology is role-sensitive, the method outputs the beams in a consistent specific order
+        (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
+        order as they were inputted.
+
+        Parameters
+        ----------
+        beam_a : :class:`compas_timber.parts.Beam`
+            First beam from intersecting pair.
+        beam_b : :class:`compas_timber.parts.Beam`
+            Second beam from intersecting pair.
+        tol : float
+            General tolerance to use for mathematical computations.
+        mat_distance : float, optional
+            Maximum distance, in desigen units, at which two beams are cosidered intersecing.
+
+        Returns
+        -------
+        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+
+        """
+
         tol = self.TOLERANCE  # TODO: change to a unit-sensitive value
         angtol = 1e-3
 

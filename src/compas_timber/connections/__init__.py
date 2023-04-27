@@ -18,11 +18,28 @@ Classes
 
     Joint
     TButtJoint
+    LButtJoint
+    LMiterJoint
+    JointTopology
+    ConnectionSolver
 
 Functions
 =========
 
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
     beam_side_incidence
+    find_neighboring_beams
+
+Exceotions
+==========
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    BeamJoinningError
 
 """
 from .joint import Joint
