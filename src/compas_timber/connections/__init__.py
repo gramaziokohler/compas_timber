@@ -33,7 +33,7 @@ Functions
     beam_side_incidence
     find_neighboring_beams
 
-Exceotions
+Exceptions
 ==========
 .. autosummary::
     :toctree: generated/

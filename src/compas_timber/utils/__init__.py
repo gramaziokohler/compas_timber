@@ -17,9 +17,6 @@ Functions
     intersection_line_line_3D
     intersection_line_plane
 
-    close
-    are_objects_identical
-
 """
 
 from .compas_extra import intersection_line_line_3D

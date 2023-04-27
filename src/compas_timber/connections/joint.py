@@ -15,7 +15,7 @@ def beam_side_incidence(beam1, beam2):
     ----------
     beam1 : :class:`~compas_timber.parts.Beam`
         The beam that attaches with one of its ends to the side of Beam2.
-    beamm2 : :class:`~compas_timber.parts.Beam`
+    beam2 : :class:`~compas_timber.parts.Beam`
         The other beam.
 
     Returns

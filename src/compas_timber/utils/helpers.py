@@ -7,7 +7,7 @@ def close(x, y, tol=1e-12):
     Returns True if `x` and `y` are equal within the given tolerance.
     Returns True also if both `x` and `y` are None.
 
-    TODO: revise if needed, handling Nones can be the responsibility of the caller.
+    TODO: TO BE DELETED
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def close(x, y, tol=1e-12):
 def are_objects_identical(object1, object2, attributes_to_compare):
     """Generic method to check if objects are practically identical.
 
-    TODO: revise if needed. this is very generic so might not belong here. comparison like this for value types belong in __eq__ e.g.
+    TODO: TO BE DELETED
 
     """
 

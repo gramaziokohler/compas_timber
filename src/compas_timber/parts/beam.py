@@ -290,8 +290,10 @@ class Beam(Part):
     def add_feature(self, feature, apply=False):
         """Adds a feature to this beam.
 
-        If apply is False, `apply_features` must be called for the features to be represented in the geometry.
+        If apply is False, `Beam.apply_features()` must be called for the features to be represented in the geometry.
 
+        Parameters
+        ----------
         feature : :class:`~compas.datastructures.Feature`
             The feature to be added to this beam.
         apply : bool
