@@ -31,20 +31,20 @@ class Beam_fromCurveGuid(component):
             if len(ZVector) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error,
-                    " In 'ZVector' I need either none, one or the same number of inputs as the refCrv parameter.",
+                    " In 'ZVector' I need either none, one or the same number of inputs as the RefCenterline parameter.",
                 )
             if len(Width) not in (1, N):
                 self.AddRuntimeMessage(
-                    Error, " In 'Width' I need either one or the same number of inputs as the refCrv parameter."
+                    Error, " In 'Width' I need either one or the same number of inputs as the RefCenterline parameter."
                 )
             if len(Height) not in (1, N):
                 self.AddRuntimeMessage(
-                    Error, " In 'Height' I need either one or the same number of inputs as the refCrv parameter."
+                    Error, " In 'Height' I need either one or the same number of inputs as the RefCenterline parameter."
                 )
             if len(Category) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error,
-                    " In 'Category' I need either none, one or the same number of inputs as the refCrv parameter.",
+                    " In 'Category' I need either none, one or the same number of inputs as the RefCenterline parameter.",
                 )
 
         # match number of elemets to number of curves
