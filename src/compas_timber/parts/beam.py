@@ -122,18 +122,12 @@ class Beam(Part):
 
     @property
     def data(self):
-        """
-        Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
-        """
         data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
         data.update(super(Beam, self).data)
         return data
 
     @data.setter
     def data(self, data):
-        """
-        Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
-        """
         Part.data.fset(self, data)
         self.width = data["width"]
         self.height = data["height"]
