@@ -1,12 +1,13 @@
 name: build
 
 on:
+  workflow_dispatch: # for testing purposes
   push:
     branches:
-      - main
+      - dev
   pull_request:
     branches:
-      - main
+      - dev
 
 jobs:
   build-package:
@@ -14,17 +15,95 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        name: [
+          "windows-py38",
+          "macos-py37",
+          "ubuntu-py39",
+          "ubuntu-py310",
+        ]
+        include:
+          - name: "windows-py38"
+            os: windows-latest
+            python-version: "3.8"
+          - name: "macos-py37"
+            os: macos-latest
+            python-version: "3.7"
+          - name: "ubuntu-py39"
+            os: ubuntu-latest
+            python-version: "3.9"
+          - name: "ubuntu-py310"
+            os: ubuntu-latest
+            python-version: "3.10"
+    steps:
+    - uses: actions/checkout@v2
 
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install wheel
+        pip install cython --config-settings="--build-option=--no-cython-compile"
+    - name: Install compas_timber
+      run: |
+        python -m pip install --no-cache-dir -r requirements-dev.txt
+    - name: Invoke lint
+      run: |
+        invoke lint
+    - name: Run unittests
+      run: |
+        invoke test
+
+  build-ironpython:
+    name: windows-ironpython
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          curl -o compas.tar.gz -LJO https://pypi.debian.net/compas/latest
+          curl -o compas_future.tar.gz -LJO https://github.com/compas-dev/compas_future/tarball/main
+          curl -o ironpython-pytest.tar.gz -LJO https://pypi.debian.net/ironpython-pytest/latest
+          choco install ironpython --version=2.7.8.1
+          ipy -X:Frames -m ensurepip
+          ipy -X:Frames -m pip install --no-deps compas.tar.gz
+          ipy -X:Frames -m pip install --no-deps compas_future.tar.gz
+          ipy -X:Frames -m pip install --no-deps ironpython-pytest.tar.gz
+      - name: Run tests
+        env:
+          IRONPYTHONPATH: ./src
+        run: |
+          ipy tests/ipy_test_runner.py
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+  upload-wheel:
+    name: componentize-upload-wheel
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
 
-      - uses: compas-dev/compas-actions.build@v1.0.0
+      - name: Install dependecies
+        run: |
+          pip install wheel
+          choco install ironpython --version=2.7.8.1
+      - name: Componentize
+        uses: compas-dev/compas-actions.ghpython_components@v2
         with:
-          test_lint: true
+          source: src/compas_timber/ghpython/components
+          target: src/compas_timber/ghpython/components/ghuser
+          prefix: "(COMPAS_TIMBER)"
+      - name: Copy manual components
+        run: |
+          cp src/compas_timber/ghpython/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
+      - name: Build
+        run: |
+          python setup.py clean --all sdist bdist_wheel
+      - uses: actions/upload-artifact@v2
+        with:
+          name: compas_timber_wheel
+          path: dist/

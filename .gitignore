@@ -103,6 +103,8 @@ ENV/
 # compas_timber
 # ==============================================================================
 
+src/compas_timber/ghpython/components/ghuser/*.ghuser
+
 *.3dmbak
 *.rhl
 *.rui_bak
@@ -119,3 +121,4 @@ temp/**
 docs/api/generated/
 
 conda.recipe/
+tests/temp/

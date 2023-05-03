@@ -1,0 +1,24 @@
+{
+    "name": "ShowBeamFrame",
+    "nickname": "ShowBeamFrame",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "Shows the XYZ axes of the Beam's local coordinate system.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+             
+            {
+                "name": "Beam",
+                "description": "Beam",
+                "typeHintID": "none",
+                "scriptParamAccess":1
+            
+            }
+        ],
+        "outputParameters": [
+        ]
+    }
+}

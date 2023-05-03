@@ -20,8 +20,8 @@ Table of Contents
 
    Introduction <self>
    gettingstarted
-   tutorial
    api
+   examples
    license
 
 

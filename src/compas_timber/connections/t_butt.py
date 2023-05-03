@@ -1,63 +1,94 @@
-from compas.geometry import intersection_line_line, intersection_line_plane, distance_point_point, angle_vectors
-from compas.geometry import Vector, Point, Plane
-from compas.data import Data
-from ..connections.joint import Joint
+from compas.geometry import BrepTrimmingError
+from compas.geometry import Frame
 
-# TODO: replace direct references to beam objects
+from compas_timber.parts import BeamTrimmingFeature
+
+from .joint import BeamJoinningError
+from .joint import Joint
+from .joint import beam_side_incidence
+from .solver import JointTopology
 
 
 class TButtJoint(Joint):
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
+        # TODO: try if possible remove default Nones
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.assembly = assembly
-        self.main_beam_key = main_beam.key
-        self.cross_beam_key = cross_beam.key
-        self.joint_type_name = 'T-Butt'
-        #self.gap = gap #float, additional gap, e.g. for glue
-        #self.frame = None  # will be needed as coordinate system for structural calculations for the forces at the joint
+        # TODO: make it protected attribute?
+        self.main_beam_key = None
+        self.cross_beam_key = None
+
+        # TODO: remove direct ref, replace with assembly look up
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
+        self.gap = None
+        self.features = []
 
     @property
-    def main_beam(self):
-        return self.assembly.find_by_key(self.main_beam_key)
+    def data(self):
+        data_dict = {
+            "main_beam_key": self.main_beam.key,
+            "cross_beam_key": self.cross_beam.key,
+            "gap": self.gap,
+        }
+        data_dict.update(Joint.data.fget(self))
+        return data_dict
+
+    @data.setter
+    def data(self, value):
+        Joint.data.fset(self, value)
+        self.main_beam_key = value["main_beam_key"]
+        self.cross_beam_key = value["cross_beam_key"]
+        self.gap = value["gap"]
 
     @property
-    def cross_beam(self):
-        return self.assembly.find_by_key(self.cross_beam_key)     
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, TButtJoint)
+            and super(TButtJoint, self).__eq__(other)
+            and self.main_beam_key == other.main_beam_key
+            and self.cross_beam_key == other.cross_beam_key
+        )
 
     @property
-    def __find_side(self):
-        """
-        calculate which side of the cross beam is the cutting side for the main beam
-        """
-
-        # find the orientation of the mainbeam's centreline so that it's pointing outward of the joint
-        #   find the closest end
-        pm, pc = intersection_line_line(self.main_beam.centreline, self.cross_beam.centreline)
-        p1 = self.main_beam.centreline.start
-        p2 = self.main_beam.centreline.end
-        d1 = distance_point_point(pm, p1)
-        d2 = distance_point_point(pm, p2)
-
-        if d1 < d2:
-            centreline_vec = Vector.from_start_end(p1, p2)
-        else:
-            centreline_vec = Vector.from_start_end(p2, p1)
-
-        # compare with side normals
-        angles = [angle_vectors(self.cross_beam.side_frame(i).normal, centreline_vec) for i in range(4)]
-        x = list(zip(angles, range(4)))
-        x.sort()
-        side = x[0][1]
-        return side
+    def joint_type(self):
+        return "T-Butt"
 
     @property
     def cutting_plane(self):
-        cfr = self.cross_beam.side_frame(self.__find_side)
-        # TODO: move the frame's center to the intersection
-        #cfr.point = Point(intersection_line_plane(self.main_beam.centreline, Plane.from_frame(cfr))[0], 1e-6)
-        # TODO: flip normal
+        angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
+        cfr = min(angles_faces, key=lambda x: x[0])[1]
+        cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
-    def apply_feature(self):
-        # TODO: how to saveguard this being added multiple times?
-        self.main_beam.add_feature(self.cutting_plane, 'trim')
+    def restore_beams_from_keys(self, assemly):
+        self.main_beam = assemly.find_by_key(self.main_beam_key)
+        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+
+    def add_features(self):
+        """
+        Adds the feature definitions (geometry, operation) to the involved beams.
+        In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
+
+        """
+        if self.features:
+            self.main_beam.clear_features(self.features)
+            self.features = []
+
+        trim_feature = BeamTrimmingFeature(self.cutting_plane)
+        try:
+            self.main_beam.add_feature(trim_feature)
+            self.features.append(trim_feature)
+        except BrepTrimmingError:
+            msg = "Failed trimming beam: {} with cutting plane: {}. Does it intersect with beam: {}".format(
+                self.main_beam, self.cutting_plane, self.cross_beam
+            )
+            raise BeamJoinningError(msg)
+
+
+if __name__ == "__main__":
+    pass

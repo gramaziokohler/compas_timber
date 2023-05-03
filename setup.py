@@ -11,15 +11,11 @@ from setuptools import setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
-
 here = path.abspath(path.dirname(__file__))
 
 
 def read(*names, **kwargs):
-    return io.open(
-        path.join(here, *names),
-        encoding=kwargs.get("encoding", "utf8")
-    ).read()
+    return io.open(path.join(here, *names), encoding=kwargs.get("encoding", "utf8")).read()
 
 
 long_description = read("README.md")
@@ -31,7 +27,6 @@ setup(
     version="0.1.0",
     description="COMPAS package for modeling, designing and fabricating timber assemblies",
     long_description=long_description,
-    long_description_content_type="text/markdown",
     url="https://github.com/gramaziokohler/compas_timber",
     author="Gramazio Kohler Research",
     author_email="gramaziokohler@arch.ethz.ch",

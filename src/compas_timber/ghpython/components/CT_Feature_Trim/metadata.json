@@ -1,0 +1,32 @@
+{
+    "name": "Trim Feature",
+    "nickname": "Trim Feature",
+    "category": "COMPAS Timber",
+    "subcategory": "Features",
+    "description": "Creates a Feature to trim a Beam with a Plane. If more than one Beam and Plane: each Beam will be cut with every Plane.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beam",
+                "description": "Beam(s) to trim.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Plane",
+                "description": "Cutting plane(s).",
+                "typeHintID": "plane",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Feature",
+                "description": "Defined Feature(s)."
+            }
+        ]
+    }
+}

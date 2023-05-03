@@ -1,0 +1,26 @@
+{
+    "name": "ShowBeam",
+    "nickname": "ShowBeam",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "Shows the original shape of the Beam.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": false,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beam",
+                "description": "Beam",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Box",
+                "description": "Box representing the original shape of the Beam."
+            }
+        ]
+    }
+}

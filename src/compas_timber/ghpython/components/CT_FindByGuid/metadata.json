@@ -1,0 +1,33 @@
+{
+    "name": "FindBeamByRhinoGuid",
+    "nickname": "FindBeamByRhinoGuid",
+    "category": "COMPAS Timber",
+    "subcategory": "Beams",
+    "description": "Finds a Beam that was created with the given referenced curve or line.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+
+            {
+                "name": "Beams",
+                "description": "A list of Beams.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Guid",
+                "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
+                "typeHintID": "guid",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "FoundBeam",
+                "description": "Found beam(s), if any."
+            }
+        ]
+    }
+}

@@ -1,4 +1,3 @@
-import rhinoscript as rs
 import Rhino
 
 

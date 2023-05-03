@@ -1,0 +1,32 @@
+{
+    "name": "Brep Subtraction Feature",
+    "nickname": "Brep Subtraction Feature",
+    "category": "COMPAS Timber",
+    "subcategory": "Features",
+    "description": "Creates a Feature to perform a boolean subtraction of a Brep form a Beam. If more than one Beam and Brep: each Brep will be subtracted from every Beam.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beam",
+                "description": "Beam(s) to subtract Geometry from.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Geometry",
+                "description": "Brep Geometry to subtract form Beam(s) (one or more).",
+                "typeHintID": "brep",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Feature",
+                "description": "Defined Feature(s)."
+            }
+        ]
+    }
+}

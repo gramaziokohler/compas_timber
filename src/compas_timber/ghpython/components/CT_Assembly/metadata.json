@@ -1,0 +1,50 @@
+{
+    "name": "Assembly",
+    "nickname": "Assembly",
+    "category": "COMPAS Timber",
+    "subcategory": "Assembly",
+    "description": "Creates an Assembly",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beams",
+                "description": "Collection of Beams",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Joints",
+                "description": "Collection of joint definitions.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1,
+                "flatten": true
+            },
+            {
+                "name": "Features",
+                "description": "Collection of feature definitions.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "applyFeatures",
+                "description": "If True, Joints and Features will be applied. Nothing happens if None or False.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Assembly",
+                "description": "Assembly object."
+            },
+            {
+                "name": "Errors",
+                "description": "Error log of the feature application process."
+            }
+
+        ]
+    }
+}

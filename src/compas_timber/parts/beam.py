@@ -1,118 +1,238 @@
-import copy
+import math
 
-from compas.geometry import Frame, Plane, Point, Line, Vector, Box
-from compas.geometry import distance_point_point, cross_vectors, angle_vectors, add_vectors
-from compas.datastructures.assembly import Part
+from compas.datastructures import Mesh
+from compas.geometry import Box
+from compas.geometry import Brep
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas.geometry import add_vectors
+from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
+from compas.geometry import distance_point_point
+from compas_future.datastructures import GeometricFeature
+from compas_future.datastructures import ParametricFeature
+from compas_future.datastructures import Part
+
+from compas_timber.utils.compas_extra import intersection_line_plane
+from compas_timber.utils.helpers import close  # TODO: remove this
+
+# TODO: update to global compas PRECISION
+ANGLE_TOLERANCE = 1e-3  # [radians]
+DEFAULT_TOLERANCE = 1e-6
 
 
+def _create_box(frame, xsize, ysize, zsize):
+    # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
+    # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
+    boxframe = frame.copy()
+    depth_offset = boxframe.xaxis * xsize * 0.5
+    boxframe.point += depth_offset
+    return Box(boxframe, xsize, ysize, zsize)
 
-# TODO: global tolerance settings?
-tol = 1e-6  # [units]
-tol_angle = 1e-1  # [radians]
+
+def _create_mesh_shape(xsize, ysize, zsize):
+    box = _create_box(Frame.worldXY(), xsize, ysize, zsize)
+    return Mesh.from_vertices_and_faces(*box.to_vertices_and_faces(True))
+
+
+def _create_brep_shape(xsize, ysize, zsize):
+    box = _create_box(Frame.worldXY(), xsize, ysize, zsize)
+    return Brep.from_box(box)
 
 
 class Beam(Part):
-    """A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
+    """
+    A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
+
     Parameters
     ----------
-    frame : :class:`compas.geometry.Frame`.
+    frame : :class:`compas.geometry.Frame`
         A local coordinate system of the beam:
-        Origin is located at the starting point of the centreline.
-        x-axis corresponds to the centreline (major axis), usually also the fibre direction in solid wood beams.
+        Origin is located at the starting point of the centerline.
+        x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
         y-axis corresponds to the width of the cross-section, usually the smaller dimension.
         z-axis corresponds to the height of the cross-section, usually the larger dimension.
 
-    width : float.
+    width : float
         Width of the cross-section
-    height : float.
+    height : float
         Height of the cross-section
 
     Attributes
     ----------
-
-    length : float.
+    length : float
         Length of the beam.
 
-    centreline: :class:``compas.geometry.Line`
+    centreline : :class:`compas.geometry.Line`
+
+    aabb : tuple(float, float, float, float, float, float)
+        an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box.
+
     """
 
-    operations = [
-        'union'
-        'difference'
-        'intersection'
-        'planar_trim']
+    SHAPE_FACTORIES = {
+        "mesh": _create_mesh_shape,
+        "brep": _create_brep_shape,
+    }
 
-    def __init__(self, frame=None, length=None, width=None, height=None):
-        super(Beam, self).__init__()
-        self.frame = frame
+    def __init__(self, frame, length, width, height, geometry_type, **kwargs):
+        super(Beam, self).__init__(frame=frame)
+        self.frame = (
+            frame  # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
+        )
         self.width = width
         self.height = height
         self.length = length
-        self.joints = [] #a list of dicts {'joint': joint_uuid,'other_beams': [beam_other1_uuid, beam_other2_uuid,...]}
-        self.features = []
+        self.geometry_type = geometry_type
+        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
+        self._geometry_with_features = self._geometry.copy()
+
+    @staticmethod
+    def _create_beam_shape_from_params(width, height, length, geometry_type):
+        try:
+            factory = Beam.SHAPE_FACTORIES[geometry_type]
+            return factory(width, height, length)
+        except KeyError:
+            raise ValueError("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
 
     def __str__(self):
-        return 'Beam %s x %s x %s at %s' % (self.width, self.height, self.length, self.frame)
+        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
+            self.width,
+            self.height,
+            self.length,
+            self.frame,
+        )
 
-    def __copy__(self, *args, **kwargs):
-        return self.copy()
+    def update_beam_geometry(self):
+        self._geometry_with_features = self._create_beam_shape_from_params(
+            self.length, self.width, self.height, self.geometry_type
+        )
 
-    def __deepcopy__(self, *args, **kwargs):
-        result = object.__new__(self.__class__)
-        result.__init__(frame=self.frame.copy(), width=self.width, height=self.height, length=self.length)
-        result.joints = copy.deepcopy(self.joints)
-        result.features = copy.deepcopy(self.features)
-        return result
+    def is_identical(self, other):
+        return (
+            isinstance(other, Beam)
+            and close(self.width, other.width, DEFAULT_TOLERANCE)
+            and close(self.height, other.height, DEFAULT_TOLERANCE)
+            and close(self.length, other.length, DEFAULT_TOLERANCE)
+            and self.frame == other.frame
+            # TODO: skip joints and features ?
+        )
 
-    ### constructors ###
+    @property
+    def tolerance(self):
+        return getattr(self.assembly, "tol", DEFAULT_TOLERANCE)
 
-    @classmethod
-    def from_frame(cls, frame, width=None, height=None, length=None):
-        # needed? same as init
-        return cls(frame, length, width, height)
-
-    @classmethod
-    def from_centreline(cls, centreline, z_vector=None, width=None, height=None):
+    @property
+    def data(self):
         """
-        Define the beam from its centreline.
+        Workaround: overrides Part.data since serialization of Beam using Data.from_data is not supported.
+        """
+        data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
+        data.update(super(Beam, self).data)
+        return data
+
+    @data.setter
+    def data(self, data):
+        """
+        Workaround: overrides Part.data.setter since de-serialization of Beam using Data.from_data is not supported.
+        """
+        Part.data.fset(self, data)
+        self.width = data["width"]
+        self.height = data["height"]
+        self.length = data["length"]
+        self.geometry_type = data["geometry_type"]
+
+    @property
+    def shape(self):
+        """Returns a Box made using the parametric properties of this beam.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Box`
+
+        """
+        return _create_box(self.frame, self.length, self.width, self.height)
+
+    @classmethod
+    def from_data(cls, data):
+        obj = cls(**data)
+        obj.data = data
+        return obj
+
+    def get_geometry(self, with_features=False):
+        transformation = Transformation.from_frame(self.frame)
+        if not with_features or not self.features:
+            g_copy = self._geometry.copy()
+        else:
+            g_copy = self._geometry_with_features.copy()
+        g_copy.transform(transformation)
+        return g_copy
+
+    def add_feature(self, feature, apply=False):
+        self.features.append(feature)
+        if apply:
+            self.apply_features()
+
+    def apply_features(self):
+        """
+        Iterate over features:
+            if is_cumulative:
+
+        """
+        error_log = []
+        para_features = [f for f in self.features if isinstance(f, ParametricFeature)]
+        geo_features = [f for f in self.features if isinstance(f, GeometricFeature)]
+        for f in para_features:
+            success, _ = f.apply(self)
+            if not success:
+                error_log.append(self._create_feature_error_msg(f, self))
+        for f in geo_features:
+            success, self._geometry_with_features = f.apply(self)
+            self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
+            if not success:
+                error_log.append(self._create_feature_error_msg(f, self))
+        return error_log
+
+    @staticmethod
+    def _create_feature_error_msg(feature, part):
+        msg = "Failed applying feature: {!r} with owner: {!r} to beam: {!r}"
+        return msg.format(feature, getattr(feature, "_owner", None), part)
+
+    def clear_features(self, features_to_clear=None):
+        if features_to_clear:
+            self.features = [f for f in self.features if f not in features_to_clear]
+        else:
+            self.features = []
+        self._geometry_with_features = self._geometry.copy()
+
+    @classmethod
+    def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):
+        """
+        Define the beam from its centerline.
         z_vector: a vector indicating the height direction (z-axis) of the cross-section. If not specified, a default will be used.
         """
-        x_vector = centreline.vector
-        if not z_vector:
-            z_vector = cls.__default_z(x_vector)
-        print(z_vector)
+        x_vector = centerline.vector
+        z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        frame = Frame(centreline.start, x_vector, y_vector)
-        length = centreline.length
+        if y_vector.length < DEFAULT_TOLERANCE:
+            raise ValueError("The given z_vector seems to be parallel to the given centerline.")
+        frame = Frame(centerline.start, x_vector, y_vector)
+        length = centerline.length
 
-        return cls(frame, length, width, height)
+        return cls(frame, length, width, height, geometry_type)
 
     @classmethod
-    def from_endpoints(cls, point_start, point_end, z_vector=None, width=None, height=None):
+    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None, geometry_type="brep"):
+        line = Line(point_start, point_end)
 
-        x_vector = Vector.from_start_end(point_start, point_end)
-        if not z_vector:
-            z_vector = cls.__default_z(x_vector)
-        y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        frame = Frame(point_start, x_vector, y_vector)
-        length = distance_point_point(point_start, point_end)
+        return cls.from_centerline(line, width, height, z_vector, geometry_type)
 
-        return cls(frame, length, width, height)
-
-    ### main methods and properties ###
-
-    def copy(self):
-        # TODO: temp workaround, inherited copy method doesn't work
-        beam = Beam(self.frame, self.length, self.width, self.height)
-        beam.features = self.features
-        return beam
-
-    def clear_features(self):
-        # needed if geometry of the beam has changed but the features are not updated automatically
-        self.features = []
-        pass
-
-    def side_frame(self, side_index):
+    @property
+    def faces(self):
         """
         Side index: sides of the beam's base shape (box) are numbered relative to the beam's coordinate system:
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -122,93 +242,147 @@ class Beam(Part):
         4: -x (side at the starting end)
         5: +x (side at the end of the beam)
         """
-        if side_index == 0:
-            return Frame(Point(*add_vectors(self.frame.point, self.frame.yaxis*self.width*0.5)),    self.frame.xaxis, -self.frame.zaxis)
-        if side_index == 1:
-            return Frame(Point(*add_vectors(self.frame.point, -self.frame.zaxis*self.height*0.5)),   self.frame.xaxis, -self.frame.yaxis)
-        if side_index == 2:
-            return Frame(Point(*add_vectors(self.frame.point, -self.frame.yaxis*self.width*0.5)),    self.frame.xaxis, self.frame.zaxis)
-        if side_index == 3:
-            return Frame(Point(*add_vectors(self.frame.point, self.frame.zaxis*self.height*0.5)),   self.frame.xaxis, self.frame.yaxis)
-        if side_index == 4:
-            return Frame(self.frame.point,                   -self.frame.yaxis,                     self.frame.zaxis)
-        if side_index == 5:
-            return Frame(Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length)),       self.frame.yaxis, self.frame.zaxis)
+        return [
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
+            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
+            Frame(
+                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
+                self.frame.yaxis,
+                self.frame.zaxis,
+            ),  # small face at end point
+        ]
 
     @property
-    def centreline(self):
-        return Line(self.__centreline_start, self.__centreline_end)
+    def centerline(self):
+        return Line(self.centerline_start, self.centerline_end)
 
     @property
-    def shape(self):
-        """
-        Base shape of the beam, i.e. box with no features.
-        """
-        boxframe = Frame(self.frame.point - self.frame.yaxis*self.width*0.5 - self.frame.zaxis*self.height*0.5, self.frame.xaxis, self.frame.yaxis)
-        return Box(boxframe, self.length, self.width, self.height)
-
-    @shape.setter
-    def shape(self, box):
-        # TODO: temp error catcher: calling Beam.shape throws an error in Part ("readonly attribute")
-        pass
-
-    @property
-    def geometry(self, geometry_representation='brep'):
-        """
-        Geometry of the beam with all features (e.g. trims, cuts, notches, holes etc.)
-        geometry_representation: 'mesh', 'brep'
-        """
-        # apply all self.features to the self.shape through boolean operations.
-        # I want to choose geometry representation (mesh, brep etc.)
-
-        pass
-
-    ### GEOMETRY ###
-
-    @property
-    def __centreline_start(self):
+    def centerline_start(self):
         return self.frame.point
 
     @property
-    def __centreline_end(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length))
+    def centerline_end(self):
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
+
+    @property
+    def aabb(self):
+        """Returns an axis-aligned bounding box of a Beam, as a 6-tuple of (xmin, ymin, zmin, xmax, ymax, zmax) which demote the coordinates of the min and max corner of the bounding box."""
+        vertices = self.shape.vertices
+        x = [p.x for p in vertices]
+        y = [p.y for p in vertices]
+        z = [p.z for p in vertices]
+        return (min(x), min(y), min(z), max(x), max(y), max(z))
+
+    @property
+    def long_edges(self):
+        """Returns a list of lines representing the long edges of the beam's bounding box
+
+        Returns
+        -------
+        list(:class:`~compas.geometry.Line`)
+
+        """
+        y = self.frame.yaxis
+        z = self.frame.zaxis
+        w = self.width * 0.5
+        h = self.height * 0.5
+        ps = self.centerline_start
+        pe = self.centerline_end
+
+        return [Line(ps + v, pe + v) for v in (y * w + z * h, -y * w + z * h, -y * w - z * h, y * w - z * h)]
 
     @property
     def midpoint(self):
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis*self.length*0.5))
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
-    def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint='start'):
+    def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
+        # TODO: revise if needed, compare to ParametricFeature
         # create & apply a transformation
         """
         which_endpoint: 'start' or 'end' or 'both'
         """
         z = self.frame.zaxis
-        ps = self.__centreline_start
-        pe = self.__centreline_end
-        if which_endpoint in ('start', 'both'):
+        ps = self.centerline_start
+        pe = self.centerline_end
+        if which_endpoint in ("start", "both"):
             ps = add_vectors(ps, vector)
-        if which_endpoint in ('end', 'both'):
+        if which_endpoint in ("end", "both"):
             pe = add_vectors(pe, vector)
         x = Vector.from_start_end(ps, pe)
         y = Vector(*cross_vectors(x, z)) * -1.0
         frame = Frame(ps, x, y)
         self.frame = frame
         self.length = distance_point_point(ps, pe)
+
         return
 
-    def extend_length(self, d, option='both'):
-        """
-        options: 'start', 'end', 'both'
-        """
-        if option in ('start', 'both'):
-            pass  # move frame's origin by -d
-        if option == 'end':
-            pass  # change length by d
-        if option == 'both':
-            pass  # chane lenth by 2d
-        return
+    def extension_to_plane(self, pln):
+        """Returns the amount by which to extend the beam in each direction using metric units.
 
-    def rotate_around_centreline(self, angle, clockwise=False):
+        TODO: verify this is true
+        The extension is the minimum amount which allows all long faces of the beam to pass through
+        the given plane.
+
+        Returns
+        -------
+        tuple(float, float)
+            Extension amount at start of beam, Extension amount at end of beam
+
+        """
+        x = {}
+        pln = Plane.from_frame(pln)
+        for e in self.long_edges:
+            p, t = intersection_line_plane(e, pln)
+            x[t] = p
+
+        px = intersection_line_plane(self.centerline, pln)[0]
+        side, _ = self.endpoint_closest_to_point(px)
+
+        ds = 0.0
+        de = 0.0
+        if side == "start":
+            tmin = min(x.keys())
+            if tmin < 0.0:
+                ds = tmin * self.length  # should be negative
+        elif side == "end":
+            tmax = max(x.keys())
+            if tmax > 1.0:
+                de = (tmax - 1.0) * self.length
+
+        return -ds, de
+
+    def extend_ends(self, d_start, d_end):
+        # TODO: revise if needed, compare to ParametricFeature
+        """
+        Extensions at the start of the centerline should have a negative value.
+        Extenshions at the end of the centerline should have a positive value.
+        Otherwise the centerline will be shortend, not extended.
+        """
+        self.frame.point += -self.frame.xaxis * d_start  # "extension" to the start edge
+        extension = d_start + d_end
+        self.length += extension
+        self.update_beam_geometry()
+
+    def rotate_around_centerline(self, angle, clockwise=False):
         # create & apply a transformation
         pass
 
@@ -218,46 +392,40 @@ class Beam(Part):
         self.frame = frame
         return
 
+    def _get_joint_keys(self):
+        n = self.assembly.graph.neighbors[self.key]
+        return [
+            k for k in n if self.assembly.node_attribute("type") == "joint"
+        ]  # just double-check in case the joint-node would be somehow connecting to smth else in the graph
 
-    ### JOINTS ###
-
-
-    ### FEATURES ###
-
-    def add_feature(self, shape, operation):
-        """
-        shape: compas geometry
-        operation: 'bool_union', 'bool_difference', 'bool_intersection', 'trim'
-        """
-        #TODO: add some descriptor attribute to identify the source/type/character of features later?
-        self.features.append((shape, operation))
-
-
-    def clear_features(self):
-        self.features = []
-        return
-
+    @property
+    def joints(self):
+        return [self.assembly.find_by_key(key) for key in self._get_joint_keys]
 
     @property
     def has_features(self):
-        if len(self.features)==0: return False
-        else: return True
+        # TODO: move to compas_future... Part
+        return len(self.features) > 0
 
-    ### hidden helpers ###
     @staticmethod
-    def __default_z(centreline_vector):
+    def _calculate_z_vector_from_centerline(centerline_vector):
         z = Vector(0, 0, 1)
-        if angle_vectors(z, centreline_vector) < tol_angle:
+        angle = angle_vectors(z, centerline_vector)
+        if angle < ANGLE_TOLERANCE or angle > math.pi - ANGLE_TOLERANCE:
             z = Vector(1, 0, 0)
         return z
 
+    def endpoint_closest_to_point(self, point):
+        ps = self.centerline_start
+        pe = self.centerline_end
+        ds = point.distance_to_point(ps)
+        de = point.distance_to_point(pe)
 
+        if ds <= de:
+            return ["start", ps]
+        else:
+            return ["end", pe]
 
-class Feature(object):
-    def __init__(self, shape, parent):
-        self.shape = shape  # global coordinates or in parent's coordinates? --> what if shared by multiple parents?
-        self.parent = parent  # connection? beam/part?
 
 if __name__ == "__main__":
-    b = Beam()
-    print(b)
+    pass

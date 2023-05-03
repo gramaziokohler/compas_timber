@@ -1,34 +1,22 @@
 """
-import connections
-import design
-import elements
-import engineering
-import fabrication
-import interop
-import process
-import utils
+********************************************************************************
+compas_timber
+********************************************************************************
+
+.. currentmodule:: compas_timber
+
+.. toctree::
+    :maxdepth: 1
+
+    compas_timber.assembly
+    compas_timber.parts
+    compas_timber.connections
+    compas_timber.utils
+
 """
-"""
-
-Intro to project ...
 
 
-Setup
-=====
-
-In order to use this library, ...
+__all_plugins__ = ["compas_timber.rhino", "compas_timber.rhino.install", "compas_timber.utils.r_tree"]
 
 
-Main concepts
-=============
-
-Describe typical classes found in project
-
-.. autoclass:: SampleClassName
-   :members:
-
-
-from .sample_module import SampleClassName
-
-__all__ = ['SampleClassName']
-"""
+__all__ = []

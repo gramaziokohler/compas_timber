@@ -1,0 +1,22 @@
+{
+    "name": "CheckAttributes",
+    "nickname": "CheckAttributes",
+    "category": "COMPAS Timber",
+    "subcategory": "Attributes",
+    "description": "Check standard attributes (zvector, height, width, category) if they are set and correctly encoded in the referenced object's name.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 2,
+        "inputParameters": [
+            {
+                "name": "RefCrv",
+                "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
+                "typeHintID": "guid",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+        ]
+    }
+}
