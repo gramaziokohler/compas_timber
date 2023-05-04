@@ -2,6 +2,11 @@
 Citing
 ********************************************************************************
 
+COMPAS TIMBER is a research project developed by Aleksandra Apolinarska, Chen Kasirer and Gonzalo Casas at Gramazio Kohler Research at ETH Zurich, 
+and supported by the Swiss National Science Foundation through the National Center of Competence in Research "Digital Fabrication" 
+(`NCCR dfab <https://dfab.ch/>`__) programme. 
+As an open-source project, it also developed by many other contributors.
+
 If you use COMPAS_TIMBER for your work, please acknowledge it by citing it with:
 
 .. 

@@ -2,7 +2,7 @@
 Joints
 ******
 
-In :code:`compas_timber` you can connect two :code:`Beams` using one of the three types of joints: :code:`T-Butt`, :code:`L-Butt` and :code:`L-Miter`.  
+In COMPAS TIMBER you can connect two beams using one of the three types of joints: :code:`T-Butt`, :code:`L-Butt` and :code:`L-Miter`.  
 
 Joint Topologies 
 ----------------
