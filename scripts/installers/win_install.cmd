@@ -13,10 +13,10 @@ CALL Miniconda3-latest-Windows-x86_64.exe /InstallationType=JustMe /RegisterPyth
 ECHO Installing miniconda...Done!
 
 CALL %conda_path%\condabin\conda activate %env_name% >nul 2>&1
-IF %ERRORLEVEL%==0 GOTO timber_install_wheel
+IF %ERRORLEVEL%==0 GOTO timber_install_pip
 
 ECHO Creating virtual environment...
-CALL %conda_path%\condabin\conda create -n %env_name% -c conda-forge compas -y >nul 2>&1
+CALL %conda_path%\condabin\conda create -n %env_name% python=3.10 -y >nul 2>&1
 ECHO Creating virtual environment...Done!
 
 ECHO Activating virtual environment...
@@ -24,14 +24,9 @@ CALL %conda_path%\condabin\conda activate %env_name%
 IF %ERRORLEVEL% neq 0 GOTO conda_activate_failed
 ECHO Activating virtual environment...Done
 
-:compas_future:
-ECHO Installing compas_future...
-python -m pip install --force-reinstall --no-input --quiet compas_future-main.zip
-ECHO Installing compas_future...Done!
-
-:timber_install_wheel
+:timber_install_pip
 ECHO Installing compas_timber...
-python -m pip install --force-reinstall --no-input --quiet compas_timber-dev.zip
+python -m pip install --force-reinstall --no-input --quiet compas_timber
 python -m compas_rhino.install
 ECHO Installing compas_timber...Done!
 

@@ -13,9 +13,9 @@ from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
-from compas_future.datastructures import GeometricFeature
-from compas_future.datastructures import ParametricFeature
-from compas_future.datastructures import Part
+from compas.datastructures import GeometricFeature
+from compas.datastructures import ParametricFeature
+from compas.datastructures import Part
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 from compas_timber.utils.helpers import close  # TODO: remove this
