@@ -1,1 +1,2 @@
+compas @ https://github.com/compas-dev/compas/tarball/main
 rtree

@@ -16,7 +16,7 @@ class ShowJointTypes(component):
 
         for joint in Assembly.joints:
             line_a, line_b = joint.beams[0].centerline, joint.beams[1].centerline
-            [p1, t1], [p2, t2] = intersection_line_line_3D(line_a, line_b, 0.2, False, 1e-3)
+            [p1, t1], [p2, t2] = intersection_line_line_3D(line_a, line_b, float("inf"), False, 1e-3)
             p1 = point_to_rhino(p1)
             p2 = point_to_rhino(p2)
 

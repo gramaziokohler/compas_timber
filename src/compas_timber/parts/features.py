@@ -1,8 +1,8 @@
 from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
-from compas_future.datastructures import GeometricFeature
-from compas_future.datastructures import ParametricFeature
+from compas.datastructures import GeometricFeature
+from compas.datastructures import ParametricFeature
 
 
 def _trim_brep_with_frame(brep, frame):
