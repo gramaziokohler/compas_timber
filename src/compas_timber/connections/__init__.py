@@ -30,7 +30,6 @@ Functions
     :toctree: generated/
     :nosignatures:
 
-    beam_side_incidence
     find_neighboring_beams
 
 Exceptions
