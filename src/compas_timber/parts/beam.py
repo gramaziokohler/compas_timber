@@ -306,7 +306,7 @@ class Beam(Part):
 
     def apply_features(self):
         """Applies all the features previously added using `add_feature` to the geometry of this Beam.
-        
+
         This method separatelly applies the parametric and geometric features.
         The parametric features, if any, are accumulated when possible.
 
@@ -314,7 +314,7 @@ class Beam(Part):
         -------
         list(str)
             A list of errors which occurred during the application of the features, if any, to assist with debugging.
-        
+
         """
         error_log = []
         para_features = [f for f in self.features if isinstance(f, ParametricFeature)]
