@@ -5,80 +5,23 @@ from compas.geometry import intersection_line_line
 
 from .solver import JointTopology
 
-# NOTE: some methods assume that for a given set of beams there is only one joint that can connect them.
-
-
-class BeamJoinningError(BaseException):
-    """Indicates that an error has occurred while trying to join two or more beams."""
-
-
-class Joint(Data):
-    """
-    parts: beams and other parts of a joint, e.g. a dowel, a steel plate
-    assembly: TimberAssembly object to which the parts belong
-    """
-
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
-
-    def __init__(self, *args, **kwargs):
-        super(Joint, self).__init__()
-        # will be needed as coordinate system for structural calculations for the forces at the joint
-        # TODO: CK: who's supposed to sets these?
-        self.frame = None
-        self.key = None
-
-    @classmethod
-    def create(cls, assembly, *beams):
-        if len(beams) < 2:
-            raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
-
-        joint = cls(assembly, *beams)
-        assembly.add_joint(joint, beams)
-        joint.add_features()
-        return joint
-
-    @property
-    def data(self):
-        # omitting self.assembly to avoid circular reference
-        return {"frame": self.frame, "key": self.key}
-
-    @data.setter
-    def data(self, value):
-        self.frame = value["frame"]
-        self.key = value["key"]
-
-    @property
-    def _get_part_keys(self):
-        neighbor_keys = self.assembly.graph.neighbors(self.key)
-        # just double-check in case the joint-node would be somehow connecting to smth else in the graph
-        return [k for k in neighbor_keys if "part" in self.assembly.graph.node_attribute(key=k, name="type")]
-
-    @property
-    def beams(self):
-        raise NotImplementedError
-
-    def add_features(self, apply=True):
-        raise NotImplementedError
-
-    def restore_beams_from_keys(self):
-        """Restores the reference to the beams associate with this joint."""
-        raise NotImplementedError
-
 
 def beam_side_incidence(beam1, beam2):
-    """
+    """Returns a map of faces of beam2 and the angle of their normal with beam1's centerline.
+
+    This is used to find a cutting plane when joining the two beams.
 
     Parameters
     ----------
-    beam1 : Beam
+    beam1 : :class:`~compas_timber.parts.Beam`
         The beam that attaches with one of its ends to the side of Beam2.
-    beamm2 : Beam
-        The other beamm
+    beam2 : :class:`~compas_timber.parts.Beam`
+        The other beam.
 
     Returns
     -------
-    List of tuples (angle, frame)
-        For each side of Beam2, the angle (in radians) between the x-axis of Beam1 and normal vector of the side frame.
+    list(tuple(float, :class:`~compas.geometry.Frame`))
+
     """
 
     # find the orientation of beam1's centerline so that it's pointing outward of the joint
@@ -94,3 +37,99 @@ def beam_side_incidence(beam1, beam2):
     # map faces to their angle with centerline, choose smallest
     angle_face = [(angle_vectors(side.normal, centerline_vec), side) for side in beam2.faces[:4]]
     return angle_face
+
+
+class BeamJoinningError(BaseException):
+    """Indicates that an error has occurred while trying to join two or more beams."""
+
+    pass
+
+
+class Joint(Data):
+    """Base class for a joint connecting two beams.
+
+    This is a base class and should not be instantiated directly.
+    Use the `create()` class method of the respective implementation of `Joint` instead.
+
+    Attributes
+    ----------
+    beams : list(:class:`~compas_timber.parts.Beam`)
+        The beams joined by this joint.
+
+    """
+
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+
+    def __init__(self, *args, **kwargs):
+        super(Joint, self).__init__()
+        # will be needed as coordinate system for structural calculations for the forces at the joint
+        # TODO: CK: who's supposed to sets these?
+        self.frame = None
+        self.key = None
+
+    @property
+    def data(self):
+        return {"frame": self.frame, "key": self.key}
+
+    @data.setter
+    def data(self, value):
+        self.frame = value["frame"]
+        self.key = value["key"]
+
+    @property
+    def beams(self):
+        raise NotImplementedError
+
+    def add_features(self):
+        """Adds the features defined by this joint to affected beam(s)."""
+        raise NotImplementedError
+
+    def restore_beams_from_keys(self):
+        """Restores the reference to the beams associate with this joint.
+
+        During serialization, :class:`compas_timber.parts.Beam` objects
+        are serialized by :class:`compas_timber.assembly`. To avoid circular references, Joint only stores the keys
+        of the respective beams.
+
+        This method is called by :class:`compas_timber.assembly during de-serialization to restore the references.
+        Since the roles of the beams are joint specific (e.g. main/cross beam) this method should be implemented by
+        the concrete implementation.
+
+        Examples
+        --------
+        See :class:`compas_timber.connections.TButtJoint`.
+
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def create(cls, assembly, *beams):
+        """Creates an instance of this joint and creates the new connection in `assembly`.
+
+        `beams` are expected to have been added to `assembly` before calling this method.
+
+        This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
+        them. This is the responsibility of the calling code.
+
+        A `ValueError` is raised if `beams` contains less than two `Beam` objects.
+
+        Parameters
+        ----------
+        assemebly : :class:`~compas_timber.assembly.Assembly`
+            The assembly to which the beams and this joing belong.
+        beams : list(:class:`~compas_timber.parts.Beam`)
+            A list containing two beams that whould be joined together
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        if len(beams) < 2:
+            raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
+
+        joint = cls(assembly, *beams)
+        assembly.add_joint(joint, beams)
+        joint.add_features()
+        return joint

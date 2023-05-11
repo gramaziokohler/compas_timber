@@ -10,16 +10,41 @@ from .solver import JointTopology
 
 
 class TButtJoint(Joint):
+    """Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
+    trimming the main beam.
+
+    This joint type is compatible with beams in T topology.
+
+    Please use `TButtJoint.create()` to properly create an instance of this class and associate it with an assembly.
+
+    Parameters
+    ----------
+    assembly : :class:`~compas_timber.assembly.TimberAssembly`
+        The assembly associated with the beams to be joined.
+    main_beam : :class:`~compas_timber.parts.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
+
+    Attributes
+    ----------
+    beams : list(:class:`~compas_timber.parts.Beam`)
+        The beams joined by this joint.
+    cutting_plane_main : :class:`~compas.geometry.Frame`
+        The frame by which the main beam is trimmed.
+    cutting_plane_cross : :class:`~compas.geometry.Frame`
+        The frame by which the cross beam is trimmed.
+    joint_type : str
+        A string representation of this joint's type.
+
+    """
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     def __init__(self, assembly=None, main_beam=None, cross_beam=None):
-        # TODO: try if possible remove default Nones
         super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        # TODO: make it protected attribute?
         self.main_beam_key = None
         self.cross_beam_key = None
-
-        # TODO: remove direct ref, replace with assembly look up
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.gap = None
@@ -46,14 +71,6 @@ class TButtJoint(Joint):
     def beams(self):
         return [self.main_beam, self.cross_beam]
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, TButtJoint)
-            and super(TButtJoint, self).__eq__(other)
-            and self.main_beam_key == other.main_beam_key
-            and self.cross_beam_key == other.cross_beam_key
-        )
-
     @property
     def joint_type(self):
         return "T-Butt"
@@ -66,13 +83,14 @@ class TButtJoint(Joint):
         return cfr
 
     def restore_beams_from_keys(self, assemly):
+        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
         self.main_beam = assemly.find_by_key(self.main_beam_key)
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_features(self):
-        """
-        Adds the feature definitions (geometry, operation) to the involved beams.
-        In a T-Butt joint, adds the trimming plane to the main beam (no features for the cross beam).
+        """Adds the trimming plane to the main beam (no features for the cross beam).
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
         if self.features:
@@ -88,7 +106,3 @@ class TButtJoint(Joint):
                 self.main_beam, self.cutting_plane, self.cross_beam
             )
             raise BeamJoinningError(msg)
-
-
-if __name__ == "__main__":
-    pass

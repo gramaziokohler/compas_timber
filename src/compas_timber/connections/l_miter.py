@@ -13,6 +13,33 @@ from .solver import JointTopology
 
 
 class LMiterJoint(Joint):
+    """Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane
+    at the bisector angle between the beams' centerlines.
+
+    This joint type is compatible with beams in L topology.
+
+    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with an assembly.
+
+    Parameters
+    ----------
+    assembly : :class:`~compas_timber.assembly.TimberAssembly`
+        The assembly associated with the beams to be joined.
+    beam_a : :class:`~compas_timber.parts.Beam`
+        First beam to be joined.
+    beam_b : :class:`~compas_timber.parts.Beam`
+        Second beam to be joined.
+
+    Attributes
+    ----------
+    beams : list(:class:`~compas_timber.parts.Beam`)
+        The beams joined by this joint.
+    cutting_planes : tuple(:class:`~compas.geometry.Frame`, :class:`~compas.geometry.Frame`)
+        A trimming plane for each of the beams. The normals of the planes point at opposite directions.
+    joint_type : str
+        A string representation of this joint's type.
+
+    """
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     def __init__(self, assembly, beam_a, beam_b, cutoff=None):
@@ -49,42 +76,8 @@ class LMiterJoint(Joint):
     def beams(self):
         return [self.beam_a, self.beam_b]
 
-    def add_features(self):
-        """
-        Adds the feature definitions (geometry, operation) to the involved beams.
-        """
-        if self.features:
-            self.beam_a.clear_features(self.features)
-            self.beam_b.clear_features(self.features)
-            self.features = []
-
-        plane_a, plane_b = self.cutting_planes
-
-        trim_a = BeamTrimmingFeature(plane_a)
-        extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
-        self.beam_a.add_feature(extension_a)
-        self.beam_a.add_feature(trim_a)
-
-        trim_b = BeamTrimmingFeature(plane_b)
-        extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
-        self.beam_b.add_feature(extension_b)
-        self.beam_b.add_feature(trim_b)
-
-        self.features.extend([trim_a, extension_a, trim_b, extension_b])
-
-    def restore_beams_from_keys(self, assemly):
-        self.beam_a = assemly.find_by_key(self.beam_a_key)
-        self.beam_b = assemly.find_by_key(self.beam_b_key)
-
     @property
     def cutting_planes(self):
-        """Returns a 45 degree angle cutting plane for each beam in this Miter joint.
-
-        Returns
-        -------
-
-        """
-
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
 
@@ -121,3 +114,33 @@ class LMiterJoint(Joint):
         plnA = Frame.from_plane(plnA)
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
+
+    def add_features(self):
+        """Adds the required extension and trimming features to both beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+        if self.features:
+            self.beam_a.clear_features(self.features)
+            self.beam_b.clear_features(self.features)
+            self.features = []
+
+        plane_a, plane_b = self.cutting_planes
+
+        trim_a = BeamTrimmingFeature(plane_a)
+        extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
+        self.beam_a.add_feature(extension_a)
+        self.beam_a.add_feature(trim_a)
+
+        trim_b = BeamTrimmingFeature(plane_b)
+        extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
+        self.beam_b.add_feature(extension_b)
+        self.beam_b.add_feature(trim_b)
+
+        self.features.extend([trim_a, extension_a, trim_b, extension_b])
+
+    def restore_beams_from_keys(self, assemly):
+        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
+        self.beam_a = assemly.find_by_key(self.beam_a_key)
+        self.beam_b = assemly.find_by_key(self.beam_b_key)

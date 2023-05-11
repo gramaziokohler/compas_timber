@@ -11,7 +11,7 @@ compas_timber
     compas_timber.assembly
     compas_timber.parts
     compas_timber.connections
-    compas_timber.utils
+    compas_timber.rhino
 
 """
 
