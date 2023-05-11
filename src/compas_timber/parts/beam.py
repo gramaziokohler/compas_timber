@@ -305,8 +305,8 @@ class Beam(Part):
             self.apply_features()
 
     def apply_features(self):
-        """Applies the features which were added to this beam.
-
+        """Applies all the features previously added using `add_feature` to the geometry of this Beam.
+        
         This method separatelly applies the parametric and geometric features.
         The parametric features, if any, are accumulated when possible.
 
@@ -314,12 +314,12 @@ class Beam(Part):
         -------
         list(str)
             A list of errors which occurred during the application of the features, if any, to assist with debugging.
-
+        
         """
         error_log = []
         para_features = [f for f in self.features if isinstance(f, ParametricFeature)]
         geo_features = [f for f in self.features if isinstance(f, GeometricFeature)]
-        for f in para_features:
+        for f in self._accumulate_param_features(para_features):
             success, _ = f.apply(self)
             if not success:
                 error_log.append(self._create_feature_error_msg(f, self))
@@ -329,6 +329,25 @@ class Beam(Part):
             if not success:
                 error_log.append(self._create_feature_error_msg(f, self))
         return error_log
+
+    @staticmethod
+    def _accumulate_param_features(features):
+        """Returns a list of simmered down parameteric features.
+
+        It accumulates the effect of all features which are complient with each other.
+        In best case, if all features are of the same type, a single feature is returned.
+        In worse case, where all of the features are of unique type. The input list of features is returned.
+
+        """
+        map = {}
+        for current in features:
+            type_ = current.__class__
+            if type_ in map:
+                previous = map[type_]
+                map[type_] = previous.accumulate(current)
+            else:
+                map[type_] = current
+        return list(map.values())
 
     @staticmethod
     def _create_feature_error_msg(feature, part):
