@@ -13,8 +13,8 @@ from .solver import JointTopology
 
 
 class LMiterJoint(Joint):
-    """Represents an L-Miter type joint which joins two beam in their ends, applying a 45° trim to both beams to create
-    a shared plane..
+    """Represents an L-Miter type joint which joins two beam in their ends, applying a trim with the required angle
+    to both beams to create a shared plane.
 
     This joint type is compatible with beams in L topology.
 
@@ -34,7 +34,7 @@ class LMiterJoint(Joint):
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
     cutting_planes : tuple(:class:`~compas.geometry.Frame`, :class:`~compas.geometry.Frame`)
-        The 45° trimming plane for each of the beams. The normals of the planes point at opposite directions.
+        A trimming plane for each of the beams. The normals of the planes point at opposite directions.
 
     """
 
