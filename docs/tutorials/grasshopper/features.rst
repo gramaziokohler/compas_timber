@@ -2,7 +2,7 @@
 Features
 ********
 
-Features are additional geometric operations on :code:`Beams`:
+Features are additional geometric operations on beams:
 
 
 

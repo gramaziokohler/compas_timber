@@ -54,17 +54,19 @@ An :code:`L-Miter` joint connects two beams with a planar cut at a bisector of a
 AutomaticJoint wizzard
 ----------------------
 
-Connecting beams can be automated using :code:`JointCategoryRule` and :code:`AutomaticJoints` components.  
-:code:`JointCategoryRule` component serves to define which joint type should be applied when a beam of the first category (`CatA`) 
-meets a beam of the second category (`CatB`).  
-:code:`AutomaticJoints` component does two things: First, it determines if two beams connect and if yes, 
-determines the joint topology (I, L, T or X). 
-Then, assigns the join type to every connecting pair of beams according to the defined rules. 
+Connecting beams can be automated using **JointCategoryRule** and **AutomaticJoints** components:
+
+**JointCategoryRule** component serves to define which joint type should be applied when a beam of the first category (`CatA`) meets a beam of the second category (`CatB`).  
+
+**AutomaticJoints** component does two things: First, it determines if two beams connect and if yes, determines the joint topology (I, L, T or X). 
+Then, it assigns the join type to every connecting pair of beams according to the defined rules. 
 If the defined joint type has a different topology than the beams, no joint is assigned 
 (Example: two beams form a corner (L) but the rule tries to assign a T-Butt joint).
 
-* `Beams`: list of beams. To avoid unintended results, it should be the same list that is later used as an input to :code:`Assembly`
-* `Rules`: rules defined using :code:`JointCategoryRule` components
+Inputs:
+
+* `Beams`: list of beams. To avoid unintended results, it should be the same list that is later used as an input to **Assembly**.
+* `Rules`: rules defined using **JointCategoryRule** components
 * `MaxDistance`: (optional) tolerance for finding connecting beams if the centerlines to not intersect exactly but are at a certain distance from each other. Default is 0.000001.
 
 .. image:: ../images/Joints4Categories_diagramm.png

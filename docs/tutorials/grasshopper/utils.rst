@@ -5,7 +5,7 @@ Utils
 
 Bake with BoxMap
 ^^^^^^^^^^^^^^^^
-Bake with BoxMap is a utility tool for rendering with texture mapping.
+**BakeWithBoxMap** is a utility tool for rendering with texture mapping.
 It bakes the *Brep* geometry of a beams
 and automatically adds a beam-aligned BoxMap information to the baked objects in the Rhino document.
 The objects are baked to the active layer and by default use the layer material, 
