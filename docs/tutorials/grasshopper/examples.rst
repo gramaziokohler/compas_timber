@@ -1,7 +1,4 @@
 Examples
 ********
 
-Will follow soon.
-
-
-.. `here <https://github.com/gramaziokohler/compas_timber/blob/dev/data>`__
+See demo files `here <https://github.com/gramaziokohler/compas_timber/tree/main/examples/Grasshopper>`__.

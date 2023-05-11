@@ -54,7 +54,7 @@ An :code:`L-Miter` joint connects two beams with a planar cut at a bisector of a
 AutomaticJoint wizzard
 ----------------------
 
-Connecting beams can be automated using **JointCategoryRule** and **AutomaticJoints** components:
+Connecting beams can be automated using **JointCategoryRule** and **AutomaticJoints** components.
 
 **JointCategoryRule** component serves to define which joint type should be applied when a beam of the first category (`CatA`) meets a beam of the second category (`CatB`).  
 
