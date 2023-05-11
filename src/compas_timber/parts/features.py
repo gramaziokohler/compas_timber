@@ -115,11 +115,28 @@ class BeamExtensionFeature(ParametricFeature):
         part.extend_ends(-self._extend_start, -self._extend_end)
 
     def accumulate(self, feature):
+        """Returns a new BeamExtensionFeature which the accumulative effect of this and `feature`.
+
+        Parameters
+        ----------
+        feature: :class:`compas_timber.features.BeamExtensionFeature`
+            The feature to accumulate with.
+
+        Returns
+        -------
+        :class:`~compas_timber.features.BeamExtensionFeature`
+            A new instance of BeamExtensionFeature.
+
+        """
         if not isinstance(feature, self.__class__):
-            return False
-        self._extend_start = max(feature._extend_start)
-        self._extend_end = max(feature._extend_end)
-        return True
+            raise TypeError(
+                "This feature {} cannot be accumulated with feature of type: {}".format(
+                    self.__class__.__name__, feature.__class__.__name__
+                )
+            )
+        return BeamExtensionFeature(
+            max(self._extend_start, feature._extend_start), max(self._extend_end, feature._extend_end)
+        )
 
     def __repr__(self):
         return "{}({}, {})".format(self.__class__.__name__, self._extend_start, self._extend_end)
