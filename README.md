@@ -1,5 +1,7 @@
 # compas_timber
 
+[![Github Actions Build Status](https://github.com/gramaziokohler/compas_timber/workflows/build/badge.svg)](https://github.com/gramaziokohler/compas_timber/actions)
+
 COMPAS package for modeling, designing and fabricating timber assemblies
 
 # Installation
