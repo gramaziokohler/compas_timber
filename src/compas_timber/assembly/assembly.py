@@ -10,10 +10,6 @@ class TimberAssembly(Assembly):
 
     Attributes
     ----------
-    units : literal("meters"|"millimiters")
-        Returns the currently selected unit type used in this assembly.
-    tol : float
-        The used tolerance for floating point operations, this is a function of the selected unit type.
     beams : list(:class:`~compas_timber.parts.Beam`)
         A list of beams assigned to this assembly.
     joints : list(:class:`~compas_timber.connections.Joint`)
@@ -29,8 +25,6 @@ class TimberAssembly(Assembly):
 
     def __init__(self, *args, **kwargs):
         super(TimberAssembly, self).__init__()
-        self._units = "meters"  # options: 'meters', 'millimeters' #TODO: change to global compas PRECISION
-        self._units_precision = {"meters": 1e-9, "millimeters": 1e-6}
         self._beams = []
         self._joints = []
 
@@ -56,24 +50,6 @@ class TimberAssembly(Assembly):
             if isinstance(part, Joint):
                 self._joints.append(part)
                 part.restore_beams_from_keys(self)
-
-    @property
-    def units(self):
-        return self._units
-
-    @units.setter
-    def units(self, units_name):
-        if units_name not in self._units_precision.keys():
-            raise ValueError(
-                "The units parameters must be one of the following strings: {}.".format(self._units_precision.keys())
-            )
-        else:
-            self._units = units_name
-
-    @property
-    def tol(self):
-        # TODO: change to compas PRECISION
-        return self._units_precision[self.units]
 
     @property
     def beams(self):
