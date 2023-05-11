@@ -104,11 +104,11 @@ class Joint(Data):
 
     @classmethod
     def create(cls, assembly, *beams):
-        """Creats and instance of this joint and updates the new connection in `assembly`.
+        """Creates an instance of this joint and creates the new connection in `assembly`.
 
         `beams` are expected to have been added to `assembly` before calling this method.
 
-        This code does not verify that the given beams are adjacent and/or lay in a topology which allows connecting
+        This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
         them. This is the responsibility of the calling code.
 
         A `ValueError` is raised if `beams` contains less than two `Beam` objects.
