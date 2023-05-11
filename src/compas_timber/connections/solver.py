@@ -34,6 +34,7 @@ def find_neighboring_beams(beams, inflate_by=None):
     Notes
     -----
     This is a `pluggable`. In order to use this function, a compatible `plugin` has to be available.
+    For example, in Rhino, the function :func:`~compas_timber.rhino.find_neighboring_beams` will be used.
 
     """
     raise NotImplementedError
