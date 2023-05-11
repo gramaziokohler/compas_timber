@@ -15,15 +15,16 @@ from compas.plugins import pluggable
 
 @pluggable(category="solvers")
 def find_neighboring_beams(beams, inflate_by=None):
-    """Finds neighboring pairs of beams in the given list of beams.
+    """Finds neighboring pairs of beams in the given list of beams, using R-tree search.
 
+    The inputs to the R-tree algorithm are the axis-aligned bounding boxes of the beams (beam.aabb), enlarged by the `inflate_by` amount.
     The returned elements are sets containing pairs of Beam objects.
 
     Parameters
     ----------
-    beams : list(:class:`compas_timer.part.Beam`)
+    beams : list(:class:`~compas_timer.part.Beam`)
         The list of beams in which neighboring beams should be identified.
-    inflate_by : float
+    inflate_by : optional, float
         A value in design units by which the regarded bounding boxes should be inflated.
 
     Returns
@@ -91,24 +92,24 @@ class ConnectionSolver(object):
 
         Parameters
         ----------
-        beams : list(:class:`compas_timber.parts.Beam`)
+        beams : list(:class:`~compas_timber.parts.Beam`)
             A list of beam objects.
         rtree : bool
-            When set to True RTree will be used to search for neighboring beams.
+            When set to True R-tree will be used to search for neighboring beams.
         max_distance : float, optional
-            When rtree is True, an additional distance apart with which
+            When `rtree` is True, an additional distance apart with which
             non-touching beams are still considered intersecting.
 
         Returns
         -------
-        list(set(:class:`compas_timber.parts.Beam`, :class:`compas_timber.parts.Beam`))
+        list(set(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`))
             List containing sets or neightboring pairs beams.
 
         """
         return find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
-        """If beam_a and beam_b intersect within the given `max_distance`, return the topology type of the intersection.
+        """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
 
         If the topology is role-sensitive, the method outputs the beams in a consistent specific order
         (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
@@ -116,14 +117,14 @@ class ConnectionSolver(object):
 
         Parameters
         ----------
-        beam_a : :class:`compas_timber.parts.Beam`
+        beam_a : :class:`~compas_timber.parts.Beam`
             First beam from intersecting pair.
-        beam_b : :class:`compas_timber.parts.Beam`
+        beam_b : :class:`~compas_timber.parts.Beam`
             Second beam from intersecting pair.
         tol : float
             General tolerance to use for mathematical computations.
-        mat_distance : float, optional
-            Maximum distance, in desigen units, at which two beams are cosidered intersecing.
+        max_distance : float, optional
+            Maximum distance, in desigen units, at which two beams are considered intersecting.
 
         Returns
         -------

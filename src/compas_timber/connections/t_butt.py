@@ -15,6 +15,8 @@ class TButtJoint(Joint):
 
     This joint type is compatible with beams in T topology.
 
+    Please use `TButtJoint.create()` to properly create an instance of this class and associate it with an assembly.
+
     Parameters
     ----------
     assembly : :class:`~compas_timber.assembly.TimberAssembly`
@@ -23,8 +25,6 @@ class TButtJoint(Joint):
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
-    joint_type : str
-        A string representation of this joint's type.
 
     Attributes
     ----------
@@ -34,6 +34,8 @@ class TButtJoint(Joint):
         The frame by which the main beam is trimmed.
     cutting_plane_cross : :class:`~compas.geometry.Frame`
         The frame by which the cross beam is trimmed.
+    joint_type : str
+        A string representation of this joint's type.
 
     """
 
@@ -86,7 +88,11 @@ class TButtJoint(Joint):
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_features(self):
-        """Adds the trimming plane to the main beam (no features for the cross beam)."""
+        """Adds the trimming plane to the main beam (no features for the cross beam).
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
         if self.features:
             self.main_beam.clear_features(self.features)
             self.features = []

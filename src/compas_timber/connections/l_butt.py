@@ -21,8 +21,6 @@ class LButtJoint(Joint):
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
-    joint_type : str
-        A string representation of this joint's type.
 
     Attributes
     ----------
@@ -32,6 +30,9 @@ class LButtJoint(Joint):
         The frame by which the main beam is trimmed.
     cutting_plane_cross : :class:`~compas.geometry.Frame`
         The frame by which the cross beam is trimmed.
+    joint_type : str
+        A string representation of this joint's type.
+
 
     """
 
@@ -90,7 +91,11 @@ class LButtJoint(Joint):
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_features(self):
-        """Adds the required extension and trimming features to both beams."""
+        """Adds the required extension and trimming features to both beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
         if self.features:
             self.main_beam.clear_features(self.features)
             self.cross_beam.clear_features(self.features)
