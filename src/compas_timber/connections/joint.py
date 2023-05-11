@@ -48,7 +48,8 @@ class BeamJoinningError(BaseException):
 class Joint(Data):
     """Base class for a joint connecting two beams.
 
-    Use `ConcreteJoint.create()` to instantiate an implementation of :class:`~compas_timber.connections.Joint`.
+    This is a base class and should not be instantiated directly.
+    Use the `create()` class method of the respective implementation of `Joint` instead.
 
     Attributes
     ----------

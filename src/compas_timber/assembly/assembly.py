@@ -92,7 +92,7 @@ class TimberAssembly(Assembly):
         Parameters
         ----------
         beam : :class:`~compas_timber.parts.Beam`
-            The beam to add.
+            The beam to add to the assembly.
 
         Returns
         -------
@@ -150,9 +150,7 @@ class TimberAssembly(Assembly):
             raise AssemblyError("Cannot add this joint to assembly: some of the parts are already joined.")
 
     def remove_joint(self, joint):
-        """Removes a joint from the assembly, i.e. disconnects it from assembly and from its parts.
-
-        Does not delete the object.
+        """Removes this joint object from the assembly.
 
         Parameters
         ----------
