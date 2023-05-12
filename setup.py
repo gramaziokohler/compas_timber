@@ -8,8 +8,7 @@ import io
 from os import path
 
 from setuptools import setup
-from setuptools.command.develop import develop
-from setuptools.command.install import install
+from setuptools import find_packages
 
 here = path.abspath(path.dirname(__file__))
 
@@ -48,7 +47,7 @@ setup(
     ],
     keywords=[],
     project_urls={},
-    packages=["compas_timber"],
+    packages=find_packages("src"),
     package_dir={"": "src"},
     package_data={},
     data_files=[],
