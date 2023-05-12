@@ -32,7 +32,7 @@ setup(
     url=about["__url__"],
     long_description=long_description,
     classifiers=[
-        "Development Status :: 3- Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Topic :: Scientific/Engineering",
         "License :: OSI Approved :: MIT License",
