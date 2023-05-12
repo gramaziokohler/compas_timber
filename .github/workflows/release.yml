@@ -25,13 +25,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: compas-dev/compas-actions.ghpython_components@v2
+        with:
+          source: src/compas_timber/ghpython/components
+          target: src/compas_timber/ghpython/components/ghuser
+      - name: Copy manual components
+        run: |
+          cp src/compas_timber/ghpython/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
       - uses: compas-dev/compas-actions.publish@v2
         with:
           pypi_token: ${{ secrets.PYPI }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_ghpython_components: true
-          gh_source: src/compas_timber/ghpython/components
-          gh_target: src/compas_timber/ghpython/components/ghuser
-      - name: Copy manual components
-        run: |
-          cp src/compas_timber/ghpython/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
