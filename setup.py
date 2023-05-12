@@ -31,6 +31,7 @@ setup(
     author_email=about["__author_email__"],
     url=about["__url__"],
     long_description=long_description,
+    long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
