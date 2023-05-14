@@ -60,4 +60,4 @@ jobs:
         env:
             IRONPYTHONPATH: ./src
         run: |
-          ipy test/ipy_test_runnner.py
+          ipy tests/ipy_test_runnner.py
