@@ -32,7 +32,7 @@ jobs:
 
       - name: Installing package
         run: |
-          python -m install --no-cache-dir -r requiremetns-dev.txt
+          python -m pip install --no-cache-dir -r requiremetns-dev.txt
 
       - name: Running linter
         run: |
