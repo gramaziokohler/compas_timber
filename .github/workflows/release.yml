@@ -81,6 +81,7 @@ jobs:
           python -m pip install wheel
           python -m pip install cython --config-settings="--build-option=--no-cython-compile"
           python -m pip install compas@git+https://github.com/compas-dev/compas@main  # TODO: remove once new `Part` is released.
+          python -m pip install --no-cache-dir -r requirements-dev.txt
 
       - uses: NuGet/setup-nuget@v1.0.5
       - name: Install dependencies
