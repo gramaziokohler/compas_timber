@@ -6,22 +6,37 @@ on:
 name: Create Release
 
 jobs:
-  # build:
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       os: [windows-latest]
-  #       python: ['3.10']
+  build:
+    if: "!contains(github.event.pull_request.labels.*.name, 'docs-only')"
+    runs-on: windows-latest
+    steps:
+      - uses:  actions/checkout@v3
 
-  #   steps:
-  #   - uses: compas-dev/compas-actions.build@v3
-  #     with:
-  #       python: ${{ matrix.python }}
-  #       invoke_lint: true
-  #       check_import: true
+      - name: Installing Python3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Installing dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install compas@git+https://github.com/compas-dev/compas@main  # TODO: remove once new `Part` is released.
+
+      - name: Installing package
+        run: |
+          python -m pip install --no-cache-dir -r requirements-dev.txt
+
+      - name: Running linter
+        run: |
+          invoke lint
+
+      - name: Running unit-tests
+        run: |
+          invoke test
+
 
   publish:
-    # needs: build
+    needs: build
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -81,6 +96,38 @@ jobs:
       - name: Copy manual components
         run: |
           cp src/compas_timber/ghpython/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
+
+      - name: 📃 Generate docs
+        if: success()
+        run: |
+          invoke docs --check-links
+          # Get branch/tag/latest name from git
+          GITHUB_REF_REGEX="tags/v([0-9a-zA-Z\.\-]+)|(pull/[0-9]+)|heads/(.+)"
+          if [[ $GITHUB_REF =~ $GITHUB_REF_REGEX ]]; then
+            if [[ $BASH_REMATCH = pull* ]]; then
+              BRANCH_OR_TAG=pull_${BASH_REMATCH##*/}
+            elif [[ $BASH_REMATCH = tags/v* ]]; then
+              # 2nd element is tag, #v replaces prefix v
+              BRANCH_OR_TAG=${BASH_REMATCH[1]#v}
+            else
+              BRANCH_OR_TAG=${BASH_REMATCH##*/}
+            fi;
+            if [[ $BRANCH_OR_TAG = main ]]; then
+              BRANCH_OR_TAG=latest
+            fi;
+          fi;
+          echo "Docs will be deployed to https://gramaziokohler.github.io/compas_timber/$BRANCH_OR_TAG"
+          mkdir -p deploy/$BRANCH_OR_TAG && mv -T dist/docs deploy/$BRANCH_OR_TAG/
+
+      - name: 🚢 Deploy docs
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: deploy
+          keep_history: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - shell: bash
         run: |
