@@ -20,7 +20,7 @@
   <link rel="stylesheet" type="text/css" href="_static/css/compas-reference.css" />
 
   
-  <link rel="next" title="Getting Started" href="gettingstarted.html" />
+  <link rel="next" title="Installation" href="installation.html" />
   
 
   
@@ -48,7 +48,7 @@
         <meta id="doc_versions" data-url="https://gramaziokohler.github.io/compas_timber/doc_versions.txt" data-docs="https://gramaziokohler.github.io/compas_timber/">
         <li class="nav-item nav-versions dropdown">
           <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="bd-versions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            0.1.0
+            0.2.10
           </a>
           <div id="doc_version_list" class="dropdown-menu dropdown-menu-md-right" aria-labelledby="bd-versions"></div>
         </li>
@@ -89,17 +89,60 @@
         
         <section id="compas-timber">
 <h1>COMPAS TIMBER</h1>
-<p class="lead">COMPAS package for modeling, designing and fabricating timber assemblies</p>
+<p class="lead">This is the documentation of COMPAS TIMBER - an open-source package for modeling, designing and fabricating timber frame structures.</p>
+<p>COMPAS TIMBER is written in Python and based on the <a class="reference external" href="https://compas.dev/index.html">COMPAS</a> framework as part of its ecosystem.
+It also features an implementation for <a class="reference external" href="https://www.rhino3d.com/">Rhinoceros 3D</a>
+as a <a class="reference external" href="https://www.rhino3d.com/features/#grasshopper">Grasshopper</a> plug-in.</p>
+<p>COMPAS TIMBER is an active research project and is being continuously developed at Gramazio Kohler Research at ETH Zurich.
+At the current stage, the library encompasses tools for fast and intuitive design of frame structures with simple joints
+using custom object classes for beam, joints and assembly entities to maintain parametric and semantic information about the structure.
+In the future, it will be expanded to entail interfaces to structural analysis software and specialist timber construction software,
+assembly sequencing methods, fabricability checking tools and more.</p>
+<section id="dependencies">
+<h2>Dependencies</h2>
+<p>COMPAS TIMBER builts upon the <a class="reference external" href="https://compas.dev/index.html">COMPAS</a> framework.
+It inherits many basic geometry classes like <code class="code docutils literal notranslate"><span class="pre">Point</span></code>, <code class="code docutils literal notranslate"><span class="pre">Line</span></code>, <code class="code docutils literal notranslate"><span class="pre">Vector</span></code> etc. from COMPAS.</p>
+<p>For more complex types of geometric objects like <em>Brep</em>, it resolves to environment-specific backends.
+For example, if the code is run in <a class="reference external" href="https://www.rhino3d.com/">Rhinoceros 3D</a>,
+it uses <a class="reference external" href="https://developer.rhino3d.com/api/rhinocommon/">RhinoCommon SDK</a> to handle <em>Brep</em> geometry, and
+if the code is run in a python process, it will default to
+<a class="reference external" href="https://www.opencascade.com/open-cascade-technology/">OpenCascade</a> via <a class="reference external" href="https://compas.dev/compas_occ">COMPAS OCC</a>.</p>
+</section>
 <section id="table-of-contents">
 <h2>Table of Contents</h2>
 <div class="toctree-wrapper compound">
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul class="simple">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation/installation_quick.html">Quick installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation/installation_manual.html">Manual installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation/installation_dev.html">Manual installation for developers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.html">compas_timber</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/create_joint.html">Create Joint</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Grasshopper plugin</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/workflow.html">Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/beam.html">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/joints.html">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/assembly.html">Assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/show.html">Show</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/examples.html">Examples</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing.html">Citing</a></li>
 </ul>
 </div>
 </section>
@@ -130,11 +173,36 @@
         <div id="compas-navigation" class="collapse compas-navigation">
           <ul class="nav flex-column collapse show active">
 <li class="toctree-l1 nav-item active"><a class="nav-link active reference internal" href="#">Introduction</a></li>
-<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="gettingstarted.html">Getting Started</a></li>
-<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="api.html">API Reference</a><ul class="simple">
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="installation.html">Installation</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="installation/installation_quick.html">Quick installation</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="installation/installation_manual.html">Manual installation</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="installation/installation_dev.html">Manual installation for developers</a></li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="api.html">API Reference</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="api/compas_timber.html">compas_timber</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="examples.html">Examples</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="examples/create_joint.html">Create Joint</a></li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="tutorials.html">Grasshopper plugin</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/workflow.html">Workflow</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/beam.html">Beam</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/attributes.html">Attributes</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/joints.html">Joints</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/features.html">Features</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/assembly.html">Assembly</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/show.html">Show</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/utils.html">Utils</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/examples.html">Examples</a></li>
 </ul>
 </li>
 <li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="license.html">License</a></li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="citing.html">Citing</a></li>
 </ul>
 
         </div>
@@ -146,6 +214,7 @@
         
         <ul class="nav flex-column" id="compas-toc">
 <li class="nav-item"><a class="nav-link reference internal" href="#">COMPAS TIMBER</a><ul class="nav flex-column">
+<li class="nav-item"><a class="nav-link reference internal" href="#dependencies">Dependencies</a></li>
 <li class="nav-item"><a class="nav-link reference internal" href="#table-of-contents">Table of Contents</a></li>
 <li class="nav-item"><a class="nav-link reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
@@ -163,10 +232,10 @@
       
 
       
-      <a href="gettingstarted.html" title="Getting Started" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
+      <a href="installation.html" title="Installation" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
         <div class="nav-title footer-link flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Next</div>
-          Getting Started
+          Installation
         </div>
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-right"></i></div>
       </a>

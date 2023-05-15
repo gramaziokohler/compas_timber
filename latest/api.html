@@ -20,11 +20,11 @@
   <link rel="stylesheet" type="text/css" href="_static/css/compas-reference.css" />
 
   
-  <link rel="next" title="&lt;no title&gt;" href="api/compas_timber.html" />
+  <link rel="next" title="compas_timber" href="api/compas_timber.html" />
   
 
   
-  <link rel="prev" title="Getting Started" href="gettingstarted.html" />
+  <link rel="prev" title="Manual installation for developers" href="installation/installation_dev.html" />
   
 
   <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
@@ -50,7 +50,7 @@
         <meta id="doc_versions" data-url="https://gramaziokohler.github.io/compas_timber/doc_versions.txt" data-docs="https://gramaziokohler.github.io/compas_timber/">
         <li class="nav-item nav-versions dropdown">
           <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="bd-versions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            0.1.0
+            0.2.10
           </a>
           <div id="doc_version_list" class="dropdown-menu dropdown-menu-md-right" aria-labelledby="bd-versions"></div>
         </li>
@@ -91,8 +91,14 @@
         
         <section id="api-reference">
 <h1>API Reference</h1>
+<section id="packages">
+<h2>Packages</h2>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/compas_timber.html">compas_timber</a></li>
+</ul>
 </div>
+</section>
 </section>
 
         
@@ -113,11 +119,36 @@
         <div id="compas-navigation" class="collapse compas-navigation">
           <ul class="nav flex-column collapse show active">
 <li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="index.html">Introduction</a></li>
-<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="gettingstarted.html">Getting Started</a></li>
-<li class="toctree-l1 nav-item active"><a class="nav-link active reference internal" href="#">API Reference</a><ul class="simple">
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="installation.html">Installation</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="installation/installation_quick.html">Quick installation</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="installation/installation_manual.html">Manual installation</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="installation/installation_dev.html">Manual installation for developers</a></li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item active"><a class="nav-link active reference internal" href="#">API Reference</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="api/compas_timber.html">compas_timber</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="examples.html">Examples</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="examples/create_joint.html">Create Joint</a></li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="tutorials.html">Grasshopper plugin</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/workflow.html">Workflow</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/beam.html">Beam</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/attributes.html">Attributes</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/joints.html">Joints</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/features.html">Features</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/assembly.html">Assembly</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/show.html">Show</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/utils.html">Utils</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="tutorials/grasshopper/examples.html">Examples</a></li>
 </ul>
 </li>
 <li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="license.html">License</a></li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="citing.html">Citing</a></li>
 </ul>
 
         </div>
@@ -128,7 +159,10 @@
       <div class="d-none d-xl-block col-xl-2 compas-toc" role="toc">
         
         <ul class="nav flex-column" id="compas-toc">
-<li class="nav-item"><a class="nav-link reference internal" href="#">API Reference</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="#">API Reference</a><ul class="nav flex-column">
+<li class="nav-item"><a class="nav-link reference internal" href="#packages">Packages</a></li>
+</ul>
+</li>
 </ul>
 
       </div>
@@ -140,20 +174,20 @@
   <footer class="compas-footer">
     <nav class="nav p-2">
       
-      <a href="gettingstarted.html" title="Getting Started" class="nav-link footer-link float-start text-left d-flex w-50" rel="prev">
+      <a href="installation/installation_dev.html" title="Manual installation for developers" class="nav-link footer-link float-start text-left d-flex w-50" rel="prev">
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-left"></i></div>
         <div class="nav-title flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Previous</div>
-          Getting Started
+          Manual installation for developers
         </div>
       </a>
       
 
       
-      <a href="api/compas_timber.html" title="&lt;no title&gt;" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
+      <a href="api/compas_timber.html" title="compas_timber" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
         <div class="nav-title footer-link flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Next</div>
-          &lt;no title&gt;
+          compas_timber
         </div>
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-right"></i></div>
       </a>
