@@ -30,8 +30,7 @@ Use this installation guide if you want to add **COMPAS TIMBER** for development
 **Rhino & Grasshopper**
 
 
-4.  `Build <https://github.com/compas-dev/compas/blob/8e21328efc0c192bd9f5f25698156778ca7a7a58/docs/devguide.rst#grasshopper-components>`__
-    ghuser components for Grasshopper:
+4.  Build ghuser components for Grasshopper:
 
     .. code-block:: bash
 
