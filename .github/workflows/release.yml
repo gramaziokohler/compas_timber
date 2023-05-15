@@ -121,7 +121,7 @@ jobs:
 
       - name: 🚢 Deploy docs
         if: success()
-        uses: crazy-max/ghaction-github-pages@v2
+        uses: crazy-max/ghaction-github-pages@v3
         with:
           target_branch: gh-pages
           build_dir: deploy
