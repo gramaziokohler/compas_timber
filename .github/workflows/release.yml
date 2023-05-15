@@ -99,6 +99,7 @@ jobs:
 
       - name: 📃 Generate docs
         if: success()
+        shell: bash
         run: |
           invoke docs --check-links
           # Get branch/tag/latest name from git
