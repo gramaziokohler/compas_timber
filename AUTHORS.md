@@ -6,7 +6,7 @@ If you use COMPAS TIMBER in a project, please use the following citation:
 
 .. code-block:: none
 
-    @misc{compas-dev,
+    @misc{compas_timber,
         title  = {{COMPAS_TIMBER}: A library for design and fabrication of timber structures.},
         author = {Apolinarska, Aleksandra Anna and Kasirer, Chen and Casas, Gonzalo and many others},
         note   = {https://github.com/gramaziokohler/compas_timber},
