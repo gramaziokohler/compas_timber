@@ -20,7 +20,7 @@ project = "COMPAS TIMBER"
 year = "2021"
 author = "Gramazio Kohler Research"
 copyright = "{0}, {1}".format(year, author)
-release = "0.2.15"
+release = "0.2.16"
 version = ".".join(release.split(".")[0:2])
 
 master_doc = "index"
