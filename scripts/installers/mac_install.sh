@@ -25,6 +25,10 @@ echo "Activating environment…"
 conda activate $CONDA_ENV_NAME
 echo "Activating environment…Done!"
 
+echo "Installing compas from main..."
+python -m pip install --no-input --quiet compas@git+https://github.com/compas-dev/compas@main
+echo "Installing compas from main...Done!"
+
 echo "Installing compas_timber…"
 python -m pip install --force-reinstall --no-input --quiet compas_timber
 python -m compas_rhino.install
