@@ -94,29 +94,19 @@
         <section id="quick-installation">
 <h1>Quick installation</h1>
 <p><strong>Prerequisites</strong>
-Assumes you have:</p>
-<ul class="simple">
-<li><p>Rhinoceros3D installed</p></li>
-<li><p>…</p></li>
-</ul>
-<p><strong>Usage</strong></p>
-<div class="line-block">
-<div class="line">Obtain offline wheels for both COMPAS TIMBER and COMPAS FUTURE, this can be done by donwloading both repositories as a <code class="code docutils literal notranslate"><span class="pre">.zip</span></code> file.</div>
-<div class="line">Place both <code class="code docutils literal notranslate"><span class="pre">.zip</span></code> files in a directory together with the script.</div>
-</div>
-<p>(This script relies on the presence of a COMPAS TIMBER and COMPAS FUTURE wheels in the same directory.)</p>
+To use the Grasshopper components included with <code class="code docutils literal notranslate"><span class="pre">compas_timber</span></code> you need to have [Rhinoceros3D](<a class="reference external" href="https://www.rhino3d.com/download/">https://www.rhino3d.com/download/</a>) installed.</p>
 <p><strong>Windows</strong></p>
 <div class="line-block">
-<div class="line">Copy the <code class="code docutils literal notranslate"><span class="pre">win_install.cmd</span></code> script along with a zipped COMPAS TIMBER to the target machine.</div>
-<div class="line">Locate <code class="code docutils literal notranslate"><span class="pre">win_install.cmd</span></code> and double click.</div>
-<div class="line">Alternatively, open a <code class="code docutils literal notranslate"><span class="pre">cmd.exe</span></code> session, locate the script, and run:</div>
+<div class="line">Download the file <code class="code docutils literal notranslate"><span class="pre">win_install.cmd</span></code> from [here](<a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/scripts/installers/">https://github.com/gramaziokohler/compas_timber/blob/main/scripts/installers/</a>) or copy its content into a newly created text file (and change the file’s extension to <code class="code docutils literal notranslate"><span class="pre">.cmd</span></code>)</div>
+<div class="line">Double click <code class="code docutils literal notranslate"><span class="pre">win_install.cmd</span></code> to execute.</div>
+<div class="line">Alternatively, open a <code class="code docutils literal notranslate"><span class="pre">cmd.exe</span></code> session, locate the file, and run:</div>
 </div>
 <div class="language-bash notranslate"><div class="highlight"><pre><button class="btn copy"><i class="far fa-copy"></i></button><code><span></span>win_install.cmd
 </code></pre></div>
 </div>
 <p><strong>Mac</strong></p>
 <div class="line-block">
-<div class="line">Copy <code class="code docutils literal notranslate"><span class="pre">mac_install.cmd</span></code> script along with a zipped COMPAS TIMBER to the target machine.</div>
+<div class="line">Download the file <code class="code docutils literal notranslate"><span class="pre">mac_install.cmd</span></code> from [here](<a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/scripts/installers/">https://github.com/gramaziokohler/compas_timber/blob/main/scripts/installers/</a>) or copy its content into a newly created text file.</div>
 <div class="line">Open a terminal session, and navigate to the script’s location.</div>
 <div class="line">Run the installer using:</div>
 </div>
@@ -128,9 +118,9 @@ Assumes you have:</p>
 <ol class="arabic simple">
 <li><p>Downloads <code class="code docutils literal notranslate"><span class="pre">miniconda</span></code> from <a class="reference external" href="https://repo.anaconda.com/miniconda/">here</a></p></li>
 <li><p>Installs <code class="code docutils literal notranslate"><span class="pre">miniconda</span></code></p></li>
-<li><p>Creates a new <code class="code docutils literal notranslate"><span class="pre">conda</span></code> virtual environment with COMPAS and required dependencies</p></li>
-<li><p>Installs <code class="code docutils literal notranslate"><span class="pre">compas_future</span></code> from an offline wheel present in the same directory</p></li>
-<li><p>Installs COMPAS TIMBER from an offline wheel present in the same directory</p></li>
+<li><p>Creates a new <code class="code docutils literal notranslate"><span class="pre">conda</span></code> virtual environment</p></li>
+<li><p>Installs COMPAS directly from its main branch on [GitHub](<a class="reference external" href="https://github.com/compas-dev/compas">https://github.com/compas-dev/compas</a>)</p></li>
+<li><p>Installs COMPAS TIMBER from [pip](<a class="reference external" href="https://pypi.org/project/compas-timber/">https://pypi.org/project/compas-timber/</a>)</p></li>
 <li><p>Installs COMPAS TIMBER components to the local <code class="code docutils literal notranslate"><span class="pre">Rhino</span></code> installation</p></li>
 </ol>
 </section>
