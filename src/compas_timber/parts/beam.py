@@ -117,8 +117,7 @@ class Beam(Part):
         self.height = height
         self.length = length
         self.geometry_type = geometry_type
-        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
-        self._geometry_with_features = self._geometry.copy()
+        self._geometry = None
 
     @property
     def data(self):
@@ -141,6 +140,14 @@ class Beam(Part):
     @property
     def shape(self):
         return _create_box(self.frame, self.length, self.width, self.height)
+
+    @property
+    def geometry(self):
+        if not self._geometry:
+            self._geometry = self._create_beam_shape_from_params(
+                self.length, self.width, self.height, self.geometry_type
+            )
+        return self._geometry.transformed(Transformation.from_frame(self.frame))
 
     @property
     def faces(self):
@@ -235,7 +242,7 @@ class Beam(Part):
         Should be called after each update to the paramteric definition of the beam.
 
         """
-        self._geometry_with_features = self._create_beam_shape_from_params(
+        self._geometry = self._create_beam_shape_from_params(
             self.length, self.width, self.height, self.geometry_type
         )
 
@@ -262,30 +269,6 @@ class Beam(Part):
         obj = cls(**data)
         obj.data = data
         return obj
-
-    def get_geometry(self, with_features=False):
-        """Returns the geometry representation of this beam.
-
-        The geometry is transformed to the frame of this beam.
-
-        Parameters
-        ----------
-        with_features : bool
-            If True the geometry returned should include the features, if any.
-
-        Returns
-        -------
-        :class:`compas.geometry.Geometry`
-
-
-        """
-        transformation = Transformation.from_frame(self.frame)
-        if not with_features or not self.features:
-            g_copy = self._geometry.copy()
-        else:
-            g_copy = self._geometry_with_features.copy()
-        g_copy.transform(transformation)
-        return g_copy
 
     def add_feature(self, feature, apply=False):
         """Adds a feature to this beam.
@@ -324,8 +307,8 @@ class Beam(Part):
             if not success:
                 error_log.append(self._create_feature_error_msg(f, self))
         for f in geo_features:
-            success, self._geometry_with_features = f.apply(self)
-            self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
+            success, self._geometry = f.apply(self)
+            self._geometry.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
             if not success:
                 error_log.append(self._create_feature_error_msg(f, self))
         return error_log
@@ -370,7 +353,7 @@ class Beam(Part):
             self.features = [f for f in self.features if f not in features_to_clear]
         else:
             self.features = []
-        self._geometry_with_features = self._geometry.copy()
+        self.update_beam_geometry()
 
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):
@@ -434,6 +417,10 @@ class Beam(Part):
         """
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector, geometry_type)
+
+    @classmethod
+    def from_brep(cls, brep):
+        pass
 
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         """Deprecated?"""
