@@ -42,7 +42,7 @@ class LMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, assembly, beam_a, beam_b, cutoff=None):
+    def __init__(self, assembly=None, beam_a=None, beam_b=None, cutoff=None):
         super(LMiterJoint, self).__init__(assembly, [beam_a, beam_b])
         self.beam_a = beam_a
         self.beam_b = beam_b

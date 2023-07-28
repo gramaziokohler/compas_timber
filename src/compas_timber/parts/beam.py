@@ -266,9 +266,7 @@ class Beam(Part):
     @classmethod
     def from_data(cls, data):
         """Alternative to None default __init__ parameters."""
-        obj = cls(**data)
-        obj.data = data
-        return obj
+        return cls(**data)
 
     def add_feature(self, feature, apply=False):
         """Adds a feature to this beam.
