@@ -242,9 +242,7 @@ class Beam(Part):
         Should be called after each update to the paramteric definition of the beam.
 
         """
-        self._geometry = self._create_beam_shape_from_params(
-            self.length, self.width, self.height, self.geometry_type
-        )
+        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
 
     def is_identical(self, other):
         """Returns True if the other beam's values are identicale, within TOLERANCE, to the ones of this beam.
