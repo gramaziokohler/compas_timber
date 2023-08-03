@@ -100,12 +100,12 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.parts.Beam">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.parts.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.datastructures.Part.html#compas.datastructures.Part" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Part</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.datastructures.Part.html#compas.datastructures.Part" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Part</span></code></a></p>
 <p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>frame</strong> (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></a>) – A local coordinate system of the beam:
+<li><p><strong>frame</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></a>) – A local coordinate system of the beam:
 Origin is located at the starting point of the centerline.
 x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
 y-axis corresponds to the width of the cross-section, usually the smaller dimension.
@@ -118,27 +118,27 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>frame</strong> (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>) – The coordinate system (frame) of this beam.</p></li>
+<li><p><strong>frame</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>) – The coordinate system (frame) of this beam.</p></li>
 <li><p><strong>length</strong> (<em>float</em>) – Length of the beam.</p></li>
 <li><p><strong>width</strong> (<em>float</em>) – Width of the cross-section</p></li>
 <li><p><strong>height</strong> (<em>float</em>) – Height of the cross-section</p></li>
 <li><p><strong>geometry_type</strong> (<em>str</em>) – The type of geometry created by this beam. Either ‘mesh’ or ‘brep’.</p></li>
 <li><p><strong>tolerance</strong> (<em>float</em>)</p></li>
-<li><p><strong>shape</strong> (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html#compas.geometry.Box" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a>) – A feature-less box representing the parametric geometry of this beam.
+<li><p><strong>shape</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Box.html#compas.geometry.Box" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a>) – A feature-less box representing the parametric geometry of this beam.
 The default tolerance used in operations performed on this beam.</p></li>
-<li><p><strong>faces</strong> (list(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)) – A list of frames representing the 6 faces of this beam.
+<li><p><strong>faces</strong> (list(<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)) – A list of frames representing the 6 faces of this beam.
 0: +y (side’s frame normal is equal to the beam’s Y positive direction)
 1: +z
 2: -y
 3: -z
 4: -x (side at the starting end)
 5: +x (side at the end of the beam)</p></li>
-<li><p><strong>centerline</strong> (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html#compas.geometry.Line" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>) – A line representing the centerline of this beam.</p></li>
-<li><p><strong>centerline_start</strong> (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the start of the centerline of this beam.</p></li>
-<li><p><strong>centerline_end</strong> (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the end of the centerline of this beam.</p></li>
+<li><p><strong>centerline</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Line.html#compas.geometry.Line" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>) – A line representing the centerline of this beam.</p></li>
+<li><p><strong>centerline_start</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the start of the centerline of this beam.</p></li>
+<li><p><strong>centerline_end</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the end of the centerline of this beam.</p></li>
 <li><p><strong>aabb</strong> (<em>tuple(float, float, float, float, float, float)</em>) – An axis-aligned bounding box of this beam as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).</p></li>
-<li><p><strong>long_edges</strong> (list(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html#compas.geometry.Line" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>)) – A list containing the 4 lines along the long axis of this beam.</p></li>
-<li><p><strong>midpoint</strong> (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS v1.17)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the middle of the centerline of this beam.</p></li>
+<li><p><strong>long_edges</strong> (list(<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Line.html#compas.geometry.Line" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>)) – A list containing the 4 lines along the long axis of this beam.</p></li>
+<li><p><strong>midpoint</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the middle of the centerline of this beam.</p></li>
 </ul>
 </dd>
 </dl>
@@ -216,11 +216,14 @@ The default tolerance used in operations performed on this beam.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_jsonstring.html#compas_timber.parts.Beam.to_jsonstring" title="compas_timber.parts.Beam.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Serialize the data representation of an object to a JSON string.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_data.html#compas_timber.parts.Beam.validate_data" title="compas_timber.parts.Beam.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
-<td><p>Validate the object's data against its data schema.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_json.html#compas_timber.parts.Beam.validate_json" title="compas_timber.parts.Beam.validate_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_json</span></code></a></p></td>
+<td><p>Validate the data contained in the JSON document against the object's JSON data schema.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_json.html#compas_timber.parts.Beam.validate_json" title="compas_timber.parts.Beam.validate_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_json</span></code></a></p></td>
-<td><p>Validate the object's data against its json schema.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_jsondata.html#compas_timber.parts.Beam.validate_jsondata" title="compas_timber.parts.Beam.validate_jsondata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_jsondata</span></code></a></p></td>
+<td><p>Validate the JSON data against the objects's JSON data schema.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_jsonstring.html#compas_timber.parts.Beam.validate_jsonstring" title="compas_timber.parts.Beam.validate_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_jsonstring</span></code></a></p></td>
+<td><p>Validate the data contained in the JSON string against the objects's JSON data schema.</p></td>
 </tr>
 </tbody>
 </table>
