@@ -11,8 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Beam geometry is created on demand.
+* Beam transformed geometry with features is available using property `geometry`.
+
 ### Removed
 
+* Removed method `Beam.get_geometry`.
 
 ## [0.2.16] 2023-05-16
 
