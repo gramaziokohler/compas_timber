@@ -72,23 +72,22 @@ class HalfLapJoint(Joint):
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
         int_points = []
         for i in lines_vertical:
-            point = intersection_line_plane(i, plane_top)
-            point = Point(*point)
-            int_points.append(point)
-        for i in lines_vertical:
-            point = intersection_line_plane(i, plane_bottom)
-            point = Point(*point)
-            int_points.append(point)
+            point_top = intersection_line_plane(i, plane_top)
+            point_bottom = intersection_line_plane(i, plane_bottom)
+            point_top = Point(*point_top)
+            point_bottom = Point(*point_bottom)
+            int_points.append(point_top)
+            int_points.append(point_bottom)
         # Step 2: Create a hexahedron with 6 Faces from the 8 Points
         return Polyhedron(
             int_points,
             [
-                [0, 1, 2, 3],  # top
-                [4, 5, 6, 7],  # bottom
-                [0, 1, 5, 4],  # left
-                [1, 5, 6, 2],  # back
-                [2, 6, 7, 3],  # right
-                [3, 7, 4, 0],  # front
+                [1, 3, 5, 7],  # top
+                [0, 2, 4, 6],  # bottom
+                [1, 3, 2, 0],  # left
+                [3, 5, 4, 2],  # back
+                [5, 7, 6, 4],  # right
+                [7, 1, 0, 6],  # front
             ],
         )
 
