@@ -31,7 +31,7 @@ def _create_box(frame, xsize, ysize, zsize):
     boxframe = frame.copy()
     depth_offset = boxframe.xaxis * xsize * 0.5
     boxframe.point += depth_offset
-    return Box(boxframe, xsize, ysize, zsize)
+    return Box(xsize, ysize, zsize, frame=boxframe)
 
 
 def _create_mesh_shape(xsize, ysize, zsize):
