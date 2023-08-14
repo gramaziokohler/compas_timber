@@ -75,6 +75,8 @@ class Beam(Part):
         Width of the cross-section
     height : float
         Height of the cross-section
+    geometry : :class:`compas.geometry.Brep` | :class:`compas.datastructures.Mesh`
+        The resolved geometry of this beam, including any applied features.
     geometry_type : str
         The type of geometry created by this beam. Either 'mesh' or 'brep'.
     tolerance : float
