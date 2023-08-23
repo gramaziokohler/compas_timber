@@ -1,0 +1,42 @@
+{
+    "name": "WriteBTLx",
+    "nickname": "WriteBTLx",
+    "category": "COMPAS Timber",
+    "subcategory": "Utils",
+    "description": "Writes a BTLx file for machining of assembly parts.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Assembly",
+                "description": "Assembly object.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }
+            {
+                "name": "Location",
+                "description": "Path to write location.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }
+            {
+                "name": "Name",
+                "description": "Name of BTLx file.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }
+            {
+                "name": "Write",
+                "description": "Write to file.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+
+        ],
+        "outputParameters": [
+
+        ]
+    }
+}

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BTLx xmlns="https://www.design2machine.com" Version="2.0.0" Language="en" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
+	<FileHistory>
+		<InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="1.7" ComputerName="PC" UserName="OB" FileName="tenon-mortise.BTLX" Date="2021-12-02" Time="14:08:00" Comment=""/>
+	</FileHistory>
+	<Project Name="Template" Number="" Section="" ListName="" Customer="" Architect="" Editor="" SourceFile="" ProcessingQuality="automatic">
+		<Parts>
+			<Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2756.516" Height="180" Width="80" PlaningLength="0" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
+				<Transformations>
+					<Transformation GUID="{E12C6AFA-DAAC-43FD-98FE-16FAA2E912B9}">
+						<Position>
+							<ReferencePoint X="2974.383" Y="2675.238" Z="2055.427"/>
+							<XVector X="0" Y="0.8192" Z="0.5736"/>
+							<YVector X="0" Y="-0.5736" Z="0.8192"/>
+						</Position>
+					</Transformation>
+				</Transformations>
+				<GrainDirection X="1" Y="0" Z="0" Align="no"/>
+				<ReferenceSide Side="3" Align="no"/>
+				<Processings>
+					<JackRafterCut Name="Jack cut" Process="yes" Priority="0" ProcessID="4" ReferencePlaneID="2">
+						<Orientation>end</Orientation>
+						<StartX>2756.516</StartX>
+						<StartY>0</StartY>
+						<StartDepth>0</StartDepth>
+						<Angle>55</Angle>
+						<Inclination>90</Inclination>
+					</JackRafterCut>
+				</Processings>
+				<Shape>
+					<IndexedFaceSet convex="false" coordIndex="">
+						<Coordinate point=""/>
+					</IndexedFaceSet>
+				</Shape>
+			</Part>
+		</Parts>
+	</Project>
+</BTLx>
