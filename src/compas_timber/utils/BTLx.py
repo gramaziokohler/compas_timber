@@ -116,8 +116,8 @@ class BTLx:
 
             a = a + 1
 
-    def writeBTLx(self, location, name):
-        self.write(open(location + name + ".btlx", "wb", encoding="utf-8"))
+    def writeBTLx(self, path):
+        self.write(open(path + ".btlx", "wb", encoding="utf-8"))
 
 
 # print(xml.dom.minidom.parseString(ET.tostring(btlx)).toprettyxml())
