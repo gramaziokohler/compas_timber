@@ -1,9 +1,6 @@
 # import xml.etree.ElementTree as ET
 # import numpy as np
 import uuid
-from compas.geometry import Point
-from compas.geometry import Frame
-from compas_timber.parts import Beam
 from compas_timber.assembly import TimberAssembly
 
 from compas.rpc import Proxy
@@ -13,7 +10,7 @@ np = Proxy('numpy')
 class BTLx:
 
 
-    def add_process(processings=ET.Element, process=int):
+    def add_process(processings, process):
         if process == 0:
             jack_cut = ET.Element(
                 "JackRafterCut", Name="Jack cut", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2"
@@ -41,7 +38,7 @@ class BTLx:
             tenon = ET.Element("Tenon", Name="Tenon", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2")
             processings.insert(1, tenon)
 
-    def __init__(assembly: TimberAssembly):
+    def __init__(assembly):
         btlx = ET.Element("BTLx")
         project = ET.SubElement(btlx, "Project")
         parts = ET.SubElement(project, "Parts")

@@ -1,8 +1,6 @@
-from compas.artists import Artist
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-from compas_timber.utils.BTLx import BTLx
-
+from compas_timber.utils.btlx import BTLx
 
 class WriteBTLx(component):
     def RunScript(self, Assembly, Location, Name, Write):

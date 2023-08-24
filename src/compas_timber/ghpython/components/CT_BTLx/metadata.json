@@ -14,19 +14,19 @@
                 "description": "Assembly object.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
-            }
+            },
             {
                 "name": "Location",
                 "description": "Path to write location.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
-            }
+            },
             {
                 "name": "Name",
                 "description": "Name of BTLx file.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
-            }
+            },
             {
                 "name": "Write",
                 "description": "Write to file.",
