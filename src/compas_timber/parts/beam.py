@@ -111,7 +111,7 @@ class Beam(Part):
         "brep": _create_brep_shape,
     }
 
-    def __init__(self, frame, length, width, height, geometry_type, **kwargs):
+    def __init__(self, frame, length, width, height, geometry_type="brep", **kwargs):
         super(Beam, self).__init__(frame=frame)
         # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.frame = frame
