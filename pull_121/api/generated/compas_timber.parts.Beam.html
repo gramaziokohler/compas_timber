@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <title>compas_timber - Beam</title>
+  
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+  <meta name="author" content="" />
+  <meta name="description" content="" />
+
+  <link rel="shortcut icon" href="../../_static/images/compas.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/mono-blue.min.css">
+  <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css" />
+  <link rel="stylesheet" type="text/css" href="../../_static/css/compas-reference.css" />
+
+  
+  <link rel="next" title="Beam.add_feature" href="compas_timber.parts.Beam.add_feature.html" />
+  
+
+  
+  <link rel="prev" title="parts" href="../compas_timber.parts.html" />
+  
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+
+<body data-spy="scroll" data-target="#compas-toc">
+  <!-- header -->
+  <header id="header" class="compas-header d-flex align-items-center">
+    <nav class="navbar navbar-expand navbar-dark col flex-column flex-md-row text-center">
+      <!-- brand -->
+      <a class="navbar-brand" href="https://gramaziokohler.github.io/compas_timber/">
+        <img src="../../_static/images/compas_icon_white.png" alt="COMPAS TIMBER" width="48px" height="48px" />
+      </a>
+      <!-- brand -->
+      <!-- primary -->
+      <ul class="navbar-nav">
+        <li class="nav-item active"><a class="nav-link" href="https://gramaziokohler.github.io/compas_timber/">COMPAS TIMBER</a></li>
+      </ul>
+      <!-- primary -->
+      <ul class="navbar-nav d-none d-md-flex ml-md-auto">
+        <!-- version -->
+        
+        <meta id="doc_versions" data-url="https://gramaziokohler.github.io/compas_timber/doc_versions.txt" data-docs="https://gramaziokohler.github.io/compas_timber/">
+        <li class="nav-item nav-versions dropdown">
+          <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="bd-versions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            0.2.16
+          </a>
+          <div id="doc_version_list" class="dropdown-menu dropdown-menu-md-right" aria-labelledby="bd-versions"></div>
+        </li>
+        
+        <!-- version -->
+        <!-- social -->
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/gramaziokohler/compas_timber" target="_blank">
+            <span class="fab fa-github fa-1x"></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="http://forum.compas-framework.org" target="_blank">
+            <span class="fab fa-discourse fa-1x"></span>
+          </a>
+        </li>
+        <!-- social -->
+      </ul>
+    </nav>
+  </header>
+  <!-- header -->
+  <!-- main -->
+  <div class="container-fluid">
+    <div class="row">
+      <!-- main -->
+      <main class="col-12 col-md-9 col-xl-7 px-4 px-md-5 pt-2 pb-5 compas-content" role="main">
+        
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-3 bg-white px-0">
+            <li class="breadcrumb-item"><a href="../../index.html">COMPAS TIMBER</a></li>
+            
+            <li class="breadcrumb-item"><a href="../../api.html">API Reference</a></li>
+            
+            <li class="breadcrumb-item"><a href="../compas_timber.html">compas_timber</a></li>
+            
+            <li class="breadcrumb-item"><a href="../compas_timber.parts.html">parts</a></li>
+            
+            <!-- <li class="breadcrumb-item active" aria-current="page">Beam</li> -->
+          </ol>
+        </nav>
+        
+
+        
+        
+        <section class="detail" id="beam">
+<h1>Beam</h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="compas_timber.parts.Beam">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.parts.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.datastructures.Part.html#compas.datastructures.Part" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Part</span></code></a></p>
+<p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frame</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></a>) – A local coordinate system of the beam:
+Origin is located at the starting point of the centerline.
+x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
+y-axis corresponds to the width of the cross-section, usually the smaller dimension.
+z-axis corresponds to the height of the cross-section, usually the larger dimension.</p></li>
+<li><p><strong>length</strong> (<em>float</em>) – Length of the beam</p></li>
+<li><p><strong>width</strong> (<em>float</em>) – Width of the cross-section</p></li>
+<li><p><strong>height</strong> (<em>float</em>) – Height of the cross-section</p></li>
+<li><p><strong>geometry_type</strong> (<em>str</em>) – The type of geometry created for this beam. Either ‘mesh’ or ‘brep.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>frame</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>) – The coordinate system (frame) of this beam.</p></li>
+<li><p><strong>length</strong> (<em>float</em>) – Length of the beam.</p></li>
+<li><p><strong>width</strong> (<em>float</em>) – Width of the cross-section</p></li>
+<li><p><strong>height</strong> (<em>float</em>) – Height of the cross-section</p></li>
+<li><p><strong>geometry_type</strong> (<em>str</em>) – The type of geometry created by this beam. Either ‘mesh’ or ‘brep’.</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>)</p></li>
+<li><p><strong>shape</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Box.html#compas.geometry.Box" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a>) – A feature-less box representing the parametric geometry of this beam.
+The default tolerance used in operations performed on this beam.</p></li>
+<li><p><strong>faces</strong> (list(<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)) – A list of frames representing the 6 faces of this beam.
+0: +y (side’s frame normal is equal to the beam’s Y positive direction)
+1: +z
+2: -y
+3: -z
+4: -x (side at the starting end)
+5: +x (side at the end of the beam)</p></li>
+<li><p><strong>centerline</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Line.html#compas.geometry.Line" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>) – A line representing the centerline of this beam.</p></li>
+<li><p><strong>centerline_start</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the start of the centerline of this beam.</p></li>
+<li><p><strong>centerline_end</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the end of the centerline of this beam.</p></li>
+<li><p><strong>aabb</strong> (<em>tuple(float, float, float, float, float, float)</em>) – An axis-aligned bounding box of this beam as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).</p></li>
+<li><p><strong>long_edges</strong> (list(<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Line.html#compas.geometry.Line" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>)) – A list containing the 4 lines along the long axis of this beam.</p></li>
+<li><p><strong>midpoint</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Point.html#compas.geometry.Point" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>) – The point at the middle of the centerline of this beam.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.add_feature.html#compas_timber.parts.Beam.add_feature" title="compas_timber.parts.Beam.add_feature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_feature</span></code></a></p></td>
+<td><p>Adds a feature to this beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.align_z.html#compas_timber.parts.Beam.align_z" title="compas_timber.parts.Beam.align_z"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_z</span></code></a></p></td>
+<td><p>Align the z_axis of the beam's definition with the given vector.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.apply_features.html#compas_timber.parts.Beam.apply_features" title="compas_timber.parts.Beam.apply_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_features</span></code></a></p></td>
+<td><p>Applies all the features previously added using <cite>add_feature</cite> to the geometry of this Beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.clear_features.html#compas_timber.parts.Beam.clear_features" title="compas_timber.parts.Beam.clear_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_features</span></code></a></p></td>
+<td><p>Clears applied features and restores their effect.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.endpoint_closest_to_point.html#compas_timber.parts.Beam.endpoint_closest_to_point" title="compas_timber.parts.Beam.endpoint_closest_to_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">endpoint_closest_to_point</span></code></a></p></td>
+<td><p>Returns which endpoint of the centerline of the beam is closer to the given point.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.extend_ends.html#compas_timber.parts.Beam.extend_ends" title="compas_timber.parts.Beam.extend_ends"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_ends</span></code></a></p></td>
+<td><p>Extends the beam's parametric definition at both ends by the given values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.extension_to_plane.html#compas_timber.parts.Beam.extension_to_plane" title="compas_timber.parts.Beam.extension_to_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extension_to_plane</span></code></a></p></td>
+<td><p>Returns the amount by which to extend the beam in each direction using metric units.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_centerline.html#compas_timber.parts.Beam.from_centerline" title="compas_timber.parts.Beam.from_centerline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_centerline</span></code></a></p></td>
+<td><p>Define the beam from its centerline.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_data.html#compas_timber.parts.Beam.from_data" title="compas_timber.parts.Beam.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a></p></td>
+<td><p>Construct an object of this type from the provided data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_endpoints.html#compas_timber.parts.Beam.from_endpoints" title="compas_timber.parts.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
+<td><p>Creates a Beam from the given endpoints.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.get_geometry.html#compas_timber.parts.Beam.get_geometry" title="compas_timber.parts.Beam.get_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_geometry</span></code></a></p></td>
+<td><p>Returns the geometry representation of this beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.is_identical.html#compas_timber.parts.Beam.is_identical" title="compas_timber.parts.Beam.is_identical"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_identical</span></code></a></p></td>
+<td><p>Returns True if the other beam's values are identicale, within TOLERANCE, to the ones of this beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.move_endpoint.html#compas_timber.parts.Beam.move_endpoint" title="compas_timber.parts.Beam.move_endpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_endpoint</span></code></a></p></td>
+<td><p>Deprecated?</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.update_beam_geometry.html#compas_timber.parts.Beam.update_beam_geometry" title="compas_timber.parts.Beam.update_beam_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_beam_geometry</span></code></a></p></td>
+<td><p>Resets the geometry representation of the beam accroding to the current parametric values.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Inherited Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.ToString.html#compas_timber.parts.Beam.ToString" title="compas_timber.parts.Beam.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
+<td><p>Converts the instance to a string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.copy.html#compas_timber.parts.Beam.copy" title="compas_timber.parts.Beam.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
+<td><p>Make an independent copy of the data object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.sha256.html#compas_timber.parts.Beam.sha256" title="compas_timber.parts.Beam.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_data.html#compas_timber.parts.Beam.to_data" title="compas_timber.parts.Beam.to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data</span></code></a></p></td>
+<td><p>Convert an object to its native data representation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_data.html#compas_timber.parts.Beam.validate_data" title="compas_timber.parts.Beam.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<td><p>Validate the data against the object's data schema.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</section>
+
+        
+      </main>
+      <!-- content -->
+      <!-- sidebar -->
+      <div class="col-12 col-md-3 compas-sidebar" role="navigation">
+        <form id="search" class="d-flex align-items-center compas-searchbox" action="../../search.html" method="get">
+          <input class="form-control" type="text" name="q" placeholder="Search docs" />
+          <input type="hidden" name="check_keywords" value="yes" />
+          <input type="hidden" name="area" value="default" />
+          <button class="navbar-toggler d-md-none" type="button" data-toggle="collapse" data-target="#compas-navigation" aria-controls="compas-navigation" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </form>
+        
+        
+        <div id="compas-navigation" class="collapse compas-navigation">
+          <ul class="nav flex-column collapse show active">
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="../../index.html">Introduction</a></li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="../../installation.html">Installation</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../installation/installation_quick.html">Quick installation</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../installation/installation_manual.html">Manual installation</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../installation/installation_dev.html">Manual installation for developers</a></li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item active"><a class="nav-link reference internal" href="../../api.html">API Reference</a><ul class="nav flex-column collapse show active">
+<li class="toctree-l2 nav-item active"><a class="nav-link reference internal" href="../compas_timber.html">compas_timber</a><ul class="nav flex-column collapse show active">
+<li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.assembly.html">assembly</a></li>
+<li class="toctree-l3 nav-item active"><a class="nav-link reference internal" href="../compas_timber.parts.html">parts</a></li>
+<li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.connections.html">connections</a></li>
+<li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.rhino.html">rhino</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="../../examples.html">Examples</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../examples/create_joint.html">Create Joint</a></li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="../../tutorials.html">Grasshopper plugin</a><ul class="nav flex-column collapse">
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/workflow.html">Workflow</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/beam.html">Beam</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/attributes.html">Attributes</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/joints.html">Joints</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/features.html">Features</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/assembly.html">Assembly</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/show.html">Show</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/utils.html">Utils</a></li>
+<li class="toctree-l2 nav-item"><a class="nav-link reference internal" href="../../tutorials/grasshopper/examples.html">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1 nav-item"><a class="nav-link reference internal" href="../../citing.html">Citing</a></li>
+</ul>
+
+        </div>
+        
+      </div>
+      <!-- sidebar -->
+      <!-- toc -->
+      <div class="d-none d-xl-block col-xl-2 compas-toc" role="toc">
+        
+        <ul class="nav flex-column" id="compas-toc">
+<li class="nav-item"><a class="nav-link reference internal" href="#">Beam</a><ul class="nav flex-column">
+<li class="nav-item"><a class="nav-link reference internal" href="#compas_timber.parts.Beam"><code class="docutils literal notranslate"><span class="pre">Beam</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+      </div>
+      <!-- toc -->
+    </div>
+  </div>
+  <!-- main -->
+  <!-- footer -->
+  <footer class="compas-footer">
+    <nav class="nav p-2">
+      
+      <a href="../compas_timber.parts.html" title="parts" class="nav-link footer-link float-start text-left d-flex w-50" rel="prev">
+        <div class="nav-button p-2 m-2"><i class="fas fa-arrow-left"></i></div>
+        <div class="nav-title flex-grow-1 align-self-center">
+          <div class="nav-direction small font-weight-light">Previous</div>
+          parts
+        </div>
+      </a>
+      
+
+      
+      <a href="compas_timber.parts.Beam.add_feature.html" title="Beam.add_feature" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
+        <div class="nav-title footer-link flex-grow-1 align-self-center">
+          <div class="nav-direction small font-weight-light">Next</div>
+          Beam.add_feature
+        </div>
+        <div class="nav-button p-2 m-2"><i class="fas fa-arrow-right"></i></div>
+      </a>
+      
+    </nav>
+  </footer>
+  <!-- footer -->
+  <!-- below -->
+  <div class="below py-5" style="background-color: #222;">
+    <div class="container">
+      <div class="row flex-column">
+        <div class="col-12 col-md-6 mx-md-auto text-center">
+          <h4 class="pb-3 below-text">COMPAS</h4>
+          <p class="below-text">
+            A computational framework for collaboration and research
+            in Architecture, Engineering, Fabrication, and Construction.
+          </p>
+          <nav class="nav justify-content-center pb-3">
+            <a class="nav-link mx-2 px-0 below-link" href="http://github.com/compas-dev" target="_blank">
+              <span class="fab fa-github fa-1x"></span>
+            </a>
+            <a class="nav-link mx-2 px-0 below-link" href="http://forum.compas-framework.org" target="_blank">
+              <span class="fab fa-discourse fa-1x"></span>
+            </a>
+            <a class="nav-link mx-2 px-0 below-link" href="https://pypi.org/project/COMPAS/" target="_blank">
+              <span class="fab fa-python fa-1x"></span>
+            </a>
+          </nav>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col text-center">
+          <p class="p-0 m-0 below-text">Copyright &copy; 2017-2021 compas-dev</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- below -->
+  <!-- scripts -->
+  <script id="documentation_options" data-url_root="" src="../../_static/documentation_options.js"></script>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.0.0/anchor.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+
+  <script src="../../_static/underscore.js"></script>
+  <script src="../../_static/doctools.js"></script>
+  <script src="../../_static/searchtools.js"></script>
+  <script src="../../_static/language_data.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      $(".language-default code").addClass("python");
+      $(".language-python code").addClass("python");
+      $(".language-bash code").addClass("bash");
+      $(".language-cpp code").addClass("cpp");
+      $(".language-json code").addClass("json");
+      $(".language-none code").addClass("plaintext");
+
+      hljs.initHighlighting();
+      anchors.add();
+
+      new ClipboardJS(".btn.copy", {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+
+      $("#compas-navigation li.active > ul").each(function() {
+        var ul = $(this);
+        if (! ul.hasClass("show")) {
+          ul.addClass("show");
+        }
+      });
+
+      $("#compas-navigation li.toctree-l1").has("ul").each(function() {
+        var li = $(this);
+        li.addClass("has-children");
+        if (li.hasClass("active")) {
+          li.prepend('<span class="menu-toggle"><i class="fas fa-chevron-up"></i></span>');
+        }
+        else {
+          li.prepend('<span class="menu-toggle"><i class="fas fa-chevron-down"></i></span>');
+        }
+      });
+
+      $(".menu-toggle").click(function() {
+        var toggle = $(this);
+        toggle.siblings("ul").toggleClass("show");
+      });
+
+    });
+
+
+    var url = $("#doc_versions").data("url");
+    var docs_site = $("#doc_versions").data("docs");
+
+    if (url) {
+      $.get(url, res => {
+        var lines = res.match(/[^\r\n]+/g);
+        lines.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        lines.reverse();
+        lines.forEach(version => {
+          $("#doc_version_list").append("<a class=\"dropdown-item\" href=\"" + docs_site + version + "\">" + version + "</a>");
+        });
+
+        var selected_version = $('.nav-versions .dropdown-item').filter(function (i, ver) {
+          return window.location.href.startsWith(ver.href);
+        });
+        selected_version.addClass('active');
+        $("#bd-versions").text(selected_version.text());
+
+      })
+    }
+  </script>
+  <!-- scripts -->
+  
+  
+</body>
+
+</html>
