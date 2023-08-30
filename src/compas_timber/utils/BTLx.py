@@ -2,10 +2,12 @@
 # import numpy as np
 import uuid
 from compas_timber.assembly import TimberAssembly
-
 from compas.rpc import Proxy
 ET = Proxy('xml.etree.ElementTree')
 np = Proxy('numpy')
+print("still OKAY")
+# from System.Xml import Xml as xml
+print("NOT OK")
 
 class BTLx:
 
@@ -38,9 +40,24 @@ class BTLx:
             tenon = ET.Element("Tenon", Name="Tenon", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2")
             processings.insert(1, tenon)
 
-    def __init__(assembly):
-        btlx = ET.Element("BTLx")
-        project = ET.SubElement(btlx, "Project")
+
+
+
+
+    def __init__(self, assembly):
+
+
+
+
+
+
+
+        print("NOW OK")
+
+        root = ET.Element("BTLx")
+        print("NOW DO EVEN BETTER!")
+
+        project = ET.SubElement(root, "Project")
         parts = ET.SubElement(project, "Parts")
 
         beams = assembly.beams
@@ -107,14 +124,17 @@ class BTLx:
             reference_side = ET.SubElement(part, "ReferenceSide", Side="3", Align="no")
 
             processings = ET.SubElement(part, "Processings")
-            for i in range(3):
-                add_process(processings, i)
+            i=0
+            for feature in beam.features:
+                self.add_process(processings, i)
+                i = i+1
 
             shape = ET.SubElement(part, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="", coorIndex="")
             coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="")
 
             a = a + 1
+        return root
 
     def writeBTLx(self, path):
         self.write(open(path + ".btlx", "wb", encoding="utf-8"))

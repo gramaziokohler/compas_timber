@@ -26,3 +26,4 @@ class TrimmingFeature(component):
             Feature.append(FeatureDefinition(feature, Beam))
 
         return Feature
+
