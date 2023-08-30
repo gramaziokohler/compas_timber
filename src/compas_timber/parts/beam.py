@@ -257,7 +257,6 @@ class Beam(Part):
             # TODO: skip joints and features ?
         )
 
-
     def get_geometry(self, with_features=False):
         """Returns the geometry representation of this beam.
 
