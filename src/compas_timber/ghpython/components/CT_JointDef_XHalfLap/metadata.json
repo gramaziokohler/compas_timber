@@ -1,23 +1,23 @@
 {
-    "name": "JointDef: Half-Lap",
-    "nickname": "JointDef: Half-Lap",
+    "name": "JointDef: XHalfLap",
+    "nickname": "JointDef: XHalfLap",
     "category": "COMPAS Timber",
     "subcategory": "Joints",
-    "description": "Defines an Half-Lap Joint for the given two Beams. The order matters: the MainBeam's z-Vector defines defines in which direction the Beams are plugged together.",
+    "description": "Defines an Half-Lap Joint for the given two Beams.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "MainBeam",
-                "description": "First (main) Beam.",
+                "name": "BeamA",
+                "description": "First Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "CrossBeam",
-                "description": "Second (cross) Beam.",
+                "name": "BeamB",
+                "description": "Second Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             }
@@ -25,7 +25,7 @@
         "outputParameters": [
             {
                 "name": "Joint",
-                "description": "Half-Lap JointDefinition."
+                "description": "XHalf-Lap JointDefinition."
             }
         ]
     }

@@ -3,12 +3,12 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import HalfLapJoint
+from compas_timber.connections import XHalfLapJoint
 from compas_timber.connections import JointTopology
 from compas_timber.ghpython import JointDefinition
 
 
-class LButtDefinition(component):
+class XHalfLapDefinition(component):
     def RunScript(self, MainBeam, CrossBeam):
         if not MainBeam:
             self.AddRuntimeMessage(Warning, "Input parameter MainBeams failed to collect data.")
@@ -27,13 +27,13 @@ class LButtDefinition(component):
         Joint = []
         for main, cross in zip(MainBeam, CrossBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, cross)
-            if topology != HalfLapJoint.SUPPORTED_TOPOLOGY:
+            if topology != XHalfLapJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
                     Warning,
                     "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                        JointTopology.get_name(topology), HalfLapJoint.__name__
+                        JointTopology.get_name(topology), XHalfLapJoint.__name__
                     ),
                 )
                 continue
-            Joint.append(JointDefinition(HalfLapJoint, [main, cross]))
+            Joint.append(JointDefinition(XHalfLapJoint, [main, cross]))
         return Joint

@@ -20,7 +20,7 @@ Classes
     TButtJoint
     LButtJoint
     LMiterJoint
-    HalfLapJoint
+    XHalfLapJoint
     JointTopology
     ConnectionSolver
 
@@ -48,7 +48,7 @@ from .joint import BeamJoinningError
 from .t_butt import TButtJoint
 from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
-from .half_lap import HalfLapJoint
+from .x_halflap import XHalfLapJoint
 from .solver import JointTopology
 from .solver import ConnectionSolver
 from .solver import find_neighboring_beams
@@ -61,7 +61,7 @@ __all__ = [
     "TButtJoint",
     "LButtJoint",
     "LMiterJoint",
-    "HalfLapJoint",
+    "XHalfLapJoint",
     "JointTopology",
     "ConnectionSolver",
     "find_neighboring_beams",

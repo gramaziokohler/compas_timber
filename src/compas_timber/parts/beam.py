@@ -31,7 +31,7 @@ def _create_box(frame, xsize, ysize, zsize):
     boxframe = frame.copy()
     depth_offset = boxframe.xaxis * xsize * 0.5
     boxframe.point += depth_offset
-    return Box(boxframe, xsize, ysize, zsize)
+    return Box(frame=boxframe, xsize=xsize, ysize=ysize, zsize=zsize)
 
 
 def _create_mesh_shape(xsize, ysize, zsize):
@@ -110,7 +110,7 @@ class Beam(Part):
     }
 
     def __init__(self, frame, length, width, height, geometry_type, **kwargs):
-        super(Beam, self).__init__(frame=frame)
+        super(Beam, self).__init__(frame=frame, **kwargs)
         # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.frame = frame
         self.width = width
@@ -126,13 +126,10 @@ class Beam(Part):
         data.update(super(Beam, self).data)
         return data
 
-    @data.setter
-    def data(self, data):
-        Part.data.fset(self, data)
-        self.width = data["width"]
-        self.height = data["height"]
-        self.length = data["length"]
-        self.geometry_type = data["geometry_type"]
+    @classmethod
+    def from_data(cls, data):
+        beam = cls(**data)
+        return beam
 
     @property
     def tolerance(self):
@@ -255,13 +252,6 @@ class Beam(Part):
             and self.frame == other.frame
             # TODO: skip joints and features ?
         )
-
-    @classmethod
-    def from_data(cls, data):
-        """Alternative to None default __init__ parameters."""
-        obj = cls(**data)
-        obj.data = data
-        return obj
 
     def get_geometry(self, with_features=False):
         """Returns the geometry representation of this beam.
