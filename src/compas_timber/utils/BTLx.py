@@ -1,18 +1,10 @@
-# import xml.etree.ElementTree as ET
-# import numpy as np
 import uuid
-from compas_timber.assembly import TimberAssembly
-from compas.rpc import Proxy
-ET = Proxy('xml.etree.ElementTree')
-np = Proxy('numpy')
-print("still OKAY")
-# from System.Xml import Xml as xml
-print("NOT OK")
-
+#from compas_timber.assembly import TimberAssembly
+import xml.dom.minidom
 class BTLx:
 
 
-    def add_process(processings, process):
+    def add_process(self, processings, process):
         if process == 0:
             jack_cut = ET.Element(
                 "JackRafterCut", Name="Jack cut", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2"
@@ -40,6 +32,47 @@ class BTLx:
             tenon = ET.Element("Tenon", Name="Tenon", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2")
             processings.insert(1, tenon)
 
+    class XmlElement:
+        name = ""
+        text = ""
+        attributes = []
+        subelements = []
+
+        def __init__(self, name, text = "", attributes = [], subelements = []):
+            self.name = name
+            self.text = text
+            self.attributes = attributes
+            self.subelements = subelements
+
+
+        def __str__(self) -> str:
+            string = "<{} {}> {} {} </{}> "
+
+            attribute_text = ""
+            for att in self.attributes:
+                attribute_text += att.__str__()
+
+            subelement_text = ""
+            for subelement in self.subelements:
+                subelement_text += subelement.__str__()
+
+
+            string = string.format(self.name, attribute_text, subelement_text, self.text, self.name)
+            return string
+
+        class Attribute:
+            name = ""
+            value = ""
+
+            def __init__(self, name, value = ""):
+                self.name = name
+                self.value = value
+                pass
+
+            def __str__(self) -> str:
+                string = self.name
+                string += "=\""+self.value+ "\" "
+                return string
 
 
 
@@ -139,6 +172,13 @@ class BTLx:
     def writeBTLx(self, path):
         self.write(open(path + ".btlx", "wb", encoding="utf-8"))
 
+attributes = [BTLx.XmlElement.Attribute("A", "1.0"), BTLx.XmlElement.Attribute("B", "2.0") ]
+subelements = [BTLx.XmlElement("subelement1", "subText1"),BTLx.XmlElement("subelement2", "subText2")]
 
-# print(xml.dom.minidom.parseString(ET.tostring(btlx)).toprettyxml())
+
+
+btlx = BTLx.XmlElement("newBTLX", "sampleText", attributes, subelements)
+
+print(btlx.__str__())
+print(xml.dom.minidom.parseString(btlx.__str__()).toprettyxml())
 # pretty print generated XML
