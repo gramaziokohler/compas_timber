@@ -19,7 +19,7 @@ class BTLx:
         project = ET.SubElement(btlx, "Project")
         parts = ET.SubElement(project, "Parts")
 
-        #print("before adding parts")
+        print("before adding parts")
 
         for part in assembly.parts:
             parts.append(self.Part(part))
@@ -128,7 +128,7 @@ class BTLx:
 
             return process
 
-    def writeBTLx(self, assembly, path):
+    def write_btlx(assembly, path):
         btlx = BTLx(assembly)
-        btlx.write(open(path + ".btlx", "wb", encoding="utf-8"))
+        #btlx.write(open(path + ".btlx", "wb", encoding="utf-8"))
         return(xml.dom.minidom.parseString(btlx).toprettyxml())
