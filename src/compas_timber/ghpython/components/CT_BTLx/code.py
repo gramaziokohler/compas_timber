@@ -10,10 +10,7 @@ class WriteBTLx(component):
         if not Path:
             self.AddRuntimeMessage(Warning, "Input parameter Path failed to collect data")
             return
-        print("dingaling")
-        self.Message = "Poopy Buttyholy"
-        msg = "g'bye"
+
         btlx = BTLx(Assembly)
         if Write:
             btlx.writeBTLx(Path)
-        return msg

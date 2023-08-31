@@ -1,6 +1,10 @@
 import uuid
-#from compas_timber.assembly import TimberAssembly
-import xml.dom.minidom
+from compas_timber.assembly import TimberAssembly
+
+from compas.rpc import Proxy
+ET = Proxy('xml.etree.ElementTree')
+np = Proxy('numpy')
+
 class BTLx:
 
 
@@ -32,65 +36,9 @@ class BTLx:
             tenon = ET.Element("Tenon", Name="Tenon", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2")
             processings.insert(1, tenon)
 
-    class XmlElement:
-        name = ""
-        text = ""
-        attributes = []
-        subelements = []
-
-        def __init__(self, name, text = "", attributes = [], subelements = []):
-            self.name = name
-            self.text = text
-            self.attributes = attributes
-            self.subelements = subelements
-
-
-        def __str__(self) -> str:
-            string = "<{} {}> {} {} </{}> "
-
-            attribute_text = ""
-            for att in self.attributes:
-                attribute_text += att.__str__()
-
-            subelement_text = ""
-            for subelement in self.subelements:
-                subelement_text += subelement.__str__()
-
-
-            string = string.format(self.name, attribute_text, subelement_text, self.text, self.name)
-            return string
-
-        class Attribute:
-            name = ""
-            value = ""
-
-            def __init__(self, name, value = ""):
-                self.name = name
-                self.value = value
-                pass
-
-            def __str__(self) -> str:
-                string = self.name
-                string += "=\""+self.value+ "\" "
-                return string
-
-
-
-
-    def __init__(self, assembly):
-
-
-
-
-
-
-
-        print("NOW OK")
-
-        root = ET.Element("BTLx")
-        print("NOW DO EVEN BETTER!")
-
-        project = ET.SubElement(root, "Project")
+    def __init__(assembly):
+        btlx = ET.Element("BTLx")
+        project = ET.SubElement(btlx, "Project")
         parts = ET.SubElement(project, "Parts")
 
         beams = assembly.beams
@@ -157,17 +105,14 @@ class BTLx:
             reference_side = ET.SubElement(part, "ReferenceSide", Side="3", Align="no")
 
             processings = ET.SubElement(part, "Processings")
-            i=0
-            for feature in beam.features:
-                self.add_process(processings, i)
-                i = i+1
+            for i in range(3):
+                add_process(processings, i)
 
             shape = ET.SubElement(part, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="", coorIndex="")
             coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="")
 
             a = a + 1
-        return root
 
     def writeBTLx(self, path):
         self.write(open(path + ".btlx", "wb", encoding="utf-8"))

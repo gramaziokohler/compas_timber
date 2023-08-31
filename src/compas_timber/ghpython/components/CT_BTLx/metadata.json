@@ -30,10 +30,7 @@
 
         ],
         "outputParameters": [
-            {
-                "name": "msg",
-                "description": "print messages."
-            }
+
         ]
     }
 }
