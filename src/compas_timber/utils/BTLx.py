@@ -18,6 +18,9 @@ class BTLx:
         btlx.append(self.file_history())
         project = ET.SubElement(btlx, "Project")
         parts = ET.SubElement(project, "Parts")
+
+        #print("before adding parts")
+
         for part in assembly.parts:
             parts.append(self.Part(part))
 
@@ -91,9 +94,9 @@ class BTLx:
             processings = ET.SubElement(part, "Processings")
 
             a = 0
-            for feature in beam.features:
-                processings.append(self.add_process(a))
-                a+=1
+            # for feature in beam.features:
+            #     processings.append(self.add_process(a))
+            #     a+=1
 
             shape = ET.SubElement(part, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="", coorIndex="")
