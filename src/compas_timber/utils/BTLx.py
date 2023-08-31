@@ -1,28 +1,36 @@
 import uuid
 from compas_timber.assembly import TimberAssembly
 from compas_timber.parts import Beam
+from compas.geometry import Frame
 import xml.etree.ElementTree as ET
 import numpy as np
 import xml.dom.minidom
 
 class BTLx:
     def __init__(self, assembly):
-        file_attributes = {
+        self.file_attributes = {
             "xmlns": "https://www.design2machine.com",
             "Version": "2.0.0" ,
             "Language":"en" ,
             "xmlns:xsi":"http://www.w3.org/2001/XMLSchema-instance" ,
             "xsi:schemaLocation":"https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd"
             }
-        btlx = ET.Element("BTLx",file_attributes)
-        btlx.append(self.file_history())
-        project = ET.SubElement(btlx, "Project")
-        parts = ET.SubElement(project, "Parts")
+        self.btlx = ET.Element("BTLx",self.file_attributes)
+        self.btlx.append(self.file_history())
+        self.project = ET.SubElement(self.btlx, "Project")
+        self.parts = ET.SubElement(self.project, "Parts")
+        self.btlx_ET = ET.ElementTree(self.btlx)
 
         print("before adding parts")
 
-        for part in assembly.parts:
-            parts.append(self.Part(part))
+        for i in range(4):
+            frame = Frame((0,0,0), (0,0,1), (0,1,0))
+            beam = Beam(frame, 2450, 85, 150, "mesh")
+            self.parts.append(self.Part(beam))
+
+    def __str__(self) -> str:
+        return ET.tostring(self.btlx)
+
 
 
     def file_history(self):
@@ -33,6 +41,9 @@ class BTLx:
 
     class Part:
         def __init__(self, beam):
+            frame = Frame((0,0,0), (0,0,1), (0,1,0))
+            beam = Beam(frame, 2450, 85, 150)
+
 
             btlx_corner_reference_point = (
                 beam.frame.point
@@ -128,7 +139,11 @@ class BTLx:
 
             return process
 
-    def write_btlx(assembly, path):
-        btlx = BTLx(assembly)
-        #btlx.write(open(path + ".btlx", "wb", encoding="utf-8"))
-        return(xml.dom.minidom.parseString(btlx).toprettyxml())
+def write_btlx(assembly, path):
+    btlx = BTLx(assembly)
+    btlx.btlx_ET.write(path)
+    msg = xml.dom.minidom.parseString(ET.tostring(btlx.btlx)).toprettyxml(indent="   ")
+    with open(path, "w") as f:
+        f.write(msg)
+
+    return msg
