@@ -1,21 +1,23 @@
 import uuid
-from compas_timber.assembly import TimberAssembly
 from compas_timber.parts import Beam
+
+from compas_timber.assembly import TimberAssembly
 from compas.geometry import Frame
 import xml.etree.ElementTree as ET
 import numpy as np
 import xml.dom.minidom
 
+
 class BTLx:
     def __init__(self, assembly):
         self.file_attributes = {
             "xmlns": "https://www.design2machine.com",
-            "Version": "2.0.0" ,
-            "Language":"en" ,
-            "xmlns:xsi":"http://www.w3.org/2001/XMLSchema-instance" ,
-            "xsi:schemaLocation":"https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd"
-            }
-        self.btlx = ET.Element("BTLx",self.file_attributes)
+            "Version": "2.0.0",
+            "Language": "en",
+            "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "xsi:schemaLocation": "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
+        }
+        self.btlx = ET.Element("BTLx", self.file_attributes)
         self.btlx.append(self.file_history())
         self.project = ET.SubElement(self.btlx, "Project")
         self.parts = ET.SubElement(self.project, "Parts")
@@ -24,26 +26,34 @@ class BTLx:
         print("before adding parts")
 
         for i in range(4):
-            frame = Frame((0,0,0), (0,0,1), (0,1,0))
+            frame = Frame((0, 0, 0), (0, 0, 1), (0, 1, 0))
             beam = Beam(frame, 2450, 85, 150, "mesh")
             self.parts.append(self.Part(beam, i).part)
 
     def __str__(self) -> str:
         return ET.tostring(self.btlx)
 
-
-
     def file_history(self):
         file_history = ET.Element("FileHistory")
-        initial_export_program = ET.SubElement(file_history, "InitialExportProgram", CompanyName="Gramazio Kohler Research", ProgramName="COMPAS_Timber", ProgramVersion="1.7", ComputerName="PC", UserName="OB", FileName="tenon-mortise.BTLX", Date="2021-12-02", Time="14:08:00", Comment="")
+        initial_export_program = ET.SubElement(
+            file_history,
+            "InitialExportProgram",
+            CompanyName="Gramazio Kohler Research",
+            ProgramName="COMPAS_Timber",
+            ProgramVersion="1.7",
+            ComputerName="PC",
+            UserName="OB",
+            FileName="tenon-mortise.BTLX",
+            Date="2021-12-02",
+            Time="14:08:00",
+            Comment="",
+        )
         return file_history
-
 
     class Part:
         def __init__(self, beam, index):
-            frame = Frame((0,0,0), (0,0,1), (0,1,0))
-            beam = Beam(frame, 2450, 85, 150, 'mesh')
-
+            frame = Frame((0, 0, 0), (0, 0, 1), (0, 1, 0))
+            beam = Beam(frame, 2450, 85, 150, "mesh")
 
             btlx_corner_reference_point = (
                 beam.frame.point
@@ -107,15 +117,15 @@ class BTLx:
             for a in range(3):
                 processings.append(self.add_process(a))
 
-
             shape = ET.SubElement(self.part, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="", coorIndex="")
             coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="")
 
-
         def add_process(self, feature):
             if feature == 0:
-                process = ET.Element("JackRafterCut", Name="Jack cut", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2" )
+                process = ET.Element(
+                    "JackRafterCut", Name="Jack cut", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2"
+                )
                 orientation = ET.SubElement(process, "Orientation")
                 orientation.text = "end"
                 start_x = ET.SubElement(process, "StartX")
@@ -133,9 +143,12 @@ class BTLx:
                     "Mortise", Name="Mortise", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2"
                 )
             else:
-                process = ET.Element("Tenon", Name="Tenon", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2")
+                process = ET.Element(
+                    "Tenon", Name="Tenon", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2"
+                )
 
             return process
+
 
 def write_btlx(assembly, path):
     btlx = BTLx(assembly)
