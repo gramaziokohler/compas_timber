@@ -26,7 +26,7 @@ class BTLx:
         for i in range(4):
             frame = Frame((0,0,0), (0,0,1), (0,1,0))
             beam = Beam(frame, 2450, 85, 150, "mesh")
-            self.parts.append(self.Part(beam))
+            self.parts.append(self.Part(beam, i).part)
 
     def __str__(self) -> str:
         return ET.tostring(self.btlx)
@@ -40,9 +40,9 @@ class BTLx:
 
 
     class Part:
-        def __init__(self, beam):
+        def __init__(self, beam, index):
             frame = Frame((0,0,0), (0,0,1), (0,1,0))
-            beam = Beam(frame, 2450, 85, 150)
+            beam = Beam(frame, 2450, 85, 150, 'mesh')
 
 
             btlx_corner_reference_point = (
@@ -50,7 +50,7 @@ class BTLx:
                 - (beam.frame.yaxis * beam.width)
                 - np.cross(beam.frame.xaxis, beam.frame.yaxis) * beam.height
             )
-            part = ET.Element(
+            self.part = ET.Element(
                 "Part",
                 SingleMemberNumber="",
                 AssemblyNumber="",
@@ -75,12 +75,12 @@ class BTLx:
                 Layer="0",
                 ModuleNumber="",
             )
-            part.set("SingleMemberNumber", str(a))
-            part.set("Length", str(beam.length))
-            part.set("Width", str(beam.width))
-            part.set("Height", str(beam.height))
+            self.part.set("SingleMemberNumber", str(index))
+            self.part.set("Length", str(beam.length))
+            self.part.set("Width", str(beam.width))
+            self.part.set("Height", str(beam.height))
 
-            transformations = ET.SubElement(part, "Transformations")
+            transformations = ET.SubElement(self.part, "Transformations")
             guid = str(uuid.uuid4())
             transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
             position = ET.SubElement(transformation, "Position")
@@ -100,23 +100,21 @@ class BTLx:
             y_vector.set("Y", str(beam.frame.yaxis.y))
             y_vector.set("Z", str(beam.frame.yaxis.z))
 
-            grain_direction = ET.SubElement(part, "GrainDirection", X="1", Y="0", Z="0", Align="no")
-            reference_side = ET.SubElement(part, "ReferenceSide", Side="3", Align="no")
-            processings = ET.SubElement(part, "Processings")
+            grain_direction = ET.SubElement(self.part, "GrainDirection", X="1", Y="0", Z="0", Align="no")
+            reference_side = ET.SubElement(self.part, "ReferenceSide", Side="3", Align="no")
+            processings = ET.SubElement(self.part, "Processings")
 
-            a = 0
-            # for feature in beam.features:
-            #     processings.append(self.add_process(a))
-            #     a+=1
+            for a in range(3):
+                processings.append(self.add_process(a))
 
-            shape = ET.SubElement(part, "Shape")
+
+            shape = ET.SubElement(self.part, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="", coorIndex="")
             coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="")
 
-            return part
 
         def add_process(self, feature):
-            if feature := 0:
+            if feature == 0:
                 process = ET.Element("JackRafterCut", Name="Jack cut", Process="yes", Priority="0", ProcessID="4", ReferencePlaneID="2" )
                 orientation = ET.SubElement(process, "Orientation")
                 orientation.text = "end"
