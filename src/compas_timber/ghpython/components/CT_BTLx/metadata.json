@@ -31,7 +31,7 @@
         ],
         "outputParameters": [
             {
-                "name": "msg",
+                "name": "btlx",
                 "description": "Pretty BTLx string"
             }
         ]

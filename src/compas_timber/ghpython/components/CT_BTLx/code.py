@@ -2,7 +2,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas.rpc.proxy import Proxy
 
-btlx = Proxy("compas_timber.utils.BTLx")
+btlx = Proxy("compas_timber.utils.btlx")
 
 
 class WriteBTLx(component):
@@ -14,7 +14,7 @@ class WriteBTLx(component):
             self.AddRuntimeMessage(Warning, "Input parameter Path failed to collect data")
             return
 
-        msg = "ready"
+        btlx = "ready"
         if Write:
-            msg = btlx.write_btlx(Assembly, Path)
-        return msg
+            btlx = btlx.write_btlx(Assembly, Path)
+        return btlx

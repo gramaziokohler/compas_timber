@@ -1,7 +1,7 @@
 import uuid
 from compas_timber.parts import Beam
 
-from compas_timber.assembly import TimberAssembly
+#from compas_timber.assembly import TimberAssembly
 from compas.geometry import Frame
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -56,9 +56,7 @@ class BTLx:
             beam = Beam(frame, 2450, 85, 150, "mesh")
 
             btlx_corner_reference_point = (
-                beam.frame.point
-                - (beam.frame.yaxis * beam.width)
-                - np.cross(beam.frame.xaxis, beam.frame.yaxis) * beam.height
+                beam.frame.point - (beam.frame.yaxis * beam.width) - np.cross(beam.frame.xaxis, beam.frame.yaxis) * beam.height
             )
             self.part = ET.Element(
                 "Part",
