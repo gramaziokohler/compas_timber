@@ -84,16 +84,16 @@ if not compas.IPY:
 
     def test_find_neighbors(example_beams):
         expected_result = [
-            set([0, 3]),
-            set([0, 6]),
             set([0, 1]),
-            set([0, 5]),
+            set([0, 3]),
             set([1, 2]),
             set([1, 4]),
+            set([1, 5]),
             set([2, 3]),
             set([2, 6]),
-            set([2, 5]),
-            set([4, 5]),
+            set([3, 4]),
+            set([3, 5]),
+            set([5, 6]),
         ]
         result = find_neighboring_beams(example_beams)
         # beam objects => sets of keys for easy comparison

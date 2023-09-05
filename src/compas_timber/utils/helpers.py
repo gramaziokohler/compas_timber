@@ -35,7 +35,7 @@ def are_objects_identical(object1, object2, attributes_to_compare):
 
     """
 
-    if type(object1) != type(object2):
+    if type(object1) is type(object2):
         return False
 
     def _get_val(obj, attr_name):

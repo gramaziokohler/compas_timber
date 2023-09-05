@@ -40,16 +40,16 @@ class TimberAssembly(Assembly):
             self.guid, len(self.beams), len(self.joints)
         )
 
-    @Assembly.data.setter
-    def data(self, value):
-        Assembly.data.fset(self, value)
-        # restore what got removed to avoid circular reference
-        for part in self.parts():
+    @classmethod
+    def from_data(cls, data):
+        assembly = super(TimberAssembly, cls).from_data(data)
+        for part in assembly.parts():
             if isinstance(part, Beam):
-                self._beams.append(part)
+                assembly._beams.append(part)
             if isinstance(part, Joint):
-                self._joints.append(part)
-                part.restore_beams_from_keys(self)
+                assembly._joints.append(part)
+                part.restore_beams_from_keys(assembly)
+        return assembly
 
     @property
     def beams(self):

@@ -31,7 +31,7 @@ def _create_box(frame, xsize, ysize, zsize):
     boxframe = frame.copy()
     depth_offset = boxframe.xaxis * xsize * 0.5
     boxframe.point += depth_offset
-    return Box(frame=boxframe, xsize=xsize, ysize=ysize, zsize=zsize)
+    return Box(xsize, ysize, zsize, frame=boxframe)
 
 
 def _create_mesh_shape(xsize, ysize, zsize):
@@ -112,7 +112,6 @@ class Beam(Part):
     def __init__(self, frame, length, width, height, geometry_type, **kwargs):
         super(Beam, self).__init__(frame=frame, **kwargs)
         # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
-        self.frame = frame
         self.width = width
         self.height = height
         self.length = length
@@ -122,14 +121,19 @@ class Beam(Part):
 
     @property
     def data(self):
-        data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
-        data.update(super(Beam, self).data)
+        data = {
+            "frame": self.frame,
+            "width": self.width,
+            "height": self.height,
+            "length": self.length,
+            "geometry_type": self.geometry_type,
+        }
+        data.update(self.attributes)
         return data
 
     @classmethod
     def from_data(cls, data):
-        beam = cls(**data)
-        return beam
+        return cls(**data)
 
     @property
     def tolerance(self):

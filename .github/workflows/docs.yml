@@ -28,6 +28,7 @@ jobs:
           python -m pip install --no-cache-dir -r requirements-dev.txt
 
       - name: 📃 Generate docs
+        id: docs
         shell: bash
         run: |
           invoke docs --check-links
@@ -36,18 +37,44 @@ jobs:
           if [[ $GITHUB_REF =~ $GITHUB_REF_REGEX ]]; then
             if [[ $BASH_REMATCH = pull* ]]; then
               BRANCH_OR_TAG=pull_${BASH_REMATCH##*/}
+              echo "commit_type=pull" >> $GITHUB_OUTPUT
             elif [[ $BASH_REMATCH = tags/v* ]]; then
               # 2nd element is tag, #v replaces prefix v
               BRANCH_OR_TAG=${BASH_REMATCH[1]#v}
+              echo "commit_type=tag" >> $GITHUB_OUTPUT
             else
               BRANCH_OR_TAG=${BASH_REMATCH##*/}
             fi;
             if [[ $BRANCH_OR_TAG = main ]]; then
               BRANCH_OR_TAG=latest
+              echo "commit_type=main" >> $GITHUB_OUTPUT
             fi;
           fi;
           echo "Docs will be deployed to https://gramaziokohler.github.io/compas_timber/$BRANCH_OR_TAG"
           mkdir -p deploy/$BRANCH_OR_TAG && mv -T dist/docs deploy/$BRANCH_OR_TAG/
+
+      # Check index.html and .nojekyll
+      - shell: bash -l {0}
+        run: |
+          echo check index.html and .nojekyll
+          cd deploy
+          if [[ ! -f ".nojekyll" ]]; then
+            echo creating .nojekyll
+            > .nojekyll
+          fi
+
+          full_repo=${{ github.repository }}
+          repo=${full_repo#*/}
+
+          if [[ ! -f "index.html" ]]; then
+            echo creating index.html
+            echo '<meta http-equiv="refresh" content="0; url=/'$repo'/latest/">' > index.html
+          fi
+
+          if [[ ${{ steps.docs.outputs.commit_type }} == "tag" ]]; then
+            echo update index.html to point at ${{ steps.docs.outputs.current_version }}
+            echo '<meta http-equiv="refresh" content="0; url=/'$repo'/${{ steps.docs.outputs.current_version }}/">' > index.html
+          fi
 
       - name: 🚢 Deploy docs
         if: success()
