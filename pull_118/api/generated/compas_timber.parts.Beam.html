@@ -170,7 +170,7 @@ The default tolerance used in operations performed on this beam.</p></li>
 <td><p>Define the beam from its centerline.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_data.html#compas_timber.parts.Beam.from_data" title="compas_timber.parts.Beam.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a></p></td>
-<td><p>Alternative to None default __init__ parameters.</p></td>
+<td><p>Construct an object of this type from the provided data.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_endpoints.html#compas_timber.parts.Beam.from_endpoints" title="compas_timber.parts.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
 <td><p>Creates a Beam from the given endpoints.</p></td>
@@ -198,32 +198,14 @@ The default tolerance used in operations performed on this beam.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.copy.html#compas_timber.parts.Beam.copy" title="compas_timber.parts.Beam.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_json.html#compas_timber.parts.Beam.from_json" title="compas_timber.parts.Beam.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
-<td><p>Construct an object from serialized data contained in a JSON file.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_jsonstring.html#compas_timber.parts.Beam.from_jsonstring" title="compas_timber.parts.Beam.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
-<td><p>Construct an object from serialized data contained in a JSON string.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.sha256.html#compas_timber.parts.Beam.sha256" title="compas_timber.parts.Beam.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_data.html#compas_timber.parts.Beam.to_data" title="compas_timber.parts.Beam.to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data</span></code></a></p></td>
 <td><p>Convert an object to its native data representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_json.html#compas_timber.parts.Beam.to_json" title="compas_timber.parts.Beam.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
-<td><p>Serialize the data representation of an object to a JSON file.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_jsonstring.html#compas_timber.parts.Beam.to_jsonstring" title="compas_timber.parts.Beam.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
-<td><p>Serialize the data representation of an object to a JSON string.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_json.html#compas_timber.parts.Beam.validate_json" title="compas_timber.parts.Beam.validate_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_json</span></code></a></p></td>
-<td><p>Validate the data contained in the JSON document against the object's JSON data schema.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_jsondata.html#compas_timber.parts.Beam.validate_jsondata" title="compas_timber.parts.Beam.validate_jsondata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_jsondata</span></code></a></p></td>
-<td><p>Validate the JSON data against the objects's JSON data schema.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_jsonstring.html#compas_timber.parts.Beam.validate_jsonstring" title="compas_timber.parts.Beam.validate_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_jsonstring</span></code></a></p></td>
-<td><p>Validate the data contained in the JSON string against the objects's JSON data schema.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_data.html#compas_timber.parts.Beam.validate_data" title="compas_timber.parts.Beam.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
 </table>
@@ -259,6 +241,7 @@ The default tolerance used in operations performed on this beam.</p></li>
 <li class="toctree-l2 nav-item active"><a class="nav-link reference internal" href="../compas_timber.html">compas_timber</a><ul class="nav flex-column collapse show active">
 <li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.assembly.html">assembly</a></li>
 <li class="toctree-l3 nav-item active"><a class="nav-link reference internal" href="../compas_timber.parts.html">parts</a></li>
+<li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.connections.html">connections</a></li>
 <li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.rhino.html">rhino</a></li>
 </ul>
 </li>
