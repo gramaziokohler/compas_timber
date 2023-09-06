@@ -35,8 +35,8 @@ class BTLx:
             beam = Beam(frame, 2450, 85, 150, "mesh")
             self.parts.append(self.Part(beam, i).part)
 
-    def __str__(self) -> str:
-        return ET.tostring(self.btlx)
+    # def __str__(self):
+    #     return ET.tostring(self.btlx)
 
     def file_history(self):
         file_history = ET.Element("FileHistory")
