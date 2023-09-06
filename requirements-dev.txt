@@ -16,7 +16,7 @@ pydocstyle
 pytest >=3.2
 pytest-mock
 sphinx_compas_theme >=0.13
-sphinx >=3.4
+sphinx ==7.1.2
 twine
 matplotlib
 Rtree

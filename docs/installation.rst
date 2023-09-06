@@ -4,10 +4,7 @@ Installation
 
 .. rst-class:: lead
 
-    Your options are:
-
-    Contents
-    ========
+    The following installation possibilties are available:
 
 .. toctree::
     :maxdepth: 1
