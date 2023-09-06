@@ -1,15 +1,17 @@
 import uuid
-from compas_timber.parts import Beam
-
-from compas_timber.assembly import TimberAssembly
-from compas.geometry import Frame
 import xml.etree.ElementTree as ET
 import numpy as np
 import xml.dom.minidom
+from compas_timber.assembly import TimberAssembly
+from compas_timber.parts.beam import Beam
+from compas.geometry import Frame
 
 
 class BTLx:
     def __init__(self, assembly):
+        from compas_timber.assembly import TimberAssembly
+        from compas_timber.parts.beam import Beam
+        from compas.geometry import Frame
 
         print("BTLx init")
 
@@ -59,7 +61,9 @@ class BTLx:
             beam = Beam(frame, 2450, 85, 150, "mesh")
 
             btlx_corner_reference_point = (
-                beam.frame.point - (beam.frame.yaxis * beam.width) - np.cross(beam.frame.xaxis, beam.frame.yaxis) * beam.height
+                beam.frame.point
+                - (beam.frame.yaxis * beam.width)
+                - np.cross(beam.frame.xaxis, beam.frame.yaxis) * beam.height
             )
             self.part = ET.Element(
                 "Part",
@@ -155,7 +159,6 @@ def get_btlx_string(assembly):
     btlx = BTLx(assembly)
 
     return xml.dom.minidom.parseString(ET.tostring(btlx.btlx)).toprettyxml(indent="   ")
-
 
 
 def write_btlx(assembly, path):
