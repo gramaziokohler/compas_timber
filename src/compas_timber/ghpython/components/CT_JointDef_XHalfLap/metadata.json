@@ -3,7 +3,7 @@
     "nickname": "JointDef: XHalfLap",
     "category": "COMPAS Timber",
     "subcategory": "Joints",
-    "description": "Defines an Half-Lap Joint for the given two Beams.",
+    "description": "Defines an X-HalfLap Joint for the given two Beams.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -25,7 +25,7 @@
         "outputParameters": [
             {
                 "name": "Joint",
-                "description": "XHalf-Lap JointDefinition."
+                "description": "XHalfLap JointDefinition."
             }
         ]
     }
