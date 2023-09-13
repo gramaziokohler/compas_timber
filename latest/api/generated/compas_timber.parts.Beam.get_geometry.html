@@ -20,11 +20,11 @@
   <link rel="stylesheet" type="text/css" href="../../_static/css/compas-reference.css" />
 
   
-  <link rel="next" title="Beam.is_identical" href="compas_timber.parts.Beam.is_identical.html" />
+  <link rel="next" title="Beam.sha256" href="compas_timber.parts.Beam.sha256.html" />
   
 
   
-  <link rel="prev" title="Beam.from_endpoints" href="compas_timber.parts.Beam.from_endpoints.html" />
+  <link rel="prev" title="Beam.copy" href="compas_timber.parts.Beam.copy.html" />
   
 
   <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
@@ -101,15 +101,15 @@
 <h1>Beam.get_geometry</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.parts.Beam.get_geometry">
-<span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">get_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">with_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L260"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Returns the geometry representation of this beam.</p>
-<p>The geometry is transformed to the frame of this beam.</p>
+<span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">get_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">with_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L192"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Returns a transformed copy of the part’s geometry.</p>
+<p>The returned type can be drawn with an Artist.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>with_features</strong> (<em>bool</em>) – If True the geometry returned should include the features, if any.</p>
+<dd class="field-odd"><p><strong>with_features</strong> (<em>bool</em>) – True if geometry should include all the available features.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Geometry.html#compas.geometry.Geometry" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Geometry</span></code></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Geometry.html#compas.geometry.Geometry" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -193,20 +193,20 @@
   <footer class="compas-footer">
     <nav class="nav p-2">
       
-      <a href="compas_timber.parts.Beam.from_endpoints.html" title="Beam.from_endpoints" class="nav-link footer-link float-start text-left d-flex w-50" rel="prev">
+      <a href="compas_timber.parts.Beam.copy.html" title="Beam.copy" class="nav-link footer-link float-start text-left d-flex w-50" rel="prev">
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-left"></i></div>
         <div class="nav-title flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Previous</div>
-          Beam.from_endpoints
+          Beam.copy
         </div>
       </a>
       
 
       
-      <a href="compas_timber.parts.Beam.is_identical.html" title="Beam.is_identical" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
+      <a href="compas_timber.parts.Beam.sha256.html" title="Beam.sha256" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
         <div class="nav-title footer-link flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Next</div>
-          Beam.is_identical
+          Beam.sha256
         </div>
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-right"></i></div>
       </a>
