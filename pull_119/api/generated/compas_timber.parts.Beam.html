@@ -99,7 +99,7 @@
 <h1>Beam</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.parts.Beam">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.parts.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.parts.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'brep'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.datastructures.Part.html#compas.datastructures.Part" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Part</span></code></a></p>
 <p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
 <dl class="field-list simple">
@@ -167,25 +167,22 @@ The default tolerance used in operations performed on this beam.</p></li>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.extension_to_plane.html#compas_timber.parts.Beam.extension_to_plane" title="compas_timber.parts.Beam.extension_to_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extension_to_plane</span></code></a></p></td>
 <td><p>Returns the amount by which to extend the beam in each direction using metric units.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_brep.html#compas_timber.parts.Beam.from_brep" title="compas_timber.parts.Beam.from_brep"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_brep</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_centerline.html#compas_timber.parts.Beam.from_centerline" title="compas_timber.parts.Beam.from_centerline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_centerline</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_centerline.html#compas_timber.parts.Beam.from_centerline" title="compas_timber.parts.Beam.from_centerline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_centerline</span></code></a></p></td>
 <td><p>Define the beam from its centerline.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_data.html#compas_timber.parts.Beam.from_data" title="compas_timber.parts.Beam.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_data.html#compas_timber.parts.Beam.from_data" title="compas_timber.parts.Beam.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a></p></td>
 <td><p>Alternative to None default __init__ parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_endpoints.html#compas_timber.parts.Beam.from_endpoints" title="compas_timber.parts.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_endpoints.html#compas_timber.parts.Beam.from_endpoints" title="compas_timber.parts.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
 <td><p>Creates a Beam from the given endpoints.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.is_identical.html#compas_timber.parts.Beam.is_identical" title="compas_timber.parts.Beam.is_identical"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_identical</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.is_identical.html#compas_timber.parts.Beam.is_identical" title="compas_timber.parts.Beam.is_identical"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_identical</span></code></a></p></td>
 <td><p>Returns True if the other beam's values are identicale, within TOLERANCE, to the ones of this beam.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.move_endpoint.html#compas_timber.parts.Beam.move_endpoint" title="compas_timber.parts.Beam.move_endpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_endpoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.move_endpoint.html#compas_timber.parts.Beam.move_endpoint" title="compas_timber.parts.Beam.move_endpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_endpoint</span></code></a></p></td>
 <td><p>Deprecated?</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.update_beam_geometry.html#compas_timber.parts.Beam.update_beam_geometry" title="compas_timber.parts.Beam.update_beam_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_beam_geometry</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.update_beam_geometry.html#compas_timber.parts.Beam.update_beam_geometry" title="compas_timber.parts.Beam.update_beam_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_beam_geometry</span></code></a></p></td>
 <td><p>Resets the geometry representation of the beam accroding to the current parametric values.</p></td>
 </tr>
 </tbody>
@@ -199,12 +196,6 @@ The default tolerance used in operations performed on this beam.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.copy.html#compas_timber.parts.Beam.copy" title="compas_timber.parts.Beam.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_json.html#compas_timber.parts.Beam.from_json" title="compas_timber.parts.Beam.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
-<td><p>Construct an object from serialized data contained in a JSON file.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_jsonstring.html#compas_timber.parts.Beam.from_jsonstring" title="compas_timber.parts.Beam.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
-<td><p>Construct an object from serialized data contained in a JSON string.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.get_geometry.html#compas_timber.parts.Beam.get_geometry" title="compas_timber.parts.Beam.get_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_geometry</span></code></a></p></td>
 <td><p>Returns a transformed copy of the part's geometry.</p></td>
 </tr>
@@ -214,20 +205,8 @@ The default tolerance used in operations performed on this beam.</p></li>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_data.html#compas_timber.parts.Beam.to_data" title="compas_timber.parts.Beam.to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data</span></code></a></p></td>
 <td><p>Convert an object to its native data representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_json.html#compas_timber.parts.Beam.to_json" title="compas_timber.parts.Beam.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
-<td><p>Serialize the data representation of an object to a JSON file.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.to_jsonstring.html#compas_timber.parts.Beam.to_jsonstring" title="compas_timber.parts.Beam.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
-<td><p>Serialize the data representation of an object to a JSON string.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_json.html#compas_timber.parts.Beam.validate_json" title="compas_timber.parts.Beam.validate_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_json</span></code></a></p></td>
-<td><p>Validate the data contained in the JSON document against the object's JSON data schema.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_jsondata.html#compas_timber.parts.Beam.validate_jsondata" title="compas_timber.parts.Beam.validate_jsondata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_jsondata</span></code></a></p></td>
-<td><p>Validate the JSON data against the objects's JSON data schema.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_jsonstring.html#compas_timber.parts.Beam.validate_jsonstring" title="compas_timber.parts.Beam.validate_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_jsonstring</span></code></a></p></td>
-<td><p>Validate the data contained in the JSON string against the objects's JSON data schema.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.validate_data.html#compas_timber.parts.Beam.validate_data" title="compas_timber.parts.Beam.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
 </table>
