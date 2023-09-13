@@ -49,6 +49,10 @@ class TimberAssembly(Assembly):
             if isinstance(part, Joint):
                 assembly._joints.append(part)
                 part.restore_beams_from_keys(assembly)
+
+        # TODO: this is needed when serializing but messes up deep copying.
+        # for joint in assembly._joints:
+        #     joint.add_features()
         return assembly
 
     @property
