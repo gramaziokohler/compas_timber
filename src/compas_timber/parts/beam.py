@@ -417,10 +417,6 @@ class Beam(Part):
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector, geometry_type)
 
-    @classmethod
-    def from_brep(cls, brep):
-        pass
-
     def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
         """Deprecated?"""
         z = self.frame.zaxis
