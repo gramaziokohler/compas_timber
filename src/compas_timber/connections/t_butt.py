@@ -82,7 +82,7 @@ class TButtJoint(Joint):
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
-    def restore_beams_from_keys(self, assembly):  # TODO: fix typo
+    def restore_beams_from_keys(self, assembly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
         self.main_beam = assembly.find_by_key(self.main_beam_key)
         self.cross_beam = assembly.find_by_key(self.cross_beam_key)
