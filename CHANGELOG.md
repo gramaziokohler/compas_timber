@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Beam geometry is created on demand.
 * Beam transformed geometry with features is available using property `geometry`.
+* Adapted the `Data` interface of `Beam` and `Assembly` according to the changes in COMPAS core.
+* Beam geometry is created on demand.
 
 ### Removed
 

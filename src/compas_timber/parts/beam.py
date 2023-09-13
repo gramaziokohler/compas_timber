@@ -114,7 +114,6 @@ class Beam(Part):
     def __init__(self, frame, length, width, height, geometry_type="brep", **kwargs):
         super(Beam, self).__init__(frame=frame)
         # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
-        self.frame = frame
         self.width = width
         self.height = height
         self.length = length
@@ -123,17 +122,19 @@ class Beam(Part):
 
     @property
     def data(self):
-        data = {"width": self.width, "height": self.height, "length": self.length, "geometry_type": self.geometry_type}
-        data.update(super(Beam, self).data)
+        data = {
+            "frame": self.frame,
+            "width": self.width,
+            "height": self.height,
+            "length": self.length,
+            "geometry_type": self.geometry_type,
+        }
+        data.update(self.attributes)
         return data
 
-    @data.setter
-    def data(self, data):
-        Part.data.fset(self, data)
-        self.width = data["width"]
-        self.height = data["height"]
-        self.length = data["length"]
-        self.geometry_type = data["geometry_type"]
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
 
     @property
     def tolerance(self):
