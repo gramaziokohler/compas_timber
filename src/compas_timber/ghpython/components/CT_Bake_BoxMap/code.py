@@ -70,7 +70,7 @@ else:
 try:
     if _inputok and Bake:
         frames = [frame_to_rhino(b.frame) for b in Beam]
-        breps = [Artist(b.get_geometry(True)).draw() for b in Beam]
+        breps = [Artist(b.geometry).draw() for b in Beam]
 
         if frames and breps:
             rs.EnableRedraw(False)
