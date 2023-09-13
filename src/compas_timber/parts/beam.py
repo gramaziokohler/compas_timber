@@ -75,6 +75,8 @@ class Beam(Part):
         Width of the cross-section
     height : float
         Height of the cross-section
+    geometry : :class:`compas.geometry.Brep` | :class:`compas.datastructures.Mesh`
+        The resolved geometry of this beam, including any applied features.
     geometry_type : str
         The type of geometry created by this beam. Either 'mesh' or 'brep'.
     tolerance : float
@@ -109,15 +111,14 @@ class Beam(Part):
         "brep": _create_brep_shape,
     }
 
-    def __init__(self, frame, length, width, height, geometry_type, **kwargs):
+    def __init__(self, frame, length, width, height, geometry_type="brep", **kwargs):
         super(Beam, self).__init__(frame=frame)
         # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.length = length
         self.geometry_type = geometry_type
-        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
-        self._geometry_with_features = self._geometry.copy()
+        self._geometry = None
 
     @property
     def data(self):
@@ -142,6 +143,14 @@ class Beam(Part):
     @property
     def shape(self):
         return _create_box(self.frame, self.length, self.width, self.height)
+
+    @property
+    def geometry(self):
+        if not self._geometry:
+            self._geometry = self._create_beam_shape_from_params(
+                self.length, self.width, self.height, self.geometry_type
+            )
+        return self._geometry.transformed(Transformation.from_frame(self.frame))
 
     @property
     def faces(self):
@@ -236,9 +245,7 @@ class Beam(Part):
         Should be called after each update to the paramteric definition of the beam.
 
         """
-        self._geometry_with_features = self._create_beam_shape_from_params(
-            self.length, self.width, self.height, self.geometry_type
-        )
+        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
 
     def is_identical(self, other):
         """Returns True if the other beam's values are identicale, within TOLERANCE, to the ones of this beam.
@@ -256,30 +263,6 @@ class Beam(Part):
             and self.frame == other.frame
             # TODO: skip joints and features ?
         )
-
-    def get_geometry(self, with_features=False):
-        """Returns the geometry representation of this beam.
-
-        The geometry is transformed to the frame of this beam.
-
-        Parameters
-        ----------
-        with_features : bool
-            If True the geometry returned should include the features, if any.
-
-        Returns
-        -------
-        :class:`compas.geometry.Geometry`
-
-
-        """
-        transformation = Transformation.from_frame(self.frame)
-        if not with_features or not self.features:
-            g_copy = self._geometry.copy()
-        else:
-            g_copy = self._geometry_with_features.copy()
-        g_copy.transform(transformation)
-        return g_copy
 
     def add_feature(self, feature, apply=False):
         """Adds a feature to this beam.
@@ -318,8 +301,8 @@ class Beam(Part):
             if not success:
                 error_log.append(self._create_feature_error_msg(f, self))
         for f in geo_features:
-            success, self._geometry_with_features = f.apply(self)
-            self._geometry_with_features.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
+            success, self._geometry = f.apply(self)
+            self._geometry.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
             if not success:
                 error_log.append(self._create_feature_error_msg(f, self))
         return error_log
@@ -364,7 +347,7 @@ class Beam(Part):
             self.features = [f for f in self.features if f not in features_to_clear]
         else:
             self.features = []
-        self._geometry_with_features = self._geometry.copy()
+        self.update_beam_geometry()
 
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):
