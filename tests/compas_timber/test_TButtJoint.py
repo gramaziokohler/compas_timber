@@ -28,4 +28,4 @@ def test_create():
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
-    _ = TButtJoint(A, B1, B2)
+    TButtJoint.create(A, B1, B2)
