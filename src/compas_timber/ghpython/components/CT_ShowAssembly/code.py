@@ -11,6 +11,6 @@ class ShowAssembly(component):
 
         Brep = []
         for beam in Assembly.beams:
-            Brep.append(Artist(beam.geometry).draw())
+            Brep.append(Artist(beam.geometry, context="Grasshopper").draw())
 
         return Brep
