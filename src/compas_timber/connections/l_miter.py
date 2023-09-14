@@ -42,31 +42,32 @@ class LMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, assembly, beam_a, beam_b, cutoff=None):
-        super(LMiterJoint, self).__init__(assembly, [beam_a, beam_b])
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, frame=None, key=None):
+        super(LMiterJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
-        self.beam_a_key = None
-        self.beam_b_key = None
+        self.beam_a_key = beam_a.key if beam_a else None
+        self.beam_b_key = beam_b.key if beam_b else None
         self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
         self.features = []
 
     @property
     def data(self):
         data_dict = {
-            "beam_a": self.beam_a.key,
-            "beam_b": self.beam_b.key,
+            "beam_a": self.beam_a_key,
+            "beam_b": self.beam_b_key,
             "cutoff": self.cutoff,
         }
         data_dict.update(Joint.data.fget(self))
         return data_dict
 
-    @data.setter
-    def data(self, value):
-        Joint.data.fset(self, value)
-        self.beam_a_key = value["beam_a"]
-        self.beam_b_key = value["beam_b"]
-        self.cutoff = value["cutoff"]
+    @classmethod
+    def from_data(cls, value):
+        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cutoff"])
+        instance.beam_a_key = value["beam_a"]
+        instance.beam_b_key = value["beam_b"]
+        instance.cutoff = value["cutoff"]
+        return instance
 
     @property
     def joint_type(self):

@@ -1,4 +1,5 @@
 from compas.data import Data
+from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
@@ -60,21 +61,14 @@ class Joint(Data):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, frame=None, key=None):
         super(Joint, self).__init__()
-        # will be needed as coordinate system for structural calculations for the forces at the joint
-        # TODO: CK: who's supposed to sets these?
-        self.frame = None
-        self.key = None
+        self.frame = frame or Frame.worldXY()
+        self.key = key
 
     @property
     def data(self):
-        return {"frame": self.frame, "key": self.key}
-
-    @data.setter
-    def data(self, value):
-        self.frame = value["frame"]
-        self.key = value["key"]
+        return {"frame": self.frame.data, "key": self.key}
 
     @property
     def beams(self):
@@ -129,7 +123,7 @@ class Joint(Data):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
 
-        joint = cls(assembly, *beams)
+        joint = cls(*beams)
         assembly.add_joint(joint, beams)
         joint.add_features()
         return joint
