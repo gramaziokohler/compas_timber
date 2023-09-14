@@ -41,31 +41,31 @@ class TButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, assembly=None, main_beam=None, cross_beam=None):
-        super(TButtJoint, self).__init__(assembly, [main_beam, cross_beam])
-        self.main_beam_key = None
-        self.cross_beam_key = None
+    def __init__(self, main_beam=None, cross_beam=None, gap=None, frame=None, key=None):
+        super(TButtJoint, self).__init__(frame, key)
+        self.main_beam_key = main_beam.key if main_beam else None
+        self.cross_beam_key = cross_beam.key if cross_beam else None
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.gap = None
+        self.gap = gap
         self.features = []
 
     @property
     def data(self):
         data_dict = {
-            "main_beam_key": self.main_beam.key,
-            "cross_beam_key": self.cross_beam.key,
+            "main_beam_key": self.main_beam_key,
+            "cross_beam_key": self.cross_beam_key,
             "gap": self.gap,
         }
         data_dict.update(Joint.data.fget(self))
         return data_dict
 
-    @data.setter
-    def data(self, value):
-        Joint.data.fset(self, value)
-        self.main_beam_key = value["main_beam_key"]
-        self.cross_beam_key = value["cross_beam_key"]
-        self.gap = value["gap"]
+    @classmethod
+    def from_data(cls, value):
+        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], gap=value["gap"])
+        instance.main_beam_key = value["main_beam_key"]
+        instance.cross_beam_key = value["cross_beam_key"]
+        return instance
 
     @property
     def beams(self):
