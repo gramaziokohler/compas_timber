@@ -5,15 +5,13 @@ import xml.dom.minidom
 from compas_timber.assembly import TimberAssembly
 from compas_timber.parts.beam import Beam
 from compas.geometry import Frame
+import compas.data
+import compas_rhino as cr
 
 
 class BTLx:
     def __init__(self, assembly):
-        from compas_timber.assembly import TimberAssembly
-        from compas_timber.parts.beam import Beam
-        from compas.geometry import Frame
-
-        print("BTLx init")
+        self.assembly = assembly
 
         self.file_attributes = {
             "xmlns": "https://www.design2machine.com",
@@ -22,21 +20,23 @@ class BTLx:
             "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "xsi:schemaLocation": "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
         }
-        self.btlx = ET.Element("BTLx", self.file_attributes)
-        self.btlx.append(self.file_history())
-        self.project = ET.SubElement(self.btlx, "Project")
+        self.string = ET.Element("BTLx", self.file_attributes)
+        self.string.append(self.file_history())
+        self.project = ET.SubElement(self.string, "Project", Name="testProject")
         self.parts = ET.SubElement(self.project, "Parts")
-        self.btlx_ET = ET.ElementTree(self.btlx)
+        self.btlx_ET = ET.ElementTree(self.string)
 
         print("before adding parts")
 
-        for i in range(4):
+        i = 0;
+        for beam in range(0,4):
             frame = Frame((0, 0, 0), (0, 0, 1), (0, 1, 0))
             beam = Beam(frame, 2450, 85, 150, "mesh")
-            self.parts.append(self.Part(beam, i).part)
+            self.parts.append(self.BTLx_Part(beam, i).part)
+            i+=1
 
-    # def __str__(self):
-    #     return ET.tostring(self.btlx)
+    def __str__(self):
+        return xml.dom.minidom.parseString(ET.tostring(self.string)).toprettyxml(indent="   ")
 
     def file_history(self):
         file_history = ET.Element("FileHistory")
@@ -55,7 +55,7 @@ class BTLx:
         )
         return file_history
 
-    class Part:
+    class BTLx_Part:
         def __init__(self, beam, index):
             frame = Frame((0, 0, 0), (0, 0, 1), (0, 1, 0))
             beam = Beam(frame, 2450, 85, 150, "mesh")
@@ -91,12 +91,13 @@ class BTLx:
                 ModuleNumber="",
             )
             self.part.set("SingleMemberNumber", str(index))
+            self.part.set("OrderNumber", str(index))
             self.part.set("Length", str(beam.length))
             self.part.set("Width", str(beam.width))
             self.part.set("Height", str(beam.height))
 
             transformations = ET.SubElement(self.part, "Transformations")
-            guid = str(uuid.uuid4())
+            guid = "{" + str(uuid.uuid4()) + "}"
             transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
             position = ET.SubElement(transformation, "Position")
 
@@ -123,8 +124,8 @@ class BTLx:
                 processings.append(self.add_process(a))
 
             shape = ET.SubElement(self.part, "Shape")
-            indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="", coorIndex="")
-            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="")
+            indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coorIndex="0")
+            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="0,0,0")
 
         def add_process(self, feature):
             if feature == 0:
@@ -154,18 +155,46 @@ class BTLx:
 
             return process
 
+def get_btlx_string(assembly_json):
+    assembly = compas.json_loads(assembly_json)
+    btlx_ins = BTLx(assembly)
+    return str(btlx_ins)
 
-def get_btlx_string(assembly):
-    btlx = BTLx(assembly)
 
-    return xml.dom.minidom.parseString(ET.tostring(btlx.btlx)).toprettyxml(indent="   ")
+def btlx_part_strings(brep):
+    brep_vertices = brep.Vertices
+    brep_vertices_string = ""
+    for vertex in brep_vertices:
+        brep_vertices_string += str(vertex.Location.X) + " " + str(vertex.Location.Y) + " " + str(vertex.Location.Z) + " "
+    brep_indices = []
+    for face in brep.Faces:
+        face_indices = []
+        for edge_index in face.AdjacentEdges():
+            edge = brep.Edges[edge_index]
+            start_vertex = edge.StartVertex
+            end_vertex = edge.EndVertex
+            face_indices.append(start_vertex.VertexIndex)
+            face_indices.append(end_vertex.VertexIndex)
+        face_indices = list(set(face_indices))
+        for index in ccw_sorted_vertex_indices(face_indices, brep, face):
+            brep_indices.append(index)
+        brep_indices.append(-1)
+    brep_indices.pop(-1)
+    brep_indices_string = ""
+    for index in brep_indices:
+        brep_indices_string += str(index) + " "
+    return [brep_vertices_string, brep_indices_string]
 
 
-def write_btlx(assembly, path):
-    btlx = BTLx(assembly)
-    btlx.btlx_ET.write(path)
-    msg = xml.dom.minidom.parseString(ET.tostring(btlx.btlx)).toprettyxml(indent="   ")
-    with open(path, "w") as f:
-        f.write(msg)
+def angle(frame, point):
+    point_vector = cr.Vector3d(point.X - frame.Origin.X, point.Y - frame.Origin.Y, point.Z - frame.Origin.Z)
+    return cr.Vector3d.VectorAngle(frame.XAxis, point_vector)
 
-    return msg
+def ccw_sorted_vertex_indices(indices, brep, brep_face):
+    frame_origin = brep_face.PointAt(0.5, 0.5)
+    frame_normal = brep_face.NormalAt(0.5, 0.5)
+    normal_frame = cr.Plane(frame_origin, frame_normal)
+    sorted_indices = sorted(indices, key=lambda index: angle(normal_frame, brep.Vertices[index].Location))
+    return sorted_indices
+
+
