@@ -5,8 +5,9 @@ import xml.dom.minidom
 from compas_timber.assembly import TimberAssembly
 from compas_timber.parts.beam import Beam
 from compas.geometry import Frame
+from compas.geometry import Plane
+from compas.geometry import Vector
 import compas.data
-import compas_rhino as cr
 
 
 class BTLx:
@@ -157,6 +158,7 @@ class BTLx:
 
 def get_btlx_string(assembly_json):
     assembly = compas.json_loads(assembly_json)
+    print(assembly.Beams)
     btlx_ins = BTLx(assembly)
     return str(btlx_ins)
 
@@ -187,13 +189,13 @@ def btlx_part_strings(brep):
 
 
 def angle(frame, point):
-    point_vector = cr.Vector3d(point.X - frame.Origin.X, point.Y - frame.Origin.Y, point.Z - frame.Origin.Z)
-    return cr.Vector3d.VectorAngle(frame.XAxis, point_vector)
+    point_vector = Vector(point[0] - frame.point[0], point[1] - frame.point[1], point[2] - frame.point[2])
+    return Vector.angle_vectors_signed(frame.xaxis, point_vector, frame.normal)
 
 def ccw_sorted_vertex_indices(indices, brep, brep_face):
     frame_origin = brep_face.PointAt(0.5, 0.5)
     frame_normal = brep_face.NormalAt(0.5, 0.5)
-    normal_frame = cr.Plane(frame_origin, frame_normal)
+    normal_frame = Frame.from_plane(Plane(frame_origin, frame_normal))
     sorted_indices = sorted(indices, key=lambda index: angle(normal_frame, brep.Vertices[index].Location))
     return sorted_indices
 
