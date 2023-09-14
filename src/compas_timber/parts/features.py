@@ -40,17 +40,17 @@ class BeamTrimmingFeature(GeometricFeature):
         self._geometry = Frame.from_data(value["trimming_frame"])
 
     def apply(self, part):
-        part_geometry = part.get_geometry(with_features=True)
+        part_geometry = part.geometry
         if not isinstance(part_geometry, Brep):
-            raise ValueError("Brep feature {} cannot be applied to part with non Brep geometry {}".format(self, part))
-        g_copy = part_geometry.copy()
+            raise ValueError(
+                "Brep feature {} cannot be applied to part with geometry of type:{}".format(self, type(part_geometry))
+            )
         operation = self.OPERATIONS[Brep]
-
         try:
-            operation(g_copy, self._geometry)
+            operation(part_geometry, self._geometry)
+            return True, part_geometry
         except BrepTrimmingError:
-            False, part_geometry
-        return True, g_copy
+            return False, part.geometry  # copy again since operation is in-place and brep might be corrupted
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, repr(self._geometry))
@@ -79,9 +79,11 @@ class BeamBooleanSubtraction(GeometricFeature):
         return BeamBooleanSubtraction(self._geometry.copy())
 
     def apply(self, part):
-        part_geometry = part.get_geometry(with_features=True)
+        part_geometry = part.geometry
         if not isinstance(part_geometry, Brep):
-            raise ValueError("Brep feature {} cannot be applied to part with non Brep geometry {}".format(self, part))
+            raise ValueError(
+                "Brep feature {} cannot be applied to part with non Brep geometry {}".format(self, part_geometry)
+            )
         operation = self.OPERATIONS[Brep]
         try:
             return True, operation(part_geometry, self._geometry)

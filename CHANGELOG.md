@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-*  Adapted the `Data` interface of `Beam` and `Assembly` according to the changes in COMPAS core.
+* Beam transformed geometry with features is available using property `geometry`.
+* Adapted the `Data` interface of `Beam` and `Assembly` according to the changes in COMPAS core.
+* Beam geometry is created on demand.
+* Adapted the `Data` interface of `Joint` and its implementations according to the changes in COMPAS core.
 
 ### Removed
 
+* Removed method `Beam.get_geometry`.
 
 ## [0.2.16] 2023-05-16
 
