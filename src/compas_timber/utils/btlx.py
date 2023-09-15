@@ -5,9 +5,14 @@ import xml.dom.minidom
 from compas_timber.assembly import TimberAssembly
 from compas_timber.parts.beam import Beam
 from compas.geometry import Frame
+from compas.geometry import Brep
 from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.datastructures import GeometricFeature
+from compas.datastructures import ParametricFeature
+from compas.datastructures import Part
 import compas.data
+import compas_occ
 
 
 class BTLx:
@@ -26,18 +31,18 @@ class BTLx:
         self.project = ET.SubElement(self.string, "Project", Name="testProject")
         self.parts = ET.SubElement(self.project, "Parts")
         self.btlx_ET = ET.ElementTree(self.string)
-
-        print("before adding parts")
+        self.msg = ""
 
         i = 0;
-        for beam in range(0,4):
-            frame = Frame((0, 0, 0), (0, 0, 1), (0, 1, 0))
-            beam = Beam(frame, 2450, 85, 150, "mesh")
+        for beam in assembly.beams:
+            for feature in beam.features:
+                self.msg += repr(feature)
             self.parts.append(self.BTLx_Part(beam, i).part)
             i+=1
 
     def __str__(self):
         return xml.dom.minidom.parseString(ET.tostring(self.string)).toprettyxml(indent="   ")
+
 
     def file_history(self):
         file_history = ET.Element("FileHistory")
@@ -58,8 +63,9 @@ class BTLx:
 
     class BTLx_Part:
         def __init__(self, beam, index):
-            frame = Frame((0, 0, 0), (0, 0, 1), (0, 1, 0))
-            beam = Beam(frame, 2450, 85, 150, "mesh")
+
+            # for feature in beam.features:
+            #     print(feature)
 
             btlx_corner_reference_point = (
                 beam.frame.point
@@ -121,12 +127,40 @@ class BTLx:
             reference_side = ET.SubElement(self.part, "ReferenceSide", Side="3", Align="no")
             processings = ET.SubElement(self.part, "Processings")
 
-            for a in range(3):
+            a=0
+            for feature in beam.features:
                 processings.append(self.add_process(a))
+                a+=1
 
             shape = ET.SubElement(self.part, "Shape")
-            indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coorIndex="0")
-            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="0,0,0")
+            indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
+            indexed_face_set.set("coordIndex", "\"" + self.btlx_part_strings(beam.geometry)[1] + "\"" )
+            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="\"" + self.btlx_part_strings(beam.geometry)[0] + "\"")
+
+        def btlx_shape_strings(self, brep_in):
+                brep = Brep.from_native(brep_in)
+                brep_vertices = brep.vertices
+                brep_vertices_string = ""
+                for vertex in brep_vertices:
+                    brep_vertices_string += str(vertex.point.x) + " " + str(vertex.point.y) + " " + str(vertex.point.z) + " "
+                brep_indices = []
+                for face in brep.faces:
+                    face_indices = []
+                    for edge_index in face.edges():
+                        edge = brep.Edges[edge_index]
+                        start_vertex = edge.StartVertex
+                        end_vertex = edge.EndVertex
+                        face_indices.append(start_vertex.VertexIndex)
+                        face_indices.append(end_vertex.VertexIndex)
+                    face_indices = list(set(face_indices))
+                    for index in self.ccw_sorted_vertex_indices(face_indices, brep, face):
+                        brep_indices.append(index)
+                    brep_indices.append(-1)
+                brep_indices.pop(-1)
+                brep_indices_string = ""
+                for index in brep_indices:
+                    brep_indices_string += str(index) + " "
+                return [brep_vertices_string, brep_indices_string]
 
         def add_process(self, feature):
             if feature == 0:
@@ -156,38 +190,6 @@ class BTLx:
 
             return process
 
-def get_btlx_string(assembly_json):
-    assembly = compas.json_loads(assembly_json)
-    print(assembly.Beams)
-    btlx_ins = BTLx(assembly)
-    return str(btlx_ins)
-
-
-def btlx_part_strings(brep):
-    brep_vertices = brep.Vertices
-    brep_vertices_string = ""
-    for vertex in brep_vertices:
-        brep_vertices_string += str(vertex.Location.X) + " " + str(vertex.Location.Y) + " " + str(vertex.Location.Z) + " "
-    brep_indices = []
-    for face in brep.Faces:
-        face_indices = []
-        for edge_index in face.AdjacentEdges():
-            edge = brep.Edges[edge_index]
-            start_vertex = edge.StartVertex
-            end_vertex = edge.EndVertex
-            face_indices.append(start_vertex.VertexIndex)
-            face_indices.append(end_vertex.VertexIndex)
-        face_indices = list(set(face_indices))
-        for index in ccw_sorted_vertex_indices(face_indices, brep, face):
-            brep_indices.append(index)
-        brep_indices.append(-1)
-    brep_indices.pop(-1)
-    brep_indices_string = ""
-    for index in brep_indices:
-        brep_indices_string += str(index) + " "
-    return [brep_vertices_string, brep_indices_string]
-
-
 def angle(frame, point):
     point_vector = Vector(point[0] - frame.point[0], point[1] - frame.point[1], point[2] - frame.point[2])
     return Vector.angle_vectors_signed(frame.xaxis, point_vector, frame.normal)
@@ -196,7 +198,11 @@ def ccw_sorted_vertex_indices(indices, brep, brep_face):
     frame_origin = brep_face.PointAt(0.5, 0.5)
     frame_normal = brep_face.NormalAt(0.5, 0.5)
     normal_frame = Frame.from_plane(Plane(frame_origin, frame_normal))
-    sorted_indices = sorted(indices, key=lambda index: angle(normal_frame, brep.Vertices[index].Location))
+    sorted_indices = sorted(indices, key=lambda index: BTLx_Part.angle(normal_frame, brep.Vertices[index].Location))
     return sorted_indices
 
-
+def get_btlx_string(assembly_json):
+    assembly = compas.json_loads(assembly_json)
+    print("Hello, beams")
+    btlx_ins = BTLx(assembly)
+    return [str(btlx_ins), btlx_ins.msg]
