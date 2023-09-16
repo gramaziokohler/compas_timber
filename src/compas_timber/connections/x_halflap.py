@@ -104,7 +104,18 @@ class XHalfLapJoint(Joint):
             point_bottom = Point(*point_bottom)
             int_points.append(point_top)
             int_points.append(point_bottom)
-        # Step 2: Create a Hexahedron with 6 Faces from the 8 Points
+
+        # Step 2: Check if int_points Order results in an inward facing Polyhedron
+        test_face_vector1 = Vector.from_start_end(int_points[0], int_points[2])
+        test_face_vector2 = Vector.from_start_end(int_points[0], int_points[6])
+        test_face_normal = Vector.cross(test_face_vector1, test_face_vector2)
+        check_vector = Vector.from_start_end(int_points[0], int_points[1])              
+        # Flip int_points Order if needed
+        if angle_vectors(test_face_normal, check_vector) < 1:
+            a,b,c,d,e,f,g,h = int_points
+            int_points = b,a,d,c,f,e,h,g
+
+        # Step 3: Create a Hexahedron with 6 Faces from the 8 Points
         return Polyhedron(
             int_points,
             [
