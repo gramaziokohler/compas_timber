@@ -10,7 +10,6 @@ from compas_timber.ghpython import JointDefinition
 
 class XHalfLapDefinition(component):
     def RunScript(self, MainBeam, CrossBeam):
-        max_distance_from_beams = max([MainBeam[0].width, MainBeam[0].height, CrossBeam[0].width, CrossBeam[0].height])
         if not MainBeam:
             self.AddRuntimeMessage(Warning, "Input parameter MainBeams failed to collect data.")
         if not CrossBeam:
@@ -24,9 +23,9 @@ class XHalfLapDefinition(component):
         if len(MainBeam) != len(CrossBeam):
             self.AddRuntimeMessage(Error, "Number of items in MainBeams and CrossBeams must match!")
             return
-
         Joint = []
         for main, cross in zip(MainBeam, CrossBeam):
+            max_distance_from_beams = max([main.width, main.height, cross.width, cross.height])
             topology, _, _ = ConnectionSolver().find_topology(main, cross, max_distance=max_distance_from_beams)
             if topology != XHalfLapJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
