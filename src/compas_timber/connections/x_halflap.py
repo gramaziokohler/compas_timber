@@ -165,8 +165,7 @@ class XHalfLapJoint(Joint):
         negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, plane_cut, lines)
 
         # Create BREP
-        Breps = Brep.from_mesh(negative_polyhedron_beam_a), Brep.from_mesh(negative_polyhedron_beam_b)
-        return Breps
+        return Brep.from_mesh(negative_polyhedron_beam_a), Brep.from_mesh(negative_polyhedron_beam_b)
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
