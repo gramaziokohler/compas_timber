@@ -1,11 +1,19 @@
-from compas.geometry import Point, Line, Plane, Polyhedron, Brep, Vector
-from compas.geometry import midpoint_point_point
-from compas.geometry import intersection_plane_plane
-from compas.geometry import intersection_line_plane
+from compas.geometry import Brep
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Polyhedron
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_plane_plane
 from compas.geometry import length_vector
+from compas.geometry import midpoint_point_point
+
 from compas_timber.parts import BeamBooleanSubtraction
 from compas_timber.utils import intersection_line_line_3D
+
 from .joint import Joint
 from .solver import JointTopology
 
@@ -31,11 +39,13 @@ class XHalfLapJoint(Joint):
         data_dict.update(Joint.data.fget(self))
         return data_dict
 
-    @data.setter
-    def data(self, value):
-        Joint.data.fset(self, value)
-        self.beam_a_key = value["beam_a"]
-        self.beam_b_key = value["beam_b"]
+    @classmethod
+    def from_data(cls, value):
+        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cut_plane_choice"])
+        instance.beam_a_key = value["beam_a"]
+        instance.beam_b_key = value["beam_b"]
+        instance.cut_plane_choice = value["cut_plane_choice"]
+        return instance
 
     @property
     def joint_type(self):
@@ -109,11 +119,11 @@ class XHalfLapJoint(Joint):
         test_face_vector1 = Vector.from_start_end(int_points[0], int_points[2])
         test_face_vector2 = Vector.from_start_end(int_points[0], int_points[6])
         test_face_normal = Vector.cross(test_face_vector1, test_face_vector2)
-        check_vector = Vector.from_start_end(int_points[0], int_points[1])              
+        check_vector = Vector.from_start_end(int_points[0], int_points[1])
         # Flip int_points Order if needed
         if angle_vectors(test_face_normal, check_vector) < 1:
-            a,b,c,d,e,f,g,h = int_points
-            int_points = b,a,d,c,f,e,h,g
+            a, b, c, d, e, f, g, h = int_points
+            int_points = b, a, d, c, f, e, h, g
 
         # Step 3: Create a Hexahedron with 6 Faces from the 8 Points
         return Polyhedron(
