@@ -12,11 +12,11 @@ from compas.datastructures import GeometricFeature
 from compas.datastructures import ParametricFeature
 from compas.datastructures import Part
 import compas.data
-import compas_occ
+#import compas_occ
 
 
 class BTLx:
-    def __init__(self, assembly):
+    def __init__(self, assembly, shape_data= None):
         self.assembly = assembly
 
         self.file_attributes = {
@@ -37,7 +37,7 @@ class BTLx:
         for beam in assembly.beams:
             for feature in beam.features:
                 self.msg += repr(feature)
-            self.parts.append(self.BTLx_Part(beam, i).part)
+            self.parts.append(self.BTLx_Part(beam, i, shape_data).part)
             i+=1
 
     def __str__(self):
@@ -62,10 +62,7 @@ class BTLx:
         return file_history
 
     class BTLx_Part:
-        def __init__(self, beam, index):
-
-            # for feature in beam.features:
-            #     print(feature)
+        def __init__(self, beam, index, shape_data = None):
 
             btlx_corner_reference_point = (
                 beam.frame.point
@@ -134,33 +131,9 @@ class BTLx:
 
             shape = ET.SubElement(self.part, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
-            indexed_face_set.set("coordIndex", "\"" + self.btlx_part_strings(beam.geometry)[1] + "\"" )
-            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="\"" + self.btlx_part_strings(beam.geometry)[0] + "\"")
+            indexed_face_set.set("coordIndex", "\"" + shape_data[0][index] + "\"" )
+            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="\"" + shape_data[1][index] + "\"")
 
-        def btlx_shape_strings(self, brep_in):
-                brep = Brep.from_native(brep_in)
-                brep_vertices = brep.vertices
-                brep_vertices_string = ""
-                for vertex in brep_vertices:
-                    brep_vertices_string += str(vertex.point.x) + " " + str(vertex.point.y) + " " + str(vertex.point.z) + " "
-                brep_indices = []
-                for face in brep.faces:
-                    face_indices = []
-                    for edge_index in face.edges():
-                        edge = brep.Edges[edge_index]
-                        start_vertex = edge.StartVertex
-                        end_vertex = edge.EndVertex
-                        face_indices.append(start_vertex.VertexIndex)
-                        face_indices.append(end_vertex.VertexIndex)
-                    face_indices = list(set(face_indices))
-                    for index in self.ccw_sorted_vertex_indices(face_indices, brep, face):
-                        brep_indices.append(index)
-                    brep_indices.append(-1)
-                brep_indices.pop(-1)
-                brep_indices_string = ""
-                for index in brep_indices:
-                    brep_indices_string += str(index) + " "
-                return [brep_vertices_string, brep_indices_string]
 
         def add_process(self, feature):
             if feature == 0:
@@ -190,19 +163,10 @@ class BTLx:
 
             return process
 
-def angle(frame, point):
-    point_vector = Vector(point[0] - frame.point[0], point[1] - frame.point[1], point[2] - frame.point[2])
-    return Vector.angle_vectors_signed(frame.xaxis, point_vector, frame.normal)
 
-def ccw_sorted_vertex_indices(indices, brep, brep_face):
-    frame_origin = brep_face.PointAt(0.5, 0.5)
-    frame_normal = brep_face.NormalAt(0.5, 0.5)
-    normal_frame = Frame.from_plane(Plane(frame_origin, frame_normal))
-    sorted_indices = sorted(indices, key=lambda index: BTLx_Part.angle(normal_frame, brep.Vertices[index].Location))
-    return sorted_indices
-
-def get_btlx_string(assembly_json):
+def get_btlx_string(assembly_json, shape_data = None):
     assembly = compas.json_loads(assembly_json)
     print("Hello, beams")
-    btlx_ins = BTLx(assembly)
+    btlx_ins = BTLx(assembly, shape_data)
     return [str(btlx_ins), btlx_ins.msg]
+    #return ["Hello, beams"]
