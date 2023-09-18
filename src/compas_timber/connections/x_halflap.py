@@ -83,9 +83,9 @@ class XHalfLapJoint(Joint):
         cutplane_vector_b = Vector.from_start_end(int_b, point_cut)
 
         # If Centerlines crossing, take the Cutplane Normal
-        if length_vector(cutplane_vector_a) == 0:
+        if length_vector(cutplane_vector_a) < 1e-6:
             cutplane_vector_a = plane_cut.normal
-        if length_vector(cutplane_vector_b) == 0:
+        if length_vector(cutplane_vector_b) < 1e-6:
             cutplane_vector_b = plane_cut.normal * -1
 
         return plane_cut, cutplane_vector_a, cutplane_vector_b
@@ -129,7 +129,7 @@ class XHalfLapJoint(Joint):
         return Polyhedron(
             int_points,
             [
-                [1, 3, 5, 7],  # top
+                [1, 7, 5, 3],  # top
                 [0, 2, 4, 6],  # bottom
                 [1, 3, 2, 0],  # left
                 [3, 5, 4, 2],  # back
