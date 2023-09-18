@@ -99,7 +99,7 @@
 <h1>LMiterJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.LMiterJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LMiterJoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assembly</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/connections/l_miter.py#L15"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LMiterJoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/connections/l_miter.py#L15"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
 <p>Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane
 at the bisector angle between the beams’ centerlines.</p>
@@ -127,7 +127,10 @@ at the bisector angle between the beams’ centerlines.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.add_features.html#compas_timber.connections.LMiterJoint.add_features" title="compas_timber.connections.LMiterJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds the required extension and trimming features to both beams.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.restore_beams_from_keys.html#compas_timber.connections.LMiterJoint.restore_beams_from_keys" title="compas_timber.connections.LMiterJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.from_data.html#compas_timber.connections.LMiterJoint.from_data" title="compas_timber.connections.LMiterJoint.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a></p></td>
+<td><p>Construct an object of this type from the provided data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.restore_beams_from_keys.html#compas_timber.connections.LMiterJoint.restore_beams_from_keys" title="compas_timber.connections.LMiterJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>After de-serialization, resotres references to the main and cross beams saved in the assembly.</p></td>
 </tr>
 </tbody>
@@ -144,16 +147,13 @@ at the bisector angle between the beams’ centerlines.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.create.html#compas_timber.connections.LMiterJoint.create" title="compas_timber.connections.LMiterJoint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
 <td><p>Creates an instance of this joint and creates the new connection in <cite>assembly</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.from_data.html#compas_timber.connections.LMiterJoint.from_data" title="compas_timber.connections.LMiterJoint.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a></p></td>
-<td><p>Construct an object of this type from the provided data.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.sha256.html#compas_timber.connections.LMiterJoint.sha256" title="compas_timber.connections.LMiterJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.sha256.html#compas_timber.connections.LMiterJoint.sha256" title="compas_timber.connections.LMiterJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.to_data.html#compas_timber.connections.LMiterJoint.to_data" title="compas_timber.connections.LMiterJoint.to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.to_data.html#compas_timber.connections.LMiterJoint.to_data" title="compas_timber.connections.LMiterJoint.to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data</span></code></a></p></td>
 <td><p>Convert an object to its native data representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.validate_data.html#compas_timber.connections.LMiterJoint.validate_data" title="compas_timber.connections.LMiterJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.validate_data.html#compas_timber.connections.LMiterJoint.validate_data" title="compas_timber.connections.LMiterJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
