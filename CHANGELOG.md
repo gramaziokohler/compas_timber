@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added new joint type: Half-lap joint.
+
 ### Changed
 
 * Beam transformed geometry with features is available using property `geometry`.
