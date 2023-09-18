@@ -27,7 +27,7 @@ class XHalfLapDefinition(component):
 
         Joint = []
         for main, cross in zip(MainBeam, CrossBeam):
-            topology, _, _ = ConnectionSolver().find_topology(main, cross, max_distance = max_distance_from_beams)
+            topology, _, _ = ConnectionSolver().find_topology(main, cross, max_distance=max_distance_from_beams)
             if topology != XHalfLapJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
                     Warning,
