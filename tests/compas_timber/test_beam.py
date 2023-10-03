@@ -31,7 +31,7 @@ def test_create_mesh(mocker, frame, mesh_geometry):
     assert close(beam.width, 2.0)
     assert close(beam.height, 3.0)
     assert beam.frame == frame
-    assert isinstance(beam.get_geometry(), Mesh)
+    assert isinstance(beam.geometry, Mesh)
 
 
 def test_create_from_endpoints(mesh_geometry):

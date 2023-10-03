@@ -8,9 +8,9 @@ from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attribut
 
 
 class Attributes_Get(component):
-    def RunScript(self, refCrv):
-        if not refCrv:
-            self.AddRuntimeMessage(Warning, "Input parameter refCrv failed to collect data")
+    def RunScript(self, RefCrv):
+        if not RefCrv:
+            self.AddRuntimeMessage(Warning, "Input parameter RefCrv failed to collect data")
 
         ZVector = []
         Width = []
@@ -18,7 +18,7 @@ class Attributes_Get(component):
         Category = []
         Group = []
 
-        guid = refCrv
+        guid = RefCrv
         if guid:
             # get attributes from the name string ==========================================
             attr = get_obj_attributes(guid)

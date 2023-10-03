@@ -1,4 +1,3 @@
-black
 attrs >=17.4
 bump2version >=0.5.11
 check-manifest >=0.36
@@ -16,11 +15,9 @@ pydocstyle
 pytest >=3.2
 pytest-mock
 sphinx_compas_theme >=0.13
-sphinx >=3.4
+sphinx ==7.1.2
 twine
 matplotlib
 Rtree
 compas_invocations
-git+https://github.com/compas-dev/compas.git@main#egg=compas
-git+https://github.com/compas-dev/compas_future.git@main#egg=compas_future
 -e .

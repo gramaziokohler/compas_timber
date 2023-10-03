@@ -15,15 +15,43 @@ from compas.plugins import pluggable
 
 @pluggable(category="solvers")
 def find_neighboring_beams(beams, inflate_by=None):
-    """Uses RTree to find neighboring pairs of beams in the given list of beams.
+    """Finds neighboring pairs of beams in the given list of beams, using R-tree search.
+
+    The inputs to the R-tree algorithm are the axis-aligned bounding boxes of the beams (beam.aabb), enlarged by the `inflate_by` amount.
     The returned elements are sets containing pairs of Beam objects.
+
+    Parameters
+    ----------
+    beams : list(:class:`~compas_timer.part.Beam`)
+        The list of beams in which neighboring beams should be identified.
+    inflate_by : optional, float
+        A value in design units by which the regarded bounding boxes should be inflated.
+
+    Returns
+    -------
+    list(set(:class:`~compas_timber.part.Beam`, :class:`~compas_timber.part.Beam`))
+
+    Notes
+    -----
+    This is a `pluggable`. In order to use this function, a compatible `plugin` has to be available.
+    For example, in Rhino, the function :func:`~compas_timber.rhino.find_neighboring_beams` will be used.
 
     """
     raise NotImplementedError
 
 
 class JointTopology(object):
-    """Enumeration of the possible joint topologies."""
+    """Enumeration of the possible joint topologies.
+
+    Attributes
+    ----------
+    TOPO_UNKNOWN
+    TOPO_I
+    TOPO_L
+    TOPO_T
+    TOPO_X
+
+    """
 
     TOPO_UNKNOWN = 0
     TOPO_I = 1
@@ -65,24 +93,46 @@ class ConnectionSolver(object):
 
         Parameters
         ----------
-        beams : list(:class:`compas_timber.parts.Beam`)
+        beams : list(:class:`~compas_timber.parts.Beam`)
             A list of beam objects.
         rtree : bool
-            When set to True RTree will be used to search for neighboring beams.
+            When set to True R-tree will be used to search for neighboring beams.
         max_distance : float, optional
-            When rtree is True, an additional distance apart with which
+            When `rtree` is True, an additional distance apart with which
             non-touching beams are still considered intersecting.
 
         Returns
         -------
-        list(set(:class:`compas_timber.parts.Beam`, :class:`compas_timber.parts.Beam`))
+        list(set(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`))
             List containing sets or neightboring pairs beams.
 
         """
         return find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
-        """For a pair of beams, checks if their centerlines intersect (within a max_distance, optional), and determines topology of this intersection (using max_distance cutoff, optional)."""
+        """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
+
+        If the topology is role-sensitive, the method outputs the beams in a consistent specific order
+        (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
+        order as they were inputted.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.parts.Beam`
+            First beam from intersecting pair.
+        beam_b : :class:`~compas_timber.parts.Beam`
+            Second beam from intersecting pair.
+        tol : float
+            General tolerance to use for mathematical computations.
+        max_distance : float, optional
+            Maximum distance, in desigen units, at which two beams are considered intersecting.
+
+        Returns
+        -------
+        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+
+        """
+
         tol = self.TOLERANCE  # TODO: change to a unit-sensitive value
         angtol = 1e-3
 

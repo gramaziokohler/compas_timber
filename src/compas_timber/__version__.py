@@ -1,11 +1,13 @@
-__title__ = "compas_timber_structures"
+from datetime import datetime
+
+__title__ = "compas_timber"
 __description__ = "COMPAS package for modeling, designing and fabricating timber assemblies."
-__url__ = "https://github.com/gramaziokohler/compas_timber_structures"
-__version__ = "0.1.0"
+__url__ = "https://github.com/gramaziokohler/compas_timber"
+__version__ = "0.3.1"
 __author__ = "Gramazio Kohler Research"
 __author_email__ = "gramaziokohler@arch.ethz.ch"
 __license__ = "MIT license"
-__copyright__ = "Copyright 2021 Gramazio Kohler Research"
+__copyright__ = "Copyright {} Gramazio Kohler Research".format(datetime.today().year)
 
 __all__ = [
     "__author__",

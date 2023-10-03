@@ -8,10 +8,9 @@ class ShowAssembly(component):
         if not Assembly:
             self.AddRuntimeMessage(Warning, "Input parameter Assembly failed to collect data")
             return
-        Assembly = Assembly.copy()  # we're gonna be making changes to upstream objects
 
         Brep = []
         for beam in Assembly.beams:
-            Brep.append(Artist(beam.get_geometry(True)).draw())
+            Brep.append(Artist(beam.geometry, context="Grasshopper").draw())
 
         return Brep

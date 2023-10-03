@@ -11,52 +11,78 @@ on:
       - main
 
 jobs:
-  build:
-    name: build and deploy docs
+  docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: compas-dev/compas-actions.docs@v1.0.2
-        id: docs
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
         with:
-          dest: deploy
-          build_to_subfolder: true
+          python-version: "3.10"
 
-      - name: Deploy docs
-        if: success() && steps.docs.outputs.commit_type != 'pull'
-        uses: crazy-max/ghaction-github-pages@v2
+      - name: Install CPython dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install compas@git+https://github.com/compas-dev/compas@main  # TODO: remove once new `Part` is released.
+          python -m pip install --no-cache-dir -r requirements-dev.txt
+
+      - name: 📃 Generate docs
+        id: docs
+        shell: bash
+        run: |
+          invoke docs --check-links
+          # Get branch/tag/latest name from git
+          GITHUB_REF_REGEX="tags/v([0-9a-zA-Z\.\-]+)|(pull/[0-9]+)|heads/(.+)"
+          if [[ $GITHUB_REF =~ $GITHUB_REF_REGEX ]]; then
+            if [[ $BASH_REMATCH = pull* ]]; then
+              BRANCH_OR_TAG=pull_${BASH_REMATCH##*/}
+              echo "commit_type=pull" >> $GITHUB_OUTPUT
+            elif [[ $BASH_REMATCH = tags/v* ]]; then
+              # 2nd element is tag, #v replaces prefix v
+              BRANCH_OR_TAG=${BASH_REMATCH[1]#v}
+              echo "commit_type=tag" >> $GITHUB_OUTPUT
+            else
+              BRANCH_OR_TAG=${BASH_REMATCH##*/}
+            fi;
+            if [[ $BRANCH_OR_TAG = main ]]; then
+              BRANCH_OR_TAG=latest
+              echo "commit_type=main" >> $GITHUB_OUTPUT
+            fi;
+          fi;
+          echo "Docs will be deployed to https://gramaziokohler.github.io/compas_timber/$BRANCH_OR_TAG"
+          mkdir -p deploy/$BRANCH_OR_TAG && mv -T dist/docs deploy/$BRANCH_OR_TAG/
+
+      # Check index.html and .nojekyll
+      - shell: bash -l {0}
+        run: |
+          echo check index.html and .nojekyll
+          cd deploy
+          if [[ ! -f ".nojekyll" ]]; then
+            echo creating .nojekyll
+            > .nojekyll
+          fi
+
+          full_repo=${{ github.repository }}
+          repo=${full_repo#*/}
+
+          if [[ ! -f "index.html" ]]; then
+            echo creating index.html
+            echo '<meta http-equiv="refresh" content="0; url=/'$repo'/latest/">' > index.html
+          fi
+
+          if [[ ${{ steps.docs.outputs.commit_type }} == "tag" ]]; then
+            echo update index.html to point at ${{ steps.docs.outputs.current_version }}
+            echo '<meta http-equiv="refresh" content="0; url=/'$repo'/${{ steps.docs.outputs.current_version }}/">' > index.html
+          fi
+
+      - name: 🚢 Deploy docs
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v3
         with:
           target_branch: gh-pages
           build_dir: deploy
           keep_history: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    outputs:
-      commit_type: ${{ steps.docs.outputs.commit_type }}
-      current_version: ${{ steps.docs.outputs.current_version }}
-  
-  docVersions:
-    needs: build
-    if: needs.build.outputs.commit_type == 'tag'
-    name: update doc versions
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: gh-pages
 
-      - uses: compas-dev/compas-actions.docversions@v1.0.2
-        with:
-          current_version: ${{ needs.build.outputs.current_version }}
-
-      - name: Deploy docs
-        if: success()
-        uses: crazy-max/ghaction-github-pages@v2
-        with:
-          target_branch: gh-pages
-          build_dir: ./
-          keep_history: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

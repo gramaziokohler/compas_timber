@@ -18,11 +18,28 @@ Classes
 
     Joint
     TButtJoint
+    LButtJoint
+    LMiterJoint
+    XHalfLapJoint
+    JointTopology
+    ConnectionSolver
 
 Functions
 =========
 
-    beam_side_incidence
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    find_neighboring_beams
+
+Exceptions
+==========
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    BeamJoinningError
 
 """
 from .joint import Joint
@@ -31,6 +48,7 @@ from .joint import BeamJoinningError
 from .t_butt import TButtJoint
 from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
+from .x_halflap import XHalfLapJoint
 from .solver import JointTopology
 from .solver import ConnectionSolver
 from .solver import find_neighboring_beams
@@ -43,6 +61,7 @@ __all__ = [
     "TButtJoint",
     "LButtJoint",
     "LMiterJoint",
+    "XHalfLapJoint",
     "JointTopology",
     "ConnectionSolver",
     "find_neighboring_beams",

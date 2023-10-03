@@ -17,5 +17,7 @@ exclude requirements-dev.txt
 exclude pytest.ini .bumpversion.cfg .editorconfig
 exclude tasks.py
 exclude CONTRIBUTING.md
+recursive-exclude examples *.3dm
+recursive-exclude examples *.gh
 
 global-exclude *.py[cod] __pycache__ *.dylib *.nb[ic] .DS_Store
