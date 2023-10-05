@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import xml.dom.minidom
 import compas.data
 import math
+from collections import defaultdict
 
 from compas.geometry import Frame
 from compas.geometry import Box
@@ -15,6 +16,7 @@ from compas.geometry import Transformation
 from compas.geometry import Translation
 
 from compas_timber.parts.beam import Beam
+from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
 from compas_timber.parts.features import BeamTrimmingFeature
 from compas_timber.parts.features import BeamExtensionFeature
@@ -26,9 +28,10 @@ class BTLx:
         self.parts = []
         self._test = []
         self._msg = []
-
-        for beam in self.assembly.beams:
-            part = BTLxPart(beam, self)
+        self._joints_per_beam = defaultdict(list)
+        for index, beam in enumerate(self.assembly.beams):
+            part = BTLxPart(beam,  index)
+            self._msg.append(self.joints_per_beam)
             self.parts.append(part)
             self._test.append(part.blank_geometry)
 
@@ -47,11 +50,18 @@ class BTLx:
         return xml.dom.minidom.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
     @property
+    def joints_per_beam(self):
+        if len(self._joints_per_beam) == 0:
+            for joint in self.assembly.joints:
+                for beam in joint.beams:
+                    self._joints_per_beam[str(beam.key)].append(joint.__class__.__name__)
+        return self._joints_per_beam
+
+    @property
     def test(self):
         items = []
         for item in self._test:
             items.append(item)
-        #self._msg.append(f'part count = {len(self.parts)}')
         for part in self.parts:
             for item in part.test:
                 items.append(item)
@@ -96,11 +106,11 @@ class BTLx:
         )
         return file_history
 
-
 class BTLxPart:
-    def __init__(self, beam, parent):
+    def __init__(self, beam,  index):
         self.beam = beam
         self.features = beam.features
+        #self.joints = joints
         self.length = beam.length
         self.width = beam.width
         self.height = beam.height
@@ -112,9 +122,10 @@ class BTLxPart:
         self.blank_geometry = None
         self.blank_frame = None
         self.blank_length = None
-        self._index = len(parent.parts)
+        self.index = index
         self.start_trim = None
         self.end_trim = None
+        self._reference_surfaces = []
         self.processes = []
         self._et_element = None
         self.attr = {
@@ -144,7 +155,6 @@ class BTLxPart:
         # self._msg.append(f'_trim_processes count = {len(self.trim_processes)}')
         self.generate_blank_geometry()
         self.generate_processes()
-
 
     @property
     def test(self):
@@ -249,15 +259,15 @@ class BTLxPart:
         self.blank_geometry.transform(Translation.from_vector(self.blank_frame.xaxis * self.blank_length * 0.5 + self.blank_frame.yaxis * self.width * 0.5 + self.blank_frame.zaxis * self.height * 0.5))
 
     def generate_processes(self):
-        for feature in self.features:
-            match feature:
-                case BeamExtensionFeature():
+        for joint in self.features:
+            match joint:
+                case BeamExtensionFeature() :
                     pass
                 case BeamTrimmingFeature():
-                    self.processes.append(BTLxJackCut(feature, self))
+                    self.processes.append(BTLxJackCut(joint, self))
 
                 case other:
-                    self._msg.append(f'feature type {type(feature)} not implemented')
+                    self._msg.append(f'feature type {type(joint)} not implemented')
 
     @property
     def trim_features(self):
@@ -267,33 +277,27 @@ class BTLxPart:
                 trim_features_out.append(feature)
         return trim_features_out
 
-    def reference_frame(self, number):
-        number -= 1
-        match number:
-            case 0:
-                return Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis)
-            case 1:
-                point = self.blank_frame.point + self.blank_frame.yaxis * self.width
-                return Frame(point, self.blank_frame.xaxis, -self.blank_frame.yaxis)
-            case 2:
-                point = (
-                    self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height
-                )
-                return Frame(point, self.blank_frame.xaxis, -self.blank_frame.zaxis)
-            case 3:
-                point = self.blank_frame.point + self.blank_frame.zaxis * self.height
-                return Frame(point, self.blank_frame.xaxis, self.blank_frame.yaxis)
-            case 4:
-                return Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis)
-            case 5:
-                point = (
-                    self.blank_frame.point
-                    + self.blank_frame.xaxis * self.blank_length
-                    + self.blank_frame.yaxis * self.width
-                )
-                return Frame(point, self.blank_frame.zaxis, -self.blank_frame.yaxis)
-            case other:
-                pass
+    @property
+    def reference_surfaces(self):
+        if len(self._reference_surfaces) != 6:
+            self._reference_surfaces = []
+            self._reference_surfaces.append(Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis))
+            point = self.blank_frame.point + self.blank_frame.yaxis * self.width
+            self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, -self.blank_frame.yaxis))
+            point = (
+                self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height
+            )
+            self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, -self.blank_frame.zaxis))
+            point = self.blank_frame.point + self.blank_frame.zaxis * self.height
+            self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, self.blank_frame.yaxis))
+            self._reference_surfaces.append(Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis))
+            point = (
+                self.blank_frame.point
+                + self.blank_frame.xaxis * self.blank_length
+                + self.blank_frame.yaxis * self.width
+            )
+            self._reference_surfaces.append(Frame(point, self.blank_frame.zaxis, -self.blank_frame.yaxis))
+        return self._reference_surfaces
 
     @property
     def shape_strings(self):
@@ -364,24 +368,17 @@ class BTLxProcess:
             child.text = val
         return process_et
 
-
-
 class BTLxJackCut(BTLxProcess):
     def __init__(self, feature, part):
         super().__init__(feature, part)
-        self._feature = feature
-        self._process = None
         self.cut_plane = feature._geometry
-
-
-        self._startX = None
-        self._startY: 0
-        self._start_depth: 0
-        self._angle = 90
-        self._inclination = 90
+        self.startX = None
+        self.startY: 0
+        self.start_depth: 0
+        self.angle = 90
+        self.inclination = 90
 
         self.process_type = "JackRafterCut"
-
         self.header_attributes = {
             "Name": "Jack cut",
             "Process": "yes",
@@ -396,25 +393,25 @@ class BTLxJackCut(BTLxProcess):
         point_precision = 3
         angle_precision = 2
         return {
-            "Orientation": str(self._orientation),
-            "StartX": f'{self._startX:.{point_precision}f}',
-            "StartY": "0",
-            "StartDepth": "0",
-            "Angle": f'{self._angle:.{angle_precision}f}',
-            "Inclination": f'{self._inclination:.{angle_precision}f}',
+            "Orientation": str(self.orientation),
+            "StartX": f'{self.startX:.{point_precision}f}',
+            "StartY": f'{self.startY:.{point_precision}f}',
+            "StartDepth": f'{self.start_depth:.{point_precision}f}',
+            "Angle": f'{self.angle:.{angle_precision}f}',
+            "Inclination": f'{self.inclination:.{angle_precision}f}',
         }
 
     def generate_process(self):
         self.x_edge = Line.from_point_and_vector(self.part.reference_frame(1).point, self.part.reference_frame(1).xaxis)
-        self._startX = (
+        self.startX = (
             intersection_line_plane(self.x_edge, Plane.from_frame(self.feature._geometry))[1] * self.x_edge.length
         )
-        if self._startX < self.part.blank_length / 2:
-            self._orientation = "start"
+        if self.startX < self.part.blank_length / 2:
+            self.orientation = "start"
         else:
-            self._orientation = "end"
+            self.orientation = "end"
         angle_direction = cross_vectors(self.part.reference_frame(1).zaxis, self.geometry.normal)
-        self._angle = (
+        self.angle = (
             angle_vectors_signed(
                 self.part.reference_frame(1).xaxis, angle_direction, self.part.reference_frame(1).zaxis
             )
@@ -422,17 +419,16 @@ class BTLxJackCut(BTLxProcess):
             / math.pi
         )
 
-        self._angle = abs(self._angle)
-        self._angle = 90 - (self._angle - 90)
+        self.angle = abs(self.angle)
+        self.angle = 90 - (self.angle - 90)
 
-        inclination_direction = cross_vectors(self.part.reference_frame(1).yaxis, self.geometry.normal)
-        self._inclination = (
+        self.inclination = (
             angle_vectors_signed(self.part.reference_frame(1).zaxis, self.geometry.normal, angle_direction)
             * 180
             / math.pi
         )
-        self._inclination = abs(self._inclination)
-        self._inclination = 90 - (self._inclination - 90)
+        self.inclination = abs(self.inclination)
+        self.inclination = 90 - (self.inclination - 90)
 
 
 def get_btlx_string(assembly_json):
