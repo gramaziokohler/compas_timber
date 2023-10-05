@@ -183,8 +183,8 @@ class BTLxPart:
         if not self._et_element:
             point_precision = 3
             self._et_element = ET.Element("Part", self.attr)
-            self._et_element.set("SingleMemberNumber", f'{self._index}')
-            self._et_element.set("OrderNumber", f'{self._index}')
+            self._et_element.set("SingleMemberNumber", f'{self.index}')
+            self._et_element.set("OrderNumber", f'{self.index}')
             self._et_element.set("Length", f'{self.blank_length:.{point_precision}f}')
             self._et_element.set("Width", f'{self.width:.{point_precision}f}')
             self._et_element.set("Height", f'{self.height:.{point_precision}f}')
@@ -253,8 +253,9 @@ class BTLxPart:
             self.frame.xaxis,
             self.frame.yaxis,
         )
-        self._test.append(self.reference_frame(3))
+
         self.blank_length = max_parameter - min_parameter
+        self._test.append(self.reference_surfaces[0])
         self.blank_geometry = Box(self.blank_length, self.width, self.height, self.blank_frame)
         self.blank_geometry.transform(Translation.from_vector(self.blank_frame.xaxis * self.blank_length * 0.5 + self.blank_frame.yaxis * self.width * 0.5 + self.blank_frame.zaxis * self.height * 0.5))
 
@@ -333,8 +334,7 @@ class BTLxProcess:
     def __init__(self, feature, part):
         self.feature = feature
         self.part = part
-        self._process = None
-        self._orientation = None
+        self.orientation = None
         self._test = []
         self._msg = []
 
@@ -354,11 +354,6 @@ class BTLxProcess:
                 msg_out.append(msg)
         return msg_out
 
-    @property
-    def orientation(self):
-        if self._orientation == None:
-            self.part.generate_blank_geometry()
-        return self._orientation
 
     @property
     def et_element(self):
@@ -373,8 +368,8 @@ class BTLxJackCut(BTLxProcess):
         super().__init__(feature, part)
         self.cut_plane = feature._geometry
         self.startX = None
-        self.startY: 0
-        self.start_depth: 0
+        self.startY = 0
+        self.start_depth = 0
         self.angle = 90
         self.inclination = 90
 
@@ -402,7 +397,7 @@ class BTLxJackCut(BTLxProcess):
         }
 
     def generate_process(self):
-        self.x_edge = Line.from_point_and_vector(self.part.reference_frame(1).point, self.part.reference_frame(1).xaxis)
+        self.x_edge = Line.from_point_and_vector(self.part.reference_surfaces[0].point, self.part.reference_surfaces[0].xaxis)
         self.startX = (
             intersection_line_plane(self.x_edge, Plane.from_frame(self.feature._geometry))[1] * self.x_edge.length
         )
@@ -410,10 +405,10 @@ class BTLxJackCut(BTLxProcess):
             self.orientation = "start"
         else:
             self.orientation = "end"
-        angle_direction = cross_vectors(self.part.reference_frame(1).zaxis, self.geometry.normal)
+        angle_direction = cross_vectors(self.part.reference_surfaces[0].zaxis, self.geometry.normal)
         self.angle = (
             angle_vectors_signed(
-                self.part.reference_frame(1).xaxis, angle_direction, self.part.reference_frame(1).zaxis
+                self.part.reference_surfaces[0].xaxis, angle_direction, self.part.reference_surfaces[0].zaxis
             )
             * 180
             / math.pi
@@ -423,7 +418,7 @@ class BTLxJackCut(BTLxProcess):
         self.angle = 90 - (self.angle - 90)
 
         self.inclination = (
-            angle_vectors_signed(self.part.reference_frame(1).zaxis, self.geometry.normal, angle_direction)
+            angle_vectors_signed(self.part.reference_surfaces[0].zaxis, self.geometry.normal, angle_direction)
             * 180
             / math.pi
         )
