@@ -97,7 +97,7 @@ class BTLx:
         return file_history
 
 
-class BTLxPart(Beam):
+class BTLxPart:
     def __init__(self, beam, parent):
         self.beam = beam
         self.features = beam.features
