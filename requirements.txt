@@ -1,2 +1,2 @@
 rtree
-compas @ https://github.com/compas-dev/compas/tarball/05542b4de2229457b19fafdab1a7dd05ab962e1b  # TODO: remove when creating a new release
+# compas @ https://github.com/compas-dev/compas/tarball/05542b4de2229457b19fafdab1a7dd05ab962e1b  # TODO: remove when creating a new release
