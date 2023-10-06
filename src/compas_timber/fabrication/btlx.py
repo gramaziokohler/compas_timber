@@ -27,14 +27,12 @@ class BTLx:
         self.assembly = assembly
         self.parts = []
         self._test = []
-        self._msg = []
-        self._joints_per_beam = defaultdict(list)
+        self._joints_per_beam = None
+        self._msg = [str(self.joints_per_beam)]
+
         for index, beam in enumerate(self.assembly.beams):
             part = BTLxPart(beam,  index)
-            self._msg.append(self.joints_per_beam)
             self.parts.append(part)
-            self._test.append(part.blank_geometry)
-
 
     def __str__(self):
         self.ET_element = ET.Element("BTLx", self.file_attributes)
@@ -51,10 +49,12 @@ class BTLx:
 
     @property
     def joints_per_beam(self):
-        if len(self._joints_per_beam) == 0:
+        if not self._joints_per_beam:
+            jpb = defaultdict(list)
             for joint in self.assembly.joints:
                 for beam in joint.beams:
-                    self._joints_per_beam[str(beam.key)].append(joint.__class__.__name__)
+                    jpb[str(beam.key)].append(joint.__class__.__name__)
+            self._joints_per_beam = jpb
         return self._joints_per_beam
 
     @property
@@ -69,13 +69,14 @@ class BTLx:
 
     @property
     def msg(self):
-        msg_out = []
+        msg_out = ''
         if len(self._msg) > 0:
             for msg in self._msg:
-                msg_out.append(msg)
-        for part in self.parts:
+                msg_out += msg
+        for index, part in enumerate(self.parts):
             if len(part.msg) > 0:
-                msg_out.append(part.msg)
+                msg_out += f'part {index} message:'
+                msg_out+=f'{part.msg} \n'
         return msg_out
 
     @property
@@ -107,7 +108,7 @@ class BTLx:
         return file_history
 
 class BTLxPart:
-    def __init__(self, beam,  index):
+    def __init__(self, beam, index):
         self.beam = beam
         self.features = beam.features
         #self.joints = joints
@@ -152,14 +153,12 @@ class BTLxPart:
             "Layer": "0",
             "ModuleNumber": "",
         }
-        # self._msg.append(f'_trim_processes count = {len(self.trim_processes)}')
         self.generate_blank_geometry()
         self.generate_processes()
 
     @property
     def test(self):
         items = []
-        #self._msg.append(f'_test items count = {len(self._test)}')
         for item in self._test:
             items.append(item)
         for process in self.processes:
@@ -169,13 +168,16 @@ class BTLxPart:
 
     @property
     def msg(self):
-        msg_out = []
-        for msg in self._msg:
-            if len(self._msg) > 0:
-                msg_out.append(msg)
-        for process in self.processes:
+        msg_out = ''
+        if len(self._msg) > 0:
+            for msg in self._msg:
+                msg_out += msg
+            msg_out+=f'\n'
+
+        for index, process in enumerate(self.processes):
             if len(process.msg) > 0:
-                msg_out.append(process.msg)
+                msg_out += f'process {index} message:'
+                msg_out+=f'{process.msg} \n'
         return msg_out
 
     @property
@@ -240,7 +242,6 @@ class BTLxPart:
                 intersection_point = intersection_line_plane(edge, Plane.from_frame(feature._geometry))[0]
                 length_params.append(self.beam.centerline.closest_point(intersection_point, True))
             length_params.sort(key = lambda x: x[1])
-            #self._msg.append(f'length_params = {length_params}')
             if length_params[0][1] < self.length / 2:
                 min_parameter = length_params[0][1]
                 start_point = length_params[0][0]
@@ -429,4 +430,8 @@ class BTLxJackCut(BTLxProcess):
 def get_btlx_string(assembly_json):
     assembly = compas.json_loads(assembly_json)
     btlx_ins = BTLx(assembly)
-    return [str(btlx_ins), btlx_ins.test, btlx_ins.msg]
+    edges = []
+    for part in btlx_ins.parts:
+        for tuple in part.blank_geometry.edges:
+            edges.append(Line(part.blank_geometry.points[tuple[0]], part.blank_geometry.points[tuple[1]]))
+    return [str(btlx_ins), edges, btlx_ins.msg]
