@@ -20,18 +20,25 @@ from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
 from compas_timber.parts.features import BeamTrimmingFeature
 from compas_timber.parts.features import BeamExtensionFeature
+from compas_timber.connections import TButtJoint
+from compas_timber.connections import LButtJoint
+from compas_timber.connections import LMiterJoint
+from compas_timber.connections import XHalfLapJoint
 
 
 class BTLx:
+    POINT_PRECISION = 3
+    ANGLE_PRECISION = 2
+
     def __init__(self, assembly):
         self.assembly = assembly
         self.parts = []
         self._test = []
         self._joints_per_beam = None
-        self._msg = [str(self.joints_per_beam)]
+        self._msg = []
 
         for index, beam in enumerate(self.assembly.beams):
-            part = BTLxPart(beam,  index)
+            part = BTLxPart(beam, index, self.joints_per_beam[str(beam.key)])
             self.parts.append(part)
 
     def __str__(self):
@@ -49,11 +56,11 @@ class BTLx:
 
     @property
     def joints_per_beam(self):
-        if not self._joints_per_beam:
+        if self._joints_per_beam == None:
             jpb = defaultdict(list)
             for joint in self.assembly.joints:
                 for beam in joint.beams:
-                    jpb[str(beam.key)].append(joint.__class__.__name__)
+                    jpb[str(beam.key)].append(joint)
             self._joints_per_beam = jpb
         return self._joints_per_beam
 
@@ -92,8 +99,7 @@ class BTLx:
     @property
     def file_history(self):
         file_history = ET.Element("FileHistory")
-        initial_export_program = ET.SubElement(
-            file_history,
+        file_history.append(ET.Element(
             "InitialExportProgram",
             CompanyName="Gramazio Kohler Research",
             ProgramName="COMPAS_Timber",
@@ -104,14 +110,17 @@ class BTLx:
             Date="2021-12-02",
             Time="14:08:00",
             Comment="",
-        )
+        ))
         return file_history
 
 class BTLxPart:
-    def __init__(self, beam, index):
+
+
+
+    def __init__(self, beam, index, joints = None):
         self.beam = beam
         self.features = beam.features
-        #self.joints = joints
+        self.joints = joints
         self.length = beam.length
         self.width = beam.width
         self.height = beam.height
@@ -129,32 +138,37 @@ class BTLxPart:
         self._reference_surfaces = []
         self.processes = []
         self._et_element = None
-        self.attr = {
-            "SingleMemberNumber": "",
-            "AssemblyNumber": "",
-            "OrderNumber": "",
-            "Designation": "",
-            "Annotation": "",
-            "Storey": "",
-            "Group": "",
-            "Package": "",
-            "Material": "",
-            "TimberGrade": "",
-            "QualityGrade": "",
-            "Count": "1",
-            "Length": "",
-            "Height": "",
-            "Width": "",
-            "PlaningLength": "0",
-            "Weight": "0",
-            "ProcessingQuality": "automatic",
-            "StoreyType": "",
-            "ElementNumber": "00",
-            "Layer": "0",
-            "ModuleNumber": "",
-        }
+
         self.generate_blank_geometry()
         self.generate_processes()
+
+    @property
+    def attr(self):
+        return{
+        "SingleMemberNumber": str(self.index),
+        "AssemblyNumber": "",
+        "OrderNumber": str(self.index),
+        "Designation": "",
+        "Annotation": "",
+        "Storey": "",
+        "Group": "",
+        "Package": "",
+        "Material": "",
+        "TimberGrade": "",
+        "QualityGrade": "",
+        "Count": "1",
+        "Length": f'{self.blank_length:.{BTLx.POINT_PRECISION}f}',
+        "Height": "",
+        "Width": "",
+        "PlaningLength": "0",
+        "Weight": "0",
+        "ProcessingQuality": "automatic",
+        "StoreyType": "",
+        "ElementNumber": "00",
+        "Layer": "0",
+        "ModuleNumber": "",
+        }
+
 
     @property
     def test(self):
@@ -183,13 +197,13 @@ class BTLxPart:
     @property
     def et_element(self):
         if not self._et_element:
-            point_precision = 3
+
             self._et_element = ET.Element("Part", self.attr)
             self._et_element.set("SingleMemberNumber", f'{self.index}')
             self._et_element.set("OrderNumber", f'{self.index}')
-            self._et_element.set("Length", f'{self.blank_length:.{point_precision}f}')
-            self._et_element.set("Width", f'{self.width:.{point_precision}f}')
-            self._et_element.set("Height", f'{self.height:.{point_precision}f}')
+            self._et_element.set("Length", f'{self.blank_length:.{BTLx.POINT_PRECISION}f}')
+            self._et_element.set("Width", f'{self.width:.{BTLx.POINT_PRECISION}f}')
+            self._et_element.set("Height", f'{self.height:.{BTLx.POINT_PRECISION}f}')
             self._shape_strings = None
 
             transformations = ET.SubElement(self._et_element, "Transformations")
@@ -198,31 +212,32 @@ class BTLxPart:
             position = ET.SubElement(transformation, "Position")
 
             reference_point_vals = {
-                "X": f'{self.blank_frame.point.x:.{point_precision}f}',
-                "Y": f'{self.blank_frame.point.y:.{point_precision}f}',
-                "Z": f'{self.blank_frame.point.z:.{point_precision}f}',
+                "X": f'{self.blank_frame.point.x:.{BTLx.POINT_PRECISION}f}',
+                "Y": f'{self.blank_frame.point.y:.{BTLx.POINT_PRECISION}f}',
+                "Z": f'{self.blank_frame.point.z:.{BTLx.POINT_PRECISION}f}',
                 }
             reference_point = ET.SubElement(position, "ReferencePoint", reference_point_vals)
 
             x_vector_vals = {
-                "X": f'{self.blank_frame.xaxis.x:.{point_precision}f}',
-                "Y": f'{self.blank_frame.xaxis.y:.{point_precision}f}',
-                "Z": f'{self.blank_frame.xaxis.z:.{point_precision}f}',
+                "X": f'{self.blank_frame.xaxis.x:.{BTLx.POINT_PRECISION}f}',
+                "Y": f'{self.blank_frame.xaxis.y:.{BTLx.POINT_PRECISION}f}',
+                "Z": f'{self.blank_frame.xaxis.z:.{BTLx.POINT_PRECISION}f}',
                 }
             x_vector = ET.SubElement(position, "XVector", x_vector_vals)
 
             y_vector_vals = {
-                "X": f'{self.blank_frame.yaxis.x:.{point_precision}f}',
-                "Y": f'{self.blank_frame.yaxis.y:.{point_precision}f}',
-                "Z": f'{self.blank_frame.yaxis.z:.{point_precision}f}',
+                "X": f'{self.blank_frame.yaxis.x:.{BTLx.POINT_PRECISION}f}',
+                "Y": f'{self.blank_frame.yaxis.y:.{BTLx.POINT_PRECISION}f}',
+                "Z": f'{self.blank_frame.yaxis.z:.{BTLx.POINT_PRECISION}f}',
                 }
             y_vector = ET.SubElement(position, "YVector", y_vector_vals)
 
             grain_direction = ET.SubElement(self._et_element, "GrainDirection", X="1", Y="0", Z="0", Align="no")
             reference_side = ET.SubElement(self._et_element, "ReferenceSide", Side="3", Align="no")
             processings = ET.SubElement(self._et_element, "Processings")
-
+            self._msg.append(f'process count = {len(self.processes)}')
             for process in self.processes:
+
                 processings.append(process.et_element)
 
             shape = ET.SubElement(self._et_element, "Shape")
@@ -260,16 +275,25 @@ class BTLxPart:
         self.blank_geometry = Box(self.blank_length, self.width, self.height, self.blank_frame)
         self.blank_geometry.transform(Translation.from_vector(self.blank_frame.xaxis * self.blank_length * 0.5 + self.blank_frame.yaxis * self.width * 0.5 + self.blank_frame.zaxis * self.height * 0.5))
 
-    def generate_processes(self):
-        for joint in self.features:
-            match joint:
-                case BeamExtensionFeature() :
-                    pass
-                case BeamTrimmingFeature():
-                    self.processes.append(BTLxJackCut(joint, self))
 
+    def generate_processes(self):
+        for joint in self.joints:
+            match joint:
+                case TButtJoint():
+                    if self.beam is joint.main_beam:
+                        self.processes.append(BTLxJackCut(joint.cutting_plane, self))
+                case LButtJoint():
+                    if self.beam is joint.main_beam:
+                        self.processes.append(BTLxJackCut(joint.cutting_plane_main, self))
+                    elif self.beam is joint.cross_beam:
+                        self.processes.append(BTLxJackCut(joint.cutting_plane_cross, self))
+                case LMiterJoint():
+                    if self.beam is joint.beam_a:
+                        self.processes.append(BTLxJackCut(joint.cutting_planes[0], self))
+                    elif self.beam is joint.beam_b:
+                        self.processes.append(BTLxJackCut(joint.cutting_planes[1], self))
                 case other:
-                    self._msg.append(f'feature type {type(joint)} not implemented')
+                    self._msg.append(f'joint type {type(joint)} not implemented')
 
     @property
     def trim_features(self):
@@ -332,16 +356,11 @@ class BTLxPart:
         return self._shape_strings
 
 class BTLxProcess:
-    def __init__(self, feature, part):
-        self.feature = feature
+    def __init__(self, joint, part):
+        self.joint = joint
         self.part = part
-        self.orientation = None
         self._test = []
         self._msg = []
-
-    @property
-    def geometry(self):
-        return self.feature._geometry
 
     @property
     def test(self):
@@ -355,7 +374,6 @@ class BTLxProcess:
                 msg_out.append(msg)
         return msg_out
 
-
     @property
     def et_element(self):
         process_et = ET.Element(self.process_type, self.header_attributes)
@@ -365,9 +383,10 @@ class BTLxProcess:
         return process_et
 
 class BTLxJackCut(BTLxProcess):
-    def __init__(self, feature, part):
-        super().__init__(feature, part)
-        self.cut_plane = feature._geometry
+    def __init__(self, cutting_plane, part):
+        super().__init__(cutting_plane, part)
+        self.cut_plane = cutting_plane
+        self.orientation = None
         self.startX = None
         self.startY = 0
         self.start_depth = 0
@@ -386,27 +405,25 @@ class BTLxJackCut(BTLxProcess):
     @property
     def process_params(self):
         self.generate_process()
-        point_precision = 3
-        angle_precision = 2
         return {
             "Orientation": str(self.orientation),
-            "StartX": f'{self.startX:.{point_precision}f}',
-            "StartY": f'{self.startY:.{point_precision}f}',
-            "StartDepth": f'{self.start_depth:.{point_precision}f}',
-            "Angle": f'{self.angle:.{angle_precision}f}',
-            "Inclination": f'{self.inclination:.{angle_precision}f}',
+            "StartX": f'{self.startX:.{BTLx.POINT_PRECISION}f}',
+            "StartY": f'{self.startY:.{BTLx.POINT_PRECISION}f}',
+            "StartDepth": f'{self.start_depth:.{BTLx.POINT_PRECISION}f}',
+            "Angle": f'{self.angle:.{BTLx.ANGLE_PRECISION}f}',
+            "Inclination": f'{self.inclination:.{BTLx.ANGLE_PRECISION}f}',
         }
 
     def generate_process(self):
         self.x_edge = Line.from_point_and_vector(self.part.reference_surfaces[0].point, self.part.reference_surfaces[0].xaxis)
         self.startX = (
-            intersection_line_plane(self.x_edge, Plane.from_frame(self.feature._geometry))[1] * self.x_edge.length
+            intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
         )
         if self.startX < self.part.blank_length / 2:
             self.orientation = "start"
         else:
             self.orientation = "end"
-        angle_direction = cross_vectors(self.part.reference_surfaces[0].zaxis, self.geometry.normal)
+        angle_direction = cross_vectors(self.part.reference_surfaces[0].normal, self.cut_plane.normal)
         self.angle = (
             angle_vectors_signed(
                 self.part.reference_surfaces[0].xaxis, angle_direction, self.part.reference_surfaces[0].zaxis
@@ -419,7 +436,7 @@ class BTLxJackCut(BTLxProcess):
         self.angle = 90 - (self.angle - 90)
 
         self.inclination = (
-            angle_vectors_signed(self.part.reference_surfaces[0].zaxis, self.geometry.normal, angle_direction)
+            angle_vectors_signed(self.part.reference_surfaces[0].zaxis, self.cut_plane.normal, angle_direction)
             * 180
             / math.pi
         )
