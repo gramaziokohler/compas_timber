@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
@@ -117,6 +119,21 @@ def test_parts_joined(mocker):
 
     assert A.are_parts_joined([B1, B2])
     assert not A.are_parts_joined([B1, B3])
+
+
+def test_beams_have_keys_after_serialization():
+    A = TimberAssembly()
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    B3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    A.add_beam(B1)
+    A.add_beam(B2)
+    A.add_beam(B3)
+    keys = [beam.key for beam in A.beams]
+
+    A = json_loads(json_dumps(A))
+
+    assert keys == [beam.key for beam in A.beams]
 
 
 if __name__ == "__main__":

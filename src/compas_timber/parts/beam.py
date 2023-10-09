@@ -124,17 +124,19 @@ class Beam(Part):
     def data(self):
         data = {
             "frame": self.frame,
+            "key": self.key,
             "width": self.width,
             "height": self.height,
             "length": self.length,
             "geometry_type": self.geometry_type,
         }
-        data.update(self.attributes)
         return data
 
     @classmethod
     def from_data(cls, data):
-        return cls(**data)
+        instance = cls(**data)
+        instance.key = data["key"]
+        return instance
 
     @property
     def tolerance(self):
