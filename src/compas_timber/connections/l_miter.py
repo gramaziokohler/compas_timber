@@ -4,8 +4,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.parts import BeamExtensionFeature
-from compas_timber.parts import BeamTrimmingFeature
+from compas_timber.parts.features import CutFeature
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import Joint
@@ -122,24 +121,25 @@ class LMiterJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        if self.features:
-            self.beam_a.clear_features(self.features)
-            self.beam_b.clear_features(self.features)
-            self.features = []
-
         plane_a, plane_b = self.cutting_planes
+        start, end = self.beam_a.extension_to_plane(plane_a)
+        self.beam_a.add_blank_extension(start, end, self.key)
+        start, end = self.beam_b.extension_to_plane(plane_b)
+        self.beam_b.add_blank_extension(start, end, self.key)
+        self.beam_a.features.append(CutFeature(plane_a))
+        self.beam_b.features.append(CutFeature(plane_b))
+        # trim_a = BeamTrimmingFeature(plane_a)
+        # extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
+        # self.beam_a.add_feature(extension_a)
+        # self.beam_a.add_feature(trim_a)
 
-        trim_a = BeamTrimmingFeature(plane_a)
-        extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
-        self.beam_a.add_feature(extension_a)
-        self.beam_a.add_feature(trim_a)
+        # trim_b = BeamTrimmingFeature(plane_b)
+        # extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
+        # self.beam_b.add_feature(extension_b)
+        # self.beam_b.add_feature(trim_b)
 
-        trim_b = BeamTrimmingFeature(plane_b)
-        extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
-        self.beam_b.add_feature(extension_b)
-        self.beam_b.add_feature(trim_b)
+        # self.features.extend([trim_a, extension_a, trim_b, extension_b])
 
-        self.features.extend([trim_a, extension_a, trim_b, extension_b])
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""

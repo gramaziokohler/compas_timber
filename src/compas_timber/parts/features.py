@@ -4,15 +4,105 @@ from compas.geometry import Frame
 from compas.datastructures import GeometricFeature
 from compas.datastructures import ParametricFeature
 
-
-def _trim_brep_with_frame(brep, frame):
-    """Trim the given Brep using the provided trimming frame."""
-    brep.trim(frame)
+from compas.data import Data
 
 
-def _boolean_subtract_breps(brep_a, brep_b):
-    """Returns the result of the boolean subtraction of two Breps."""
-    return brep_a - brep_b
+class Feature(Data):
+    """
+
+    Attirbutes
+    ----------
+    is_joinery : bool
+        Indicates whether this feature is a result of joinery.
+
+    """
+    def __init__(self, name=None, is_joinery=False):
+        super(Feature, self).__init__(name)
+        self._is_joiney = is_joinery
+
+    @property
+    def is_joinery(self):
+        return self._is_joiney
+
+    @property
+    def data(self):
+        return {"is_joinery": self._is_joiney}
+
+
+class CutFeature(Feature):
+    """Indicates a cut to be made on a beam.
+
+    Parameters
+    ----------
+    cutting_plane : :class:`compas.geometry.Frame`
+        The plane to cut the beam with.
+
+    """
+    def __init__(self, cutting_plane, **kwargs):
+        super(CutFeature, self).__init__(**kwargs)
+        self.cutting_plane = cutting_plane
+
+    @property
+    def data(self):
+        data_dict = {"cutting_plane": self.cutting_plane}
+        data_dict.update(super(CutFeature, self).data)
+        return data_dict
+
+
+class DrillFeature(Feature):
+    """Parametric drill hole to be made on a beam.
+
+    Parameters
+    ----------
+    plane : :class:`compas.geometry.Plane`
+        The plane on which the drill hole is to be made.
+    diameter : float
+        The diameter of the drill hole.
+    length : float
+        The length (depth?) of the drill hole.
+
+    """
+    def __init__(self, plane, diameter, length, **kwargs):
+        super(DrillFeature, self).__init__(**kwargs)
+        self.plane = plane
+        self.diameter = diameter
+        self.length = length
+
+    @property
+    def data(self):
+        data_dict = {"plane": self.plane, "diameter": self.diameter, "length": self.length}
+        data_dict.update(super(DrillFeature, self).data)
+        return data_dict
+
+
+class MillVolume(Feature):
+    """A volume to be milled out of a beam.
+
+    Parameters
+    ----------
+    volume : :class:`compas.geometry.Polyhedron` | :class:`compas.datastructures.Mesh`
+        The volume to be milled out of the beam.
+
+    """
+    def __init__(self, volume, **kwargs):
+        super(MillVolume, self).__init__(**kwargs)
+        self.volume = volume
+
+    @property
+    def data(self):
+        data_dict = {"volume": self.volume}
+        data_dict.update(super(MillVolume, self).data)
+        return data_dict
+
+
+# def _trim_brep_with_frame(brep, frame):
+#     """Trim the given Brep using the provided trimming frame."""
+#     brep.trim(frame)
+
+
+# def _boolean_subtract_breps(brep_a, brep_b):
+#     """Returns the result of the boolean subtraction of two Breps."""
+#     return brep_a - brep_b
 
 
 class FeatureApplicationError(BaseException):
@@ -23,122 +113,122 @@ class FeatureApplicationError(BaseException):
         self.owner = owner
 
 
-class BeamTrimmingFeature(GeometricFeature):
-    OPERATIONS = {Brep: _trim_brep_with_frame}
+# class BeamTrimmingFeature(GeometricFeature):
+#     OPERATIONS = {Brep: _trim_brep_with_frame}
 
-    def __init__(self, trimming_plane, owner=None):
-        super(BeamTrimmingFeature, self).__init__()
-        self._geometry = trimming_plane
-        self._owner = owner  # currenly just for debugging
+#     def __init__(self, trimming_plane, owner=None):
+#         super(BeamTrimmingFeature, self).__init__()
+#         self._geometry = trimming_plane
+#         self._owner = owner  # currenly just for debugging
 
-    @property
-    def data(self):
-        return {"trimming_frame": self._geometry.data}
+#     @property
+#     def data(self):
+#         return {"trimming_frame": self._geometry.data}
 
-    @data.setter
-    def data(self, value):
-        self._geometry = Frame.from_data(value["trimming_frame"])
+#     @data.setter
+#     def data(self, value):
+#         self._geometry = Frame.from_data(value["trimming_frame"])
 
-    def apply(self, part):
-        part_geometry = part.geometry
-        if not isinstance(part_geometry, Brep):
-            raise ValueError(
-                "Brep feature {} cannot be applied to part with geometry of type:{}".format(self, type(part_geometry))
-            )
-        operation = self.OPERATIONS[Brep]
-        try:
-            operation(part_geometry, self._geometry)
-            return True, part_geometry
-        except BrepTrimmingError:
-            return False, part.geometry  # copy again since operation is in-place and brep might be corrupted
+#     def apply(self, part):
+#         part_geometry = part.geometry
+#         if not isinstance(part_geometry, Brep):
+#             raise ValueError(
+#                 "Brep feature {} cannot be applied to part with geometry of type:{}".format(self, type(part_geometry))
+#             )
+#         operation = self.OPERATIONS[Brep]
+#         try:
+#             operation(part_geometry, self._geometry)
+#             return True, part_geometry
+#         except BrepTrimmingError:
+#             return False, part.geometry  # copy again since operation is in-place and brep might be corrupted
 
-    def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, repr(self._geometry))
-
-
-class BeamBooleanSubtraction(GeometricFeature):
-    OPERATIONS = {Brep: _boolean_subtract_breps}
-
-    def __init__(self, brep, owner=None):
-        super(BeamBooleanSubtraction, self).__init__()
-        self._geometry = brep
-        self._owner = owner
-
-    def __deepcopy__(self, memo=None):
-        return self.copy()
-
-    @property
-    def data(self):
-        raise NotImplementedError
-
-    @data.setter
-    def data(self, value):
-        raise NotImplementedError
-
-    def copy(self, cls=None):
-        return BeamBooleanSubtraction(self._geometry.copy())
-
-    def apply(self, part):
-        part_geometry = part.geometry
-        if not isinstance(part_geometry, Brep):
-            raise ValueError(
-                "Brep feature {} cannot be applied to part with non Brep geometry {}".format(self, part_geometry)
-            )
-        operation = self.OPERATIONS[Brep]
-        try:
-            return True, operation(part_geometry, self._geometry)
-        except Exception:
-            return False, part_geometry
-
-    def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, repr(self._geometry))
+#     def __repr__(self):
+#         return "{}({})".format(self.__class__.__name__, repr(self._geometry))
 
 
-class BeamExtensionFeature(ParametricFeature):
-    def __init__(self, extend_start_by, extend_end_by):
-        super(BeamExtensionFeature, self).__init__()
-        self._extend_start = extend_start_by
-        self._extend_end = extend_end_by
+# class BeamBooleanSubtraction(GeometricFeature):
+#     OPERATIONS = {Brep: _boolean_subtract_breps}
 
-    @property
-    def data(self):
-        return {"start": self._extend_start, "end": self._extend_end}
+#     def __init__(self, brep, owner=None):
+#         super(BeamBooleanSubtraction, self).__init__()
+#         self._geometry = brep
+#         self._owner = owner
 
-    @data.setter
-    def data(self, value):
-        self._extend_start = value["start"]
-        self._extend_end = value["end"]
+#     def __deepcopy__(self, memo=None):
+#         return self.copy()
 
-    def apply(self, part):
-        part.extend_ends(self._extend_start, self._extend_end)
-        return True, None
+#     @property
+#     def data(self):
+#         raise NotImplementedError
 
-    def restore(self, part):
-        part.extend_ends(-self._extend_start, -self._extend_end)
+#     @data.setter
+#     def data(self, value):
+#         raise NotImplementedError
 
-    def accumulate(self, feature):
-        """Returns a new BeamExtensionFeature which the accumulative effect of this and `feature`.
+#     def copy(self, cls=None):
+#         return BeamBooleanSubtraction(self._geometry.copy())
 
-        Parameters
-        ----------
-        feature: :class:`compas_timber.features.BeamExtensionFeature`
-            The feature to accumulate with.
+#     def apply(self, part):
+#         part_geometry = part.geometry
+#         if not isinstance(part_geometry, Brep):
+#             raise ValueError(
+#                 "Brep feature {} cannot be applied to part with non Brep geometry {}".format(self, part_geometry)
+#             )
+#         operation = self.OPERATIONS[Brep]
+#         try:
+#             return True, operation(part_geometry, self._geometry)
+#         except Exception:
+#             return False, part_geometry
 
-        Returns
-        -------
-        :class:`~compas_timber.features.BeamExtensionFeature`
-            A new instance of BeamExtensionFeature.
+#     def __repr__(self):
+#         return "{}({})".format(self.__class__.__name__, repr(self._geometry))
 
-        """
-        if not isinstance(feature, self.__class__):
-            raise TypeError(
-                "This feature {} cannot be accumulated with feature of type: {}".format(
-                    self.__class__.__name__, feature.__class__.__name__
-                )
-            )
-        return BeamExtensionFeature(
-            max(self._extend_start, feature._extend_start), max(self._extend_end, feature._extend_end)
-        )
 
-    def __repr__(self):
-        return "{}({}, {})".format(self.__class__.__name__, self._extend_start, self._extend_end)
+# class BeamExtensionFeature(ParametricFeature):
+#     def __init__(self, extend_start_by, extend_end_by):
+#         super(BeamExtensionFeature, self).__init__()
+#         self._extend_start = extend_start_by
+#         self._extend_end = extend_end_by
+
+#     @property
+#     def data(self):
+#         return {"start": self._extend_start, "end": self._extend_end}
+
+#     @data.setter
+#     def data(self, value):
+#         self._extend_start = value["start"]
+#         self._extend_end = value["end"]
+
+#     def apply(self, part):
+#         part.extend_ends(self._extend_start, self._extend_end)
+#         return True, None
+
+#     def restore(self, part):
+#         part.extend_ends(-self._extend_start, -self._extend_end)
+
+#     def accumulate(self, feature):
+#         """Returns a new BeamExtensionFeature which the accumulative effect of this and `feature`.
+
+#         Parameters
+#         ----------
+#         feature: :class:`compas_timber.features.BeamExtensionFeature`
+#             The feature to accumulate with.
+
+#         Returns
+#         -------
+#         :class:`~compas_timber.features.BeamExtensionFeature`
+#             A new instance of BeamExtensionFeature.
+
+#         """
+#         if not isinstance(feature, self.__class__):
+#             raise TypeError(
+#                 "This feature {} cannot be accumulated with feature of type: {}".format(
+#                     self.__class__.__name__, feature.__class__.__name__
+#                 )
+#             )
+#         return BeamExtensionFeature(
+#             max(self._extend_start, feature._extend_start), max(self._extend_end, feature._extend_end)
+#         )
+
+#     def __repr__(self):
+#         return "{}({}, {})".format(self.__class__.__name__, self._extend_start, self._extend_end)
