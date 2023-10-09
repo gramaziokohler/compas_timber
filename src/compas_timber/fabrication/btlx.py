@@ -18,8 +18,6 @@ from compas.geometry import Translation
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
-from compas_timber.parts.features import BeamTrimmingFeature
-from compas_timber.parts.features import BeamExtensionFeature
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
@@ -117,7 +115,6 @@ class BTLx:
 class BTLxPart:
     def __init__(self, beam, index, joints = None):
         self.beam = beam
-        self.features = beam.features
         self.joints = joints
         self.length = beam.length
         self.width = beam.width
@@ -127,17 +124,15 @@ class BTLxPart:
         self._test = []
         self.geometry_type = "brep"
         self.orientation = None
-        self.blank_geometry = None
-        self.blank_frame = None
-        self.blank_length = None
+        self.blank_geometry = beam.shape
+        self._blank_frame = None
+        self.blank_length = beam.length
         self.index = index
         self.start_trim = None
         self.end_trim = None
         self._reference_surfaces = []
         self.processes = []
         self._et_element = None
-
-        self.generate_blank_geometry()
         self.generate_processes()
 
     @property
@@ -197,7 +192,6 @@ class BTLxPart:
     @property
     def et_element(self):
         if not self._et_element:
-
             self._et_element = ET.Element("Part", self.attr)
             self._et_element.set("SingleMemberNumber", f'{self.index}')
             self._et_element.set("OrderNumber", f'{self.index}')
@@ -216,24 +210,24 @@ class BTLxPart:
                 "Y": f'{self.blank_frame.point.y:.{BTLx.POINT_PRECISION}f}',
                 "Z": f'{self.blank_frame.point.z:.{BTLx.POINT_PRECISION}f}',
                 }
-            reference_point = ET.SubElement(position, "ReferencePoint", reference_point_vals)
+            position.append(ET.Element("ReferencePoint", reference_point_vals))
 
             x_vector_vals = {
                 "X": f'{self.blank_frame.xaxis.x:.{BTLx.POINT_PRECISION}f}',
                 "Y": f'{self.blank_frame.xaxis.y:.{BTLx.POINT_PRECISION}f}',
                 "Z": f'{self.blank_frame.xaxis.z:.{BTLx.POINT_PRECISION}f}',
                 }
-            x_vector = ET.SubElement(position, "XVector", x_vector_vals)
+            position.append(ET.Element("XVector", x_vector_vals))
 
             y_vector_vals = {
                 "X": f'{self.blank_frame.yaxis.x:.{BTLx.POINT_PRECISION}f}',
                 "Y": f'{self.blank_frame.yaxis.y:.{BTLx.POINT_PRECISION}f}',
                 "Z": f'{self.blank_frame.yaxis.z:.{BTLx.POINT_PRECISION}f}',
                 }
-            y_vector = ET.SubElement(position, "YVector", y_vector_vals)
+            position.append(ET.Element("YVector", y_vector_vals))
 
-            grain_direction = ET.SubElement(self._et_element, "GrainDirection", X="1", Y="0", Z="0", Align="no")
-            reference_side = ET.SubElement(self._et_element, "ReferenceSide", Side="3", Align="no")
+            self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
+            self._et_element.append(ET.Element("ReferenceSide", Side="3", Align="no"))
             processings = ET.SubElement(self._et_element, "Processings")
 
             for process in self.processes:
@@ -243,16 +237,8 @@ class BTLxPart:
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
             strings = self.shape_strings
             indexed_face_set.set("coordIndex", strings[0])
-            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point=strings[1])
+            indexed_face_set.append(ET.Element("Coordinate", point=strings[1]))
         return self._et_element
-
-    @property #TODO: fix Beam.shape definition and remove this.
-    def trim_features(self):
-        trim_features_out = []
-        for feature in self.features:
-            if isinstance(feature, BeamTrimmingFeature):
-                trim_features_out.append(feature)
-        return trim_features_out
 
     @property
     def reference_surfaces(self): #TODO: fix Beam.shape definition and update this.
@@ -306,33 +292,16 @@ class BTLxPart:
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
-    def generate_blank_geometry(self): #TODO: fix Beam.shape definition and update this.
-        start_point = None
-        min_parameter = None
-        max_parameter = None
-        for feature in self.trim_features:
-            length_params = []
-            for edge in self.beam.long_edges:
-                intersection_point = intersection_line_plane(edge, Plane.from_frame(feature._geometry))[0]
-                length_params.append(self.beam.centerline.closest_point(intersection_point, True))
-            length_params.sort(key = lambda x: x[1])
-            if length_params[0][1] < self.length / 2:
-                min_parameter = length_params[0][1]
-                start_point = length_params[0][0]
-            else:
-                max_parameter = length_params[-1][1]
-
-        blank_frame_point = self.beam.long_edges[2].closest_point(start_point)# I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
-        self.blank_frame = Frame(
+    @property
+    def blank_frame(self):
+        blank_frame_point = self.beam.long_edges[2].closest_point(self.beam.frame.point)# I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        self._blank_frame = Frame(
             blank_frame_point,
             self.frame.xaxis,
             self.frame.yaxis,
         )
+        return self._blank_frame
 
-        self.blank_length = max_parameter - min_parameter
-        self._test.append(self.reference_surfaces[0])
-        self.blank_geometry = Box(self.blank_length, self.width, self.height, self.blank_frame)
-        self.blank_geometry.transform(Translation.from_vector(self.blank_frame.xaxis * self.blank_length * 0.5 + self.blank_frame.yaxis * self.width * 0.5 + self.blank_frame.zaxis * self.height * 0.5))
 
     def generate_processes(self):
         for joint in self.joints:
