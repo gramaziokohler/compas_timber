@@ -27,8 +27,9 @@ from compas_timber.connections import XHalfLapJoint
 
 
 class BTLx:
+
     POINT_PRECISION = 3
-    ANGLE_PRECISION = 2
+    ANGLE_PRECISION = 3
 
     def __init__(self, assembly):
         self.assembly = assembly
@@ -114,9 +115,6 @@ class BTLx:
         return file_history
 
 class BTLxPart:
-
-
-
     def __init__(self, beam, index, joints = None):
         self.beam = beam
         self.features = beam.features
@@ -158,8 +156,8 @@ class BTLxPart:
         "QualityGrade": "",
         "Count": "1",
         "Length": f'{self.blank_length:.{BTLx.POINT_PRECISION}f}',
-        "Height": "",
-        "Width": "",
+        "Height": f'{self.height:.{BTLx.POINT_PRECISION}f}',
+        "Width": f'{self.width:.{BTLx.POINT_PRECISION}f}',
         "PlaningLength": "0",
         "Weight": "0",
         "ProcessingQuality": "automatic",
@@ -168,7 +166,6 @@ class BTLxPart:
         "Layer": "0",
         "ModuleNumber": "",
         }
-
 
     @property
     def test(self):
@@ -189,9 +186,12 @@ class BTLxPart:
             msg_out+=f'\n'
 
         for index, process in enumerate(self.processes):
-            if len(process.msg) > 0:
-                msg_out += f'process {index} message:'
-                msg_out+=f'{process.msg} \n'
+            try:
+                if len(process.msg) > 0:
+                    msg_out += f'process {index} message:'
+                    msg_out+=f'{process.msg} \n'
+            except:
+                pass
         return msg_out
 
     @property
@@ -235,9 +235,8 @@ class BTLxPart:
             grain_direction = ET.SubElement(self._et_element, "GrainDirection", X="1", Y="0", Z="0", Align="no")
             reference_side = ET.SubElement(self._et_element, "ReferenceSide", Side="3", Align="no")
             processings = ET.SubElement(self._et_element, "Processings")
-            self._msg.append(f'process count = {len(self.processes)}')
-            for process in self.processes:
 
+            for process in self.processes:
                 processings.append(process.et_element)
 
             shape = ET.SubElement(self._et_element, "Shape")
@@ -247,55 +246,7 @@ class BTLxPart:
             coordinate = ET.SubElement(indexed_face_set, "Coordinate", point=strings[1])
         return self._et_element
 
-    def generate_blank_geometry(self):
-        start_point = None
-        min_parameter = None
-        max_parameter = None
-        for feature in self.trim_features:
-            length_params = []
-            for edge in self.beam.long_edges:
-                intersection_point = intersection_line_plane(edge, Plane.from_frame(feature._geometry))[0]
-                length_params.append(self.beam.centerline.closest_point(intersection_point, True))
-            length_params.sort(key = lambda x: x[1])
-            if length_params[0][1] < self.length / 2:
-                min_parameter = length_params[0][1]
-                start_point = length_params[0][0]
-            else:
-                max_parameter = length_params[-1][1]
-
-        blank_frame_point = self.beam.long_edges[2].closest_point(start_point)# I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
-        self.blank_frame = Frame(
-            blank_frame_point,
-            self.frame.xaxis,
-            self.frame.yaxis,
-        )
-
-        self.blank_length = max_parameter - min_parameter
-        self._test.append(self.reference_surfaces[0])
-        self.blank_geometry = Box(self.blank_length, self.width, self.height, self.blank_frame)
-        self.blank_geometry.transform(Translation.from_vector(self.blank_frame.xaxis * self.blank_length * 0.5 + self.blank_frame.yaxis * self.width * 0.5 + self.blank_frame.zaxis * self.height * 0.5))
-
-
-    def generate_processes(self):
-        for joint in self.joints:
-            match joint:
-                case TButtJoint():
-                    if self.beam is joint.main_beam:
-                        self.processes.append(BTLxJackCut(joint.cutting_plane, self))
-                case LButtJoint():
-                    if self.beam is joint.main_beam:
-                        self.processes.append(BTLxJackCut(joint.cutting_plane_main, self))
-                    elif self.beam is joint.cross_beam:
-                        self.processes.append(BTLxJackCut(joint.cutting_plane_cross, self))
-                case LMiterJoint():
-                    if self.beam is joint.beam_a:
-                        self.processes.append(BTLxJackCut(joint.cutting_planes[0], self))
-                    elif self.beam is joint.beam_b:
-                        self.processes.append(BTLxJackCut(joint.cutting_planes[1], self))
-                case other:
-                    self._msg.append(f'joint type {type(joint)} not implemented')
-
-    @property
+    @property #TODO: fix Beam.shape definition and remove this.
     def trim_features(self):
         trim_features_out = []
         for feature in self.features:
@@ -304,7 +255,7 @@ class BTLxPart:
         return trim_features_out
 
     @property
-    def reference_surfaces(self):
+    def reference_surfaces(self): #TODO: fix Beam.shape definition and update this.
         if len(self._reference_surfaces) != 6:
             self._reference_surfaces = []
             self._reference_surfaces.append(Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis))
@@ -355,10 +306,49 @@ class BTLxPart:
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
+    def generate_blank_geometry(self): #TODO: fix Beam.shape definition and update this.
+        start_point = None
+        min_parameter = None
+        max_parameter = None
+        for feature in self.trim_features:
+            length_params = []
+            for edge in self.beam.long_edges:
+                intersection_point = intersection_line_plane(edge, Plane.from_frame(feature._geometry))[0]
+                length_params.append(self.beam.centerline.closest_point(intersection_point, True))
+            length_params.sort(key = lambda x: x[1])
+            if length_params[0][1] < self.length / 2:
+                min_parameter = length_params[0][1]
+                start_point = length_params[0][0]
+            else:
+                max_parameter = length_params[-1][1]
+
+        blank_frame_point = self.beam.long_edges[2].closest_point(start_point)# I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        self.blank_frame = Frame(
+            blank_frame_point,
+            self.frame.xaxis,
+            self.frame.yaxis,
+        )
+
+        self.blank_length = max_parameter - min_parameter
+        self._test.append(self.reference_surfaces[0])
+        self.blank_geometry = Box(self.blank_length, self.width, self.height, self.blank_frame)
+        self.blank_geometry.transform(Translation.from_vector(self.blank_frame.xaxis * self.blank_length * 0.5 + self.blank_frame.yaxis * self.width * 0.5 + self.blank_frame.zaxis * self.height * 0.5))
+
+    def generate_processes(self):
+        for joint in self.joints:
+            process = BTLxProcess.create(joint, self)
+            if process:     # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
+                self.processes.append(process)
+
+
 class BTLxProcess:
-    def __init__(self, joint, part):
-        self.joint = joint
-        self.part = part
+    """
+    Generic class for BTLx Processes.
+    This should not be called or instantiated directly, but rather specific process subclasses should be instantiated using the classmethod BTLxProcess.create()
+    """
+    def __init__(self):
+        self.joint = None
+        self.part = None
         self._test = []
         self._msg = []
 
@@ -382,26 +372,77 @@ class BTLxProcess:
             child.text = val
         return process_et
 
+    @classmethod
+    def create(cls, joint, part):
+        process = None
+        match joint:
+            case TButtJoint():
+                if part.beam is joint.main_beam:
+                    process = BTLxJackCut(joint, part)
+            case LButtJoint() | LMiterJoint():
+                    process = BTLxJackCut(joint, part)
+
+            # """
+            # add other process constructors here
+            # """
+
+            case other:
+                part._msg.append(f'joint type {type(joint)} not implemented')
+        return process
+
+
+"""
+when creating new process classes, each must have the following attributes:
+self.process_type  -> returns string with process name per https://design2machine.com/btlx/BTLx_2_1_0.xsd
+self.header_attributes -> returns dict with process attributes NOTE: pay attention to reference plane ID!
+self.process_params -> returns dict with geometric parameters of process
+
+To create a new process class, the specific process class, e.g. BTLxJackCut, should inherit fom the parent class BTLxProcess.
+Additionally, an instance of the process class should be returned by classmethod BTLxProcess.create(joint, part) (ABOVE)
+
+"""
+
 class BTLxJackCut(BTLxProcess):
-    def __init__(self, cutting_plane, part):
-        super().__init__(cutting_plane, part)
-        self.cut_plane = cutting_plane
-        self.orientation = None
-        self.startX = None
+    def __init__(self, joint, part):
+        """
+        Constructor for BTLxJackCut can take Joint and Frame as argument because some other joints will use the jack cut as part of the milling process.
+        """
+        super().__init__()
+        self.part = part
+
+        """
+        the following attributes are specific to Jack Cut
+        """
+        self.cut_plane = None
+        if isinstance(joint, Frame):
+            self.cut_plane = joint
+        else:
+            self.joint = joint
+            self.parse_geometry()
+        self.orientation = "start"
+        self.startX = 0
         self.startY = 0
         self.start_depth = 0
         self.angle = 90
         self.inclination = 90
 
+
+        """
+        the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
+        """
         self.process_type = "JackRafterCut"
         self.header_attributes = {
             "Name": "Jack cut",
             "Process": "yes",
             "Priority": "0",
-            "ProcessID": "4",
+            "ProcessID": "0",
             "ReferencePlaneID": "1",
         }
 
+
+    """
+    This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint.
+    """
     @property
     def process_params(self):
         self.generate_process()
@@ -414,7 +455,34 @@ class BTLxJackCut(BTLxProcess):
             "Inclination": f'{self.inclination:.{BTLx.ANGLE_PRECISION}f}',
         }
 
+
+    def parse_geometry(self):
+        """
+        This method is specific to jack cut, which has multiple possible joints that create it.
+        """
+        match self.joint:
+            case TButtJoint():
+                if self.part.beam is self.joint.main_beam:
+                    self.cut_plane = self.joint.cutting_plane
+            case LButtJoint():
+                if self.part.beam is self.joint.main_beam:
+                    self.cut_plane = self.joint.cutting_plane_main
+                elif self.part.beam is self.joint.cross_beam:
+                    self.cut_plane = self.joint.cutting_plane_cross
+            case LMiterJoint():
+                if self.part.beam is self.joint.beam_a:
+                    self.cut_plane = self.joint.cutting_planes[0]
+                elif self.part.beam is self.joint.beam_b:
+                    self.cut_plane = self.joint.cutting_planes[1]
+
+
+
+
+
     def generate_process(self):
+        """
+        This is an internal method to generate process parameters
+        """
         self.x_edge = Line.from_point_and_vector(self.part.reference_surfaces[0].point, self.part.reference_surfaces[0].xaxis)
         self.startX = (
             intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
@@ -444,7 +512,13 @@ class BTLxJackCut(BTLxProcess):
         self.inclination = 90 - (self.inclination - 90)
 
 
+
+
+
 def get_btlx_string(assembly_json):
+    """
+    the following method is used to get the btlx string in grasshopper
+    """
     assembly = compas.json_loads(assembly_json)
     btlx_ins = BTLx(assembly)
     edges = []
