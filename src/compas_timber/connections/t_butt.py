@@ -1,7 +1,7 @@
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 
-from compas_timber.parts import BeamTrimmingFeature
+# from compas_timber.parts import BeamTrimmingFeature
 
 from .joint import BeamJoinningError
 from .joint import Joint
