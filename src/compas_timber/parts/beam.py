@@ -1,26 +1,18 @@
 import math
 
-from compas.datastructures import Mesh
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
-from compas.geometry import distance_point_point
-from compas.datastructures import GeometricFeature
-from compas.datastructures import ParametricFeature
 from compas.datastructures import Part
 
 from compas_timber.utils.compas_extra import intersection_line_plane
-from compas_timber.utils.helpers import close  # TODO: remove this
 
-# TODO: update to global compas PRECISION
 ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
@@ -32,16 +24,6 @@ def _create_box(frame, xsize, ysize, zsize):
     depth_offset = boxframe.xaxis * xsize * 0.5
     boxframe.point += depth_offset
     return Box(xsize, ysize, zsize, frame=boxframe)
-
-
-def _create_mesh_shape(xsize, ysize, zsize):
-    box = _create_box(Frame.worldXY(), xsize, ysize, zsize)
-    return Mesh.from_vertices_and_faces(*box.to_vertices_and_faces(True))
-
-
-def _create_brep_shape(xsize, ysize, zsize):
-    box = _create_box(Frame.worldXY(), xsize, ysize, zsize)
-    return Brep.from_box(box)
 
 
 class Beam(Part):
@@ -62,8 +44,6 @@ class Beam(Part):
         Width of the cross-section
     height : float
         Height of the cross-section
-    geometry_type : str
-        The type of geometry created for this beam. Either 'mesh' or 'brep.
 
     Attributes
     ----------
@@ -75,14 +55,8 @@ class Beam(Part):
         Width of the cross-section
     height : float
         Height of the cross-section
-    geometry : :class:`compas.geometry.Brep` | :class:`compas.datastructures.Mesh`
-        The resolved geometry of this beam, including any applied features.
-    geometry_type : str
-        The type of geometry created by this beam. Either 'mesh' or 'brep'.
-    tolerance : float
-    shape : :class:`~compas.geometry.Box`
+    blank : :class:`~compas.geometry.Box`
         A feature-less box representing the parametric geometry of this beam.
-        The default tolerance used in operations performed on this beam.
     faces : list(:class:`~compas.geometry.Frame`)
         A list of frames representing the 6 faces of this beam.
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -106,19 +80,13 @@ class Beam(Part):
 
     """
 
-    SHAPE_FACTORIES = {
-        "mesh": _create_mesh_shape,
-        "brep": _create_brep_shape,
-    }
-
-    def __init__(self, frame, length, width, height, geometry_type="brep", **kwargs):
+    def __init__(self, frame, length, width, height, **kwargs):
         super(Beam, self).__init__(frame=frame)
-        # TODO: add setter so that only that makes sure the frame is orthonormal --> needed for comparisons
         self.width = width
         self.height = height
         self.length = length
-        self.geometry_type = geometry_type
-        self._geometry = None
+        self.features = []
+        self._blank_extensions = {}
 
     @property
     def data(self):
@@ -127,7 +95,6 @@ class Beam(Part):
             "width": self.width,
             "height": self.height,
             "length": self.length,
-            "geometry_type": self.geometry_type,
         }
         data.update(self.attributes)
         return data
@@ -137,20 +104,12 @@ class Beam(Part):
         return cls(**data)
 
     @property
-    def tolerance(self):
-        return DEFAULT_TOLERANCE
-
-    @property
-    def shape(self):
-        return _create_box(self.frame, self.length, self.width, self.height)
-
-    @property
-    def geometry(self):
-        if not self._geometry:
-            self._geometry = self._create_beam_shape_from_params(
-                self.length, self.width, self.height, self.geometry_type
-            )
-        return self._geometry.transformed(Transformation.from_frame(self.frame))
+    def blank(self):
+        start, end = self._resolve_blank_extensions()
+        frame = self.frame.copy()
+        frame.point += -frame.xaxis * start  # "extension" to the start edge
+        new_length = self.length + start + end
+        return _create_box(frame, new_length, self.width, self.height)
 
     @property
     def faces(self):
@@ -239,116 +198,6 @@ class Beam(Part):
             self.frame,
         )
 
-    def update_beam_geometry(self):
-        """Resets the geometry representation of the beam accroding to the current parametric values.
-
-        Should be called after each update to the paramteric definition of the beam.
-
-        """
-        self._geometry = self._create_beam_shape_from_params(self.length, self.width, self.height, self.geometry_type)
-
-    def is_identical(self, other):
-        """Returns True if the other beam's values are identicale, within TOLERANCE, to the ones of this beam.
-
-        Returns
-        -------
-        bool
-
-        """
-        return (
-            isinstance(other, Beam)
-            and close(self.width, other.width, DEFAULT_TOLERANCE)
-            and close(self.height, other.height, DEFAULT_TOLERANCE)
-            and close(self.length, other.length, DEFAULT_TOLERANCE)
-            and self.frame == other.frame
-            # TODO: skip joints and features ?
-        )
-
-    def add_feature(self, feature, apply=False):
-        """Adds a feature to this beam.
-
-        If apply is False, `Beam.apply_features()` must be called for the features to be represented in the geometry.
-
-        Parameters
-        ----------
-        feature : :class:`~compas.datastructures.Feature`
-            The feature to be added to this beam.
-        apply : bool
-            If True, the feature will be applied to the beam's geometry upon adding it.
-
-        """
-        self.features.append(feature)
-        if apply:
-            self.apply_features()
-
-    def apply_features(self):
-        """Applies all the features previously added using `add_feature` to the geometry of this Beam.
-
-        This method separatelly applies the parametric and geometric features.
-        The parametric features, if any, are accumulated when possible.
-
-        Returns
-        -------
-        list(str)
-            A list of errors which occurred during the application of the features, if any, to assist with debugging.
-
-        """
-        error_log = []
-        para_features = [f for f in self.features if isinstance(f, ParametricFeature)]
-        geo_features = [f for f in self.features if isinstance(f, GeometricFeature)]
-        for f in self._accumulate_param_features(para_features):
-            success, _ = f.apply(self)
-            if not success:
-                error_log.append(self._create_feature_error_msg(f, self))
-        for f in geo_features:
-            success, self._geometry = f.apply(self)
-            self._geometry.transform(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
-            if not success:
-                error_log.append(self._create_feature_error_msg(f, self))
-        return error_log
-
-    @staticmethod
-    def _accumulate_param_features(features):
-        """Returns a list of simmered down parameteric features.
-
-        It accumulates the effect of all features which are complient with each other.
-        In best case, if all features are of the same type, a single feature is returned.
-        In worse case, where all of the features are of unique type. The input list of features is returned.
-
-        """
-        map = {}
-        for current in features:
-            type_ = current.__class__
-            if type_ in map:
-                previous = map[type_]
-                map[type_] = previous.accumulate(current)
-            else:
-                map[type_] = current
-        return list(map.values())
-
-    @staticmethod
-    def _create_feature_error_msg(feature, part):
-        msg = "Failed applying feature: {!r} with owner: {!r} to beam: {!r}"
-        return msg.format(feature, getattr(feature, "_owner", None), part)
-
-    def clear_features(self, features_to_clear=None):
-        """Clears applied features and restores their effect.
-
-        Selective removal of features is possible by providing a list of features which shall be removed.
-        In such case, all features are restored and the remaining features are reapplied.
-
-        Parameters
-        ----------
-        features_to_clear : list(:class:`compas.datastructures.Feature`)
-            If provided, only the features which are in this list shall be removed.
-
-        """
-        if features_to_clear:
-            self.features = [f for f in self.features if f not in features_to_clear]
-        else:
-            self.features = []
-        self.update_beam_geometry()
-
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):
         """Define the beam from its centerline.
@@ -412,20 +261,39 @@ class Beam(Part):
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector, geometry_type)
 
-    def move_endpoint(self, vector=Vector(0, 0, 0), which_endpoint="start"):
-        """Deprecated?"""
-        z = self.frame.zaxis
-        ps = self.centerline_start
-        pe = self.centerline_end
-        if which_endpoint in ("start", "both"):
-            ps = add_vectors(ps, vector)
-        if which_endpoint in ("end", "both"):
-            pe = add_vectors(pe, vector)
-        x = Vector.from_start_end(ps, pe)
-        y = Vector(*cross_vectors(x, z)) * -1.0
-        frame = Frame(ps, x, y)
-        self.frame = frame
-        self.length = distance_point_point(ps, pe)
+    def add_blank_extension(self, start, end, joint_key=None):
+        """Adds a blank extension to the beam.
+
+        start : float
+            The amount by which the start of the beam should be extended.
+        end : float
+            The amount by which the end of the beam should be extended.
+        joint_key : int
+            The key of the joint which required this extension. When the joint is removed,
+            this extension will be removed as well.
+
+        """
+        self._blank_extensions[joint_key] = (start, end)
+
+    def remove_blank_extension(self, joint_key):
+        """Removes a blank extension from the beam.
+
+        Parameters
+        ----------
+        joint_key : int
+            The key of the joint which required this extension.
+
+        """
+        del self._blank_extensions[joint_key]
+
+    def _resolve_blank_extensions(self):
+        """Returns the max amount by which to extend the beam at both ends."""
+        start = 0.0
+        end = 0.0
+        for s, e in self._blank_extensions.values():
+            start = max(start, s)
+            end = max(end, e)
+        return start, end
 
     def extension_to_plane(self, pln):
         """Returns the amount by which to extend the beam in each direction using metric units.
@@ -461,28 +329,6 @@ class Beam(Part):
                 de = (tmax - 1.0) * self.length
 
         return -ds, de
-
-    def extend_ends(self, d_start, d_end):
-        """Extends the beam's parametric definition at both ends by the given values.
-
-        Extensions at the start of the centerline should have a negative value.
-        Extenshions at the end of the centerline should have a positive value.
-        Otherwise the centerline will be shortend, not extended.
-
-        The geometry of the beam is subsequently updated to match the new values.
-
-        Parameters
-        ----------
-        d_start : float
-            The amount by which the start of the beam's centerline should be extended, in design units.
-        d_end : float
-            The amount by which the end of the beam's centerline should be extended, in design units.
-
-        """
-        self.frame.point += -self.frame.xaxis * d_start  # "extension" to the start edge
-        extension = d_start + d_end
-        self.length += extension
-        self.update_beam_geometry()
 
     def align_z(self, vector):
         """Align the z_axis of the beam's definition with the given vector.
