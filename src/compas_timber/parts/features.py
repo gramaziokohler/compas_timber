@@ -130,15 +130,29 @@ class BeamExtensionFeature(ParametricFeature):
             A new instance of BeamExtensionFeature.
 
         """
+
+
         if not isinstance(feature, self.__class__):
             raise TypeError(
                 "This feature {} cannot be accumulated with feature of type: {}".format(
                     self.__class__.__name__, feature.__class__.__name__
                 )
             )
+
+        start_val = 0.0
+        end_val = 0.0
+        if self._extend_start + feature._extend_start < 0:
+            start_val = min(self._extend_start, feature._extend_start)
+        else:
+            start_val = max(self._extend_start, feature._extend_start)
+        if self._extend_end + feature._extend_end < 0:
+            end_val = min(self._extend_end, feature._extend_end)
+        else:
+            end_val = max(self._extend_end, feature._extend_end)
         return BeamExtensionFeature(
-            max(self._extend_start, feature._extend_start), max(self._extend_end, feature._extend_end)
+            start_val, end_val
         )
+
 
     def __repr__(self):
         return "{}({}, {})".format(self.__class__.__name__, self._extend_start, self._extend_end)
