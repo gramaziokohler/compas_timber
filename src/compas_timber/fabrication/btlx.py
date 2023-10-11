@@ -28,10 +28,14 @@ class BTLx(object):
 
     def __init__(self, assembly):
         self.assembly = assembly
+        self.joints = assembly.joints
+        for joint in assembly.joints:
+            self.joints.append(BTLxJoint(joint))
         self.parts = []
         self._test = []
         self._joints_per_beam = None
         self._msg = []
+        self.btlx_joints = []
 
         for index, beam in enumerate(self.assembly.beams):
             part = BTLxPart(beam, index, self.joints_per_beam[str(beam.key)])
@@ -54,7 +58,7 @@ class BTLx(object):
     def joints_per_beam(self):
         if self._joints_per_beam == None:
             jpb = defaultdict(list)
-            for joint in self.assembly.joints:
+            for joint in self.joints:
                 for beam in joint.beams:
                     jpb[str(beam.key)].append(joint)
             self._joints_per_beam = jpb
@@ -307,6 +311,14 @@ class BTLxPart(object):
                 self.processes.append(process)
 
 
+class BTLxJoint(Joint):
+    def __init__(self, joint):
+        super(BTLxJoint, self).__init__()
+        self.__dict__.update(joint.__dict__)
+        self.type = type(joint)
+        self.part_a = None
+        self.part_b = None
+
 class BTLxProcess(object):
     registered_processes = {}
 
@@ -343,7 +355,7 @@ class BTLxProcess(object):
     @classmethod
     def create(cls, joint, part):
         process = None
-        process_type = BTLxProcess.registered_processes.get(type(joint))
+        process_type = BTLxProcess.registered_processes.get(joint.type)
         try:
             process = process_type(joint, part)
         except:
