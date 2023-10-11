@@ -430,8 +430,6 @@ class Beam(Part):
         self.length = distance_point_point(ps, pe)
 
     def extension_to_plane(self, pln):
-
-
         """Returns the amount by which to extend the beam in each direction using metric units.
 
         TODO: verify this is true
@@ -470,7 +468,6 @@ class Beam(Part):
         #     tmax = max(x.keys())
         #     if tmax > 1.0:
         #         de = (tmax - 1.0) * self.length
-
 
         return -ds, de
 

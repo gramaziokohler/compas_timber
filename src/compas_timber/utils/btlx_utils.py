@@ -55,5 +55,3 @@
 #         normal_frame = Frame.from_plane(Plane(frame_origin, frame_normal))
 #         sorted_indices = sorted(indices, key=lambda index: BTLx_Part.angle(normal_frame, brep.Vertices[index].Location))
 #         return sorted_indices
-
-

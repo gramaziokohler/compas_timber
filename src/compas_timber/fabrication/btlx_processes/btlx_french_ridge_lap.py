@@ -10,6 +10,7 @@ from compas_timber.connections import FrenchRidgeLapJoint
 from compas_timber.fabrication.btlx import BTLxProcess
 from compas_timber.fabrication.btlx import BTLx
 
+
 class BTLxFrenchRidgeLap(BTLxProcess):
     def __init__(self, joint, part):
         super().__init__()
@@ -17,14 +18,12 @@ class BTLxFrenchRidgeLap(BTLxProcess):
         self.joint = joint
         self.apply_process = True
 
-
         if self.part is self.joint.parts[0]:
             self.other_part = self.joint.parts[1]
         else:
             self.other_part = self.joint.parts[0]
 
-
-        #self.check_geometry()
+        # self.check_geometry()
 
         """
         the following attributes hold values used to create process_params
@@ -66,7 +65,6 @@ class BTLxFrenchRidgeLap(BTLxProcess):
         else:
             return "no"
 
-
     @property
     def process_params(self):
         """
@@ -75,13 +73,12 @@ class BTLxFrenchRidgeLap(BTLxProcess):
         self.generate_process()
         return {
             "Orientation": str(self.orientation),
-            "StartX": f'{self.startX:.{BTLx.POINT_PRECISION}f}',
-            "Angle": f'{self.angle:.{BTLx.ANGLE_PRECISION}f}',
+            "StartX": f"{self.startX:.{BTLx.POINT_PRECISION}f}",
+            "Angle": f"{self.angle:.{BTLx.ANGLE_PRECISION}f}",
             "RefPosition": self.ref_position,
             "Drillhole": self.drill_hole,
-            "DrillholeDiam": f'{self.drill_hole_diameter:.{BTLx.ANGLE_PRECISION}f}',
+            "DrillholeDiam": f"{self.drill_hole_diameter:.{BTLx.ANGLE_PRECISION}f}",
         }
-
 
     # def check_geometry(self):
     #     """
@@ -117,17 +114,15 @@ class BTLxFrenchRidgeLap(BTLxProcess):
 
     #     self.joint.reference_face_indices = (indices[0], indices[1])
 
-
     def generate_process(self):
         """
         This is an internal method to generate process parameters
         """
         self.angle_rad = angle_vectors(self.part.frame.xaxis, self.other_part.frame.xaxis)
-        #self.angle_rad = angle_vectors_signed(self.part.frame.xaxis, self.other_part.frame.xaxis, self.part.frame.normal)
-        if self.angle_rad < math.pi/2:
+        # self.angle_rad = angle_vectors_signed(self.part.frame.xaxis, self.other_part.frame.xaxis, self.part.frame.normal)
+        if self.angle_rad < math.pi / 2:
             self.angle_rad = math.pi - self.angle_rad
-        self.startX = self.part.width/math.tan(math.pi-self.angle_rad)
+        self.startX = self.part.width / math.tan(math.pi - self.angle_rad)
 
 
 BTLxProcess.register_process(FrenchRidgeLapJoint, BTLxFrenchRidgeLap)
-

@@ -17,6 +17,7 @@ from compas_timber.connections import XHalfLapJoint
 from compas_timber.fabrication.btlx import BTLxProcess
 from compas_timber.fabrication.btlx import BTLx
 
+
 class BTLxJackCut(BTLxProcess):
     def __init__(self, joint, part):
         """
@@ -43,7 +44,6 @@ class BTLxJackCut(BTLxProcess):
         self.angle = 90
         self.inclination = 90
 
-
         """
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
         """
@@ -56,22 +56,21 @@ class BTLxJackCut(BTLxProcess):
             "ReferencePlaneID": "1",
         }
 
-
     """
     This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint.
     """
+
     @property
     def process_params(self):
         self.generate_process()
         return {
             "Orientation": str(self.orientation),
-            "StartX": f'{self.startX:.{BTLx.POINT_PRECISION}f}',
-            "StartY": f'{self.startY:.{BTLx.POINT_PRECISION}f}',
-            "StartDepth": f'{self.start_depth:.{BTLx.POINT_PRECISION}f}',
-            "Angle": f'{self.angle:.{BTLx.ANGLE_PRECISION}f}',
-            "Inclination": f'{self.inclination:.{BTLx.ANGLE_PRECISION}f}',
+            "StartX": f"{self.startX:.{BTLx.POINT_PRECISION}f}",
+            "StartY": f"{self.startY:.{BTLx.POINT_PRECISION}f}",
+            "StartDepth": f"{self.start_depth:.{BTLx.POINT_PRECISION}f}",
+            "Angle": f"{self.angle:.{BTLx.ANGLE_PRECISION}f}",
+            "Inclination": f"{self.inclination:.{BTLx.ANGLE_PRECISION}f}",
         }
-
 
     def parse_geometry(self):
         """
@@ -95,18 +94,14 @@ class BTLxJackCut(BTLxProcess):
                     self.cut_plane = self.joint.cutting_planes[1]
                 self.apply_process = True
 
-
-
-
-
     def generate_process(self):
         """
         This is an internal method to generate process parameters
         """
-        self.x_edge = Line.from_point_and_vector(self.part.reference_surfaces[0].point, self.part.reference_surfaces[0].xaxis)
-        self.startX = (
-            intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
+        self.x_edge = Line.from_point_and_vector(
+            self.part.reference_surfaces[0].point, self.part.reference_surfaces[0].xaxis
         )
+        self.startX = intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
         if self.startX < self.part.blank_length / 2:
             self.orientation = "start"
         else:
@@ -130,7 +125,6 @@ class BTLxJackCut(BTLxProcess):
         )
         self.inclination = abs(self.inclination)
         self.inclination = 90 - (self.inclination - 90)
-
 
 
 BTLxProcess.register_process(TButtJoint, BTLxJackCut)

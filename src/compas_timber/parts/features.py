@@ -131,7 +131,6 @@ class BeamExtensionFeature(ParametricFeature):
 
         """
 
-
         if not isinstance(feature, self.__class__):
             raise TypeError(
                 "This feature {} cannot be accumulated with feature of type: {}".format(
@@ -149,10 +148,7 @@ class BeamExtensionFeature(ParametricFeature):
             end_val = min(self._extend_end, feature._extend_end)
         else:
             end_val = max(self._extend_end, feature._extend_end)
-        return BeamExtensionFeature(
-            start_val, end_val
-        )
-
+        return BeamExtensionFeature(start_val, end_val)
 
     def __repr__(self):
         return "{}({}, {})".format(self.__class__.__name__, self._extend_start, self._extend_end)

@@ -20,9 +20,7 @@ from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
 
 
-
 class BTLx(object):
-
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
 
@@ -39,8 +37,6 @@ class BTLx(object):
 
         self.process_parts()
 
-
-
     def __str__(self):
         """returns a pretty xml sting for visualization in GH, Terminal, etc"""
         self.ET_element = ET.Element("BTLx", self.file_attributes)
@@ -54,7 +50,6 @@ class BTLx(object):
             i += 1
 
         return xml.dom.minidom.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
-
 
     def process_parts(self):
         for index, beam in enumerate(self.assembly.beams):
@@ -84,14 +79,14 @@ class BTLx(object):
 
     @property
     def msg(self):
-        msg_out = ''
+        msg_out = ""
         if len(self._msg) > 0:
             for msg in self._msg:
                 msg_out += msg
         for index, part in enumerate(self.parts):
             if len(part.msg) > 0:
-                msg_out += f'part {index} message:'
-                msg_out+=f'{part.msg} \n'
+                msg_out += f"part {index} message:"
+                msg_out += f"{part.msg} \n"
         return msg_out
 
     @property
@@ -107,22 +102,25 @@ class BTLx(object):
     @property
     def file_history(self):
         file_history = ET.Element("FileHistory")
-        file_history.append(ET.Element(
-            "InitialExportProgram",
-            CompanyName="Gramazio Kohler Research",
-            ProgramName="COMPAS_Timber",
-            ProgramVersion="1.7",
-            ComputerName="PC",
-            UserName="OB",
-            FileName="tenon-mortise.BTLX",
-            Date="2021-12-02",
-            Time="14:08:00",
-            Comment="",
-        ))
+        file_history.append(
+            ET.Element(
+                "InitialExportProgram",
+                CompanyName="Gramazio Kohler Research",
+                ProgramName="COMPAS_Timber",
+                ProgramVersion="1.7",
+                ComputerName="PC",
+                UserName="OB",
+                FileName="tenon-mortise.BTLX",
+                Date="2021-12-02",
+                Time="14:08:00",
+                Comment="",
+            )
+        )
         return file_history
 
+
 class BTLxPart(object):
-    def __init__(self, beam, index, joints = None):
+    def __init__(self, beam, index, joints=None):
         self.beam = beam
         self.joints = joints
         self.length = beam.length
@@ -143,32 +141,31 @@ class BTLxPart(object):
         self.processes = []
         self._et_element = None
 
-
     @property
     def attr(self):
-        return{
-        "SingleMemberNumber": str(self.index),
-        "AssemblyNumber": "",
-        "OrderNumber": str(self.index),
-        "Designation": "",
-        "Annotation": "",
-        "Storey": "",
-        "Group": "",
-        "Package": "",
-        "Material": "",
-        "TimberGrade": "",
-        "QualityGrade": "",
-        "Count": "1",
-        "Length": f'{self.blank_length:.{BTLx.POINT_PRECISION}f}',
-        "Height": f'{self.height:.{BTLx.POINT_PRECISION}f}',
-        "Width": f'{self.width:.{BTLx.POINT_PRECISION}f}',
-        "PlaningLength": "0",
-        "Weight": "0",
-        "ProcessingQuality": "automatic",
-        "StoreyType": "",
-        "ElementNumber": "00",
-        "Layer": "0",
-        "ModuleNumber": "",
+        return {
+            "SingleMemberNumber": str(self.index),
+            "AssemblyNumber": "",
+            "OrderNumber": str(self.index),
+            "Designation": "",
+            "Annotation": "",
+            "Storey": "",
+            "Group": "",
+            "Package": "",
+            "Material": "",
+            "TimberGrade": "",
+            "QualityGrade": "",
+            "Count": "1",
+            "Length": f"{self.blank_length:.{BTLx.POINT_PRECISION}f}",
+            "Height": f"{self.height:.{BTLx.POINT_PRECISION}f}",
+            "Width": f"{self.width:.{BTLx.POINT_PRECISION}f}",
+            "PlaningLength": "0",
+            "Weight": "0",
+            "ProcessingQuality": "automatic",
+            "StoreyType": "",
+            "ElementNumber": "00",
+            "Layer": "0",
+            "ModuleNumber": "",
         }
 
     @property
@@ -183,17 +180,17 @@ class BTLxPart(object):
 
     @property
     def msg(self):
-        msg_out = ''
+        msg_out = ""
         if len(self._msg) > 0:
             for msg in self._msg:
                 msg_out += msg
-            msg_out+=f'\n'
+            msg_out += f"\n"
 
         for index, process in enumerate(self.processes):
             try:
                 if len(process.msg) > 0:
-                    msg_out += f'process {index} message:'
-                    msg_out+=f'{process.msg} \n'
+                    msg_out += f"process {index} message:"
+                    msg_out += f"{process.msg} \n"
             except:
                 pass
         return msg_out
@@ -202,11 +199,11 @@ class BTLxPart(object):
     def et_element(self):
         if not self._et_element:
             self._et_element = ET.Element("Part", self.attr)
-            self._et_element.set("SingleMemberNumber", f'{self.index}')
-            self._et_element.set("OrderNumber", f'{self.index}')
-            self._et_element.set("Length", f'{self.blank_length:.{BTLx.POINT_PRECISION}f}')
-            self._et_element.set("Width", f'{self.width:.{BTLx.POINT_PRECISION}f}')
-            self._et_element.set("Height", f'{self.height:.{BTLx.POINT_PRECISION}f}')
+            self._et_element.set("SingleMemberNumber", f"{self.index}")
+            self._et_element.set("OrderNumber", f"{self.index}")
+            self._et_element.set("Length", f"{self.blank_length:.{BTLx.POINT_PRECISION}f}")
+            self._et_element.set("Width", f"{self.width:.{BTLx.POINT_PRECISION}f}")
+            self._et_element.set("Height", f"{self.height:.{BTLx.POINT_PRECISION}f}")
             self._shape_strings = None
 
             transformations = ET.SubElement(self._et_element, "Transformations")
@@ -215,24 +212,24 @@ class BTLxPart(object):
             position = ET.SubElement(transformation, "Position")
 
             reference_point_vals = {
-                "X": f'{self.blank_frame.point.x:.{BTLx.POINT_PRECISION}f}',
-                "Y": f'{self.blank_frame.point.y:.{BTLx.POINT_PRECISION}f}',
-                "Z": f'{self.blank_frame.point.z:.{BTLx.POINT_PRECISION}f}',
-                }
+                "X": f"{self.blank_frame.point.x:.{BTLx.POINT_PRECISION}f}",
+                "Y": f"{self.blank_frame.point.y:.{BTLx.POINT_PRECISION}f}",
+                "Z": f"{self.blank_frame.point.z:.{BTLx.POINT_PRECISION}f}",
+            }
             position.append(ET.Element("ReferencePoint", reference_point_vals))
 
             x_vector_vals = {
-                "X": f'{self.blank_frame.xaxis.x:.{BTLx.POINT_PRECISION}f}',
-                "Y": f'{self.blank_frame.xaxis.y:.{BTLx.POINT_PRECISION}f}',
-                "Z": f'{self.blank_frame.xaxis.z:.{BTLx.POINT_PRECISION}f}',
-                }
+                "X": f"{self.blank_frame.xaxis.x:.{BTLx.POINT_PRECISION}f}",
+                "Y": f"{self.blank_frame.xaxis.y:.{BTLx.POINT_PRECISION}f}",
+                "Z": f"{self.blank_frame.xaxis.z:.{BTLx.POINT_PRECISION}f}",
+            }
             position.append(ET.Element("XVector", x_vector_vals))
 
             y_vector_vals = {
-                "X": f'{self.blank_frame.yaxis.x:.{BTLx.POINT_PRECISION}f}',
-                "Y": f'{self.blank_frame.yaxis.y:.{BTLx.POINT_PRECISION}f}',
-                "Z": f'{self.blank_frame.yaxis.z:.{BTLx.POINT_PRECISION}f}',
-                }
+                "X": f"{self.blank_frame.yaxis.x:.{BTLx.POINT_PRECISION}f}",
+                "Y": f"{self.blank_frame.yaxis.y:.{BTLx.POINT_PRECISION}f}",
+                "Z": f"{self.blank_frame.yaxis.z:.{BTLx.POINT_PRECISION}f}",
+            }
             position.append(ET.Element("YVector", y_vector_vals))
 
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
@@ -250,19 +247,21 @@ class BTLxPart(object):
         return self._et_element
 
     @property
-    def reference_surfaces(self): #TODO: fix Beam.shape definition and update this.
+    def reference_surfaces(self):  # TODO: fix Beam.shape definition and update this.
         if len(self._reference_surfaces) != 6:
             self._reference_surfaces = []
-            self._reference_surfaces.append(Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis))
+            self._reference_surfaces.append(
+                Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis)
+            )
             point = self.blank_frame.point + self.blank_frame.yaxis * self.width
             self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, -self.blank_frame.yaxis))
-            point = (
-                self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height
-            )
+            point = self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height
             self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, -self.blank_frame.zaxis))
             point = self.blank_frame.point + self.blank_frame.zaxis * self.height
             self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, self.blank_frame.yaxis))
-            self._reference_surfaces.append(Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis))
+            self._reference_surfaces.append(
+                Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis)
+            )
             point = (
                 self.blank_frame.point
                 + self.blank_frame.xaxis * self.blank_length
@@ -295,15 +294,17 @@ class BTLxPart(object):
 
             brep_vertices_string = " "
             for point in brep_vertex_points:
-                xform = Transformation.from_frame_to_frame(self.blank_frame, Frame((0,0,0), (1,0,0),(0,1,0)))
+                xform = Transformation.from_frame_to_frame(self.blank_frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
-                brep_vertices_string += f'{point.x:.{2}f} {point.y:.{2}f} {point.z:.{2}f} '
+                brep_vertices_string += f"{point.x:.{2}f} {point.y:.{2}f} {point.z:.{2}f} "
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
     @property
     def blank_frame(self):
-        blank_frame_point = self.beam.long_edges[2].closest_point(self.beam.frame.point)# I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        blank_frame_point = self.beam.long_edges[2].closest_point(
+            self.beam.frame.point
+        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self._blank_frame = Frame(
             blank_frame_point,
             self.frame.xaxis,
@@ -311,12 +312,13 @@ class BTLxPart(object):
         )
         return self._blank_frame
 
-
     def generate_processes(self):
         for joint in self.joints:
             joint.parts.append(self)
             process = BTLxProcess.create(joint, self)
-            if process.apply_process:     # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
+            if (
+                process.apply_process
+            ):  # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
                 self.processes.append(process)
 
 
@@ -339,6 +341,7 @@ class BTLxProcess(object):
     Generic class for BTLx Processes.
     This should not be called or instantiated directly, but rather specific process subclasses should be instantiated using the classmethod BTLxProcess.create()
     """
+
     def __init__(self):
         self.joint = None
         self.part = None
@@ -372,13 +375,12 @@ class BTLxProcess(object):
         try:
             process = process_type(joint, part)
         except:
-            part._msg.append(f'joint type {type(joint)} not implemented')
+            part._msg.append(f"joint type {type(joint)} not implemented")
         return process
 
     @classmethod
     def register_process(cls, joint_type, process_type):
         cls.registered_processes[joint_type] = process_type
-
 
 
 def get_btlx_string(assembly_json):

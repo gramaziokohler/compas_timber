@@ -12,11 +12,12 @@ from compas.datastructures import GeometricFeature
 from compas.datastructures import ParametricFeature
 from compas.datastructures import Part
 import compas.data
-#import compas_occ
+
+# import compas_occ
 
 
 class BTLx:
-    def __init__(self, assembly, shape_data= None):
+    def __init__(self, assembly, shape_data=None):
         self.assembly = assembly
 
         self.file_attributes = {
@@ -33,16 +34,15 @@ class BTLx:
         self.btlx_ET = ET.ElementTree(self.string)
         self.msg = ""
 
-        i = 0;
+        i = 0
         for beam in assembly.beams:
             for feature in beam.features:
                 self.msg += repr(feature)
             self.parts.append(self.BTLx_Part(beam, i, shape_data).part)
-            i+=1
+            i += 1
 
     def __str__(self):
         return xml.dom.minidom.parseString(ET.tostring(self.string)).toprettyxml(indent="   ")
-
 
     def file_history(self):
         file_history = ET.Element("FileHistory")
@@ -62,8 +62,7 @@ class BTLx:
         return file_history
 
     class BTLx_Part:
-        def __init__(self, beam, index, shape_data = None):
-
+        def __init__(self, beam, index, shape_data=None):
             btlx_corner_reference_point = (
                 beam.frame.point
                 - (beam.frame.yaxis * beam.width)
@@ -124,16 +123,15 @@ class BTLx:
             reference_side = ET.SubElement(self.part, "ReferenceSide", Side="3", Align="no")
             processings = ET.SubElement(self.part, "Processings")
 
-            a=0
+            a = 0
             for feature in beam.features:
                 processings.append(self.add_process(a))
-                a+=1
+                a += 1
 
             shape = ET.SubElement(self.part, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
-            indexed_face_set.set("coordIndex", "\"" + shape_data[0][index] + "\"" )
-            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point="\"" + shape_data[1][index] + "\"")
-
+            indexed_face_set.set("coordIndex", '"' + shape_data[0][index] + '"')
+            coordinate = ET.SubElement(indexed_face_set, "Coordinate", point='"' + shape_data[1][index] + '"')
 
         def add_process(self, feature):
             if feature == 0:
@@ -164,9 +162,9 @@ class BTLx:
             return process
 
 
-def get_btlx_string(assembly_json, shape_data = None):
+def get_btlx_string(assembly_json, shape_data=None):
     assembly = compas.json_loads(assembly_json)
     print("Hello, beams")
     btlx_ins = BTLx(assembly, shape_data)
     return [str(btlx_ins), btlx_ins.msg]
-    #return ["Hello, beams"]
+    # return ["Hello, beams"]

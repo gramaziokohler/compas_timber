@@ -3,12 +3,14 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas.rpc.proxy import Proxy
 from compas_timber.assembly import TimberAssembly
 import compas.data
-#from compas_timber.utils.btlx_utils import BTLx_Part
+
+# from compas_timber.utils.btlx_utils import BTLx_Part
 import compas.geometry.brep
 from compas.artists import Artist
 from compas.geometry import Line
 
 btlx = Proxy("compas_timber.fabrication.btlx")
+
 
 class WriteBTLx(component):
     def RunScript(self, Assembly, Path, Write):
@@ -32,6 +34,5 @@ class WriteBTLx(component):
                 return
             with open(Path, "w") as f:
                 f.write(BTLx)
-
 
         return BTLx, Blanks

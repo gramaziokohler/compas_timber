@@ -129,7 +129,6 @@ class FrenchRidgeLapJoint(Joint):
 
         self.reference_face_indices = (indices[0], indices[1])
 
-
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
