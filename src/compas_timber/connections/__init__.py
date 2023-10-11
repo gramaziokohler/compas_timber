@@ -49,6 +49,7 @@ from .t_butt import TButtJoint
 from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
 from .x_halflap import XHalfLapJoint
+from .french_ridge_lap import FrenchRidgeLapJoint
 from .solver import JointTopology
 from .solver import ConnectionSolver
 from .solver import find_neighboring_beams
@@ -62,6 +63,7 @@ __all__ = [
     "LButtJoint",
     "LMiterJoint",
     "XHalfLapJoint",
+    "FrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
     "find_neighboring_beams",

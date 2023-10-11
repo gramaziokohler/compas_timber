@@ -37,11 +37,12 @@ class BTLx(object):
         self._msg = []
         self.btlx_joints = []
 
-        for index, beam in enumerate(self.assembly.beams):
-            part = BTLxPart(beam, index, self.joints_per_beam[str(beam.key)])
-            self.parts.append(part)
+        self.process_parts()
+
+
 
     def __str__(self):
+        """returns a pretty xml sting for visualization in GH, Terminal, etc"""
         self.ET_element = ET.Element("BTLx", self.file_attributes)
         self.ET_element.append(self.file_history)
         self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
@@ -53,6 +54,13 @@ class BTLx(object):
             i += 1
 
         return xml.dom.minidom.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
+
+
+    def process_parts(self):
+        for index, beam in enumerate(self.assembly.beams):
+            self.parts.append(BTLxPart(beam, index, self.joints_per_beam[str(beam.key)]))
+        for part in self.parts:
+            part.generate_processes()
 
     @property
     def joints_per_beam(self):
@@ -134,7 +142,7 @@ class BTLxPart(object):
         self._reference_surfaces = []
         self.processes = []
         self._et_element = None
-        self.generate_processes()
+
 
     @property
     def attr(self):
@@ -306,6 +314,7 @@ class BTLxPart(object):
 
     def generate_processes(self):
         for joint in self.joints:
+            joint.parts.append(self)
             process = BTLxProcess.create(joint, self)
             if process.apply_process:     # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
                 self.processes.append(process)
@@ -314,10 +323,14 @@ class BTLxPart(object):
 class BTLxJoint(Joint):
     def __init__(self, joint):
         super(BTLxJoint, self).__init__()
-        self.__dict__.update(joint.__dict__)
-        self.type = type(joint)
-        self.part_a = None
-        self.part_b = None
+        self.parts = ()
+        self.reference_face_indices = ()
+        self.parts_processed = (False, False)
+
+    @property
+    def type(self):
+        return type(self.joint)
+
 
 class BTLxProcess(object):
     registered_processes = {}
