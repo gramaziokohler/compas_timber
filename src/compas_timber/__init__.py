@@ -12,6 +12,7 @@ compas_timber
     compas_timber.parts
     compas_timber.connections
     compas_timber.rhino
+    compas_timber.fabrication
 
 """
 

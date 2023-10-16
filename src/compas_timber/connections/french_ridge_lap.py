@@ -47,6 +47,7 @@ class FrenchRidgeLapJoint(Joint):
         self.cross_beam_key = cross_beam.key if cross_beam else None
         self.features = []
         self.reference_face_indices = None
+        self.gap = 0
 
     @property
     def data(self):
@@ -87,7 +88,7 @@ class FrenchRidgeLapJoint(Joint):
         return cfr
 
     def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
+        """After de-serialization, restores references to the main and cross beams saved in the assembly."""
         self.main_beam = assemly.find_by_key(self.main_beam_key)
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
@@ -127,7 +128,7 @@ class FrenchRidgeLapJoint(Joint):
         else:
             raise ("part not aligned with corner normal, no French Ridge Lap possible")
 
-        self.reference_face_indices = (indices[0], indices[1])
+        self.reference_face_keys = (indices[0], indices[1])
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.

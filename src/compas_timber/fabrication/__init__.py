@@ -13,10 +13,19 @@ To create a new process class, the specific process class, e.g. BTLxJackCut, sho
 Additionally, an instance of the process class should be returned by classmethod BTLxProcess.create(joint, part) using the registered_processes
 
 """
-from .btlx import BTLxProcess
-from .btlx_processes.btlx_jack_cut import BTLxJackCut
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+
+from .btlx import BTLx
+# from .btlx import BTLxProcess
+# from .btlx_jack_cut import BTLxJackCut
+# from .btlx_french_ridge_lap import BTLxFrenchRidgeLap
 
 __all__ = [
-    "BTLxProcess",
-    "BTLxJackCut",
+    "BTLx",
+    # # "BTLxProcess",
+    # "BTLxJackCut",
+    # "BTLxFrenchRidgeLap"
 ]

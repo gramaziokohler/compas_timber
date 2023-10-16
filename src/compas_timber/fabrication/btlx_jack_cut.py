@@ -13,7 +13,6 @@ from compas_timber.utils.compas_extra import intersection_line_plane
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
-from compas_timber.connections import XHalfLapJoint
 from compas_timber.fabrication.btlx import BTLxProcess
 from compas_timber.fabrication.btlx import BTLx
 
@@ -25,7 +24,7 @@ class BTLxJackCut(BTLxProcess):
         """
         super().__init__()
         self.part = part
-        self.apply_process = False
+        self.apply_process = True
 
         """
         the following attributes are specific to Jack Cut
@@ -65,34 +64,33 @@ class BTLxJackCut(BTLxProcess):
         self.generate_process()
         return {
             "Orientation": str(self.orientation),
-            "StartX": f"{self.startX:.{BTLx.POINT_PRECISION}f}",
-            "StartY": f"{self.startY:.{BTLx.POINT_PRECISION}f}",
-            "StartDepth": f"{self.start_depth:.{BTLx.POINT_PRECISION}f}",
-            "Angle": f"{self.angle:.{BTLx.ANGLE_PRECISION}f}",
-            "Inclination": f"{self.inclination:.{BTLx.ANGLE_PRECISION}f}",
+            "StartX": "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION),
+            "StartY": "{:.{prec}f}".format(self.startY, prec = BTLx.POINT_PRECISION),
+            "StartDepth": "{:.{prec}f}".format(self.start_depth, prec = BTLx.POINT_PRECISION),
+            "Angle": "{:.{prec}f}".format(self.angle, prec = BTLx.ANGLE_PRECISION),
+            "Inclination": "{:.{prec}f}".format(self.inclination, prec = BTLx.ANGLE_PRECISION),
         }
 
     def parse_geometry(self):
         """
         This method is specific to jack cut, which has multiple possible joints that create it.
         """
-        match self.joint:
-            case TButtJoint():
-                if self.part.beam is self.joint.main_beam:
-                    self.cut_plane = self.joint.cutting_plane
-                    self.apply_process = True
-            case LButtJoint():
-                if self.part.beam is self.joint.main_beam:
-                    self.cut_plane = self.joint.cutting_plane_main
-                elif self.part.beam is self.joint.cross_beam:
-                    self.cut_plane = self.joint.cutting_plane_cross
-                self.apply_process = True
-            case LMiterJoint():
-                if self.part.beam is self.joint.beam_a:
-                    self.cut_plane = self.joint.cutting_planes[0]
-                elif self.part.beam is self.joint.beam_b:
-                    self.cut_plane = self.joint.cutting_planes[1]
-                self.apply_process = True
+
+        if isinstance(self.joint, TButtJoint):
+            if self.part.beam is self.joint.main_beam:
+                self.cut_plane = self.joint.cutting_plane
+            else:
+                self.apply_process = False
+        elif isinstance(self.joint, LButtJoint):
+            if self.part.beam is self.joint.main_beam:
+                self.cut_plane = self.joint.cutting_plane_main
+            elif self.part.beam is self.joint.cross_beam:
+                self.cut_plane = self.joint.cutting_plane_cross
+        elif isinstance(self.joint, LMiterJoint):
+            if self.part.beam is self.joint.beam_a:
+                self.cut_plane = self.joint.cutting_planes[0]
+            elif self.part.beam is self.joint.beam_b:
+                self.cut_plane = self.joint.cutting_planes[1]
 
     def generate_process(self):
         """

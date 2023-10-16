@@ -73,46 +73,13 @@ class BTLxFrenchRidgeLap(BTLxProcess):
         self.generate_process()
         return {
             "Orientation": str(self.orientation),
-            "StartX": f"{self.startX:.{BTLx.POINT_PRECISION}f}",
-            "Angle": f"{self.angle:.{BTLx.ANGLE_PRECISION}f}",
+            "StartX": "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION),
+            "Angle": "{:.{prec}f}".format(self.angle, prec = BTLx.POINT_PRECISION),
             "RefPosition": self.ref_position,
             "Drillhole": self.drill_hole,
-            "DrillholeDiam": f"{self.drill_hole_diameter:.{BTLx.ANGLE_PRECISION}f}",
+            "DrillholeDiam":"{:.{prec}f}".format(self.drill_hole_diameter, prec = BTLx.POINT_PRECISION),
         }
 
-    # def check_geometry(self):
-    #     """
-    #     This method checks whether the parts are aligned as necessary to create French Ridge Lap.
-    #     """
-    #     if not len(self.joint.parts) == 2:
-    #         raise ("French Ridge Lap requires 2 beams")
-
-    #     if self.part is self.joint.parts[0]:
-    #         self.other_part = self.joint.parts[1]
-    #     else:
-    #         self.other_part = self.joint.parts[0]
-
-    #     if not (self.part.width == self.other_part.width and self.part.height == self.other_part.height):
-    #         raise ("widths and heights for both beams must match for the French Ridge Lap")
-
-    #     normal = cross_vectors(self.part.blank_frame.xaxis, self.other_part.blank_frame.xaxis)
-
-    #     indices = []
-    #     for part in self.parts:
-    #         found = False
-    #         for face_number in range(4):
-    #             if angle_vectors(normal, part.reference_faces[face_number].normal) < 0.001:
-    #                 indices.append(face_number)
-    #                 found = True
-    #                 break
-    #         if not found:
-    #             raise ("part not aligned with corner normal, no French Ridge Lap possible")
-    #     if indices[1] <2:
-    #         indices[1] +=2
-    #     else:
-    #         indices[1] -=2
-
-    #     self.joint.reference_face_indices = (indices[0], indices[1])
 
     def generate_process(self):
         """
