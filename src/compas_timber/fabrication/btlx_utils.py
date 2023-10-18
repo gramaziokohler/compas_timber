@@ -1,57 +1,43 @@
-# from compas_timber.assembly import TimberAssembly
-# #from compas_ghpython import unload_module
-# from compas_timber.parts.beam import Beam
-# from compas.geometry import Brep as Brep
-# from compas.geometry import Frame
-# from compas.geometry import Plane
-# from compas.geometry import Vector
-# import compas.data
-# import compas_rhino.geometry
+# from compas_timber.fabrication import BTLx
+from compas.geometry import Line
+import compas.data
 
-# class BTLx_Part:
+import sys
+import xml.etree.ElementTree as ET
+import xml.dom.minidom as dom
 
-#     def __init__(self, brep):
-#         strings = self.btlx_part_strings(brep)
-#         self.point_string = strings[0]
-#         self.indices_string = strings[1]
+import compas
 
-
-#     @staticmethod
-#     def btlx_part_strings(brep_in):
-#         brep = Brep.from_native(brep_in)
-#         brep_vertices = brep.vertices
-#         brep_vertices_string = ""
-#         for vertex in brep_vertices:
-#             brep_vertices_string += str(vertex.point.x) + " " + str(vertex.point.y) + " " + str(vertex.point.z) + " "
-#         brep_indices = []
-#         for face in brep.faces:
-#             face_indices = []
-#             for edge_index in face.edges():
-#                 edge = brep.Edges[edge_index]
-#                 start_vertex = edge.StartVertex
-#                 end_vertex = edge.EndVertex
-#                 face_indices.append(start_vertex.VertexIndex)
-#                 face_indices.append(end_vertex.VertexIndex)
-#             face_indices = list(set(face_indices))
-#             for index in BTLx_Part.ccw_sorted_vertex_indices(face_indices, brep, face):
-#                 brep_indices.append(index)
-#             brep_indices.append(-1)
-#         brep_indices.pop(-1)
-#         brep_indices_string = ""
-#         for index in brep_indices:
-#             brep_indices_string += str(index) + " "
-#         return [brep_vertices_string, brep_indices_string]
+if not compas.IPY:
+    if sys.version_info[0] >= 3 and sys.version_info[1] >= 8:
+        from compas.files._xml import xml_cpython as xml_impl
+    else:
+        from compas.files._xml import xml_pre_38 as xml_impl
+else:
+    from compas.files._xml import xml_cli as xml_impl
 
 
-#     @staticmethod
-#     def angle(frame, point):
-#         point_vector = Vector(point[0] - frame.point[0], point[1] - frame.point[1], point[2] - frame.point[2])
-#         return Vector.angle_vectors_signed(frame.xaxis, point_vector, frame.normal)
+def get_btlx_string(assembly_json):
+    """
+    the following method is used to get the btlx string in grasshopper
+    """
+    # assembly = compas.json_loads(assembly_json)
+    # btlx_ins = BTLx(assembly)
+    # edges = []
+    # for part in btlx_ins.parts:
+    #     for tuple in part.blank_geometry.edges:
+    #         edges.append(Line(part.blank_geometry.points[tuple[0]], part.blank_geometry.points[tuple[1]]))
+    # return [str(btlx_ins), edges, btlx_ins.msg]
 
-#     @staticmethod
-#     def ccw_sorted_vertex_indices(indices, brep, brep_face):
-#         frame_origin = brep_face.PointAt(0.5, 0.5)
-#         frame_normal = brep_face.NormalAt(0.5, 0.5)
-#         normal_frame = Frame.from_plane(Plane(frame_origin, frame_normal))
-#         sorted_indices = sorted(indices, key=lambda index: BTLx_Part.angle(normal_frame, brep.Vertices[index].Location))
-#         return sorted_indices
+
+def test_xml():
+    file_attributes = {
+        "xmlns": "https://www.design2machine.com",
+        "Version": "2.0.0",
+        "Language": "en",
+        "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:schemaLocation": "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
+    }
+    ET_element = ET.Element("BTLx", file_attributes)
+    ET_element.append(ET.Element("poop", shit="shittyshit", otherShit="shittiershit"))
+    return dom.parseString(ET.tostring(ET_element)).toprettyxml(indent="   ")
