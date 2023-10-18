@@ -15,12 +15,12 @@ Additionally, an instance of the process class should be returned by classmethod
 """
 from .btlx import BTLx
 from .btlx import BTLxProcess
-from .btlx_french_ridge_lap import BTLxFrenchRidgeLap
-from .btlx_jack_cut import BTLxJackCut
+# from .btlx_french_ridge_lap import BTLxFrenchRidgeLap
+# from .btlx_jack_cut import BTLxJackCut
 
 __all__ = [
     "BTLx",
     "BTLxProcess",
-    "BTLxJackCut",
-    "BTLxFrenchRidgeLap",
+    # "BTLxJackCut",
+    # "BTLxFrenchRidgeLap",
 ]
