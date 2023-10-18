@@ -1,4 +1,3 @@
-import xml.etree.ElementTree as ET
 import math
 
 from compas.geometry import Frame
@@ -13,7 +12,6 @@ from compas_timber.utils.compas_extra import intersection_line_plane
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
-from compas_timber.connections import XHalfLapJoint
 from compas_timber.fabrication.btlx import BTLxProcess
 from compas_timber.fabrication.btlx import BTLx
 
@@ -24,8 +22,13 @@ class BTLxJackCut(BTLxProcess):
         Constructor for BTLxJackCut can take Joint and Frame as argument because some other joints will use the jack cut as part of the milling process.
         """
         super().__init__()
+
+
+        print("Instantiating Jack Cut")
+
+
         self.part = part
-        self.apply_process = False
+        self.apply_process = True
 
         """
         the following attributes are specific to Jack Cut
@@ -35,7 +38,7 @@ class BTLxJackCut(BTLxProcess):
         if isinstance(joint, Frame):
             self.cut_plane = joint
         else:
-            self.joint = joint
+            self.joint = joint.joint
             self.parse_geometry()
         self.orientation = "start"
         self.startX = 0
@@ -79,19 +82,18 @@ class BTLxJackCut(BTLxProcess):
         if isinstance(self.joint, TButtJoint):
             if self.part.beam is self.joint.main_beam:
                 self.cut_plane = self.joint.cutting_plane
-                self.apply_process = True
+            else:
+                self.apply_process = False
         if isinstance(self.joint, LButtJoint):
             if self.part.beam is self.joint.main_beam:
                 self.cut_plane = self.joint.cutting_plane_main
             elif self.part.beam is self.joint.cross_beam:
                 self.cut_plane = self.joint.cutting_plane_cross
-            self.apply_process = True
         if isinstance(self.joint, LMiterJoint):
             if self.part.beam is self.joint.beam_a:
                 self.cut_plane = self.joint.cutting_planes[0]
             elif self.part.beam is self.joint.beam_b:
                 self.cut_plane = self.joint.cutting_planes[1]
-            self.apply_process = True
 
     def generate_process(self):
         """

@@ -1,4 +1,3 @@
-import xml.etree.ElementTree as ET
 import math
 
 from compas.geometry import angle_vectors

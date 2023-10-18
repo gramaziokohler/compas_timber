@@ -29,11 +29,7 @@ from compas.geometry import Translation
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
-
-
-# class BTLx(object):
-#     def __init__(self):
-#         print("init")
+import compas_timber.fabrication
 
 
 class BTLx(object):
@@ -56,7 +52,6 @@ class BTLx(object):
 
     def __str__(self):
         """returns a pretty xml sting for visualization in GH, Terminal, etc"""
-        print("why not?")
         self.ET_element = ET.Element("BTLx", self.file_attributes)
         self.ET_element.append(self.file_history)
         self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
@@ -70,8 +65,8 @@ class BTLx(object):
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
     def process_parts(self):
-        for index, beam in enumerate(self.assembly.beams):
-            self.parts.append(BTLxPart(beam, index, self.joints_per_beam[str(beam.key)]))
+        for beam in self.assembly.beams:
+            self.parts.append(BTLxPart(beam, str(beam.key), self.joints_per_beam[str(beam.key)]))
         for part in self.parts:
             part.generate_processes()
 
@@ -190,9 +185,9 @@ class BTLxPart(object):
             self._et_element = ET.Element("Part", self.attr)
             self._et_element.set("SingleMemberNumber",str(self.index))
             self._et_element.set("OrderNumber", str(self.index))
-            self._et_element.set("\"{:.{prec}f}\"".format(self.blank_length, prec=BTLx.POINT_PRECISION))
-            self._et_element.set("\"{:.{prec}f}\"".format(self.width, prec=BTLx.POINT_PRECISION))
-            self._et_element.set("\"{:.{prec}f}\"".format(self.height, prec=BTLx.POINT_PRECISION))
+            self._et_element.set("Length", "\"{:.{prec}f}\"".format(self.blank_length, prec=BTLx.POINT_PRECISION))
+            self._et_element.set("Width", "\"{:.{prec}f}\"".format(self.width, prec=BTLx.POINT_PRECISION))
+            self._et_element.set("Height", "\"{:.{prec}f}\"".format(self.height, prec=BTLx.POINT_PRECISION))
             self._shape_strings = None
 
             transformations = ET.SubElement(self._et_element, "Transformations")
@@ -264,19 +259,21 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
+            try:
+                for face in self.beam.geometry.faces:
+                    for loop in face.loops:
+                        for vertex in loop.vertices:
+                            try:
+                                vertex_index = brep_vertex_points.index(vertex.point)
+                                brep_indices.append(vertex_index)
+                            except:
+                                brep_vertex_points.append(vertex.point)
+                                brep_indices.append(len(brep_vertex_points))
 
-            for face in self.beam.geometry.faces:
-                for loop in face.loops:
-                    for vertex in loop.vertices:
-                        try:
-                            vertex_index = brep_vertex_points.index(vertex.point)
-                            brep_indices.append(vertex_index)
-                        except:
-                            brep_vertex_points.append(vertex.point)
-                            brep_indices.append(len(brep_vertex_points))
                 brep_indices.append(-1)
-            brep_indices.pop(-1)
-
+                brep_indices.pop(-1)
+            except:
+                    pass
             brep_indices_string = " "
             for index in brep_indices:
                 brep_indices_string += str(index) + " "
@@ -305,14 +302,15 @@ class BTLxPart(object):
         for joint in self.joints:
             joint.parts.append(self)
             process = BTLxProcess.create(joint, self)
-            if process.apply_process:  # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
+            if process:  # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
+                print("add process")
                 self.processes.append(process)
 
 
 class BTLxJoint(object):
     def __init__(self, joint):
-        print("joint")
         self.joint = joint
+
         self.parts = []
         self.reference_face_indices = []
         self.parts_processed = [False, False]
@@ -327,7 +325,7 @@ class BTLxJoint(object):
 
 
 class BTLxProcess(object):
-    registered_processes = {}
+    REGISTERED_PROCESSES = {}
 
     """
     Generic class for BTLx Processes.
@@ -354,14 +352,16 @@ class BTLxProcess(object):
     @classmethod
     def create(cls, joint, part):
         process = None
-        process_type = BTLxProcess.registered_processes.get(joint.type)
+        process_type = BTLxProcess.REGISTERED_PROCESSES.get(str(joint.type))
+        print("process type = {}".format(process_type))
         try:
             process = process_type(joint, part)
+            print("process = {}".format(process))
         except:
-            pass # raise("joint type {} not implemented".format(type(joint)))
+            print("joint type {} not implemented".format((joint.type)))
         return process
 
     @classmethod
     def register_process(cls, joint_type, process_type):
-        cls.registered_processes[joint_type] = process_type
+        cls.REGISTERED_PROCESSES[str(joint_type)] = process_type
 
