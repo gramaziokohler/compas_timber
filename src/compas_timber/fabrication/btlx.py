@@ -1,6 +1,10 @@
 import os
 import uuid
 import sys
+from datetime import date
+from datetime import datetime
+
+
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
 import compas
@@ -32,6 +36,8 @@ from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
 import compas_timber.fabrication
+from compas_timber.fabrication.btlx_jack_cut import BTLxJackCut
+from compas_timber.fabrication.btlx_french_ridge_lap import BTLxFrenchRidgeLap
 
 
 class BTLx(object):
@@ -49,6 +55,21 @@ class BTLx(object):
         self._joints_per_beam = None
         self.btlx_joints = []
         self._blanks = None
+
+        self.history = {
+            "CompanyName":"Gramazio Kohler Research",
+            "ProgramName":"COMPAS_Timber",
+            "ProgramVersion":"Compas: {}".format(compas.__version__),
+            "ComputerName":"{}".format(os.getenv("computername")),
+            "UserName":"{}".format(os.getenv("USERNAME")),
+            "FileName":"",
+            "Date":"{}".format(date.today()),
+            "Time":"{}".format(datetime.now().strftime("%H:%M:%S")),
+            "Comment":"",
+        }
+
+
+
         self.process_parts()
 
 
@@ -96,13 +117,14 @@ class BTLx(object):
 
     @property
     def file_attributes(self):
-        od = OrderedDict()
-        od.__setitem__("xmlns", "https://www.design2machine.com")
-        od.__setitem__("Version", "2.0.0")
-        od.__setitem__("Language", "en")
-        od.__setitem__("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-        od.__setitem__("xsi:schemaLocation", "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd")
-        return od
+        return {
+        "xmlns": "https://www.design2machine.com",
+        "Version": "2.0.0",
+        "Language": "en",
+        "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:schemaLocation": "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd"
+        }
+
 
     @property
     def file_history(self):
@@ -110,15 +132,7 @@ class BTLx(object):
         file_history.append(
             ET.Element(
                 "InitialExportProgram",
-                CompanyName="Gramazio Kohler Research",
-                ProgramName="COMPAS_Timber",
-                ProgramVersion="1.7",
-                ComputerName="PC",
-                UserName="{}".format(os.getenv("USERNAME")),
-                FileName="tenon-mortise.BTLX",
-                Date="2021-12-02",
-                Time="14:08:00",
-                Comment="",
+                self.history
             )
         )
         return file_history
@@ -198,7 +212,7 @@ class BTLxPart(object):
             position = ET.SubElement(transformation, "Position")
 
             reference_point_vals = {
-                 "X": "{:.{prec}f}".format(self.blank_frame.point.x, prec=BTLx.POINT_PRECISION),
+                "X": "{:.{prec}f}".format(self.blank_frame.point.x, prec=BTLx.POINT_PRECISION),
                 "Y": "{:.{prec}f}".format(self.blank_frame.point.y, prec=BTLx.POINT_PRECISION),
                 "Z": "{:.{prec}f}".format(self.blank_frame.point.z, prec=BTLx.POINT_PRECISION),
             }
@@ -219,11 +233,10 @@ class BTLxPart(object):
             position.append(ET.Element("YVector", y_vector_vals))
 
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
-            self._et_element.append(ET.Element("ReferenceSide", Side="3", Align="no"))
-            processings = ET.SubElement(self._et_element, "Processings")
+            self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
+            self.processings = ET.SubElement(self._et_element, "Processings")
 
-            for process in self.processes:
-                processings.append(process.et_element)
+            self.add_process_elements()
 
             shape = ET.SubElement(self._et_element, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
@@ -308,6 +321,12 @@ class BTLxPart(object):
                 print("add process")
                 self.processes.append(process)
 
+    def add_process_elements(self):
+            for process in self.processes:
+                et_process = ET.Element(process.process_type, process.et_element)
+                for key, val in process.process_params.items():
+                    et_process.append(ET.Element(key, val))
+                self.processings.append(et_process)
 
 class BTLxJoint(object):
     def __init__(self, joint):
@@ -325,7 +344,6 @@ class BTLxJoint(object):
         return self.joint.beams
 
 
-
 class BTLxProcess(object):
     REGISTERED_PROCESSES = {}
 
@@ -339,17 +357,9 @@ class BTLxProcess(object):
         self.part = None
         self._test = []
 
-    @property
-    def test(self):
-        return self._test
-
-    @property
-    def et_element(self):
-        process_et = ET.Element(self.process_type, self.header_attributes)
-        for key, val in self.process_params.items():
-            child = ET.SubElement(process_et, key)
-            child.text = val
-        return process_et
+    # @property
+    # def test(self):
+    #     return self._test
 
     @classmethod
     def create(cls, joint, part):

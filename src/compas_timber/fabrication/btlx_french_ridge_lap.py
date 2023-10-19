@@ -6,9 +6,10 @@ from compas.geometry import angle_vectors_signed
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.connections import FrenchRidgeLapJoint
-from compas_timber.fabrication.btlx import BTLxProcess
-from compas_timber.fabrication.btlx import BTLx
-
+from compas_timber.fabrication import BTLx
+from compas_timber.fabrication import BTLxJoint
+from compas_timber.fabrication import BTLxProcess
+#from compas_timber.fabrication import BTLx
 
 class BTLxFrenchRidgeLap(BTLxProcess):
     def __init__(self, joint, part):
