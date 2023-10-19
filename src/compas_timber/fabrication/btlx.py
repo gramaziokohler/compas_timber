@@ -36,8 +36,7 @@ from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
 import compas_timber.fabrication
-from compas_timber.fabrication.btlx_jack_cut import BTLxJackCut
-from compas_timber.fabrication.btlx_french_ridge_lap import BTLxFrenchRidgeLap
+
 
 
 class BTLx(object):
@@ -117,13 +116,13 @@ class BTLx(object):
 
     @property
     def file_attributes(self):
-        return {
-        "xmlns": "https://www.design2machine.com",
-        "Version": "2.0.0",
-        "Language": "en",
-        "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-        "xsi:schemaLocation": "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd"
-        }
+        return OrderedDict([
+        ("xmlns", "https://www.design2machine.com"),
+        ("Version", "2.0.0"),
+        ("Language", "en"),
+        ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
+        ("xsi:schemaLocation", "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd")
+        ])
 
 
     @property
@@ -195,42 +194,26 @@ class BTLxPart(object):
                 items.append(item)
         return items
 
+    def et_point_vals(self, point):
+        return OrderedDict([
+            ("X", "{:.{prec}f}".format(point.x, prec=BTLx.POINT_PRECISION)),
+            ("Y", "{:.{prec}f}".format(point.y, prec=BTLx.POINT_PRECISION)),
+            ("Z", "{:.{prec}f}".format(point.z, prec=BTLx.POINT_PRECISION)),
+            ])
+
     @property
     def et_element(self):
         if not self._et_element:
             self._et_element = ET.Element("Part", self.attr)
-            self._et_element.set("SingleMemberNumber",str(self.index))
-            self._et_element.set("OrderNumber", str(self.index))
-            self._et_element.set("Length", "{:.{prec}f}".format(self.blank_length, prec=BTLx.POINT_PRECISION))
-            self._et_element.set("Width", "{:.{prec}f}".format(self.width, prec=BTLx.POINT_PRECISION))
-            self._et_element.set("Height", "{:.{prec}f}".format(self.height, prec=BTLx.POINT_PRECISION))
             self._shape_strings = None
 
             transformations = ET.SubElement(self._et_element, "Transformations")
             guid = "{" + str(uuid.uuid4()) + "}"
             transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
             position = ET.SubElement(transformation, "Position")
-
-            reference_point_vals = {
-                "X": "{:.{prec}f}".format(self.blank_frame.point.x, prec=BTLx.POINT_PRECISION),
-                "Y": "{:.{prec}f}".format(self.blank_frame.point.y, prec=BTLx.POINT_PRECISION),
-                "Z": "{:.{prec}f}".format(self.blank_frame.point.z, prec=BTLx.POINT_PRECISION),
-            }
-            position.append(ET.Element("ReferencePoint", reference_point_vals))
-
-            x_vector_vals = {
-                "X": "{:.{prec}f}".format(self.blank_frame.xaxis.x, prec=BTLx.POINT_PRECISION),
-                "Y": "{:.{prec}f}".format(self.blank_frame.xaxis.y, prec=BTLx.POINT_PRECISION),
-                "Z": "{:.{prec}f}".format(self.blank_frame.xaxis.z, prec=BTLx.POINT_PRECISION),
-            }
-            position.append(ET.Element("XVector", x_vector_vals))
-
-            y_vector_vals = {
-                "X": "{:.{prec}f}".format(self.blank_frame.yaxis.x, prec=BTLx.POINT_PRECISION),
-                "Y": "{:.{prec}f}".format(self.blank_frame.yaxis.y, prec=BTLx.POINT_PRECISION),
-                "Z": "{:.{prec}f}".format(self.blank_frame.yaxis.z, prec=BTLx.POINT_PRECISION),
-            }
-            position.append(ET.Element("YVector", y_vector_vals))
+            position.append(ET.Element("ReferencePoint", self.et_point_vals(self.blank_frame.point)))
+            position.append(ET.Element("XVector", self.et_point_vals(self.blank_frame.xaxis)))
+            position.append(ET.Element("YVector", self.et_point_vals(self.blank_frame.yaxis)))
 
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
             self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
@@ -248,25 +231,14 @@ class BTLxPart(object):
     @property
     def reference_surfaces(self):  # TODO: fix Beam.shape definition and update this.
         if len(self._reference_surfaces) != 6:
-            self._reference_surfaces = []
-            self._reference_surfaces.append(
-                Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis)
-            )
-            point = self.blank_frame.point + self.blank_frame.yaxis * self.width
-            self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, -self.blank_frame.yaxis))
-            point = self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height
-            self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, -self.blank_frame.zaxis))
-            point = self.blank_frame.point + self.blank_frame.zaxis * self.height
-            self._reference_surfaces.append(Frame(point, self.blank_frame.xaxis, self.blank_frame.yaxis))
-            self._reference_surfaces.append(
-                Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis)
-            )
-            point = (
-                self.blank_frame.point
-                + self.blank_frame.xaxis * self.blank_length
-                + self.blank_frame.yaxis * self.width
-            )
-            self._reference_surfaces.append(Frame(point, self.blank_frame.zaxis, -self.blank_frame.yaxis))
+            self._reference_surfaces = [
+                Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis),
+                Frame(self.blank_frame.point + self.blank_frame.yaxis * self.width, self.blank_frame.xaxis, -self.blank_frame.yaxis),
+                Frame(self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height, self.blank_frame.xaxis, -self.blank_frame.zaxis),
+                Frame(self.blank_frame.point + self.blank_frame.zaxis * self.height, self.blank_frame.xaxis, self.blank_frame.yaxis),
+                Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis),
+                Frame(self.blank_frame.point + self.blank_frame.xaxis * self.blank_length + self.blank_frame.yaxis * self.width, self.blank_frame.zaxis, -self.blank_frame.yaxis)
+            ]
         return self._reference_surfaces
 
     @property
@@ -318,20 +290,20 @@ class BTLxPart(object):
             joint.parts.append(self)
             process = BTLxProcess.create(joint, self)
             if process:  # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
-                print("add process")
                 self.processes.append(process)
 
     def add_process_elements(self):
             for process in self.processes:
-                et_process = ET.Element(process.process_type, process.et_element)
-                for key, val in process.process_params.items():
-                    et_process.append(ET.Element(key, val))
-                self.processings.append(et_process)
+                if process.apply_process:
+                    et_process = ET.Element(process.process_type, process.header_attributes)
+                    for key, val in process.process_params.items():
+                        et_process.append(ET.Element(key))
+                        et_process[-1].text = val
+                    self.processings.append(et_process)
 
 class BTLxJoint(object):
     def __init__(self, joint):
         self.joint = joint
-
         self.parts = []
         self.reference_face_indices = []
         self.parts_processed = [False, False]
@@ -364,18 +336,8 @@ class BTLxProcess(object):
     @classmethod
     def create(cls, joint, part):
         btlx_process = None
-        #print("REGISTERED_PROCESSES = {}".format(BTLxProcess.REGISTERED_PROCESSES))
-
         process_type = BTLxProcess.REGISTERED_PROCESSES.get(str(joint.type))
-        try:
-            from compas_timber.fabrication.btlx_jack_cut import BTLxJackCut
-            print("process type = {}".format(process_type))
-
-
-            btlx_process = BTLxJackCut(joint.joint, part)
-            print("process = {}".format(btlx_process))
-        except:
-            print("process type {} not implemented".format(process_type))
+        btlx_process = process_type(joint, part)
         return btlx_process
 
     @classmethod

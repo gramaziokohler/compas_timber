@@ -1,5 +1,5 @@
 import math
-
+from collections import OrderedDict
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -22,9 +22,7 @@ class BTLxJackCut(BTLxProcess):
         """
         Constructor for BTLxJackCut can take Joint and Frame as argument because some other joints will use the jack cut as part of the milling process.
         """
-        super().__init__()
-
-        print("Instantiating Jack Cut!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        super(BTLxProcess, self).__init__()
 
         self.part = part
         self.apply_process = True
@@ -37,18 +35,21 @@ class BTLxJackCut(BTLxProcess):
         if isinstance(joint, Frame):
             self.cut_plane = joint
         else:
+            self.btlx_joint = joint
             self.joint = joint.joint
+            self.joint_type = joint.type
             self.parse_geometry()
         self.orientation = "start"
-        self.startX = 0
-        self.startY = 0
-        self.start_depth = 0
-        self.angle = 90
-        self.inclination = 90
+        self.startX = 0.0
+        self.startY = 0.0
+        self.start_depth = 0.0
+        self.angle = 90.0
+        self.inclination = 90.0
 
         """
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
         """
+
         self.process_type = "JackRafterCut"
         self.header_attributes = {
             "Name": "Jack cut",
@@ -64,31 +65,35 @@ class BTLxJackCut(BTLxProcess):
 
     @property
     def process_params(self):
-        self.generate_process()
-        return {
-            "Orientation": str(self.orientation),
-             "StartX": "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION),
-            "StartY": "{:.{prec}f}".format(self.startY, prec = BTLx.POINT_PRECISION),
-            "StartDepth": "{:.{prec}f}".format(self.start_depth, prec = BTLx.POINT_PRECISION),
-            "Angle": "{:.{prec}f}".format(self.angle, prec = BTLx.ANGLE_PRECISION),
-            "Inclination": "{:.{prec}f}".format(self.inclination, prec = BTLx.ANGLE_PRECISION),
-        }
+        if self.apply_process:
+            self.generate_process()
+            od = OrderedDict([
+                ("Orientation", str(self.orientation)),
+                ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
+                ("StartY", "{:.{prec}f}".format(self.startY, prec = BTLx.POINT_PRECISION)),
+                ("StartDepth", "{:.{prec}f}".format(self.start_depth, prec = BTLx.POINT_PRECISION)),
+                ("Angle", "{:.{prec}f}".format(self.angle, prec = BTLx.ANGLE_PRECISION)),
+                ("Inclination", "{:.{prec}f}".format(self.inclination, prec = BTLx.ANGLE_PRECISION))
+                ])
+            return od
+        else:
+            return None
 
     def parse_geometry(self):
         """
         This method is specific to jack cut, which has multiple possible joints that create it.
         """
-        if isinstance(self.joint, TButtJoint):
+        if str(self.joint_type) == str(TButtJoint):
             if self.part.beam is self.joint.main_beam:
                 self.cut_plane = self.joint.cutting_plane
             else:
                 self.apply_process = False
-        if isinstance(self.joint, LButtJoint):
+        if str(self.joint_type) == str(LButtJoint):
             if self.part.beam is self.joint.main_beam:
                 self.cut_plane = self.joint.cutting_plane_main
             elif self.part.beam is self.joint.cross_beam:
                 self.cut_plane = self.joint.cutting_plane_cross
-        if isinstance(self.joint, LMiterJoint):
+        if str(self.joint_type) == str(LMiterJoint):
             if self.part.beam is self.joint.beam_a:
                 self.cut_plane = self.joint.cutting_planes[0]
             elif self.part.beam is self.joint.beam_b:
