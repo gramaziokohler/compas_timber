@@ -11,56 +11,42 @@ from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxProcess
 #from compas_timber.fabrication import BTLx
 
-class BTLxFrenchRidgeLap(BTLxProcess):
-    def __init__(self, joint, part):
-        super(BTLxProcess, self).__init__()
-        self.part = part
-        self.beams = joint.beams
+class BTLxFrenchRidgeLap(object):
+    PROCESS_TYPE = "FrenchRidgeLap"
 
+    def __init__(self, joint, top_beam_key):
+        self.beams = joint.beams
         self.joint = joint.joint
         self.btlx_joint = joint
         self.apply_process = True
-
-        print(self.btlx_joint.parts)
-
-        if len(self.btlx_joint.parts) < 2:
-            self.btlx_joint.parts.append(self.part)
-
-        if self.part.beam is self.joint.main_beam:
-            self.other_beam = self.joint.cross_beam
-            self.ref_face_id = self.joint.reference_face_indices[0]
-        else:
-            self.other_beam = self.joint.main_beam
-            self.ref_face_id = self.joint.reference_face_indices[1]
-
-
-
-
-        """
-        the following attributes hold values used to create process_params
-        """
-        # self.orientation = self.joint.cutting_plane_main
-        self.startX = 0.0
-        self.angle_rad = 0.0
-        self.ref_edge = True
+        self.which_beam = ""
+        self.orientations = ["start", "start"]
+        self.ref_edges = ["refedge", "refedge"]
         self._drill_hole = True
         self.drill_hole_diameter = 10.0
 
         """
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
         """
-        self.process_type = "FrenchRidgeLap"
-        self.header_attributes = {
-            "Name": "Jack cut",
+        self.main_process_type = "FrenchRidgeLap"
+        self.main_header_attributes = {
+            "Name": "French ridge lap",
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": "2",
+            "ReferencePlaneID": str(self.joint.reference_face_indices[0]),
         }
 
-    @property
-    def orientation(self):
-        pass
+        self.cross_process_type = "FrenchRidgeLap"
+        self.cross_header_attributes = {
+            "Name": "French ridge lap",
+            "Process": "yes",
+            "Priority": "0",
+            "ProcessID": "0",
+            "ReferencePlaneID": str(self.joint.reference_face_indices[1]),
+        }
+
+        self.process_joints()
 
     @property
     def angle(self):
@@ -80,35 +66,81 @@ class BTLxFrenchRidgeLap(BTLxProcess):
         else:
             return "no"
 
-    @property
-    def process_params(self):
+
+    def process_joints(self):
         """
         This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint. Use OrderedDict to maintain original order
         """
-        self.generate_process()
-        return OrderedDict([
-            ("Orientation", str(self.orientation)),
+        self.get_ends()
+        self.get_params()
+
+        self.main_beam_parameters = OrderedDict([
+            ("Orientation", str(self.orientations[0])),
             ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
             ("Angle", "{:.{prec}f}".format(self.angle, prec = BTLx.POINT_PRECISION)),
-            ("RefPosition", self.ref_position),
+            ("RefPosition", self.ref_edges[0]),
             ("Drillhole", self.drill_hole),
             ("DrillholeDiam", "{:.{prec}f}".format(self.drill_hole_diameter, prec = BTLx.POINT_PRECISION)),
         ])
 
-    def generate_process(self):
+        self.cross_beam_parameters = OrderedDict([
+            ("Orientation", str(self.orientations[1])),
+            ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
+            ("Angle", "{:.{prec}f}".format(self.angle, prec = BTLx.POINT_PRECISION)),
+            ("RefPosition", self.ref_edges[1]),
+            ("Drillhole", self.drill_hole),
+            ("DrillholeDiam", "{:.{prec}f}".format(self.drill_hole_diameter, prec = BTLx.POINT_PRECISION)),
+        ])
+
+
+    def get_ends(self):
+        start_distance = min([
+            self.beams[0].centerline.start.distance_to_point(self.beams[1].centerline.start),
+            self.beams[0].centerline.start.distance_to_point(self.beams[1].centerline.end)
+        ])
+        end_distance = min([
+            self.beams[0].centerline.end.distance_to_point(self.beams[1].centerline.start),
+            self.beams[0].centerline.end.distance_to_point(self.beams[1].centerline.end)
+        ])
+        print("start dist = {} ____________ end dist = {}".format(start_distance, end_distance))
+        if start_distance > end_distance:
+            self.orientations[0] = "end"
+
+        start_distance = min([
+            self.beams[1].centerline.start.distance_to_point(self.beams[0].centerline.start),
+            self.beams[1].centerline.start.distance_to_point(self.beams[0].centerline.end)
+        ])
+        end_distance = min([
+            self.beams[1].centerline.end.distance_to_point(self.beams[0].centerline.start),
+            self.beams[1].centerline.end.distance_to_point(self.beams[0].centerline.end)
+        ])
+        print("start dist = {} ____________ end dist = {}".format(start_distance, end_distance))
+        if start_distance > end_distance:
+            self.orientations[1] = "end"
+
+        print("orientations = {}".format(self.orientations))
+
+    def get_params(self):
         """
         This is an internal method to generate process parameters
         """
 
-
-
-
-
         self.angle_rad = angle_vectors(self.joint.beams[0].frame.xaxis, self.joint.beams[1].frame.xaxis)
-        # self.angle_rad = angle_vectors_signed(self.part.frame.xaxis, self.other_part.frame.xaxis, self.part.frame.normal)
         if self.angle_rad < math.pi / 2:
+
             self.angle_rad = math.pi - self.angle_rad
-        self.startX = self.part.width / math.tan(math.pi - self.angle_rad)
+        self.startX = self.btlx_joint.parts.values()[0].width / math.tan(math.pi - self.angle_rad)
+
+    @classmethod
+    def apply_processes(cls, joint, top_beam_key):
+        frl_process = BTLxFrenchRidgeLap(joint, top_beam_key)
+        keys = []
+        for key in joint.parts.keys():
+            keys.append(key)
+        key_index = keys.index(top_beam_key)
+        keys.pop(key_index)
+        joint.parts[top_beam_key].processes.append(BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.main_header_attributes, frl_process.main_beam_parameters))
+        joint.parts[keys[0]].processes.append(BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.cross_header_attributes, frl_process.cross_beam_parameters))
 
 
-BTLxProcess.register_process(FrenchRidgeLapJoint, BTLxFrenchRidgeLap)
+

@@ -18,6 +18,10 @@ from .btlx import BTLxProcess
 from .btlx import BTLxJoint
 from .btlx_jack_cut import BTLxJackCut
 from .btlx_french_ridge_lap import BTLxFrenchRidgeLap
+from .l_butt_factory import LButtFactory
+from .t_butt_factory import TButtFactory
+from .l_miter_factory import LMiterFactory
+from .french_ridge_factory import FrenchRidgeFactory
 
 __all__ = [
     "BTLx",
@@ -25,4 +29,9 @@ __all__ = [
     "BTLxJoint",
     "BTLxJackCut",
     "BTLxFrenchRidgeLap",
+    "LButtFactory",
+    "TButtFactory",
+    "LMiterFactory",
+    "FrenchRidgeFactory",
+
 ]

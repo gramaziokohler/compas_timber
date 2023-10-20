@@ -8,65 +8,49 @@ from compas.geometry import angle_vectors_signed
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
-from compas_timber.connections import TButtJoint
-from compas_timber.connections import LButtJoint
-from compas_timber.connections import LMiterJoint
 from compas_timber.fabrication import BTLx
-from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxProcess
 # from compas_timber.fabrication import BTLx
 
 
-class BTLxJackCut(BTLxProcess):
-    def __init__(self, joint, part):
+class BTLxJackCut(object):
+    def __init__(self, frame, part, joint=None):
         """
         Constructor for BTLxJackCut can take Joint and Frame as argument because some other joints will use the jack cut as part of the milling process.
         """
-        super(BTLxProcess, self).__init__()
 
+        self.cut_plane = frame
         self.part = part
         self.apply_process = True
-
-        """
-        the following attributes are specific to Jack Cut
-        """
-
-        self.cut_plane = None
-        if isinstance(joint, Frame):
-            self.cut_plane = joint
+        self.generate_process()
+        if joint:
+            self.name = str(joint.joint.__class__.__name__)
         else:
-            self.btlx_joint = joint
-            self.joint = joint.joint
-            self.joint_type = joint.type
-            self.parse_geometry()
-        self.orientation = "start"
-        self.startX = 0.0
-        self.startY = 0.0
-        self.start_depth = 0.0
-        self.angle = 90.0
-        self.inclination = 90.0
+            self.name = "jack cut"
 
-        """
-        the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
-        """
 
-        self.process_type = "JackRafterCut"
-        self.header_attributes = {
-            "Name": "Jack cut",
+    @property
+    def process_type(self):
+        return "JackRafterCut"
+
+    @property
+    def header_attributes(self):
+        """ the following attributes are required for all processes, but the keys and values of header_attributes are process specific. """
+        return {
+            "Name": self.name,
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
             "ReferencePlaneID": "1",
-        }
-
-    """
-    This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint.
-    """
+            }
 
     @property
     def process_params(self):
+        """ This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint. """
+
         if self.apply_process:
-            self.generate_process()
+
+            """ the following attributes are specific to Jack Cut """
             od = OrderedDict([
                 ("Orientation", str(self.orientation)),
                 ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
@@ -79,33 +63,15 @@ class BTLxJackCut(BTLxProcess):
         else:
             return None
 
-    def parse_geometry(self):
-        """
-        This method is specific to jack cut, which has multiple possible joints that create it.
-        """
-        if str(self.joint_type) == str(TButtJoint):
-            if self.part.beam is self.joint.main_beam:
-                self.cut_plane = self.joint.cutting_plane
-            else:
-                self.apply_process = False
-        if str(self.joint_type) == str(LButtJoint):
-            if self.part.beam is self.joint.main_beam:
-                self.cut_plane = self.joint.cutting_plane_main
-            elif self.part.beam is self.joint.cross_beam:
-                self.cut_plane = self.joint.cutting_plane_cross
-        if str(self.joint_type) == str(LMiterJoint):
-            if self.part.beam is self.joint.beam_a:
-                self.cut_plane = self.joint.cutting_planes[0]
-            elif self.part.beam is self.joint.beam_b:
-                self.cut_plane = self.joint.cutting_planes[1]
-
     def generate_process(self):
-        """
-        This is an internal method to generate process parameters
-        """
+        """ This is an internal method to generate process parameters """
+        self.startY = 0.0
+        self.start_depth = 0.0
+
         self.x_edge = Line.from_point_and_vector(
             self.part.reference_surfaces[0].point, self.part.reference_surfaces[0].xaxis
         )
+
         self.startX = intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
         if self.startX < self.part.blank_length / 2:
             self.orientation = "start"
@@ -131,8 +97,7 @@ class BTLxJackCut(BTLxProcess):
         self.inclination = abs(self.inclination)
         self.inclination = 90 - (self.inclination - 90)
 
-
-BTLxProcess.register_process(TButtJoint, BTLxJackCut)
-BTLxProcess.register_process(LButtJoint, BTLxJackCut)
-BTLxProcess.register_process(LMiterJoint, BTLxJackCut)
-
+    @classmethod
+    def apply_processes(cls, frame, part, joint = None):
+        jack_cut = BTLxJackCut(frame, part, joint)
+        part.processes.append(BTLxProcess(jack_cut.process_type, jack_cut.header_attributes, jack_cut.process_params))

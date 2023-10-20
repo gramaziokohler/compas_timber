@@ -35,8 +35,6 @@ from compas.geometry import Translation
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
-import compas_timber.fabrication
-
 
 
 class BTLx(object):
@@ -47,14 +45,11 @@ class BTLx(object):
 
         self.assembly = assembly
         self.joints = []
-        for joint in assembly.joints:
-            self.joints.append(BTLxJoint(joint))
-        self.parts = []
+        self.parts = {}
         self._test = []
         self._joints_per_beam = None
         self.btlx_joints = []
         self._blanks = None
-
         self.history = {
             "CompanyName":"Gramazio Kohler Research",
             "ProgramName":"COMPAS_Timber",
@@ -66,10 +61,8 @@ class BTLx(object):
             "Time":"{}".format(datetime.now().strftime("%H:%M:%S")),
             "Comment":"",
         }
-
-
-
-        self.process_parts()
+        self.process_assembly()
+        self.process_joints()
 
 
     def __str__(self):
@@ -79,28 +72,25 @@ class BTLx(object):
         self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
         self.parts_element = ET.SubElement(self.project_element, "Parts")
 
-        i = 0
-        for part in self.parts:
+        for part in self.parts.values():
             self.parts_element.append(part.et_element)
-            i += 1
 
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
-    def process_parts(self):
-        for beam in self.assembly.beams:
-            self.parts.append(BTLxPart(beam, str(beam.key), self.joints_per_beam[str(beam.key)]))
-        for part in self.parts:
-            part.generate_processes()
+    def process_assembly(self):
+        for joint in self.assembly.joints:
+            btlx_joint = BTLxJoint(joint)
+            for beam in btlx_joint.beams:
+                if self.parts.keys().__contains__(str(beam.key)):
+                    btlx_joint.parts[str(beam.key)] = self.parts[str(beam.key)]
+                else:
+                    self.parts[str(beam.key)] = BTLxPart(beam)
+                    btlx_joint.parts[str(beam.key)] = self.parts[str(beam.key)]
+            self.joints.append(btlx_joint)
 
-    @property
-    def joints_per_beam(self):
-        if self._joints_per_beam == None:
-            jpb = defaultdict(list)
-            for joint in self.joints:
-                for beam in joint.beams:
-                    jpb[str(beam.key)].append(joint)
-            self._joints_per_beam = jpb
-        return self._joints_per_beam
+    def process_joints(self):
+        for joint in self.joints:
+            joint.process_joint()
 
     @property
     def blanks(self):
@@ -111,9 +101,6 @@ class BTLx(object):
                     self._edges.append(Line(part.blank_geometry.points[tuple[0]], part.blank_geometry.points[tuple[1]]))
         return self._edges
 
-
-
-
     @property
     def file_attributes(self):
         return OrderedDict([
@@ -123,7 +110,6 @@ class BTLx(object):
         ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
         ("xsi:schemaLocation", "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd")
         ])
-
 
     @property
     def file_history(self):
@@ -138,9 +124,8 @@ class BTLx(object):
 
 
 class BTLxPart(object):
-    def __init__(self, beam, index, joints=None):
+    def __init__(self, beam):
         self.beam = beam
-        self.joints = joints
         self.length = beam.length
         self.width = beam.width
         self.height = beam.height
@@ -151,7 +136,7 @@ class BTLxPart(object):
         self.blank_geometry = beam.shape
         self._blank_frame = None
         self.blank_length = beam.length
-        self.index = index
+        self.index = beam.key
         self.start_trim = None
         self.end_trim = None
         self._reference_surfaces = []
@@ -195,11 +180,11 @@ class BTLxPart(object):
         return items
 
     def et_point_vals(self, point):
-        return OrderedDict([
-            ("X", "{:.{prec}f}".format(point.x, prec=BTLx.POINT_PRECISION)),
-            ("Y", "{:.{prec}f}".format(point.y, prec=BTLx.POINT_PRECISION)),
-            ("Z", "{:.{prec}f}".format(point.z, prec=BTLx.POINT_PRECISION)),
-            ])
+        return {
+            "X": "{:.{prec}f}".format(point.x, prec=BTLx.POINT_PRECISION),
+            "Y": "{:.{prec}f}".format(point.y, prec=BTLx.POINT_PRECISION),
+            "Z": "{:.{prec}f}".format(point.z, prec=BTLx.POINT_PRECISION),
+        }
 
     @property
     def et_element(self):
@@ -217,10 +202,10 @@ class BTLxPart(object):
 
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
             self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
-            self.processings = ET.SubElement(self._et_element, "Processings")
-
-            self.add_process_elements()
-
+            processings = ET.Element("Processings")
+            for process in self.processes:
+                processings.append(process.et_element)
+            self._et_element.append(processings)
             shape = ET.SubElement(self._et_element, "Shape")
             indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
             strings = self.shape_strings
@@ -285,28 +270,14 @@ class BTLxPart(object):
         )
         return self._blank_frame
 
-    def generate_processes(self):
-        for joint in self.joints:
-            joint.parts.append(self)
-            process = BTLxProcess.create(joint, self)
-            if process:  # If no process is returned then dont append process. Some joints dont require a process for every member, e.g. TButtJoint doesn't change cross beam
-                self.processes.append(process)
 
-    def add_process_elements(self):
-            for process in self.processes:
-                if process.apply_process:
-                    et_process = ET.Element(process.process_type, process.header_attributes)
-                    for key, val in process.process_params.items():
-                        et_process.append(ET.Element(key))
-                        et_process[-1].text = val
-                    self.processings.append(et_process)
 
 class BTLxJoint(object):
+    REGISTERED_JOINTS = {}
+
     def __init__(self, joint):
         self.joint = joint
-        self.parts = []
-        self.reference_face_indices = []
-        self.parts_processed = [False, False]
+        self.parts = OrderedDict()
 
     @property
     def type(self):
@@ -315,32 +286,32 @@ class BTLxJoint(object):
     def beams(self):
         return self.joint.beams
 
+    def process_joint(self):
+        print(BTLxJoint.REGISTERED_JOINTS)
+        factory_type = BTLxJoint.REGISTERED_JOINTS.get(str(type(self.joint)))
+        factory_type.apply_processes(self)
+
+    @classmethod
+    def register_joint(cls, joint_type, process_type):
+        cls.REGISTERED_JOINTS[str(joint_type)] = process_type
 
 class BTLxProcess(object):
-    REGISTERED_PROCESSES = {}
 
     """
     Generic class for BTLx Processes.
     This should not be called or instantiated directly, but rather specific process subclasses should be instantiated using the classmethod BTLxProcess.create()
     """
+    def __init__(self, name, attr, params):
+        self.name = name
+        self.attr = attr
+        self.params = params
 
-    def __init__(self):
-        self.joint = None
-        self.part = None
-        self._test = []
 
-    # @property
-    # def test(self):
-    #     return self._test
-
-    @classmethod
-    def create(cls, joint, part):
-        btlx_process = None
-        process_type = BTLxProcess.REGISTERED_PROCESSES.get(str(joint.type))
-        btlx_process = process_type(joint, part)
-        return btlx_process
-
-    @classmethod
-    def register_process(cls, joint_type, process_type):
-        cls.REGISTERED_PROCESSES[str(joint_type)] = process_type
-
+    @property
+    def et_element(self):
+        element = ET.Element(self.name, self.attr)
+        for key, value in self.params.items():
+            child = ET.Element(key)
+            child.text = (value)
+            element.append(child)
+        return element
