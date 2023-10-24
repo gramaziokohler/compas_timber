@@ -33,5 +33,4 @@ __all__ = [
     "TButtFactory",
     "LMiterFactory",
     "FrenchRidgeFactory",
-
 ]

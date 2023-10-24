@@ -114,15 +114,9 @@ class BTLxFrenchRidgeLap(object):
             elif self.angle_rad < 0:
                 self.angle_rad = abs(self.angle_rad)
                 self._ref_edge = False
-            #else:
-
             self.angle_rad = math.pi - self.angle_rad
 
-
-
         self.startX = self.btlx_joint.parts.values()[0].width / abs(math.tan(self.angle_rad))
-        print("end is {}____blank length is {} __________ start X is = {}".format(self.orientation, self.part.blank_length, self.startX))
-
 
         if self.orientation == "end":
             if self._ref_edge:
@@ -130,7 +124,6 @@ class BTLxFrenchRidgeLap(object):
                 self.startX = self.part.blank_length - self.startX
             else:
                 self.startX = self.part.blank_length + self.startX
-        print("start X is = {}".format(self.orientation, self.part.blank_length, self.startX))
 
     @classmethod
     def apply_processes(cls, part, joint, is_top, end):
