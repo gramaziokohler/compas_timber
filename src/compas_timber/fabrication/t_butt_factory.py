@@ -25,7 +25,7 @@ class TButtFactory(object):
     def apply_processes(cls, btlx_joint):
         part = btlx_joint.parts[str(btlx_joint.joint.main_beam.key)]
         cut_plane = btlx_joint.joint.cutting_plane
-        BTLxJackCut.apply_processes(cut_plane, part, btlx_joint)
+        BTLxJackCut.apply_processes(part, cut_plane, btlx_joint)
 
 
 BTLxJoint.register_joint(TButtJoint, TButtFactory)

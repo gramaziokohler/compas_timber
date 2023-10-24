@@ -1,7 +1,10 @@
 import math
 from collections import OrderedDict
+from compas.geometry import Vector
+from compas.geometry import Frame
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
+from compas.geometry import Rotation
 
 from compas_timber.parts.beam import Beam
 from compas_timber.connections.joint import Joint
@@ -13,37 +16,39 @@ from compas_timber.fabrication import BTLxProcess
 
 class BTLxFrenchRidgeLap(object):
     PROCESS_TYPE = "FrenchRidgeLap"
+    def __init__(self, part, joint, is_top, end):
 
-    def __init__(self, joint, top_beam_key):
-        self.beams = joint.beams
+        self.part = part
+        for beam in joint.beams:
+            if beam is part.beam:
+                self.beam = beam
+            else:
+                self.other_beam = beam
+
         self.joint = joint.joint
         self.btlx_joint = joint
+        self.is_top = is_top
+        self.orientation = end
         self.apply_process = True
-        self.which_beam = ""
-        self.orientations = ["start", "start"]
-        self.ref_edges = ["refedge", "refedge"]
+        self._ref_edge = True
         self._drill_hole = True
         self.drill_hole_diameter = 10.0
+
+        self.ref_face_index = self.joint.reference_face_indices[str(self.beam.key)]
+        self.ref_face = self.part.reference_surfaces[str(self.ref_face_index)]
 
         """
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
         """
-        self.main_process_type = "FrenchRidgeLap"
-        self.main_header_attributes = {
-            "Name": "French ridge lap",
-            "Process": "yes",
-            "Priority": "0",
-            "ProcessID": "0",
-            "ReferencePlaneID": str(self.joint.reference_face_indices[0]),
-        }
 
-        self.cross_process_type = "FrenchRidgeLap"
-        self.cross_header_attributes = {
+        self.main_process_type = "FrenchRidgeLap"
+
+        self.header_attributes = {
             "Name": "French ridge lap",
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": str(self.joint.reference_face_indices[1]),
+            "ReferencePlaneID": str(self.ref_face_index),
         }
 
         self.process_joints()
@@ -53,8 +58,8 @@ class BTLxFrenchRidgeLap(object):
         return self.angle_rad * 180 / math.pi
 
     @property
-    def ref_position(self):
-        if self.ref_edge:
+    def ref_edge(self):
+        if self._ref_edge:
             return "refedge"
         else:
             return "oppedge"
@@ -71,76 +76,68 @@ class BTLxFrenchRidgeLap(object):
         """
         This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint. Use OrderedDict to maintain original order
         """
-        self.get_ends()
         self.get_params()
 
-        self.main_beam_parameters = OrderedDict([
-            ("Orientation", str(self.orientations[0])),
+        self.process_parameters = OrderedDict([
+            ("Orientation", str(self.orientation)),
             ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
             ("Angle", "{:.{prec}f}".format(self.angle, prec = BTLx.POINT_PRECISION)),
-            ("RefPosition", self.ref_edges[0]),
+            ("RefPosition", self.ref_edge),
             ("Drillhole", self.drill_hole),
             ("DrillholeDiam", "{:.{prec}f}".format(self.drill_hole_diameter, prec = BTLx.POINT_PRECISION)),
         ])
 
-        self.cross_beam_parameters = OrderedDict([
-            ("Orientation", str(self.orientations[1])),
-            ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
-            ("Angle", "{:.{prec}f}".format(self.angle, prec = BTLx.POINT_PRECISION)),
-            ("RefPosition", self.ref_edges[1]),
-            ("Drillhole", self.drill_hole),
-            ("DrillholeDiam", "{:.{prec}f}".format(self.drill_hole_diameter, prec = BTLx.POINT_PRECISION)),
-        ])
-
-
-    def get_ends(self):
-        start_distance = min([
-            self.beams[0].centerline.start.distance_to_point(self.beams[1].centerline.start),
-            self.beams[0].centerline.start.distance_to_point(self.beams[1].centerline.end)
-        ])
-        end_distance = min([
-            self.beams[0].centerline.end.distance_to_point(self.beams[1].centerline.start),
-            self.beams[0].centerline.end.distance_to_point(self.beams[1].centerline.end)
-        ])
-        print("start dist = {} ____________ end dist = {}".format(start_distance, end_distance))
-        if start_distance > end_distance:
-            self.orientations[0] = "end"
-
-        start_distance = min([
-            self.beams[1].centerline.start.distance_to_point(self.beams[0].centerline.start),
-            self.beams[1].centerline.start.distance_to_point(self.beams[0].centerline.end)
-        ])
-        end_distance = min([
-            self.beams[1].centerline.end.distance_to_point(self.beams[0].centerline.start),
-            self.beams[1].centerline.end.distance_to_point(self.beams[0].centerline.end)
-        ])
-        print("start dist = {} ____________ end dist = {}".format(start_distance, end_distance))
-        if start_distance > end_distance:
-            self.orientations[1] = "end"
-
-        print("orientations = {}".format(self.orientations))
 
     def get_params(self):
         """
         This is an internal method to generate process parameters
         """
 
-        self.angle_rad = angle_vectors(self.joint.beams[0].frame.xaxis, self.joint.beams[1].frame.xaxis)
-        if self.angle_rad < math.pi / 2:
+
+
+        other_vector = self.other_beam.frame.xaxis
+        if self.btlx_joint.ends[str(self.other_beam.key)] == "end":
+            other_vector = - other_vector
+
+        self.angle_rad = angle_vectors_signed(self.ref_face.xaxis, other_vector, self.ref_face.normal)
+
+        if self.orientation == "start":
+            if self.angle_rad < math.pi/2 and self.angle_rad > - math.pi/2:
+                raise Exception("french ridge lap joint beams must join at 90-180 degrees")
+            elif self.angle_rad < -math.pi/2:
+                self._ref_edge = False
+                self.angle_rad = abs(self.angle_rad)
+
+        else:
+            if self.angle_rad < -math.pi/2 or self.angle_rad > math.pi/2:
+                raise Exception("french ridge lap joint beams must join at 90-180 degrees")
+            elif self.angle_rad < 0:
+                self.angle_rad = abs(self.angle_rad)
+                self._ref_edge = False
+            #else:
 
             self.angle_rad = math.pi - self.angle_rad
-        self.startX = self.btlx_joint.parts.values()[0].width / math.tan(math.pi - self.angle_rad)
+
+
+
+        self.startX = self.btlx_joint.parts.values()[0].width / abs(math.tan(self.angle_rad))
+        print("end is {}____blank length is {} __________ start X is = {}".format(self.orientation, self.part.blank_length, self.startX))
+
+
+        if self.orientation == "end":
+            if self._ref_edge:
+
+                self.startX = self.part.blank_length - self.startX
+            else:
+                self.startX = self.part.blank_length + self.startX
+        print("start X is = {}".format(self.orientation, self.part.blank_length, self.startX))
 
     @classmethod
-    def apply_processes(cls, joint, top_beam_key):
-        frl_process = BTLxFrenchRidgeLap(joint, top_beam_key)
-        keys = []
-        for key in joint.parts.keys():
-            keys.append(key)
-        key_index = keys.index(top_beam_key)
-        keys.pop(key_index)
-        joint.parts[top_beam_key].processes.append(BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.main_header_attributes, frl_process.main_beam_parameters))
-        joint.parts[keys[0]].processes.append(BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.cross_header_attributes, frl_process.cross_beam_parameters))
+    def apply_processes(cls, part, joint, is_top, end):
+
+        frl_process = BTLxFrenchRidgeLap(part, joint, is_top, end)
+
+        part.processes.append(BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters))
 
 
 

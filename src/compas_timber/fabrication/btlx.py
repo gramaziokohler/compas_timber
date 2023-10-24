@@ -47,20 +47,19 @@ class BTLx(object):
         self.joints = []
         self.parts = {}
         self._test = []
-        self._joints_per_beam = None
         self.btlx_joints = []
         self._blanks = None
-        self.history = {
-            "CompanyName":"Gramazio Kohler Research",
-            "ProgramName":"COMPAS_Timber",
-            "ProgramVersion":"Compas: {}".format(compas.__version__),
-            "ComputerName":"{}".format(os.getenv("computername")),
-            "UserName":"{}".format(os.getenv("USERNAME")),
-            "FileName":"",
-            "Date":"{}".format(date.today()),
-            "Time":"{}".format(datetime.now().strftime("%H:%M:%S")),
-            "Comment":"",
-        }
+        self.history =  {
+                "CompanyName":"Gramazio Kohler Research",
+                "ProgramName":"COMPAS_Timber",
+                "ProgramVersion":"Compas: {}".format(compas.__version__),
+                "ComputerName":"{}".format(os.getenv("computername")),
+                "UserName":"{}".format(os.getenv("USERNAME")),
+                "FileName":"",
+                "Date":"{}".format(date.today()),
+                "Time":"{}".format(datetime.now().strftime("%H:%M:%S")),
+                "Comment":"",
+                }
         self.process_assembly()
         self.process_joints()
 
@@ -76,6 +75,7 @@ class BTLx(object):
             self.parts_element.append(part.et_element)
 
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
+
 
     def process_assembly(self):
         for joint in self.assembly.joints:
@@ -111,11 +111,11 @@ class BTLx(object):
         ("xsi:schemaLocation", "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd")
         ])
 
+
     @property
     def file_history(self):
         file_history = ET.Element("FileHistory")
-        file_history.append(
-            ET.Element(
+        file_history.append(ET.Element(
                 "InitialExportProgram",
                 self.history
             )
@@ -136,7 +136,7 @@ class BTLxPart(object):
         self.blank_geometry = beam.shape
         self._blank_frame = None
         self.blank_length = beam.length
-        self.index = beam.key
+        self.key = beam.key
         self.start_trim = None
         self.end_trim = None
         self._reference_surfaces = []
@@ -144,11 +144,36 @@ class BTLxPart(object):
         self._et_element = None
 
     @property
+    def reference_surfaces(self):  # TODO: fix Beam.shape definition and update this.
+        if len(self._reference_surfaces) != 6:
+            self._reference_surfaces = {
+                "1": Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis),
+                "2": Frame(self.blank_frame.point + self.blank_frame.yaxis * self.width, self.blank_frame.xaxis, -self.blank_frame.yaxis),
+                "3": Frame(self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height, self.blank_frame.xaxis, -self.blank_frame.zaxis),
+                "4": Frame(self.blank_frame.point + self.blank_frame.zaxis * self.height, self.blank_frame.xaxis, self.blank_frame.yaxis),
+                "5": Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis),
+                "6": Frame(self.blank_frame.point + self.blank_frame.xaxis * self.blank_length + self.blank_frame.yaxis * self.width, self.blank_frame.zaxis, -self.blank_frame.yaxis)
+            }
+        return self._reference_surfaces
+
+    @property
+    def blank_frame(self):
+        blank_frame_point = self.beam.long_edges[2].closest_point(
+            self.beam.frame.point
+        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        self._blank_frame = Frame(
+            blank_frame_point,
+            self.frame.xaxis,
+            self.frame.yaxis,
+        )
+        return self._blank_frame
+
+    @property
     def attr(self):
         return {
-            "SingleMemberNumber": str(self.index),
+            "SingleMemberNumber": str(self.key),
             "AssemblyNumber": "",
-            "OrderNumber": str(self.index),
+            "OrderNumber": str(self.key),
             "Designation": "",
             "Annotation": "",
             "Storey": "",
@@ -191,43 +216,37 @@ class BTLxPart(object):
         if not self._et_element:
             self._et_element = ET.Element("Part", self.attr)
             self._shape_strings = None
-
-            transformations = ET.SubElement(self._et_element, "Transformations")
-            guid = "{" + str(uuid.uuid4()) + "}"
-            transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
-            position = ET.SubElement(transformation, "Position")
-            position.append(ET.Element("ReferencePoint", self.et_point_vals(self.blank_frame.point)))
-            position.append(ET.Element("XVector", self.et_point_vals(self.blank_frame.xaxis)))
-            position.append(ET.Element("YVector", self.et_point_vals(self.blank_frame.yaxis)))
-
+            self._et_element.append(self.et_transformations)
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
             self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
             processings = ET.Element("Processings")
             for process in self.processes:
                 processings.append(process.et_element)
             self._et_element.append(processings)
-            shape = ET.SubElement(self._et_element, "Shape")
-            indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
-            strings = self.shape_strings
-            indexed_face_set.set("coordIndex", strings[0])
-            indexed_face_set.append(ET.Element("Coordinate", point=strings[1]))
+            self._et_element.append(self.et_shape)
         return self._et_element
 
     @property
-    def reference_surfaces(self):  # TODO: fix Beam.shape definition and update this.
-        if len(self._reference_surfaces) != 6:
-            self._reference_surfaces = [
-                Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis),
-                Frame(self.blank_frame.point + self.blank_frame.yaxis * self.width, self.blank_frame.xaxis, -self.blank_frame.yaxis),
-                Frame(self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height, self.blank_frame.xaxis, -self.blank_frame.zaxis),
-                Frame(self.blank_frame.point + self.blank_frame.zaxis * self.height, self.blank_frame.xaxis, self.blank_frame.yaxis),
-                Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis),
-                Frame(self.blank_frame.point + self.blank_frame.xaxis * self.blank_length + self.blank_frame.yaxis * self.width, self.blank_frame.zaxis, -self.blank_frame.yaxis)
-            ]
-        return self._reference_surfaces
+    def et_transformations(self):
+        transformations = ET.Element("Transformations")
+        guid = "{" + str(uuid.uuid4()) + "}"
+        transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
+        position = ET.SubElement(transformation, "Position")
+        position.append(ET.Element("ReferencePoint", self.et_point_vals(self.blank_frame.point)))
+        position.append(ET.Element("XVector", self.et_point_vals(self.blank_frame.xaxis)))
+        position.append(ET.Element("YVector", self.et_point_vals(self.blank_frame.yaxis)))
+        return transformations
 
     @property
-    def shape_strings(self):
+    def et_shape(self):
+        shape = ET.Element("Shape")
+        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
+        indexed_face_set.set("coordIndex", self.shape_strings[0])
+        indexed_face_set.append(ET.Element("Coordinate", point=self.shape_strings[1]))
+        return shape
+
+    @property
+    def shape_strings(self):        #TODO: update for different Brep creation environments
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
@@ -258,18 +277,6 @@ class BTLxPart(object):
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
-    @property
-    def blank_frame(self):
-        blank_frame_point = self.beam.long_edges[2].closest_point(
-            self.beam.frame.point
-        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
-        self._blank_frame = Frame(
-            blank_frame_point,
-            self.frame.xaxis,
-            self.frame.yaxis,
-        )
-        return self._blank_frame
-
 
 
 class BTLxJoint(object):
@@ -277,17 +284,37 @@ class BTLxJoint(object):
 
     def __init__(self, joint):
         self.joint = joint
-        self.parts = OrderedDict()
+        self.parts = {}
+        self._ends = {}
+
+    @property
+    def ends(self):
+        if len(self._ends) ==0:
+            for index, beam in enumerate(self.joint.beams):
+                start_distance = min([
+                    beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.start),
+                    beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.end)
+                    ])
+                end_distance = min([
+                    beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.start),
+                    beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.end)
+                    ])
+                if start_distance < end_distance:
+                    self._ends[str(beam.key)] = "start"
+                else:
+                    self._ends[str(beam.key)] = "end"
+        return self._ends
+
 
     @property
     def type(self):
         return type(self.joint)
+
     @property
     def beams(self):
         return self.joint.beams
 
     def process_joint(self):
-        print(BTLxJoint.REGISTERED_JOINTS)
         factory_type = BTLxJoint.REGISTERED_JOINTS.get(str(type(self.joint)))
         factory_type.apply_processes(self)
 
@@ -295,11 +322,13 @@ class BTLxJoint(object):
     def register_joint(cls, joint_type, process_type):
         cls.REGISTERED_JOINTS[str(joint_type)] = process_type
 
+
+
 class BTLxProcess(object):
 
     """
     Generic class for BTLx Processes.
-    This should not be called or instantiated directly, but rather specific process subclasses should be instantiated using the classmethod BTLxProcess.create()
+    This should be instantiated and appended to BTLxPart.processes in a specific btlx_process class (eg BTLxJackCut)
     """
     def __init__(self, name, attr, params):
         self.name = name

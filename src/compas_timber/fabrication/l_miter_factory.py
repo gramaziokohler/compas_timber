@@ -23,8 +23,8 @@ class LMiterFactory(object):
         pass
     @classmethod
     def apply_processes(cls, joint):
-        BTLxJackCut.apply_processes(joint.joint.cutting_planes[0], joint.parts.values()[0], joint)
-        BTLxJackCut.apply_processes(joint.joint.cutting_planes[1], joint.parts.values()[1], joint)
+        BTLxJackCut.apply_processes(joint.parts.values()[0], joint.joint.cutting_planes[0], joint)
+        BTLxJackCut.apply_processes(joint.parts.values()[1], joint.joint.cutting_planes[1], joint)
 
 
 BTLxJoint.register_joint(LMiterJoint, LMiterFactory)

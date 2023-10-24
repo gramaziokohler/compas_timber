@@ -14,24 +14,22 @@ from compas_timber.fabrication import BTLxProcess
 
 
 class BTLxJackCut(object):
-    def __init__(self, frame, part, joint=None):
-        """
-        Constructor for BTLxJackCut can take Joint and Frame as argument because some other joints will use the jack cut as part of the milling process.
-        """
+    PROCESS_TYPE = "JackRafterCut"
+
+    def __init__(self, part, frame, joint=None):
+
+
 
         self.cut_plane = frame
         self.part = part
         self.apply_process = True
+        self.reference_surface = self.part.reference_surfaces["1"]
         self.generate_process()
         if joint:
             self.name = str(joint.joint.__class__.__name__)
         else:
             self.name = "jack cut"
 
-
-    @property
-    def process_type(self):
-        return "JackRafterCut"
 
     @property
     def header_attributes(self):
@@ -69,7 +67,7 @@ class BTLxJackCut(object):
         self.start_depth = 0.0
 
         self.x_edge = Line.from_point_and_vector(
-            self.part.reference_surfaces[0].point, self.part.reference_surfaces[0].xaxis
+            self.reference_surface.point, self.reference_surface.xaxis
         )
 
         self.startX = intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
@@ -77,10 +75,10 @@ class BTLxJackCut(object):
             self.orientation = "start"
         else:
             self.orientation = "end"
-        angle_direction = cross_vectors(self.part.reference_surfaces[0].normal, self.cut_plane.normal)
+        angle_direction = cross_vectors(self.reference_surface.normal, self.cut_plane.normal)
         self.angle = (
             angle_vectors_signed(
-                self.part.reference_surfaces[0].xaxis, angle_direction, self.part.reference_surfaces[0].zaxis
+                self.reference_surface.xaxis, angle_direction, self.reference_surface.zaxis
             )
             * 180
             / math.pi
@@ -90,7 +88,7 @@ class BTLxJackCut(object):
         self.angle = 90 - (self.angle - 90)
 
         self.inclination = (
-            angle_vectors_signed(self.part.reference_surfaces[0].zaxis, self.cut_plane.normal, angle_direction)
+            angle_vectors_signed(self.reference_surface.zaxis, self.cut_plane.normal, angle_direction)
             * 180
             / math.pi
         )
@@ -98,6 +96,6 @@ class BTLxJackCut(object):
         self.inclination = 90 - (self.inclination - 90)
 
     @classmethod
-    def apply_processes(cls, frame, part, joint = None):
-        jack_cut = BTLxJackCut(frame, part, joint)
-        part.processes.append(BTLxProcess(jack_cut.process_type, jack_cut.header_attributes, jack_cut.process_params))
+    def apply_processes(cls, part, frame, joint = None):
+        jack_cut = BTLxJackCut(part, frame, joint)
+        part.processes.append(BTLxProcess(BTLxJackCut.PROCESS_TYPE, jack_cut.header_attributes, jack_cut.process_params))

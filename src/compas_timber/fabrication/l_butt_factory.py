@@ -22,8 +22,8 @@ class LButtFactory(object):
     def apply_processes(cls, joint):
         main_part = joint.parts[str(joint.joint.main_beam.key)]
         cross_part = joint.parts[str(joint.joint.cross_beam.key)]
-        BTLxJackCut.apply_processes(joint.joint.cutting_plane_main, main_part, joint)
-        BTLxJackCut.apply_processes(joint.joint.cutting_plane_cross, cross_part, joint)
+        BTLxJackCut.apply_processes(main_part, joint.joint.cutting_plane_main, joint)
+        BTLxJackCut.apply_processes(cross_part, joint.joint.cutting_plane_cross, joint)
 
 
 BTLxJoint.register_joint(LButtJoint, LButtFactory)
