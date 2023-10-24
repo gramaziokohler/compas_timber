@@ -17,10 +17,10 @@ from compas_timber.fabrication import BTLxProcess
 from compas_timber.fabrication import BTLxJackCut
 
 
-
 class LMiterFactory(object):
     def __init__(self):
         pass
+
     @classmethod
     def apply_processes(cls, joint):
         BTLxJackCut.apply_processes(joint.parts.values()[0], joint.joint.cutting_planes[0], joint)

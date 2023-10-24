@@ -4,7 +4,6 @@ from compas.geometry import angle_vectors
 import math
 
 
-
 from compas_timber.parts import BeamExtensionFeature
 from compas_timber.parts import BeamTrimmingFeature
 
@@ -122,27 +121,16 @@ class FrenchRidgeLapJoint(Joint):
 
         if abs(angle_vectors(normal, self.beam_b.frame.yaxis) - math.pi) < 0.001:
             indices.append(3)
-        elif abs(angle_vectors(normal, self.beam_b.frame.zaxis)- math.pi) < 0.001:
+        elif abs(angle_vectors(normal, self.beam_b.frame.zaxis) - math.pi) < 0.001:
             indices.append(4)
-        elif abs(angle_vectors(normal, -self.beam_b.frame.yaxis)- math.pi) < 0.001:
+        elif abs(angle_vectors(normal, -self.beam_b.frame.yaxis) - math.pi) < 0.001:
             indices.append(1)
-        elif abs(angle_vectors(normal, -self.beam_b.frame.zaxis)- math.pi) < 0.001:
+        elif abs(angle_vectors(normal, -self.beam_b.frame.zaxis) - math.pi) < 0.001:
             indices.append(2)
         else:
             raise ("part not aligned with corner normal, no French Ridge Lap possible")
 
-        self.reference_face_indices = {
-            str(self.beam_a.key): indices[0],
-            str(self.beam_b.key): indices[1]
-        }
-
-
-
-
-
-
-
-
+        self.reference_face_indices = {str(self.beam_a.key): indices[0], str(self.beam_b.key): indices[1]}
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.

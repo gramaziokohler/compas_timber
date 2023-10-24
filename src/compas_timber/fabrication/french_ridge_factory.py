@@ -19,18 +19,19 @@ class FrenchRidgeFactory(object):
 
     @classmethod
     def apply_processes(self, joint):
-
         top_key, top_part = joint.parts.items()[0]
         top_end = joint.ends[top_key]
-        top_part._test.append(top_part.reference_surfaces[str(joint.joint.reference_face_indices[str(top_part.beam.key)])])
+        top_part._test.append(
+            top_part.reference_surfaces[str(joint.joint.reference_face_indices[str(top_part.beam.key)])]
+        )
         BTLxFrenchRidgeLap.apply_processes(top_part, joint, True, top_end)
-
 
         bottom_key, bottom_part = joint.parts.items()[1]
         bottom_end = joint.ends[bottom_key]
-        bottom_part._test.append(bottom_part.reference_surfaces[str(joint.joint.reference_face_indices[str(bottom_part.beam.key)])])
+        bottom_part._test.append(
+            bottom_part.reference_surfaces[str(joint.joint.reference_face_indices[str(bottom_part.beam.key)])]
+        )
         BTLxFrenchRidgeLap.apply_processes(bottom_part, joint, False, bottom_end)
 
 
 BTLxJoint.register_joint(FrenchRidgeLapJoint, FrenchRidgeFactory)
-

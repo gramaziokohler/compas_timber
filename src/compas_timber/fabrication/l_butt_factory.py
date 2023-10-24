@@ -13,7 +13,6 @@ from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxJackCut
 
 
-
 class LButtFactory(object):
     def __init__(self):
         pass

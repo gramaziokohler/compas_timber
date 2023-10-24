@@ -10,6 +10,7 @@ from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
+
 # from compas_timber.fabrication import BTLx
 
 
@@ -17,9 +18,6 @@ class BTLxJackCut(object):
     PROCESS_TYPE = "JackRafterCut"
 
     def __init__(self, part, frame, joint=None):
-
-
-
         self.cut_plane = frame
         self.part = part
         self.apply_process = True
@@ -30,45 +28,43 @@ class BTLxJackCut(object):
         else:
             self.name = "jack cut"
 
-
     @property
     def header_attributes(self):
-        """ the following attributes are required for all processes, but the keys and values of header_attributes are process specific. """
+        """the following attributes are required for all processes, but the keys and values of header_attributes are process specific."""
         return {
             "Name": self.name,
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
             "ReferencePlaneID": "1",
-            }
+        }
 
     @property
     def process_params(self):
-        """ This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint. """
+        """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
-
-            """ the following attributes are specific to Jack Cut """
-            od = OrderedDict([
-                ("Orientation", str(self.orientation)),
-                ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
-                ("StartY", "{:.{prec}f}".format(self.startY, prec = BTLx.POINT_PRECISION)),
-                ("StartDepth", "{:.{prec}f}".format(self.start_depth, prec = BTLx.POINT_PRECISION)),
-                ("Angle", "{:.{prec}f}".format(self.angle, prec = BTLx.ANGLE_PRECISION)),
-                ("Inclination", "{:.{prec}f}".format(self.inclination, prec = BTLx.ANGLE_PRECISION))
-                ])
+            """the following attributes are specific to Jack Cut"""
+            od = OrderedDict(
+                [
+                    ("Orientation", str(self.orientation)),
+                    ("StartX", "{:.{prec}f}".format(self.startX, prec=BTLx.POINT_PRECISION)),
+                    ("StartY", "{:.{prec}f}".format(self.startY, prec=BTLx.POINT_PRECISION)),
+                    ("StartDepth", "{:.{prec}f}".format(self.start_depth, prec=BTLx.POINT_PRECISION)),
+                    ("Angle", "{:.{prec}f}".format(self.angle, prec=BTLx.ANGLE_PRECISION)),
+                    ("Inclination", "{:.{prec}f}".format(self.inclination, prec=BTLx.ANGLE_PRECISION)),
+                ]
+            )
             return od
         else:
             return None
 
     def generate_process(self):
-        """ This is an internal method to generate process parameters """
+        """This is an internal method to generate process parameters"""
         self.startY = 0.0
         self.start_depth = 0.0
 
-        self.x_edge = Line.from_point_and_vector(
-            self.reference_surface.point, self.reference_surface.xaxis
-        )
+        self.x_edge = Line.from_point_and_vector(self.reference_surface.point, self.reference_surface.xaxis)
 
         self.startX = intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
         if self.startX < self.part.blank_length / 2:
@@ -77,9 +73,7 @@ class BTLxJackCut(object):
             self.orientation = "end"
         angle_direction = cross_vectors(self.reference_surface.normal, self.cut_plane.normal)
         self.angle = (
-            angle_vectors_signed(
-                self.reference_surface.xaxis, angle_direction, self.reference_surface.zaxis
-            )
+            angle_vectors_signed(self.reference_surface.xaxis, angle_direction, self.reference_surface.zaxis)
             * 180
             / math.pi
         )
@@ -88,14 +82,14 @@ class BTLxJackCut(object):
         self.angle = 90 - (self.angle - 90)
 
         self.inclination = (
-            angle_vectors_signed(self.reference_surface.zaxis, self.cut_plane.normal, angle_direction)
-            * 180
-            / math.pi
+            angle_vectors_signed(self.reference_surface.zaxis, self.cut_plane.normal, angle_direction) * 180 / math.pi
         )
         self.inclination = abs(self.inclination)
         self.inclination = 90 - (self.inclination - 90)
 
     @classmethod
-    def apply_processes(cls, part, frame, joint = None):
+    def apply_processes(cls, part, frame, joint=None):
         jack_cut = BTLxJackCut(part, frame, joint)
-        part.processes.append(BTLxProcess(BTLxJackCut.PROCESS_TYPE, jack_cut.header_attributes, jack_cut.process_params))
+        part.processes.append(
+            BTLxProcess(BTLxJackCut.PROCESS_TYPE, jack_cut.header_attributes, jack_cut.process_params)
+        )

@@ -12,12 +12,14 @@ from compas_timber.connections import FrenchRidgeLapJoint
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxProcess
-#from compas_timber.fabrication import BTLx
+
+# from compas_timber.fabrication import BTLx
+
 
 class BTLxFrenchRidgeLap(object):
     PROCESS_TYPE = "FrenchRidgeLap"
-    def __init__(self, part, joint, is_top, end):
 
+    def __init__(self, part, joint, is_top, end):
         self.part = part
         for beam in joint.beams:
             if beam is part.beam:
@@ -71,45 +73,43 @@ class BTLxFrenchRidgeLap(object):
         else:
             return "no"
 
-
     def process_joints(self):
         """
         This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint. Use OrderedDict to maintain original order
         """
         self.get_params()
 
-        self.process_parameters = OrderedDict([
-            ("Orientation", str(self.orientation)),
-            ("StartX", "{:.{prec}f}".format(self.startX, prec = BTLx.POINT_PRECISION)),
-            ("Angle", "{:.{prec}f}".format(self.angle, prec = BTLx.POINT_PRECISION)),
-            ("RefPosition", self.ref_edge),
-            ("Drillhole", self.drill_hole),
-            ("DrillholeDiam", "{:.{prec}f}".format(self.drill_hole_diameter, prec = BTLx.POINT_PRECISION)),
-        ])
-
+        self.process_parameters = OrderedDict(
+            [
+                ("Orientation", str(self.orientation)),
+                ("StartX", "{:.{prec}f}".format(self.startX, prec=BTLx.POINT_PRECISION)),
+                ("Angle", "{:.{prec}f}".format(self.angle, prec=BTLx.POINT_PRECISION)),
+                ("RefPosition", self.ref_edge),
+                ("Drillhole", self.drill_hole),
+                ("DrillholeDiam", "{:.{prec}f}".format(self.drill_hole_diameter, prec=BTLx.POINT_PRECISION)),
+            ]
+        )
 
     def get_params(self):
         """
         This is an internal method to generate process parameters
         """
 
-
-
         other_vector = self.other_beam.frame.xaxis
         if self.btlx_joint.ends[str(self.other_beam.key)] == "end":
-            other_vector = - other_vector
+            other_vector = -other_vector
 
         self.angle_rad = angle_vectors_signed(self.ref_face.xaxis, other_vector, self.ref_face.normal)
 
         if self.orientation == "start":
-            if self.angle_rad < math.pi/2 and self.angle_rad > - math.pi/2:
+            if self.angle_rad < math.pi / 2 and self.angle_rad > -math.pi / 2:
                 raise Exception("french ridge lap joint beams must join at 90-180 degrees")
-            elif self.angle_rad < -math.pi/2:
+            elif self.angle_rad < -math.pi / 2:
                 self._ref_edge = False
                 self.angle_rad = abs(self.angle_rad)
 
         else:
-            if self.angle_rad < -math.pi/2 or self.angle_rad > math.pi/2:
+            if self.angle_rad < -math.pi / 2 or self.angle_rad > math.pi / 2:
                 raise Exception("french ridge lap joint beams must join at 90-180 degrees")
             elif self.angle_rad < 0:
                 self.angle_rad = abs(self.angle_rad)
@@ -120,17 +120,14 @@ class BTLxFrenchRidgeLap(object):
 
         if self.orientation == "end":
             if self._ref_edge:
-
                 self.startX = self.part.blank_length - self.startX
             else:
                 self.startX = self.part.blank_length + self.startX
 
     @classmethod
     def apply_processes(cls, part, joint, is_top, end):
-
         frl_process = BTLxFrenchRidgeLap(part, joint, is_top, end)
 
-        part.processes.append(BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters))
-
-
-
+        part.processes.append(
+            BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters)
+        )
