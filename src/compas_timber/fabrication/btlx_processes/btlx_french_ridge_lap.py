@@ -1,16 +1,7 @@
 import math
 from collections import OrderedDict
-from compas.geometry import Vector
-from compas.geometry import Frame
-from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
-from compas.geometry import Rotation
-
-from compas_timber.parts.beam import Beam
-from compas_timber.connections.joint import Joint
-from compas_timber.connections import FrenchRidgeLapJoint
 from compas_timber.fabrication import BTLx
-from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxProcess
 
 # from compas_timber.fabrication import BTLx
@@ -125,7 +116,7 @@ class BTLxFrenchRidgeLap(object):
                 self.startX = self.part.blank_length + self.startX
 
     @classmethod
-    def apply_processes(cls, part, joint, is_top, end):
+    def apply_process(cls, part, joint, is_top, end):
         frl_process = BTLxFrenchRidgeLap(part, joint, is_top, end)
 
         part.processes.append(

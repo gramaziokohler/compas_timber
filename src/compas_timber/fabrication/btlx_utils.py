@@ -1,11 +1,8 @@
 # from compas_timber.fabrication import BTLx
-from compas.geometry import Line
 import compas.data
-
 import sys
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as dom
-
 import compas
 
 if not compas.IPY:

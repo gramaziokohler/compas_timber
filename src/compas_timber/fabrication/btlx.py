@@ -17,24 +17,11 @@ if not compas.IPY:
 else:
     from compas.files._xml import xml_cli as xml_impl
 
-
-import math
-from collections import defaultdict
 from collections import OrderedDict
 
 from compas.geometry import Frame
-from compas.geometry import Box
 from compas.geometry import Line
-from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import cross_vectors
-from compas.geometry import angle_vectors_signed
 from compas.geometry import Transformation
-from compas.geometry import Translation
-
-from compas_timber.parts.beam import Beam
-from compas_timber.connections.joint import Joint
-from compas_timber.utils.compas_extra import intersection_line_plane
 
 
 class BTLx(object):
@@ -261,7 +248,7 @@ class BTLxPart(object):
         return shape
 
     @property
-    def shape_strings(self):  # TODO: update for different Brep creation environments
+    def shape_strings(self):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
@@ -269,17 +256,16 @@ class BTLxPart(object):
                 for face in self.beam.geometry.faces:
                     for loop in face.loops:
                         for vertex in loop.vertices:
-                            try:
-                                vertex_index = brep_vertex_points.index(vertex.point)
-                                brep_indices.append(vertex_index)
-                            except:
+                            if brep_vertex_points.contains(vertex.point):
+                                brep_indices.append(brep_vertex_points.index(vertex.point))
+                            else:
                                 brep_vertex_points.append(vertex.point)
                                 brep_indices.append(len(brep_vertex_points))
 
                 brep_indices.append(-1)
                 brep_indices.pop(-1)
-            except:
-                pass
+            except NotImplementedError:
+                print("brep.face.loop.vertices not implemented")
             brep_indices_string = " "
             for index in brep_indices:
                 brep_indices_string += str(index) + " "

@@ -1,12 +1,9 @@
 import math
 from collections import OrderedDict
-from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import cross_vectors
 from compas.geometry import angle_vectors_signed
-from compas_timber.parts.beam import Beam
-from compas_timber.connections.joint import Joint
 from compas_timber.utils.compas_extra import intersection_line_plane
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
@@ -88,7 +85,7 @@ class BTLxJackCut(object):
         self.inclination = 90 - (self.inclination - 90)
 
     @classmethod
-    def apply_processes(cls, part, frame, joint=None):
+    def apply_process(cls, part, frame, joint=None):
         jack_cut = BTLxJackCut(part, frame, joint)
         part.processes.append(
             BTLxProcess(BTLxJackCut.PROCESS_TYPE, jack_cut.header_attributes, jack_cut.process_params)

@@ -1,9 +1,7 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 import Rhino
-from compas_timber.assembly import TimberAssembly
 from compas_timber.fabrication import BTLx
-import compas.data
 
 
 class WriteBTLx(component):
