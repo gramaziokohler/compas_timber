@@ -1,11 +1,10 @@
 from compas.geometry import Brep
-from compas.geometry import Transformation
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 
-from compas_timber.parts.features import CutFeature
-from compas_timber.parts.features import DrillFeature
-from compas_timber.parts.features import MillVolume
+from compas_timber.parts import CutFeature
+from compas_timber.parts import DrillFeature
+from compas_timber.parts import MillVolume
 
 
 def apply_drill_feature(beam_geometry, feature):
@@ -15,7 +14,10 @@ def apply_drill_feature(beam_geometry, feature):
 
 
 def apply_cut_feature(beam_geometry, feature):
-    return beam_geometry.trimmed(feature.cutting_plane)
+    # TODO: replace with Brep.trimmed once available
+    brep_copy = beam_geometry.copy()
+    brep_copy.trim(feature.cutting_plane)
+    return brep_copy
 
 
 def appliy_mill_volume(beam_geometry, feature):
@@ -30,7 +32,7 @@ class BeamGeometry(object):
 
 
 class BrepGeometryConsumer(object):
-    FEATURE_MAP = {CutFeature: apply_cut_feature, DrillFeature: apply_drill_feature}
+    FEATURE_MAP = {CutFeature: apply_cut_feature, DrillFeature: apply_drill_feature, MillVolume: appliy_mill_volume}
 
     def __init__(self, assembly):
         self.assembly = assembly
