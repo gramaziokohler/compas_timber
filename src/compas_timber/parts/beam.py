@@ -156,7 +156,7 @@ class Beam(Part):
 
     @property
     def aabb(self):
-        vertices = self.shape.vertices
+        vertices = self.blank.vertices
         x = [p.x for p in vertices]
         y = [p.y for p in vertices]
         z = [p.z for p in vertices]
