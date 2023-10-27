@@ -15,7 +15,7 @@ def apply_drill_feature(beam_geometry, feature):
 
 
 def apply_cut_feature(beam_geometry, feature):
-    return beam_geometry.trim(feature.cutting_plane)
+    return beam_geometry.trimmed(feature.cutting_plane)
 
 
 def appliy_mill_volume(beam_geometry, feature):
@@ -39,8 +39,8 @@ class BrepGeometryConsumer(object):
     def result(self):
         for beam in self.assembly.beams:
             geometry = Brep.from_box(beam.blank)
-            self._apply_features(geometry, beam.features)
-            yield BeamGeometry(beam, geometry)
+            features_geo = self._apply_features(geometry, beam.features)
+            yield BeamGeometry(beam, features_geo)
 
     def _apply_features(self, geometry, features):
         for feature in features:
@@ -48,3 +48,4 @@ class BrepGeometryConsumer(object):
             if not geo_op:
                 continue
             geometry = geo_op(geometry, feature)
+        return geometry
