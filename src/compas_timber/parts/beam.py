@@ -182,14 +182,6 @@ class Beam(Part):
         # TODO: move to compas_future... Part
         return len(self.features) > 0
 
-    @staticmethod
-    def _create_beam_shape_from_params(width, height, length, geometry_type):
-        try:
-            factory = Beam.SHAPE_FACTORIES[geometry_type]
-            return factory(width, height, length)
-        except KeyError:
-            raise ValueError("Expected one of {} got instaed: {}".format(Beam.SHAPE_FACTORIES.keys(), geometry_type))
-
     def __str__(self):
         return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
             self.width,
@@ -199,7 +191,7 @@ class Beam(Part):
         )
 
     @classmethod
-    def from_centerline(cls, centerline, width, height, z_vector=None, geometry_type="brep"):
+    def from_centerline(cls, centerline, width, height, z_vector=None):
         """Define the beam from its centerline.
 
         Parameters
@@ -215,8 +207,6 @@ class Beam(Part):
         z_vector : :class:`~compas.geometry.Vector`
             A vector indicating the height direction (z-axis) of the cross-section.
             Defaults to WorldZ or WorldX depending on the centerline's orientation.
-        gemetry_type : str
-            The type of geometry to use when creating this beam. Either 'mesh' of 'brep'.
 
         Returns
         -------
@@ -231,10 +221,10 @@ class Beam(Part):
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
 
-        return cls(frame, length, width, height, geometry_type)
+        return cls(frame, length, width, height)
 
     @classmethod
-    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None, geometry_type="brep"):
+    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
         """Creates a Beam from the given endpoints.
 
         Parameters
@@ -250,8 +240,6 @@ class Beam(Part):
         z_vector : :class:`~compas.geometry.Vector`
             A vector indicating the height direction (z-axis) of the cross-section.
             Defaults to WorldZ or WorldX depending on the centerline's orientation.
-        gemetry_type : str
-            The type of geometry to use when creating this beam. Either 'mesh' of 'brep'.
 
         Returns
         -------
@@ -259,7 +247,36 @@ class Beam(Part):
 
         """
         line = Line(point_start, point_end)
-        return cls.from_centerline(line, width, height, z_vector, geometry_type)
+        return cls.from_centerline(line, width, height, z_vector)
+
+    def add_features(self, features):
+        """Adds one or more features to the beam.
+
+        Parameters
+        ----------
+        features : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
+            The feature to be added.
+
+        """
+        if not isinstance(features, list):
+            features = [features]
+        self.features.extend(features)
+
+    def remove_features(self, features=None):
+        """Removes a feature from the beam.
+
+        Parameters
+        ----------
+        feature : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
+            The feature to be removed. If None, all features will be removed.
+
+        """
+        if features is None:
+            self.features = []
+        else:
+            if not isinstance(features, list):
+                features = [features]
+            self.features = [f for f in self.features if f not in features]
 
     def add_blank_extension(self, start, end, joint_key=None):
         """Adds a blank extension to the beam.
