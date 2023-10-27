@@ -19,15 +19,15 @@ Classes
     Beam
 """
 from .beam import Beam
-# from .features import BeamTrimmingFeature
-# from .features import BeamExtensionFeature
-# from .features import BeamBooleanSubtraction
+from .features import CutFeature
+from .features import DrillFeature
+from .features import MillVolume
 from .features import FeatureApplicationError
 
 __all__ = [
     "Beam",
-    # "BeamTrimmingFeature",
-    # "BeamExtensionFeature",
-    # "BeamBooleanSubtraction",
+    "CutFeature",
+    "DrillFeature",
+    "MillVolume",
     "FeatureApplicationError",
 ]
