@@ -121,25 +121,20 @@ class LMiterJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
+        if self.features:
+            self.beam_a.remove_features(self.features)
+            self.beam_b.remove_features(self.features)
+
         plane_a, plane_b = self.cutting_planes
-        start, end = self.beam_a.extension_to_plane(plane_a)
-        self.beam_a.add_blank_extension(start, end, self.key)
-        start, end = self.beam_b.extension_to_plane(plane_b)
-        self.beam_b.add_blank_extension(start, end, self.key)
-        self.beam_a.features.append(CutFeature(plane_a))
-        self.beam_b.features.append(CutFeature(plane_b))
-        # trim_a = BeamTrimmingFeature(plane_a)
-        # extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
-        # self.beam_a.add_feature(extension_a)
-        # self.beam_a.add_feature(trim_a)
+        start_a, end_a = self.beam_a.extension_to_plane(plane_a)
+        start_b, end_b = self.beam_b.extension_to_plane(plane_b)
+        self.beam_a.add_blank_extension(start_a, end_a, self.key)
+        self.beam_b.add_blank_extension(start_b, end_b, self.key)
 
-        # trim_b = BeamTrimmingFeature(plane_b)
-        # extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
-        # self.beam_b.add_feature(extension_b)
-        # self.beam_b.add_feature(trim_b)
-
-        # self.features.extend([trim_a, extension_a, trim_b, extension_b])
-
+        f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
+        self.beam_a.add_features(f1)
+        self.beam_b.add_features(f2)
+        self.features = [f1, f2]
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
