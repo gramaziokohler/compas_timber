@@ -127,3 +127,25 @@ class Joint(Data):
         assembly.add_joint(joint, beams)
         joint.add_features()
         return joint
+
+
+
+    @property
+    def ends(self):
+        for index, beam in enumerate(self.joint.beams):
+            start_distance = min(
+                [
+                    beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.start),
+                    beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.end),
+                ]
+            )
+            end_distance = min(
+                [
+                    beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.start),
+                    beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.end),
+                ]
+            )
+            if start_distance < end_distance:
+                self._ends[str(beam.key)] = "start"
+            else:
+                self._ends[str(beam.key)] = "end"

@@ -8,10 +8,10 @@ class TButtFactory(object):
         pass
 
     @classmethod
-    def apply_processes(cls, btlx_joint):
-        part = btlx_joint.parts[str(btlx_joint.joint.main_beam.key)]
-        cut_plane = btlx_joint.joint.cutting_plane
-        BTLxJackCut.apply_process(part, cut_plane, btlx_joint)
+    def apply_processes(cls, joint, parts):
+        part = parts[str(joint.main_beam.key)]
+        cut_plane = joint.cutting_plane
+        BTLxJackCut.apply_process(part, cut_plane, "T-Butt Joint")
 
 
 BTLxJoint.register_joint(TButtJoint, TButtFactory)

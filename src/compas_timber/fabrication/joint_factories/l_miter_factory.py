@@ -8,9 +8,9 @@ class LMiterFactory(object):
         pass
 
     @classmethod
-    def apply_processes(cls, joint):
-        BTLxJackCut.apply_process(joint.parts.values()[0], joint.joint.cutting_planes[0], joint)
-        BTLxJackCut.apply_process(joint.parts.values()[1], joint.joint.cutting_planes[1], joint)
+    def apply_processes(cls, joint, parts):
+        parts.values()[0].processings.append(BTLxJackCut.create_process(parts.values()[0], joint.cutting_planes[0], "L-Miter Joint"))
+        parts.values()[1].processings.append(BTLxJackCut.create_process(parts.values()[1], joint.cutting_planes[1], "L-Miter Joint"))
 
 
 BTLxJoint.register_joint(LMiterJoint, LMiterFactory)

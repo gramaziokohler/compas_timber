@@ -27,10 +27,10 @@ from compas.geometry import Transformation
 class BTLx(object):
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
+    REGISTERED_JOINTS = {}
 
     def __init__(self, assembly):
         self.assembly = assembly
-        self.joints = []
         self.parts = {}
         self._test = []
         self.btlx_joints = []
@@ -62,15 +62,19 @@ class BTLx(object):
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
     def process_assembly(self):
+        for beam in self.assembly.beams:
+            self.parts[str(beam.key)] = BTLxPart(beam)
         for joint in self.assembly.joints:
-            btlx_joint = BTLxJoint(joint)
-            for beam in btlx_joint.beams:
-                if self.parts.keys().__contains__(str(beam.key)):
-                    btlx_joint.parts[str(beam.key)] = self.parts[str(beam.key)]
-                else:
-                    self.parts[str(beam.key)] = BTLxPart(beam)
-                    btlx_joint.parts[str(beam.key)] = self.parts[str(beam.key)]
-            self.joints.append(btlx_joint)
+            self.process_joint(joint, self.parts)
+
+    def process_joint(self, joint, parts):
+        factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
+        factory_type.apply_processes(self, parts)
+
+    @classmethod
+    def register_joint(cls, joint_type, process_type):
+        cls.REGISTERED_JOINTS[str(joint_type)] = process_type
+
 
     def process_joints(self):
         for joint in self.joints:
@@ -282,50 +286,21 @@ class BTLxPart(object):
 
 
 class BTLxJoint(object):
-    REGISTERED_JOINTS = {}
+
 
     def __init__(self, joint):
         self.joint = joint
         self.parts = {}
-        self._ends = {}
 
-    @property
-    def ends(self):
-        if len(self._ends) == 0:
-            for index, beam in enumerate(self.joint.beams):
-                start_distance = min(
-                    [
-                        beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.start),
-                        beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.end),
-                    ]
-                )
-                end_distance = min(
-                    [
-                        beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.start),
-                        beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.end),
-                    ]
-                )
-                if start_distance < end_distance:
-                    self._ends[str(beam.key)] = "start"
-                else:
-                    self._ends[str(beam.key)] = "end"
-        return self._ends
 
-    @property
-    def type(self):
-        return type(self.joint)
 
-    @property
-    def beams(self):
-        return self.joint.beams
+
 
     def process_joint(self):
         factory_type = BTLxJoint.REGISTERED_JOINTS.get(str(type(self.joint)))
         factory_type.apply_processes(self)
 
-    @classmethod
-    def register_joint(cls, joint_type, process_type):
-        cls.REGISTERED_JOINTS[str(joint_type)] = process_type
+
 
 
 class BTLxProcess(object):

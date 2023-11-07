@@ -10,19 +10,16 @@ from compas_timber.fabrication import BTLxProcess
 class BTLxFrenchRidgeLap(object):
     PROCESS_TYPE = "FrenchRidgeLap"
 
-    def __init__(self, part, joint, is_top, end):
-        self.part = part
+    def __init__(self, joint, part_key, is_top):
         for beam in joint.beams:
-            if beam is part.beam:
+            if beam.key == part_key:
                 self.beam = beam
             else:
                 self.other_beam = beam
 
-        self.joint = joint.joint
-        self.btlx_joint = joint
+        self.joint = joint
         self.is_top = is_top
-        self.orientation = end
-        self.apply_process = True
+        self.orientation = joint.ends[str(part_key)]
         self._ref_edge = True
         self._drill_hole = True
         self.drill_hole_diameter = 10.0
@@ -87,7 +84,7 @@ class BTLxFrenchRidgeLap(object):
         """
 
         other_vector = self.other_beam.frame.xaxis
-        if self.btlx_joint.ends[str(self.other_beam.key)] == "end":
+        if self.joint.ends[str(self.other_beam.key)] == "end":
             other_vector = -other_vector
 
         self.angle_rad = angle_vectors_signed(self.ref_face.xaxis, other_vector, self.ref_face.normal)
@@ -107,18 +104,16 @@ class BTLxFrenchRidgeLap(object):
                 self._ref_edge = False
             self.angle_rad = math.pi - self.angle_rad
 
-        self.startX = self.btlx_joint.parts.values()[0].width / abs(math.tan(self.angle_rad))
+        self.startX = self.beam.width / abs(math.tan(self.angle_rad))
 
         if self.orientation == "end":
             if self._ref_edge:
-                self.startX = self.part.blank_length - self.startX
+                self.startX = self.beam.blank_length - self.startX
             else:
-                self.startX = self.part.blank_length + self.startX
+                self.startX = self.beam.blank_length + self.startX
 
     @classmethod
-    def apply_process(cls, part, joint, is_top, end):
+    def create_process(cls, part, joint, is_top, end):
         frl_process = BTLxFrenchRidgeLap(part, joint, is_top, end)
+        return BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters)
 
-        part.processes.append(
-            BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters)
-        )

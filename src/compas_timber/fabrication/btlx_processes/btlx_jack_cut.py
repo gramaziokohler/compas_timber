@@ -14,14 +14,14 @@ from compas_timber.fabrication import BTLxProcess
 class BTLxJackCut(object):
     PROCESS_TYPE = "JackRafterCut"
 
-    def __init__(self, part, frame, joint=None):
+    def __init__(self, part, frame, joint_name=None):
         self.cut_plane = frame
         self.part = part
         self.apply_process = True
         self.reference_surface = self.part.reference_surfaces["1"]
         self.generate_process()
-        if joint:
-            self.name = str(joint.joint.__class__.__name__)
+        if joint_name:
+            self.name = joint_name
         else:
             self.name = "jack cut"
 
@@ -85,8 +85,7 @@ class BTLxJackCut(object):
         self.inclination = 90 - (self.inclination - 90)
 
     @classmethod
-    def apply_process(cls, part, frame, joint=None):
-        jack_cut = BTLxJackCut(part, frame, joint)
-        part.processes.append(
-            BTLxProcess(BTLxJackCut.PROCESS_TYPE, jack_cut.header_attributes, jack_cut.process_params)
-        )
+    def create_process(cls, part, frame, joint_name=None):
+        jack_cut = BTLxJackCut(part, frame, joint_name)
+        return BTLxProcess(BTLxJackCut.PROCESS_TYPE, jack_cut.header_attributes, jack_cut.process_params)
+

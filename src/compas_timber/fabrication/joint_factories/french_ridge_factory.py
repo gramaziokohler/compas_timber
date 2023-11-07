@@ -8,13 +8,14 @@ class FrenchRidgeFactory(object):
         pass
 
     @classmethod
-    def apply_processes(self, joint):
-        top_key, top_part = joint.parts.items()[0]
+    def apply_processes(self, joint, parts):
+        top_key = joint.beams[0].key
+        top_part = parts[str(top_key)]
         top_end = joint.ends[top_key]
         top_part._test.append(
             top_part.reference_surfaces[str(joint.joint.reference_face_indices[str(top_part.beam.key)])]
         )
-        BTLxFrenchRidgeLap.apply_process(top_part, joint, True, top_end)
+        top_part.processings.append(BTLxFrenchRidgeLap.create_process(top_part, joint, True, top_end))
 
         bottom_key, bottom_part = joint.parts.items()[1]
         bottom_end = joint.ends[bottom_key]
