@@ -33,7 +33,7 @@ class BTLx(object):
         self.assembly = assembly
         self.parts = {}
         self._test = []
-        self.btlx_joints = []
+        self.joints = assembly.joints
         self._blanks = None
         self.history = {
             "CompanyName": "Gramazio Kohler Research",
@@ -47,7 +47,6 @@ class BTLx(object):
             "Comment": "",
         }
         self.process_assembly()
-        self.process_joints()
 
     def __str__(self):
         """returns a pretty xml sting for visualization in GH, Terminal, etc"""
@@ -58,27 +57,19 @@ class BTLx(object):
 
         for part in self.parts.values():
             self.parts_element.append(part.et_element)
-
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
     def process_assembly(self):
         for beam in self.assembly.beams:
             self.parts[str(beam.key)] = BTLxPart(beam)
-        for joint in self.assembly.joints:
-            self.process_joint(joint, self.parts)
-
-    def process_joint(self, joint, parts):
-        factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
-        factory_type.apply_processes(self, parts)
+        for joint in self.joints:
+            factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
+            factory_type.apply_processings(joint, self.parts)
 
     @classmethod
     def register_joint(cls, joint_type, process_type):
         cls.REGISTERED_JOINTS[str(joint_type)] = process_type
 
-
-    def process_joints(self):
-        for joint in self.joints:
-            joint.process_joint()
 
     @property
     def blanks(self):
@@ -114,6 +105,7 @@ class BTLx(object):
 class BTLxPart(object):
     def __init__(self, beam):
         self.beam = beam
+        self.key = beam.key
         self.length = beam.length
         self.width = beam.width
         self.height = beam.height
@@ -128,7 +120,7 @@ class BTLxPart(object):
         self.start_trim = None
         self.end_trim = None
         self._reference_surfaces = []
-        self.processes = []
+        self.processings = []
         self._et_element = None
 
     @property
@@ -205,7 +197,7 @@ class BTLxPart(object):
         items = []
         for item in self._test:
             items.append(item)
-        for process in self.processes:
+        for process in self.processings:
             for item in process.test:
                 items.append(item)
         return items
@@ -225,10 +217,10 @@ class BTLxPart(object):
             self._et_element.append(self.et_transformations)
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
             self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
-            processings = ET.Element("Processings")
-            for process in self.processes:
-                processings.append(process.et_element)
-            self._et_element.append(processings)
+            processings_et = ET.Element("Processings")
+            for process in self.processings:
+                processings_et.append(process.et_element)
+            self._et_element.append(processings_et)
             self._et_element.append(self.et_shape)
         return self._et_element
 
@@ -247,8 +239,10 @@ class BTLxPart(object):
     def et_shape(self):
         shape = ET.Element("Shape")
         indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
-        indexed_face_set.set("coordIndex", self.shape_strings[0])
-        indexed_face_set.append(ET.Element("Coordinate", point=self.shape_strings[1]))
+        indexed_face_set.set("coordIndex", " ")
+        indexed_face_set.append(ET.Element("Coordinate"))
+        # indexed_face_set.set("coordIndex", self.shape_strings[0])
+        # indexed_face_set.append(ET.Element("Coordinate", point=self.shape_strings[1]))
         return shape
 
     @property
@@ -285,29 +279,11 @@ class BTLxPart(object):
         return self._shape_strings
 
 
-class BTLxJoint(object):
-
-
-    def __init__(self, joint):
-        self.joint = joint
-        self.parts = {}
-
-
-
-
-
-    def process_joint(self):
-        factory_type = BTLxJoint.REGISTERED_JOINTS.get(str(type(self.joint)))
-        factory_type.apply_processes(self)
-
-
-
-
 class BTLxProcess(object):
 
     """
-    Generic class for BTLx Processes.
-    This should be instantiated and appended to BTLxPart.processes in a specific btlx_process class (eg BTLxJackCut)
+    Generic class for BTLx processings.
+    This should be instantiated and appended to BTLxPart.processings in a specific btlx_process class (eg BTLxJackCut)
     """
 
     def __init__(self, name, attr, params):

@@ -10,16 +10,16 @@ from compas_timber.fabrication import BTLxProcess
 class BTLxFrenchRidgeLap(object):
     PROCESS_TYPE = "FrenchRidgeLap"
 
-    def __init__(self, joint, part_key, is_top):
+    def __init__(self, part, joint, is_top):
         for beam in joint.beams:
-            if beam.key == part_key:
+            if beam.key == part.key:
                 self.beam = beam
             else:
                 self.other_beam = beam
-
+        self.part = part
         self.joint = joint
         self.is_top = is_top
-        self.orientation = joint.ends[str(part_key)]
+        self.orientation = joint.ends[str(part.key)]
         self._ref_edge = True
         self._drill_hole = True
         self.drill_hole_diameter = 10.0
@@ -113,7 +113,7 @@ class BTLxFrenchRidgeLap(object):
                 self.startX = self.beam.blank_length + self.startX
 
     @classmethod
-    def create_process(cls, part, joint, is_top, end):
-        frl_process = BTLxFrenchRidgeLap(part, joint, is_top, end)
+    def create_process(cls, part, joint, is_top):
+        frl_process = BTLxFrenchRidgeLap(part, joint, is_top)
         return BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters)
 

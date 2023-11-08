@@ -132,20 +132,23 @@ class Joint(Data):
 
     @property
     def ends(self):
-        for index, beam in enumerate(self.joint.beams):
+        self._ends = {}
+        for index, beam in enumerate(self.beams):
             start_distance = min(
                 [
-                    beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.start),
-                    beam.centerline.start.distance_to_point(self.joint.beams[index - 1].centerline.end),
+                    beam.centerline.start.distance_to_point(self.beams[index - 1].centerline.start),
+                    beam.centerline.start.distance_to_point(self.beams[index - 1].centerline.end),
                 ]
             )
             end_distance = min(
                 [
-                    beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.start),
-                    beam.centerline.end.distance_to_point(self.joint.beams[index - 1].centerline.end),
+                    beam.centerline.end.distance_to_point(self.beams[index - 1].centerline.start),
+                    beam.centerline.end.distance_to_point(self.beams[index - 1].centerline.end),
                 ]
             )
             if start_distance < end_distance:
                 self._ends[str(beam.key)] = "start"
             else:
                 self._ends[str(beam.key)] = "end"
+
+        return self._ends

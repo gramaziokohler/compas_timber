@@ -1,5 +1,5 @@
+from compas_timber.fabrication import BTLx
 from compas_timber.connections import LButtJoint
-from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxJackCut
 
 
@@ -8,11 +8,11 @@ class LButtFactory(object):
         pass
 
     @classmethod
-    def apply_processes(cls, joint):
-        main_part = joint.parts[str(joint.joint.main_beam.key)]
-        cross_part = joint.parts[str(joint.joint.cross_beam.key)]
-        BTLxJackCut.apply_process(main_part, joint.joint.cutting_plane_main, joint)
-        BTLxJackCut.apply_process(cross_part, joint.joint.cutting_plane_cross, joint)
+    def apply_processings(cls, joint, parts):
+        main_part = parts[str(joint.main_beam.key)]
+        cross_part = parts[str(joint.cross_beam.key)]
+        main_part.processings.append(BTLxJackCut.create_process(main_part, joint.cutting_plane_main, "L-Butt Joint"))
+        cross_part.processings.append(BTLxJackCut.create_process(cross_part, joint.cutting_plane_cross, "L-Butt Joint"))
 
 
-BTLxJoint.register_joint(LButtJoint, LButtFactory)
+BTLx.register_joint(LButtJoint, LButtFactory)
