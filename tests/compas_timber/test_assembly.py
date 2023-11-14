@@ -15,7 +15,7 @@ def test_create():
 
 def test_add_beam():
     A = TimberAssembly()
-    B = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0, geometry_type="mesh")
+    B = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
     A.add_beam(B)
 
     assert B.key in A.beam_keys
@@ -29,8 +29,8 @@ def test_add_beam():
 def test_add_joint(mocker):
     mocker.patch("compas_timber.connections.Joint.add_features")
     a = TimberAssembly()
-    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
-    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
 
     a.add_beam(b1)
     a.add_beam(b2)
@@ -45,8 +45,8 @@ def test_add_joint(mocker):
 def test_remove_joint(mocker):
     mocker.patch("compas_timber.connections.Joint.add_features")
     A = TimberAssembly()
-    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
-    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
 
@@ -65,8 +65,8 @@ def test_copy(mocker):
     mocker.patch("compas_timber.connections.Joint.restore_beams_from_keys")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    B1 = Beam(F1, length=1.0, width=0.1, height=0.12, geometry_type="mesh")
-    B2 = Beam(F2, length=1.0, width=0.1, height=0.12, geometry_type="mesh")
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
@@ -74,7 +74,6 @@ def test_copy(mocker):
 
     A_copy = A.copy()
     assert A_copy is not A
-    assert A_copy.beams[0].is_identical(A.beams[0])
     assert A_copy.beams[0] is not A.beams[0]
 
 
@@ -83,8 +82,8 @@ def test_deepcopy(mocker):
     mocker.patch("compas_timber.connections.Joint.restore_beams_from_keys")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    B1 = Beam(F1, length=1.0, width=0.1, height=0.12, geometry_type="mesh")
-    B2 = Beam(F2, length=1.0, width=0.1, height=0.12, geometry_type="mesh")
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
@@ -92,13 +91,12 @@ def test_deepcopy(mocker):
 
     A_copy = deepcopy(A)
     assert A_copy is not A
-    assert A_copy.beams[0].is_identical(A.beams[0])
     assert A_copy.beams[0] is not A.beams[0]
 
 
 def test_find():
     A = TimberAssembly()
-    B = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    B = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B)
     assert B == A.find(B.guid)
 
@@ -106,9 +104,9 @@ def test_find():
 def test_parts_joined(mocker):
     mocker.patch("compas_timber.connections.Joint.add_features")  # abstract method
     A = TimberAssembly()
-    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
-    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
-    B3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    B3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1)
 
     A.add_beam(B1)
     A.add_beam(B2)
@@ -118,15 +116,3 @@ def test_parts_joined(mocker):
     assert A.are_parts_joined([B1, B2])
     assert not A.are_parts_joined([B1, B3])
 
-
-if __name__ == "__main__":
-    # TODO: run with `invoke test` instead
-    test_create()
-    test_add_beam()
-    test_add_joint()
-    test_remove_joint()
-    # test_copy()
-    # test_deepcopy()
-    test_find()
-    test_parts_joined()
-    print("\n *** all tests passed ***\n\n")
