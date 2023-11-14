@@ -132,4 +132,3 @@ def test_beams_have_keys_after_serialization():
     A = json_loads(json_dumps(A))
 
     assert keys == [beam.key for beam in A.beams]
-    
