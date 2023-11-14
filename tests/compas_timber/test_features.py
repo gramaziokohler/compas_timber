@@ -1,5 +1,4 @@
 from compas.geometry import close
-from compas.geometry import allclose
 from compas.geometry import Point
 
 from compas_timber.parts import Beam

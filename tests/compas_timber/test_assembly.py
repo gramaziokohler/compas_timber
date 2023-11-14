@@ -115,4 +115,3 @@ def test_parts_joined(mocker):
 
     assert A.are_parts_joined([B1, B2])
     assert not A.are_parts_joined([B1, B3])
-

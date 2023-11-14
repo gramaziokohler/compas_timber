@@ -1,9 +1,7 @@
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 
 from compas_timber.parts import CutFeature
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .joint import beam_side_incidence
 from .solver import JointTopology

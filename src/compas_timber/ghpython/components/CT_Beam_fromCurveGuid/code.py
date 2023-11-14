@@ -1,3 +1,4 @@
+# flake8: noqa
 import Rhino
 from compas_rhino.conversions import RhinoCurve
 from compas_rhino.conversions import vector_to_compas

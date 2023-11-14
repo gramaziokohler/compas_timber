@@ -10,6 +10,7 @@ class Feature(Data):
         Indicates whether this feature is a result of joinery.
 
     """
+
     def __init__(self, name=None, is_joinery=False):
         super(Feature, self).__init__(name)
         self._is_joiney = is_joinery
@@ -32,6 +33,7 @@ class CutFeature(Feature):
         The plane to cut the beam with.
 
     """
+
     def __init__(self, cutting_plane, **kwargs):
         super(CutFeature, self).__init__(**kwargs)
         self.cutting_plane = cutting_plane
@@ -56,6 +58,7 @@ class DrillFeature(Feature):
         The length (depth?) of the drill hole.
 
     """
+
     def __init__(self, plane, diameter, length, **kwargs):
         super(DrillFeature, self).__init__(**kwargs)
         self.plane = plane
@@ -78,6 +81,7 @@ class MillVolume(Feature):
         The volume to be milled out of the beam.
 
     """
+
     def __init__(self, volume, **kwargs):
         super(MillVolume, self).__init__(**kwargs)
         self.volume = volume
