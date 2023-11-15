@@ -30,6 +30,16 @@ def test_simple_sequence_generator(mock_assembly):
         assert beam.key == step.element_ids[0]
 
 
+def test_simple_sequence_generator_get_beam(mock_assembly):
+    generator = SimpleSequenceGenerator(mock_assembly)
+    plan = generator.result
+
+    assert len(plan) == len(mock_assembly.beams)
+    for step, beam in zip(plan, mock_assembly.beams):
+        beam_key = step.element_ids[0]
+        assert beam is mock_assembly.find_by_key(beam_key)
+
+
 def test_serialize_plan(mock_assembly):
     generator = SimpleSequenceGenerator(mock_assembly)
     plan = generator.result
