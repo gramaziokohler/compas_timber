@@ -1,5 +1,5 @@
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
+from compas.brep import Brep
+from compas.brep import BrepTrimmingError
 from compas.geometry import Frame
 from compas.datastructures import GeometricFeature
 from compas.datastructures import ParametricFeature
