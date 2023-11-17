@@ -1,4 +1,4 @@
-from compas.geometry import BrepTrimmingError
+from compas.brep import BrepTrimmingError
 from compas.geometry import Frame
 
 from compas_timber.parts import BeamTrimmingFeature

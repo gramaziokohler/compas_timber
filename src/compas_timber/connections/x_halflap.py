@@ -1,4 +1,4 @@
-from compas.geometry import Brep
+from compas.brep import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
