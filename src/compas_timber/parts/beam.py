@@ -102,7 +102,7 @@ class Beam(Part):
     @classmethod
     def from_data(cls, data):
         instance = cls(
-            Frame.from_data(data["frame"]), data["length"], data["width"], data["height"], data["geometry_type"]
+            Frame.from_data(data["frame"]), data["length"], data["width"], data["height"]
         )
         instance.key = data["key"]
         return instance
