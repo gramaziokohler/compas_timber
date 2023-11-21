@@ -91,7 +91,7 @@ class Beam(Part):
     @property
     def data(self):
         data = {
-            "frame": self.frame,
+            "frame": self.frame.data,
             "key": self.key,
             "width": self.width,
             "height": self.height,
@@ -101,7 +101,9 @@ class Beam(Part):
 
     @classmethod
     def from_data(cls, data):
-        instance = cls(**data)
+        instance = cls(
+            Frame.from_data(data["frame"]), data["length"], data["width"], data["height"], data["geometry_type"]
+        )
         instance.key = data["key"]
         return instance
 
