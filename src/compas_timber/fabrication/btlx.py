@@ -28,6 +28,18 @@ class BTLx(object):
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
     REGISTERED_JOINTS = {}
+    FILE_ATTRIBUTES = OrderedDict(
+            [
+                ("xmlns", "https://www.design2machine.com"),
+                ("Version", "2.0.0"),
+                ("Language", "en"),
+                ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
+                (
+                    "xsi:schemaLocation",
+                    "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
+                ),
+            ]
+        )
 
     def __init__(self, assembly):
         self.assembly = assembly
@@ -48,7 +60,7 @@ class BTLx(object):
         }
         self.process_assembly()
 
-    def __str__(self):
+    def btlx_string(self):
         """returns a pretty xml sting for visualization in GH, Terminal, etc"""
         self.ET_element = ET.Element("BTLx", self.file_attributes)
         self.ET_element.append(self.file_history)
@@ -70,30 +82,14 @@ class BTLx(object):
     def register_joint(cls, joint_type, process_type):
         cls.REGISTERED_JOINTS[str(joint_type)] = process_type
 
-
-    @property
-    def blanks(self):
-        if not self._edges:
-            self._edges = []
-            for part in self.parts:
-                for tuple in part.blank_geometry.edges:
-                    self._edges.append(Line(part.blank_geometry.points[tuple[0]], part.blank_geometry.points[tuple[1]]))
-        return self._edges
-
-    @property
-    def file_attributes(self):
-        return OrderedDict(
-            [
-                ("xmlns", "https://www.design2machine.com"),
-                ("Version", "2.0.0"),
-                ("Language", "en"),
-                ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
-                (
-                    "xsi:schemaLocation",
-                    "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
-                ),
-            ]
-        )
+    # @property
+    # def blanks(self):
+    #     if not self._edges:
+    #         self._edges = []
+    #         for part in self.parts:
+    #             for tuple in part.blank_geometry.edges:
+    #                 self._edges.append(Line(part.blank_geometry.points[tuple[0]], part.blank_geometry.points[tuple[1]]))
+    #     return self._edges
 
     @property
     def file_history(self):
@@ -109,13 +105,12 @@ class BTLxPart(object):
         self.length = beam.length
         self.width = beam.width
         self.height = beam.height
-        self.frame = beam.frame
+        self.frame = self.btlx_frame(beam.frame)
         self._test = []
-        self.geometry_type = "brep"
-        self.orientation = None
-        self.blank_geometry = beam.shape
-        self._blank_frame = None
-        self.blank_length = beam.length
+        # self.geometry_type = "brep"
+#        self.orientation = None
+        # self.blank_geometry = beam.blank
+        self.blank_length = beam.blank_length
         self.key = beam.key
         self.start_trim = None
         self.end_trim = None
@@ -124,47 +119,46 @@ class BTLxPart(object):
         self._et_element = None
 
     @property
-    def reference_surfaces(self):  # TODO: fix Beam.shape definition and update this.
+    def reference_surface_planes(self):  # TODO: fix Beam.shape definition and update this.
         if len(self._reference_surfaces) != 6:
             self._reference_surfaces = {
-                "1": Frame(self.blank_frame.point, self.blank_frame.xaxis, self.blank_frame.zaxis),
+                "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
                 "2": Frame(
-                    self.blank_frame.point + self.blank_frame.yaxis * self.width,
-                    self.blank_frame.xaxis,
-                    -self.blank_frame.yaxis,
+                    self.frame.point + self.frame.yaxis * self.width,
+                    self.frame.xaxis,
+                    -self.frame.yaxis,
                 ),
                 "3": Frame(
-                    self.blank_frame.point + self.blank_frame.yaxis * self.width + self.blank_frame.zaxis * self.height,
-                    self.blank_frame.xaxis,
-                    -self.blank_frame.zaxis,
+                    self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
+                    self.frame.xaxis,
+                    -self.frame.zaxis,
                 ),
                 "4": Frame(
-                    self.blank_frame.point + self.blank_frame.zaxis * self.height,
-                    self.blank_frame.xaxis,
-                    self.blank_frame.yaxis,
+                    self.frame.point + self.frame.zaxis * self.height,
+                    self.frame.xaxis,
+                    self.frame.yaxis,
                 ),
-                "5": Frame(self.blank_frame.point, self.blank_frame.zaxis, self.blank_frame.yaxis),
+                "5": Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
                 "6": Frame(
-                    self.blank_frame.point
-                    + self.blank_frame.xaxis * self.blank_length
-                    + self.blank_frame.yaxis * self.width,
-                    self.blank_frame.zaxis,
-                    -self.blank_frame.yaxis,
+                    self.frame.point
+                    + self.frame.xaxis * self.blank_length
+                    + self.frame.yaxis * self.width,
+                    self.frame.zaxis,
+                    -self.frame.yaxis,
                 ),
             }
         return self._reference_surfaces
 
-    @property
-    def blank_frame(self):
-        blank_frame_point = self.beam.long_edges[2].closest_point(
+
+    def btlx_frame(self, frame):
+        btlx_frame_point = self.beam.long_edges[2].closest_point(
             self.beam.frame.point
         )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
-        self._blank_frame = Frame(
-            blank_frame_point,
-            self.frame.xaxis,
-            self.frame.yaxis,
+        return Frame(
+            btlx_frame_point,
+            frame.xaxis,
+            frame.yaxis,
         )
-        return self._blank_frame
 
     @property
     def attr(self):
@@ -230,9 +224,9 @@ class BTLxPart(object):
         guid = "{" + str(uuid.uuid4()) + "}"
         transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
         position = ET.SubElement(transformation, "Position")
-        position.append(ET.Element("ReferencePoint", self.et_point_vals(self.blank_frame.point)))
-        position.append(ET.Element("XVector", self.et_point_vals(self.blank_frame.xaxis)))
-        position.append(ET.Element("YVector", self.et_point_vals(self.blank_frame.yaxis)))
+        position.append(ET.Element("ReferencePoint", self.et_point_vals(self.frame.point)))
+        position.append(ET.Element("XVector", self.et_point_vals(self.frame.xaxis)))
+        position.append(ET.Element("YVector", self.et_point_vals(self.frame.yaxis)))
         return transformations
 
     @property
@@ -270,7 +264,7 @@ class BTLxPart(object):
 
             brep_vertices_string = " "
             for point in brep_vertex_points:
-                xform = Transformation.from_frame_to_frame(self.blank_frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
+                xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
                 brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(
                     point.x, point.y, point.z, prec=BTLx.POINT_PRECISION
