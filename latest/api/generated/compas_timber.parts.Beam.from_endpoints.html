@@ -20,7 +20,7 @@
   <link rel="stylesheet" type="text/css" href="../../_static/css/compas-reference.css" />
 
   
-  <link rel="next" title="Beam.is_identical" href="compas_timber.parts.Beam.is_identical.html" />
+  <link rel="next" title="Beam.remove_blank_extension" href="compas_timber.parts.Beam.remove_blank_extension.html" />
   
 
   
@@ -101,7 +101,7 @@
 <h1>Beam.from_endpoints</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.parts.Beam.from_endpoints">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">from_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point_start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'brep'</span></span></em><span class="sig-paren">)</span></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">from_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point_start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Creates a Beam from the given endpoints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -112,7 +112,6 @@
 <li><p><strong>height</strong> (<em>float</em>) – Height of the cross-section.</p></li>
 <li><p><strong>z_vector</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Vector.html#compas.geometry.Vector" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vector</span></code></a>) – A vector indicating the height direction (z-axis) of the cross-section.
 Defaults to WorldZ or WorldX depending on the centerline’s orientation.</p></li>
-<li><p><strong>gemetry_type</strong> (<em>str</em>) – The type of geometry to use when creating this beam. Either ‘mesh’ of ‘brep’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -210,10 +209,10 @@ Defaults to WorldZ or WorldX depending on the centerline’s orientation.</p></l
       
 
       
-      <a href="compas_timber.parts.Beam.is_identical.html" title="Beam.is_identical" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
+      <a href="compas_timber.parts.Beam.remove_blank_extension.html" title="Beam.remove_blank_extension" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
         <div class="nav-title footer-link flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Next</div>
-          Beam.is_identical
+          Beam.remove_blank_extension
         </div>
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-right"></i></div>
       </a>

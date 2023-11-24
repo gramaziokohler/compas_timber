@@ -20,7 +20,7 @@
   <link rel="stylesheet" type="text/css" href="../../_static/css/compas-reference.css" />
 
   
-  <link rel="next" title="Beam.add_feature" href="compas_timber.parts.Beam.add_feature.html" />
+  <link rel="next" title="Beam.add_blank_extension" href="compas_timber.parts.Beam.add_blank_extension.html" />
   
 
   
@@ -99,7 +99,7 @@
 <h1>Beam</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.parts.Beam">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.parts.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'brep'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.parts.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L29"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.datastructures.Part.html#compas.datastructures.Part" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Part</span></code></a></p>
 <p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
 <dl class="field-list simple">
@@ -113,7 +113,6 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <li><p><strong>length</strong> (<em>float</em>) – Length of the beam</p></li>
 <li><p><strong>width</strong> (<em>float</em>) – Width of the cross-section</p></li>
 <li><p><strong>height</strong> (<em>float</em>) – Height of the cross-section</p></li>
-<li><p><strong>geometry_type</strong> (<em>str</em>) – The type of geometry created for this beam. Either ‘mesh’ or ‘brep.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
@@ -122,11 +121,7 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <li><p><strong>length</strong> (<em>float</em>) – Length of the beam.</p></li>
 <li><p><strong>width</strong> (<em>float</em>) – Width of the cross-section</p></li>
 <li><p><strong>height</strong> (<em>float</em>) – Height of the cross-section</p></li>
-<li><p><strong>geometry</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Brep</span></code> | <a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.datastructures.Mesh.html#compas.datastructures.Mesh" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.datastructures.Mesh</span></code></a>) – The resolved geometry of this beam, including any applied features.</p></li>
-<li><p><strong>geometry_type</strong> (<em>str</em>) – The type of geometry created by this beam. Either ‘mesh’ or ‘brep’.</p></li>
-<li><p><strong>tolerance</strong> (<em>float</em>)</p></li>
-<li><p><strong>shape</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Box.html#compas.geometry.Box" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a>) – A feature-less box representing the parametric geometry of this beam.
-The default tolerance used in operations performed on this beam.</p></li>
+<li><p><strong>blank</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Box.html#compas.geometry.Box" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a>) – A feature-less box representing the parametric geometry of this beam.</p></li>
 <li><p><strong>faces</strong> (list(<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.geometry.Frame.html#compas.geometry.Frame" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)) – A list of frames representing the 6 faces of this beam.
 0: +y (side’s frame normal is equal to the beam’s Y positive direction)
 1: +z
@@ -146,23 +141,17 @@ The default tolerance used in operations performed on this beam.</p></li>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.add_feature.html#compas_timber.parts.Beam.add_feature" title="compas_timber.parts.Beam.add_feature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_feature</span></code></a></p></td>
-<td><p>Adds a feature to this beam.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.add_blank_extension.html#compas_timber.parts.Beam.add_blank_extension" title="compas_timber.parts.Beam.add_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_blank_extension</span></code></a></p></td>
+<td><p>Adds a blank extension to the beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.align_z.html#compas_timber.parts.Beam.align_z" title="compas_timber.parts.Beam.align_z"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_z</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.add_features.html#compas_timber.parts.Beam.add_features" title="compas_timber.parts.Beam.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
+<td><p>Adds one or more features to the beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.align_z.html#compas_timber.parts.Beam.align_z" title="compas_timber.parts.Beam.align_z"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_z</span></code></a></p></td>
 <td><p>Align the z_axis of the beam's definition with the given vector.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.apply_features.html#compas_timber.parts.Beam.apply_features" title="compas_timber.parts.Beam.apply_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_features</span></code></a></p></td>
-<td><p>Applies all the features previously added using <cite>add_feature</cite> to the geometry of this Beam.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.clear_features.html#compas_timber.parts.Beam.clear_features" title="compas_timber.parts.Beam.clear_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_features</span></code></a></p></td>
-<td><p>Clears applied features and restores their effect.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.endpoint_closest_to_point.html#compas_timber.parts.Beam.endpoint_closest_to_point" title="compas_timber.parts.Beam.endpoint_closest_to_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">endpoint_closest_to_point</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.endpoint_closest_to_point.html#compas_timber.parts.Beam.endpoint_closest_to_point" title="compas_timber.parts.Beam.endpoint_closest_to_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">endpoint_closest_to_point</span></code></a></p></td>
 <td><p>Returns which endpoint of the centerline of the beam is closer to the given point.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.extend_ends.html#compas_timber.parts.Beam.extend_ends" title="compas_timber.parts.Beam.extend_ends"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_ends</span></code></a></p></td>
-<td><p>Extends the beam's parametric definition at both ends by the given values.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.extension_to_plane.html#compas_timber.parts.Beam.extension_to_plane" title="compas_timber.parts.Beam.extension_to_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extension_to_plane</span></code></a></p></td>
 <td><p>Returns the amount by which to extend the beam in each direction using metric units.</p></td>
@@ -176,14 +165,11 @@ The default tolerance used in operations performed on this beam.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.from_endpoints.html#compas_timber.parts.Beam.from_endpoints" title="compas_timber.parts.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
 <td><p>Creates a Beam from the given endpoints.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.is_identical.html#compas_timber.parts.Beam.is_identical" title="compas_timber.parts.Beam.is_identical"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_identical</span></code></a></p></td>
-<td><p>Returns True if the other beam's values are identicale, within TOLERANCE, to the ones of this beam.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.remove_blank_extension.html#compas_timber.parts.Beam.remove_blank_extension" title="compas_timber.parts.Beam.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
+<td><p>Removes a blank extension from the beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.move_endpoint.html#compas_timber.parts.Beam.move_endpoint" title="compas_timber.parts.Beam.move_endpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_endpoint</span></code></a></p></td>
-<td><p>Deprecated?</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.update_beam_geometry.html#compas_timber.parts.Beam.update_beam_geometry" title="compas_timber.parts.Beam.update_beam_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_beam_geometry</span></code></a></p></td>
-<td><p>Resets the geometry representation of the beam accroding to the current parametric values.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.remove_features.html#compas_timber.parts.Beam.remove_features" title="compas_timber.parts.Beam.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
+<td><p>Removes a feature from the beam.</p></td>
 </tr>
 </tbody>
 </table>
@@ -192,6 +178,12 @@ The default tolerance used in operations performed on this beam.</p></li>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.ToString.html#compas_timber.parts.Beam.ToString" title="compas_timber.parts.Beam.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
 <td><p>Converts the instance to a string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.add_feature.html#compas_timber.parts.Beam.add_feature" title="compas_timber.parts.Beam.add_feature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_feature</span></code></a></p></td>
+<td><p>Add a Feature to this Part.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.parts.Beam.clear_features.html#compas_timber.parts.Beam.clear_features" title="compas_timber.parts.Beam.clear_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_features</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.parts.Beam.copy.html#compas_timber.parts.Beam.copy" title="compas_timber.parts.Beam.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
@@ -301,10 +293,10 @@ The default tolerance used in operations performed on this beam.</p></li>
       
 
       
-      <a href="compas_timber.parts.Beam.add_feature.html" title="Beam.add_feature" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
+      <a href="compas_timber.parts.Beam.add_blank_extension.html" title="Beam.add_blank_extension" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
         <div class="nav-title footer-link flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Next</div>
-          Beam.add_feature
+          Beam.add_blank_extension
         </div>
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-right"></i></div>
       </a>
