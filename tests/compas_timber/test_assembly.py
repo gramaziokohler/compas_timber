@@ -121,9 +121,9 @@ def test_parts_joined(mocker):
 
 def test_beams_have_keys_after_serialization():
     A = TimberAssembly()
-    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
-    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
-    B3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1, geometry_type="mesh")
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    B3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
     A.add_beam(B3)
