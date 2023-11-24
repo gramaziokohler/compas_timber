@@ -1,7 +1,9 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
+from compas.artists import Artist
 from compas_timber.assembly import TimberAssembly
+from compas_timber.consumers import BrepGeometryConsumer
 
 
 class Assembly(component):
@@ -17,7 +19,7 @@ class Assembly(component):
             new_beams.append(self._beam_map[id(beam)])
         return new_beams
 
-    def RunScript(self, Beams, Joints, Features, applyFeatures):
+    def RunScript(self, Beams, Joints, Features, CreateGeometry):
         if not Beams:
             self.AddRuntimeMessage(Warning, "Input parameter 'Beams' failed to collect data")
             return
@@ -43,16 +45,17 @@ class Assembly(component):
                 joint.joint_type.create(Assembly, *beams_to_pair)
                 handled_beams.append(beam_pair_ids)
 
-        Errors = []
-
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
                 beams_to_modify = self._get_copied_beams(f_def.beams)
                 for beam in beams_to_modify:
                     beam.add_feature(f_def.feature)
-        if applyFeatures:
-            for beam in Assembly.beams:
-                Errors.extend(beam.apply_features())
 
-        return Assembly, Errors
+        Geometry = []
+        if CreateGeometry:
+            vis_consumer = BrepGeometryConsumer(Assembly)
+            for result in vis_consumer.result:
+                Geometry.append(Artist(result.geometry).draw())
+
+        return Assembly, Geometry

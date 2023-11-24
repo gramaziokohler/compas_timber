@@ -29,8 +29,8 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "applyFeatures",
-                "description": "If True, Joints and Features will be applied. Nothing happens if None or False.",
+                "name": "CreateGeometry",
+                "description": "If True, Beam and joint geometry is created for visualization.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
@@ -41,10 +41,9 @@
                 "description": "Assembly object."
             },
             {
-                "name": "Errors",
-                "description": "Error log of the feature application process."
+                "name": "Geometry",
+                "description": "Geometry of the beams and joints."
             }
-
         ]
     }
 }
