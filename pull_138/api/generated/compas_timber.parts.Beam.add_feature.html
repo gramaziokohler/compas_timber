@@ -20,11 +20,11 @@
   <link rel="stylesheet" type="text/css" href="../../_static/css/compas-reference.css" />
 
   
-  <link rel="next" title="Beam.align_z" href="compas_timber.parts.Beam.align_z.html" />
+  <link rel="next" title="Beam.clear_features" href="compas_timber.parts.Beam.clear_features.html" />
   
 
   
-  <link rel="prev" title="Beam" href="compas_timber.parts.Beam.html" />
+  <link rel="prev" title="Beam.ToString" href="compas_timber.parts.Beam.ToString.html" />
   
 
   <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
@@ -50,7 +50,7 @@
         <meta id="doc_versions" data-url="https://gramaziokohler.github.io/compas_timber/doc_versions.txt" data-docs="https://gramaziokohler.github.io/compas_timber/">
         <li class="nav-item nav-versions dropdown">
           <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="bd-versions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            0.3.1
+            0.3.2
           </a>
           <div id="doc_version_list" class="dropdown-menu dropdown-menu-md-right" aria-labelledby="bd-versions"></div>
         </li>
@@ -101,15 +101,17 @@
 <h1>Beam.add_feature</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.parts.Beam.add_feature">
-<span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">add_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L269"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Adds a feature to this beam.</p>
-<p>If apply is False, <cite>Beam.apply_features()</cite> must be called for the features to be represented in the geometry.</p>
+<span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">add_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/main/src/compas_timber/parts/beam.py#L213"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Add a Feature to this Part.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>feature</strong> (<a class="reference external" href="https://compas.dev/compas/latest/reference/generated/compas.datastructures.Feature.html#compas.datastructures.Feature" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code></a>) – The feature to be added to this beam.</p></li>
-<li><p><strong>apply</strong> (<em>bool</em>) – If True, the feature will be applied to the beam’s geometry upon adding it.</p></li>
+<li><p><strong>feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code>) – The feature to add</p></li>
+<li><p><strong>apply</strong> (<em>:bool:</em>) – If True, feature is also applied. Otherwise, feature is only added and user must call <cite>apply_features</cite>.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>None</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -144,7 +146,6 @@
 <li class="toctree-l2 nav-item active"><a class="nav-link reference internal" href="../compas_timber.html">compas_timber</a><ul class="nav flex-column collapse show active">
 <li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.assembly.html">assembly</a></li>
 <li class="toctree-l3 nav-item active"><a class="nav-link reference internal" href="../compas_timber.parts.html">parts</a></li>
-<li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.connections.html">connections</a></li>
 <li class="toctree-l3 nav-item"><a class="nav-link reference internal" href="../compas_timber.rhino.html">rhino</a></li>
 </ul>
 </li>
@@ -193,20 +194,20 @@
   <footer class="compas-footer">
     <nav class="nav p-2">
       
-      <a href="compas_timber.parts.Beam.html" title="Beam" class="nav-link footer-link float-start text-left d-flex w-50" rel="prev">
+      <a href="compas_timber.parts.Beam.ToString.html" title="Beam.ToString" class="nav-link footer-link float-start text-left d-flex w-50" rel="prev">
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-left"></i></div>
         <div class="nav-title flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Previous</div>
-          Beam
+          Beam.ToString
         </div>
       </a>
       
 
       
-      <a href="compas_timber.parts.Beam.align_z.html" title="Beam.align_z" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
+      <a href="compas_timber.parts.Beam.clear_features.html" title="Beam.clear_features" class="nav-link footer-link float-end text-right d-flex w-50" rel="next">
         <div class="nav-title footer-link flex-grow-1 align-self-center">
           <div class="nav-direction small font-weight-light">Next</div>
-          Beam.align_z
+          Beam.clear_features
         </div>
         <div class="nav-button p-2 m-2"><i class="fas fa-arrow-right"></i></div>
       </a>
