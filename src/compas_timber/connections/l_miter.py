@@ -4,8 +4,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.parts import BeamExtensionFeature
-from compas_timber.parts import BeamTrimmingFeature
+from compas_timber.parts.features import CutFeature
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import Joint
@@ -123,23 +122,19 @@ class LMiterJoint(Joint):
 
         """
         if self.features:
-            self.beam_a.clear_features(self.features)
-            self.beam_b.clear_features(self.features)
-            self.features = []
+            self.beam_a.remove_features(self.features)
+            self.beam_b.remove_features(self.features)
 
         plane_a, plane_b = self.cutting_planes
+        start_a, end_a = self.beam_a.extension_to_plane(plane_a)
+        start_b, end_b = self.beam_b.extension_to_plane(plane_b)
+        self.beam_a.add_blank_extension(start_a, end_a, self.key)
+        self.beam_b.add_blank_extension(start_b, end_b, self.key)
 
-        trim_a = BeamTrimmingFeature(plane_a)
-        extension_a = BeamExtensionFeature(*self.beam_a.extension_to_plane(plane_a))
-        self.beam_a.add_feature(extension_a)
-        self.beam_a.add_feature(trim_a)
-
-        trim_b = BeamTrimmingFeature(plane_b)
-        extension_b = BeamExtensionFeature(*self.beam_b.extension_to_plane(plane_b))
-        self.beam_b.add_feature(extension_b)
-        self.beam_b.add_feature(trim_b)
-
-        self.features.extend([trim_a, extension_a, trim_b, extension_b])
+        f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
+        self.beam_a.add_features(f1)
+        self.beam_b.add_features(f2)
+        self.features = [f1, f2]
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""

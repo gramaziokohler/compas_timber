@@ -44,6 +44,10 @@
             {
                 "name": "Beam",
                 "description": "Beam object(s)."
+            },
+            {
+                "name": "Blank",
+                "description": "Shape of the beam's blank."
             }
         ]
     }

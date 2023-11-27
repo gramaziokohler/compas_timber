@@ -1,4 +1,3 @@
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,7 +10,7 @@ from compas.geometry import intersection_plane_plane
 from compas.geometry import length_vector
 from compas.geometry import midpoint_point_point
 
-from compas_timber.parts import BeamBooleanSubtraction
+from compas_timber.parts import MillVolume
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import Joint
@@ -163,9 +162,7 @@ class XHalfLapJoint(Joint):
         # Create Polyhedrons
         negative_polyhedron_beam_a = self._create_polyhedron(plane_a0, plane_cut, lines)
         negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, plane_cut, lines)
-
-        # Create BREP
-        return Brep.from_mesh(negative_polyhedron_beam_a), Brep.from_mesh(negative_polyhedron_beam_b)
+        return negative_polyhedron_beam_a, negative_polyhedron_beam_b
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
@@ -174,5 +171,5 @@ class XHalfLapJoint(Joint):
 
     def add_features(self):
         negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
-        self.beam_a.add_feature(BeamBooleanSubtraction(negative_brep_beam_a))
-        self.beam_b.add_feature(BeamBooleanSubtraction(negative_brep_beam_b))
+        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
+        self.beam_b.add_features(MillVolume(negative_brep_beam_b))

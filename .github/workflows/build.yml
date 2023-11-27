@@ -46,7 +46,7 @@ jobs:
 
       - name: Installing dependencies
         run: |
-          curl -o compas.tar.gz -LJO https://pypi.debian.net/compas/latest
+          curl -o compas.tar.gz -LJO https://pypi.debian.net/compas/COMPAS-2.0.0a2.tar.gz
           curl -o ironpython-pytest.tar.gz -LJO https://pypi.debian.net/ironpython-pytest/latest
           choco install ironpython --version=2.7.8.1
           ipy -X:Frames -m ensurepip

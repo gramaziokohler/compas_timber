@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Removed
+
+
+## [0.3.2] 2023-11-17
+
+### Added
+
+* Added now released COMPAS `2.0.0a1` to requirements.
+
+### Changed
+
 * Explicitly added attribute `key` to (de)serialization of `Beam`.
 
 ### Removed
