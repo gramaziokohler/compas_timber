@@ -87,6 +87,8 @@ class Beam(Part):
         self.length = length
         self.features = []
         self._blank_extensions = {}
+        self.blank_frame = None
+        self.blank_length = 0.0
 
     @property
     def data(self):
@@ -108,10 +110,10 @@ class Beam(Part):
     @property
     def blank(self):
         start, end = self._resolve_blank_extensions()
-        frame = self.frame.copy()
-        frame.point += -frame.xaxis * start  # "extension" to the start edge
-        new_length = self.length + start + end
-        return _create_box(frame, new_length, self.width, self.height)
+        self.blank_frame = self.frame.copy()
+        self.blank_frame.point += -self.blank_frame.xaxis * start  # "extension" to the start edge
+        self.blank_length = self.length + start + end
+        return _create_box(self.blank_frame, self.blank_length, self.width, self.height)
 
     @property
     def faces(self):
