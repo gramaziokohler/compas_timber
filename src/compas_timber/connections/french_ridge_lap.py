@@ -3,10 +3,6 @@ from compas.geometry import cross_vectors
 from compas.geometry import angle_vectors
 import math
 
-
-from compas_timber.parts import BeamExtensionFeature
-from compas_timber.parts import BeamTrimmingFeature
-
 from .joint import Joint
 from .joint import beam_side_incidence
 from .solver import JointTopology
@@ -132,21 +128,3 @@ class FrenchRidgeLapJoint(Joint):
 
         self.reference_face_indices = {str(self.beam_a.key): indices[0], str(self.beam_b.key): indices[1]}
 
-    def add_features(self):
-        """Adds the required extension and trimming features to both beams.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-
-        """
-
-        if self.features:
-            self.beam_a.clear_features(self.features)
-            self.beam_b.clear_features(self.features)
-            self.features = []
-
-        top_extend = BeamExtensionFeature(*self.beam_a.extension_to_plane(self.cutting_plane_top))
-        bottom_extend = BeamExtensionFeature(*self.beam_b.extension_to_plane(self.cutting_plane_bottom))
-
-        self.beam_a.add_feature(top_extend)
-        self.beam_b.add_feature(bottom_extend)
-        self.features.extend([top_extend, bottom_extend])

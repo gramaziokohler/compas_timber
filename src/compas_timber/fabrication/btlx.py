@@ -41,13 +41,17 @@ class BTLx(object):
             ]
         )
 
+
     def __init__(self, assembly):
         self.assembly = assembly
         self.parts = {}
         self._test = []
         self.joints = assembly.joints
-        self._blanks = None
-        self.history = {
+        self.process_assembly()
+
+    @property
+    def history(self):
+        return {
             "CompanyName": "Gramazio Kohler Research",
             "ProgramName": "COMPAS_Timber",
             "ProgramVersion": "Compas: {}".format(compas.__version__),
@@ -58,11 +62,10 @@ class BTLx(object):
             "Time": "{}".format(datetime.now().strftime("%H:%M:%S")),
             "Comment": "",
         }
-        self.process_assembly()
 
     def btlx_string(self):
         """returns a pretty xml sting for visualization in GH, Terminal, etc"""
-        self.ET_element = ET.Element("BTLx", self.file_attributes)
+        self.ET_element = ET.Element("BTLx", BTLx.FILE_ATTRIBUTES)
         self.ET_element.append(self.file_history)
         self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
         self.parts_element = ET.SubElement(self.project_element, "Parts")
@@ -82,15 +85,6 @@ class BTLx(object):
     def register_joint(cls, joint_type, process_type):
         cls.REGISTERED_JOINTS[str(joint_type)] = process_type
 
-    # @property
-    # def blanks(self):
-    #     if not self._edges:
-    #         self._edges = []
-    #         for part in self.parts:
-    #             for tuple in part.blank_geometry.edges:
-    #                 self._edges.append(Line(part.blank_geometry.points[tuple[0]], part.blank_geometry.points[tuple[1]]))
-    #     return self._edges
-
     @property
     def file_history(self):
         file_history = ET.Element("FileHistory")
@@ -105,21 +99,19 @@ class BTLxPart(object):
         self.length = beam.length
         self.width = beam.width
         self.height = beam.height
-        self.frame = self.btlx_frame(beam.frame)
+        self.frame = Frame(
+            self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
+            beam.frame.xaxis,
+            beam.frame.yaxis,
+        ) # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self._test = []
-        # self.geometry_type = "brep"
-#        self.orientation = None
-        # self.blank_geometry = beam.blank
         self.blank_length = beam.blank_length
         self.key = beam.key
-        self.start_trim = None
-        self.end_trim = None
         self._reference_surfaces = []
         self.processings = []
         self._et_element = None
 
-    @property
-    def reference_surface_planes(self):  # TODO: fix Beam.shape definition and update this.
+    def reference_surface_planes(self, index):  # TODO: fix Beam.shape definition and update this.
         if len(self._reference_surfaces) != 6:
             self._reference_surfaces = {
                 "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
@@ -147,18 +139,8 @@ class BTLxPart(object):
                     -self.frame.yaxis,
                 ),
             }
-        return self._reference_surfaces
+        return self._reference_surfaces[str(index)]
 
-
-    def btlx_frame(self, frame):
-        btlx_frame_point = self.beam.long_edges[2].closest_point(
-            self.beam.frame.point
-        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
-        return Frame(
-            btlx_frame_point,
-            frame.xaxis,
-            frame.yaxis,
-        )
 
     @property
     def attr(self):

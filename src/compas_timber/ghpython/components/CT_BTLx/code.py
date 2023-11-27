@@ -3,7 +3,6 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 import Rhino
 from compas_timber.fabrication import BTLx
 
-
 class WriteBTLx(component):
     def RunScript(self, Assembly, Path, Write):
         if not Assembly:
@@ -18,6 +17,5 @@ class WriteBTLx(component):
                 self.AddRuntimeMessage(Warning, "Input parameter Path failed to collect data")
                 return
             with open(Path, "w") as f:
-                f.write(str(btlx))
-
-        return str(btlx)
+                f.write(btlx.btlx_string())
+        return btlx.btlx_string()
