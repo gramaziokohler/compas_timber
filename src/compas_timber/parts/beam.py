@@ -87,8 +87,8 @@ class Beam(Part):
         self.length = length
         self.features = []
         self._blank_extensions = {}
-        self.blank_frame = None
-        self.blank_length = 0.0
+        self.blank_frame = frame
+        self.blank_length = length
 
     @property
     def data(self):
