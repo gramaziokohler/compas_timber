@@ -128,8 +128,6 @@ class Joint(Data):
         joint.add_features()
         return joint
 
-
-
     @property
     def ends(self):
         self._ends = {}

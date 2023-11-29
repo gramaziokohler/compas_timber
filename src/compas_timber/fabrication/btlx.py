@@ -29,18 +29,17 @@ class BTLx(object):
     ANGLE_PRECISION = 3
     REGISTERED_JOINTS = {}
     FILE_ATTRIBUTES = OrderedDict(
-            [
-                ("xmlns", "https://www.design2machine.com"),
-                ("Version", "2.0.0"),
-                ("Language", "en"),
-                ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
-                (
-                    "xsi:schemaLocation",
-                    "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
-                ),
-            ]
-        )
-
+        [
+            ("xmlns", "https://www.design2machine.com"),
+            ("Version", "2.0.0"),
+            ("Language", "en"),
+            ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
+            (
+                "xsi:schemaLocation",
+                "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
+            ),
+        ]
+    )
 
     def __init__(self, assembly):
         self.assembly = assembly
@@ -103,7 +102,7 @@ class BTLxPart(object):
             self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
             beam.frame.xaxis,
             beam.frame.yaxis,
-        ) # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self._test = []
         self.blank_length = beam.blank_length
         self.key = beam.key
@@ -132,15 +131,12 @@ class BTLxPart(object):
                 ),
                 "5": Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
                 "6": Frame(
-                    self.frame.point
-                    + self.frame.xaxis * self.blank_length
-                    + self.frame.yaxis * self.width,
+                    self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
                     self.frame.zaxis,
                     -self.frame.yaxis,
                 ),
             }
         return self._reference_surfaces[str(index)]
-
 
     @property
     def attr(self):

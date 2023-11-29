@@ -88,4 +88,3 @@ class BTLxJackCut(object):
     def create_process(cls, part, frame, joint_name=None):
         jack_cut = BTLxJackCut(part, frame, joint_name)
         return BTLxProcess(BTLxJackCut.PROCESS_TYPE, jack_cut.header_attributes, jack_cut.process_params)
-

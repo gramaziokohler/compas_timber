@@ -115,5 +115,6 @@ class BTLxFrenchRidgeLap(object):
     @classmethod
     def create_process(cls, part, joint, is_top):
         frl_process = BTLxFrenchRidgeLap(part, joint, is_top)
-        return BTLxProcess(BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters)
-
+        return BTLxProcess(
+            BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters
+        )
