@@ -126,34 +126,49 @@ class Step(Data):
 
     Attributes
     ----------
-    location : :class:`compas.geometry.Frame`  # TODO: replace with Transformation?
-        Location of the step.
-    obj_filepath : str
-        Path to the 3d model of the element(s) which belong to this step.
-    instructions : list(:class:`Instruction`)
-        List of instructions which make up the step.
+    actor : :class:`Actor`
+        Actor which executes the step. one of [Actor.HUMAN, Actor.ROBOT]
     element_ids : list(int)
         List of cad element ids which are associated with the step.
+    elements_held : list(int)
+        List of cad element ids which are held by the actor (typically a robot) during this step.
+    location : :class:`compas.geometry.Frame`  # TODO: replace with Transformation?
+        Location of the step.
+    instructions : list(:class:`Instruction`)
+        List of instructions which support the step.
+    is_built : bool
+        Whether the step has been executed.
+    is_planned : bool
+        Whether the step has been planned. Allows for incremental planning.
+    obj_filepath : str
+        Path to the 3d model of the element(s) which belong to this step.
+        List of instructions which make up the step.
+    priority : int
+        Priority of the step. Steps within the same priority can be executed in parallel.
 
     """
 
     def __init__(
         self,
         element_ids,
+        actor=None,
         location=None,
         obj_filepath=None,
-        step_id=None,
         instructions=None,
         is_built=False,
-        actor=None,
+        is_planned=False,
+        elements_held=None,
+        priority=0,
     ):
         super(Step, self).__init__()
         self.element_ids = element_ids or []
         self.location = location or Frame.worldXY()
         self.obj_filepath = obj_filepath
-        self.step_id = step_id
+        self.priority = priority
         self.instructions = instructions or []
         self.is_built = is_built
+        self.is_planned = is_planned
+        self.elements_held = elements_held or []
         self._actor = actor
 
     @property
@@ -172,10 +187,12 @@ class Step(Data):
         return {
             "location": self.location.data,
             "obj_filepath": self.obj_filepath,
-            "step_id": self.step_id,
+            "priority": self.priority,
             "element_ids": self.element_ids,
             "instructions": self.instructions,
             "is_built": self.is_built,
+            "is_planned": self.is_planned,
+            "elements_held": self.elements_held,
             "actor": Actor.get_name(self.actor),
         }
 
