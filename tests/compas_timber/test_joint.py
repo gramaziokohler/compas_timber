@@ -58,7 +58,7 @@ def test_joint_beam_keys(mocker):
     assert len(list(A.graph.nodes())) == 3
     assert len(list(A.graph.edges())) == 2
     assert A.joints[0] == J
-    assert J.data["beams"] == {B1.key, B2.key}
+    assert J.data["beams"] == [B1.key, B2.key]
 
 
 def test_joint_override_protection(mocker):
