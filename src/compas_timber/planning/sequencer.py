@@ -286,6 +286,5 @@ class SimpleSequenceGenerator(object):
     def result(self):
         plan = BuildingPlan()
         for beam in self.assembly.beams:
-            # TODO: Mesh.from_shape(beam.blank).to_obj(filepath) and use that as obj_filepath
-            plan.add_step(Step(element_ids=[beam.key], actor=Actor.HUMAN))
+            plan.add_step(Step(element_ids=[beam.key], actor=Actor.HUMAN, location=beam.frame))
         return plan
