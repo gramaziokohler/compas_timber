@@ -292,6 +292,10 @@ class Beam(Part):
             this extension will be removed as well.
 
         """
+        if joint_key in self._blank_extensions:
+            s, e = self._blank_extensions[joint_key]
+            start += s
+            end += e
         self._blank_extensions[joint_key] = (start, end)
 
     def remove_blank_extension(self, joint_key):
