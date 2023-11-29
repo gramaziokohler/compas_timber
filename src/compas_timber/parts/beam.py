@@ -292,7 +292,7 @@ class Beam(Part):
             this extension will be removed as well.
 
         """
-        if joint_key in self._blank_extensions:
+        if joint_key is not None and joint_key in self._blank_extensions:
             s, e = self._blank_extensions[joint_key]
             start += s
             end += e
