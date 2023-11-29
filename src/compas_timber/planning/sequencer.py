@@ -132,7 +132,7 @@ class Step(Data):
         List of cad element ids which are associated with the step.
     elements_held : list(int)
         List of cad element ids which are held by the actor (typically a robot) during this step.
-    location : :class:`compas.geometry.Frame`  # TODO: replace with Transformation?
+    location : :class:`compas.geometry.Frame`
         Location of the step.
     instructions : list(:class:`Instruction`)
         List of instructions which support the step.
@@ -140,9 +140,8 @@ class Step(Data):
         Whether the step has been executed.
     is_planned : bool
         Whether the step has been planned. Allows for incremental planning.
-    obj_filepath : str
-        Path to the 3d model of the element(s) which belong to this step.
-        List of instructions which make up the step.
+    geometry : str
+        Geometry type of the element to be assembled. One of ["obj", "cylinder", "box"]]. Used for visualization.
     priority : int
         Priority of the step. Steps within the same priority can be executed in parallel.
 
@@ -153,7 +152,7 @@ class Step(Data):
         element_ids,
         actor=None,
         location=None,
-        obj_filepath=None,
+        geometry=None,
         instructions=None,
         is_built=False,
         is_planned=False,
@@ -163,7 +162,7 @@ class Step(Data):
         super(Step, self).__init__()
         self.element_ids = element_ids or []
         self.location = location or Frame.worldXY()
-        self.obj_filepath = obj_filepath
+        self.geometry = geometry
         self.priority = priority
         self.instructions = instructions or []
         self.is_built = is_built
@@ -186,7 +185,7 @@ class Step(Data):
     def data(self):
         return {
             "location": self.location.data,
-            "obj_filepath": self.obj_filepath,
+            "geometry": self.geometry,
             "priority": self.priority,
             "element_ids": self.element_ids,
             "instructions": self.instructions,
