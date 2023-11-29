@@ -1,26 +1,13 @@
 import os
 import uuid
-import sys
 from datetime import date
 from datetime import datetime
-
-
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
 import compas
 
-if not compas.IPY:
-    if sys.version_info[0] >= 3 and sys.version_info[1] >= 8:
-        from compas.files._xml import xml_cpython as xml_impl
-    else:
-        from compas.files._xml import xml_pre_38 as xml_impl
-else:
-    from compas.files._xml import xml_cli as xml_impl
-
 from collections import OrderedDict
-
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Transformation
 
 
