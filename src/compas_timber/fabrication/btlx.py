@@ -68,8 +68,8 @@ class BTLx(object):
             factory_type.apply_processings(joint, self.parts)
 
     @classmethod
-    def register_joint(cls, joint_type, process_type):
-        cls.REGISTERED_JOINTS[str(joint_type)] = process_type
+    def register_joint(cls, joint_type, joint_factory):
+        cls.REGISTERED_JOINTS[str(joint_type)] = joint_factory
 
     @property
     def file_history(self):
