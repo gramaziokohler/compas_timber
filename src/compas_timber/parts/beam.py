@@ -158,7 +158,7 @@ class Beam(Part):
 
     @property
     def aabb(self):
-        vertices = self.blank.vertices
+        vertices, _ = self.blank.to_vertices_and_faces()
         x = [p.x for p in vertices]
         y = [p.y for p in vertices]
         z = [p.z for p in vertices]
@@ -292,6 +292,10 @@ class Beam(Part):
             this extension will be removed as well.
 
         """
+        if joint_key is not None and joint_key in self._blank_extensions:
+            s, e = self._blank_extensions[joint_key]
+            start += s
+            end += e
         self._blank_extensions[joint_key] = (start, end)
 
     def remove_blank_extension(self, joint_key):

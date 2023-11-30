@@ -9,7 +9,7 @@ from compas_timber.parts import MillVolume
 
 def apply_drill_feature(beam_geometry, feature):
     frame = Frame.from_plane(feature.plane)
-    drill_volume = Cylinder(frame, radius=feature.diameter / 2.0, height=feature.length)
+    drill_volume = Cylinder(frame=frame, radius=feature.diameter / 2.0, height=feature.length)
     return beam_geometry - Brep.from_cylinder(drill_volume)
 
 

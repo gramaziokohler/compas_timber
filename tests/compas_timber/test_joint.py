@@ -45,6 +45,22 @@ def test_create(mocker):
     assert A.joints[0] == J
 
 
+def test_joint_beam_keys(mocker):
+    mocker.patch("compas_timber.connections.Joint.add_features")
+    # try create with beams
+    A = TimberAssembly()
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    A.add_beam(B1)
+    A.add_beam(B2)
+    J = TButtJoint.create(A, B1, B2)
+
+    assert len(list(A.graph.nodes())) == 3
+    assert len(list(A.graph.edges())) == 2
+    assert A.joints[0] == J
+    assert J.data["beams"] == [B1.key, B2.key]
+
+
 def test_joint_override_protection(mocker):
     mocker.patch("compas_timber.connections.Joint.add_features")
     A = TimberAssembly()
