@@ -5,10 +5,11 @@ import random
 import Rhino
 import Rhino.Geometry as rg
 import rhinoscriptsyntax as rs
-from compas.artists import Artist
-from compas_rhino.conversions import frame_to_rhino
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+
+from compas_rhino.conversions import frame_to_rhino
+from compas_timber.consumers import BrepGeometryConsumer
 
 
 def create_box_map(pln, sx, sy, sz):
@@ -57,20 +58,17 @@ elif len(MapSize) != 3:
 else:
     dimx, dimy, dimz = MapSize
 
-Beams = Beam  # Beam is a list of Beams or an empty list
-if Assembly:
-    Beams.extend(Assembly.beams)
-
-if not Beams:
-    ghenv.Component.AddRuntimeMessage(Warning, "Input parameters Assembly and Beam failed to collect any Beam objects.")
+if not Assembly:
+    ghenv.Component.AddRuntimeMessage(Warning, "Input parameters Assembly failed to collect any Beam objects.")
     _inputok = False
 else:
     _inputok = True
 
 try:
+    geometries = BrepGeometryConsumer(Assembly).result
     if _inputok and Bake:
-        frames = [frame_to_rhino(b.frame) for b in Beam]
-        breps = [Artist(b.geometry).draw() for b in Beam]
+        frames = [frame_to_rhino(b.frame) for b in Assembly.beams]
+        breps = [g.geometry.native_brep for g in geometries]
 
         if frames and breps:
             rs.EnableRedraw(False)
