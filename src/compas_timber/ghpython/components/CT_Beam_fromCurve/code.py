@@ -6,7 +6,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas.artists import Artist
+from compas.scene import Scene
 from compas_timber.parts.beam import Beam as ctBeam
 
 
@@ -28,6 +28,7 @@ class Beam_fromCurve(component):
 
         Beam = []
         Blank = []
+        scene = Scene()
 
         if Centerline and Height and Width:
             # check list lengths for consistency
@@ -77,6 +78,7 @@ class Beam_fromCurve(component):
                     beam.attributes["category"] = c
 
                     Beam.append(beam)
-                    Blank.append(Artist(beam.blank).draw())
+                    scene.add(beam.blank)
+        Blank = scene.redraw()
 
         return Beam, Blank
