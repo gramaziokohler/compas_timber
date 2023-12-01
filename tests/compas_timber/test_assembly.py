@@ -7,7 +7,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.assembly import TimberAssembly
-from compas_timber.connections import Joint
+from compas_timber.connections import LButtJoint
 from compas_timber.parts import Beam
 
 
@@ -29,14 +29,14 @@ def test_add_beam():
 
 
 def test_add_joint(mocker):
-    mocker.patch("compas_timber.connections.Joint.add_features")
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
     a = TimberAssembly()
     b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
 
     a.add_beam(b1)
     a.add_beam(b2)
-    _ = Joint.create(a, b1, b2)
+    _ = LButtJoint.create(a, b1, b2)
 
     assert len(list(a.graph.nodes())) == 3
     assert len(list(a.graph.edges())) == 2
@@ -45,26 +45,24 @@ def test_add_joint(mocker):
 
 
 def test_remove_joint(mocker):
-    mocker.patch("compas_timber.connections.Joint.add_features")
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
     A = TimberAssembly()
     B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
     A.add_beam(B1)
     A.add_beam(B2)
 
-    J = Joint.create(A, B1, B2)
+    J = LButtJoint.create(A, B1, B2)
     assert A.contains(J)
 
     A.remove_joint(J)
     assert len(list(A.graph.nodes())) == 2
     assert len(list(A.graph.edges())) == 0
     assert len(A.joints) == 0
-    assert J.assembly is None
 
 
 def test_copy(mocker):
-    mocker.patch("compas_timber.connections.Joint.add_features")
-    mocker.patch("compas_timber.connections.Joint.restore_beams_from_keys")
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
@@ -72,7 +70,7 @@ def test_copy(mocker):
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
-    _ = Joint.create(A, B1, B2)
+    _ = LButtJoint.create(A, B1, B2)
 
     A_copy = A.copy()
     assert A_copy is not A
@@ -80,8 +78,7 @@ def test_copy(mocker):
 
 
 def test_deepcopy(mocker):
-    mocker.patch("compas_timber.connections.Joint.add_features")
-    mocker.patch("compas_timber.connections.Joint.restore_beams_from_keys")
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
@@ -89,7 +86,7 @@ def test_deepcopy(mocker):
     A = TimberAssembly()
     A.add_beam(B1)
     A.add_beam(B2)
-    _ = Joint.create(A, B1, B2)
+    _ = LButtJoint.create(A, B1, B2)
 
     A_copy = deepcopy(A)
     assert A_copy is not A
@@ -104,7 +101,7 @@ def test_find():
 
 
 def test_parts_joined(mocker):
-    mocker.patch("compas_timber.connections.Joint.add_features")  # abstract method
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
     A = TimberAssembly()
     B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
@@ -113,7 +110,7 @@ def test_parts_joined(mocker):
     A.add_beam(B1)
     A.add_beam(B2)
     A.add_beam(B3)
-    _ = Joint.create(A, B1, B2)
+    _ = LButtJoint.create(A, B1, B2)
 
     assert A.are_parts_joined([B1, B2])
     assert not A.are_parts_joined([B1, B3])

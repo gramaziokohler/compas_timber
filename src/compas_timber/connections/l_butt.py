@@ -99,14 +99,12 @@ class LButtJoint(Joint):
         """
         if self.features:
             self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
         start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_plane_cross)
         self.main_beam.add_blank_extension(start_main, end_main, self.key)
         self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
 
-        f_main, f_cross = CutFeature(self.cutting_plane_main), CutFeature(self.cutting_plane_cross)
+        f_main = CutFeature(self.cutting_plane_main)
         self.main_beam.add_features(f_main)
-        self.cross_beam.add_features(f_cross)
-        self.features = [f_main, f_cross]
+        self.features = [f_main]
