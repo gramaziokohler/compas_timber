@@ -8,9 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-
+* added `fabrication` package 
+* added `BTLx` as a wrapper for `TimberAssembly` to generate .btlx files for machining timber beams
+* added `BTLxPart` as wrapper for `Beam`
+* added `joint_factories` folder and factories for existing joints except `X-HalfLap`
+* added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
+* added `BTLx` Grasshopper component
+* added `FrenchRidgeHalfLap` joint
 ### Changed
-
+* changed `Beam` definition to include `blank_frame` and `blank_length` attributes 
 * Replaced `Artist` with the new `Scene`.
 
 ### Removed

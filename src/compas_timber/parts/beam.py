@@ -107,11 +107,19 @@ class Beam(Part):
 
     @property
     def blank(self):
+        return _create_box(self.blank_frame, self.blank_length, self.width, self.height)
+
+    @property
+    def blank_length(self):
         start, end = self._resolve_blank_extensions()
+        return self.length + start + end
+
+    @property
+    def blank_frame(self):
+        start, _ = self._resolve_blank_extensions()
         frame = self.frame.copy()
         frame.point += -frame.xaxis * start  # "extension" to the start edge
-        new_length = self.length + start + end
-        return _create_box(frame, new_length, self.width, self.height)
+        return frame
 
     @property
     def faces(self):
@@ -344,13 +352,10 @@ class Beam(Part):
         de = 0.0
         if side == "start":
             tmin = min(x.keys())
-            if tmin < 0.0:
-                ds = tmin * self.length  # should be negative
+            ds = tmin * self.length  # should be negative
         elif side == "end":
             tmax = max(x.keys())
-            if tmax > 1.0:
-                de = (tmax - 1.0) * self.length
-
+            de = (tmax - 1.0) * self.length
         return -ds, de
 
     def align_z(self, vector):
