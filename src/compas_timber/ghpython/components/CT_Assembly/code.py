@@ -1,7 +1,7 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas.artists import Artist
+from compas.scene import Scene
 from compas_timber.assembly import TimberAssembly
 from compas_timber.consumers import BrepGeometryConsumer
 
@@ -52,10 +52,13 @@ class Assembly(component):
                 for beam in beams_to_modify:
                     beam.add_feature(f_def.feature)
 
-        Geometry = []
+        Geometry = None
+        scene = Scene()
         if CreateGeometry:
             vis_consumer = BrepGeometryConsumer(Assembly)
             for result in vis_consumer.result:
-                Geometry.append(Artist(result.geometry).draw())
+                scene.add(result.geometry)
+
+        Geometry = scene.redraw()
 
         return Assembly, Geometry

@@ -14,13 +14,7 @@
                 "description": "Assembly object (optional).",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
-            },              
-            {
-                "name": "Beam",
-                "description": "Beam object(s) (optional).",
-                "typeHintID": "none",
-                "scriptParamAccess": 1
-            },           
+            },
             {
                 "name": "MapSize",
                 "description": "Scaling of the BoxMap in x,y,z directions (list of three positive values) (optional).",

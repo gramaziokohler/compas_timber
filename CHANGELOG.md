@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added `FrenchRidgeHalfLap` joint
 ### Changed
 * changed `Beam` definition to include `blank_frame` and `blank_length` attributes 
+* Replaced `Artist` with the new `Scene`.
+
 ### Removed
 
 

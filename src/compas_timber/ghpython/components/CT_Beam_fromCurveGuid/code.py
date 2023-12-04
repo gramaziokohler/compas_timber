@@ -7,7 +7,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
-from compas.artists import Artist
+from compas.scene import Scene
 from compas_timber.parts import Beam
 
 
@@ -61,6 +61,7 @@ class Beam_fromCurveGuid(component):
 
         Beam = []
         Blank = []
+        scene = Scene()
 
         for guid, z, w, h, c in zip(RefCenterline, ZVector, Width, Height, Category):
             curve = RhinoCurve.from_object(Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid))
@@ -78,6 +79,6 @@ class Beam_fromCurveGuid(component):
                 update_rhobj_attributes_name(guid, "category", c)
 
             Beam.append(beam)
-            Blank.append(Artist(beam.blank).draw())
-
+            scene.add(beam.blank)
+        Blank = scene.redraw()
         return Beam, Blank
