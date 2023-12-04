@@ -30,7 +30,8 @@ class FrenchRidgeLapJoint(Joint):
         The beams joined by this joint.
     joint_type : str
         A string representation of this joint's type.
-
+    reference_face_indices : dict
+        A dictionary containing the indices of the reference faces for both beams.
 
     """
 
@@ -85,13 +86,13 @@ class FrenchRidgeLapJoint(Joint):
         return cfr
 
     def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the top and bottom beams saved in the assembly."""
+        """After de-serialization, restores references to the top and bottom beams saved in the assembly."""
         self.beam_a = assemly.find_by_key(self.beam_a_key)
         self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     def check_geometry(self):
         """
-        This method checks whether the parts are aligned as necessary to create French Ridge Lap.
+        This method checks whether the parts are aligned as necessary to create French Ridge Lap and determines which face is used as reference face for machining.
         """
         if not (self.beam_a and self.beam_b):
             raise(BeamJoinningError("French Ridge Lap requires 2 beams"))

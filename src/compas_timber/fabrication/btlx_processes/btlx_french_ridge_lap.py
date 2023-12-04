@@ -4,10 +4,51 @@ from compas.geometry import angle_vectors_signed
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
 
-# from compas_timber.fabrication import BTLx
-
-
+# from compas_timber.fabrication import BT
+        ...
 class BTLxFrenchRidgeLap(object):
+    """
+    BTLxFrenchRidgeLap represents a fabrication process for creating a French Ridge Lap joint.
+
+    Parameters
+    ----------
+    part : :class:`~compas_timber.fabrication.btlx_part.BTLxPart`
+        The BTLxPart object representing the beam.
+    joint : :class:`~compas_timber.connections.joint.Joint`
+        The joint object.
+    is_top : bool
+        Flag indicating if the part is the top part or bottom part.
+
+    Attributes
+    ----------
+        PROCESS_TYPE : str
+            The type of the process, which is "FrenchRidgeLap".
+        beam : :class:`~compas_timber.parts.beam.Beam`
+           The beam object associated with the part.
+        other_beam : :class:`~compas_timber.parts.beam.Beam`
+            The other beam object associated with the joint.
+        part : :class:`~compas_timber.fabrication.btlx_part.BTLxPart`
+            The BTLxPart object this process is applied to.
+        joint : :class:`~compas_timber.connections.joint.Joint`
+            The joint object.
+        orientation : str
+            Indicates which end of the beam this join is applied to.
+        drill_hole_diameter : float
+            The diameter of the drill hole.
+        ref_face_index : int
+            The index of the reference face.
+        ref_face : :class:`~compas.geometry.Frame`
+            The reference surface frame object.
+        header_attributes : dict
+            The header attributes for the process.
+        process_parameters : dict
+            The process parameters that define the geometric parameters of the BTLx process.
+        angle : float
+            The angle of the joint in degrees.
+
+
+    """
+
     PROCESS_TYPE = "FrenchRidgeLap"
 
     def __init__(self, part, joint, is_top):
@@ -31,15 +72,13 @@ class BTLxFrenchRidgeLap(object):
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
         """
 
-        self.main_process_type = "FrenchRidgeLap"
-
         self.header_attributes = {
             "Name": "French ridge lap",
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
             "ReferencePlaneID": str(self.ref_face_index),
-        }
+        }   # XML attributes of the process element in the BTLx file
 
         self.process_joints()
 

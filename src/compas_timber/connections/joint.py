@@ -57,6 +57,8 @@ class Joint(Data):
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
 
+    ends : dict(:class:`~compas_timber.parts.Beam`, str)
+        A map of which end of each beam is joined by this joint.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
@@ -130,6 +132,9 @@ class Joint(Data):
 
     @property
     def ends(self):
+
+        """Returns a map of ehich end of each beam is joined by this joint."""
+
         self._ends = {}
         for index, beam in enumerate(self.beams):
             start_distance = min(

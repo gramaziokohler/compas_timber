@@ -12,6 +12,28 @@ from compas.geometry import Transformation
 
 
 class BTLx(object):
+    """Class representing a BTLx object.
+
+    BTLx is a format used for representing timber fabrication data.
+
+    Parameters:
+    ----------
+        assembly : :class:`~compas_timber.assembly.Assembly`
+            The assembly object.
+
+    Attributes:
+    ----------
+        history : dict
+            The history of the BTLx file.
+        btlx_string : str
+            A pretty XML string for visualization.
+        parts : dict
+            A dictionary of the BTLxParts in the assembly.
+        joints : list
+            A list of the joints in the assembly.
+
+    """
+
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
     REGISTERED_JOINTS = {}
@@ -37,6 +59,7 @@ class BTLx(object):
 
     @property
     def history(self):
+        """Returns the file history of the BTLx file."""
         return {
             "CompanyName": "Gramazio Kohler Research",
             "ProgramName": "COMPAS_Timber",
@@ -50,7 +73,7 @@ class BTLx(object):
         }
 
     def btlx_string(self):
-        """returns a pretty xml sting for visualization in GH, Terminal, etc"""
+        """Returns a pretty XML string for visualization in GH, Terminal, etc."""
         self.ET_element = ET.Element("BTLx", BTLx.FILE_ATTRIBUTES)
         self.ET_element.append(self.file_history)
         self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
@@ -61,6 +84,7 @@ class BTLx(object):
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
     def process_assembly(self):
+        """Processes the assembly and generates BTLx parts."""
         for beam in self.assembly.beams:
             self.parts[str(beam.key)] = BTLxPart(beam)
         for joint in self.joints:
@@ -69,16 +93,64 @@ class BTLx(object):
 
     @classmethod
     def register_joint(cls, joint_type, joint_factory):
+        """Registers a joint type and its corresponding factory.
+
+        Args:
+            joint_type : type
+                The type of the joint.
+            joint_factory : : class:`~compas_timber.fabrication.joint_factories.joint_factory.JointFactory`
+                The factory for creating the joint.
+
+        Returns:
+            None
+        """
         cls.REGISTERED_JOINTS[str(joint_type)] = joint_factory
 
     @property
     def file_history(self):
+        """Returns the file history element."""
         file_history = ET.Element("FileHistory")
         file_history.append(ET.Element("InitialExportProgram", self.history))
         return file_history
 
 
 class BTLxPart(object):
+    """Class representing a BTLx part. This acts as a wrapper for a Beam object.
+
+    Parameters:
+    ----------
+        beam : :class:`~compas_timber.assembly.Beam`
+            The beam object.
+
+    Attributes:
+    ----------
+        attr : dict
+            The attributes of the BTLx part.
+        beam : :class:`~compas_timber.assembly.Beam`
+            The beam object.
+        key : str
+            The key of the beam object.
+        length : float
+            The length of the beam.
+        width : float
+            The width of the beam.
+        height : float
+            The height of the beam.
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
+        blank : :class:`~compas.geometry.Box`
+            The blank of the beam.
+        blank_frame : :class:`~compas.geometry.Frame`
+            The frame of the blank.
+        blank_length : float
+            The blank length of the beam.
+        processings : list
+            A list of the processings applied to the beam.
+        et_element : :class:`~xml.etree.ElementTree.Element`
+            The ET element of the BTLx part.
+
+    """
+
     def __init__(self, beam):
         self.beam = beam
         self.key = beam.key
@@ -90,14 +162,13 @@ class BTLxPart(object):
             beam.frame.xaxis,
             beam.frame.yaxis,
         )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
-        self._test = []
         self.blank_length = beam.blank_length
-        self.key = beam.key
         self._reference_surfaces = []
         self.processings = []
         self._et_element = None
 
-    def reference_surface_planes(self, index):  # TODO: fix Beam.shape definition and update this.
+    def reference_surface_planes(self, index):
+        """Returns the reference surface planes for a given index per BTLx docs."""
         if len(self._reference_surfaces) != 6:
             self._reference_surfaces = {
                 "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
@@ -162,6 +233,17 @@ class BTLxPart(object):
         return items
 
     def et_point_vals(self, point):
+        """Returns the ET point values for a given point.
+
+        Parameters:
+        ----------
+            point : :class:`~compas.geometry.Point`
+                The point to be converted.
+        Returns:
+        ----------
+            dict
+                The ET point values formatted for the ET element.
+        """
         return {
             "X": "{:.{prec}f}".format(point.x, prec=BTLx.POINT_PRECISION),
             "Y": "{:.{prec}f}".format(point.y, prec=BTLx.POINT_PRECISION),
@@ -243,17 +325,49 @@ class BTLxProcess(object):
     """
     Generic class for BTLx processings.
     This should be instantiated and appended to BTLxPart.processings in a specific btlx_process class (eg BTLxJackCut)
+
+    each specific btlx process class should have:
+    PROCESS_TYPE a class attribute which matches the btlx process name
+    self.header_attributes which matches as a dict,
+    self.process_parameters which describe the geometric parameters of the process
+
+
+    the joint factory calls instantiates a process or processes and appends it or them to the BTLxPart.processes list
+
+    each process will have specific inputs which are derived from the Joint instance and related BTLxParts
+
+
+    some joints will require combinations of multiple BTLx processes, and some processes will cover multiple joint types.
+
+    the factory module should call the BTLx.register_joint(joint type, joint factory) function so that the BTLx class can call specific factory types.
+
+    The factory will typically derive the needed parameters from the Joint instance and the joint_factory will apply them to the individual BTLxParts.
+
+
+    Parameters:
+    name : str
+        The name of the processing.
+    attr : dict
+        The attributes of the processing.
+    params : dict
+        The parameters of the processing.
+
+
+    Attributes:
+    ----------
+    et_element : :class:`~xml.etree.ElementTree.Element`
+        The ET element of the BTLx processing.
     """
 
-    def __init__(self, name, attr, params):
-        self.name = name
-        self.attr = attr
-        self.params = params
+    def __init__(self, process_type, header_attributes, process_parameters):
+        self.process_type = process_type
+        self.header_attributes = header_attributes
+        self.process_parameters = process_parameters
 
     @property
     def et_element(self):
-        element = ET.Element(self.name, self.attr)
-        for key, value in self.params.items():
+        element = ET.Element(self.process_type, self.header_attributes)
+        for key, value in self.process_parameters.items():
             child = ET.Element(key)
             child.text = value
             element.append(child)
