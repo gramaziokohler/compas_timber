@@ -37,7 +37,7 @@ class BTLxLap(object):
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": "2",
+            "ReferencePlaneID": str(self.parameters[5]),
         }
 
         self.process_joints()
@@ -68,15 +68,15 @@ class BTLxLap(object):
 
         self.process_parameters = OrderedDict(
             [
-                ("Orientation", "start"), #TODO Define
-                ("StartX", "500.000"), #TODO Define
+                ("Orientation", "start"),
+                ("StartX", str(self.parameters[6])),
                 ("StartY", "0.000"), #TODO Define
                 ("Angle", str(self.parameters[2])),
                 ("Inclination", str(self.parameters[4])),
                 ("Slope", str(self.parameters[3])),
                 ("Length", str(self.parameters[1])),
                 ("Width", str(self.parameters[0])),
-                ("Depth", "40.000"), #TODO Define
+                ("Depth", str(self.parameters[7])), #TODO Define
                 ("LeadAngleParallel", "yes"), #TODO Define
                 ("LeadAngle", "90.000"), #TODO Define
                 ("LeadInclinationParallel", "yes"), #TODO Define

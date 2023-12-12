@@ -29,6 +29,13 @@ class XHalfLapJoint(Joint):
         self.beam_b_key = beam_b.key if beam_b else None
         self.cut_plane_choice = cut_plane_choice  # Decide if Direction of beam_a or beam_b
         self.features = []
+        self.cutplane = []
+        self.sorted_frames_a = []
+        self.sorted_frames_b = []
+        self.sorted_planes_a = []
+        self.sorted_planes_b = []
+        self.operation_plane_a = []
+        self.operation_plane_b = []
 
     @property
     def data(self):
@@ -87,13 +94,13 @@ class XHalfLapJoint(Joint):
             cutplane_vector_a = plane_cut.normal
         if length_vector(cutplane_vector_b) < 1e-6:
             cutplane_vector_b = plane_cut.normal * -1
+        
+        self.cutplane = plane_cut
 
         return plane_cut, cutplane_vector_a, cutplane_vector_b
 
     @staticmethod
-    def _sort_beam_planes(beam, cutplane_vector):
-        # Sorts the Beam Face Planes according to the Cut Plane
-
+    def _sort_beam_planes_old(beam, cutplane_vector): #TODO delete this if the new function works!!!
         frames = beam.faces[:4]
         planes = []
         planes_angles = []
@@ -102,7 +109,23 @@ class XHalfLapJoint(Joint):
             planes_angles.append(angle_vectors(cutplane_vector, i.normal))
         planes_angles, planes = zip(*sorted(zip(planes_angles, planes)))
         return planes
-
+    
+    @staticmethod
+    def _sort_beam_planes(beam, cutplane_vector):
+        #Reorders the Beam Planes based on which Plane is the Operation Face
+        frames = beam.faces[:4]
+        angles = []
+        for i in frames:
+            angles.append(angle_vectors(cutplane_vector, i.normal))
+        min_item = angles.index(min(angles)) #smallest normal angle
+        frames_sorted = frames[min_item:] + frames[:min_item] #rotate the list
+        frames_sorted.append(beam.faces[4]) #add Frame 5
+        frames_sorted.append(beam.faces[5]) #add Frame 6
+        planes_sorted = []
+        for i in frames_sorted:
+            planes_sorted.append(Plane.from_frame(i))
+        return frames_sorted, planes_sorted, min_item
+        
     @staticmethod
     def _create_polyhedron(plane_a, plane_b, lines):  # Hexahedron from 2 Planes and 4 Lines
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
@@ -110,8 +133,6 @@ class XHalfLapJoint(Joint):
         for i in lines:
             point_top = intersection_line_plane(i, plane_a)
             point_bottom = intersection_line_plane(i, plane_b)
-            point_top = Point(*point_top)
-            point_bottom = Point(*point_bottom)
             int_points.append(point_top)
             int_points.append(point_bottom)
 
@@ -143,21 +164,21 @@ class XHalfLapJoint(Joint):
         plane_cut, plane_cut_vector_a, plane_cut_vector_b = self._cutplane()
 
         # Get Beam Faces (Planes) in right order
-        planes_a = self._sort_beam_planes(self.beam_a, plane_cut_vector_a)
-        plane_a0, plane_a1, plane_a2, plane_a3 = planes_a
+        self.sorted_frames_a, self.sorted_planes_a, self.operation_plane_a = self._sort_beam_planes(self.beam_a, plane_cut_vector_a)
+        plane_a0, plane_a1, plane_a2, plane_a3, plane_a4, plane_a5 = self.sorted_planes_a
 
-        planes_b = self._sort_beam_planes(self.beam_b, plane_cut_vector_b)
-        plane_b0, plane_b1, plane_b2, plane_b3 = planes_b
+        self.sorted_frames_b, self.sorted_planes_b, self.operation_plane_b = self._sort_beam_planes(self.beam_b, plane_cut_vector_b)
+        plane_b0, plane_b1, plane_b2, plane_b3, plane_b4, plane_b5 = self.sorted_planes_b
 
         # Lines as Frame Intersections
         lines = []
         x = intersection_plane_plane(plane_a1, plane_b1)
         lines.append(Line(x[0], x[1]))
-        x = intersection_plane_plane(plane_a1, plane_b2)
+        x = intersection_plane_plane(plane_a1, plane_b3)
         lines.append(Line(x[0], x[1]))
-        x = intersection_plane_plane(plane_a2, plane_b2)
+        x = intersection_plane_plane(plane_a3, plane_b3)
         lines.append(Line(x[0], x[1]))
-        x = intersection_plane_plane(plane_a2, plane_b1)
+        x = intersection_plane_plane(plane_a3, plane_b1)
         lines.append(Line(x[0], x[1]))
 
         # Create Polyhedrons
