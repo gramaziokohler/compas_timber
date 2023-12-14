@@ -25,7 +25,6 @@ class BTLxLap(object):
         self._drill_hole = True
         self.drill_hole_diameter = 10.0
 
-
         """
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
         """
@@ -37,7 +36,7 @@ class BTLxLap(object):
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": str(self.parameters[5]),
+            "ReferencePlaneID": str(self.parameters[0]),
         }
 
         self.process_joints()
@@ -68,20 +67,20 @@ class BTLxLap(object):
 
         self.process_parameters = OrderedDict(
             [
-                ("Orientation", "start"),
-                ("StartX", str(self.parameters[6])),
-                ("StartY", "0.000"), #TODO Define
-                ("Angle", str(self.parameters[2])),
-                ("Inclination", str(self.parameters[4])),
-                ("Slope", str(self.parameters[3])),
-                ("Length", str(self.parameters[1])),
-                ("Width", str(self.parameters[0])),
-                ("Depth", str(self.parameters[7])), #TODO Define
-                ("LeadAngleParallel", "yes"), #TODO Define
-                ("LeadAngle", "90.000"), #TODO Define
-                ("LeadInclinationParallel", "yes"), #TODO Define
-                ("LeadInclination", "90.000"), #TODO Define
-                ("MachiningLimits", ""), #TODO Define
+                ("Orientation", str(self.parameters[1])),
+                ("StartX", str(self.parameters[2])),
+                ("StartY", str(self.parameters[3])),
+                ("Angle", str(self.parameters[4])),
+                ("Inclination", str(self.parameters[5])),
+                ("Slope", str(self.parameters[6])),
+                ("Length", str(self.parameters[7])),
+                ("Width", str(self.parameters[8])),
+                ("Depth", str(self.parameters[9])),
+                ("LeadAngleParallel", str(self.parameters[10])),
+                ("LeadAngle", str(self.parameters[11])),
+                ("LeadInclinationParallel", str(self.parameters[12])),
+                ("LeadInclination", str(self.parameters[13])),
+                ("MachiningLimits", str(self.parameters[14])),
             ]
         )
 
@@ -90,7 +89,6 @@ class BTLxLap(object):
         This is an internal method to generate process parameters
         """
         # TODO Get Params
-
 
     @classmethod
     def apply_process(cls, part, joint, parameters):

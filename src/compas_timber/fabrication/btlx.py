@@ -111,8 +111,8 @@ class BTLxPart(object):
     def __init__(self, beam):
         self.beam = beam
         self.length = beam.length
-        self.width = beam.width
-        self.height = beam.height
+        self.width = beam.height
+        self.height = beam.width
         self.frame = beam.frame
         self._test = []
         self.geometry_type = "brep"
