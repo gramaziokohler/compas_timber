@@ -5,7 +5,6 @@ from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
 
 # from compas_timber.fabrication import BT
-        ...
 class BTLxFrenchRidgeLap(object):
     """
     BTLxFrenchRidgeLap represents a fabrication process for creating a French Ridge Lap joint.
