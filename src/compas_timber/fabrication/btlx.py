@@ -167,6 +167,14 @@ class BTLxPart(object):
         self.processings = []
         self._et_element = None
 
+
+    def reference_surface_from_beam_face(self, beam_face):
+        """ Finds the reference surface with normal that matches the normal of the beam face argument"""
+        for key, face in self.reference_surfaces.items():
+            if face.normal == beam_face.normal:
+                return key
+
+
     def reference_surface_planes(self, index):
         """Returns the reference surface planes for a given index per BTLx docs."""
         if len(self._reference_surfaces) != 6:
