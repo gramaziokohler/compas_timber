@@ -37,6 +37,8 @@ class XHalfLapFactory(object):
         self._apply_lap(
             btlx_joint, reference_plane_id, part_b, part_a, planes_b, planes_a, frames_b, cutplane_b, crossplane_to_b
         )
+        output = crossplane_to_a, crossplane_to_b, cutplane_a #TODO delete if everything works
+        return output #TODO delete if everything works
 
     @staticmethod
     def _apply_lap(
@@ -85,7 +87,7 @@ class XHalfLapFactory(object):
     @staticmethod
     def _crossplane(planes_main, planes_cross):
         # calculates the plane of beam_b that marks the angle center
-        vector_a4 = planes_main[5][1]  # TODO herausfinden ob [4] oder [5]
+        vector_a4 = planes_main[4][1]  # TODO herausfinden ob [4] oder [5]
         planes_b = planes_cross[1], planes_cross[3]
         vectors_b = planes_cross[1][1], planes_cross[3][1]
         angles = []
@@ -110,7 +112,7 @@ class XHalfLapFactory(object):
 
     @staticmethod
     def _calculate_angle(frames_main, planes_main, crossplane):
-        vector_a3 = planes_main[3][1]
+        vector_a3 = planes_main[1][1]
         vector_b = XHalfLapFactory._project_vector_to_frame(crossplane[1], frames_main[0])
         angle = angle_vectors(vector_a3, vector_b)
         return degrees(angle)
@@ -125,7 +127,6 @@ class XHalfLapFactory(object):
 
     @staticmethod
     def _calculate_slope(part_a, part_b):
-        # Calculates the Slope
         frame = part_a.frame
         vector = part_b.frame.xaxis
         vector_projected = XHalfLapFactory._project_vector_to_frame(vector, frame)
