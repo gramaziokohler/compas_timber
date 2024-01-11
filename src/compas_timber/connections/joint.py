@@ -132,7 +132,6 @@ class Joint(Data):
 
     @property
     def ends(self):
-
         """Returns a map of ehich end of each beam is joined by this joint."""
 
         self._ends = {}
