@@ -1,13 +1,14 @@
 """Creates a Beam from a LineCurve."""
-import Rhino.Geometry as rg
-from compas_rhino.conversions import line_to_compas
+from compas.geometry import Line
+from compas.scene import Scene
 from compas_rhino.conversions import vector_to_compas
+from compas_rhino.conversions import curve_to_compas
+from compas_timber.parts import Beam as CTBeam
+
+from Rhino.RhinoDoc import ActiveDoc
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-
-from compas.scene import Scene
-from compas_timber.parts.beam import Beam as ctBeam
 
 
 class Beam_fromCurve(component):
@@ -60,25 +61,17 @@ class Beam_fromCurve(component):
             if len(Category) != N:
                 Category = [Category[0] for _ in range(N)]
 
-            for crv, z, w, h, c in zip(Centerline, ZVector, Width, Height, Category):
-                if crv is None or w is None or h is None:
-                    self.AddRuntimeMessage(Warning, "Some of the input values are Null")
-                else:
-                    line = rg.Line(crv.PointAtStart, crv.PointAtEnd)
+            for guid, z, w, h, c in zip(Centerline, ZVector, Width, Height, Category):
+                curve = curve_to_compas(ActiveDoc.Objects.FindId(guid))
+                line = Line(curve.start, curve.end)
+                z = vector_to_compas(z) if z else None
+                beam = CTBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
+                beam.attributes["rhino_guid"] = str(guid)
+                beam.attributes["category"] = c
 
-                    line = line_to_compas(line)
-                    if z:
-                        z = vector_to_compas(z)
-                    else:
-                        None
+                Beam.append(beam)
+                scene.add(beam.blank)
 
-                    beam = ctBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
-
-                    beam.attributes["rhino_guid"] = None
-                    beam.attributes["category"] = c
-
-                    Beam.append(beam)
-                    scene.add(beam.blank)
         Blank = scene.redraw()
 
         return Beam, Blank
