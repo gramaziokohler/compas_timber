@@ -1,2 +1,2 @@
 rtree
-compas==2.0.0a2
+compas==2.0.0beta1
