@@ -1,0 +1,54 @@
+{
+    "name": "Apply Joints by Topology",
+    "nickname": "JointsByTopo",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "Analyzes beams and applies given joint types for each topology type.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beams",
+                "description": "Collection of Beams.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "L",
+                "description": "Joint type to be applied to L topology. Default type is L-Miter. If L-Butt, the beam with a larger cross section area will be used as crossing beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "T",
+                "description": "Joint type to be applied to T topology. Default type is T-Butt.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "X",
+                "description": "Joint type to be applied to X topology. Default type is X-HalfLap.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "MaxDistance",
+                "description": "(optional) Maximum distance between centerlines of two Beams (limited to segments) to consider the Beams as connecting. Optional (if omitted, a default value equal to the average beam height will be taken).",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Joints",
+                "description": "List of JointDefinitions."
+            },
+            {
+                "name": "Info",
+                "description": "Report and analysis of the found connections and any issues."
+            }
+        ]
+    }
+}

@@ -13,7 +13,7 @@ class LButtFactory(object):
 
     @classmethod
     def apply_processings(cls, joint, parts):
-        """ Apply processings to the joint and its associated parts.
+        """Apply processings to the joint and its associated parts.
 
         Parameters:
         ----------

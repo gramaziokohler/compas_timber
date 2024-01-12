@@ -4,8 +4,7 @@ from compas.geometry import angle_vectors_signed
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
 
-# from compas_timber.fabrication import BT
-        ...
+
 class BTLxFrenchRidgeLap(object):
     """
     BTLxFrenchRidgeLap represents a fabrication process for creating a French Ridge Lap joint.
@@ -78,7 +77,7 @@ class BTLxFrenchRidgeLap(object):
             "Priority": "0",
             "ProcessID": "0",
             "ReferencePlaneID": str(self.ref_face_index),
-        }   # XML attributes of the process element in the BTLx file
+        }  # XML attributes of the process element in the BTLx file
 
         self.process_joints()
 
