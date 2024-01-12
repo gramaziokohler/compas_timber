@@ -19,7 +19,7 @@
                 "name": "L",
                 "description": "Joint type to be applied to L topology. Default type is L-Miter. If L-Butt, the beam with a larger cross section area will be used as crossing beam.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "T",
