@@ -48,6 +48,6 @@ class MyComponent(component):
                 Joints.append(JointDefinition(joint_type, [beam_b, beam_a]))
             else:
                 Joints.append(JointDefinition(joint_type, [beam_a, beam_b]))
-            msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule assigns: {}"
+            msg = "Beams: {}, {} meet with topology: {} and use joint: {}"
             Info.append(msg.format(beam_a, beam_b, JointTopology.get_name(detected_topo), joint_type.__name__))
-        return Joints
+        return Joints, Info
