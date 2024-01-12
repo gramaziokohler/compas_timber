@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* added `ApplyJointsByTopology` GH Component 
 * added `fabrication` package 
 * added `BTLx` as a wrapper for `TimberAssembly` to generate .btlx files for machining timber beams
 * added `BTLxPart` as wrapper for `Beam`
