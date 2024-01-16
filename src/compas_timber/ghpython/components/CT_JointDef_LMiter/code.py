@@ -27,7 +27,7 @@ class LMiterDefinition(component):
         Joint = []
         for beam_a, beam_b in zip(BeamA, BeamB):
             topology, _, _ = ConnectionSolver().find_topology(beam_a, beam_b)
-            if topology != LMiterJoint.SUPPORTED_TOPOLOGY:
+            if topology not in LMiterJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
                     Warning,
                     "Beams meet with topology: {} which does not agree with joint of type: {}".format(

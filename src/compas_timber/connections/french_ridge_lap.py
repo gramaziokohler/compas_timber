@@ -37,7 +37,7 @@ class FrenchRidgeLapJoint(Joint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_L]
 
     def __init__(self, beam_a=None, beam_b=None, gap=0.0, frame=None, key=None):
         super(FrenchRidgeLapJoint, self).__init__(frame=frame, key=key)

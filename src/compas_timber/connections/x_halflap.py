@@ -18,7 +18,7 @@ from .solver import JointTopology
 
 
 class XHalfLapJoint(Joint):
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
+    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_X, JointTopology.TOPO_T, JointTopology.TOPO_L]
 
     def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)

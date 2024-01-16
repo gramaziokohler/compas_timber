@@ -61,7 +61,7 @@ class Joint(Data):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_UNKNOWN]
 
     def __init__(self, frame=None, key=None):
         super(Joint, self).__init__()

@@ -37,7 +37,7 @@ class LButtJoint(Joint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X]
 
     def __init__(self, main_beam=None, cross_beam=None, gap=0.0, frame=None, key=None):
         super(LButtJoint, self).__init__(frame=frame, key=key)

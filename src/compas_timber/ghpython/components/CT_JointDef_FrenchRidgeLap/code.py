@@ -27,7 +27,7 @@ class FrenchRidgeLapDefinition(component):
         Joint = []
         for main, cross in zip(MainBeam, CrossBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, cross)
-            if topology != FrenchRidgeLapJoint.SUPPORTED_TOPOLOGY:
+            if topology not in FrenchRidgeLapJoint.SUPPORTED_TOPOLOGY:
                 self.AddRuntimeMessage(
                     Warning,
                     "Beams meet with topology: {} which does not agree with joint of type: {}".format(

@@ -34,10 +34,15 @@ class AutotomaticJoints(component):
             for rule in rules:
                 if not rule.comply(pair):
                     continue
-                if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
-                    msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule assigns: {}"
+                if detected_topo not in rule.joint_type.SUPPORTED_TOPOLOGY:
+                    msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule assigns: {} which supports: {}"
                     Info.append(
-                        msg.format(beam_a, beam_b, JointTopology.get_name(detected_topo), rule.joint_type.__name__)
+                        msg.format(
+                            beam_a,
+                            beam_b,
+                            JointTopology.get_name(detected_topo), rule.joint_type.__name__,
+                            [JointTopology.get_name(t) for t in rule.joint_type.SUPPORTED_TOPOLOGY],
+                        )
                     )
                     continue
                 # sort by category to allow beam role by order (main beam first, cross beam second)

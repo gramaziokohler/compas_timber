@@ -37,7 +37,7 @@ class TButtJoint(Joint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_T, JointTopology.TOPO_L, JointTopology.TOPO_X]
 
     def __init__(self, main_beam=None, cross_beam=None, gap=None, frame=None, key=None):
         super(TButtJoint, self).__init__(frame, key)
