@@ -1,9 +1,8 @@
 # flake8: noqa
 # -*- coding: utf-8 -*-
 
+from sphinx.writers import html, html5
 import sphinx_compas2_theme
-from sphinx.writers import html
-from sphinx.writers import html5
 
 # -- General configuration ------------------------------------------------
 
@@ -101,9 +100,8 @@ sphinx_compas2_theme.replace(html5.HTML5Translator)
 
 # -- Options for HTML output ----------------------------------------------
 
-html_theme = "multisection"
+html_theme = "sidebaronly"
 html_title = project
-html_sidebars = {"index": []}
 
 favicons = [
     {

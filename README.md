@@ -12,14 +12,16 @@
 
 ## Installation
 
-Since it is in early active development, `compas_timber` relies on unreleased features of COMPAS. Please first install:
-```bash
-pip install compas@git+https://github.com/compas-dev/compas@main
-```
+> It is recomended you install `compas_timber` inside a virtual environment.
 
-Then install `compas_timber` using:
 ```bash
 pip install compas_timber
+```
+
+To install `compas_timber` to Rhino run
+
+```bash
+python -m compas_rhino.install
 ```
 
 ## First Steps

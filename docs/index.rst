@@ -2,11 +2,16 @@
 COMPAS TIMBER
 ********************************************************************************
 
+.. figure:: /_images/compas_timber.png
+     :figclass: figure
+     :class: figure-img img-fluid
+
+
 .. rst-class:: lead
 
-This is the documentation of COMPAS TIMBER - an open-source package for modeling, designing and fabricating timber frame structures.
+COMPAS TIMBER is an open-source package for modeling, designing and fabricating timber frame structures.
 
-COMPAS TIMBER is written in Python and based on the `COMPAS <https://compas.dev/index.html>`__ framework as part of its ecosystem.
+COMPAS TIMBER is written in Python and and is a part of the `COMPAS <https://compas.dev/index.html>`__ ecosystem.
 It also features an implementation for `Rhinoceros 3D <https://www.rhino3d.com/>`__
 as a `Grasshopper <https://www.rhino3d.com/features/#grasshopper>`__ plug-in.
 
