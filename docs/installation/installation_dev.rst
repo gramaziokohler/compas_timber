@@ -7,7 +7,7 @@ Manual installation for developers
 Use this installation guide if you want to add **COMPAS TIMBER** for development purposes.
 
     .. note::
-        See also details on COMPAS development `here <https://compas.dev/compas/latest/devguide.html#>`__ .
+        See also details on COMPAS development `here <https://compas.dev/compas/latest/devguide>`__ .
 
 
 1.  Fork the COMPAS TIMBER `repo <https://github.com/gramaziokohler/compas_timber>`__ and clone the fork.

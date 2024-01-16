@@ -8,19 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-* added `fabrication` package 
-* added `BTLx` as a wrapper for `TimberAssembly` to generate .btlx files for machining timber beams
-* added `BTLxPart` as wrapper for `Beam`
-* added `joint_factories` folder and factories for existing joints except `X-HalfLap`
-* added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
-* added `BTLx` Grasshopper component
-* added `FrenchRidgeHalfLap` joint
+* Added `fabrication` package 
+* Added `BTLx` as a wrapper for `TimberAssembly` to generate .btlx files for machining timber beams
+* Added `BTLxPart` as wrapper for `Beam`
+* Added `joint_factories` folder and factories for existing joints except `X-HalfLap`
+* Added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
+* Added `BTLx` Grasshopper component
+* Added `FrenchRidgeHalfLap` joint
+
 ### Changed
-* changed `Beam` definition to include `blank_frame` and `blank_length` attributes 
+* Changed `Beam` definition to include `blank_frame` and `blank_length` attributes 
 * Replaced `Artist` with the new `Scene`.
+* Changed type hint for argument `Centerline` of GH component `BeamFromCurve` to `Guid`.
+* Curve ID of beam curves are now always stored in `Beam.attributes["rhino_guid"]`.
+* Fixed `FindBeamByGuid` component.
+* Bumped required COMPAS version to `2.0.0beta.2`.
+* Changed docs theme to the new `sphinx_compas2_theme`.
 
 ### Removed
 
+* Removed superfluous component `BeamFromCurveGuid`.
 
 ## [0.3.2] 2023-11-17
 

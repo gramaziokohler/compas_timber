@@ -1,6 +1,7 @@
+import Rhino
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-import Rhino
+
 from compas_timber.fabrication import BTLx
 
 

@@ -1,8 +1,8 @@
 ********************************************************************************
-compas_timber.parts
+compas_timber.fabrication
 ********************************************************************************
 
-.. currentmodule:: compas_timber.parts
+.. currentmodule:: compas_timber.fabrication
 
 Classes
 =======
@@ -11,4 +11,11 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Beam
+    BTLx
+    BTLxProcess
+    BTLxJackCut
+    BTLxFrenchRidgeLap
+    LButtFactory
+    TButtFactory
+    LMiterFactory
+    FrenchRidgeFactory

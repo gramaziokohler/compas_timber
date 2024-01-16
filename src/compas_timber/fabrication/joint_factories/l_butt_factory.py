@@ -1,5 +1,5 @@
-from compas_timber.fabrication import BTLx
 from compas_timber.connections import LButtJoint
+from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
 
 
@@ -13,17 +13,19 @@ class LButtFactory(object):
 
     @classmethod
     def apply_processings(cls, joint, parts):
-        """ Apply processings to the joint and its associated parts.
+        """Apply processings to the joint and its associated parts.
 
-        Parameters:
+        Parameters
         ----------
-            joint : :class:`~compas_timber.connections.joint.Joint`
-                The joint object.
-            parts : dict
-                A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
+        joint : :class:`~compas_timber.connections.joint.Joint`
+            The joint object.
+        parts : dict
+            A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
 
         main_part = parts[str(joint.main_beam.key)]

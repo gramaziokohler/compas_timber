@@ -1,5 +1,5 @@
-from compas_timber.fabrication import BTLx
 from compas_timber.connections import FrenchRidgeLapJoint
+from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxFrenchRidgeLap
 
 
@@ -12,18 +12,21 @@ class FrenchRidgeFactory(object):
         pass
 
     @classmethod
-    def apply_processings(self, joint, parts):
+    def apply_processings(cls, joint, parts):
         """
         Apply processings to the joint and parts.
 
-        Parameters:
-            joint : :class:`~compas_timber.connections.joint.Joint`
-                The joint object.
-            parts :dict
-                A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
+        Parameters
+        ----------
+        joint : :class:`~compas_timber.connections.joint.Joint`
+            The joint object.
+        parts : dict
+            A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
 
         top_key = joint.beams[0].key
@@ -34,7 +37,7 @@ class FrenchRidgeFactory(object):
         bottom_key = joint.beams[1].key
         bottom_part = parts[str(bottom_key)]
         bottom_part._test.append(
-            bottom_part.reference_surface_planes(joint.reference_face_indices[str(bottom_part.beam.key)]))
+            bottom_part.reference_surface_planes(joint.reference_face_indices[str(bottom_part.beam.key)])
         )
         bottom_part.processings.append(BTLxFrenchRidgeLap.create_process(bottom_part, joint, False))
 

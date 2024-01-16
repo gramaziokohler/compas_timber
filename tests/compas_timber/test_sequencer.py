@@ -3,9 +3,9 @@ from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
 
-from compas_timber.planning import SimpleSequenceGenerator
 from compas_timber.assembly import TimberAssembly
 from compas_timber.parts import Beam
+from compas_timber.planning import SimpleSequenceGenerator
 
 
 @pytest.fixture
