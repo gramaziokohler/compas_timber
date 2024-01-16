@@ -1,18 +1,14 @@
 ********************************************************************************
-rhino
+compas_timber.consumers
 ********************************************************************************
 
-.. currentmodule:: compas_timber.rhino
+.. currentmodule:: compas_timber.consumers
 
-.. rst-class:: lead
-
-The modules contains functions and types meant to be used in the Rhino context.
-
-Plugins
+Classes
 =======
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    find_neighboring_beams
+    BrepGeometryConsumer
