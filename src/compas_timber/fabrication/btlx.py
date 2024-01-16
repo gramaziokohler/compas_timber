@@ -1,12 +1,12 @@
 import os
 import uuid
+import xml.dom.minidom as MD
+import xml.etree.ElementTree as ET
+from collections import OrderedDict
 from datetime import date
 from datetime import datetime
-import xml.etree.ElementTree as ET
-import xml.dom.minidom as MD
-import compas
 
-from collections import OrderedDict
+import compas
 from compas.geometry import Frame
 from compas.geometry import Transformation
 

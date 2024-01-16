@@ -5,10 +5,10 @@ import random
 import Rhino
 import Rhino.Geometry as rg
 import rhinoscriptsyntax as rs
+from compas_rhino.conversions import frame_to_rhino
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_rhino.conversions import frame_to_rhino
 from compas_timber.consumers import BrepGeometryConsumer
 
 

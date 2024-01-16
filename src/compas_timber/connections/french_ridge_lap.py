@@ -1,9 +1,11 @@
-from compas.geometry import Frame
-from compas.geometry import cross_vectors
-from compas.geometry import angle_vectors
 import math
 
-from .joint import BeamJoinningError, Joint
+from compas.geometry import Frame
+from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
+
+from .joint import BeamJoinningError
+from .joint import Joint
 from .joint import beam_side_incidence
 from .solver import JointTopology
 

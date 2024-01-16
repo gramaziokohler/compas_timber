@@ -1,5 +1,5 @@
-from compas_timber.fabrication import BTLx
 from compas_timber.connections import FrenchRidgeLapJoint
+from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxFrenchRidgeLap
 
 

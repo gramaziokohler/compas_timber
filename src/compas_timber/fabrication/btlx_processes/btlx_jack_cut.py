@@ -1,12 +1,14 @@
 import math
 from collections import OrderedDict
+
 from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import cross_vectors
 from compas.geometry import angle_vectors_signed
-from compas_timber.utils.compas_extra import intersection_line_plane
+from compas.geometry import cross_vectors
+
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
+from compas_timber.utils.compas_extra import intersection_line_plane
 
 
 class BTLxJackCut(object):

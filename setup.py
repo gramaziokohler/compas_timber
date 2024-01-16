@@ -6,8 +6,8 @@ from __future__ import print_function
 import io
 from os import path
 
-from setuptools import setup
 from setuptools import find_packages
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 

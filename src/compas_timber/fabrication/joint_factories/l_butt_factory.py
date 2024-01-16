@@ -1,5 +1,5 @@
-from compas_timber.fabrication import BTLx
 from compas_timber.connections import LButtJoint
+from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
 
 
