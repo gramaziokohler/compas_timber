@@ -38,6 +38,12 @@
                 "description": "Category of a beam.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "updateRefObj",
+                "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [

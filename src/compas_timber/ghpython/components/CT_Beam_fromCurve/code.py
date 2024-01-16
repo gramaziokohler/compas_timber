@@ -8,11 +8,12 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.RhinoDoc import ActiveDoc
 
+from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
 from compas_timber.parts import Beam as CTBeam
 
 
 class Beam_fromCurve(component):
-    def RunScript(self, Centerline, ZVector, Width, Height, Category):
+    def RunScript(self, Centerline, ZVector, Width, Height, Category, updateRefObj):
         # minimum inputs required
         if not Centerline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")
@@ -68,6 +69,12 @@ class Beam_fromCurve(component):
                 beam = CTBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
                 beam.attributes["rhino_guid"] = str(guid)
                 beam.attributes["category"] = c
+
+                if updateRefObj:
+                    update_rhobj_attributes_name(guid, "width", str(w))
+                    update_rhobj_attributes_name(guid, "height", str(h))
+                    update_rhobj_attributes_name(guid, "zvector", str(list(beam.frame.zaxis)))
+                    update_rhobj_attributes_name(guid, "category", c)
 
                 Beam.append(beam)
                 scene.add(beam.blank)
