@@ -40,7 +40,8 @@ class AutotomaticJoints(component):
                         msg.format(
                             beam_a,
                             beam_b,
-                            JointTopology.get_name(detected_topo), rule.joint_type.__name__,
+                            JointTopology.get_name(detected_topo),
+                            rule.joint_type.__name__,
                             [JointTopology.get_name(t) for t in rule.joint_type.SUPPORTED_TOPOLOGY],
                         )
                     )
