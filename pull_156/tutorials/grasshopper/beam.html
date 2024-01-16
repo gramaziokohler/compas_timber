@@ -147,7 +147,7 @@
     <div class="me-auto navbar-header-items__center">
       
         <div class="navbar-item"><nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
+  <!-- <p class="sidebar-header-items__title"
      role="heading"
      aria-level="1"
      aria-label="Site Navigation">
@@ -218,7 +218,7 @@
                 </div>
             </div>
             
-  </ul>
+  </ul> -->
 </nav></div>
       
     </div>
@@ -338,7 +338,7 @@ document.write(`
       <div class="sidebar-header-items__center">
         
           <div class="navbar-item"><nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
+  <!-- <p class="sidebar-header-items__title"
      role="heading"
      aria-level="1"
      aria-label="Site Navigation">
@@ -409,7 +409,7 @@ document.write(`
                 </div>
             </div>
             
-  </ul>
+  </ul> -->
 </nav></div>
         
       </div>
@@ -489,23 +489,54 @@ document.write(`
   </div>
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
-        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
-     aria-label="Section Navigation">
-  <!-- <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p> -->
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Beam</a></li>
-<li class="toctree-l1"><a class="reference internal" href="attributes.html">Attributes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="joints.html">Joints</a></li>
-<li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
-<li class="toctree-l1"><a class="reference internal" href="assembly.html">Assembly</a></li>
-<li class="toctree-l1"><a class="reference internal" href="show.html">Show</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Introduction</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../installation.html">Installation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation/installation_quick.html">Quick installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation/installation_manual.html">Manual installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation/installation_dev.html">Manual installation for developers</a></li>
 </ul>
-</div>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.assembly.html">compas_timber.assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.parts.html">compas_timber.parts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.connections.html">compas_timber.connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.consumers.html">compas_timber.consumers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.fabrication.html">compas_timber.fabrication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.planning.html">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.rhino.html">rhino</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/create_joint.html">Create Joint</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../citing.html">Citing</a></li>
+</ul>
+
+    </div>
 </nav></div>
+        <div class="sidebar-primary-item"><div class="sidebar-primary-item">
+    <a href="https://compas.dev" target="_blank">
+        COMPAS.dev <i class="fa fa-external-link" aria-hidden="true"></i>
+    </a>
+</div></div>
     </div>
   
   

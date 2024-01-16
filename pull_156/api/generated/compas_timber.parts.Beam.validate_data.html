@@ -147,7 +147,7 @@
     <div class="me-auto navbar-header-items__center">
       
         <div class="navbar-item"><nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
+  <!-- <p class="sidebar-header-items__title"
      role="heading"
      aria-level="1"
      aria-label="Site Navigation">
@@ -218,7 +218,7 @@
                 </div>
             </div>
             
-  </ul>
+  </ul> -->
 </nav></div>
       
     </div>
@@ -342,7 +342,7 @@ document.write(`
       <div class="sidebar-header-items__center">
         
           <div class="navbar-item"><nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
+  <!-- <p class="sidebar-header-items__title"
      role="heading"
      aria-level="1"
      aria-label="Site Navigation">
@@ -413,7 +413,7 @@ document.write(`
                 </div>
             </div>
             
-  </ul>
+  </ul> -->
 </nav></div>
         
       </div>
@@ -493,59 +493,54 @@ document.write(`
   </div>
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
-        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
-     aria-label="Section Navigation">
-  <!-- <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p> -->
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="../compas_timber.assembly.html">compas_timber.assembly</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.assembly.TimberAssembly.html">TimberAssembly</a></li>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Introduction</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../installation.html">Installation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation/installation_quick.html">Quick installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation/installation_manual.html">Manual installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation/installation_dev.html">Manual installation for developers</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../compas_timber.parts.html">compas_timber.parts</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2 current active"><a class="reference internal" href="compas_timber.parts.Beam.html">Beam</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.assembly.html">compas_timber.assembly</a></li>
+<li class="toctree-l2 current active"><a class="reference internal" href="../compas_timber.parts.html">compas_timber.parts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.consumers.html">compas_timber.consumers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.rhino.html">rhino</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.Joint.html">Joint</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.TButtJoint.html">TButtJoint</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.LButtJoint.html">LButtJoint</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.LMiterJoint.html">LMiterJoint</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.XHalfLapJoint.html">XHalfLapJoint</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.JointTopology.html">JointTopology</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.ConnectionSolver.html">ConnectionSolver</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.find_neighboring_beams.html">find_neighboring_beams</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.BeamJoinningError.html">BeamJoinningError</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/create_joint.html">Create Joint</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../compas_timber.consumers.html">compas_timber.consumers</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.consumers.BrepGeometryConsumer.html">BrepGeometryConsumer</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/workflow.html">Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/beam.html">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/joints.html">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/assembly.html">Assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/show.html">Show</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/grasshopper/examples.html">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.BTLx.html">BTLx</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.BTLxProcess.html">BTLxProcess</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.BTLxJackCut.html">BTLxJackCut</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.BTLxFrenchRidgeLap.html">BTLxFrenchRidgeLap</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.LButtFactory.html">LButtFactory</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.TButtFactory.html">TButtFactory</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.LMiterFactory.html">LMiterFactory</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.FrenchRidgeFactory.html">FrenchRidgeFactory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../citing.html">Citing</a></li>
 </ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.planning.Actor.html">Actor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.planning.BuildingPlan.html">BuildingPlan</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.planning.Step.html">Step</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.planning.SimpleSequenceGenerator.html">SimpleSequenceGenerator</a></li>
-</ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../compas_timber.rhino.html">rhino</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.rhino.find_neighboring_beams.html">find_neighboring_beams</a></li>
-</ul>
-</li>
-</ul>
-</div>
+
+    </div>
 </nav></div>
+        <div class="sidebar-primary-item"><div class="sidebar-primary-item">
+    <a href="https://compas.dev" target="_blank">
+        COMPAS.dev <i class="fa fa-external-link" aria-hidden="true"></i>
+    </a>
+</div></div>
     </div>
   
   
@@ -612,7 +607,7 @@ document.write(`
 <h1>Beam.validate_data</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.parts.Beam.validate_data">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">validate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/a2dad6c/src/compas_timber/../../../../../../../opt/hostedtoolcache/Python/3.10.13/x64/lib/python3.10/site-packages/compas/data/data.py#L341"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">validate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/ff9b367/src/compas_timber/../../../../../../../opt/hostedtoolcache/Python/3.10.13/x64/lib/python3.10/site-packages/compas/data/data.py#L341"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Validate the data against the object’s data schema.</p>
 <p>The data is the raw data that can be used to construct an object of this type with the classmethod <code class="docutils literal notranslate"><span class="pre">from_data</span></code>.</p>
 <dl class="field-list simple">
