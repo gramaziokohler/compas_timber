@@ -13,7 +13,6 @@ Classes
 
     BTLx
     BTLxProcess
-    BTLxJoint
     BTLxJackCut
     BTLxFrenchRidgeLap
     LButtFactory

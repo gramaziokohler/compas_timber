@@ -15,14 +15,15 @@ class BTLxJackCut(object):
     """
     Represents a jack cut process for timber fabrication.
 
-    Parameters:
+    Parameters
     ----------
-        part : :class:`~compas_timber.fabrication.btlx_part.BTLxPart`
-            The BTLxPart object representing the beam.
-        frame : :class:`~compas.geometry.Frame`
-            The frame object representing the cutting plane.
-        joint_name : str, optional
-            The name of the joint. Defaults to None.
+    part : :class:`~compas_timber.fabrication.btlx_part.BTLxPart`
+        The BTLxPart object representing the beam.
+    frame : :class:`~compas.geometry.Frame`
+        The frame object representing the cutting plane.
+    joint_name : str, optional
+        The name of the joint. Defaults to None.
+
     """
 
     PROCESS_TYPE = "JackRafterCut"

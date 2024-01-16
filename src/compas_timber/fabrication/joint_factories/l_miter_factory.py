@@ -16,15 +16,17 @@ class LMiterFactory(object):
         """
         Apply processings to the parts involved in the L-Miter joint.
 
-        Parameters:
+        Parameters
         ----------
-            joint : :class:`~compas_timber.connections.joint.Joint`
-                The joint object.
-            parts : dict
-                A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
+        joint : :class:`~compas_timber.connections.joint.Joint`
+            The joint object.
+        parts : dict
+            A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
 
         parts[str(joint.beams[0].key)].processings.append(

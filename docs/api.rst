@@ -14,3 +14,4 @@ Packages
     api/compas_timber.consumers
     api/compas_timber.fabrication
     api/compas_timber.planning
+    api/compas_timber.rhino
