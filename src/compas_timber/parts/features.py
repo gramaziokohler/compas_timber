@@ -59,15 +59,15 @@ class DrillFeature(Feature):
 
     """
 
-    def __init__(self, plane, diameter, length, **kwargs):
+    def __init__(self, line, diameter, length, **kwargs):
         super(DrillFeature, self).__init__(**kwargs)
-        self.plane = plane
+        self.line = line
         self.diameter = diameter
         self.length = length
 
     @property
     def data(self):
-        data_dict = {"plane": self.plane, "diameter": self.diameter, "length": self.length}
+        data_dict = {"line": self.line, "diameter": self.diameter, "length": self.length}
         data_dict.update(super(DrillFeature, self).data)
         return data_dict
 
