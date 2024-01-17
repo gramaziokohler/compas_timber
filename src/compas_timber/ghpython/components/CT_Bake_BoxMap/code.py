@@ -53,7 +53,6 @@ class BakeBoxMap(component):
                     ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
         finally:
             rs.EnableRedraw(True)
-            rs.Redraw()
 
     @staticmethod
     def create_box_map(pln, sx, sy, sz):
