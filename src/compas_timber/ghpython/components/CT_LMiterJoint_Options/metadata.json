@@ -1,0 +1,26 @@
+{
+    "name": "L-Miter Joint Options",
+    "nickname": "L-Miter",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "defines and gives access to L-Miter joint and its parameters",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Cutoff",
+                "description": "For very acute angles, limit the extension of the tip/beak of the joint.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "L-Miter",
+                "description": "L-Miter Joint Options."
+            }
+        ]
+    }
+}

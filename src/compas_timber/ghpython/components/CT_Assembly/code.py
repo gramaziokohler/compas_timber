@@ -42,7 +42,7 @@ class Assembly(component):
                 beam_pair_ids = set([id(beam) for beam in beams_to_pair])
                 if beam_pair_ids in handled_beams:
                     continue
-                joint.joint_type.create(Assembly, *beams_to_pair)
+                joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
                 handled_beams.append(beam_pair_ids)
 
         if Features:

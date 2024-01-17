@@ -1,0 +1,22 @@
+
+{
+    "name": "French Ridge Lap  Joint Options",
+    "nickname": "French Ridge",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "defines and gives access to French Ridge Lap joint and its parameters",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+
+        ],
+        "outputParameters": [
+            {
+                "name": "French Ridge",
+                "description": "French Ridge Lap Joint Options."
+            }
+        ]
+    }
+}
