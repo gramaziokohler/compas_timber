@@ -110,7 +110,17 @@ class CategoryRule(JointRule):
 
 
 class TopologyRule(JointRule):
-    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type."""
+    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type.
+
+    parameters
+    ----------
+    topology_type : constant(compas_timber.connections.JointTopology)
+        The topology type to which the rule is applied.
+    joint_type : cls(:class:`compas_timber.connections.Joint`)
+        The joint type to be applied to this topology.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+    """
 
     def __init__(self, topology_type, joint_type, **kwargs):
         self.topology_type = topology_type
@@ -125,36 +135,6 @@ class TopologyRule(JointRule):
         return "{}({}, {})".format(
             TopologyRule, self.topology_type, self.joint_type
             )
-
-    # def comply(self, beams):
-    #     try:
-    #         beam_cats = set([b.attributes["category"] for b in beams])
-    #         return beam_cats == set([self.category_a, self.category_b])
-    #     except KeyError:
-    #         return False
-
-    # def reorder(self, beams):
-    #     """Returns the given beams in a sorted order.
-
-    #     The beams are sorted according to their category attribute, first the beams with `catergory_a` and second the
-    #     one with `category_b`.
-    #     This allows using the category to determine the role of the beams.
-
-    #     Parameters
-    #     ----------
-    #     beams : tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
-    #         A tuple containing two beams to sort.
-
-    #     Returns
-    #     -------
-    #     tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
-
-    #     """
-    #     beam_a, beam_b = beams
-    #     if beam_a.attributes["category"] == self.category_a:
-    #         return beam_a, beam_b
-    #     else:
-    #         return beam_b, beam_a
 
 
 class JointDefinition(object):

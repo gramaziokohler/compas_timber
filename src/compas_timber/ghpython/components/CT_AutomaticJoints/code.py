@@ -31,8 +31,7 @@ class AutotomaticJoints(component):
         cat_rules = []
         direct_rules = []
 
-        for r in Rules:     #separate category and topo rules
-
+        for r in Rules:     #separate category and topo and direct joint rules
             if isinstance(r, TopologyRule):
                 topo_rules[r.topology_type] = r
             elif isinstance(r, CategoryRule):
@@ -50,15 +49,13 @@ class AutotomaticJoints(component):
             if detected_topo == JointTopology.TOPO_UNKNOWN:
                 continue
 
-            for rule in direct_rules:
+            for rule in direct_rules:   #apply direct rules first
                 if rule.comply(pair):
                     Joints.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
                     pair_joined = True
-
                     break
 
-
-            if not pair_joined:
+            if not pair_joined:    #if no direct rule applies, apply category rules next
                 for rule in cat_rules:
                     if not rule.comply(pair):
                         continue
@@ -72,8 +69,8 @@ class AutotomaticJoints(component):
                     beam_a, beam_b = rule.reorder([beam_a, beam_b])
                     Joints.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
                     break  # first matching rule
-                else:
 
+                else: # no category rule applies, apply topology rules
                     Joints.append(JointDefinition(topo_rules[detected_topo].joint_type, [beam_a, beam_b], **topo_rules[detected_topo].kwargs))
 
         return Joints, Info

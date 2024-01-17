@@ -164,14 +164,14 @@ class JointOptions(object):
 
     Parameters
     ----------
-    type :  (:class:`compas_timber.connections.Joint`)
+    type :  cls(:class:`compas_timber.connections.Joint`)
         The type of the joint.
     kwargs : dict
         The keyword arguments to be passed to the joint.
 
     Attributes
     ----------
-    type :  (:class:`compas_timber.connections.Joint`)
+    type :  cls(:class:`compas_timber.connections.Joint`)
         The type of the joint.
     kwargs : dict
         The keyword arguments to be passed to the joint.
