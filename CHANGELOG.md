@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
 * Added `BTLx` Grasshopper component
 * Added `FrenchRidgeHalfLap` joint
+* Added `DrillHole` Feature.
+* Added `DrillHoleFeature` Grasshopper component.
 
 ### Changed
 * Changed `Beam` definition to include `blank_frame` and `blank_length` attributes 
