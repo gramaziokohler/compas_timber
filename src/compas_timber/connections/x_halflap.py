@@ -20,7 +20,7 @@ from .solver import JointTopology
 class XHalfLapJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, cut_plane_bias = 0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -28,6 +28,7 @@ class XHalfLapJoint(Joint):
         self.beam_b_key = beam_b.key if beam_b else None
         self.cut_plane_choice = cut_plane_choice  # Decide if Direction of beam_a or beam_b
         self.features = []
+        self.cut_plane_bias = cut_plane_bias
 
     @property
     def data(self):
@@ -63,6 +64,9 @@ class XHalfLapJoint(Joint):
         int_a, _ = int_a
         int_b, _ = int_b
         point_cut = Point(*midpoint_point_point(int_a, int_b))
+        print("bias = {}".format(self.cut_plane_bias))
+        point_cut = int_a * self.cut_plane_bias + int_b*(1-self.cut_plane_bias)
+        print("point_cut = {}".format(point_cut))
 
         # Vector Cross Product
         beam_a_start = self.beam_a.centerline_start
