@@ -48,9 +48,7 @@ class DirectRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {})".format(
-            DirectRule, self.beams, self.joint_type
-            )
+        return "{}({}, {})".format(DirectRule, self.beams, self.joint_type)
 
     def comply(self, beams):
         try:
@@ -58,6 +56,7 @@ class DirectRule(JointRule):
         except KeyError:
             print("key error")
             return False
+
 
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the beams, this rule assigns"""
@@ -108,7 +107,6 @@ class CategoryRule(JointRule):
             return beam_b, beam_a
 
 
-
 class TopologyRule(JointRule):
     """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type.
 
@@ -132,9 +130,7 @@ class TopologyRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {})".format(
-            TopologyRule, self.topology_type, self.joint_type
-            )
+        return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type)
 
 
 class JointDefinition(object):

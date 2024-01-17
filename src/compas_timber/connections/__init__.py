@@ -58,6 +58,7 @@ from .solver import find_neighboring_beams
 
 __all__ = [
     "Joint",
+    "JointOptions",
     "beam_side_incidence",
     "BeamJoinningError",
     "TButtJoint",

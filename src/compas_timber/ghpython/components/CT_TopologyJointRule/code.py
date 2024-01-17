@@ -1,5 +1,4 @@
 from ghpythonlib.componentbase import executingcomponent as component
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import JointTopology
 from compas_timber.ghpython import TopologyRule
@@ -9,12 +8,9 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
 
 
-
 class MyComponent(component):
     def RunScript(self, L, T, X):
-
         topoRules = []
-
 
         if L:
             topoRules.append(TopologyRule(JointTopology.TOPO_L, L.type, **L.kwargs))

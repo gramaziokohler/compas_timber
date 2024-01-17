@@ -123,9 +123,6 @@ class Joint(Data):
 
         """
 
-
-
-
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
         joint = cls(*beams, **kwargs)
@@ -157,6 +154,8 @@ class Joint(Data):
                 self._ends[str(beam.key)] = "end"
 
         return self._ends
+
+
 class JointOptions(object):
     """Container for options to be passed to a joint.
 
@@ -189,7 +188,4 @@ class JointOptions(object):
         return repr(self)
 
     def is_identical(self, other):
-        return (
-            isinstance(other, JointOptions)
-            and self.kwargs == other.kwargs
-        )
+        return isinstance(other, JointOptions) and self.kwargs == other.kwargs

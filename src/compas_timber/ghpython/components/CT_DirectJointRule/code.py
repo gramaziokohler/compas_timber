@@ -1,13 +1,10 @@
-
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
-from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import DirectRule
-
 
 
 class DirectJointRule(component):
@@ -26,7 +23,6 @@ class DirectJointRule(component):
             self.AddRuntimeMessage(Error, "Number of items in MainBeams and CrossBeams must match!")
             return
 
-
         for main, secondary in zip(MainBeam, SecondaryBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, secondary)
             if topology != JointOptions.type.SUPPORTED_TOPOLOGY:
@@ -39,4 +35,3 @@ class DirectJointRule(component):
                 continue
             Rule = DirectRule(JointOptions.type, [secondary, main], **JointOptions.kwargs)
         return Rule
-
