@@ -2,83 +2,88 @@
 import math
 import random
 
-import Rhino
-import Rhino.Geometry as rg
-import rhinoscriptsyntax as rs
-from compas_rhino.conversions import frame_to_rhino
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Rhino import Render
+from Rhino.Geometry import Plane
+from Rhino.Geometry import Interval
+from Rhino.RhinoDoc import ActiveDoc
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from ghpythonlib.componentbase import executingcomponent as component
+import rhinoscriptsyntax as rs
 
+from compas_rhino.conversions import frame_to_rhino
 from compas_timber.consumers import BrepGeometryConsumer
 
 
-def create_box_map(pln, sx, sy, sz):
-    """
-    pln: frame of beam box, where x=main axis, y=width, z=height
-    sx,sy,sz: box map size in x,y,z direction
-    """
+class BakeBoxMap(component):
+    def RunScript(self, Assembly, MapSize, Bake):
+        if MapSize and len(MapSize) != 3:
+            self.AddRuntimeMessage(
+                Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
+            )
+            return
 
-    v = pln.YAxis
-    w = pln.ZAxis
-    pt = pln.Origin
+        if MapSize:
+            dimx, dimy, dimz = MapSize
+        else:
+            # for the pine 251 material bitmap, rotated
+            dimx = 0.2
+            dimy = 0.2
+            dimz = 1.0
 
-    # random deviation
-    a = math.pi * 0.5
-    randangle = (random.random() - 0.5) * a
-    v.Rotate(randangle, pln.XAxis)
+        if not Assembly:
+            self.AddRuntimeMessage(Warning, "Input parameters Assembly failed to collect any Beam objects.")
+            return
 
-    b = math.pi * 0.01
-    randangle = (random.random() - 0.5) * b
-    w.Rotate(randangle, pln.XAxis)
+        if not Bake:
+            return
 
-    randpos = sx * random.random()
-    pt += pln.XAxis * randpos
+        try:
+            geometries = BrepGeometryConsumer(Assembly).result
 
-    # create box mapping
-    mappingPln = rg.Plane(pt, w, v)
-    dx = rg.Interval(-sx * 0.5, sx * 0.5)
-    dy = rg.Interval(-sy * 0.5, sy * 0.5)
-    dz = rg.Interval(-sz * 0.5, sz * 0.5)
+            frames = [frame_to_rhino(b.frame) for b in Assembly.beams]
+            breps = [g.geometry.native_brep for g in geometries]
 
-    BoxMap = Rhino.Render.TextureMapping.CreateBoxMapping(mappingPln, dx, dy, dz, False)
+            if frames and breps:
+                rs.EnableRedraw(False)
 
-    return BoxMap, mappingPln
+                for brep, frame in zip(breps, frames):
+                    guid = ActiveDoc.Objects.Add(brep)
+                    boxmap = self.create_box_map(frame, dimx, dimy, dimz)
+                    ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
+        finally:
+            rs.EnableRedraw(True)
+            rs.Redraw()
 
+    @staticmethod
+    def create_box_map(pln, sx, sy, sz):
+        """
+        pln: frame of beam box, where x=main axis, y=width, z=height
+        sx,sy,sz: box map size in x,y,z direction
+        """
 
-if not MapSize:
-    # for the pine 251 material bitmap, rotated
-    dimx = 0.2
-    dimy = 0.2
-    dimz = 1.0
+        v = pln.YAxis
+        w = pln.ZAxis
+        pt = pln.Origin
 
-elif len(MapSize) != 3:
-    ghenv.Component.AddRuntimeMessage(
-        Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
-    )
-else:
-    dimx, dimy, dimz = MapSize
+        # random deviation
+        a = math.pi * 0.5
+        randangle = (random.random() - 0.5) * a
+        v.Rotate(randangle, pln.XAxis)
 
-if not Assembly:
-    ghenv.Component.AddRuntimeMessage(Warning, "Input parameters Assembly failed to collect any Beam objects.")
-    _inputok = False
-else:
-    _inputok = True
+        b = math.pi * 0.01
+        randangle = (random.random() - 0.5) * b
+        w.Rotate(randangle, pln.XAxis)
 
-try:
-    geometries = BrepGeometryConsumer(Assembly).result
-    if _inputok and Bake:
-        frames = [frame_to_rhino(b.frame) for b in Assembly.beams]
-        breps = [g.geometry.native_brep for g in geometries]
+        randpos = sx * random.random()
+        pt += pln.XAxis * randpos
 
-        if frames and breps:
-            rs.EnableRedraw(False)
-            rhino_doc = Rhino.RhinoDoc.ActiveDoc
+        # create box mapping
+        mappingPln = Plane(pt, w, v)
+        dx = Interval(-sx * 0.5, sx * 0.5)
+        dy = Interval(-sy * 0.5, sy * 0.5)
+        dz = Interval(-sz * 0.5, sz * 0.5)
 
-            for brep, frame in zip(breps, frames):
-                attributes = None
-                guid = rhino_doc.Objects.Add(brep, attributes)
-                boxmap, map_pln = create_box_map(frame, dimx, dimy, dimz)
-                rhino_doc.Objects.ModifyTextureMapping(guid, 1, boxmap)
-finally:
-    rs.EnableRedraw(True)
-    rs.Redraw()
+        BoxMap = Render.TextureMapping.CreateBoxMapping(mappingPln, dx, dy, dz, False)
+
+        return BoxMap
