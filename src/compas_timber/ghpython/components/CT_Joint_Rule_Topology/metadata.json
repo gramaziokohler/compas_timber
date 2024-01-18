@@ -30,7 +30,7 @@
         ],
         "outputParameters": [
             {
-                "name": "Joints",
+                "name": "Rules",
                 "description": "List of JointDefinitions."
             }
         ]
