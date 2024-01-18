@@ -8,6 +8,8 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7934267.svg)](https://doi.org/10.5281/zenodo.7934267)
 [![Twitter Follow](https://img.shields.io/twitter/follow/compas_dev?style=social)](https://twitter.com/compas_dev)
 
+![COMPAS Timber](docs/_images/compas_timber.png?raw=true)
+
 `compas_timber` is a user-friendly open-source software toolkit to streamline the design of timber frame structures. Despite its advances in digitalization compared to other building techniques, timber construction is often perceived as a challenging field, involving intricate processes in design, planning, coordination, and fabrication. We aim to increase the use of timber in architecture by lowering the threshold of creating versatile and resource-aware designs.
 
 ## Installation
