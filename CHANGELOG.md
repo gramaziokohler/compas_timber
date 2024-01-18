@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `FindBeamByGuid` component.
 * Bumped required COMPAS version to `2.0.0beta.2`.
 * Changed docs theme to the new `sphinx_compas2_theme`.
+* Re-worked component `BakeBoxMap` to advanced mode.
+* Removed call to `rs.Redraw()` in `BakeBoxMap` which was causing GH document to lock (cannot drag).
 
 ### Removed
 
