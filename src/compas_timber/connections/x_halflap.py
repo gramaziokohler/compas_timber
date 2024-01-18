@@ -20,7 +20,7 @@ from .solver import JointTopology
 class XHalfLapJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, cut_plane_bias = 0.5, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=False, cut_plane_bias = 0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -63,7 +63,7 @@ class XHalfLapJoint(Joint):
         int_a, int_b = intersection_line_line_3D(centerline_a, centerline_b, max_distance)
         int_a, _ = int_a
         int_b, _ = int_b
-        point_cut = int_a * self.cut_plane_bias + int_b*(1-self.cut_plane_bias)
+        point_cut = midpoint_point_point(int_a, int_b)
 
         # Vector Cross Product
         beam_a_start = self.beam_a.centerline_start
@@ -104,12 +104,12 @@ class XHalfLapJoint(Joint):
         return planes
 
     @staticmethod
-    def _create_polyhedron(plane_a, plane_b, lines):  # Hexahedron from 2 Planes and 4 Lines
+    def _create_polyhedron(plane_a, lines, bias):  # Hexahedron from 2 Planes and 4 Lines
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
         int_points = []
         for i in lines:
             point_top = intersection_line_plane(i, plane_a)
-            point_bottom = intersection_line_plane(i, plane_b)
+            point_bottom = i.point_at(bias)  # intersection_line_plane(i, plane_b
             point_top = Point(*point_top)
             point_bottom = Point(*point_bottom)
             int_points.append(point_top)
@@ -142,6 +142,9 @@ class XHalfLapJoint(Joint):
         # Get Cut Plane
         plane_cut, plane_cut_vector_a, plane_cut_vector_b = self._cutplane()
 
+        if self.cut_plane_choice:
+            plane_cut_vector_a, plane_cut_vector_b = plane_cut_vector_b, plane_cut_vector_a
+
         # Get Beam Faces (Planes) in right order
         planes_a = self._sort_beam_planes(self.beam_a, plane_cut_vector_a)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_a
@@ -151,18 +154,30 @@ class XHalfLapJoint(Joint):
 
         # Lines as Frame Intersections
         lines = []
-        x = intersection_plane_plane(plane_a1, plane_b1)
-        lines.append(Line(x[0], x[1]))
-        x = intersection_plane_plane(plane_a1, plane_b2)
-        lines.append(Line(x[0], x[1]))
-        x = intersection_plane_plane(plane_a2, plane_b2)
-        lines.append(Line(x[0], x[1]))
-        x = intersection_plane_plane(plane_a2, plane_b1)
-        lines.append(Line(x[0], x[1]))
+        unbound_line = intersection_plane_plane(plane_a1, plane_b1, tol=1e-6)
+
+        pt_a = (intersection_line_plane(unbound_line, plane_a0))
+        pt_b = (intersection_line_plane(unbound_line, plane_b0))
+        lines.append(Line(pt_a, pt_b))
+
+        unbound_line = intersection_plane_plane(plane_a1, plane_b2)
+        pt_a = intersection_line_plane(unbound_line, plane_a0)
+        pt_b = intersection_line_plane(unbound_line, plane_b0)
+        lines.append(Line(pt_a, pt_b))
+
+        unbound_line = intersection_plane_plane(plane_a2, plane_b2)
+        pt_a = intersection_line_plane(unbound_line, plane_a0)
+        pt_b = intersection_line_plane(unbound_line, plane_b0)
+        lines.append(Line(pt_a, pt_b))
+
+        unbound_line = intersection_plane_plane(plane_a2, plane_b1)
+        pt_a = intersection_line_plane(unbound_line, plane_a0)
+        pt_b = intersection_line_plane(unbound_line, plane_b0)
+        lines.append(Line(pt_a, pt_b))
 
         # Create Polyhedrons
-        negative_polyhedron_beam_a = self._create_polyhedron(plane_a0, plane_cut, lines)
-        negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, plane_cut, lines)
+        negative_polyhedron_beam_a = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
+        negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
         return negative_polyhedron_beam_a, negative_polyhedron_beam_b
 
     def restore_beams_from_keys(self, assemly):
