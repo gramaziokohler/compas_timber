@@ -13,7 +13,7 @@
                 "name": "JointOptions",
                 "description": "Joint Options Component",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "Primary Beam",

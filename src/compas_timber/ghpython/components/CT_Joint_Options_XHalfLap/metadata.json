@@ -14,6 +14,12 @@
                 "description": "Decide if Direction of beam_a or beam_b",
                 "typeHintID": "int",
                 "scriptParamAccess": 0
+            },
+            {
+                "name": "cut_plane_bias",
+                "description": "determines the depth of lap cuts on the beams",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [

@@ -63,10 +63,7 @@ class XHalfLapJoint(Joint):
         int_a, int_b = intersection_line_line_3D(centerline_a, centerline_b, max_distance)
         int_a, _ = int_a
         int_b, _ = int_b
-        point_cut = Point(*midpoint_point_point(int_a, int_b))
-        print("bias = {}".format(self.cut_plane_bias))
         point_cut = int_a * self.cut_plane_bias + int_b*(1-self.cut_plane_bias)
-        print("point_cut = {}".format(point_cut))
 
         # Vector Cross Product
         beam_a_start = self.beam_a.centerline_start

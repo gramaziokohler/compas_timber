@@ -22,7 +22,7 @@ class DirectJointRule(component):
         if len(MainBeam) != len(SecondaryBeam):
             self.AddRuntimeMessage(Error, "Number of items in MainBeams and CrossBeams must match!")
             return
-
+        Rules = []
         for main, secondary in zip(MainBeam, SecondaryBeam):
             topology, _, _ = ConnectionSolver().find_topology(main, secondary)
             if topology != JointOptions.type.SUPPORTED_TOPOLOGY:
@@ -33,5 +33,5 @@ class DirectJointRule(component):
                     ),
                 )
                 continue
-            Rule = DirectRule(JointOptions.type, [secondary, main], **JointOptions.kwargs)
-        return Rule
+            Rules.append(DirectRule(JointOptions.type, [secondary, main], **JointOptions.kwargs))
+        return Rules
