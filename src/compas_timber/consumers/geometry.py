@@ -26,20 +26,7 @@ class FeatureApplicationError(Exception):
 
 
 class FeatureApplicator(object):
-    """Base class for feature applicators.
-
-    Parameters
-    ----------
-    beam_geometry : :class:`compas.geometry.Geometry`
-        The geometry of the beam.
-    feature : :class:`compas_timber.parts.Feature`
-        The feature to apply.
-
-    """
-
-    def __init__(self, beam_geometry, feature):
-        self.beam_geometry = beam_geometry
-        self.feature = feature
+    """Base class for feature applicators."""
 
     def apply(self):
         """Apply the feature to the beam geometry.
@@ -66,6 +53,7 @@ class DrillFeatureGeometry(FeatureApplicator):
     """
 
     def __init__(self, beam_geometry, feature):
+        super(DrillFeatureGeometry, self).__init__()
         self.line = feature.line
         self.diameter = feature.diameter
         self.length = feature.length
@@ -111,6 +99,7 @@ class CutFeatureGeometry(FeatureApplicator):
     """
 
     def __init__(self, beam_geometry, feature):
+        super(CutFeatureGeometry, self).__init__()
         self.cutting_plane = feature.cutting_plane
         self.beam_geometry = beam_geometry
 
@@ -138,7 +127,7 @@ class CutFeatureGeometry(FeatureApplicator):
             )
 
 
-class MillVolumeGeometry(object):
+class MillVolumeGeometry(FeatureApplicator):
     """Applies MillVolume to beam geometry.
 
     Parameters
@@ -151,6 +140,7 @@ class MillVolumeGeometry(object):
     """
 
     def __init__(self, beam_geometry, feature):
+        super(MillVolumeGeometry, self).__init__()
         self.volume = Brep.from_mesh(feature.volume)
         self.beam_geometry = beam_geometry
 
