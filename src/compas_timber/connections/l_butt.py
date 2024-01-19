@@ -39,10 +39,10 @@ class LButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, gap=0.0, frame=None, key=None, smallBeamButts=False):
+    def __init__(self, main_beam=None, cross_beam=None, gap=0.0, frame=None, key=None, small_beam_butts=False):
         super(LButtJoint, self).__init__(frame=frame, key=key)
 
-        if smallBeamButts:
+        if small_beam_butts:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
 

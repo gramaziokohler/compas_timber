@@ -2,7 +2,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 from compas_timber.connections import XHalfLapJoint
-from compas_timber.connections.joint import JointOptions
+from compas_timber.ghpython import JointOptions
 
 
 class MyComponent(component):
