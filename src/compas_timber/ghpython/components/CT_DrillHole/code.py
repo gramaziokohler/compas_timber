@@ -8,25 +8,21 @@ from compas_timber.parts import DrillFeature
 
 
 class DrillHoleFeature(component):
-    def RunScript(self, Beam, Line, Diameter, Length):
-        if not Beam:
+    def RunScript(self, beam, line, diameter, length):
+        if not beam:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-        if not Line:
+        if not line:
             self.AddRuntimeMessage(Warning, "Input parameter Line failed to collect data")
-        if not Diameter:
+        if not diameter:
             self.AddRuntimeMessage(Warning, "Input parameter Diameter failed to collect data")
-        if not Length:
+        if not length:
             self.AddRuntimeMessage(Warning, "Input parameter Length failed to collect data")
 
-        if not (Beam and Line and Diameter and Length):
+        if not (beam and line and diameter and length):
             return
 
-        if not isinstance(Beam, list):
-            Beam = [Beam]
+        if not isinstance(beam, list):
+            beam = [beam]
 
-        Feature = []
-        for beam in Beam:
-            feature = DrillFeature(line_to_compas(Line), Diameter, Length)
-            Feature.append(FeatureDefinition(feature, beam))
-
-        return Feature
+        f = DrillFeature(line_to_compas(line), diameter, length)
+        return FeatureDefinition(f, beam)
