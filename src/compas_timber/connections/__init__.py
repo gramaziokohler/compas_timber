@@ -50,6 +50,7 @@ from .t_butt import TButtJoint
 from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
 from .x_halflap import XHalfLapJoint
+from .t_halflap import THalfLapJoint
 from .french_ridge_lap import FrenchRidgeLapJoint
 from .solver import JointTopology
 from .solver import ConnectionSolver
@@ -65,6 +66,7 @@ __all__ = [
     "LButtJoint",
     "LMiterJoint",
     "XHalfLapJoint",
+    "THalfLapJoint",
     "FrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",

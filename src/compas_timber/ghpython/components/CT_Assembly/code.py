@@ -94,7 +94,7 @@ class Assembly(component):
             pass
         if not JointRules:
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
-        if not (Beams and JointRules):
+        if not (Beams):
             return
 
         self.get_joint_definitions_from_rules(Beams, JointRules, MaxDistance=MaxDistance)
@@ -129,10 +129,13 @@ class Assembly(component):
 
         Geometry = None
         scene = Scene()
-        if CreateGeometry:
+        if CreateGeometry and self.joints:
             vis_consumer = BrepGeometryConsumer(Assembly)
             for result in vis_consumer.result:
                 scene.add(result.geometry)
+        else:
+            for beam in Beams:
+                scene.add(beam.shape)
 
         Geometry = scene.redraw()
 

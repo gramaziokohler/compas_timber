@@ -1,4 +1,5 @@
 from compas.geometry import Frame
+from compas.geometry import Plane
 
 from compas_timber.parts import CutFeature
 
@@ -81,7 +82,9 @@ class LButtJoint(Joint):
     @property
     def cutting_plane_main(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
+
         cfr = min(angles_faces, key=lambda x: x[0])[1]
+
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         return cfr
 
@@ -108,11 +111,14 @@ class LButtJoint(Joint):
         start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
         start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_plane_cross)
         self.main_beam.add_blank_extension(start_main, end_main, self.key)
-        self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
+        # self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
+        self.cross_beam.add_blank_extension(1, 1, self.key)
 
-        f_main = CutFeature(self.cutting_plane_main)
+
+        f_main = CutFeature(Plane.from_frame(self.cutting_plane_main))
         self.main_beam.add_features(f_main)
         self.features.append(f_main)
-        # f_cross = CutFeature(self.cutting_plane_cross)
-        # self.cross_beam.add_features(f_cross)
-        # self.features.append(f_cross)
+
+        f_cross = CutFeature(Plane.from_frame(self.cutting_plane_cross))
+        self.cross_beam.add_features(f_cross)
+        self.features.append(f_cross)

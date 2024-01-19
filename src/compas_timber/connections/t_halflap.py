@@ -10,31 +10,33 @@ from compas.geometry import intersection_plane_plane
 from compas.geometry import length_vector
 from compas.geometry import midpoint_point_point
 
-from compas_timber.parts import MillVolume
-from compas_timber.utils import intersection_line_line_3D
 
+from compas_timber.utils import intersection_line_line_3D
+from .joint import beam_side_incidence
+from compas_timber.parts import CutFeature
+from compas_timber.parts import MillVolume
 from .joint import Joint
 from .solver import JointTopology
 
 
-class XHalfLapJoint(Joint):
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
+class THalfLapJoint(Joint):
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias = 0.5, frame=None, key=None):
-        super(XHalfLapJoint, self).__init__(frame, key)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
-        self.cut_plane_choice = flip_lap_side  # Decide if Direction of beam_a or beam_b
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias = 0.5, frame=None, key=None):
+        super(THalfLapJoint, self).__init__(frame, key)
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
+        self.main_beam_key = main_beam.key if main_beam else None
+        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.flip_lap_side = flip_lap_side  # Decide if Direction of main_beam or cross_beam
         self.features = []
         self.cut_plane_bias = cut_plane_bias
 
     @property
     def data(self):
         data_dict = {
-            "beam_a": self.beam_a_key,
-            "beam_b": self.beam_b_key,
+            "main_beam": self.main_beam_key,
+            "cross_beam": self.cross_beam_key,
         }
         data_dict.update(Joint.data.fget(self))
         return data_dict
@@ -42,65 +44,36 @@ class XHalfLapJoint(Joint):
     @classmethod
     def from_data(cls, value):
         instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cut_plane_choice"])
-        instance.beam_a_key = value["beam_a"]
-        instance.beam_b_key = value["beam_b"]
+        instance.main_beam_key = value["main_beam"]
+        instance.cross_beam_key = value["cross_beam"]
         instance.cut_plane_choice = value["cut_plane_choice"]
         return instance
 
     @property
     def joint_type(self):
-        return "X-HalfLap"
+        return "T-HalfLap"
 
     @property
     def beams(self):
-        return [self.beam_a, self.beam_b]
+        return [self.main_beam, self.cross_beam]
 
     def _cutplane(self):
         # Find the Point for the Cut Plane
-        centerline_a = self.beam_a.centerline
-        centerline_b = self.beam_b.centerline
-        max_distance = float("inf")
-        int_a, int_b = intersection_line_line_3D(centerline_a, centerline_b, max_distance)
+        int_a, int_b = intersection_line_line_3D(self.main_beam.centerline, self.cross_beam.centerline, float("inf"))
         int_a, _ = int_a
         int_b, _ = int_b
         point_cut = midpoint_point_point(int_a, int_b)
 
         # Vector Cross Product
-        beam_a_start = self.beam_a.centerline_start
-        beam_b_start = self.beam_b.centerline_start
-        beam_a_end = self.beam_a.centerline_end
-        beam_b_end = self.beam_b.centerline_end
-        centerline_vec_a = Vector.from_start_end(beam_a_start, beam_a_end)
-        centerline_vec_b = Vector.from_start_end(beam_b_start, beam_b_end)
-        plane_cut = Plane.from_point_and_two_vectors(point_cut, centerline_vec_a, centerline_vec_b)
-
-        # Flip Cut Plane if its Normal Z-Coordinate is positive
-        if plane_cut[1][2] > 0:
-            plane_cut[1] = plane_cut[1] * -1
-
-        # Cutplane Normal Vector pointing from a and b to Cutplane Origin
-        cutplane_vector_a = Vector.from_start_end(int_a, point_cut)
-        cutplane_vector_b = Vector.from_start_end(int_b, point_cut)
-
-        # If Centerlines crossing, take the Cutplane Normal
-        if length_vector(cutplane_vector_a) < 1e-6:
-            cutplane_vector_a = plane_cut.normal
-        if length_vector(cutplane_vector_b) < 1e-6:
-            cutplane_vector_b = plane_cut.normal * -1
-
-        return plane_cut, cutplane_vector_a, cutplane_vector_b
+        cross_vector = self.main_beam.centerline.vector.cross(self.cross_beam.centerline.vector)
+        return  cross_vector
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
         # Sorts the Beam Face Planes according to the Cut Plane
-
         frames = beam.faces[:4]
-        planes = []
-        planes_angles = []
-        for i in frames:
-            planes.append(Plane.from_frame(i))
-            planes_angles.append(angle_vectors(cutplane_vector, i.normal))
-        planes_angles, planes = zip(*sorted(zip(planes_angles, planes)))
+        planes = [Plane.from_frame(frame) for frame in frames]
+        planes.sort(key = lambda x: angle_vectors(cutplane_vector, x.normal))
         return planes
 
     @staticmethod
@@ -138,19 +111,30 @@ class XHalfLapJoint(Joint):
             ],
         )
 
+
+    @property
+    def cutting_plane_main(self):
+        angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
+        cfr = max(angles_faces, key=lambda x: x[0])[1]
+        cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
+        return cfr
+
     def _create_negative_volumes(self):
         # Get Cut Plane
-        plane_cut, plane_cut_vector_a, plane_cut_vector_b = self._cutplane()
+        plane_cut_vector = self._cutplane()
 
-        if self.cut_plane_choice:
-            plane_cut_vector_a, plane_cut_vector_b = plane_cut_vector_b, plane_cut_vector_a
+        if self.flip_lap_side:
+            plane_cut_vector = - plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
-        planes_a = self._sort_beam_planes(self.beam_a, plane_cut_vector_a)
-        plane_a0, plane_a1, plane_a2, plane_a3 = planes_a
+        planes_main = self._sort_beam_planes(self.main_beam, plane_cut_vector)
+        plane_a0, plane_a1, plane_a2, plane_a3 = planes_main
 
-        planes_b = self._sort_beam_planes(self.beam_b, plane_cut_vector_b)
-        plane_b0, plane_b1, plane_b2, plane_b3 = planes_b
+
+        planes_cross = self._sort_beam_planes(self.cross_beam, -plane_cut_vector)
+        plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
+
+
 
         # Lines as Frame Intersections
         lines = []
@@ -176,16 +160,27 @@ class XHalfLapJoint(Joint):
         lines.append(Line(pt_a, pt_b))
 
         # Create Polyhedrons
-        negative_polyhedron_beam_a = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
-        negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
-        return negative_polyhedron_beam_a, negative_polyhedron_beam_b
+        negative_polyhedron_main_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
+        negative_polyhedron_cross_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
+        return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.beam_a = assemly.find_by_key(self.beam_a_key)
-        self.beam_b = assemly.find_by_key(self.beam_b_key)
+        self.main_beam = assemly.find_by_key(self.main_beam_key)
+        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_features(self):
-        negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
-        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
-        self.beam_b.add_features(MillVolume(negative_brep_beam_b))
+        start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
+        print(start_main, end_main)
+        self.main_beam.add_blank_extension(start_main, end_main, self.key)
+
+        negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
+        self.main_beam.add_features(MillVolume(negative_brep_main_beam))
+        self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
+
+        trim_plane = Plane(self.cutting_plane_main.point, -self.cutting_plane_main.normal)
+        f_main = CutFeature(trim_plane)
+        self.main_beam.add_features(f_main)
+        self.features.append(f_main)
+
+

@@ -1,6 +1,6 @@
 {
-    "name": "X-Half Lap Joint Options",
-    "nickname": "X-Half Lap",
+    "name": "T-Half Lap Joint Options",
+    "nickname": "T-Half Lap",
     "category": "COMPAS Timber",
     "subcategory": "Joints",
     "description": "defines and gives access to X-Half Lap joint and its parameters",
@@ -24,8 +24,8 @@
         ],
         "outputParameters": [
             {
-                "name": "X-Half Lap",
-                "description": "X-Half Lap Joint Options."
+                "name": "T-Half Lap",
+                "description": "T-Half Lap Joint Options."
             }
         ]
     }
