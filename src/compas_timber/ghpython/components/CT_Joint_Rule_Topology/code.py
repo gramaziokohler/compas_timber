@@ -13,9 +13,6 @@ class MyComponent(component):
     def RunScript(self, L, T, X):
         topoRules = []
 
-
-
-
         if L:
             if not L.type.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L:
                 self.AddRuntimeMessage(Warning, "Joint type does not match topology. Joint may not be generated.")

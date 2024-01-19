@@ -8,7 +8,6 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import length_vector
-from compas.geometry import midpoint_point_point
 
 from compas_timber.parts import MillVolume
 from compas_timber.utils import intersection_line_line_3D
@@ -20,7 +19,7 @@ from .solver import JointTopology
 class XHalfLapJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, cut_plane_bias = 0.5, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, cut_plane_bias=0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -63,7 +62,7 @@ class XHalfLapJoint(Joint):
         int_a, int_b = intersection_line_line_3D(centerline_a, centerline_b, max_distance)
         int_a, _ = int_a
         int_b, _ = int_b
-        point_cut = int_a * self.cut_plane_bias + int_b*(1-self.cut_plane_bias)
+        point_cut = int_a * self.cut_plane_bias + int_b * (1 - self.cut_plane_bias)
 
         # Vector Cross Product
         beam_a_start = self.beam_a.centerline_start

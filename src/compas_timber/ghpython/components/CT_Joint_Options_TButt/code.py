@@ -11,4 +11,3 @@ class MyComponent(component):
         options = JointOptions(TButtJoint, **args)
 
         return options
-
