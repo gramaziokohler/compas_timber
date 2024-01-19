@@ -43,6 +43,10 @@
             {
                 "name": "Geometry",
                 "description": "Geometry of the beams and joints."
+            },
+            {
+                "name": "Debug",
+                "description": "Debug geometries in the case of feature application errors."
             }
         ]
     }

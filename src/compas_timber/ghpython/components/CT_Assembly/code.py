@@ -50,15 +50,22 @@ class Assembly(component):
             for f_def in features:
                 beams_to_modify = self._get_copied_beams(f_def.beams)
                 for beam in beams_to_modify:
-                    beam.add_feature(f_def.feature)
+                    beam.add_features(f_def.feature)
 
         Geometry = None
         scene = Scene()
+        debug_scene = Scene()  # to collect debug related information
+
         if CreateGeometry:
             vis_consumer = BrepGeometryConsumer(Assembly)
             for result in vis_consumer.result:
                 scene.add(result.geometry)
+                if result.debug_info:
+                    debug = result.debug_info
+                    self.AddRuntimeMessage(Warning, "{}".format(debug.message))
+                    debug_scene.add(debug.feature_geometry)
+                    debug_scene.add(result.geometry)
 
         Geometry = scene.redraw()
-
-        return Assembly, Geometry
+        Debug = debug_scene.redraw()
+        return Assembly, Geometry, Debug
