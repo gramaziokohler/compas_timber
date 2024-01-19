@@ -19,6 +19,7 @@ class FeatureApplicationError(Exception):
         The error message.
 
     """
+
     def __init__(self, feature_geometry, message):
         self.feature_geometry = feature_geometry
         self.message = message
@@ -35,6 +36,7 @@ class FeatureApplicator(object):
         The feature to apply.
 
     """
+
     def __init__(self, beam_geometry, feature):
         self.beam_geometry = beam_geometry
         self.feature = feature
@@ -62,6 +64,7 @@ class DrillFeatureGeometry(FeatureApplicator):
         The feature to apply.
 
     """
+
     def __init__(self, beam_geometry, feature):
         self.line = feature.line
         self.diameter = feature.diameter
@@ -106,6 +109,7 @@ class CutFeatureGeometry(FeatureApplicator):
         The feature to apply.
 
     """
+
     def __init__(self, beam_geometry, feature):
         self.cutting_plane = feature.cutting_plane
         self.beam_geometry = beam_geometry
@@ -145,6 +149,7 @@ class MillVolumeGeometry(object):
         The feature to apply.
 
     """
+
     def __init__(self, beam_geometry, feature):
         self.volume = Brep.from_mesh(feature.volume)
         self.beam_geometry = beam_geometry
@@ -185,6 +190,7 @@ class BeamGeometry(object):
         Debug information if an error occurred during processing.
 
     """
+
     def __init__(self, beam, geometry, debug_info=None):
         self.beam = beam
         self.geometry = geometry
@@ -207,6 +213,7 @@ class BrepGeometryConsumer(object):
         The resulting geometry after processing.
 
     """
+
     FEATURE_MAP = {CutFeature: CutFeatureGeometry, DrillFeature: DrillFeatureGeometry, MillVolume: MillVolumeGeometry}
 
     def __init__(self, assembly):
