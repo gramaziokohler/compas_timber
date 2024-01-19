@@ -19,7 +19,7 @@ from .joint import Joint
 from .solver import JointTopology
 
 
-class THalfLapJoint(Joint):
+class LHalfLapJoint(Joint):
     """Represents a T-Lap type joint which joins the end of a beam along the length of another beam,
     trimming the main beam.
 
@@ -58,11 +58,11 @@ class THalfLapJoint(Joint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
 
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias = 0.5, frame=None, key=None):
-        super(THalfLapJoint, self).__init__(frame, key)
+        super(LHalfLapJoint, self).__init__(frame, key)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
@@ -90,7 +90,7 @@ class THalfLapJoint(Joint):
 
     @property
     def joint_type(self):
-        return "T-HalfLap"
+        return "L-HalfLap"
 
     @property
     def beams(self):
@@ -158,6 +158,12 @@ class THalfLapJoint(Joint):
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
+    @property
+    def cutting_plane_cross(self):
+        angles_faces = beam_side_incidence(self.cross_beam, self.main_beam)
+        cfr = max(angles_faces, key=lambda x: x[0])[1]
+        return cfr
+
     def _create_negative_volumes(self):
         # Get Cut Plane
         plane_cut_vector = self._cutplane()
@@ -210,11 +216,21 @@ class THalfLapJoint(Joint):
 
     def add_features(self):
         start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
-        self.main_beam.add_blank_extension(start_main, end_main, self.key)
+        start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_plane_cross)
+        # self.main_beam.add_blank_extension(start_main, end_main, self.key)
+        # self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
+        self.main_beam.add_blank_extension(1, 1, self.key)
+        self.cross_beam.add_blank_extension(1, 1, self.key)
 
         negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         self.main_beam.add_features(MillVolume(negative_brep_main_beam))
         self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
+
+
+        f_cross = CutFeature(Plane.from_frame(self.cutting_plane_cross))
+        self.cross_beam.add_features(f_cross)
+        self.features.append(f_cross)
+
 
         trim_plane = Plane(self.cutting_plane_main.point, -self.cutting_plane_main.normal)
         f_main = CutFeature(trim_plane)

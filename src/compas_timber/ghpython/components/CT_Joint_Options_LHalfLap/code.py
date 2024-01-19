@@ -1,7 +1,7 @@
 from ghpythonlib.componentbase import executingcomponent as component
 
 
-from compas_timber.connections import THalfLapJoint
+from compas_timber.connections import LHalfLapJoint
 from compas_timber.connections.joint import JointOptions
 
 class MyComponent(component):
@@ -13,6 +13,6 @@ class MyComponent(component):
         if cut_plane_bias:
             args["cut_plane_bias"] = cut_plane_bias
 
-        options = JointOptions(THalfLapJoint, **args)
+        options = JointOptions(LHalfLapJoint, **args)
 
         return options

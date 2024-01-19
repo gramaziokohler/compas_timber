@@ -82,9 +82,7 @@ class LButtJoint(Joint):
     @property
     def cutting_plane_main(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
-
         cfr = min(angles_faces, key=lambda x: x[0])[1]
-
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         return cfr
 
@@ -107,6 +105,8 @@ class LButtJoint(Joint):
         """
         if self.features:
             self.main_beam.remove_features(self.features)
+
+
 
         start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
         start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_plane_cross)

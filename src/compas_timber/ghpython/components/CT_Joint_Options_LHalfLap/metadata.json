@@ -1,9 +1,9 @@
 {
-    "name": "T-Half Lap Joint Options",
-    "nickname": "T-Half Lap",
+    "name": "L-Half Lap Joint Options",
+    "nickname": "L-Half Lap",
     "category": "COMPAS Timber",
     "subcategory": "Joints",
-    "description": "defines and gives access to T-Half Lap joint and its parameters",
+    "description": "defines and gives access to L-Half Lap joint and its parameters",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
@@ -24,8 +24,8 @@
         ],
         "outputParameters": [
             {
-                "name": "T-Half Lap",
-                "description": "T-Half Lap Joint Options."
+                "name": "L-Half Lap",
+                "description": "L-Half Lap Joint Options."
             }
         ]
     }

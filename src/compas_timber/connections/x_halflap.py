@@ -18,6 +18,44 @@ from .solver import JointTopology
 
 
 class XHalfLapJoint(Joint):
+    """Represents a X-Lap type joint which joins the end of a beam along the length of another beam,
+    trimming the main beam.
+
+    This joint type is compatible with beams in T topology.
+
+    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
+
+    Parameters
+    ----------
+    main_beam : :class:`~compas_timber.parts.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
+    flip_lap_side : bool
+        If True, the lap is flipped to the other side of the beams.
+    cut_plane_bias : float
+        Allows lap to be shifted deeper into one beam or the other. Value should be between 0 and 1.0 without completely cutting through either beam. Default is 0.5.
+
+    Attributes
+    ----------
+    beams : list(:class:`~compas_timber.parts.Beam`)
+        The beams joined by this joint.
+    main_beam : :class:`~compas_timber.parts.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
+    main_beam_key : str
+        The key of the main beam.
+    cross_beam_key : str
+        The key of the cross beam.
+    features : list(:class:`~compas_timber.parts.Feature`)
+        The features created by this joint.
+    joint_type : str
+        A string representation of this joint's type.
+
+
+    """
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
     def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias = 0.5, frame=None, key=None):
@@ -92,8 +130,8 @@ class XHalfLapJoint(Joint):
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
-        # Sorts the Beam Face Planes according to the Cut Plane
-
+        """Sorts the Beam Face Planes according to the Cut Plane
+        """
         frames = beam.faces[:4]
         planes = []
         planes_angles = []
@@ -104,8 +142,10 @@ class XHalfLapJoint(Joint):
         return planes
 
     @staticmethod
-    def _create_polyhedron(plane_a, lines, bias):  # Hexahedron from 2 Planes and 4 Lines
+    def _create_polyhedron(plane_a, lines, bias):
+        """ Hexahedron from 2 Planes and 4 Lines
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
+        """
         int_points = []
         for i in lines:
             point_top = intersection_line_plane(i, plane_a)
