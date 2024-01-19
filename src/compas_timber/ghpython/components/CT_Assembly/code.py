@@ -25,13 +25,11 @@ class Assembly(component):
             new_beams.append(self._beam_map[id(beam)])
         return new_beams
 
-    def get_joint_definitions_from_rules(self, beams, rules, MaxDistance = 0):
+    def get_joint_definitions_from_rules(self, topologies, rules, ):
         if not isinstance(rules, list):
             rules = [rules]
         rules = [r for r in rules if r is not None]
 
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=MaxDistance)
         self.joints = []
         Info = []
         # rules have to be resolved into joint definitions
@@ -47,9 +45,11 @@ class Assembly(component):
             if isinstance(r, DirectRule):
                 direct_rules.append(r)
 
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
+        for topo in topologies:
+            beam_a = topo["beam_a"]
+            beam_b = topo["beam_b"]
+            detected_topo = topo["detected_topo"]
+            pair = beam_a, beam_b
             pair_joined = False
 
             if detected_topo == JointTopology.TOPO_UNKNOWN:
@@ -86,9 +86,7 @@ class Assembly(component):
                             )
                         )
 
-
     def RunScript(self, Beams, JointRules, Features, MaxDistance, CreateGeometry):
-
         if not Beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
             pass
@@ -97,9 +95,20 @@ class Assembly(component):
         if not (Beams):
             return
 
-        self.get_joint_definitions_from_rules(Beams, JointRules, MaxDistance=MaxDistance)
-
         Assembly = TimberAssembly()
+
+        topologies = []
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance = MaxDistance)
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b":beam_b})
+
+        Assembly.set_topologies(topologies)
+        self.get_joint_definitions_from_rules(topologies, JointRules)
+
         self._beam_map = {}
         beams = [b for b in Beams if b is not None]
         for beam in beams:
@@ -129,14 +138,13 @@ class Assembly(component):
 
         Geometry = None
         scene = Scene()
-        if CreateGeometry and self.joints:
+        if CreateGeometry:
             vis_consumer = BrepGeometryConsumer(Assembly)
             for result in vis_consumer.result:
                 scene.add(result.geometry)
         else:
-            for beam in Beams:
+            for beam in beams:
                 scene.add(beam.shape)
-
         Geometry = scene.redraw()
 
         return Assembly, Geometry

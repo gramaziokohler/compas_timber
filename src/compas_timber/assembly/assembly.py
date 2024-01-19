@@ -20,6 +20,8 @@ class TimberAssembly(Assembly):
         A list of the keys of the beams included in this assembly.
     joint_keys :  list(int)
         A list of the keys of the joints included in this assembly.
+    topologies :  list(dict)
+        A list of JointTopology for assembly. dict is: {"detected_topo": detected_topo, "beam_a": beam_a, "beam_b":beam_b} See :class:`~compas_timber.connections.JointTopology`.
 
     """
 
@@ -27,6 +29,7 @@ class TimberAssembly(Assembly):
         super(TimberAssembly, self).__init__()
         self._beams = []
         self._joints = []
+        self._topologies = [] # added to avoid calculating multiple times
 
     def __str__(self):
         """Returns a formatted string representation of this assembly.
@@ -190,3 +193,10 @@ class TimberAssembly(Assembly):
                     if self.graph.node[x]["type"] == "joint":
                         return True
         return False
+
+    def set_topologies(self, topologies):
+        self._topologies = topologies
+
+    @property
+    def topologies(self):
+        return self._topologies
