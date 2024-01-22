@@ -18,12 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
 * added `BTLx` Grasshopper component
 * added `FrenchRidgeHalfLap` joint
+* added `L-HalfLapJoint`
+* added `T-HalfLapJoint`
+* added `ShowTopologyTypes` GH Component
+
 ### Changed
 * changed `Beam` definition to include `blank_frame` and `blank_length` attributes 
 * Replaced `Artist` with the new `Scene`.
 
-### Removed
 
+### Removed
+* removed `JointDef` GH components
+* removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`
 
 ## [0.3.2] 2023-11-17
 
