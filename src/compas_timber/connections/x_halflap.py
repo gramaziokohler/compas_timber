@@ -8,7 +8,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import length_vector
-
+from compas.geometry import midpoint_point_point
 from compas_timber.parts import MillVolume
 from compas_timber.utils import intersection_line_line_3D
 

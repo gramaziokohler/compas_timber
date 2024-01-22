@@ -6,7 +6,7 @@ from compas_timber.ghpython import JointOptions
 
 
 class XHalfLapJointOptions(component):
-    def RunScript(self, FlipLap, cut_plane_bias):
+    def RunScript(self, flip_lap_side, cut_plane_bias):
         bias = cut_plane_bias or 0.5
         args = {"flip_lap_side": flip_lap_side, "cut_plane_bias": bias}
         options = JointOptions(XHalfLapJoint, **args)
