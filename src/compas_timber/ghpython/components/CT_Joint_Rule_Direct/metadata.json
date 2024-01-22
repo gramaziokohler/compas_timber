@@ -16,8 +16,8 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "Primary Beam",
-                "description": "Primary Beam.",
+                "name": "MainBeam",
+                "description": "Main Beam.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },

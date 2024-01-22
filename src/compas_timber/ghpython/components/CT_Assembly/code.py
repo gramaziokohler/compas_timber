@@ -17,6 +17,7 @@ class Assembly(component):
         # maintains relationship of old_beam.id => new_beam_obj for referencing
         # lets us modify copies of the beams while referencing them using their old identities.
         self._beam_map = {}
+        self.joints = []
 
     def _get_copied_beams(self, old_beams):
         """For the given old_beams returns their respective copies."""
@@ -25,7 +26,7 @@ class Assembly(component):
             new_beams.append(self._beam_map[id(beam)])
         return new_beams
 
-    def get_joint_definitions_from_rules(self, topologies, rules, ):
+    def process_joint_rules(self, beams, rules, max_distance=0):
         if not isinstance(rules, list):
             rules = [rules]
         rules = [r for r in rules if r is not None]
@@ -77,23 +78,26 @@ class Assembly(component):
                     break  # first matching rule
 
                 else:  # no category rule applies, apply topology rules
-                    if not detected_topo in topo_rules:
+                    if detected_topo not in topo_rules:
                         continue
                     else:
                         self.joints.append(
                             JointDefinition(
-                                topo_rules[detected_topo].joint_type, [beam_a, beam_b], **topo_rules[detected_topo].kwargs
+                                topo_rules[detected_topo].joint_type,
+                                [beam_a, beam_b],
+                                **topo_rules[detected_topo].kwargs
                             )
                         )
 
     def RunScript(self, Beams, JointRules, Features, MaxDistance, CreateGeometry):
         if not Beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-            pass
         if not JointRules:
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
-        if not (Beams):
+        if not (Beams):  # shows beams even if no joints are found
             return
+
+        self.process_joint_rules(Beams, JointRules, max_distance=MaxDistance)
 
         Assembly = TimberAssembly()
 

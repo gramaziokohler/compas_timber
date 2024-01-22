@@ -168,13 +168,38 @@ class BTLxPart(object):
         self._et_element = None
 
     def reference_surface_from_beam_face(self, beam_face):
-        """Finds the reference surface with normal that matches the normal of the beam face argument"""
+        """Finds the reference surface with normal that matches the normal of the beam face argument
+
+        parameters:
+        -----------
+            beam_face : :class:`~compas.geometry.Frame`
+                The frame of a beam face from beam.faces.
+
+        returns:
+        --------
+            key : str
+                The key(index 1-6) of the reference surface.
+
+        """
         for key, face in self.reference_surfaces.items():
             if face.normal == beam_face.normal:
                 return key
 
     def reference_surface_planes(self, index):
-        """Returns the reference surface planes for a given index per BTLx docs."""
+        """Returns the reference surface planes for a given index per BTLx docs.
+
+        Parameters:
+        ----------
+            index : int
+                The index of the reference surface.
+
+        returns:
+        --------
+            dict
+                The BTLx reference surface frame.
+
+
+        """
         if len(self._reference_surfaces) != 6:
             self._reference_surfaces = {
                 "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),

@@ -2,11 +2,11 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 from compas_timber.connections import XHalfLapJoint
-from compas_timber.connections.joint import JointOptions
+from compas_timber.ghpython import JointOptions
 
-class MyComponent(component):
 
-    def RunScript(self, flip_lap_side, cut_plane_bias):
+class XHalfLapJointOptions(component):
+    def RunScript(self, FlipLap, cut_plane_bias):
         bias = cut_plane_bias or 0.5
         args = {"flip_lap_side": flip_lap_side, "cut_plane_bias": bias}
         options = JointOptions(XHalfLapJoint, **args)

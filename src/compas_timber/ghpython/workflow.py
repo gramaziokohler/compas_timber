@@ -53,8 +53,8 @@ class DirectRule(JointRule):
     def comply(self, beams):
         try:
             return set(self.beams) == set(beams)
-        except KeyError:
-            print("key error")
+        except TypeError:
+            print("unable to comply direct joint beam sets")
             return False
 
 
@@ -258,3 +258,38 @@ def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l
 
     for beamA, beamB in connectivity["X"]:
         pass
+
+
+class JointOptions(object):
+    """Container for options to be passed to a joint.
+
+    This allows delaying the actual joining of the beams to a downstream component.
+
+    Parameters
+    ----------
+    type :  cls(:class:`compas_timber.connections.Joint`)
+        The type of the joint.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+
+    Attributes
+    ----------
+    type :  cls(:class:`compas_timber.connections.Joint`)
+        The type of the joint.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+
+    """
+
+    def __init__(self, type, **kwargs):
+        self.type = type
+        self.kwargs = kwargs
+
+    def __repr__(self):
+        return "{}({}{})".format(JointOptions.__name__, self.type, self.kwargs)
+
+    def ToString(self):
+        return repr(self)
+
+    def is_identical(self, other):
+        return isinstance(other, JointOptions) and self.kwargs == other.kwargs

@@ -8,7 +8,6 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import length_vector
-from compas.geometry import midpoint_point_point
 
 from compas_timber.parts import MillVolume
 from compas_timber.utils import intersection_line_line_3D
@@ -64,6 +63,7 @@ class XHalfLapJoint(Joint):
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
+        self.cut_plane_choice = flip_lap_side  # Decide if Direction of beam_a or beam_b
         self.cut_plane_choice = flip_lap_side  # Decide if Direction of beam_a or beam_b
         self.features = []
         self.cut_plane_bias = cut_plane_bias
