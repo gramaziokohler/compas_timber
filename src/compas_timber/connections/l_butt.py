@@ -113,6 +113,3 @@ class LButtJoint(Joint):
         f_main = CutFeature(self.cutting_plane_main)
         self.main_beam.add_features(f_main)
         self.features.append(f_main)
-        # f_cross = CutFeature(self.cutting_plane_cross)
-        # self.cross_beam.add_features(f_cross)
-        # self.features.append(f_cross)

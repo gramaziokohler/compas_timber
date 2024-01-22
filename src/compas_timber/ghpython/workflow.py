@@ -259,6 +259,7 @@ def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l
     for beamA, beamB in connectivity["X"]:
         pass
 
+
 class JointOptions(object):
     """Container for options to be passed to a joint.
 

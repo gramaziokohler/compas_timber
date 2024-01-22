@@ -9,7 +9,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
 
 
-class MyComponent(component):
+class TopologyJointRule(component):
     def RunScript(self, L, T, X):
         topoRules = []
 

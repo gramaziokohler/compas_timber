@@ -6,11 +6,4 @@ from .workflow import FeatureDefinition
 from .workflow import JointOptions
 
 
-__all__ = [
-    "JointDefinition",
-    "CategoryRule",
-    "TopologyRule",
-    "DirectRule",
-    "FeatureDefinition",
-    "JointOptions"
-]
+__all__ = ["JointDefinition", "CategoryRule", "TopologyRule", "DirectRule", "FeatureDefinition", "JointOptions"]

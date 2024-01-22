@@ -154,6 +154,3 @@ class Joint(Data):
                 self._ends[str(beam.key)] = "end"
 
         return self._ends
-
-
-
