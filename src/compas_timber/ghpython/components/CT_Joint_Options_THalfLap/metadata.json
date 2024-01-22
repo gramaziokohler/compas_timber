@@ -10,13 +10,13 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "flip_lap_side",
+                "name": "FlipLapSide",
                 "description": "flip the side of the lap joint",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             },
             {
-                "name": "cut_plane_bias",
+                "name": "CutPlaneBias",
                 "description": "determines the depth of lap cuts on the beams",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
