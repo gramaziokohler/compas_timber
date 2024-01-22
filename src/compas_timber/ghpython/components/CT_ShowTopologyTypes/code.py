@@ -18,7 +18,9 @@ class ShowJointTypes(component):
             beam_b = topo.get("beam_b")
             topology = topo.get("detected_topo")
 
-            [p1, _], [p2, _] = intersection_line_line_3D(beam_a.centerline, beam_b.centerline, float("inf"), False, 1e-3)
+            [p1, _], [p2, _] = intersection_line_line_3D(
+                beam_a.centerline, beam_b.centerline, float("inf"), False, 1e-3
+            )
             p1 = point_to_rhino(p1)
             p2 = point_to_rhino(p2)
             self.pt.append((p2 + p1) / 2)

@@ -29,7 +29,7 @@ class TimberAssembly(Assembly):
         super(TimberAssembly, self).__init__()
         self._beams = []
         self._joints = []
-        self._topologies = [] # added to avoid calculating multiple times
+        self._topologies = []  # added to avoid calculating multiple times
 
     def __str__(self):
         """Returns a formatted string representation of this assembly.

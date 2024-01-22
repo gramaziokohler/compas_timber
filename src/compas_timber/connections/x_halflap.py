@@ -57,7 +57,7 @@ class XHalfLapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias = 0.5, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -130,8 +130,7 @@ class XHalfLapJoint(Joint):
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
-        """Sorts the Beam Face Planes according to the Cut Plane
-        """
+        """Sorts the Beam Face Planes according to the Cut Plane"""
         frames = beam.faces[:4]
         planes = []
         planes_angles = []
@@ -143,7 +142,7 @@ class XHalfLapJoint(Joint):
 
     @staticmethod
     def _create_polyhedron(plane_a, lines, bias):
-        """ Hexahedron from 2 Planes and 4 Lines
+        """Hexahedron from 2 Planes and 4 Lines
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
         """
         int_points = []
@@ -196,8 +195,8 @@ class XHalfLapJoint(Joint):
         lines = []
         unbound_line = intersection_plane_plane(plane_a1, plane_b1, tol=1e-6)
 
-        pt_a = (intersection_line_plane(unbound_line, plane_a0))
-        pt_b = (intersection_line_plane(unbound_line, plane_b0))
+        pt_a = intersection_line_plane(unbound_line, plane_a0)
+        pt_b = intersection_line_plane(unbound_line, plane_b0)
         lines.append(Line(pt_a, pt_b))
 
         unbound_line = intersection_plane_plane(plane_a1, plane_b2)

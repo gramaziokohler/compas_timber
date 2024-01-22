@@ -7,11 +7,8 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
-from compas.geometry import length_vector
-from compas.geometry import midpoint_point_point
 
 
-from compas_timber.utils import intersection_line_line_3D
 from .joint import beam_side_incidence
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
@@ -60,8 +57,7 @@ class THalfLapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias = 0.5, frame=None, key=None):
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
         super(THalfLapJoint, self).__init__(frame, key)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -96,23 +92,12 @@ class THalfLapJoint(Joint):
     def beams(self):
         return [self.main_beam, self.cross_beam]
 
-    def _cutplane(self):
-        # Find the Point for the Cut Plane
-        int_a, int_b = intersection_line_line_3D(self.main_beam.centerline, self.cross_beam.centerline, float("inf"))
-        int_a, _ = int_a
-        int_b, _ = int_b
-        point_cut = midpoint_point_point(int_a, int_b)
-
-        # Vector Cross Product
-        cross_vector = self.main_beam.centerline.vector.cross(self.cross_beam.centerline.vector)
-        return  cross_vector
-
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
         # Sorts the Beam Face Planes according to the Cut Plane
         frames = beam.faces[:4]
         planes = [Plane.from_frame(frame) for frame in frames]
-        planes.sort(key = lambda x: angle_vectors(cutplane_vector, x.normal))
+        planes.sort(key=lambda x: angle_vectors(cutplane_vector, x.normal))
         return planes
 
     @staticmethod
@@ -150,7 +135,6 @@ class THalfLapJoint(Joint):
             ],
         )
 
-
     @property
     def cutting_plane_main(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
@@ -160,27 +144,24 @@ class THalfLapJoint(Joint):
 
     def _create_negative_volumes(self):
         # Get Cut Plane
-        plane_cut_vector = self._cutplane()
+        plane_cut_vector = self.main_beam.centerline.vector.cross(self.cross_beam.centerline.vector)
 
         if self.flip_lap_side:
-            plane_cut_vector = - plane_cut_vector
+            plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
         planes_main = self._sort_beam_planes(self.main_beam, plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_main
 
-
         planes_cross = self._sort_beam_planes(self.cross_beam, -plane_cut_vector)
         plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
-
-
 
         # Lines as Frame Intersections
         lines = []
         unbound_line = intersection_plane_plane(plane_a1, plane_b1, tol=1e-6)
 
-        pt_a = (intersection_line_plane(unbound_line, plane_a0))
-        pt_b = (intersection_line_plane(unbound_line, plane_b0))
+        pt_a = intersection_line_plane(unbound_line, plane_a0)
+        pt_b = intersection_line_plane(unbound_line, plane_b0)
         lines.append(Line(pt_a, pt_b))
 
         unbound_line = intersection_plane_plane(plane_a1, plane_b2)
@@ -220,5 +201,3 @@ class THalfLapJoint(Joint):
         f_main = CutFeature(trim_plane)
         self.main_beam.add_features(f_main)
         self.features.append(f_main)
-
-
