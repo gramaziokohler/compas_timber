@@ -43,6 +43,7 @@ Exceptions
 
 """
 from .joint import Joint
+from .joint import JointOptions
 from .joint import beam_side_incidence
 from .joint import BeamJoinningError
 from .t_butt import TButtJoint
@@ -57,6 +58,7 @@ from .solver import find_neighboring_beams
 
 __all__ = [
     "Joint",
+    "JointOptions",
     "beam_side_incidence",
     "BeamJoinningError",
     "TButtJoint",

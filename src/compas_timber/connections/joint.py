@@ -57,6 +57,8 @@ class Joint(Data):
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
 
+    ends : dict(:class:`~compas_timber.parts.Beam`, str)
+        A map of which end of each beam is joined by this joint.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
@@ -68,7 +70,7 @@ class Joint(Data):
 
     @property
     def data(self):
-        return {"frame": self.frame.data, "key": self.key}
+        return {"frame": self.frame.data, "key": self.key, "beams": [beam.key for beam in self.beams]}
 
     @property
     def beams(self):
@@ -97,7 +99,7 @@ class Joint(Data):
         raise NotImplementedError
 
     @classmethod
-    def create(cls, assembly, *beams):
+    def create(cls, assembly, *beams, **kwargs):
         """Creates an instance of this joint and creates the new connection in `assembly`.
 
         `beams` are expected to have been added to `assembly` before calling this method.
@@ -120,10 +122,70 @@ class Joint(Data):
             The instance of the created joint.
 
         """
+
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
-
-        joint = cls(*beams)
+        joint = cls(*beams, **kwargs)
         assembly.add_joint(joint, beams)
         joint.add_features()
         return joint
+
+    @property
+    def ends(self):
+        """Returns a map of ehich end of each beam is joined by this joint."""
+
+        self._ends = {}
+        for index, beam in enumerate(self.beams):
+            start_distance = min(
+                [
+                    beam.centerline.start.distance_to_point(self.beams[index - 1].centerline.start),
+                    beam.centerline.start.distance_to_point(self.beams[index - 1].centerline.end),
+                ]
+            )
+            end_distance = min(
+                [
+                    beam.centerline.end.distance_to_point(self.beams[index - 1].centerline.start),
+                    beam.centerline.end.distance_to_point(self.beams[index - 1].centerline.end),
+                ]
+            )
+            if start_distance < end_distance:
+                self._ends[str(beam.key)] = "start"
+            else:
+                self._ends[str(beam.key)] = "end"
+
+        return self._ends
+
+
+class JointOptions(object):
+    """Container for options to be passed to a joint.
+
+    This allows delaying the actual joining of the beams to a downstream component.
+
+    Parameters
+    ----------
+    type :  cls(:class:`compas_timber.connections.Joint`)
+        The type of the joint.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+
+    Attributes
+    ----------
+    type :  cls(:class:`compas_timber.connections.Joint`)
+        The type of the joint.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+
+    """
+
+    def __init__(self, type, **kwargs):
+        self.type = type
+        self.kwargs = kwargs
+
+    def __repr__(self):
+        return "{}({}{})".format(JointOptions.__name__, self.type, self.kwargs)
+
+    def ToString(self):
+        return repr(self)
+
+    def is_identical(self, other):
+        return isinstance(other, JointOptions) and self.kwargs == other.kwargs

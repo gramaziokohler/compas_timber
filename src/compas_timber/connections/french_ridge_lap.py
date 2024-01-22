@@ -3,11 +3,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import angle_vectors
 import math
 
-
-from compas_timber.parts import BeamExtensionFeature
-from compas_timber.parts import BeamTrimmingFeature
-
-from .joint import Joint
+from .joint import BeamJoinningError, Joint
 from .joint import beam_side_incidence
 from .solver import JointTopology
 
@@ -34,7 +30,8 @@ class FrenchRidgeLapJoint(Joint):
         The beams joined by this joint.
     joint_type : str
         A string representation of this joint's type.
-
+    reference_face_indices : dict
+        A dictionary containing the indices of the reference faces for both beams.
 
     """
 
@@ -89,19 +86,19 @@ class FrenchRidgeLapJoint(Joint):
         return cfr
 
     def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the top and bottom beams saved in the assembly."""
+        """After de-serialization, restores references to the top and bottom beams saved in the assembly."""
         self.beam_a = assemly.find_by_key(self.beam_a_key)
         self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     def check_geometry(self):
         """
-        This method checks whether the parts are aligned as necessary to create French Ridge Lap.
+        This method checks whether the parts are aligned as necessary to create French Ridge Lap and determines which face is used as reference face for machining.
         """
         if not (self.beam_a and self.beam_b):
-            raise ("French Ridge Lap requires 2 beams")
+            raise (BeamJoinningError("French Ridge Lap requires 2 beams"))
 
         if not (self.beam_a.width == self.beam_b.width and self.beam_a.height == self.beam_b.height):
-            raise ("widths and heights for both beams must match for the French Ridge Lap")
+            raise (BeamJoinningError("widths and heights for both beams must match for the French Ridge Lap"))
 
         normal = cross_vectors(self.beam_a.frame.xaxis, self.beam_b.frame.xaxis)
 
@@ -116,8 +113,7 @@ class FrenchRidgeLapJoint(Joint):
         elif angle_vectors(normal, -self.beam_a.frame.zaxis) < 0.001:
             indices.append(2)
         else:
-            raise ("part not aligned with corner normal, no French Ridge Lap possible")
-        print(indices)
+            raise (BeamJoinningError("part not aligned with corner normal, no French Ridge Lap possible"))
 
         if abs(angle_vectors(normal, self.beam_b.frame.yaxis) - math.pi) < 0.001:
             indices.append(3)
@@ -128,25 +124,5 @@ class FrenchRidgeLapJoint(Joint):
         elif abs(angle_vectors(normal, -self.beam_b.frame.zaxis) - math.pi) < 0.001:
             indices.append(2)
         else:
-            raise ("part not aligned with corner normal, no French Ridge Lap possible")
-
+            raise (BeamJoinningError("part not aligned with corner normal, no French Ridge Lap possible"))
         self.reference_face_indices = {str(self.beam_a.key): indices[0], str(self.beam_b.key): indices[1]}
-
-    def add_features(self):
-        """Adds the required extension and trimming features to both beams.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-
-        """
-
-        if self.features:
-            self.beam_a.clear_features(self.features)
-            self.beam_b.clear_features(self.features)
-            self.features = []
-
-        top_extend = BeamExtensionFeature(*self.beam_a.extension_to_plane(self.cutting_plane_top))
-        bottom_extend = BeamExtensionFeature(*self.beam_b.extension_to_plane(self.cutting_plane_bottom))
-
-        self.beam_a.add_feature(top_extend)
-        self.beam_b.add_feature(bottom_extend)
-        self.features.extend([top_extend, bottom_extend])

@@ -1,17 +1,32 @@
+from compas_timber.fabrication import BTLx
 from compas_timber.connections import TButtJoint
-from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxJackCut
 
 
 class TButtFactory(object):
+    """Factory class for creating T-Butt joints."""
+
     def __init__(self):
         pass
 
     @classmethod
-    def apply_processes(cls, btlx_joint):
-        part = btlx_joint.parts[str(btlx_joint.joint.main_beam.key)]
-        cut_plane = btlx_joint.joint.cutting_plane
-        BTLxJackCut.apply_process(part, cut_plane, btlx_joint)
+    def apply_processings(cls, joint, parts):
+        """
+        Apply processings to the joint and its associated parts.
+
+        Parameters:
+            joint : :class:`~compas_timber.connections.joint.Joint`
+                The joint object.
+            parts : dict
+                A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
+
+        Returns:
+            None
+        """
+
+        part = parts[str(joint.main_beam.key)]
+        cut_plane = joint.cutting_plane
+        part.processings.append(BTLxJackCut.create_process(part, cut_plane, "T-Butt Joint"))
 
 
-BTLxJoint.register_joint(TButtJoint, TButtFactory)
+BTLx.register_joint(TButtJoint, TButtFactory)

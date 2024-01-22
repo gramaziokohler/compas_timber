@@ -35,13 +35,37 @@ class JointRule(object):
         raise NotImplementedError
 
 
+class DirectRule(JointRule):
+    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type."""
+
+    def __init__(self, joint_type, beams, **kwargs):
+        self.beams = beams
+        self.joint_type = joint_type
+        self.kwargs = kwargs
+
+    def ToString(self):
+        # GH doesn't know
+        return repr(self)
+
+    def __repr__(self):
+        return "{}({}, {})".format(DirectRule, self.beams, self.joint_type)
+
+    def comply(self, beams):
+        try:
+            return set(self.beams) == set(beams)
+        except KeyError:
+            print("key error")
+            return False
+
+
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the beams, this rule assigns"""
 
-    def __init__(self, joint_type, category_a, category_b):
+    def __init__(self, joint_type, category_a, category_b, **kwargs):
         self.joint_type = joint_type
         self.category_a = category_a
         self.category_b = category_b
+        self.kwargs = kwargs
 
     def ToString(self):
         # GH doesn't know
@@ -83,6 +107,32 @@ class CategoryRule(JointRule):
             return beam_b, beam_a
 
 
+class TopologyRule(JointRule):
+    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type.
+
+    parameters
+    ----------
+    topology_type : constant(compas_timber.connections.JointTopology)
+        The topology type to which the rule is applied.
+    joint_type : cls(:class:`compas_timber.connections.Joint`)
+        The joint type to be applied to this topology.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+    """
+
+    def __init__(self, topology_type, joint_type, **kwargs):
+        self.topology_type = topology_type
+        self.joint_type = joint_type
+        self.kwargs = kwargs
+
+    def ToString(self):
+        # GH doesn't know
+        return repr(self)
+
+    def __repr__(self):
+        return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type)
+
+
 class JointDefinition(object):
     """Container for a joint type and the beam that shall be joined.
 
@@ -90,7 +140,7 @@ class JointDefinition(object):
 
     """
 
-    def __init__(self, joint_type, beams):
+    def __init__(self, joint_type, beams, **kwargs):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
         if len(beams) != 2:
@@ -98,9 +148,10 @@ class JointDefinition(object):
 
         self.joint_type = joint_type
         self.beams = beams
+        self.kwargs = kwargs
 
     def __repr__(self):
-        return "{}({}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.beams)
+        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.beams, self.kwargs)
 
     def ToString(self):
         return repr(self)

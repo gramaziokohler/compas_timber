@@ -19,7 +19,8 @@
                 "name": "Rules",
                 "description": "Pre-defined rules for default joint types based on 'Category' attribute of the Beams.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten": true
             },
             {
                 "name": "MaxDistance",

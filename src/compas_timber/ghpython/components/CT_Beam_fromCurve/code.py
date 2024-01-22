@@ -7,6 +7,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.parts.beam import Beam as ctBeam
+from compas.scene import Scene
 
 
 class Beam_fromCurve(component):
@@ -26,6 +27,8 @@ class Beam_fromCurve(component):
             Category = [None]
 
         Beam = []
+        Blank = []
+        scene = Scene()
 
         if Centerline and Height and Width:
             # check list lengths for consistency
@@ -69,11 +72,13 @@ class Beam_fromCurve(component):
                     else:
                         None
 
-                    beam = ctBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z, geometry_type="brep")
+                    beam = ctBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
 
                     beam.attributes["rhino_guid"] = None
                     beam.attributes["category"] = c
 
                     Beam.append(beam)
+                    scene.add(beam.blank)
+        Blank = scene.redraw()
 
-        return Beam
+        return Beam, Blank

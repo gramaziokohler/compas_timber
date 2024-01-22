@@ -1,0 +1,38 @@
+{
+    "name": "Category Joints Rules ",
+    "nickname": "JointsByCategory",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "Defines which Joint type will be applied in the Automatic Joints component for connecting Beams with the given Category attributes. This overrides Topological Joint rules and is overriden by Direct joint rules",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "JointOptions",
+                "description": "Joint Options component.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "CatA",
+                "description": "Categeory of the first Beam.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "CatB",
+                "description": "Category of the sectond Beam.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Rule",
+                "description": "A joint rule."
+            }
+        ]
+    }
+}

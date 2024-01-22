@@ -1,3 +1,4 @@
+# flake8: noqa
 import Rhino
 from compas_rhino.conversions import RhinoCurve
 from compas_rhino.conversions import vector_to_compas
@@ -6,7 +7,8 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
-from compas_timber.parts.beam import Beam as ctBeam
+from compas.scene import Scene
+from compas_timber.parts import Beam
 
 
 class Beam_fromCurveGuid(component):
@@ -57,13 +59,16 @@ class Beam_fromCurveGuid(component):
         if len(Category) != N:
             Category = [Category[0]] * N
 
-        beams = []
+        Beam = []
+        Blank = []
+        scene = Scene()
+
         for guid, z, w, h, c in zip(RefCenterline, ZVector, Width, Height, Category):
             curve = RhinoCurve.from_object(Rhino.RhinoDoc.ActiveDoc.Objects.FindId(guid))
             line = curve.to_compas_line()
             if z:
                 z = vector_to_compas(z)
-            beam = ctBeam.from_centerline(line, w, h, z_vector=z)
+            beam = Beam.from_centerline(line, w, h, z_vector=z)
             beam.attributes["rhino_guid"] = str(guid)
             beam.attributes["category"] = c
 
@@ -73,6 +78,7 @@ class Beam_fromCurveGuid(component):
                 update_rhobj_attributes_name(guid, "zvector", str(list(beam.frame.zaxis)))
                 update_rhobj_attributes_name(guid, "category", c)
 
-            beams.append(beam)
-        Beam = beams
-        return Beam
+            Beam.append(beam)
+            scene.add(beam.blank)
+        Blank = scene.redraw()
+        return Beam, Blank

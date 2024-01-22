@@ -1,7 +1,6 @@
 from compas.geometry import Frame
 
-from compas_timber.parts import BeamExtensionFeature
-from compas_timber.parts import BeamTrimmingFeature
+from compas_timber.parts import CutFeature
 
 from .joint import Joint
 from .joint import beam_side_incidence
@@ -40,8 +39,13 @@ class LButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, gap=0.0, frame=None, key=None):
+    def __init__(self, main_beam=None, cross_beam=None, gap=0.0, frame=None, key=None, smallBeamButts=False):
         super(LButtJoint, self).__init__(frame=frame, key=key)
+
+        if smallBeamButts:
+            if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
+                main_beam, cross_beam = cross_beam, main_beam
+
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
@@ -99,17 +103,16 @@ class LButtJoint(Joint):
 
         """
         if self.features:
-            self.main_beam.clear_features(self.features)
-            self.cross_beam.clear_features(self.features)
-            self.features = []
+            self.main_beam.remove_features(self.features)
 
-        main_extend = BeamExtensionFeature(*self.main_beam.extension_to_plane(self.cutting_plane_main))
-        main_trim = BeamTrimmingFeature(self.cutting_plane_main)
-        cross_extend = BeamExtensionFeature(*self.cross_beam.extension_to_plane(self.cutting_plane_cross))
-        cross_trim = BeamTrimmingFeature(self.cutting_plane_cross)
+        start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
+        start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_plane_cross)
+        self.main_beam.add_blank_extension(start_main, end_main, self.key)
+        self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
 
-        self.main_beam.add_feature(main_extend)
-        self.main_beam.add_feature(main_trim)
-        self.cross_beam.add_feature(cross_extend)
-        self.cross_beam.add_feature(cross_trim)
-        self.features.extend([main_extend, main_trim, cross_extend, cross_trim])
+        f_main = CutFeature(self.cutting_plane_main)
+        self.main_beam.add_features(f_main)
+        self.features.append(f_main)
+        # f_cross = CutFeature(self.cutting_plane_cross)
+        # self.cross_beam.add_features(f_cross)
+        # self.features.append(f_cross)

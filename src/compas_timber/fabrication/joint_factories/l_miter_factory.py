@@ -1,16 +1,38 @@
+from compas_timber.fabrication import BTLx
 from compas_timber.connections import LMiterJoint
-from compas_timber.fabrication import BTLxJoint
 from compas_timber.fabrication import BTLxJackCut
 
 
 class LMiterFactory(object):
+    """
+    Factory class for creating L-Miter joints.
+    """
+
     def __init__(self):
         pass
 
     @classmethod
-    def apply_processes(cls, joint):
-        BTLxJackCut.apply_process(joint.parts.values()[0], joint.joint.cutting_planes[0], joint)
-        BTLxJackCut.apply_process(joint.parts.values()[1], joint.joint.cutting_planes[1], joint)
+    def apply_processings(cls, joint, parts):
+        """
+        Apply processings to the parts involved in the L-Miter joint.
+
+        Parameters:
+        ----------
+            joint : :class:`~compas_timber.connections.joint.Joint`
+                The joint object.
+            parts : dict
+                A dictionary of the BTLxParts connected by this joint, with part keys as the dictionary keys.
+
+        Returns:
+            None
+        """
+
+        parts[str(joint.beams[0].key)].processings.append(
+            BTLxJackCut.create_process(parts[str(joint.beams[0].key)], joint.cutting_planes[0], "L-Miter Joint")
+        )
+        parts[str(joint.beams[1].key)].processings.append(
+            BTLxJackCut.create_process(parts[str(joint.beams[1].key)], joint.cutting_planes[1], "L-Miter Joint")
+        )
 
 
-BTLxJoint.register_joint(LMiterJoint, LMiterFactory)
+BTLx.register_joint(LMiterJoint, LMiterFactory)
