@@ -10,7 +10,12 @@
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
-
+            {
+                "name": "Cutoff",
+                "description": "For very acute angles, limit the extension of the tip/beak of the joint.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
         ],
         "outputParameters": [
             {

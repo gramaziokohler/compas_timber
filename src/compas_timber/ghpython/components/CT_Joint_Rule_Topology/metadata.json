@@ -11,19 +11,19 @@
         "inputParameters": [
             {
                 "name": "L",
-                "description": "Joint type to be applied to L topology. Default type is L-Miter. If L-Butt, the beam with a larger cross section area will be used as crossing beam.",
+                "description": "Joint type to be applied to L topology. Default type is L-Miter. Input is a joint options component.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             },
             {
                 "name": "T",
-                "description": "Joint type to be applied to T topology. Default type is T-Butt.",
+                "description": "Joint type to be applied to T topology. Default type is T-Butt. Input is a joint options component.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             },
             {
                 "name": "X",
-                "description": "Joint type to be applied to X topology. Default type is X-HalfLap.",
+                "description": "Joint type to be applied to X topology. Default type is X-HalfLap. Input is a joint options component.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             }

@@ -5,9 +5,9 @@ from compas_timber.connections import LButtJoint
 from compas_timber.ghpython import JointOptions
 
 
-class MyComponent(component):
-    def RunScript(self, Gap, Small_Beam_Butts):
-        args = {"gap": Gap, "smallBeamButts": Small_Beam_Butts}
+class LButtJointOptions(component):
+    def RunScript(self, Gap, SmallBeamButts):
+        args = {"gap": Gap, "small_beam_butts": SmallBeamButts}
         options = JointOptions(LButtJoint, **args)
 
         return options

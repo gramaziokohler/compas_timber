@@ -53,8 +53,8 @@ class DirectRule(JointRule):
     def comply(self, beams):
         try:
             return set(self.beams) == set(beams)
-        except KeyError:
-            print("key error")
+        except TypeError:
+            print("unable to comply direct joint beam sets")
             return False
 
 

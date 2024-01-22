@@ -19,13 +19,13 @@ from .solver import JointTopology
 class XHalfLapJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, cut_plane_bias=0.5, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
-        self.cut_plane_choice = cut_plane_choice  # Decide if Direction of beam_a or beam_b
+        self.cut_plane_choice = flip_lap_side  # Decide if Direction of beam_a or beam_b
         self.features = []
         self.cut_plane_bias = cut_plane_bias
 

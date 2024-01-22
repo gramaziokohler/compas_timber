@@ -26,13 +26,13 @@ class Assembly(component):
             new_beams.append(self._beam_map[id(beam)])
         return new_beams
 
-    def process_joint_rules(self, beams, rules, MaxDistance=0):
+    def process_joint_rules(self, beams, rules, max_distance=0):
         if not isinstance(rules, list):
             rules = [rules]
         rules = [r for r in rules if r is not None]
 
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=MaxDistance)
+        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
 
         Info = []
         # rules have to be resolved into joint definitions
@@ -50,7 +50,7 @@ class Assembly(component):
 
         for pair in found_pairs:
             beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
             pair_joined = False
 
             if detected_topo == JointTopology.TOPO_UNKNOWN:
@@ -97,7 +97,7 @@ class Assembly(component):
         if not (Beams):  # shows beams even if no joints are found
             return
 
-        self.process_joint_rules(Beams, JointRules, MaxDistance=MaxDistance)
+        self.process_joint_rules(Beams, JointRules, max_distance=MaxDistance)
 
         Assembly = TimberAssembly()
         self._beam_map = {}

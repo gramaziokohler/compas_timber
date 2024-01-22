@@ -10,13 +10,13 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "cut_plane",
-                "description": "Decide if Direction of beam_a or beam_b",
-                "typeHintID": "int",
+                "name": "FlipLapSide",
+                "description": "flips the lap side",
+                "typeHintID": "bool",
                 "scriptParamAccess": 0
             },
             {
-                "name": "cut_plane_bias",
+                "name": "CutPlaneBias",
                 "description": "determines the depth of lap cuts on the beams",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
