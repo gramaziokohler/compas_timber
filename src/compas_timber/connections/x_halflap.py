@@ -57,7 +57,7 @@ class XHalfLapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side = False, cut_plane_bias=0.5, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -133,7 +133,6 @@ class XHalfLapJoint(Joint):
         """Sorts the Beam Face Planes according to the Cut Plane"""
         frames = beam.faces[:4]
         planes = []
-        planes_angles = []
         for i in frames:
             planes.append(Plane.from_frame(i))
         planes.sort(key=lambda x: angle_vectors(cutplane_vector, x.normal))

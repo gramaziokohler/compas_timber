@@ -7,7 +7,6 @@ from compas_timber.ghpython import JointOptions
 
 class TButtJointOptions(component):
     def RunScript(self, Gap):
-
         args = {}
         if Gap:
             args["gap"] = Gap
