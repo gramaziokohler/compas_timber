@@ -1,12 +1,12 @@
 import os
 import uuid
+import xml.dom.minidom as MD
+import xml.etree.ElementTree as ET
+from collections import OrderedDict
 from datetime import date
 from datetime import datetime
-import xml.etree.ElementTree as ET
-import xml.dom.minidom as MD
-import compas
 
-from collections import OrderedDict
+import compas
 from compas.geometry import Frame
 from compas.geometry import Transformation
 
@@ -16,12 +16,12 @@ class BTLx(object):
 
     BTLx is a format used for representing timber fabrication data.
 
-    Parameters:
+    Parameters
     ----------
         assembly : :class:`~compas_timber.assembly.Assembly`
             The assembly object.
 
-    Attributes:
+    Attributes
     ----------
         history : dict
             The history of the BTLx file.
@@ -117,12 +117,12 @@ class BTLx(object):
 class BTLxPart(object):
     """Class representing a BTLx part. This acts as a wrapper for a Beam object.
 
-    Parameters:
+    Parameters
     ----------
         beam : :class:`~compas_timber.assembly.Beam`
             The beam object.
 
-    Attributes:
+    Attributes
     ----------
         attr : dict
             The attributes of the BTLx part.
@@ -375,7 +375,8 @@ class BTLxProcess(object):
     The factory will typically derive the needed parameters from the Joint instance and the joint_factory will apply them to the individual BTLxParts.
 
 
-    Parameters:
+    Parameters
+    ----------
     name : str
         The name of the processing.
     attr : dict
@@ -384,10 +385,11 @@ class BTLxProcess(object):
         The parameters of the processing.
 
 
-    Attributes:
+    Attributes
     ----------
     et_element : :class:`~xml.etree.ElementTree.Element`
         The ET element of the BTLx processing.
+
     """
 
     def __init__(self, process_type, header_attributes, process_parameters):

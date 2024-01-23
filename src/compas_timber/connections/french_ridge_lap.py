@@ -1,9 +1,11 @@
-from compas.geometry import Frame
-from compas.geometry import cross_vectors
-from compas.geometry import angle_vectors
 import math
 
-from .joint import BeamJoinningError, Joint
+from compas.geometry import Frame
+from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
+
+from .joint import BeamJoinningError
+from .joint import Joint
 from .joint import beam_side_incidence
 from .solver import JointTopology
 
@@ -43,6 +45,7 @@ class FrenchRidgeLapJoint(Joint):
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
+        self.gap = gap
         self.features = []
         self.reference_face_indices = {}
         self.check_geometry()

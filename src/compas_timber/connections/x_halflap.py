@@ -57,32 +57,32 @@ class XHalfLapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side = False, cut_plane_bias=0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
         self.cut_plane_choice = flip_lap_side  # Decide if Direction of beam_a or beam_b
-        self.cut_plane_choice = flip_lap_side  # Decide if Direction of beam_a or beam_b
         self.features = []
         self.cut_plane_bias = cut_plane_bias
+        self.features = []
 
     @property
     def data(self):
         data_dict = {
             "beam_a": self.beam_a_key,
             "beam_b": self.beam_b_key,
+            "cut_plane_bias": self.cut_plane_bias,
         }
         data_dict.update(Joint.data.fget(self))
         return data_dict
 
     @classmethod
     def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cut_plane_choice"])
+        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cut_plane_bias=value["cut_plane_bias"])
         instance.beam_a_key = value["beam_a"]
         instance.beam_b_key = value["beam_b"]
-        instance.cut_plane_choice = value["cut_plane_choice"]
         return instance
 
     @property
@@ -136,8 +136,7 @@ class XHalfLapJoint(Joint):
         planes_angles = []
         for i in frames:
             planes.append(Plane.from_frame(i))
-            planes_angles.append(angle_vectors(cutplane_vector, i.normal))
-        planes_angles, planes = zip(*sorted(zip(planes_angles, planes)))
+        planes.sort(key=lambda x: angle_vectors(cutplane_vector, x.normal))
         return planes
 
     @staticmethod

@@ -1,5 +1,6 @@
 import math
 
+from compas.datastructures import Part
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -9,7 +10,6 @@ from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
-from compas.datastructures import Part
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 
