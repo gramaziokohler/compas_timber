@@ -7,7 +7,9 @@ from compas_timber.ghpython import JointOptions
 
 class FrenchRidgeLapOptions(component):
     def RunScript(self, Cutoff):
-        args = {"cutoff": Cutoff}
+        args = {}
+        if Cutoff:
+            args["cutoff"] = Cutoff
         options = JointOptions(FrenchRidgeLapJoint, **args)
 
         return options
