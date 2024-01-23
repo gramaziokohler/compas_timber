@@ -98,8 +98,7 @@ class XHalfLapJoint(Joint):
         planes_angles = []
         for i in frames:
             planes.append(Plane.from_frame(i))
-            planes_angles.append(angle_vectors(cutplane_vector, i.normal))
-        planes_angles, planes = zip(*sorted(zip(planes_angles, planes)))
+        planes.sort(key=lambda x: angle_vectors(cutplane_vector, x.normal))
         return planes
 
     @staticmethod
