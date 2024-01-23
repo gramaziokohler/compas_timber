@@ -94,7 +94,6 @@ class XHalfLapJoint(Joint):
 
         frames = beam.faces[:4]
         planes = []
-        planes_angles = []
         for i in frames:
             planes.append(Plane.from_frame(i))
         planes.sort(key=lambda x: angle_vectors(cutplane_vector, x.normal))
