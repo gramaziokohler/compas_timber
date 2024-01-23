@@ -56,9 +56,9 @@ class Joint(Data):
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
-
     ends : dict(:class:`~compas_timber.parts.Beam`, str)
         A map of which end of each beam is joined by this joint.
+
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
@@ -87,7 +87,7 @@ class Joint(Data):
         are serialized by :class:`compas_timber.assembly`. To avoid circular references, Joint only stores the keys
         of the respective beams.
 
-        This method is called by :class:`compas_timber.assembly during de-serialization to restore the references.
+        This method is called by :class:`compas_timber.assembly` during de-serialization to restore the references.
         Since the roles of the beams are joint specific (e.g. main/cross beam) this method should be implemented by
         the concrete implementation.
 

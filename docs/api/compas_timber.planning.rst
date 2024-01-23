@@ -1,8 +1,8 @@
 ********************************************************************************
-compas_timber.parts
+compas_timber.planning
 ********************************************************************************
 
-.. currentmodule:: compas_timber.parts
+.. currentmodule:: compas_timber.planning
 
 Classes
 =======
@@ -11,4 +11,7 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Beam
+    Actor
+    BuildingPlan
+    Step
+    SimpleSequenceGenerator
