@@ -1,8 +1,7 @@
 from .sequencer import Actor
 from .sequencer import BuildingPlan
-from .sequencer import Step
 from .sequencer import SimpleSequenceGenerator
-
+from .sequencer import Step
 
 __all__ = [
     "Actor",

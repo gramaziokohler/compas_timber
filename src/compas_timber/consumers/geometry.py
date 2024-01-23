@@ -1,6 +1,7 @@
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
+from compas.geometry import Plane
 
 from compas_timber.parts import CutFeature
 from compas_timber.parts import DrillFeature
@@ -8,7 +9,8 @@ from compas_timber.parts import MillVolume
 
 
 def apply_drill_feature(beam_geometry, feature):
-    frame = Frame.from_plane(feature.plane)
+    frame = Frame.from_plane(Plane(point=feature.line.start, normal=feature.line.vector))
+    frame.point += frame.zaxis * 0.5 * feature.length
     drill_volume = Cylinder(frame=frame, radius=feature.diameter / 2.0, height=feature.length)
     return beam_geometry - Brep.from_cylinder(drill_volume)
 

@@ -1,7 +1,7 @@
+from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas.scene import Scene
 from compas_timber.assembly import TimberAssembly
 from compas_timber.consumers import BrepGeometryConsumer
 from compas_timber.connections import ConnectionSolver
