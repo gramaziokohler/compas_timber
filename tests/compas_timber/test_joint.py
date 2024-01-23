@@ -152,16 +152,29 @@ def test_joint_create_kwargs_passthrough_lmiter():
     assert joint.cutoff == 42
 
 
-# def test_joint_create_kwargs_passthrough_xhalflap():
-#     assembly = TimberAssembly()
-#     beam_a = Beam.from_endpoints(Point(0.5, 0, 0), Point(0.5, 1, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-#     beam_b = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-#     assembly.add_beam(beam_a)
-#     assembly.add_beam(beam_b)
+def test_joint_create_kwargs_passthrough_xhalflap():
+    assembly = TimberAssembly()
+    beam_a = Beam.from_endpoints(Point(0.5, 0, 0), Point(0.5, 1, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
+    beam_b = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
+    assembly.add_beam(beam_a)
+    assembly.add_beam(beam_b)
 
-#     joint = XHalfLapJoint.create(assembly, beam_a, beam_b)
+    from compas_timber.connections import XHalfLapJoint
+    joint = XHalfLapJoint.create(assembly, beam_a, beam_b)
 
-#     assert joint.cut_plane_bias == 0.4
+    assert joint.cut_plane_bias == 0.4
+
+
+def test_joint_create_kwargs_passthrough_frenchridge():
+    assembly = TimberAssembly()
+    beam_a = Beam.from_endpoints(Point(0.5, 0, 0), Point(0.5, 1, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
+    beam_b = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
+    assembly.add_beam(beam_a)
+    assembly.add_beam(beam_b)
+
+    from compas_timber.connections import FrenchRidgeLapJoint
+
+    joint = FrenchRidgeLapJoint.create(assembly, beam_a, beam_b)
 
 
 if not compas.IPY:
