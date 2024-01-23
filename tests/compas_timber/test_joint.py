@@ -160,7 +160,7 @@ def test_joint_create_kwargs_passthrough_xhalflap():
     assembly.add_beam(beam_b)
 
     from compas_timber.connections import XHalfLapJoint
-    joint = XHalfLapJoint.create(assembly, beam_a, beam_b)
+    joint = XHalfLapJoint.create(assembly, beam_a, beam_b, cut_plane_bias=0.4)
 
     assert joint.cut_plane_bias == 0.4
 
@@ -174,7 +174,9 @@ def test_joint_create_kwargs_passthrough_frenchridge():
 
     from compas_timber.connections import FrenchRidgeLapJoint
 
-    joint = FrenchRidgeLapJoint.create(assembly, beam_a, beam_b)
+    joint = FrenchRidgeLapJoint.create(assembly, beam_a, beam_b, cutoff=2.4)
+
+    assert joint.cutoff == 2.4
 
 
 if not compas.IPY:
