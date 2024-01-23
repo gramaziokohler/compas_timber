@@ -13,7 +13,6 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import XHalfLapJoint
-from compas_timber.connections import FrenchRidgeLapJoint
 from compas_timber.connections import find_neighboring_beams
 from compas_timber.parts import Beam
 
