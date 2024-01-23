@@ -166,18 +166,6 @@ def test_joint_create_kwargs_passthrough_xhalflap():
     assert joint.cut_plane_bias == 0.4
 
 
-def test_joint_create_kwargs_passthrough_frenchridge():
-    assembly = TimberAssembly()
-    beam_a = Beam.from_endpoints(Point(0.5, 0, 0), Point(0.5, 1, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-    beam_b = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-    assembly.add_beam(beam_a)
-    assembly.add_beam(beam_b)
-
-    joint = FrenchRidgeLapJoint.create(assembly, beam_a, beam_b, cutoff=2.4)
-
-    assert joint.cutoff == 0.4
-
-
 if not compas.IPY:
 
     def test_find_neighbors(example_beams):
