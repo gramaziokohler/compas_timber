@@ -99,7 +99,7 @@ class Joint(Data):
         raise NotImplementedError
 
     @classmethod
-    def create(cls, assembly, *beams):
+    def create(cls, assembly, *beams, **kwargs):
         """Creates an instance of this joint and creates the new connection in `assembly`.
 
         `beams` are expected to have been added to `assembly` before calling this method.
@@ -122,10 +122,10 @@ class Joint(Data):
             The instance of the created joint.
 
         """
+
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
-
-        joint = cls(*beams)
+        joint = cls(*beams, **kwargs)
         assembly.add_joint(joint, beams)
         joint.add_features()
         return joint

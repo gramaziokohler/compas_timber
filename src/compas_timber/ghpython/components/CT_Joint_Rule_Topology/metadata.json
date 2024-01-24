@@ -1,0 +1,38 @@
+{
+    "name": "Topological Joint Rules",
+    "nickname": "JointsByTopo",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "makes rules to apply joint types for each topology type.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "L",
+                "description": "Joint type to be applied to L topology. Default type is L-Miter. Input is a joint options component.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "T",
+                "description": "Joint type to be applied to T topology. Default type is T-Butt. Input is a joint options component.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "X",
+                "description": "Joint type to be applied to X topology. Default type is X-HalfLap. Input is a joint options component.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Rules",
+                "description": "List of JointDefinitions."
+            }
+        ]
+    }
+}

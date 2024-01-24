@@ -8,7 +8,6 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import length_vector
-from compas.geometry import midpoint_point_point
 
 from compas_timber.parts import MillVolume
 from compas_timber.utils import intersection_line_line_3D
@@ -20,13 +19,13 @@ from .solver import JointTopology
 class XHalfLapJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, cut_plane_bias=0.5, frame=None, key=None):
         super(XHalfLapJoint, self).__init__(frame, key)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
-        self.cut_plane_choice = cut_plane_choice  # Decide if Direction of beam_a or beam_b
+        self.cut_plane_bias = cut_plane_bias
         self.features = []
 
     @property
@@ -34,16 +33,16 @@ class XHalfLapJoint(Joint):
         data_dict = {
             "beam_a": self.beam_a_key,
             "beam_b": self.beam_b_key,
+            "cut_plane_bias": self.cut_plane_bias,
         }
         data_dict.update(Joint.data.fget(self))
         return data_dict
 
     @classmethod
     def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cut_plane_choice"])
+        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cut_plane_bias=value["cut_plane_bias"])
         instance.beam_a_key = value["beam_a"]
         instance.beam_b_key = value["beam_b"]
-        instance.cut_plane_choice = value["cut_plane_choice"]
         return instance
 
     @property
@@ -62,7 +61,7 @@ class XHalfLapJoint(Joint):
         int_a, int_b = intersection_line_line_3D(centerline_a, centerline_b, max_distance)
         int_a, _ = int_a
         int_b, _ = int_b
-        point_cut = Point(*midpoint_point_point(int_a, int_b))
+        point_cut = int_a * self.cut_plane_bias + int_b * (1 - self.cut_plane_bias)
 
         # Vector Cross Product
         beam_a_start = self.beam_a.centerline_start
@@ -95,11 +94,9 @@ class XHalfLapJoint(Joint):
 
         frames = beam.faces[:4]
         planes = []
-        planes_angles = []
         for i in frames:
             planes.append(Plane.from_frame(i))
-            planes_angles.append(angle_vectors(cutplane_vector, i.normal))
-        planes_angles, planes = zip(*sorted(zip(planes_angles, planes)))
+        planes.sort(key=lambda x: angle_vectors(cutplane_vector, x.normal))
         return planes
 
     @staticmethod
