@@ -45,6 +45,7 @@ class FrenchRidgeLapJoint(Joint):
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
+        self.gap = gap
         self.features = []
         self.reference_face_indices = {}
         self.check_geometry()

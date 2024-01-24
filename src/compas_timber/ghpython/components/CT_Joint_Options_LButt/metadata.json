@@ -1,0 +1,32 @@
+{
+    "name": "L-Butt Options",
+    "nickname": "L-Butt",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "defines and gives access to L-Butt joint and its parameters",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Gap",
+                "description": "Gap for tolerance.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "SmallBeamButts",
+                "description": "If true, the beam with a larger cross-section is considered as the cross beam.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "L-Butt",
+                "description": "L-Butt Joint Options."
+            }
+        ]
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "name": "Direct Joint Rules",
+    "nickname": "DirectJoints",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "Generates a direct joint between two beams. This overrides other joint rules.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "JointOptions",
+                "description": "Joint Options Component",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "MainBeam",
+                "description": "Main Beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "SecondaryBeam",
+                "description": "Secondary Beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Rule",
+                "description": "Direct Joint Rule."
+            }
+        ]
+    }
+}

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Removed
+
+
+## [0.4.0] 2024-01-24
+
+### Added
+
 * Added `fabrication` package 
 * Added `BTLx` as a wrapper for `TimberAssembly` to generate .btlx files for machining timber beams
 * Added `BTLxPart` as wrapper for `Beam`
@@ -17,8 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `FrenchRidgeHalfLap` joint
 * Added `DrillHole` Feature.
 * Added `DrillHoleFeature` Grasshopper component.
+* added `JointOptions` GH Components for all current joint types. This allows joint parameter definition in GH
+* added `DirectJointRules` GH Component 
+* added `TopologyJointRules` GH Component 
+* added `BTLx` as a wrapper for `TimberAssembly` to generate .btlx files for machining timber beams
+* added `BTLxPart` as wrapper for `Beam`
+* added `joint_factories` folder and factories for existing joints except `X-HalfLap`
+* added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
+* added `BTLx` Grasshopper component
+* added `FrenchRidgeHalfLap` joint
 
 ### Changed
+
 * Changed `Beam` definition to include `blank_frame` and `blank_length` attributes 
 * Replaced `Artist` with the new `Scene`.
 * Changed type hint for argument `Centerline` of GH component `BeamFromCurve` to `Guid`.

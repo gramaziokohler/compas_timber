@@ -18,19 +18,19 @@ class BTLx(object):
 
     Parameters
     ----------
-        assembly : :class:`~compas_timber.assembly.Assembly`
-            The assembly object.
+    assembly : :class:`~compas_timber.assembly.Assembly`
+        The assembly object.
 
     Attributes
     ----------
-        history : dict
-            The history of the BTLx file.
-        btlx_string : str
-            A pretty XML string for visualization.
-        parts : dict
-            A dictionary of the BTLxParts in the assembly.
-        joints : list
-            A list of the joints in the assembly.
+    history : dict
+        The history of the BTLx file.
+    btlx_string : str
+        A pretty XML string for visualization.
+    parts : dict
+        A dictionary of the BTLxParts in the assembly.
+    joints : list
+        A list of the joints in the assembly.
 
     """
 
@@ -95,14 +95,17 @@ class BTLx(object):
     def register_joint(cls, joint_type, joint_factory):
         """Registers a joint type and its corresponding factory.
 
-        Args:
-            joint_type : type
-                The type of the joint.
-            joint_factory : : class:`~compas_timber.fabrication.joint_factories.joint_factory.JointFactory`
-                The factory for creating the joint.
+        Parameters
+        ----------
+        joint_type : type
+            The type of the joint.
+        joint_factory : : class:`~compas_timber.fabrication.joint_factories.joint_factory.JointFactory`
+            The factory for creating the joint.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
         cls.REGISTERED_JOINTS[str(joint_type)] = joint_factory
 
@@ -119,35 +122,35 @@ class BTLxPart(object):
 
     Parameters
     ----------
-        beam : :class:`~compas_timber.assembly.Beam`
-            The beam object.
+    beam : :class:`~compas_timber.assembly.Beam`
+        The beam object.
 
     Attributes
     ----------
-        attr : dict
-            The attributes of the BTLx part.
-        beam : :class:`~compas_timber.assembly.Beam`
-            The beam object.
-        key : str
-            The key of the beam object.
-        length : float
-            The length of the beam.
-        width : float
-            The width of the beam.
-        height : float
-            The height of the beam.
-        frame : :class:`~compas.geometry.Frame`
-            The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
-        blank : :class:`~compas.geometry.Box`
-            The blank of the beam.
-        blank_frame : :class:`~compas.geometry.Frame`
-            The frame of the blank.
-        blank_length : float
-            The blank length of the beam.
-        processings : list
-            A list of the processings applied to the beam.
-        et_element : :class:`~xml.etree.ElementTree.Element`
-            The ET element of the BTLx part.
+    attr : dict
+        The attributes of the BTLx part.
+    beam : :class:`~compas_timber.assembly.Beam`
+        The beam object.
+    key : str
+        The key of the beam object.
+    length : float
+        The length of the beam.
+    width : float
+        The width of the beam.
+    height : float
+        The height of the beam.
+    frame : :class:`~compas.geometry.Frame`
+        The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
+    blank : :class:`~compas.geometry.Box`
+        The blank of the beam.
+    blank_frame : :class:`~compas.geometry.Frame`
+        The frame of the blank.
+    blank_length : float
+        The blank length of the beam.
+    processings : list
+        A list of the processings applied to the beam.
+    et_element : :class:`~xml.etree.ElementTree.Element`
+        The ET element of the BTLx part.
 
     """
 
@@ -167,8 +170,38 @@ class BTLxPart(object):
         self.processings = []
         self._et_element = None
 
+    def reference_surface_from_beam_face(self, beam_face):
+        """Finds the reference surface with normal that matches the normal of the beam face argument
+
+        Parameters
+        -----------
+        beam_face : :class:`~compas.geometry.Frame`
+            The frame of a beam face from beam.faces.
+
+        Returns
+        --------
+        key : str
+            The key(index 1-6) of the reference surface.
+
+        """
+        for key, face in self.reference_surfaces.items():
+            if face.normal == beam_face.normal:
+                return key
+
     def reference_surface_planes(self, index):
-        """Returns the reference surface planes for a given index per BTLx docs."""
+        """Returns the reference surface planes for a given index per BTLx docs.
+
+        Parameters
+        ----------
+        index : int
+            The index of the reference surface.
+
+        Returns
+        -------
+        dict
+            The BTLx reference surface frame.
+
+        """
         if len(self._reference_surfaces) != 6:
             self._reference_surfaces = {
                 "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
@@ -235,14 +268,16 @@ class BTLxPart(object):
     def et_point_vals(self, point):
         """Returns the ET point values for a given point.
 
-        Parameters:
+        Parameters
         ----------
-            point : :class:`~compas.geometry.Point`
-                The point to be converted.
-        Returns:
-        ----------
-            dict
-                The ET point values formatted for the ET element.
+        point : :class:`~compas.geometry.Point`
+            The point to be converted.
+
+        Returns
+        -------
+        dict
+            The ET point values formatted for the ET element.
+
         """
         return {
             "X": "{:.{prec}f}".format(point.x, prec=BTLx.POINT_PRECISION),
@@ -322,8 +357,8 @@ class BTLxPart(object):
 
 class BTLxProcess(object):
 
-    """
-    Generic class for BTLx processings.
+    """Generic class for BTLx processings.
+
     This should be instantiated and appended to BTLxPart.processings in a specific btlx_process class (eg BTLxJackCut)
 
     each specific btlx process class should have:
@@ -331,11 +366,9 @@ class BTLxProcess(object):
     self.header_attributes which matches as a dict,
     self.process_parameters which describe the geometric parameters of the process
 
-
     the joint factory calls instantiates a process or processes and appends it or them to the BTLxPart.processes list
 
     each process will have specific inputs which are derived from the Joint instance and related BTLxParts
-
 
     some joints will require combinations of multiple BTLx processes, and some processes will cover multiple joint types.
 
