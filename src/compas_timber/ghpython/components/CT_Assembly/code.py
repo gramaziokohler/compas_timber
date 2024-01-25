@@ -31,7 +31,6 @@ class Assembly(component):
         rules = [r for r in rules if r is not None]
 
         joints = []
-        info = []
         # rules have to be resolved into joint definitions
         topo_rules = {}
         cat_rules = []
@@ -67,8 +66,11 @@ class Assembly(component):
                         continue
                     if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
                         msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule assigns: {}"
-                        self.AddRuntimeMessage(Warning,
-                            msg.format(beam_a.key, beam_b.key, JointTopology.get_name(detected_topo), rule.joint_type.__name__)
+                        self.AddRuntimeMessage(
+                            Warning,
+                            msg.format(
+                                beam_a.key, beam_b.key, JointTopology.get_name(detected_topo), rule.joint_type.__name__
+                            ),
                         )
                         continue
                     # sort by category to allow beam role by order (main beam first, cross beam second)
