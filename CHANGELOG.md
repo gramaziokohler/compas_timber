@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.4.0] 2024-01-24
+
+### Added
+
 * Added `fabrication` package 
 * Added `BTLx` as a wrapper for `TimberAssembly` to generate .btlx files for machining timber beams
 * Added `BTLxPart` as wrapper for `Beam`

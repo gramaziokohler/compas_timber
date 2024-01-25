@@ -12,6 +12,7 @@ from compas_timber.assembly import TimberAssembly
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
+from compas_timber.connections import XHalfLapJoint
 from compas_timber.connections import find_neighboring_beams
 from compas_timber.parts import Beam
 
@@ -152,16 +153,16 @@ def test_joint_create_kwargs_passthrough_lmiter():
     assert joint.cutoff == 42
 
 
-# def test_joint_create_kwargs_passthrough_xhalflap():
-#     assembly = TimberAssembly()
-#     beam_a = Beam.from_endpoints(Point(0.5, 0, 0), Point(0.5, 1, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-#     beam_b = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-#     assembly.add_beam(beam_a)
-#     assembly.add_beam(beam_b)
+def test_joint_create_kwargs_passthrough_xhalflap():
+    assembly = TimberAssembly()
+    beam_a = Beam.from_endpoints(Point(0.5, 0, 0), Point(0.5, 1, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
+    beam_b = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
+    assembly.add_beam(beam_a)
+    assembly.add_beam(beam_b)
 
-#     joint = XHalfLapJoint.create(assembly, beam_a, beam_b)
+    joint = XHalfLapJoint.create(assembly, beam_a, beam_b, cut_plane_bias=0.4)
 
-#     assert joint.cut_plane_bias == 0.4
+    assert joint.cut_plane_bias == 0.4
 
 
 if not compas.IPY:
