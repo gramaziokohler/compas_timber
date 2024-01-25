@@ -13,6 +13,7 @@ from compas_timber.parts import MillVolume
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import Joint
+from .joint import BeamJoinningError
 from .solver import JointTopology
 
 
@@ -167,6 +168,12 @@ class XHalfLapJoint(Joint):
         self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     def add_features(self):
-        negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
+        assert self.beam_a and self.beam_b, "Beams not defined in joint before adding features"
+
+        try:
+            negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=ex)
+
         self.beam_a.add_features(MillVolume(negative_brep_beam_a))
         self.beam_b.add_features(MillVolume(negative_brep_beam_b))

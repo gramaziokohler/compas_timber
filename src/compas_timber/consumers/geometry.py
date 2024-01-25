@@ -20,8 +20,9 @@ class FeatureApplicationError(Exception):
 
     """
 
-    def __init__(self, feature_geometry, message):
+    def __init__(self, feature_geometry, beam_geometry, message):
         self.feature_geometry = feature_geometry
+        self.beam_geometry = beam_geometry
         self.message = message
 
 
@@ -82,7 +83,8 @@ class DrillFeatureGeometry(FeatureApplicator):
         except IndexError:
             raise FeatureApplicationError(
                 drill_volume,
-                "Drill feature could not be applied. The drill volume is not contained in the beam geometry.",
+                self.beam_geometry,
+                "The drill volume is not contained in the beam geometry.",
             )
 
 
@@ -123,7 +125,8 @@ class CutFeatureGeometry(FeatureApplicator):
         except IndexError:
             raise FeatureApplicationError(
                 self.cutting_plane,
-                "Cut feature could not be applied. The cutting plane does not intersect with beam geometry.",
+                self.beam_geometry,
+                "The cutting plane does not intersect with beam geometry.",
             )
 
 
@@ -163,7 +166,8 @@ class MillVolumeGeometry(FeatureApplicator):
         except IndexError:
             raise FeatureApplicationError(
                 self.volume,
-                "Mill volume could not be applied. The volume does not intersect with beam geometry.",
+                self.beam_geometry,
+                "The volume does not intersect with beam geometry.",
             )
 
 

@@ -40,10 +40,19 @@ def beam_side_incidence(beam1, beam2):
     return angle_face
 
 
-class BeamJoinningError(BaseException):
-    """Indicates that an error has occurred while trying to join two or more beams."""
+class BeamJoinningError(Exception):
+    """Indicates that an error has occurred while trying to join two or more beams.
 
-    pass
+    This error should indicate that an error has occurred while calculating the features which
+    should be applied by this joint.
+
+    """
+
+    def __init__(self, beams, joint, debug_info=None):
+        super(BeamJoinningError, self).__init__()
+        self.beams = beams
+        self.joint = joint
+        self.debug_info = debug_info
 
 
 class Joint(Data):
