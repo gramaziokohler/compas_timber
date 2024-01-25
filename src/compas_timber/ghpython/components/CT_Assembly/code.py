@@ -107,9 +107,7 @@ class Assembly(component):
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-
         Assembly.set_topologies(topologies)
-        joints = self.get_joints_from_rules(Beams, JointRules, topologies)
 
         self._beam_map = {}
         beams = [b for b in Beams if b is not None]
@@ -118,6 +116,8 @@ class Assembly(component):
             Assembly.add_beam(c_beam)
             self._beam_map[id(beam)] = c_beam
         beams = Assembly.beams
+
+        joints = self.get_joints_from_rules(beams, JointRules, topologies)
 
         if joints:
             handled_beams = []
