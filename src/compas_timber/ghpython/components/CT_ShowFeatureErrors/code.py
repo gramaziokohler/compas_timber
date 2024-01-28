@@ -20,12 +20,10 @@ class ShowFeatureErrors(component):
         index = int(index) % len(feature_errors)
         error = feature_errors[index]
 
-        self.AddRuntimeMessage(Warning, error.message)
-
         geometries = [error.feature_geometry, error.beam_geometry]
         geo_objs = [SceneObject(geo) for geo in geometries]
         output = []
         for obj in geo_objs:
             output.extend(obj.draw())
 
-        return output
+        return error.message, output

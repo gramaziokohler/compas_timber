@@ -23,6 +23,10 @@
         ],
         "outputParameters": [
             {
+                "name": "Info",
+                "description": "Information about the selected feature error."
+            },
+            {
                 "name": "Geometry",
                 "description": "Geometry related to the selected feature error."
             }

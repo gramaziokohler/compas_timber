@@ -23,6 +23,10 @@
         ],
         "outputParameters": [
             {
+                "name": "Info",
+                "description": "Information about the joining error."
+            },
+            {
                 "name": "Geometry",
                 "description": "Geometry of the beam blanks related to the selected joining error."
             }

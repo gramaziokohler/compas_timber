@@ -13,14 +13,12 @@ class ShowJoiningErrors(component):
         if not debug_info:
             self.AddRuntimeMessage(Warning, "Input parameter 'DebugInfo' failed to collect data")
             return
-        if not debug_info.joining_errors:
+        if not debug_info.joint_errors:
             self.AddRuntimeMessage(Warning, "No joining errors found in input parameter 'DebugInfo'")
             return
-        joining_errors = debug_info.joining_errors
+        joining_errors = debug_info.joint_errors
         index = int(index) % len(joining_errors)
         error = joining_errors[index]
-
-        self.AddRuntimeMessage(Warning, error.debug_info)
 
         geometries = [beam.blank for beam in error.beams]
         geo_objs = [SceneObject(geo) for geo in geometries]
@@ -28,4 +26,4 @@ class ShowJoiningErrors(component):
         for obj in geo_objs:
             output.extend(obj.draw())
 
-        return output
+        return error.debug_info, output
