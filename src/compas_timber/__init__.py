@@ -20,7 +20,6 @@ __all_plugins__ = [
     "compas_timber.rhino",
     "compas_timber.rhino.install",
     "compas_timber.utils.r_tree",
-    "compas_timber.rhino.scene",
 ]
 
 
