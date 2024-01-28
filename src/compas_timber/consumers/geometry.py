@@ -13,8 +13,10 @@ class FeatureApplicationError(Exception):
 
     Attributes
     ----------
-    feature_geometry : :class:`compas.geometry.Geometry`
+    feature_geometry : :class:`~compas.geometry.Geometry`
         The geometry of the feature that could not be applied.
+    beam_geometry : :class:`~compas.geometry.Geometry`
+        The geometry of the beam that could not be modified.
     message : str
         The error message.
 
@@ -228,6 +230,8 @@ class BrepGeometryConsumer(object):
     def _apply_features(self, geometry, features):
         for feature in features:
             cls = self.FEATURE_MAP.get(type(feature), None)
+            if not cls:
+                raise ValueError("No applicator found for feature type: {}".format(type(feature)))
             feature_applicator = cls(geometry, feature)
             if not feature_applicator:
                 continue
