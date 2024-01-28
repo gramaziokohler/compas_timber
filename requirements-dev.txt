@@ -9,7 +9,7 @@ ipykernel
 ipython >=5.8
 isort
 m2r
-black
+black <4
 nbsphinx
 pydocstyle
 pytest >=3.2
