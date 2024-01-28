@@ -324,6 +324,10 @@ class DebugInfomation(object):
     def ToString(self):
         return repr(self)
 
+    @property
+    def has_errors(self):
+        return self.add_feature_error or self.add_joint_error
+
     def add_feature_error(self, error):
         self.feature_errors.append(error)
 

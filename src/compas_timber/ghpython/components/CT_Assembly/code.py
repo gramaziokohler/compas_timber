@@ -6,6 +6,7 @@ from compas_timber.assembly import TimberAssembly
 from compas_timber.consumers import BrepGeometryConsumer
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
+from compas_timber.connections import BeamJoinningError
 from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import CategoryRule
 from compas_timber.ghpython import TopologyRule
@@ -120,8 +121,12 @@ class Assembly(component):
                 beam_pair_ids = set([id(beam) for beam in beams_to_pair])
                 if beam_pair_ids in handled_beams:
                     continue
-                joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
-                handled_beams.append(beam_pair_ids)
+                try:
+                    joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
+                except BeamJoinningError as bje:
+                    debug_info.add_joint_error(bje)
+                else:
+                    handled_beams.append(beam_pair_ids)
 
         if Features:
             features = [f for f in Features if f is not None]
@@ -139,6 +144,9 @@ class Assembly(component):
                 scene.add(result.geometry)
                 if result.debug_info:
                     debug_info.add_feature_error(result.debug_info)
+
+        if debug_info.has_errors:
+            self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
         Geometry = scene.redraw()
         return Assembly, Geometry, debug_info
