@@ -9,7 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added class `DebugInformation` to `workflow.py`.
+* Added new component `ShowFeatureErrors`.
+* Added new component `ShowJoiningErrors`.
+* Added `FeatureApplicator` classes which report errors during feature application.
+
 ### Changed
+
+* Feature application now fails more gracefully (un-processed geometry is returned).
+* Attempting to join beams which are already joined raises `BeamJoiningError` instead of `AssemblyError`
+* `Joint.add_features` which fails to calculate anything raises `BeamJoiningError`.
 
 ### Removed
 
@@ -48,8 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed docs theme to the new `sphinx_compas2_theme`.
 * Re-worked component `BakeBoxMap` to advanced mode.
 * Removed call to `rs.Redraw()` in `BakeBoxMap` which was causing GH document to lock (cannot drag).
-* Feature application now fails more gracefully (un-processed geometry is returned).
-* Added debug information in the case of failed feature application.
 
 ### Removed
 
