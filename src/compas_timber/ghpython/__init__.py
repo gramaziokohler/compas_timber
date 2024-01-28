@@ -13,5 +13,5 @@ __all__ = [
     "DirectRule",
     "FeatureDefinition",
     "JointOptions",
-    "DebugInfomation"
+    "DebugInfomation",
 ]
