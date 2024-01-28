@@ -10,6 +10,7 @@ from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import CategoryRule
 from compas_timber.ghpython import TopologyRule
 from compas_timber.ghpython import DirectRule
+from compas_timber.ghpython import DebugInfomation
 
 
 class Assembly(component):
@@ -97,6 +98,8 @@ class Assembly(component):
         if not (Beams):  # shows beams even if no joints are found
             return
 
+        debug_info = DebugInfomation()
+
         self.process_joint_rules(Beams, JointRules, max_distance=MaxDistance)
 
         Assembly = TimberAssembly()
@@ -129,18 +132,13 @@ class Assembly(component):
 
         Geometry = None
         scene = Scene()
-        debug_scene = Scene()  # to collect debug related information
 
         if CreateGeometry:
             vis_consumer = BrepGeometryConsumer(Assembly)
             for result in vis_consumer.result:
                 scene.add(result.geometry)
                 if result.debug_info:
-                    debug = result.debug_info
-                    self.AddRuntimeMessage(Warning, "{}".format(debug.message))
-                    debug_scene.add(debug.feature_geometry)
-                    debug_scene.add(result.geometry)
+                    debug_info.add_feature_error(result.debug_info)
 
         Geometry = scene.redraw()
-        Debug = debug_scene.redraw()
-        return Assembly, Geometry, Debug
+        return Assembly, Geometry, debug_info
