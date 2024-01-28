@@ -168,12 +168,12 @@ class XHalfLapJoint(Joint):
         self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     def add_features(self):
-        assert self.beam_a and self.beam_b, "Beams not defined in joint before adding features"
+        assert self.beam_a and self.beam_b  # should never happen
 
         try:
             negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=ex)
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         self.beam_a.add_features(MillVolume(negative_brep_beam_a))
         self.beam_b.add_features(MillVolume(negative_brep_beam_b))

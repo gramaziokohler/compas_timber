@@ -2,6 +2,7 @@ from compas.geometry import Frame
 
 from compas_timber.parts import CutFeature
 
+from .joint import BeamJoinningError
 from .joint import Joint
 from .joint import beam_side_incidence
 from .solver import JointTopology
@@ -73,8 +74,7 @@ class TButtJoint(Joint):
     def joint_type(self):
         return "T-Butt"
 
-    @property
-    def cutting_plane(self):
+    def get_cutting_plane(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
         cfr = min(angles_faces, key=lambda x: x[0])[1]
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
@@ -91,9 +91,15 @@ class TButtJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
+        assert self.main_beam and self.cross_beam  # should never happen
+
         if self.features:
             self.main_beam.remove_features(self.features)
+        try:
+            cutting_plane = self.get_cutting_plane()
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        trim_feature = CutFeature(self.cutting_plane)
+        trim_feature = CutFeature(cutting_plane)
         self.main_beam.add_features(trim_feature)
         self.features = [trim_feature]

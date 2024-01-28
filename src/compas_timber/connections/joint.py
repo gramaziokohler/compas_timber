@@ -86,7 +86,14 @@ class Joint(Data):
         raise NotImplementedError
 
     def add_features(self):
-        """Adds the features defined by this joint to affected beam(s)."""
+        """Adds the features defined by this joint to affected beam(s).
+
+        Raises
+        ------
+        :class:`~compas_timber.connections.BeamJoinningError`
+            Should be raised whenever the joint was not able to calculate the features to be applied to the beams.
+
+        """
         raise NotImplementedError
 
     def restore_beams_from_keys(self):
