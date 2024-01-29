@@ -16,7 +16,11 @@ compas_timber
 """
 
 
-__all_plugins__ = ["compas_timber.rhino", "compas_timber.rhino.install", "compas_timber.utils.r_tree"]
+__all_plugins__ = [
+    "compas_timber.rhino",
+    "compas_timber.rhino.install",
+    "compas_timber.utils.r_tree",
+]
 
 
 __all__ = []
