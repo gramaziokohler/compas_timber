@@ -602,7 +602,7 @@ document.write(`
 <h1>LButtJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.LButtJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0b6426e/src/compas_timber/connections/l_butt.py#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/55f2777/src/compas_timber/connections/l_butt.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
 <p>Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.</p>
 <p>This joint type is compatible with beams in L topology.</p>
@@ -639,6 +639,12 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.from_data.html#compas_timber.connections.LButtJoint.from_data" title="compas_timber.connections.LButtJoint.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a></p></td>
 <td><p>Construct an object of this type from the provided data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.get_cross_cutting_plane.html#compas_timber.connections.LButtJoint.get_cross_cutting_plane" title="compas_timber.connections.LButtJoint.get_cross_cutting_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cross_cutting_plane</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.get_main_cutting_plane.html#compas_timber.connections.LButtJoint.get_main_cutting_plane" title="compas_timber.connections.LButtJoint.get_main_cutting_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_main_cutting_plane</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.restore_beams_from_keys.html#compas_timber.connections.LButtJoint.restore_beams_from_keys" title="compas_timber.connections.LButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>After de-serialization, resotres references to the main and cross beams saved in the assembly.</p></td>

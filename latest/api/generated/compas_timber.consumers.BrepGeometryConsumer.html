@@ -602,8 +602,25 @@ document.write(`
 <h1>BrepGeometryConsumer</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.consumers.BrepGeometryConsumer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.consumers.</span></span><span class="sig-name descname"><span class="pre">BrepGeometryConsumer</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0b6426e/src/compas_timber/consumers/geometry.py#L36"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.consumers.</span></span><span class="sig-name descname"><span class="pre">BrepGeometryConsumer</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/55f2777/src/compas_timber/consumers/geometry.py#L196"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A consumer that applies features to beams and yields the resulting geometry.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>assembly</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Assembly</span></code></span></dt><dd><p>The assembly to consume.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt><strong>FEATURE_MAP</strong><span class="classifier">dict(<code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureApplicator</span></code>.)</span></dt><dd><p>A mapping of feature types to feature applicators.</p>
+</dd>
+<dt><strong>result</strong><span class="classifier">generator(<code class="xref py py-class docutils literal notranslate"><span class="pre">BeamGeometry</span></code>)</span></dt><dd><p>The resulting geometry after processing.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
