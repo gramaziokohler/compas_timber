@@ -39,6 +39,8 @@ Create a new environment if necessary
     conda create -n <myenvname> python=3.10
     conda activate <myenvname>
 
+Install the package in editable mode with its development dependencies
+
 .. code-block:: bash
 
     pip install -r requirements-dev.txt
