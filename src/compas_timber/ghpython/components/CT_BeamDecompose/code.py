@@ -1,4 +1,5 @@
 """Extracts main geometric characteristics of a beam."""
+
 from compas_rhino.conversions import box_to_rhino
 from compas_rhino.conversions import frame_to_rhino
 from compas_rhino.conversions import line_to_rhino_curve

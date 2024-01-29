@@ -1,4 +1,5 @@
 """Read all attributes encoded in the referenced object's name."""
+
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
