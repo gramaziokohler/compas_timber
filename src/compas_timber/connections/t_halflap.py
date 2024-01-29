@@ -90,7 +90,7 @@ class THalfLapJoint(LapJoint):
 
     def add_features(self):
         start_main, end_main = self.main_beam.extension_to_plane(self.cutting_frame_main)
-        self.main_beam.add_blank_extension(start_main, end_main, self.key)
+        self.main_beam.add_blank_extension(1, 1, self.key)
 
         negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         self.main_beam.add_features(MillVolume(negative_brep_main_beam))

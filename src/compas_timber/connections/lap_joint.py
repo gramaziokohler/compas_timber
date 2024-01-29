@@ -53,43 +53,15 @@ class LapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(LapJoint, self).__init__(frame, key)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
-        self.flip_lap_side = flip_lap_side  # Decide if Direction of main_beam or cross_beam
-        self.features = []
-        self.cut_plane_bias = cut_plane_bias
+    def __init__(self, frame=None, key=None):
+        super(Joint, self).__init__()
+        self.frame = frame or Frame.worldXY()
+        self.key = key
 
-    @property
-    def data(self):
-        data_dict = {
-            "main_beam": self.main_beam_key,
-            "cross_beam": self.cross_beam_key,
-            "flip_lap_side": self.flip_lap_side,
-            "cut_plane_bias": self.cut_plane_bias,
-        }
-        data_dict.update(Joint.data.fget(self))
-        return data_dict
-
-    @classmethod
-    def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cut_plane_choice"])
-        instance.main_beam_key = value["main_beam"]
-        instance.cross_beam_key = value["cross_beam"]
-        instance.flip_lap_side = value["flip_lap_side"]
-        instance.cut_plane_bias = value["cut_plane_bias"]
-        return instance
 
     @property
     def joint_type(self):
         return "L-HalfLap"
-
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
@@ -136,29 +108,29 @@ class LapJoint(Joint):
 
     @property
     def cutting_frame_main(self):
-        angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
+        angles_faces = beam_side_incidence(self.beams[0], self.beams[1])
         cfr = max(angles_faces, key=lambda x: x[0])[1]
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     @property
     def cutting_frame_cross(self):
-        angles_faces = beam_side_incidence(self.cross_beam, self.main_beam)
+        angles_faces = beam_side_incidence(self.beams[1], self.beams[0])
         cfr = max(angles_faces, key=lambda x: x[0])[1]
         return cfr
 
     def _create_negative_volumes(self):
         # Get Cut Plane
-        plane_cut_vector = self.main_beam.centerline.vector.cross(self.cross_beam.centerline.vector)
+        plane_cut_vector = self.beams[0].centerline.vector.cross(self.beams[1].centerline.vector)
 
         if self.flip_lap_side:
             plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
-        planes_main = self._sort_beam_planes(self.main_beam, plane_cut_vector)
+        planes_main = self._sort_beam_planes(self.beams[0], plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_main
 
-        planes_cross = self._sort_beam_planes(self.cross_beam, -plane_cut_vector)
+        planes_cross = self._sort_beam_planes(self.beams[1], -plane_cut_vector)
         plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
 
         # Lines as Frame Intersections
@@ -187,8 +159,8 @@ class LapJoint(Joint):
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.main_beam = assemly.find_by_key(self.main_beam_key)
-        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+        self.beams[0] = assemly.find_by_key(self.main_beam_key)
+        self.beams[1] = assemly.find_by_key(self.cross_beam_key)
 
     # def add_features(self):
     #     start_main, end_main = self.main_beam.extension_to_plane(self.cutting_frame_main)
