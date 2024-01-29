@@ -2,7 +2,9 @@ from compas.geometry import Frame
 from compas_timber.parts import MillVolume
 from compas_timber.connections.lap_joint import LapJoint
 from compas_timber.connections.joint import Joint
+
 from .solver import JointTopology
+from .joint import BeamJoinningError
 
 
 class XHalfLapJoint(LapJoint):
@@ -90,6 +92,12 @@ class XHalfLapJoint(LapJoint):
         self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     def add_features(self):
-        negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
+        assert self.beam_a and self.beam_b  # should never happen
+
+        try:
+            negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+
         self.beam_a.add_features(MillVolume(negative_brep_beam_a))
         self.beam_b.add_features(MillVolume(negative_brep_beam_b))

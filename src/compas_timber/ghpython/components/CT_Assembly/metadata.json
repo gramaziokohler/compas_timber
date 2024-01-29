@@ -49,6 +49,10 @@
             {
                 "name": "Geometry",
                 "description": "Geometry of the beams and joints."
+            },
+            {
+                "name": "DebugInfo",
+                "description": "Debug information object in the case of feature or joining errors."
             }
         ]
     }

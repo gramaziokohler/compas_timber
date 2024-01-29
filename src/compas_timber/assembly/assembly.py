@@ -1,7 +1,8 @@
 from compas.datastructures import Assembly
 from compas.datastructures import AssemblyError
 
-from compas_timber.connections.joint import Joint
+from compas_timber.connections import Joint
+from compas_timber.connections import BeamJoinningError
 from compas_timber.parts import Beam
 
 
@@ -152,7 +153,7 @@ class TimberAssembly(Assembly):
             raise AssemblyError("Cannot add this joint to assembly: some of the parts are not in this assembly.")
 
         if self.are_parts_joined(parts):
-            raise AssemblyError("Cannot add this joint to assembly: some of the parts are already joined.")
+            raise BeamJoinningError(beams=parts, joint=joint, debug_info="Beams are already joined.")
 
     def remove_joint(self, joint):
         """Removes this joint object from the assembly.

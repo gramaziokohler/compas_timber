@@ -158,8 +158,8 @@ class BTLxPart(object):
         self.beam = beam
         self.key = beam.key
         self.length = beam.length
-        self.width = beam.width
-        self.height = beam.height
+        self.width = beam.height
+        self.height = beam.width
         self.frame = Frame(
             self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
             beam.frame.xaxis,
@@ -356,7 +356,6 @@ class BTLxPart(object):
 
 
 class BTLxProcess(object):
-
     """Generic class for BTLx processings.
 
     This should be instantiated and appended to BTLxPart.processings in a specific btlx_process class (eg BTLxJackCut)

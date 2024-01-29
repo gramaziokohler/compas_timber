@@ -8,12 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+* Added class `DebugInformation` to `workflow.py`.
+* Added new component `ShowFeatureErrors`.
+* Added new component `ShowJoiningErrors`.
+* Added `FeatureApplicator` classes which report errors during feature application.
 * added `L-HalfLapJoint`
 * added `T-HalfLapJoint`
 * added `ShowTopologyTypes` GH Component
+
 ### Changed
 
+* Feature application now fails more gracefully (un-processed geometry is returned).
+* Attempting to join beams which are already joined raises `BeamJoiningError` instead of `AssemblyError`
+* `Joint.add_features` which fails to calculate anything raises `BeamJoiningError`.
+
 ### Removed
+
 * removed `JointDef` GH components
 * removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`
 

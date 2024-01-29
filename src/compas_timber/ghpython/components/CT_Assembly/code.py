@@ -6,10 +6,12 @@ from compas_timber.assembly import TimberAssembly
 from compas_timber.consumers import BrepGeometryConsumer
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
+from compas_timber.connections import BeamJoinningError
 from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import CategoryRule
 from compas_timber.ghpython import TopologyRule
 from compas_timber.ghpython import DirectRule
+from compas_timber.ghpython import DebugInfomation
 
 
 class Assembly(component):
@@ -109,6 +111,10 @@ class Assembly(component):
         if not (Beams):  # shows beams even if no joints are found
             return
 
+        debug_info = DebugInfomation()
+
+        self.process_joint_rules(Beams, JointRules, max_distance=MaxDistance)
+
         Assembly = TimberAssembly()
 
         self._beam_map = {}
@@ -130,25 +136,32 @@ class Assembly(component):
                 beam_pair_ids = set([id(beam) for beam in beams_to_pair])
                 if beam_pair_ids in handled_beams:
                     continue
-                joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
-                handled_beams.append(beam_pair_ids)
+                try:
+                    joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
+                except BeamJoinningError as bje:
+                    debug_info.add_joint_error(bje)
+                else:
+                    handled_beams.append(beam_pair_ids)
 
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
                 beams_to_modify = self._get_copied_beams(f_def.beams)
                 for beam in beams_to_modify:
-                    beam.add_feature(f_def.feature)
+                    beam.add_features(f_def.feature)
 
         Geometry = None
         scene = Scene()
-        if joints and CreateGeometry:
+
+        if CreateGeometry:
             vis_consumer = BrepGeometryConsumer(Assembly)
             for result in vis_consumer.result:
                 scene.add(result.geometry)
-        else:
-            for beam in beams:
-                scene.add(beam.shape)
-        Geometry = scene.redraw()
+                if result.debug_info:
+                    debug_info.add_feature_error(result.debug_info)
 
-        return Assembly, Geometry
+        if debug_info.has_errors:
+            self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
+
+        Geometry = scene.redraw()
+        return Assembly, Geometry, debug_info

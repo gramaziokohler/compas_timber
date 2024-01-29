@@ -40,10 +40,19 @@ def beam_side_incidence(beam1, beam2):
     return angle_face
 
 
-class BeamJoinningError(BaseException):
-    """Indicates that an error has occurred while trying to join two or more beams."""
+class BeamJoinningError(Exception):
+    """Indicates that an error has occurred while trying to join two or more beams.
 
-    pass
+    This error should indicate that an error has occurred while calculating the features which
+    should be applied by this joint.
+
+    """
+
+    def __init__(self, beams, joint, debug_info=None):
+        super(BeamJoinningError, self).__init__()
+        self.beams = beams
+        self.joint = joint
+        self.debug_info = debug_info
 
 
 class Joint(Data):
@@ -77,7 +86,14 @@ class Joint(Data):
         raise NotImplementedError
 
     def add_features(self):
-        """Adds the features defined by this joint to affected beam(s)."""
+        """Adds the features defined by this joint to affected beam(s).
+
+        Raises
+        ------
+        :class:`~compas_timber.connections.BeamJoinningError`
+            Should be raised whenever the joint was not able to calculate the features to be applied to the beams.
+
+        """
         raise NotImplementedError
 
     def restore_beams_from_keys(self):

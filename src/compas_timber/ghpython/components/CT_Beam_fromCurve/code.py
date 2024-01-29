@@ -1,4 +1,5 @@
 """Creates a Beam from a LineCurve."""
+
 from compas.geometry import Line
 from compas.scene import Scene
 from compas_rhino.conversions import curve_to_compas
