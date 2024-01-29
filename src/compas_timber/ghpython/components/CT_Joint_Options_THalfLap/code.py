@@ -4,7 +4,7 @@ from compas_timber.connections import THalfLapJoint
 from compas_timber.ghpython import JointOptions
 
 
-class THalfLapJoint(component):
+class THalfLapJointOptions(component):
     def RunScript(self, flip_lap_side, cut_plane_bias):
         args = {}
         if flip_lap_side:

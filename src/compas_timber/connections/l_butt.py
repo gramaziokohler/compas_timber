@@ -1,6 +1,4 @@
 from compas.geometry import Frame
-from compas.geometry import Plane
-
 from compas_timber.parts import CutFeature
 
 from .joint import Joint

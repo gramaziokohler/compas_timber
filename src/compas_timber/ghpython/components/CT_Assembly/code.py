@@ -111,7 +111,6 @@ class Assembly(component):
 
         Assembly = TimberAssembly()
 
-
         self._beam_map = {}
         beams = [b for b in Beams if b is not None]
         for beam in beams:
@@ -119,8 +118,6 @@ class Assembly(component):
             Assembly.add_beam(c_beam)
             self._beam_map[id(beam)] = c_beam
         beams = Assembly.beams
-
-
 
         joints = self.get_joints_from_rules(Assembly, JointRules, max_distance=MaxDistance)
 

@@ -6,26 +6,21 @@ from compas.geometry import Polyhedron
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
-from compas_timber.parts import CutFeature
-from compas_timber.parts import MillVolume
 from .joint import beam_side_incidence
 from .joint import Joint
-from .solver import JointTopology
 
 
 class LapJoint(Joint):
-    """Abstract Lap type joint.
+    """Abstract Lap type joint with functions common to L-Lap, T-Lap, and X-Lap Joints.
 
     Do not instantiate directly. Please use `**LapJoint.create()` to properly create an instance of lap sub-class and associate it with an assembly.
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
-        The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
-        The cross beam to be joined.
+    beams : list(:class:`~compas_timber.parts.Beam`)
+        The beams to be joined.
+
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
     cut_plane_bias : float
@@ -35,10 +30,8 @@ class LapJoint(Joint):
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
-    main_beam : :class:`~compas_timber.parts.Beam`
+    beams : list(:class:`~compas_timber.parts.Beam`)
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
-        The cross beam to be joined.
     main_beam_key : str
         The key of the main beam.
     cross_beam_key : str
@@ -48,20 +41,12 @@ class LapJoint(Joint):
     joint_type : str
         A string representation of this joint's type.
 
-
     """
-
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     def __init__(self, frame=None, key=None):
         super(Joint, self).__init__()
         self.frame = frame or Frame.worldXY()
         self.key = key
-
-
-    @property
-    def joint_type(self):
-        return "L-HalfLap"
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
@@ -156,29 +141,3 @@ class LapJoint(Joint):
         negative_polyhedron_main_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
         negative_polyhedron_cross_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
         return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
-
-    def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.beams[0] = assemly.find_by_key(self.main_beam_key)
-        self.beams[1] = assemly.find_by_key(self.cross_beam_key)
-
-    # def add_features(self):
-    #     start_main, end_main = self.main_beam.extension_to_plane(self.cutting_frame_main)
-    #     start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_frame_cross)
-    #     # self.main_beam.add_blank_extension(start_main, end_main, self.key)
-    #     # self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
-    #     self.main_beam.add_blank_extension(1, 1, self.key)
-    #     self.cross_beam.add_blank_extension(1, 1, self.key)
-
-    #     negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
-    #     self.main_beam.add_features(MillVolume(negative_brep_main_beam))
-    #     self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
-
-    #     f_cross = CutFeature(self.cutting_frame_cross)
-    #     self.cross_beam.add_features(f_cross)
-    #     self.features.append(f_cross)
-
-    #     trim_frame = Frame(self.cutting_frame_main.point, self.cutting_frame_main.xaxis, -self.cutting_frame_main.yaxis)
-    #     f_main = CutFeature(trim_frame)
-    #     self.main_beam.add_features(f_main)
-    #     self.features.append(f_main)
