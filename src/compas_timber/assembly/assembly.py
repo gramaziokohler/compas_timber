@@ -42,8 +42,8 @@ class TimberAssembly(Assembly):
         )
 
     @classmethod
-    def from_data(cls, data):
-        assembly = super(TimberAssembly, cls).from_data(data)
+    def __from_data__(cls, data):
+        assembly = super(TimberAssembly, cls).__from_data__(data)
         for part in assembly.parts():
             if isinstance(part, Beam):
                 assembly._beams.append(part)
