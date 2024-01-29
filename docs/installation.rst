@@ -1,15 +1,44 @@
-************
+********************************************************************************
 Installation
-************
+********************************************************************************
 
-.. rst-class:: lead
+Stable
+======
 
-    The following installation possibilties are available:
+Install with pip
+------------------
 
-.. toctree::
-    :maxdepth: 1
-    :titlesonly:
+In an new environment:
 
-    installation/installation_quick
-    installation/installation_manual
-    installation/installation_dev
+.. code-block:: bash
+
+    conda create -n <myenvname> python=3.10 --yes
+    conda activate <myenvname>
+    pip install compas_timber
+
+Install to Rhino
+
+.. code-block:: bash
+
+    python -m compas_rhino.install -p compas_timber
+
+Development
+===========
+
+To get the latest development version, `fork the repository <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo>`_ and clone the fork
+
+.. code-block:: bash
+
+    git clone https://github.com/<yourgithub_username>/compas_timber.git
+    cd compas_timber
+
+Create a new environment if necessary
+
+.. code-block:: bash
+
+    conda create -n <myenvname> python=3.10
+    conda activate <myenvname>
+
+.. code-block:: bash
+
+    pip install -r requirements-dev.txt
