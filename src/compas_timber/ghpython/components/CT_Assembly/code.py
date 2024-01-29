@@ -32,7 +32,7 @@ class Assembly(component):
 
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(Assembly.beams, rtree=True, max_distance=max_distance)
+        found_pairs = solver.find_intersecting_pairs(assembly.beams, rtree=True, max_distance=max_distance)
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
@@ -55,8 +55,8 @@ class Assembly(component):
                 direct_rules.append(r)
 
         for topo in topologies:
-            beam_a = Assembly.beams[Assembly.beam_keys.index(topo["beam_a_key"])]
-            beam_b = Assembly.beams[Assembly.beam_keys.index(topo["beam_b_key"])]
+            beam_a = assembly.beams[assembly.beam_keys.index(topo["beam_a_key"])]
+            beam_b = assembly.beams[assembly.beam_keys.index(topo["beam_b_key"])]
             detected_topo = topo["detected_topo"]
             pair = beam_a, beam_b
             pair_joined = False
