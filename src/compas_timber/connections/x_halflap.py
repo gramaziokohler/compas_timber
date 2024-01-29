@@ -48,56 +48,20 @@ class XHalfLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(XHalfLapJoint, self).__init__(frame, key)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
-        self.flip_lap_side = flip_lap_side  # Decide if Direction of beam_a or beam_b
-        self.cut_plane_bias = cut_plane_bias
-        self.features = []
-
-    @property
-    def data(self):
-        data_dict = {
-            "beam_a": self.beam_a_key,
-            "beam_b": self.beam_b_key,
-            "flip_lap_side": self.flip_lap_side,
-            "cut_plane_bias": self.cut_plane_bias,
-        }
-        data_dict.update(Joint.data.fget(self))
-        return data_dict
-
-    @classmethod
-    def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cut_plane_bias=value["cut_plane_bias"])
-        instance.beam_a_key = value["beam_a"]
-        instance.beam_b_key = value["beam_b"]
-        instance.flip_lap_side = value["flip_lap_side"]
-        instance.cut_plane_bias = value["cut_plane_bias"]
-        return instance
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
+        super(XHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, frame, key)
 
     @property
     def joint_type(self):
         return "X-HalfLap"
 
-    @property
-    def beams(self):
-        return [self.beam_a, self.beam_b]
-
-    def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.beam_a = assemly.find_by_key(self.beam_a_key)
-        self.beam_b = assemly.find_by_key(self.beam_b_key)
-
     def add_features(self):
-        assert self.beam_a and self.beam_b  # should never happen
+        assert self.main_beam and self.cross_beam  # should never happen
 
         try:
             negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
-        self.beam_b.add_features(MillVolume(negative_brep_beam_b))
+        self.main_beam.add_features(MillVolume(negative_brep_beam_a))
+        self.cross_beam.add_features(MillVolume(negative_brep_beam_b))
