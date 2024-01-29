@@ -6,7 +6,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
-class ShowJointTypes(component):
+class ShowTopologyTypes(component):
     def RunScript(self, Assembly):
         self.pt = []
         self.txt = []
@@ -14,8 +14,8 @@ class ShowJointTypes(component):
         if not Assembly:
             return
         for topo in Assembly.topologies:
-            beam_a = topo.get("beam_a")
-            beam_b = topo.get("beam_b")
+            beam_a = Assembly.beams[Assembly.beam_keys.index(topo["beam_a_key"])]
+            beam_b = Assembly.beams[Assembly.beam_keys.index(topo["beam_b_key"])]
             topology = topo.get("detected_topo")
 
             [p1, _], [p2, _] = intersection_line_line_3D(

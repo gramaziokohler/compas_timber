@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-
+* added `L-HalfLapJoint`
+* added `T-HalfLapJoint`
+* added `ShowTopologyTypes` GH Component
 ### Changed
 
 ### Removed
-
+* removed `JointDef` GH components
+* removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`
 
 ## [0.4.0] 2024-01-24
 
@@ -36,9 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
 * added `BTLx` Grasshopper component
 * added `FrenchRidgeHalfLap` joint
-* added `L-HalfLapJoint`
-* added `T-HalfLapJoint`
-* added `ShowTopologyTypes` GH Component
+
 
 ### Changed
 
@@ -53,8 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed call to `rs.Redraw()` in `BakeBoxMap` which was causing GH document to lock (cannot drag).
 
 ### Removed
-* removed `JointDef` GH components
-* removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`
+
 
 ## [0.3.2] 2023-11-17
 

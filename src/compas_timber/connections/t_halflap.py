@@ -52,7 +52,6 @@ class THalfLapJoint(Joint):
     joint_type : str
         A string representation of this joint's type.
 
-
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
@@ -136,7 +135,7 @@ class THalfLapJoint(Joint):
         )
 
     @property
-    def cutting_plane_main(self):
+    def cutting_frame_main(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
         cfr = max(angles_faces, key=lambda x: x[0])[1]
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
@@ -190,14 +189,14 @@ class THalfLapJoint(Joint):
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_features(self):
-        start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
+        start_main, end_main = self.main_beam.extension_to_plane(self.cutting_frame_main)
         self.main_beam.add_blank_extension(start_main, end_main, self.key)
 
         negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         self.main_beam.add_features(MillVolume(negative_brep_main_beam))
         self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
 
-        trim_plane = Plane(self.cutting_plane_main.point, -self.cutting_plane_main.normal)
-        f_main = CutFeature(trim_plane)
+        trim_frame = Frame(self.cutting_frame_main.point, self.cutting_frame_main.xaxis, -self.cutting_frame_main.yaxis)
+        f_main = CutFeature(trim_frame)
         self.main_beam.add_features(f_main)
         self.features.append(f_main)

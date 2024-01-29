@@ -21,7 +21,7 @@ class TimberAssembly(Assembly):
     joint_keys :  list(int)
         A list of the keys of the joints included in this assembly.
     topologies :  list(dict)
-        A list of JointTopology for assembly. dict is: {"detected_topo": detected_topo, "beam_a": beam_a, "beam_b":beam_b} See :class:`~compas_timber.connections.JointTopology`.
+        A list of JointTopology for assembly. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key} See :class:`~compas_timber.connections.JointTopology`.
 
     """
 

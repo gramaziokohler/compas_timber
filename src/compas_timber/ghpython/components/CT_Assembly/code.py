@@ -25,10 +25,20 @@ class Assembly(component):
             new_beams.append(self._beam_map[id(beam)])
         return new_beams
 
-    def get_joints_from_rules(self, beams, rules, topologies):
+    def get_joints_from_rules(self, assembly, rules, max_distance=0.0):
         if not isinstance(rules, list):
             rules = [rules]
         rules = [r for r in rules if r is not None]
+
+        topologies = []
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(Assembly.beams, rtree=True, max_distance=max_distance)
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                topologies.append({"detected_topo": detected_topo, "beam_a_key": beam_a.key, "beam_b_key": beam_b.key})
+        Assembly.set_topologies(topologies)
 
         joints = []
         # rules have to be resolved into joint definitions
@@ -45,8 +55,8 @@ class Assembly(component):
                 direct_rules.append(r)
 
         for topo in topologies:
-            beam_a = topo["beam_a"]
-            beam_b = topo["beam_b"]
+            beam_a = Assembly.beams[Assembly.beam_keys.index(topo["beam_a_key"])]
+            beam_b = Assembly.beams[Assembly.beam_keys.index(topo["beam_b_key"])]
             detected_topo = topo["detected_topo"]
             pair = beam_a, beam_b
             pair_joined = False
@@ -101,15 +111,6 @@ class Assembly(component):
 
         Assembly = TimberAssembly()
 
-        topologies = []
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-        Assembly.set_topologies(topologies)
 
         self._beam_map = {}
         beams = [b for b in Beams if b is not None]
@@ -119,7 +120,9 @@ class Assembly(component):
             self._beam_map[id(beam)] = c_beam
         beams = Assembly.beams
 
-        joints = self.get_joints_from_rules(beams, JointRules, topologies)
+
+
+        joints = self.get_joints_from_rules(Assembly, JointRules, max_distance=MaxDistance)
 
         if joints:
             handled_beams = []

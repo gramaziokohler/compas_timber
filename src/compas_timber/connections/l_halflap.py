@@ -7,22 +7,20 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
-
-
-from .joint import beam_side_incidence
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
+from .joint import beam_side_incidence
 from .joint import Joint
 from .solver import JointTopology
 
 
 class LHalfLapJoint(Joint):
-    """Represents a T-Lap type joint which joins the end of a beam along the length of another beam,
+    """Represents a L-Lap type joint which joins the ends of two beams,
     trimming the main beam.
 
-    This joint type is compatible with beams in T topology.
+    This joint type is compatible with beams in L topology.
 
-    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
 
     Parameters
     ----------
@@ -72,6 +70,8 @@ class LHalfLapJoint(Joint):
         data_dict = {
             "main_beam": self.main_beam_key,
             "cross_beam": self.cross_beam_key,
+            "flip_lap_side": self.flip_lap_side,
+            "cut_plane_bias": self.cut_plane_bias,
         }
         data_dict.update(Joint.data.fget(self))
         return data_dict
@@ -136,14 +136,14 @@ class LHalfLapJoint(Joint):
         )
 
     @property
-    def cutting_plane_main(self):
+    def cutting_frame_main(self):
         angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
         cfr = max(angles_faces, key=lambda x: x[0])[1]
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     @property
-    def cutting_plane_cross(self):
+    def cutting_frame_cross(self):
         angles_faces = beam_side_incidence(self.cross_beam, self.main_beam)
         cfr = max(angles_faces, key=lambda x: x[0])[1]
         return cfr
@@ -196,8 +196,8 @@ class LHalfLapJoint(Joint):
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_features(self):
-        start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_main)
-        start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_plane_cross)
+        start_main, end_main = self.main_beam.extension_to_plane(self.cutting_frame_main)
+        start_cross, end_cross = self.cross_beam.extension_to_plane(self.cutting_frame_cross)
         # self.main_beam.add_blank_extension(start_main, end_main, self.key)
         # self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
         self.main_beam.add_blank_extension(1, 1, self.key)
@@ -207,11 +207,11 @@ class LHalfLapJoint(Joint):
         self.main_beam.add_features(MillVolume(negative_brep_main_beam))
         self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
 
-        f_cross = CutFeature(Plane.from_frame(self.cutting_plane_cross))
+        f_cross = CutFeature(self.cutting_frame_cross)
         self.cross_beam.add_features(f_cross)
         self.features.append(f_cross)
 
-        trim_plane = Plane(self.cutting_plane_main.point, -self.cutting_plane_main.normal)
-        f_main = CutFeature(trim_plane)
+        trim_frame = Frame(self.cutting_frame_main.point, self.cutting_frame_main.xaxis, -self.cutting_frame_main.yaxis)
+        f_main = CutFeature(trim_frame)
         self.main_beam.add_features(f_main)
         self.features.append(f_main)

@@ -63,7 +63,7 @@ class XHalfLapJoint(Joint):
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
-        self.cut_plane_choice = flip_lap_side  # Decide if Direction of beam_a or beam_b
+        self.flip_lap_side = flip_lap_side  # Decide if Direction of beam_a or beam_b
         self.features = []
         self.cut_plane_bias = cut_plane_bias
         self.features = []
@@ -179,7 +179,7 @@ class XHalfLapJoint(Joint):
         # Get Cut Plane
         plane_cut, plane_cut_vector_a, plane_cut_vector_b = self._cutplane()
 
-        if self.cut_plane_choice:
+        if self.flip_lap_side:
             plane_cut_vector_a, plane_cut_vector_b = plane_cut_vector_b, plane_cut_vector_a
 
         # Get Beam Faces (Planes) in right order
