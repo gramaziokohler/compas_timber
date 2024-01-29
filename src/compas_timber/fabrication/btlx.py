@@ -356,7 +356,6 @@ class BTLxPart(object):
 
 
 class BTLxProcess(object):
-
     """Generic class for BTLx processings.
 
     This should be instantiated and appended to BTLxPart.processings in a specific btlx_process class (eg BTLxJackCut)
