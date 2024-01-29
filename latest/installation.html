@@ -58,7 +58,7 @@
         </script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Quick installation" href="installation/installation_quick.html" />
+    <link rel="next" title="API Reference" href="api.html" />
     <link rel="prev" title="COMPAS TIMBER" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -321,6 +321,10 @@ document.write(`
   
 
   
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
 </div>
 
     </nav>
@@ -493,13 +497,8 @@ document.write(`
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Installation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="installation/installation_quick.html">Quick installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation/installation_manual.html">Manual installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation/installation_dev.html">Manual installation for developers</a></li>
-</ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.assembly.html">compas_timber.assembly</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.parts.html">compas_timber.parts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.connections.html">compas_timber.connections</a></li>
@@ -509,11 +508,11 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.rhino.html">rhino</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="examples/create_joint.html">Create Joint</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/workflow.html">Workflow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/attributes.html">Attributes</a></li>
@@ -590,14 +589,39 @@ document.write(`
                   
   <section id="installation">
 <h1>Installation</h1>
-<p class="lead">The following installation possibilties are available:</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="installation/installation_quick.html">Quick installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation/installation_manual.html">Manual installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation/installation_dev.html">Manual installation for developers</a></li>
-</ul>
+<section id="stable">
+<h2>Stable</h2>
+<section id="install-with-pip">
+<h3>Install with pip</h3>
+<p>In an new environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>&lt;myenvname&gt;<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10<span class="w"> </span>--yes
+conda<span class="w"> </span>activate<span class="w"> </span>&lt;myenvname&gt;
+pip<span class="w"> </span>install<span class="w"> </span>compas_timber
+</pre></div>
 </div>
+<p>Install to Rhino</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_rhino.install<span class="w"> </span>-p<span class="w"> </span>compas_timber
+</pre></div>
+</div>
+</section>
+</section>
+<section id="development">
+<h2>Development</h2>
+<p>To get the latest development version, <a class="reference external" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo">fork the repository</a> and clone the fork</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;yourgithub_username&gt;/compas_timber.git
+<span class="nb">cd</span><span class="w"> </span>compas_timber
+</pre></div>
+</div>
+<p>Create a new environment if necessary</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>&lt;myenvname&gt;<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
+conda<span class="w"> </span>activate<span class="w"> </span>&lt;myenvname&gt;
+</pre></div>
+</div>
+<p>Install the package in editable mode with its development dependencies</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
+</pre></div>
+</div>
+</section>
 </section>
 
 
@@ -612,6 +636,24 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stable">Stable</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#install-with-pip">Install with pip</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">Development</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>
