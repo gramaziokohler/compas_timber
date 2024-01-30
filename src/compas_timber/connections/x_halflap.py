@@ -42,9 +42,7 @@ class XHalfLapJoint(Joint):
     @classmethod
     def __from_data__(cls, value):
         instance = cls(
-            frame=Frame.__from_data__(value["frame"]),
-            key=value["key"],
-            cut_plane_bias=value["cut_plane_bias"]
+            frame=Frame.__from_data__(value["frame"]), key=value["key"], cut_plane_bias=value["cut_plane_bias"]
         )
         instance.beam_a_key = value["beam_a"]
         instance.beam_b_key = value["beam_b"]
