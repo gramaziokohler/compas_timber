@@ -20,7 +20,7 @@ class Feature(Data):
         return self._is_joiney
 
     @property
-    def data(self):
+    def __data__(self):
         return {"is_joinery": self._is_joiney}
 
 
@@ -39,9 +39,9 @@ class CutFeature(Feature):
         self.cutting_plane = cutting_plane
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {"cutting_plane": self.cutting_plane}
-        data_dict.update(super(CutFeature, self).data)
+        data_dict.update(super(CutFeature, self).__data__)
         return data_dict
 
 
@@ -66,9 +66,9 @@ class DrillFeature(Feature):
         self.length = length
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {"line": self.line, "diameter": self.diameter, "length": self.length}
-        data_dict.update(super(DrillFeature, self).data)
+        data_dict.update(super(DrillFeature, self).__data__)
         return data_dict
 
 
@@ -87,7 +87,7 @@ class MillVolume(Feature):
         self.volume = volume
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {"volume": self.volume}
-        data_dict.update(super(MillVolume, self).data)
+        data_dict.update(super(MillVolume, self).__data__)
         return data_dict

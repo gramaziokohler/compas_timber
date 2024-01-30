@@ -51,18 +51,18 @@ class FrenchRidgeLapJoint(Joint):
         self.check_geometry()
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "beam_a_key": self.beam_a_key,
             "beam_b_key": self.beam_b_key,
             "gap": self.gap,
         }
-        data_dict.update(super(FrenchRidgeLapJoint, self).data)
+        data_dict.update(super(FrenchRidgeLapJoint, self).__data__)
         return data_dict
 
     @classmethod
-    def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], gap=value["gap"])
+    def __from_data__(cls, value):
+        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], gap=value["gap"])
         instance.beam_a_key = value["beam_a_key"]
         instance.beam_b_key = value["beam_b_key"]
         return instance

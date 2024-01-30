@@ -163,5 +163,5 @@ class Assembly(component):
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
-        Geometry = scene.redraw()
+        Geometry = scene.draw()
         return Assembly, Geometry, debug_info

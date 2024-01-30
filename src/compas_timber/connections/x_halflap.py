@@ -59,19 +59,21 @@ class XHalfLapJoint(LapJoint):
         self.features = []
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "beam_a": self.beam_a_key,
             "beam_b": self.beam_b_key,
             "flip_lap_side": self.flip_lap_side,
             "cut_plane_bias": self.cut_plane_bias,
         }
-        data_dict.update(Joint.data.fget(self))
+        data_dict.update(super(XHalfLapJoint, self).__data__)
         return data_dict
 
     @classmethod
-    def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cut_plane_bias=value["cut_plane_bias"])
+    def __from_data__(cls, value):
+        instance = cls(
+            frame=Frame.__from_data__(value["frame"]), key=value["key"], cut_plane_bias=value["cut_plane_bias"]
+        )
         instance.beam_a_key = value["beam_a"]
         instance.beam_b_key = value["beam_b"]
         instance.flip_lap_side = value["flip_lap_side"]
