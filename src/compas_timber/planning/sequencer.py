@@ -42,10 +42,10 @@ class Instruction(Data):
         self.location = location
 
     @property
-    def data(self):
+    def __data__(self):
         return {
             "id": self.id,
-            "location": self.location.data,
+            "location": self.location.__data__,
         }
 
     def transform(self, tranformation):
@@ -62,13 +62,13 @@ class Model3d(Instruction):
         self.obj_filepath = obj_filepath
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "geometry": self.geometry,
             "element_id": self.element_id,
             "obj_filepath": self.obj_filepath,
         }
-        data_dict.update(super(Model3d, self).data)
+        data_dict.update(super(Model3d, self).__data__)
         return data_dict
 
     def transform(self, tranformation):
@@ -85,12 +85,12 @@ class Text3d(Instruction):
         self.size = size
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "text": self.text,
             "size": self.size,
         }
-        data_dict.update(super(Text3d, self).data)
+        data_dict.update(super(Text3d, self).__data__)
         return data_dict
 
 
@@ -105,14 +105,14 @@ class LinearDimension(Instruction):
         self.offset = offset
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "start": self.start,
             "end": self.end,
             "char_size": self.char_size,
             "offset": self.offset,
         }
-        data_dict.update(super(LinearDimension, self).data)
+        data_dict.update(super(LinearDimension, self).__data__)
         return data_dict
 
     def transform(self, tranformation):
@@ -182,9 +182,9 @@ class Step(Data):
             self._actor = value
 
     @property
-    def data(self):
+    def __data__(self):
         return {
-            "location": self.location.data,
+            "location": self.location.__data__,
             "geometry": self.geometry,
             "priority": self.priority,
             "element_ids": self.element_ids,
@@ -255,7 +255,7 @@ class BuildingPlan(Data):
         return len(self.steps)
 
     @property
-    def data(self):
+    def __data__(self):
         return {"steps": self.steps}
 
     def add_step(self, step):

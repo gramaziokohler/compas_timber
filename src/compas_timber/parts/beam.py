@@ -89,9 +89,9 @@ class Beam(Part):
         self._blank_extensions = {}
 
     @property
-    def data(self):
+    def __data__(self):
         data = {
-            "frame": self.frame.data,
+            "frame": self.frame.__data__,
             "key": self.key,
             "width": self.width,
             "height": self.height,
@@ -100,8 +100,8 @@ class Beam(Part):
         return data
 
     @classmethod
-    def from_data(cls, data):
-        instance = cls(Frame.from_data(data["frame"]), data["length"], data["width"], data["height"])
+    def __from_data__(cls, data):
+        instance = cls(Frame.__from_data__(data["frame"]), data["length"], data["width"], data["height"])
         instance.key = data["key"]
         return instance
 

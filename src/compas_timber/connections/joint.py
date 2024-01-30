@@ -78,8 +78,8 @@ class Joint(Data):
         self.key = key
 
     @property
-    def data(self):
-        return {"frame": self.frame.data, "key": self.key, "beams": [beam.key for beam in self.beams]}
+    def __data__(self):
+        return {"frame": self.frame.__data__, "key": self.key, "beams": [beam.key for beam in self.beams]}
 
     @property
     def beams(self):

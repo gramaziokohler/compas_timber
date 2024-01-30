@@ -55,18 +55,18 @@ class LButtJoint(Joint):
         self.features = []
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "main_beam_key": self.main_beam_key,
             "cross_beam_key": self.cross_beam_key,
             "gap": self.gap,
         }
-        data_dict.update(super(LButtJoint, self).data)
+        data_dict.update(super(LButtJoint, self).__data__)
         return data_dict
 
     @classmethod
-    def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], gap=value["gap"])
+    def __from_data__(cls, value):
+        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], gap=value["gap"])
         instance.main_beam_key = value["main_beam_key"]
         instance.cross_beam_key = value["cross_beam_key"]
         return instance

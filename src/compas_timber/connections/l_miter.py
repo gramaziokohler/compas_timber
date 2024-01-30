@@ -52,18 +52,18 @@ class LMiterJoint(Joint):
         self.features = []
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "beam_a": self.beam_a_key,
             "beam_b": self.beam_b_key,
             "cutoff": self.cutoff,
         }
-        data_dict.update(Joint.data.fget(self))
+        data_dict.update(super(LMiterJoint, self).__data__)
         return data_dict
 
     @classmethod
-    def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cutoff"])
+    def __from_data__(cls, value):
+        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], cutoff=value["cutoff"])
         instance.beam_a_key = value["beam_a"]
         instance.beam_b_key = value["beam_b"]
         instance.cutoff = value["cutoff"]
