@@ -326,7 +326,7 @@ class DebugInfomation(object):
 
     @property
     def has_errors(self):
-        return self.add_feature_error or self.add_joint_error
+        return self.feature_errors or self.joint_errors
 
     def add_feature_error(self, error):
         self.feature_errors.append(error)
