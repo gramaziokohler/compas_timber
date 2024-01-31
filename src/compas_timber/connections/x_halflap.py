@@ -1,7 +1,5 @@
-from compas.geometry import Frame
 from compas_timber.parts import MillVolume
-from compas_timber.connections.lap_joint import LapJoint
-from compas_timber.connections.joint import Joint
+from compas_timber.connections import LapJoint
 
 from .solver import JointTopology
 from .joint import BeamJoinningError

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Feature application now fails more gracefully (un-processed geometry is returned).
 * Attempting to join beams which are already joined raises `BeamJoiningError` instead of `AssemblyError`
 * `Joint.add_features` which fails to calculate anything raises `BeamJoiningError`.
+* Changed COMPAS dependency to `compas==2.0.0beta.4`.
 
 ### Removed
 

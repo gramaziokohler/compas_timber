@@ -80,6 +80,6 @@ class Beam_fromCurve(component):
                 Beam.append(beam)
                 scene.add(beam.blank)
 
-        Blank = scene.redraw()
+        Blank = scene.draw()
 
         return Beam, Blank
