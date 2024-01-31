@@ -40,7 +40,7 @@ class Assembly(component):
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 topologies.append({"detected_topo": detected_topo, "beam_a_key": beam_a.key, "beam_b_key": beam_b.key})
-        Assembly.set_topologies(topologies)
+        assembly.set_topologies(topologies)
 
         joints = []
         # rules have to be resolved into joint definitions
@@ -113,19 +113,17 @@ class Assembly(component):
 
         debug_info = DebugInfomation()
 
-        self.process_joint_rules(Beams, JointRules, max_distance=MaxDistance)
-
-        Assembly = TimberAssembly()
+        assembly = TimberAssembly()
 
         self._beam_map = {}
         beams = [b for b in Beams if b is not None]
         for beam in beams:
             c_beam = beam.copy()
-            Assembly.add_beam(c_beam)
+            assembly.add_beam(c_beam)
             self._beam_map[id(beam)] = c_beam
-        beams = Assembly.beams
+        beams = assembly.beams
 
-        joints = self.get_joints_from_rules(Assembly, JointRules, max_distance=MaxDistance)
+        joints = self.get_joints_from_rules(assembly, JointRules, max_distance=MaxDistance)
 
         if joints:
             handled_beams = []
@@ -137,7 +135,7 @@ class Assembly(component):
                 if beam_pair_ids in handled_beams:
                     continue
                 try:
-                    joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
+                    joint.joint_type.create(assembly, *beams_to_pair, **joint.kwargs)
                 except BeamJoinningError as bje:
                     debug_info.add_joint_error(bje)
                 else:
@@ -154,7 +152,7 @@ class Assembly(component):
         scene = Scene()
 
         if CreateGeometry:
-            vis_consumer = BrepGeometryConsumer(Assembly)
+            vis_consumer = BrepGeometryConsumer(assembly)
             for result in vis_consumer.result:
                 scene.add(result.geometry)
                 if result.debug_info:
@@ -164,4 +162,4 @@ class Assembly(component):
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
         Geometry = scene.draw()
-        return Assembly, Geometry, debug_info
+        return assembly, Geometry, debug_info
