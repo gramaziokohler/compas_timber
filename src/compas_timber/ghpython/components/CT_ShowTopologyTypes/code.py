@@ -14,8 +14,8 @@ class ShowTopologyTypes(component):
         if not Assembly:
             return
         for topo in Assembly.topologies:
-            beam_a = Assembly.beams[Assembly.beam_keys.index(topo["beam_a_key"])]
-            beam_b = Assembly.beams[Assembly.beam_keys.index(topo["beam_b_key"])]
+            beam_a = topo["beam_a"]
+            beam_b = topo["beam_b"]
             topology = topo.get("detected_topo")
 
             [p1, _], [p2, _] = intersection_line_line_3D(
@@ -29,7 +29,7 @@ class ShowTopologyTypes(component):
     def DrawViewportWires(self, arg):
         if self.Locked:
             return
-        col = System.Drawing.Color.FromArgb(255, 0, 0, 0)
+        col = System.Drawing.Color.FromArgb(0, 0, 255, 0)
         # https://developer.rhino3d.com/api/RhinoCommon/html/M_Rhino_Display_DisplayPipeline_Draw2dText_5.htm
         for p, t in zip(self.pt, self.txt):
-            arg.Display.Draw2dText(t, col, p, True, 20, "Verdana")
+            arg.Display.Draw2dText(t, col, p, True, 12, "Verdana")
