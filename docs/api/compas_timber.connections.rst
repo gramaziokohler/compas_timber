@@ -11,13 +11,17 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Joint
-    TButtJoint
-    LButtJoint
-    LMiterJoint
-    XHalfLapJoint
-    JointTopology
     ConnectionSolver
+    FrenchRidgeLapJoint
+    Joint
+    JointTopology
+    LapJoint
+    LButtJoint
+    LHalfLapJoint
+    LMiterJoint
+    TButtJoint
+    THalfLapJoint
+    XHalfLapJoint
 
 Functions
 =========
@@ -27,6 +31,7 @@ Functions
     :nosignatures:
 
     find_neighboring_beams
+    beam_side_incidence
 
 Exceptions
 ==========
