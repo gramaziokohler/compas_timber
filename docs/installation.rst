@@ -16,11 +16,11 @@ In an new environment:
     conda activate <myenvname>
     pip install compas_timber
 
-Install to Rhino
+Install to Rhino 7.0
 
 .. code-block:: bash
 
-    python -m compas_rhino.install -p compas_timber
+    python -m compas_rhino.install -v7.0
 
 Development
 ===========
@@ -44,3 +44,10 @@ Install the package in editable mode with its development dependencies
 .. code-block:: bash
 
     pip install -r requirements-dev.txt
+
+Compile the Grasshopper components
+
+.. code-block:: bash
+
+    invoke build-ghuser-components
+    python -m compas_rhino.install -v7.0
