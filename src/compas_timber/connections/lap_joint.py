@@ -56,20 +56,20 @@ class LapJoint(Joint):
         self.features = []
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "main_beam": self.main_beam_key,
             "cross_beam": self.cross_beam_key,
             "flip_lap_side": self.flip_lap_side,
             "cut_plane_bias": self.cut_plane_bias,
         }
-        data_dict.update(super(LapJoint, self).data)
+        data_dict.update(super(LapJoint, self).__data__)
         return data_dict
 
     @classmethod
-    def from_data(cls, value):
+    def __from_data__(cls, value):
         instance = cls(
-            frame=Frame.from_data(value["frame"]),
+            frame=Frame.__from_data__(value["frame"]),
             key=value["key"],
             cut_plane_bias=value["cut_plane_bias"],
             flip_lap_side=value["flip_lap_side"]
