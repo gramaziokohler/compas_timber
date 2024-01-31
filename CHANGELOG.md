@@ -22,9 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new component `ShowFeatureErrors`.
 * Added new component `ShowJoiningErrors`.
 * Added `FeatureApplicator` classes which report errors during feature application.
-* added `L-HalfLapJoint`
-* added `T-HalfLapJoint`
-* added `ShowTopologyTypes` GH Component
+* Added `L-HalfLapJoint`.
+* Added `T-HalfLapJoint`.
+* Added `ShowTopologyTypes` GH Component.
 
 ### Changed
 
@@ -32,11 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Attempting to join beams which are already joined raises `BeamJoiningError` instead of `AssemblyError`
 * `Joint.add_features` which fails to calculate anything raises `BeamJoiningError`.
 * Changed COMPAS dependency to `compas==2.0.0beta.4`.
+* Assembly component shows blanks when `CeateGeometry` flag is set to `False`. 
 
 ### Removed
 
-* removed `JointDef` GH components
-* removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`
+* Removed `JointDef` GH components.
+* Removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`.
 
 ## [0.4.0] 2024-01-24
 

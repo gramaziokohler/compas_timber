@@ -155,6 +155,9 @@ class Assembly(component):
                 scene.add(result.geometry)
                 if result.debug_info:
                     debug_info.add_feature_error(result.debug_info)
+        else:
+            for beam in Assembly.beams:
+                scene.add(beam.blank)
 
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
