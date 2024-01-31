@@ -70,7 +70,9 @@ class LHalfLapJoint(LapJoint):
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
-        self.cross_beam.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.key)
+        self.cross_beam.add_blank_extension(
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+        )
 
         self.main_beam.add_features(MillVolume(negative_brep_main_beam))
         self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))

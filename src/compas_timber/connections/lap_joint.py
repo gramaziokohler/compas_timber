@@ -72,7 +72,7 @@ class LapJoint(Joint):
             frame=Frame.__from_data__(value["frame"]),
             key=value["key"],
             cut_plane_bias=value["cut_plane_bias"],
-            flip_lap_side=value["flip_lap_side"]
+            flip_lap_side=value["flip_lap_side"],
         )
         instance.main_beam_key = value["main_beam"]
         instance.cross_beam_key = value["cross_beam"]
