@@ -58,8 +58,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="compas_timber.fabrication" href="../compas_timber.fabrication.html" />
-    <link rel="prev" title="compas_timber.consumers" href="../compas_timber.consumers.html" />
+    <link rel="next" title="CutFeature" href="compas_timber.consumers.CutFeature.html" />
+    <link rel="prev" title="BeamGeometry" href="compas_timber.consumers.BeamGeometry.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -505,6 +505,7 @@ document.write(`
 <li class="toctree-l2 current active"><a class="reference internal" href="../compas_timber.consumers.html">compas_timber.consumers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.rhino.html">rhino</a></li>
 </ul>
 </li>
@@ -597,7 +598,7 @@ document.write(`
 <h1>BrepGeometryConsumer</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.consumers.BrepGeometryConsumer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.consumers.</span></span><span class="sig-name descname"><span class="pre">BrepGeometryConsumer</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/49e237e/src/compas_timber/consumers/geometry.py#L196"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.consumers.</span></span><span class="sig-name descname"><span class="pre">BrepGeometryConsumer</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b3e82b7/src/compas_timber/consumers/geometry.py#L196"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A consumer that applies features to beams and yields the resulting geometry.</p>
 <dl class="field-list">
@@ -609,9 +610,9 @@ document.write(`
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><strong>FEATURE_MAP</strong><span class="classifier">dict(<code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureApplicator</span></code>.)</span></dt><dd><p>A mapping of feature types to feature applicators.</p>
+<dt><strong>FEATURE_MAP</strong><span class="classifier">dict(<code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code>, <a class="reference internal" href="compas_timber.consumers.FeatureApplicator.html#compas_timber.consumers.FeatureApplicator" title="compas_timber.consumers.FeatureApplicator"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureApplicator</span></code></a>.)</span></dt><dd><p>A mapping of feature types to feature applicators.</p>
 </dd>
-<dt><strong>result</strong><span class="classifier">generator(<code class="xref py py-class docutils literal notranslate"><span class="pre">BeamGeometry</span></code>)</span></dt><dd><p>The resulting geometry after processing.</p>
+<dt><strong>result</strong><span class="classifier">generator(<a class="reference internal" href="compas_timber.consumers.BeamGeometry.html#compas_timber.consumers.BeamGeometry" title="compas_timber.consumers.BeamGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamGeometry</span></code></a>)</span></dt><dd><p>The resulting geometry after processing.</p>
 </dd>
 </dl>
 </dd>

@@ -504,6 +504,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.consumers.html">compas_timber.consumers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.fabrication.html">compas_timber.fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.planning.html">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.ghpython.html">compas_timber.ghpython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.rhino.html">rhino</a></li>
 </ul>
 </li>
@@ -600,19 +601,33 @@ if the code is run in a python process, it will default to
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.connections.html">compas_timber.connections</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.Joint.html">Joint</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.TButtJoint.html">TButtJoint</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.LButtJoint.html">LButtJoint</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.LMiterJoint.html">LMiterJoint</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.XHalfLapJoint.html">XHalfLapJoint</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.JointTopology.html">JointTopology</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.ConnectionSolver.html">ConnectionSolver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.FrenchRidgeLapJoint.html">FrenchRidgeLapJoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.Joint.html">Joint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.JointTopology.html">JointTopology</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.LapJoint.html">LapJoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.LButtJoint.html">LButtJoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.LHalfLapJoint.html">LHalfLapJoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.LMiterJoint.html">LMiterJoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.TButtJoint.html">TButtJoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.THalfLapJoint.html">THalfLapJoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.XHalfLapJoint.html">XHalfLapJoint</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.find_neighboring_beams.html">find_neighboring_beams</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.beam_side_incidence.html">beam_side_incidence</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.connections.BeamJoinningError.html">BeamJoinningError</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.consumers.html">compas_timber.consumers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.BeamGeometry.html">BeamGeometry</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.BrepGeometryConsumer.html">BrepGeometryConsumer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.CutFeature.html">CutFeature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.CutFeatureGeometry.html">CutFeatureGeometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.DrillFeature.html">DrillFeature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.DrillFeatureGeometry.html">DrillFeatureGeometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.FeatureApplicator.html">FeatureApplicator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.FeatureApplicationError.html">FeatureApplicationError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.MillVolume.html">MillVolume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.consumers.MillVolumeGeometry.html">MillVolumeGeometry</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.fabrication.html">compas_timber.fabrication</a><ul>
@@ -631,6 +646,16 @@ if the code is run in a python process, it will default to
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.planning.BuildingPlan.html">BuildingPlan</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.planning.Step.html">Step</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.planning.SimpleSequenceGenerator.html">SimpleSequenceGenerator</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.ghpython.html">compas_timber.ghpython</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.JointDefinition.html">JointDefinition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.CategoryRule.html">CategoryRule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.TopologyRule.html">TopologyRule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.DirectRule.html">DirectRule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.FeatureDefinition.html">FeatureDefinition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.JointOptions.html">JointOptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.DebugInfomation.html">DebugInfomation</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.rhino.html">rhino</a><ul>

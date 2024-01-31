@@ -58,7 +58,7 @@
         </script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="BrepGeometryConsumer" href="generated/compas_timber.consumers.BrepGeometryConsumer.html" />
+    <link rel="next" title="BeamGeometry" href="generated/compas_timber.consumers.BeamGeometry.html" />
     <link rel="prev" title="BeamJoinningError" href="generated/compas_timber.connections.BeamJoinningError.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -505,6 +505,7 @@ document.write(`
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">compas_timber.consumers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.html">compas_timber.fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compas_timber.planning.html">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_timber.ghpython.html">compas_timber.ghpython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compas_timber.rhino.html">rhino</a></li>
 </ul>
 </li>
@@ -596,8 +597,35 @@ document.write(`
 <h2>Classes</h2>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.consumers.BrepGeometryConsumer.html" title="compas_timber.consumers.BrepGeometryConsumer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BrepGeometryConsumer</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.consumers.BeamGeometry.html" title="compas_timber.consumers.BeamGeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BeamGeometry</span></code></a></p></td>
+<td><p>A data class containing the result of applying features to a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.consumers.BrepGeometryConsumer.html" title="compas_timber.consumers.BrepGeometryConsumer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BrepGeometryConsumer</span></code></a></p></td>
 <td><p>A consumer that applies features to beams and yields the resulting geometry.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.consumers.CutFeature.html" title="compas_timber.consumers.CutFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CutFeature</span></code></a></p></td>
+<td><p>Indicates a cut to be made on a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.consumers.CutFeatureGeometry.html" title="compas_timber.consumers.CutFeatureGeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CutFeatureGeometry</span></code></a></p></td>
+<td><p>Applies CutFeature to beam geometry.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.consumers.DrillFeature.html" title="compas_timber.consumers.DrillFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DrillFeature</span></code></a></p></td>
+<td><p>Parametric drill hole to be made on a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.consumers.DrillFeatureGeometry.html" title="compas_timber.consumers.DrillFeatureGeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DrillFeatureGeometry</span></code></a></p></td>
+<td><p>Applies DrillFeature to beam geometry.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.consumers.FeatureApplicator.html" title="compas_timber.consumers.FeatureApplicator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FeatureApplicator</span></code></a></p></td>
+<td><p>Base class for feature applicators.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.consumers.FeatureApplicationError.html" title="compas_timber.consumers.FeatureApplicationError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FeatureApplicationError</span></code></a></p></td>
+<td><p>Raised when a feature cannot be applied to a beam geometry.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.consumers.MillVolume.html" title="compas_timber.consumers.MillVolume"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MillVolume</span></code></a></p></td>
+<td><p>A volume to be milled out of a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.consumers.MillVolumeGeometry.html" title="compas_timber.consumers.MillVolumeGeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MillVolumeGeometry</span></code></a></p></td>
+<td><p>Applies MillVolume to beam geometry.</p></td>
 </tr>
 </tbody>
 </table>
