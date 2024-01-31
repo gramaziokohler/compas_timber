@@ -55,8 +55,10 @@ class Beam(Part):
         Width of the cross-section
     height : float
         Height of the cross-section
-    blank : :class:`~compas.geometry.Box`
+    shape : :class:`~compas.geometry.Box`
         A feature-less box representing the parametric geometry of this beam.
+    blank : :class:`~compas.geometry.Box`
+        A feature-less box representing the material stock geometry to produce this beam.
     faces : list(:class:`~compas.geometry.Frame`)
         A list of frames representing the 6 faces of this beam.
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -104,6 +106,10 @@ class Beam(Part):
         instance = cls(Frame.__from_data__(data["frame"]), data["length"], data["width"], data["height"])
         instance.key = data["key"]
         return instance
+
+    @property
+    def shape(self):
+        return _create_box(self.frame, self.length, self.width, self.height)
 
     @property
     def blank(self):

@@ -1,5 +1,4 @@
 from compas.geometry import Frame
-
 from compas_timber.parts import CutFeature
 
 from .joint import BeamJoinningError
@@ -120,3 +119,7 @@ class LButtJoint(Joint):
         f_main = CutFeature(main_cutting_plane)
         self.main_beam.add_features(f_main)
         self.features.append(f_main)
+
+        f_cross = CutFeature(self.get_cross_cutting_plane())
+        self.cross_beam.add_features(f_cross)
+        self.features.append(f_cross)

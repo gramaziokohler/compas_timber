@@ -7,7 +7,9 @@ from compas_timber.ghpython import JointOptions
 
 class LMiterJointOptions(component):
     def RunScript(self, Cutoff):
-        args = {"cutoff": Cutoff}
+        args = {}
+        if Cutoff:
+            args["cutoff"] = Cutoff
         options = JointOptions(LMiterJoint, **args)
 
         return options

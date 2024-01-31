@@ -1,17 +1,20 @@
+from compas.geometry import Frame
+
+from compas_timber.connections.lap_joint import LapJoint
+from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
-from compas_timber.connections import LapJoint
 
-from .solver import JointTopology
 from .joint import BeamJoinningError
+from .solver import JointTopology
 
 
-class XHalfLapJoint(LapJoint):
-    """Represents a X-Lap type joint which joins the end of a beam along the length of another beam,
+class THalfLapJoint(LapJoint):
+    """Represents a T-Lap type joint which joins the end of a beam along the length of another beam,
     trimming the main beam.
 
     This joint type is compatible with beams in T topology.
 
-    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
 
     Parameters
     ----------
@@ -41,25 +44,34 @@ class XHalfLapJoint(LapJoint):
     joint_type : str
         A string representation of this joint's type.
 
-
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(XHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, frame, key)
+        super(THalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, frame, key)
 
     @property
     def joint_type(self):
-        return "X-HalfLap"
+        return "T-HalfLap"
 
     def add_features(self):
         assert self.main_beam and self.cross_beam  # should never happen
 
         try:
-            negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
+            main_cutting_frame = self.get_main_cutting_frame()
+            negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        self.main_beam.add_features(MillVolume(negative_brep_beam_a))
-        self.cross_beam.add_features(MillVolume(negative_brep_beam_b))
+        start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+
+        self.main_beam.add_features(MillVolume(negative_brep_main_beam))
+        self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
+
+        trim_frame = Frame(main_cutting_frame.point, main_cutting_frame.xaxis, -main_cutting_frame.yaxis)
+        f_main = CutFeature(trim_frame)
+        self.main_beam.add_features(f_main)
+        self.features.append(f_main)

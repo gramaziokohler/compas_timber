@@ -1,0 +1,23 @@
+{
+    "name": "ShowTopologyTypes",
+    "nickname": "ShowTopo",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "Shows the names of the connection topology types.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+
+            {
+                "name": "Assembly",
+                "description": "Assembly object.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+        ]
+    }
+}
