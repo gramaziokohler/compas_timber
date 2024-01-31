@@ -597,7 +597,7 @@ document.write(`
 <h1>TimberAssembly</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.assembly.TimberAssembly">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.assembly.</span></span><span class="sig-name descname"><span class="pre">TimberAssembly</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d344332/src/compas_timber/assembly/assembly.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.assembly.</span></span><span class="sig-name descname"><span class="pre">TimberAssembly</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/db0db2d/src/compas_timber/assembly/assembly.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/api/compas.datastructures.Assembly.html#compas.datastructures.Assembly" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Assembly</span></code></a></p>
 <p>Represents a timber assembly containing beams and joints etc.</p>
 <dl class="field-list">
@@ -612,6 +612,8 @@ document.write(`
 <dt><strong>beam_keys</strong><span class="classifier">list(int)</span></dt><dd><p>A list of the keys of the beams included in this assembly.</p>
 </dd>
 <dt><strong>joint_keys</strong><span class="classifier">list(int)</span></dt><dd><p>A list of the keys of the joints included in this assembly.</p>
+</dd>
+<dt><strong>topologies</strong><span class="classifier">list(dict)</span></dt><dd><p>A list of JointTopology for assembly. dict is: {“detected_topo”: detected_topo, “beam_a_key”: beam_a_key, “beam_b_key”:beam_b_key} See <a class="reference internal" href="compas_timber.connections.JointTopology.html#compas_timber.connections.JointTopology" title="compas_timber.connections.JointTopology"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointTopology</span></code></a>.</p>
 </dd>
 </dl>
 </dd>
@@ -633,6 +635,9 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.assembly.TimberAssembly.remove_joint.html#compas_timber.assembly.TimberAssembly.remove_joint" title="compas_timber.assembly.TimberAssembly.remove_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_joint</span></code></a></p></td>
 <td><p>Removes this joint object from the assembly.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.assembly.TimberAssembly.set_topologies.html#compas_timber.assembly.TimberAssembly.set_topologies" title="compas_timber.assembly.TimberAssembly.set_topologies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_topologies</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>
