@@ -111,10 +111,13 @@ class LButtJoint(Joint):
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
         start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
-        self.main_beam.add_blank_extension(start_main, end_main, self.key)
-        self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.cross_beam.add_blank_extension(
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+        )
 
         f_main = CutFeature(main_cutting_plane)
         self.main_beam.add_features(f_main)
