@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * `BeamFromCurve` GH component accepts now referenced Rhino curves, referenced Rhino object IDs and internalized lines. 
+* Fixed `FeatureError` when L-Butt applies the cutting plane.
+* Fixed T-Butt doesn't get extended to cross beam's plane.
 
 ### Removed
 
