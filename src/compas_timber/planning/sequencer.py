@@ -269,7 +269,7 @@ class SimpleSequenceGenerator(object):
 
     Parameters
     ----------
-    assembly : :class:`compas_timber.assembly.TimberAssembly` or :class:'compas.datastructures.Assembly'
+    assembly : :class:'compas.datastructures.Assembly'
         Assembly to be sequenced.
 
     Attributes
