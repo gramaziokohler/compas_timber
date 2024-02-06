@@ -22,27 +22,24 @@ class LButtJoint(Joint):
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
+    small_beam_butts : bool
+        If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
 
     Attributes
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
-    cutting_plane_main : :class:`~compas.geometry.Frame`
-        The frame by which the main beam is trimmed.
-    cutting_plane_cross : :class:`~compas.geometry.Frame`
-        The frame by which the cross beam is trimmed.
     joint_type : str
         A string representation of this joint's type.
-
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, gap=0.0, frame=None, key=None, small_beam_butts=False):
-        super(LButtJoint, self).__init__(frame=frame, key=key)
+    def __init__(self, main_beam=None, cross_beam=None, small_beam_butts=False, **kwargs):
+        super(LButtJoint, self).__init__(**kwargs)
 
-        if small_beam_butts:
+        if small_beam_butts and main_beam and cross_beam:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
 
@@ -50,7 +47,6 @@ class LButtJoint(Joint):
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
-        self.gap = gap  # float, additional gap, e.g. for glue
         self.features = []
 
     @property
@@ -58,7 +54,6 @@ class LButtJoint(Joint):
         data_dict = {
             "main_beam_key": self.main_beam_key,
             "cross_beam_key": self.cross_beam_key,
-            "gap": self.gap,
         }
         data_dict.update(super(LButtJoint, self).__data__)
         return data_dict
