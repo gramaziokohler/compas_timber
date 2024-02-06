@@ -2,6 +2,7 @@ from compas.data import Data
 from compas.data import json_dump
 from compas.data import json_load
 from compas.geometry import Frame
+from compas_timber.assembly import TimberAssembly
 
 
 class Actor(object):
@@ -268,7 +269,7 @@ class SimpleSequenceGenerator(object):
 
     Parameters
     ----------
-    assembly : :class:`compas_timber.assembly.TimberAssembly`
+    assembly : :class:`compas_timber.assembly.TimberAssembly` or :class:'compas.datastructures.Assembly'
         Assembly to be sequenced.
 
     Attributes
@@ -283,7 +284,11 @@ class SimpleSequenceGenerator(object):
 
     @property
     def result(self):
+        if isinstance(self.assembly, TimberAssembly):
+            parts = self.assembly.beams
+        else:
+            parts = self.assembly.parts()
         plan = BuildingPlan()
-        for beam in self.assembly.beams:
-            plan.add_step(Step(element_ids=[beam.key], actor=Actor.HUMAN, location=beam.frame))
+        for part in parts:
+            plan.add_step(Step(element_ids=[part.key], actor=Actor.HUMAN, location=part.frame))
         return plan
