@@ -1,0 +1,59 @@
+{
+    "name": "Assembly",
+    "nickname": "Assembly",
+    "category": "COMPAS Timber",
+    "subcategory": "Assembly",
+    "description": "Creates an Assembly",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beams",
+                "description": "Collection of Beams",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "JointRules",
+                "description": "Collection of joint rules.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1,
+                "flatten": true
+            },
+            {
+                "name": "Features",
+                "description": "Collection of feature definitions.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "MaxDistance",
+                "description": "Max Distance Tolerance for topology detection.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "CreateGeometry",
+                "description": "If True, Beam and joint geometry is created for visualization.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Assembly",
+                "description": "Assembly object."
+            },
+            {
+                "name": "Geometry",
+                "description": "Geometry of the beams and joints."
+            },
+            {
+                "name": "DebugInfo",
+                "description": "Debug information object in the case of feature or joining errors."
+            }
+        ]
+    }
+}
