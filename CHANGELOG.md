@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* `BeamFromCurve` GH component accepts now referenced Rhino curves, referenced Rhino object IDs and internalized lines. 
+* `BeamFromCurve` GH component accepts now referenced Rhino curves, referenced Rhino object IDs and internalized lines.
+* `SimpleSequenceGenerator` updated to work with `compas.datastructures.assembly` and generates building plan acording to type. 
 
 ### Removed
 
