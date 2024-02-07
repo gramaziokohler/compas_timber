@@ -58,13 +58,18 @@ class THalfLapJoint(LapJoint):
     def add_features(self):
         assert self.main_beam and self.cross_beam  # should never happen
 
+        main_cutting_frame = None
         try:
             main_cutting_frame = self.get_main_cutting_frame()
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
+            start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
+        except AttributeError as ae:
+            raise BeamJoinningError(
+                beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame]
+            )
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
