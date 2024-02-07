@@ -2,7 +2,7 @@
     "name": "Topological Joint Rules",
     "nickname": "JointsByTopo",
     "category": "COMPAS Timber",
-    "subcategory": "Joints",
+    "subcategory": "Joint Rules",
     "description": "makes rules to apply joint types for each topology type.",
     "exposure": 2,
     "ghpython": {
