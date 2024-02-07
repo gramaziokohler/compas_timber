@@ -7,39 +7,6 @@ from compas.geometry import intersection_line_line
 from .solver import JointTopology
 
 
-def beam_side_incidence(beam1, beam2):
-    """Returns a map of faces of beam2 and the angle of their normal with beam1's centerline.
-
-    This is used to find a cutting plane when joining the two beams.
-
-    Parameters
-    ----------
-    beam1 : :class:`~compas_timber.parts.Beam`
-        The beam that attaches with one of its ends to the side of Beam2.
-    beam2 : :class:`~compas_timber.parts.Beam`
-        The other beam.
-
-    Returns
-    -------
-    list(tuple(float, :class:`~compas.geometry.Frame`))
-
-    """
-
-    # find the orientation of beam1's centerline so that it's pointing outward of the joint
-    #   find the closest end
-    p1x, p2x = intersection_line_line(beam1.centerline, beam2.centerline)
-    which, _ = beam1.endpoint_closest_to_point(Point(*p1x))
-
-    if which == "start":
-        centerline_vec = beam1.centerline.vector
-    else:
-        centerline_vec = beam1.centerline.vector * -1
-
-    # map faces to their angle with centerline, choose smallest
-    angle_face = [(angle_vectors(side.normal, centerline_vec), side) for side in beam2.faces[:4]]
-    return angle_face
-
-
 class BeamJoinningError(Exception):
     """Indicates that an error has occurred while trying to join two or more beams.
 
@@ -48,11 +15,12 @@ class BeamJoinningError(Exception):
 
     """
 
-    def __init__(self, beams, joint, debug_info=None):
+    def __init__(self, beams, joint, debug_info=None, debug_geometries=None):
         super(BeamJoinningError, self).__init__()
         self.beams = beams
         self.joint = joint
         self.debug_info = debug_info
+        self.debug_geometries = debug_geometries or []
 
 
 class Joint(Data):
@@ -76,6 +44,7 @@ class Joint(Data):
         super(Joint, self).__init__()
         self.frame = frame or Frame.worldXY()
         self.key = key
+        self.attributes = {}
 
     @property
     def __data__(self):
@@ -170,3 +139,46 @@ class Joint(Data):
                 self._ends[str(beam.key)] = "end"
 
         return self._ends
+
+    @staticmethod
+    def beam_side_incidence(beam1, beam2, ignore_ends=True):
+        """Returns a map of faces of beam2 and the angle of their normal with beam1's centerline.
+
+        This is used to find a cutting plane when joining the two beams.
+
+        Parameters
+        ----------
+        beam1 : :class:`~compas_timber.parts.Beam`
+            The beam that attaches with one of its ends to the side of Beam2.
+        beam2 : :class:`~compas_timber.parts.Beam`
+            The other beam.
+
+        Returns
+        -------
+        list(tuple(float, :class:`~compas.geometry.Frame`))
+
+        """
+        # find the orientation of beam1's centerline so that it's pointing outward of the joint
+        # find the closest end
+        p1x, _ = intersection_line_line(beam1.centerline, beam2.centerline)
+        if p1x is None:
+            raise AssertionError("No intersection found")
+
+        end, _ = beam1.endpoint_closest_to_point(Point(*p1x))
+
+        if end == "start":
+            centerline_vec = beam1.centerline.vector
+        else:
+            centerline_vec = beam1.centerline.vector * -1
+
+        if ignore_ends:
+            beam2_faces = beam2.faces[:4]
+        else:
+            beam2_faces = beam2.faces
+
+        face_angles = {}
+        for face_index, face in enumerate(beam2_faces):
+            face_angles[face_index] = angle_vectors(face.normal, centerline_vec)
+
+        return face_angles
+
