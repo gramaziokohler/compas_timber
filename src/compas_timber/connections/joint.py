@@ -142,7 +142,7 @@ class Joint(Data):
 
     @staticmethod
     def beam_side_incidence(beam1, beam2, ignore_ends=True):
-        """Returns a map of faces of beam2 and the angle of their normal with beam1's centerline.
+        """Returns a map of face indices of beam2 and the angle of their normal with beam1's centerline.
 
         This is used to find a cutting plane when joining the two beams.
 
@@ -152,10 +152,19 @@ class Joint(Data):
             The beam that attaches with one of its ends to the side of Beam2.
         beam2 : :class:`~compas_timber.parts.Beam`
             The other beam.
+        ignore_ends : bool, optional
+            If True, only the first four faces of `beam2` are considered. Otherwise all faces are considered.
+
+        Examples
+        --------
+        >>> face_angles = Joint.beam_side_incidence(beam1, beam2)
+        >>> closest_face_index = min(face_angles, key=face_angles.get)
+        >>> cutting_plane = beam2.faces[closest_face_index]
 
         Returns
         -------
-        list(tuple(float, :class:`~compas.geometry.Frame`))
+        dict(int, float)
+            A map of face indices and their respective angle with beam1's centerline.
 
         """
         # find the orientation of beam1's centerline so that it's pointing outward of the joint
