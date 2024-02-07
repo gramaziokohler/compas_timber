@@ -37,7 +37,7 @@ class LButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, small_beam_butts=False, extend_cross=True, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, **kwargs):
         super(LButtJoint, self).__init__(**kwargs)
 
         if small_beam_butts and main_beam and cross_beam:
@@ -48,7 +48,8 @@ class LButtJoint(Joint):
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
-        self.extend_cross = extend_cross
+        self.modify_cross = modify_cross
+        self.small_beam_butts = small_beam_butts
         self.features = []
 
     @property
@@ -56,14 +57,20 @@ class LButtJoint(Joint):
         data_dict = {
             "main_beam_key": self.main_beam_key,
             "cross_beam_key": self.cross_beam_key,
-            "extend_cross": self.extend_cross,
+            "small_beam_butts": self.small_beam_butts,
+            "modify_cross": self.modify_cross,
         }
         data_dict.update(super(LButtJoint, self).__data__)
         return data_dict
 
     @classmethod
     def __from_data__(cls, value):
-        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], gap=value["gap"])
+        instance = cls(
+            frame=Frame.__from_data__(value["frame"]),
+            key=value["key"],
+            small_beam_butts=value["small_beam_butts"],
+            modify_cross=value["modify_cross"]
+        )
         instance.main_beam_key = value["main_beam_key"]
         instance.cross_beam_key = value["cross_beam_key"]
         return instance
@@ -77,8 +84,6 @@ class LButtJoint(Joint):
         return "L-Butt"
 
     def get_main_cutting_plane(self):
-        # TODO: rework this to look at all faces (including end faces) and return the index of the face with the smallest angle
-        # TODO: check here if the found face is one of the end faces, if it is raise BeamJoiningError, we don't want to join in that situation
         assert self.main_beam and self.cross_beam
 
         face_angles = self.beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=False)
@@ -134,7 +139,7 @@ class LButtJoint(Joint):
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
 
-        if self.extend_cross:
+        if self.modify_cross:
             self.cross_beam.add_blank_extension(
                 start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
             )
