@@ -69,7 +69,7 @@ class LButtJoint(Joint):
             frame=Frame.__from_data__(value["frame"]),
             key=value["key"],
             small_beam_butts=value["small_beam_butts"],
-            modify_cross=value["modify_cross"]
+            modify_cross=value["modify_cross"],
         )
         instance.main_beam_key = value["main_beam_key"]
         instance.cross_beam_key = value["cross_beam_key"]
@@ -128,12 +128,7 @@ class LButtJoint(Joint):
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [cross_cutting_plane] if start_main is not None else [main_cutting_plane]
-            raise BeamJoinningError(
-                beams=self.beams,
-                joint=self,
-                debug_info=str(ae),
-                debug_geometries=geometries
-            )
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
@@ -152,4 +147,3 @@ class LButtJoint(Joint):
         f_main = CutFeature(main_cutting_plane)
         self.main_beam.add_features(f_main)
         self.features.append(f_main)
-

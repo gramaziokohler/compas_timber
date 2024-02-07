@@ -134,7 +134,7 @@ class LapJoint(Joint):
         assert beam_a and beam_b
 
         angles_faces = self.beam_side_incidence(beam_a, beam_b)
-        f_index = max(angles_faces, key=angles_faces.get) # type: ignore
+        f_index = max(angles_faces, key=angles_faces.get)  # type: ignore
         cfr = beam_b.faces[f_index]
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr

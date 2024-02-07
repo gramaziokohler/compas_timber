@@ -77,7 +77,7 @@ class TButtJoint(Joint):
         assert self.main_beam and self.cross_beam  # should never happen
 
         angles_faces = self.beam_side_incidence(self.main_beam, self.cross_beam)
-        frame_index = min(angles_faces, key=angles_faces.get)  #type: ignore
+        frame_index = min(angles_faces, key=angles_faces.get)  # type: ignore
         cfr = self.cross_beam.faces[frame_index]
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr

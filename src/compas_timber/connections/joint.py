@@ -201,4 +201,3 @@ class Joint(Data):
             face_angles[face_index] = angle_vectors(face.normal, centerline_vec)
 
         return face_angles
-
