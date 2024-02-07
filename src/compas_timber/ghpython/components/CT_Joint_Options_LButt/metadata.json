@@ -10,14 +10,14 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Gap",
-                "description": "Gap for tolerance.",
-                "typeHintID": "float",
+                "name": "SmallBeamButts",
+                "description": "If true, the beam with a larger cross-section is considered as the cross beam.",
+                "typeHintID": "bool",
                 "scriptParamAccess": 0
             },
             {
-                "name": "SmallBeamButts",
-                "description": "If true, the beam with a larger cross-section is considered as the cross beam.",
+                "name": "ExtendCross",
+                "description": "If true, the cross beam is extended to the opposite face of the main beam.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
