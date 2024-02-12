@@ -17,6 +17,7 @@ from compas_fab.robots import AttachedCollisionMesh
 
 from compas.geometry import Transformation
 from compas.geometry import Translation
+from compas_robots import Configuration
 from compas_timber.assembly import TimberAssembly
 from compas_timber.parts import beam
 
@@ -50,6 +51,7 @@ class TimberAssemblyPlanner(object):
 
 
     def plan_robot_assembly(self, replan_index = 0):
+        print("or maybe this one? IDK LOL")
         for index in range(replan_index, len(self.building_plan.steps)):
             step = self.building_plan.steps[index]
             if step["actor"] == "ROBOT":
@@ -146,11 +148,14 @@ class TimberAssemblyPlanner(object):
         return Frame(frame.point - frame.zaxis * offset, frame.xaxis, frame.yaxis)
 
 
-    def get_trajectory(self, target_frame, linear = False):
+
+
+
+
+    def get_trajectory(self, target, linear = False):
         self.scene.remove_collision_mesh("beam_meshes")
         beams_in_scene = [beam for beam in self.assembly.beams if beam.attributes["is_in_scene"]]
         for beam in beams_in_scene:
-
             added_beam_collision_mesh = CollisionMesh(Mesh.from_shape(beam.blank), "beam_meshes")
             self.scene.append_collision_mesh(added_beam_collision_mesh)
 
@@ -161,10 +166,16 @@ class TimberAssemblyPlanner(object):
                     planner_id=self.planner_id
                     )
             if linear:
-                this_trajectory = self.robot.plan_cartesian_motion([self.current_frame, target_frame], start_configuration=self.current_configuration, group=self.group, options = options)
+                this_trajectory = self.robot.plan_cartesian_motion([self.current_frame, target], start_configuration=self.current_configuration, group=self.group, options = options)
             else:
-                print("group is  {}", self.group)
-                constraints = self.robot.constraints_from_frame(target_frame, TimberAssemblyPlanner.TOLERANCE_POSITION, TimberAssemblyPlanner.TOLERANCE_AXES, group = self.group)
+                if type(target) is Configuration:
+                    print("is it HERE???????????????????")
+                    target_config = self.robot.get_group_configuration(self.group, target)
+                    print(target_config)
+                    constraints = self.robot.constraints_from_configuration(target_config, TimberAssemblyPlanner.TOLERANCE_POSITION, TimberAssemblyPlanner.TOLERANCE_AXES, group = self.group)
+                    print("or maybe HERE??")
+                else:
+                    constraints = self.robot.constraints_from_frame(target, TimberAssemblyPlanner.TOLERANCE_POSITION, TimberAssemblyPlanner.TOLERANCE_AXES, group = self.group)
                 this_trajectory = self.robot.plan_motion(constraints, start_configuration=self.current_configuration, group=self.group, options = options)
 
             this_trajectory.attributes["beams_in_scene"] = beams_in_scene
@@ -172,21 +183,6 @@ class TimberAssemblyPlanner(object):
         if this_trajectory.fraction < 1:
             raise Exception("Failed to plan trajectory")
         return this_trajectory
-
-    # def get_trajectories_simple(self, beams, start = 0, end = None):
-    #     trajectories = []
-    #     for beam in beams[start:end]:
-    #         print("to pick up")
-    #         trajectories.append(self.get_trajectory(self.beam_pickup(beam)))
-    #         target_frame = Frame(beam.midpoint, Vector.Xaxis(), Vector.Yaxis())
-    #         print("to target")
-
-    #         trajectories.append(self.get_trajectory(target_frame))
-    #         print("to safe spot")
-
-    #         trajectories.append(self.get_trajectory(self.safe_configuation))
-
-    #     return trajectories
 
 
 
@@ -220,16 +216,15 @@ class TimberAssemblyPlanner(object):
 
         print("to safe spot")
         try:
-            self.trajectories.append(self.get_trajectory(self.safe_frame))
+            self.trajectories.append(self.get_trajectory(self.safe_configuation))
             print(self.trajectories[-1])
 
         except:
             print("failed to get safe frame")
             raise
-
+        print("or this len()")
         print("trajectories len = {}".format( len(self.trajectories)))
         return self.trajectories
-
 
 
     def beam_pickup(self, beam):
@@ -240,6 +235,7 @@ class TimberAssemblyPlanner(object):
 
     @property
     def current_configuration(self):
+        print("this len?")
         if len(self.trajectories) == 0:
             return self.safe_configuation
         else:
@@ -261,9 +257,10 @@ class TimberAssemblyPlanner(object):
 
         configuration['bridge2_joint_EA_X'] = 30
 
-        configuration['robot11_joint_EA_Z'] = -4.5
-        configuration['robot11_joint_2'] = 0
-        configuration['robot11_joint_3'] = -math.pi/2
+        configuration['robot11_joint_EA_Z'] = -5
+        configuration['robot11_joint_2'] = -math.pi/(2)
+        configuration['robot11_joint_3'] = math.pi/(3)
+        configuration['robot11_joint_5'] = -math.pi/(3)
         configuration['bridge1_joint_EA_X'] = 9
 
         """ get robot_12 out of the way """
