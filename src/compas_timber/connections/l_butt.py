@@ -23,8 +23,8 @@ class LButtJoint(Joint):
         The cross beam to be joined.
     small_beam_butts : bool, default False
         If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
-    extend_cross : bool, default True
-        If True, the cross beam will be extended to the opposite face of the main beam.
+    modify_cross : bool, default True
+        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
 
     Attributes
     ----------
