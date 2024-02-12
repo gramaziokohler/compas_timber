@@ -86,21 +86,16 @@ class LButtJoint(Joint):
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
 
-        face_angles = self.beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=False)
-        face_index = min(face_angles, key=face_angles.get)  # type: ignore
-        if face_index in [5, 6]:
+        index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=False)
+        if index in [5, 6]:  # end faces
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info="Can't join to end faces")
 
-        cfr = self.cross_beam.faces[face_index]
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         return cfr
 
     def get_cross_cutting_plane(self):
         assert self.main_beam and self.cross_beam
-
-        face_angles = self.beam_side_incidence(self.cross_beam, self.main_beam)
-        face_index = max(face_angles, key=face_angles.get)  # type: ignore
-        cfr = self.main_beam.faces[face_index]
+        _, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam)
         return cfr
 
     def restore_beams_from_keys(self, assemly):

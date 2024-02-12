@@ -152,52 +152,106 @@ class Joint(Data):
         return self._ends
 
     @staticmethod
-    def beam_side_incidence(beam1, beam2, ignore_ends=True):
-        """Returns a map of face indices of beam2 and the angle of their normal with beam1's centerline.
+    def get_face_most_towards_beam(beam_a, beam_b, ignore_ends=True):
+        """Of all the faces of `beam_b`, returns the one whose normal most faces `beam_a`.
+
+        This is done by calculating the inner-product of `beam_a`'s centerline which each of the face normals of `beam_b`.
+        The face with the result closest to 1 is chosen.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.parts.Beam`
+            The beam that attaches with one of its ends to `beam_b`.
+        beam_b : :class:`~compas_timber.parts.Beam`
+            The other beam.
+        ignore_ends : bool, optional
+            If True, the faces at each end of `beam_b` are ignored.
+
+        Returns
+        -------
+        tuple(face_index, :class:`~compas.geometry.Frame`)
+            Tuple containing the index of the chosen face and a frame at the center of if.
+
+        """
+        face_dict = Joint._beam_side_incidence(beam_a, beam_b, ignore_ends)
+        face_index = max(face_dict, key=face_dict.get)  # type: ignore
+        return face_index, beam_b[face_index]
+
+
+    @staticmethod
+    def get_face_most_ortho_to_beam(beam_a, beam_b, ignore_ends=True):
+        """Of all the faces of `beam_b`, returns the one whose normal is most orthogonal to `beam_a`.
+
+        This is done by calculating the inner-product of `beam_a`'s centerline which each of the face normals of `beam_b`.
+        The face with the result closest to 0 is chosen.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.parts.Beam`
+            The beam that attaches with one of its ends to `beam_b`.
+        beam_b : :class:`~compas_timber.parts.Beam`
+            The other beam.
+        ignore_ends : bool, optional
+            If True, the faces at each end of `beam_b` are ignored.
+
+        Returns
+        -------
+        tuple(face_index, :class:`~compas.geometry.Frame`)
+            Tuple containing the index of the chosen face and a frame at the center of if.
+
+        """
+        face_dict = Joint._beam_side_incidence(beam_a, beam_b, ignore_ends)
+        face_index = min(face_dict, key=face_dict.get)  # type: ignore
+        return face_index, beam_b[face_index]
+
+
+    @staticmethod
+    def _beam_side_incidence(beam_a, beam_b, ignore_ends=True):
+        """Returns a map of face indices of beam_b and the angle of their normal with beam_a's centerline.
 
         This is used to find a cutting plane when joining the two beams.
 
         Parameters
         ----------
-        beam1 : :class:`~compas_timber.parts.Beam`
-            The beam that attaches with one of its ends to the side of Beam2.
-        beam2 : :class:`~compas_timber.parts.Beam`
+        beam_a : :class:`~compas_timber.parts.Beam`
+            The beam that attaches with one of its ends to the side of beam_b.
+        beam_b : :class:`~compas_timber.parts.Beam`
             The other beam.
         ignore_ends : bool, optional
-            If True, only the first four faces of `beam2` are considered. Otherwise all faces are considered.
+            If True, only the first four faces of `beam_b` are considered. Otherwise all faces are considered.
 
         Examples
         --------
-        >>> face_angles = Joint.beam_side_incidence(beam1, beam2)
+        >>> face_angles = Joint.beam_side_incidence(beam_a, beam_b)
         >>> closest_face_index = min(face_angles, key=face_angles.get)
-        >>> cutting_plane = beam2.faces[closest_face_index]
+        >>> cutting_plane = beam_b.faces[closest_face_index]
 
         Returns
         -------
         dict(int, float)
-            A map of face indices and their respective angle with beam1's centerline.
+            A map of face indices of beam_b and their respective angle with beam_a's centerline.
 
         """
-        # find the orientation of beam1's centerline so that it's pointing outward of the joint
+        # find the orientation of beam_a's centerline so that it's pointing outward of the joint
         # find the closest end
-        p1x, _ = intersection_line_line(beam1.centerline, beam2.centerline)
+        p1x, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
         if p1x is None:
             raise AssertionError("No intersection found")
 
-        end, _ = beam1.endpoint_closest_to_point(Point(*p1x))
+        end, _ = beam_a.endpoint_closest_to_point(Point(*p1x))
 
         if end == "start":
-            centerline_vec = beam1.centerline.vector
+            centerline_vec = beam_a.centerline.vector
         else:
-            centerline_vec = beam1.centerline.vector * -1
+            centerline_vec = beam_a.centerline.vector * -1
 
         if ignore_ends:
-            beam2_faces = beam2.faces[:4]
+            beam_b_faces = beam_b.faces[:4]
         else:
-            beam2_faces = beam2.faces
+            beam_b_faces = beam_b.faces
 
         face_angles = {}
-        for face_index, face in enumerate(beam2_faces):
+        for face_index, face in enumerate(beam_b_faces):
             face_angles[face_index] = angle_vectors(face.normal, centerline_vec)
 
         return face_angles

@@ -76,17 +76,13 @@ class FrenchRidgeLapJoint(Joint):
 
     @property
     def cutting_plane_top(self):
-        angles_faces = self.beam_side_incidence(self.beam_a, self.beam_b, ignore_ends=True)
-        index = max(angles_faces, key=angle_vectors.get)
-        cfr = self.beam_b.faces[index]
+        _, cfr = self.get_face_most_towards_beam(self.beam_a, self.beam_b, ignore_ends=True)
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         return cfr
 
     @property
     def cutting_plane_bottom(self):
-        angles_faces = self.beam_side_incidence(self.beam_b, self.beam_a, ignore_ends=True)
-        index = max(angles_faces, key=angle_vectors.get)
-        cfr = self.beam_a.faces[index]
+        _, cfr = self.get_face_most_towards_beam(self.beam_b, self.beam_b, ignore_ends=True)
         return cfr
 
     def restore_beams_from_keys(self, assemly):

@@ -133,18 +133,14 @@ class LapJoint(Joint):
         beam_a, beam_b = self.beams
         assert beam_a and beam_b
 
-        angles_faces = self.beam_side_incidence(beam_a, beam_b)
-        f_index = max(angles_faces, key=angles_faces.get)  # type: ignore
-        cfr = beam_b.faces[f_index]
+        _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     def get_cross_cutting_frame(self):
         beam_a, beam_b = self.beams
         assert beam_a and beam_b
-
-        angles_faces = self.beam_side_incidence(beam_b, beam_a)
-        cfr = max(angles_faces, key=lambda x: x[0])[1]
+        _, cfr = self.get_face_most_towards_beam(beam_b, beam_a)
         return cfr
 
     def _create_negative_volumes(self):
