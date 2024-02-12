@@ -175,7 +175,7 @@ class Joint(Data):
         """
         face_dict = Joint._beam_side_incidence(beam_a, beam_b, ignore_ends)
         face_index = max(face_dict, key=face_dict.get)  # type: ignore
-        return face_index, beam_b[face_index]
+        return face_index, beam_b.faces[face_index]
 
     @staticmethod
     def get_face_most_ortho_to_beam(beam_a, beam_b, ignore_ends=True):
@@ -201,7 +201,7 @@ class Joint(Data):
         """
         face_dict = Joint._beam_side_incidence(beam_a, beam_b, ignore_ends)
         face_index = min(face_dict, key=face_dict.get)  # type: ignore
-        return face_index, beam_b[face_index]
+        return face_index, beam_b.faces[face_index]
 
     @staticmethod
     def _beam_side_incidence(beam_a, beam_b, ignore_ends=True):
