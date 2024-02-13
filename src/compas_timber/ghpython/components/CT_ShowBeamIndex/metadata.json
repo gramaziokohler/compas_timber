@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Show",
     "description": "Shows the key of the Beam in the Assembly.",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

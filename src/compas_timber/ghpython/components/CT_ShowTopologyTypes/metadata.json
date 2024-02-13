@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Show",
     "description": "Shows the names of the connection topology types.",
-    "exposure": 4,
+    "exposure": 8,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
