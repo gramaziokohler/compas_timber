@@ -37,14 +37,7 @@ class LButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(
-            self,
-            main_beam=None,
-            cross_beam=None,
-            small_beam_butts=False,
-            modify_cross=True,
-            **kwargs
-    ):
+    def __init__(self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, **kwargs):
         super(LButtJoint, self).__init__(**kwargs)
 
         if small_beam_butts and main_beam and cross_beam:
