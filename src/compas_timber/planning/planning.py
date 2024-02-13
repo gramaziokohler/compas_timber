@@ -1,8 +1,8 @@
 import math
 from compas.geometry import Frame
+from compas.geometry import Point
 from compas.geometry import Vector
 from compas.datastructures import Mesh
-
 # import compas_fab
 # from compas_fab.robots import AttachedCollisionMesh
 # from compas_fab import Robot
@@ -10,9 +10,6 @@ from compas_fab.robots import JointConstraint
 from compas_fab.robots import PlanningScene
 from compas_fab.robots import CollisionMesh
 from compas_fab.robots import AttachedCollisionMesh
-
-
-
 
 
 from compas.geometry import Transformation
@@ -25,6 +22,7 @@ class TimberAssemblyPlanner(object):
 
     TOLERANCE_POSITION = 0.001          # 1 mm tolerance on position
     TOLERANCE_AXES = [math.radians(1.0)]*3    # 1 degree tolerance per axis
+    TOLERANCE_JOINT = math.radians(1.0)   # 1 degree tolerance per axis
 
 
     def __init__(self, robot, assembly,  pickup_base_frame, building_plan = None, scene_objects = None, group = None, planner_id = None):
@@ -41,6 +39,7 @@ class TimberAssemblyPlanner(object):
         self.robot_steps = {}
         self.scene_objects = [scene_objects]
         self.scene = PlanningScene(robot)
+        self.target_frames = []
         for beam in self.assembly.beams:
             beam.attributes["is_built"] = False
             beam.attributes["is_planned"] = False
@@ -130,10 +129,10 @@ class TimberAssemblyPlanner(object):
         return trajectories
 
 
-    def grab_beam(self, beam, pickup_frame, target_frame):
+    def grab_beam(self, beam):
         beam_mesh = Mesh.from_shape(beam.blank)
-        beam_mesh.transform(Transformation.from_frame_to_frame(target_frame, Frame.worldXY()))
-        beam_mesh.transform(Translation.from_vector([0,0,beam.height/2.0]))
+        beam_mesh.transform(Transformation.from_frame_to_frame(self.target_frame(beam), Frame.worldXY()))
+        # beam_mesh.transform(Translation.from_vector([0, 0,  beam.height/2]))
         beam_collision_mesh = CollisionMesh(beam_mesh, "attached_beam")
         acm = AttachedCollisionMesh(beam_collision_mesh, 'robot11_tool0', touch_links = ['robot11_link_6'])
         self.scene.add_attached_collision_mesh(acm)
@@ -148,16 +147,14 @@ class TimberAssemblyPlanner(object):
         return Frame(frame.point - frame.zaxis * offset, frame.xaxis, frame.yaxis)
 
 
-
-
-
-
-    def get_trajectory(self, target, linear = False):
+    def get_trajectory(self, target, linear = False, check_collisions = True):
+        self.target_frames.append(target)
         self.scene.remove_collision_mesh("beam_meshes")
         beams_in_scene = [beam for beam in self.assembly.beams if beam.attributes["is_in_scene"]]
-        for beam in beams_in_scene:
-            added_beam_collision_mesh = CollisionMesh(Mesh.from_shape(beam.blank), "beam_meshes")
-            self.scene.append_collision_mesh(added_beam_collision_mesh)
+        if check_collisions:
+            for beam in beams_in_scene:
+                added_beam_collision_mesh = CollisionMesh(Mesh.from_shape(beam.blank), "beam_meshes")
+                self.scene.append_collision_mesh(added_beam_collision_mesh)
 
         if (self.robot.client and self.robot.client.is_connected):
             options = dict(
@@ -169,11 +166,8 @@ class TimberAssemblyPlanner(object):
                 this_trajectory = self.robot.plan_cartesian_motion([self.current_frame, target], start_configuration=self.current_configuration, group=self.group, options = options)
             else:
                 if type(target) is Configuration:
-                    print("is it HERE???????????????????")
                     target_config = self.robot.get_group_configuration(self.group, target)
-                    print(target_config)
-                    constraints = self.robot.constraints_from_configuration(target_config, TimberAssemblyPlanner.TOLERANCE_POSITION, TimberAssemblyPlanner.TOLERANCE_AXES, group = self.group)
-                    print("or maybe HERE??")
+                    constraints = self.robot.constraints_from_configuration(target_config, [TimberAssemblyPlanner.TOLERANCE_JOINT], [TimberAssemblyPlanner.TOLERANCE_JOINT], group = self.group)
                 else:
                     constraints = self.robot.constraints_from_frame(target, TimberAssemblyPlanner.TOLERANCE_POSITION, TimberAssemblyPlanner.TOLERANCE_AXES, group = self.group)
                 this_trajectory = self.robot.plan_motion(constraints, start_configuration=self.current_configuration, group=self.group, options = options)
@@ -184,64 +178,118 @@ class TimberAssemblyPlanner(object):
             raise Exception("Failed to plan trajectory")
         return this_trajectory
 
-
-
     def get_trajectories_beam(self, beam):
         self.scene.reset()
 
         self.trajectories = []
+        target_frame = self.target_frame(beam)
 
         print("to pick up")
         try:
-            self.trajectories.append(self.get_trajectory(self.beam_pickup(beam)))
-            print(self.trajectories[-1])
+            pickup_frame = self.pickup_frame_robot(beam)
+            pickup_offset_frame = self.offset_frame(pickup_frame, 0.2)
+            self.trajectories.append(self.get_trajectory(pickup_offset_frame))
+            self.trajectories.append(self.get_trajectory(pickup_frame, linear=True, check_collisions=False))
+            self.grab_beam(beam)
+
+            self.trajectories.append(self.get_trajectory(pickup_offset_frame, linear=True, check_collisions=False))
+            print ("here now")
         except:
             print("failed to pick up")
-            raise
-
-
-        target_frame = Frame(beam.midpoint, beam.frame.xaxis, beam.frame.yaxis)
-        self.grab_beam(beam, self.beam_pickup(beam), target_frame)
-
+            # raise
         print("to target")
         try:
-            self.trajectories.append(self.get_trajectory(target_frame))
-            print(self.trajectories[-1])
-
+            target_offset_frame = self.offset_frame(target_frame, 0.2)
+            self.trajectories.append(self.get_trajectory(target_offset_frame))
+            self.trajectories.append(self.get_trajectory(target_frame, linear = True, check_collisions=False))
+            self.release_beam(beam)
+            self.trajectories.append(self.get_trajectory(target_offset_frame, linear = True, check_collisions=False))
         except:
             print("failed to get target frame")
-            raise
-
-        self.release_beam(beam)
+            # raise
 
         print("to safe spot")
         try:
             self.trajectories.append(self.get_trajectory(self.safe_configuation))
-            print(self.trajectories[-1])
-
         except:
             print("failed to get safe frame")
-            raise
-        print("or this len()")
-        print("trajectories len = {}".format( len(self.trajectories)))
+            # raise
         return self.trajectories
 
 
-    def beam_pickup(self, beam):
+    def get_trajectories_beam_explicit(self, beam):
+        self.scene.reset()
+        self.trajectories = []
+        target_frame = self.target_frame(beam)
+
+        print("to pick up")
+        try:
+            pickup_frame = self.pickup_frame_robot(beam)
+            pickup_offset_frame = self.offset_frame(pickup_frame, 0.2)
+            self.trajectories.append(self.get_trajectory(pickup_offset_frame))
+            self.trajectories.append(self.get_trajectory(pickup_frame, linear=True, check_collisions=False))
+            self.grab_beam(beam)
+            print("grabbed Beam")
+            self.trajectories.append(self.get_trajectory(pickup_offset_frame, linear=True, check_collisions=False))
+            print("lifted from pickup")
+            self.trajectories.append(self.get_trajectory(self.a_frame(), linear=True))
+            print("raised up")
+
+
+        except:
+            print("failed to pick up")
+            raise
+        print("to target")
+        try:
+            target_offset_frame = self.offset_frame(target_frame, 0.2)
+            self.trajectories.append(self.get_trajectory(target_offset_frame))
+            self.trajectories.append(self.get_trajectory(target_frame, linear = True, check_collisions=False))
+            self.release_beam(beam)
+            self.trajectories.append(self.get_trajectory(target_offset_frame, linear = True, check_collisions=False))
+        except:
+            print("failed to get target frame")
+            raise
+
+        print("to safe spot")
+        try:
+            self.trajectories.append(self.get_trajectory(self.safe_configuation))
+        except:
+            print("failed to get safe frame")
+            raise
+        return self.trajectories
+
+    def pickup_frame_beam(self, beam):
         # return self.pickup_base_frame
-        return Frame(self.pickup_base_frame.point + (self.pickup_base_frame.xaxis * (beam.length / 2.0)) + (self.pickup_base_frame.yaxis* (beam.width / 2.0)) + (self.pickup_base_frame.zaxis * (beam.height/2.0)), self.pickup_base_frame.xaxis, self.pickup_base_frame.yaxis)
+        return Frame(self.pickup_base_frame.point + (self.pickup_base_frame.xaxis * (beam.length / 2.0)) + (self.pickup_base_frame.yaxis* (beam.width / 2.0)) - (self.pickup_base_frame.zaxis * (beam.height/2.0)), self.pickup_base_frame.xaxis, self.pickup_base_frame.yaxis)
 
+    def pickup_frame_robot(self, beam):
+        # return self.pickup_base_frame
+        return Frame(self.pickup_base_frame.point + (self.pickup_base_frame.xaxis * (beam.length / 2.0)) + (self.pickup_base_frame.yaxis* (beam.width / 2.0)) - (self.pickup_base_frame.zaxis * (beam.height)), self.pickup_base_frame.xaxis, self.pickup_base_frame.yaxis)
 
+    def target_frame(self, beam):
+        return Frame(beam.midpoint - (beam.frame.zaxis * (beam.height/2.0)), beam.frame.xaxis, beam.frame.yaxis)
+
+    def a_frame(self):
+        frame = self.current_frame
+        point = frame.point
+        point.z = 3
+        print ("point = {}".format(point))
+        frame = Frame(point, frame.xaxis, frame.yaxis)
+        print(frame)
+        return frame
+
+    def b_frame(self, beam):
+        point = beam.midpoint
+        point.z = 4
+        return Frame(point, beam.frame.xaxis, beam.frame.yaxis)
 
     @property
     def current_configuration(self):
-        print("this len?")
         if len(self.trajectories) == 0:
             return self.safe_configuation
         else:
             config = self.trajectories[-1].start_configuration
             return self.robot.merge_group_with_full_configuration(self.trajectories[-1].points[-1], config, self.group)
-
 
     @property
     def current_frame(self):
@@ -256,12 +304,12 @@ class TimberAssemblyPlanner(object):
         configuration = self.robot.zero_configuration()
 
         configuration['bridge2_joint_EA_X'] = 30
-
+        configuration['robot11_joint_EA_Y'] = -4
         configuration['robot11_joint_EA_Z'] = -5
         configuration['robot11_joint_2'] = -math.pi/(2)
         configuration['robot11_joint_3'] = math.pi/(3)
         configuration['robot11_joint_5'] = -math.pi/(3)
-        configuration['bridge1_joint_EA_X'] = 9
+        configuration['bridge1_joint_EA_X'] = 7
 
         """ get robot_12 out of the way """
         configuration['robot12_joint_EA_Y'] = -12
@@ -275,5 +323,7 @@ class TimberAssemblyPlanner(object):
         constraints = []
         constraints.append(JointConstraint('robot11_joint_2', 0, -0.1, 0.1, 0.5))
         constraints.append(JointConstraint('robot11_joint_3', -math.pi/2, -0.1, 0.1, 0.5))
+        constraints.append(JointConstraint('robot11_joint_6', -0, 6, 6, 1))
         constraints.append(JointConstraint('bridge1_joint_EA_X', 9, 3, 3, 1.0))
+        constraints.append(JointConstraint('bridge1_joint_EA_Z', -5, 1, 1, 0.5))
         return constraints
