@@ -37,7 +37,14 @@ class LButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, **kwargs):
+    def __init__(
+            self,
+            main_beam=None,
+            cross_beam=None,
+            small_beam_butts=False,
+            modify_cross=True,
+            **kwargs
+    ):
         super(LButtJoint, self).__init__(**kwargs)
 
         if small_beam_butts and main_beam and cross_beam:
@@ -86,16 +93,19 @@ class LButtJoint(Joint):
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
 
-        index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=False)
-        if index in [5, 6]:  # end faces
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info="Can't join to end faces")
+        index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
 
+        self.attributes["main_cutting_plane_face_index"] = index
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
+        self.attributes["main_cutting_plane_face"] = cfr
         return cfr
 
     def get_cross_cutting_plane(self):
         assert self.main_beam and self.cross_beam
-        _, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam)
+        index, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)
+
+        self.attributes["cross_cutting_plane_face"] = cfr
+        self.attributes["cross_cutting_plane_face_index"] = index
         return cfr
 
     def restore_beams_from_keys(self, assemly):
@@ -110,7 +120,8 @@ class LButtJoint(Joint):
 
         """
         assert self.main_beam and self.cross_beam  # should never happen
-
+        self.attributes["main_beam_key"] = self.main_beam.key
+        self.attributes["cross_beam_key"] = self.cross_beam.key
         if self.features:
             self.main_beam.remove_features(self.features)
         start_main, start_cross = None, None
@@ -133,7 +144,7 @@ class LButtJoint(Joint):
             self.cross_beam.add_blank_extension(
                 start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
             )
-            f_cross = CutFeature(self.get_cross_cutting_plane())
+            f_cross = CutFeature(cross_cutting_plane)
             self.cross_beam.add_features(f_cross)
             self.features.append(f_cross)
 
