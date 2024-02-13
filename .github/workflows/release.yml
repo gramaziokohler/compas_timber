@@ -88,10 +88,6 @@ jobs:
           target: src/compas_timber/ghpython/components/ghuser
           prefix: "CT: "
 
-      - name: Copy manual components
-        run: |
-          cp src/compas_timber/ghpython/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
-
       - shell: bash
         run: |
           python -m pip install --upgrade pip

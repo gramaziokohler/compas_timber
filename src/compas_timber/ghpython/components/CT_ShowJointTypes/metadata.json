@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Show",
     "description": "Shows the names of the defined Joints.",
-    "exposure": 4,
+    "exposure": 6,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
