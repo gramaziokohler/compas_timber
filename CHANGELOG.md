@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added flag `modify_cross` to `L-Butt` joint.
 * Added `debug_geometries` attribute to `BeamJoiningError`.
+* Added flag `modify_cross` to `L-Butt` joint.
+* Added flag `reject_i` to `L-Butt` joint.
 
 ### Changed
 
@@ -21,9 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `SimpleSequenceGenerator` updated to work with `compas.datastructures.assembly` and generates building plan acording to type.
 * Changed GH Categories for joint rules.
 * Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
+* Extended `DecomposeBeam` component to optionally show beam frame and faces.
 
 ### Removed
 
+* Removed component `ShowBeamFrame`.
 
 ## [0.6.1] 2024-02-02
 
