@@ -20,6 +20,12 @@
                 "description": "If true, the cross beam is extended to the opposite face of the main beam and cut flush with it.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
+            },
+            {
+                "name": "RejectI",
+                "description": "If true, joint will not apply when the cross beam meets the main beam in an I topology.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [

@@ -25,6 +25,8 @@ class LButtJoint(Joint):
         If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
     modify_cross : bool, default True
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
+    reject_i : bool, default False
+        If True, the joint will be rejected if the beams are not in I topology (i.e. main butts at crosses end).
 
     Attributes
     ----------
@@ -37,7 +39,9 @@ class LButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, **kwargs):
+    def __init__(
+        self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs
+    ):
         super(LButtJoint, self).__init__(**kwargs)
 
         if small_beam_butts and main_beam and cross_beam:
@@ -50,6 +54,7 @@ class LButtJoint(Joint):
         self.cross_beam_key = cross_beam.key if cross_beam else None
         self.modify_cross = modify_cross
         self.small_beam_butts = small_beam_butts
+        self.reject_i = reject_i
         self.features = []
 
     @property
@@ -59,6 +64,7 @@ class LButtJoint(Joint):
             "cross_beam_key": self.cross_beam_key,
             "small_beam_butts": self.small_beam_butts,
             "modify_cross": self.modify_cross,
+            "reject_i": self.reject_i,
         }
         data_dict.update(super(LButtJoint, self).__data__)
         return data_dict
@@ -70,6 +76,7 @@ class LButtJoint(Joint):
             key=value["key"],
             small_beam_butts=value["small_beam_butts"],
             modify_cross=value["modify_cross"],
+            reject_i=value["reject_i"],
         )
         instance.main_beam_key = value["main_beam_key"]
         instance.cross_beam_key = value["cross_beam_key"]
@@ -86,19 +93,19 @@ class LButtJoint(Joint):
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
 
-        index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        index, _ = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=False)
+        if self.reject_i and index in [4, 5]:
+            raise BeamJoinningError(
+                beams=self.beams, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
+            )
 
-        self.attributes["main_cutting_plane_face_index"] = index
+        index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
-        self.attributes["main_cutting_plane_face"] = cfr
         return cfr
 
     def get_cross_cutting_plane(self):
         assert self.main_beam and self.cross_beam
-        index, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)
-
-        self.attributes["cross_cutting_plane_face"] = cfr
-        self.attributes["cross_cutting_plane_face_index"] = index
+        _, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)
         return cfr
 
     def restore_beams_from_keys(self, assemly):
@@ -113,8 +120,6 @@ class LButtJoint(Joint):
 
         """
         assert self.main_beam and self.cross_beam  # should never happen
-        self.attributes["main_beam_key"] = self.main_beam.key
-        self.attributes["cross_beam_key"] = self.cross_beam.key
         if self.features:
             self.main_beam.remove_features(self.features)
         start_main, start_cross = None, None
@@ -124,6 +129,8 @@ class LButtJoint(Joint):
             cross_cutting_plane = self.get_cross_cutting_plane()
             start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
             start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
+        except BeamJoinningError as be:
+            raise be
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [cross_cutting_plane] if start_main is not None else [main_cutting_plane]
