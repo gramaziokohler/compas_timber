@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed T-Butt doesn't get extended to cross beam's plane.
 * `SimpleSequenceGenerator` updated to work with `compas.datastructures.assembly` and generates building plan acording to type.
 * Changed GH Categories for joint rules
+* Fixed broken `TrimmingFeature` component.
 
 ### Removed
 
