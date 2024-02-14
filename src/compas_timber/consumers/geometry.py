@@ -6,6 +6,7 @@ from compas.geometry import Plane
 from compas_timber.parts import CutFeature
 from compas_timber.parts import DrillFeature
 from compas_timber.parts import MillVolume
+from compas_timber.parts import BrepSubtraction
 
 
 class FeatureApplicationError(Exception):
@@ -173,6 +174,47 @@ class MillVolumeGeometry(FeatureApplicator):
             )
 
 
+class BrepSubtractionGeometry(FeatureApplicator):
+    """Applies BrepSubtraction to beam geometry.
+
+    Parameters
+    ----------
+    beam_geometry : :class:`compas.geometry.Brep`
+        The geometry of the beam.
+    feature : :class:`compas_timber.parts.BrepSubtraction`
+        The feature to apply.
+
+    """
+
+    def __init__(self, beam_geometry, feature):
+        super(BrepSubtractionGeometry, self).__init__()
+        self.volume = feature.volume
+        self.beam_geometry = beam_geometry
+
+    def apply(self):
+        """Apply the feature to the beam geometry.
+
+        Raises
+        ------
+        :class:`compas_timber.consumers.FeatureApplicationError`
+            If the volume does not intersect with the beam geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        try:
+            return self.beam_geometry - self.volume
+        except IndexError:
+            raise FeatureApplicationError(
+                self.volume,
+                self.beam_geometry,
+                "The volume does not intersect with beam geometry.",
+            )
+
+
 class BeamGeometry(object):
     """A data class containing the result of applying features to a beam.
 
@@ -210,7 +252,12 @@ class BrepGeometryConsumer(object):
 
     """
 
-    FEATURE_MAP = {CutFeature: CutFeatureGeometry, DrillFeature: DrillFeatureGeometry, MillVolume: MillVolumeGeometry}
+    FEATURE_MAP = {
+        CutFeature: CutFeatureGeometry,
+        DrillFeature: DrillFeatureGeometry,
+        MillVolume: MillVolumeGeometry,
+        BrepSubtraction: BrepSubtractionGeometry,
+    }
 
     def __init__(self, assembly):
         self.assembly = assembly
