@@ -17,9 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed T-Butt doesn't get extended to cross beam's plane.
 * `SimpleSequenceGenerator` updated to work with `compas.datastructures.assembly` and generates building plan acording to type.
 * Changed GH Categories for joint rules
+* `BrepGeometryConsumer` continues to apply features even after the first error.
+* `DrillHole` component calculates length from input line.
+* `DrillHole` has default diameter proportional to beam cross-section.
 
 ### Removed
 
+* Removed input `Length` from `DrillHole` component.
 
 ## [0.6.1] 2024-02-02
 
