@@ -14,7 +14,7 @@ class BeamDecompose(component):
     GREEN = Color.FromArgb(200, 50, 220, 100)
     BLUE = Color.FromArgb(200, 50, 150, 255)
     WHITE = Color.FromArgb(255, 255, 255, 255)
-    YELLOW = Color.FromArgb(255, 255,255, 0)
+    YELLOW = Color.FromArgb(255, 255, 255, 0)
     SCREEN_SIZE = 10
     RELATIVE_SIZE = 0
 
@@ -67,7 +67,7 @@ class BeamDecompose(component):
 
     def _draw_faces(self, display, faces, scale):
         for index, face in enumerate(faces):
-           normal = Line.from_point_and_vector(face.point, face.normal * scale)
-           text = str(index)
-           display.Draw2dText(text, self.WHITE, point_to_rhino(face.point), True, 16, "Verdana")
-           display.DrawArrow(line_to_rhino(normal), self.YELLOW, self.SCREEN_SIZE, self.RELATIVE_SIZE)
+            normal = Line.from_point_and_vector(face.point, face.normal * scale)
+            text = str(index)
+            display.Draw2dText(text, self.WHITE, point_to_rhino(face.point), True, 16, "Verdana")
+            display.DrawArrow(line_to_rhino(normal), self.YELLOW, self.SCREEN_SIZE, self.RELATIVE_SIZE)
