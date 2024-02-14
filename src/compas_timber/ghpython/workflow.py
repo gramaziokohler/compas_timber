@@ -36,7 +36,7 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type."""
+    """Creates a Joint Rule that directly joins two beams."""
 
     def __init__(self, joint_type, beams, **kwargs):
         self.beams = beams
