@@ -599,7 +599,7 @@ document.write(`
 <h1>THalfLapJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.THalfLapJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">THalfLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d044797/src/compas_timber/connections/t_halflap.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">THalfLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/11d1afd/src/compas_timber/connections/t_halflap.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.LapJoint.html#compas_timber.connections.LapJoint" title="compas_timber.connections.lap_joint.LapJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p>
 <p>Represents a T-Lap type joint which joins the end of a beam along the length of another beam,
 trimming the main beam.</p>
@@ -665,6 +665,12 @@ trimming the main beam.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_cross_cutting_frame.html#compas_timber.connections.THalfLapJoint.get_cross_cutting_frame" title="compas_timber.connections.THalfLapJoint.get_cross_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cross_cutting_frame</span></code></a></p></td>
 <td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam.html#compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam" title="compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
+<td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal is most orthogonal to <cite>beam_a</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_face_most_towards_beam.html#compas_timber.connections.THalfLapJoint.get_face_most_towards_beam" title="compas_timber.connections.THalfLapJoint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
+<td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal most faces <cite>beam_a</cite>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_main_cutting_frame.html#compas_timber.connections.THalfLapJoint.get_main_cutting_frame" title="compas_timber.connections.THalfLapJoint.get_main_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_main_cutting_frame</span></code></a></p></td>
 <td><p></p></td>
