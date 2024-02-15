@@ -14,18 +14,6 @@
                 "description": "Joint Options Component",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
-            },
-            {
-                "name": "MainBeam",
-                "description": "Main Beam.",
-                "typeHintID": "none",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "SecondaryBeam",
-                "description": "Secondary Beam.",
-                "typeHintID": "none",
-                "scriptParamAccess": 1
             }
         ],
         "outputParameters": [

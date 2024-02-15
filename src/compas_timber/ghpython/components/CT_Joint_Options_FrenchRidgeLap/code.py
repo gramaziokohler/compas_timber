@@ -10,6 +10,6 @@ class FrenchRidgeLapOptions(component):
         args = {}
         if Cutoff:
             args["cutoff"] = Cutoff
-        options = JointOptions(FrenchRidgeLapJoint, **args)
+        options = JointOptions(FrenchRidgeLapJoint, ['top_beam','bottom_beam'] **args)
 
         return options
