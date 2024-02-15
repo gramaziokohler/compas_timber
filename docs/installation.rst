@@ -5,16 +5,15 @@ Installation
 Stable
 ======
 
-Install with pip
+Install with conda
 ------------------
 
 In an new environment:
 
 .. code-block:: bash
 
-    conda create -n <myenvname> python=3.10 --yes
+    conda create -n <myenvname> compas_timber --yes
     conda activate <myenvname>
-    pip install compas_timber
 
 Install to Rhino 7.0
 
