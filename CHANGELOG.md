@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `debug_geometries` attribute to `BeamJoiningError`.
+* (Re)added `BooleanSubtraction` feature.
+* Added flag `modify_cross` to `L-Butt` joint.
+* Added flag `reject_i` to `L-Butt` joint.
+
 ### Changed
 
 * `BeamFromCurve` GH component accepts now referenced Rhino curves, referenced Rhino object IDs and internalized lines.
@@ -16,10 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `FeatureError` when L-Butt applies the cutting plane.
 * Fixed T-Butt doesn't get extended to cross beam's plane.
 * `SimpleSequenceGenerator` updated to work with `compas.datastructures.assembly` and generates building plan acording to type.
-* Changed GH Categories for joint rules
+* Changed GH Categories for joint rules.
+* Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
+* Extended `DecomposeBeam` component to optionally show beam frame and faces.
 
 ### Removed
 
+* Removed component `ShowBeamFrame`.
+* Changed GH Categories for joint rules
+* `BrepGeometryConsumer` continues to apply features even after the first error.
+* `DrillHole` component calculates length from input line.
+* `DrillHole` has default diameter proportional to beam cross-section.
+* Removed input `Length` from `DrillHole` component.
+* Fixed broken `TrimmingFeature` component.
 
 ## [0.6.1] 2024-02-02
 

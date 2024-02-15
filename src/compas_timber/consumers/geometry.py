@@ -6,6 +6,7 @@ from compas.geometry import Plane
 from compas_timber.parts import CutFeature
 from compas_timber.parts import DrillFeature
 from compas_timber.parts import MillVolume
+from compas_timber.parts import BrepSubtraction
 
 
 class FeatureApplicationError(Exception):
@@ -173,6 +174,47 @@ class MillVolumeGeometry(FeatureApplicator):
             )
 
 
+class BrepSubtractionGeometry(FeatureApplicator):
+    """Applies BrepSubtraction to beam geometry.
+
+    Parameters
+    ----------
+    beam_geometry : :class:`compas.geometry.Brep`
+        The geometry of the beam.
+    feature : :class:`compas_timber.parts.BrepSubtraction`
+        The feature to apply.
+
+    """
+
+    def __init__(self, beam_geometry, feature):
+        super(BrepSubtractionGeometry, self).__init__()
+        self.volume = feature.volume
+        self.beam_geometry = beam_geometry
+
+    def apply(self):
+        """Apply the feature to the beam geometry.
+
+        Raises
+        ------
+        :class:`compas_timber.consumers.FeatureApplicationError`
+            If the volume does not intersect with the beam geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        try:
+            return self.beam_geometry - self.volume
+        except IndexError:
+            raise FeatureApplicationError(
+                self.volume,
+                self.beam_geometry,
+                "The volume does not intersect with beam geometry.",
+            )
+
+
 class BeamGeometry(object):
     """A data class containing the result of applying features to a beam.
 
@@ -210,7 +252,12 @@ class BrepGeometryConsumer(object):
 
     """
 
-    FEATURE_MAP = {CutFeature: CutFeatureGeometry, DrillFeature: DrillFeatureGeometry, MillVolume: MillVolumeGeometry}
+    FEATURE_MAP = {
+        CutFeature: CutFeatureGeometry,
+        DrillFeature: DrillFeatureGeometry,
+        MillVolume: MillVolumeGeometry,
+        BrepSubtraction: BrepSubtractionGeometry,
+    }
 
     def __init__(self, assembly):
         self.assembly = assembly
@@ -220,20 +267,20 @@ class BrepGeometryConsumer(object):
         for beam in self.assembly.beams:
             geometry = Brep.from_box(beam.blank)
             debug_info = None
-            try:
-                resulting_geometry = self._apply_features(geometry, beam.features)
-            except FeatureApplicationError as error:
-                resulting_geometry = geometry
-                debug_info = error
+            resulting_geometry, debug_info = self._apply_features(geometry, beam.features)
             yield BeamGeometry(beam, resulting_geometry, debug_info)
 
     def _apply_features(self, geometry, features):
+        debug_info = []
         for feature in features:
             cls = self.FEATURE_MAP.get(type(feature), None)
             if not cls:
                 raise ValueError("No applicator found for feature type: {}".format(type(feature)))
             feature_applicator = cls(geometry, feature)
-            if not feature_applicator:
-                continue
-            geometry = feature_applicator.apply()
-        return geometry
+
+            try:
+                geometry = feature_applicator.apply()
+            except FeatureApplicationError as error:
+                debug_info.append(error)
+
+        return geometry, debug_info

@@ -127,13 +127,18 @@ class LMiterJoint(Joint):
             self.beam_a.remove_features(self.features)
             self.beam_b.remove_features(self.features)
 
+        start_a, start_b = None, None
         try:
             plane_a, plane_b = self.get_cutting_planes()
+            start_a, end_a = self.beam_a.extension_to_plane(plane_a)
+            start_b, end_b = self.beam_b.extension_to_plane(plane_b)
+        except AttributeError as ae:
+            # I want here just the plane that caused the error
+            geometries = [plane_b] if start_a is not None else [plane_a]
+            raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
 
-        start_a, end_a = self.beam_a.extension_to_plane(plane_a)
-        start_b, end_b = self.beam_b.extension_to_plane(plane_b)
         self.beam_a.add_blank_extension(start_a, end_a, self.key)
         self.beam_b.add_blank_extension(start_b, end_b, self.key)
 

@@ -3,26 +3,20 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.ghpython import FeatureDefinition
-from compas_timber.parts import BeamTrimmingFeature
+from compas_timber.parts import CutFeature
 
 
 class TrimmingFeature(component):
-    def RunScript(self, Beam, Plane):
-        if not Beam:
+    def RunScript(self, beam, plane):
+        if not beam:
             self.AddRuntimeMessage(Warning, "Input parameter Beam failed to collect data")
-        if not Plane:
+        if not plane:
             self.AddRuntimeMessage(Warning, "Input parameter Plane failed to collect data")
-        if not (Beam and Plane):
+        if not (beam and plane):
             return
 
-        if not isinstance(Beam, list):
-            Beam = [Beam]
-        if not isinstance(Plane, list):
-            Plane = [Plane]
+        if not isinstance(beam, list):
+            beam = [beam]
 
-        Feature = []
-        for plane in Plane:
-            feature = BeamTrimmingFeature(plane_to_compas_frame(plane))
-            Feature.append(FeatureDefinition(feature, Beam))
-
-        return Feature
+        feature = CutFeature(plane_to_compas_frame(plane))
+        return FeatureDefinition(feature, beam)
