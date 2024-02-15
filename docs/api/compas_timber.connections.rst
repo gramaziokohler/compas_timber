@@ -31,7 +31,6 @@ Functions
     :nosignatures:
 
     find_neighboring_beams
-    beam_side_incidence
 
 Exceptions
 ==========

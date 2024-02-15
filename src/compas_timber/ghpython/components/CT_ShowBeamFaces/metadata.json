@@ -1,21 +1,20 @@
 {
-    "name": "ShowBeamFrame",
-    "nickname": "ShowBeamFrame",
+    "name": "ShowBeamFaceIndices",
+    "nickname": "ShowBeamFace",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Shows the XYZ axes of the Beam's local coordinate system.",
+    "description": "Shows the indices of the Beam's faces.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
-             
+
             {
-                "name": "Beam",
-                "description": "Beam",
+                "name": "Assembly",
+                "description": "Assembly object.",
                 "typeHintID": "none",
-                "scriptParamAccess":1
-            
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
