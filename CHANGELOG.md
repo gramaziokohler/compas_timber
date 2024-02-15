@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* (Re)added `BooleanSubtraction` feature.
+
 ### Changed
 
 * `BeamFromCurve` GH component accepts now referenced Rhino curves, referenced Rhino object IDs and internalized lines.
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `BrepGeometryConsumer` continues to apply features even after the first error.
 * `DrillHole` component calculates length from input line.
 * `DrillHole` has default diameter proportional to beam cross-section.
+* Fixed broken `TrimmingFeature` component.
 
 ### Removed
 

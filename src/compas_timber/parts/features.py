@@ -91,3 +91,24 @@ class MillVolume(Feature):
         data_dict = {"volume": self.volume}
         data_dict.update(super(MillVolume, self).__data__)
         return data_dict
+
+
+class BrepSubtraction(Feature):
+    """Generic volume subtraction from a beam.
+
+    Parameters
+    ----------
+    volume : :class:`compas.geometry.Brep`
+        The volume to be subtracted from the beam.
+
+    """
+
+    def __init__(self, volume, **kwargs):
+        super(BrepSubtraction, self).__init__(**kwargs)
+        self.volume = volume
+
+    @property
+    def __data__(self):
+        data_dict = {"volume": self.volume}
+        data_dict.update(super(BrepSubtraction, self).__data__)
+        return data_dict
