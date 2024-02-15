@@ -267,20 +267,20 @@ class BrepGeometryConsumer(object):
         for beam in self.assembly.beams:
             geometry = Brep.from_box(beam.blank)
             debug_info = None
-            try:
-                resulting_geometry = self._apply_features(geometry, beam.features)
-            except FeatureApplicationError as error:
-                resulting_geometry = geometry
-                debug_info = error
+            resulting_geometry, debug_info = self._apply_features(geometry, beam.features)
             yield BeamGeometry(beam, resulting_geometry, debug_info)
 
     def _apply_features(self, geometry, features):
+        debug_info = []
         for feature in features:
             cls = self.FEATURE_MAP.get(type(feature), None)
             if not cls:
                 raise ValueError("No applicator found for feature type: {}".format(type(feature)))
             feature_applicator = cls(geometry, feature)
-            if not feature_applicator:
-                continue
-            geometry = feature_applicator.apply()
-        return geometry
+
+            try:
+                geometry = feature_applicator.apply()
+            except FeatureApplicationError as error:
+                debug_info.append(error)
+
+        return geometry, debug_info
