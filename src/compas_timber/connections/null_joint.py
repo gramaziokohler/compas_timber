@@ -67,7 +67,6 @@ class NullJoint(Joint):
     def joint_type(self):
         return "L-Butt"
 
-
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
         self.beam_a = assemly.find_by_key(self.beam_a_key)
