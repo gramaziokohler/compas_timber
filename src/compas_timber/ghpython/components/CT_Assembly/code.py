@@ -58,7 +58,7 @@ class Assembly(component):
 
             for rule in direct_rules:  # apply direct rules first
                 if rule.comply(pair):
-                    joints.append(JointDefinition(rule.joint_type, [rule.beams[0], rule.beams[1]], **rule.kwargs))
+                    joints.append(JointDefinition(rule.joint_type, rule.beams, **rule.kwargs))
                     pair_joined = True
                     break
 

@@ -14,18 +14,6 @@
                 "description": "Joint Options component.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
-            },
-            {
-                "name": "CatA",
-                "description": "Categeory of the first Beam.",
-                "typeHintID": "str",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "CatB",
-                "description": "Category of the sectond Beam.",
-                "typeHintID": "str",
-                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
