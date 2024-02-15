@@ -1,0 +1,20 @@
+{
+    "name": "Null-Joint Options",
+    "nickname": "NullJoint",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "defines and gives access to NullJoint joint and its parameters",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+        ],
+        "outputParameters": [
+            {
+                "name": "NullJoint",
+                "description": "NullJoint Joint Options."
+            }
+        ]
+    }
+}

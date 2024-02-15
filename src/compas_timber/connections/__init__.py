@@ -11,6 +11,7 @@ from .solver import ConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_beams
 from .t_butt import TButtJoint
+from .null_joint import NullJoint
 
 __all__ = [
     "Joint",
@@ -22,6 +23,7 @@ __all__ = [
     "XHalfLapJoint",
     "THalfLapJoint",
     "LHalfLapJoint",
+    "NullJoint",
     "FrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
