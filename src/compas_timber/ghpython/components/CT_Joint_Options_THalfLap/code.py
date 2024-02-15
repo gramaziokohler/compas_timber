@@ -11,6 +11,6 @@ class THalfLapJointOptions(component):
             args["flip_lap_side"] = flip_lap_side
         if cut_plane_bias:
             args["cut_plane_bias"] = cut_plane_bias
-        options = JointOptions(THalfLapJoint, ["top_beam", "bottom_beam"],**args)
+        options = JointOptions(THalfLapJoint, ["top_beam", "bottom_beam"], **args)
 
         return options

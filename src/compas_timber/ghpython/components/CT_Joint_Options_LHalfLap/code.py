@@ -13,6 +13,6 @@ class LHalfLapJointOptions(component):
         if cut_plane_bias:
             args["cut_plane_bias"] = cut_plane_bias
 
-        options = JointOptions(LHalfLapJoint, ["top_beam", "bottom_beam"],**args)
+        options = JointOptions(LHalfLapJoint, ["top_beam", "bottom_beam"], **args)
 
         return options

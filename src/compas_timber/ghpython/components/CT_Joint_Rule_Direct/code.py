@@ -8,9 +8,9 @@ from compas_timber.connections import JointTopology
 from compas_timber.ghpython import DirectRule
 
 
-def AddParam(name, IO, list = True):
-    assert IO in ('Output', 'Input')
-    params = [param.NickName for param in getattr(ghenv.Component.Params,IO)]
+def AddParam(name, IO, list=True):
+    assert IO in ("Output", "Input")
+    params = [param.NickName for param in getattr(ghenv.Component.Params, IO)]
     if name not in params:
         param = Grasshopper.Kernel.Parameters.Param_GenericObject()
         param.NickName = name
@@ -19,14 +19,10 @@ def AddParam(name, IO, list = True):
         param.Access = Grasshopper.Kernel.GH_ParamAccess.list
         param.Optional = True
         index = getattr(ghenv.Component.Params, IO).Count
-        registers = dict(Input  = 'RegisterInputParam'
-                        ,Output = 'RegisterOutputParam'
-                        )
-        getattr(ghenv.Component.Params,registers[IO])(param, index)
+        registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
+        getattr(ghenv.Component.Params, registers[IO])(param, index)
         ghenv.Component.Params.OnParametersChanged()
         return param
-
-
 
 
 class DirectJointRule(component):
@@ -34,18 +30,19 @@ class DirectJointRule(component):
         self.joint_type = None
 
     def ClearParams(self):
-        while len(ghenv.Component.Params.Input)>1:
-            ghenv.Component.Params.UnregisterInputParameter(ghenv.Component.Params.Input[len(ghenv.Component.Params.Input)-1])
+        while len(ghenv.Component.Params.Input) > 1:
+            ghenv.Component.Params.UnregisterInputParameter(
+                ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1]
+            )
         ghenv.Component.Params.OnParametersChanged()
 
-
-    def RunScript(self, JointOptions,  *args):
-        if not JointOptions:            #if no JointOptions is input
+    def RunScript(self, JointOptions, *args):
+        if not JointOptions:  # if no JointOptions is input
             self.ClearParams()
             self.joint_type = None
             return
 
-        if JointOptions.type != self.joint_type:        # if JointOptions changes
+        if JointOptions.type != self.joint_type:  # if JointOptions changes
             if len(JointOptions.beam_names) != 2:
                 self.AddRuntimeMessage(Error, "Component currently only supports joint types with 2 beams.")
             self.ClearParams()
@@ -63,19 +60,26 @@ class DirectJointRule(component):
 
         beams = []
         create_rule = True
-        for i in range(len(ghenv.Component.Params.Input)-1):
+        for i in range(len(ghenv.Component.Params.Input) - 1):
             if not args[i]:
-                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(JointOptions.beam_names[i]))
+                self.AddRuntimeMessage(
+                    Warning, "Input parameter {} failed to collect data.".format(JointOptions.beam_names[i])
+                )
                 create_rule = False
             else:
-                 arg_beams= args[i]
-                 if not isinstance(arg_beams, list):
-                     arg_beams = [arg_beams]
-                 beams.append(arg_beams)
+                arg_beams = args[i]
+                if not isinstance(arg_beams, list):
+                    arg_beams = [arg_beams]
+                beams.append(arg_beams)
 
         if create_rule:
             if len(beams[0]) != len(beams[1]):
-                self.AddRuntimeMessage(Error, "Number of items in {} and {} must match!".format(JointOptions.beam_names[0], JointOptions.beam_names[1]))
+                self.AddRuntimeMessage(
+                    Error,
+                    "Number of items in {} and {} must match!".format(
+                        JointOptions.beam_names[0], JointOptions.beam_names[1]
+                    ),
+                )
                 return
             Rules = []
             for main, secondary in zip(beams[0], beams[1]):

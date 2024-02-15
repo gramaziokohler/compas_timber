@@ -10,6 +10,6 @@ class LMiterJointOptions(component):
         args = {}
         if Cutoff:
             args["cutoff"] = Cutoff
-        options = JointOptions(LMiterJoint, ["first_beam", "second_beam"],**args)
+        options = JointOptions(LMiterJoint, ["first_beam", "second_beam"], **args)
 
         return options
