@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `debug_geometries` attribute to `BeamJoiningError`.
+* (Re)added `BooleanSubtraction` feature.
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 
@@ -27,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 * Removed component `ShowBeamFrame`.
+* Changed GH Categories for joint rules
+* `BrepGeometryConsumer` continues to apply features even after the first error.
+* `DrillHole` component calculates length from input line.
+* `DrillHole` has default diameter proportional to beam cross-section.
+* Removed input `Length` from `DrillHole` component.
+* Fixed broken `TrimmingFeature` component.
 
 ## [0.6.1] 2024-02-02
 

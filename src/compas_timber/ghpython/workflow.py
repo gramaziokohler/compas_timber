@@ -329,7 +329,10 @@ class DebugInfomation(object):
         return self.feature_errors or self.joint_errors
 
     def add_feature_error(self, error):
-        self.feature_errors.append(error)
+        if isinstance(error, list):
+            self.feature_errors.extend(error)
+        else:
+            self.feature_errors.append(error)
 
     def add_joint_error(self, error):
         self.joint_errors.append(error)
