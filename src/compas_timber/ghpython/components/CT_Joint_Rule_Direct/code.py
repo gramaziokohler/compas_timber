@@ -11,27 +11,35 @@ from compas_timber.ghpython import manage_dynamic_params
 
 class DirectJointRule(component):
     def RunScript(self, joint_options, *args):
+        names = None
+        if joint_options:
+            names = [name + " category" for name in joint_options.beam_names]
 
-        manage_dynamic_params(joint_options.beam_names)
+        manage_dynamic_params(names, ghenv)
 
-        if len(args) != len(joint_options.beam_names):  # check that dynamic params are correct
+        if not args or not names:  # check that dynamic params generated
+            return
+
+        if len(args) != len(names):  # check that dynamic params generated correctly
             self.AddRuntimeMessage(Error, "Input parameter error.")
+            return
 
         beams = []
         create_rule = True
         for i in range(len(joint_options.beam_names)):
-            if not args[i]:
+            if not args[i]:  # test that input recieved data
                 self.AddRuntimeMessage(
                     Warning, "Input parameter {} failed to collect data.".format(joint_options.beam_names[i])
                 )
                 create_rule = False
             else:
+                beam_args = []
                 if not isinstance(args[i], list):
-                    args[i] = [args[i]]
-                beams.append(args[i])
+                    beam_args = [args[i]]
+                beams.append(beam_args)
 
         if create_rule:
-            if len(beams[0]) != len(beams[1]):
+            if len(beams[0]) != len(beams[1]):  # test that beam list lengths match
                 self.AddRuntimeMessage(
                     Error,
                     "Number of items in {} and {} must match!".format(

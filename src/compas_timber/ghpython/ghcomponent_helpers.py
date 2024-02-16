@@ -1,5 +1,6 @@
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+import Grasshopper
 
 
 def list_input_valid(component, Param, name):
@@ -24,7 +25,7 @@ def item_input_valid(component, Param, name):
     return False
 
 
-def add_GH_param(name, io):
+def add_GH_param(name, io, ghenv):
     assert io in ("Output", "Input")
     params = [param.NickName for param in getattr(ghenv.Component.Params, io)]
     if name not in params:
@@ -40,17 +41,18 @@ def add_GH_param(name, io):
         ghenv.Component.Params.OnParametersChanged()
 
 
-def clear_GH_params(permanent_param_count = 1):
-    for param in ghenv.Component.Params.Input:
-        if param.Index >= permanent_param_count:
-            ghenv.Component.Params.UnregisterInputParameter(param)
+def clear_GH_params(ghenv, permanent_param_count=1):
+    while len(ghenv.Component.Params.Input) > permanent_param_count:
+        ghenv.Component.Params.UnregisterInputParameter(
+            ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1]
+        )
     ghenv.Component.Params.OnParametersChanged()
     ghenv.Component.ExpireSolution(False)
 
 
-def manage_dynamic_params(input_names, permanent_param_count = 1):
+def manage_dynamic_params(input_names, ghenv, permanent_param_count=1):
     if not input_names:  # if no joint_options is input
-        clear_GH_params(permanent_param_count)
+        clear_GH_params(ghenv, permanent_param_count)
         return
     register_params = False
     if len(ghenv.Component.Params.Input) == len(input_names) + permanent_param_count:
@@ -61,6 +63,6 @@ def manage_dynamic_params(input_names, permanent_param_count = 1):
     else:
         register_params = True
     if register_params:
-        clear_GH_params(permanent_param_count)
+        clear_GH_params(ghenv, permanent_param_count)
         for name in input_names:
-            add_GH_param(name, "Input")
+            add_GH_param(name, "Input", ghenv)

@@ -285,7 +285,7 @@ class JointOptions(object):
 
     """
 
-    def __init__(self, type, beam_names = [], **kwargs):
+    def __init__(self, type, beam_names=[], **kwargs):
         self.type = type
         self.kwargs = kwargs
         self.beam_names = beam_names
