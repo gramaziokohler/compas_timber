@@ -1,7 +1,6 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-import Grasshopper
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
