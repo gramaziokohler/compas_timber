@@ -11,8 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Reduced some boilerplate code in `Joint` subclasses.
+
 ### Removed
 
+* Removed `joint_type` attributes from all `Joint` classes.
 
 ## [0.7.0] 2024-02-15
 
