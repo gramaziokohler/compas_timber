@@ -8,7 +8,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.ghpython import DirectRule
 
 
-def AddParam(name, IO):
+def add_param(name, IO):
     assert IO in ("Output", "Input")
     params = [param.NickName for param in getattr(ghenv.Component.Params, IO)]
     if name not in params:
@@ -23,7 +23,7 @@ def AddParam(name, IO):
         getattr(ghenv.Component.Params, registers[IO])(param, index)
         ghenv.Component.Params.OnParametersChanged()
 
-def ClearParams():
+def clear_params():
     while len(ghenv.Component.Params.Input) > 1:
         ghenv.Component.Params.UnregisterInputParameter(
             ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1]
@@ -33,28 +33,28 @@ def ClearParams():
 
 
 class DirectJointRule(component):
-    def RunScript(self, JointOptions, *args):
-        if not JointOptions:  # if no JointOptions is input
-            ClearParams()
+    def RunScript(self, joint_options, *args):
+        if not joint_options:  # if no JointOptions is input
+            clear_params()
             return
 
         register_params = False
-        if len(ghenv.Component.Params.Input) == len(JointOptions.beam_names) + 1:
-            for i, name in enumerate(JointOptions.beam_names):
+        if len(ghenv.Component.Params.Input) == len(joint_options.beam_names) + 1:
+            for i, name in enumerate(joint_options.beam_names):
                 if ghenv.Component.Params.Input[i + 1].Name != name:
                     register_params = True
                     break
         else:
             register_params = True
         if register_params:  # if JointOptions changes
-            if len(JointOptions.beam_names) != 2:
+            if len(joint_options.beam_names) != 2:
                 self.AddRuntimeMessage(Error, "Component currently only supports joint types with 2 beams.")
-            ClearParams()
-            for name in JointOptions.beam_names:
-                AddParam(name, "Input")
+            clear_params()
+            for name in joint_options.beam_names:
+                add_param(name, "Input")
 
         if (
-            len(ghenv.Component.Params.Input) != len(JointOptions.beam_names) + 1
+            len(ghenv.Component.Params.Input) != len(joint_options.beam_names) + 1
         ):  # something went wrong and the number of input parameters is wrong
             self.AddRuntimeMessage(Warning, "Input parameter error.")
             return
@@ -64,7 +64,7 @@ class DirectJointRule(component):
         for i in range(len(ghenv.Component.Params.Input) - 1):
             if not args[i]:
                 self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(JointOptions.beam_names[i])
+                    Warning, "Input parameter {} failed to collect data.".format(joint_options.beam_names[i])
                 )
                 create_rule = False
             else:
@@ -78,20 +78,20 @@ class DirectJointRule(component):
                 self.AddRuntimeMessage(
                     Error,
                     "Number of items in {} and {} must match!".format(
-                        JointOptions.beam_names[0], JointOptions.beam_names[1]
+                        joint_options.beam_names[0], joint_options.beam_names[1]
                     ),
                 )
                 return
-            Rules = []
+            rules = []
             for main, secondary in zip(beams[0], beams[1]):
                 topology, _, _ = ConnectionSolver().find_topology(main, secondary)
-                if topology != JointOptions.type.SUPPORTED_TOPOLOGY:
+                if topology != joint_options.type.SUPPORTED_TOPOLOGY:
                     self.AddRuntimeMessage(
                         Warning,
                         "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                            JointTopology.get_name(topology), JointOptions.type.__name__
+                            JointTopology.get_name(topology), joint_options.type.__name__
                         ),
                     )
                     continue
-                Rules.append(DirectRule(JointOptions.type, [main, secondary], **JointOptions.kwargs))
-            return Rules
+                rules.append(DirectRule(joint_options.type, [main, secondary], **joint_options.kwargs))
+            return rules
