@@ -23,6 +23,7 @@ def add_param(name, io):
         getattr(ghenv.Component.Params, registers[io])(param, index)
         ghenv.Component.Params.OnParametersChanged()
 
+
 def clear_params():
     while len(ghenv.Component.Params.Input) > 1:
         ghenv.Component.Params.UnregisterInputParameter(

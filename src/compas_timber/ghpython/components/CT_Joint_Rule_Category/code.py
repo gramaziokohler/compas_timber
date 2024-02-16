@@ -1,4 +1,7 @@
 from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+import Grasshopper
 
 from compas_timber.ghpython import CategoryRule
 
@@ -17,6 +20,7 @@ def add_param(name, io):
         registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
         getattr(ghenv.Component.Params, registers[io])(param, index)
         ghenv.Component.Params.OnParametersChanged()
+
 
 def clear_params():
     while len(ghenv.Component.Params.Input) > 1:
