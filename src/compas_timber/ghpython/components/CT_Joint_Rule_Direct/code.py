@@ -6,73 +6,29 @@ import Grasshopper
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.ghpython import DirectRule
-
-
-def add_param(name, io):
-    assert io in ("Output", "Input")
-    params = [param.NickName for param in getattr(ghenv.Component.Params, io)]
-    if name not in params:
-        param = Grasshopper.Kernel.Parameters.Param_GenericObject()
-        param.NickName = name
-        param.Name = name
-        param.Description = name
-        param.Access = Grasshopper.Kernel.GH_ParamAccess.list
-        param.Optional = True
-        index = getattr(ghenv.Component.Params, io).Count
-        registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
-        getattr(ghenv.Component.Params, registers[io])(param, index)
-        ghenv.Component.Params.OnParametersChanged()
-
-
-def clear_params():
-    while len(ghenv.Component.Params.Input) > 1:
-        ghenv.Component.Params.UnregisterInputParameter(
-            ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1]
-        )
-    ghenv.Component.Params.OnParametersChanged()
-    ghenv.Component.ExpireSolution(True)
+from compas_timber.ghpython import manage_dynamic_params
 
 
 class DirectJointRule(component):
     def RunScript(self, joint_options, *args):
-        if not joint_options:  # if no JointOptions is input
-            clear_params()
-            return
 
-        register_params = False
-        if len(ghenv.Component.Params.Input) == len(joint_options.beam_names) + 1:
-            for i, name in enumerate(joint_options.beam_names):
-                if ghenv.Component.Params.Input[i + 1].Name != name:
-                    register_params = True
-                    break
-        else:
-            register_params = True
-        if register_params:  # if JointOptions changes
-            if len(joint_options.beam_names) != 2:
-                self.AddRuntimeMessage(Error, "Component currently only supports joint types with 2 beams.")
-            clear_params()
-            for name in joint_options.beam_names:
-                add_param(name, "Input")
+        manage_dynamic_params(joint_options.beam_names)
 
-        if (
-            len(ghenv.Component.Params.Input) != len(joint_options.beam_names) + 1
-        ):  # something went wrong and the number of input parameters is wrong
-            self.AddRuntimeMessage(Warning, "Input parameter error.")
-            return
+        if len(args) != len(joint_options.beam_names):  # check that dynamic params are correct
+            self.AddRuntimeMessage(Error, "Input parameter error.")
 
         beams = []
         create_rule = True
-        for i in range(len(ghenv.Component.Params.Input) - 1):
+        for i in range(len(joint_options.beam_names)):
             if not args[i]:
                 self.AddRuntimeMessage(
                     Warning, "Input parameter {} failed to collect data.".format(joint_options.beam_names[i])
                 )
                 create_rule = False
             else:
-                arg_beams = args[i]
-                if not isinstance(arg_beams, list):
-                    arg_beams = [arg_beams]
-                beams.append(arg_beams)
+                if not isinstance(args[i], list):
+                    args[i] = [args[i]]
+                beams.append(args[i])
 
         if create_rule:
             if len(beams[0]) != len(beams[1]):
