@@ -1,15 +1,16 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+import Grasshopper
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.ghpython import DirectRule
 
 
-def add_param(name, IO):
-    assert IO in ("Output", "Input")
-    params = [param.NickName for param in getattr(ghenv.Component.Params, IO)]
+def add_param(name, io):
+    assert io in ("Output", "Input")
+    params = [param.NickName for param in getattr(ghenv.Component.Params, io)]
     if name not in params:
         param = Grasshopper.Kernel.Parameters.Param_GenericObject()
         param.NickName = name
@@ -17,9 +18,9 @@ def add_param(name, IO):
         param.Description = name
         param.Access = Grasshopper.Kernel.GH_ParamAccess.list
         param.Optional = True
-        index = getattr(ghenv.Component.Params, IO).Count
+        index = getattr(ghenv.Component.Params, io).Count
         registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
-        getattr(ghenv.Component.Params, registers[IO])(param, index)
+        getattr(ghenv.Component.Params, registers[io])(param, index)
         ghenv.Component.Params.OnParametersChanged()
 
 def clear_params():

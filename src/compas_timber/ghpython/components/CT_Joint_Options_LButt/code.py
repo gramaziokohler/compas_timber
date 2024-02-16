@@ -15,6 +15,6 @@ class LButtJointOptions(component):
         if reject_i is not None:
             args["reject_i"] = reject_i
 
-        options = JointOptions(LButtJoint, **args)
+        options = JointOptions(LButtJoint, ["main_beam", "cross_beam"], **args)
 
         return options

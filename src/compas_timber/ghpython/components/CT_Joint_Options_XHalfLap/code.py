@@ -12,6 +12,6 @@ class XHalfLapJointOptions(component):
             args["flip_lap_side"] = flip_lap_side
         if cut_plane_bias:
             args["cut_plane_bias"] = cut_plane_bias
-        options = JointOptions(XHalfLapJoint, **args)
+        options = JointOptions(XHalfLapJoint, ["top_beam", "bottom_beam"], **args)
 
         return options
