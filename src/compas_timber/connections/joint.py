@@ -42,19 +42,29 @@ class Joint(Data):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
+    beams : tuple(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
     ends : dict(:class:`~compas_timber.parts.Beam`, str)
         A map of which end of each beam is joined by this joint.
+    frame : :class:`~compas.geometry.Frame`
+        The frame of the joint.
+    key : str
+        A unique identifier for this joint.
+    features : list(:class:`~compas_timber.parts.Feature`)
+        A list of features that were added to the beams by this joint.
+    attributes : dict
+        A dictionary of additional attributes for this joint.
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
 
-    def __init__(self, frame=None, key=None):
+    def __init__(self, frame=None, key=None, beams=None):
         super(Joint, self).__init__()
         self.frame = frame or Frame.worldXY()
         self.key = key
+        self._beams = beams
+        self.features = []
         self.attributes = {}
 
     @property
@@ -63,7 +73,7 @@ class Joint(Data):
 
     @property
     def beams(self):
-        raise NotImplementedError
+        return self._beams
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).

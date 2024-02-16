@@ -17,8 +17,6 @@ class TButtJoint(Joint):
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.TimberAssembly`
-        The assembly associated with the beams to be joined.
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
@@ -26,52 +24,37 @@ class TButtJoint(Joint):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
-        The beams joined by this joint.
-    cutting_plane_main : :class:`~compas.geometry.Frame`
-        The frame by which the main beam is trimmed.
-    cutting_plane_cross : :class:`~compas.geometry.Frame`
-        The frame by which the cross beam is trimmed.
-    joint_type : str
-        A string representation of this joint's type.
+    main_beam : :class:`~compas_timber.parts.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, gap=None, frame=None, key=None):
-        super(TButtJoint, self).__init__(frame, key)
+    def __init__(self, main_beam=None, cross_beam=None, **kwargs):
+        super(TButtJoint, self).__init__(beams=(main_beam, cross_beam), **kwargs)
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.gap = gap
-        self.features = []
 
     @property
     def __data__(self):
         data_dict = {
             "main_beam_key": self.main_beam_key,
             "cross_beam_key": self.cross_beam_key,
-            "gap": self.gap,
         }
         data_dict.update(super(TButtJoint, self).__data__)
         return data_dict
 
     @classmethod
     def __from_data__(cls, value):
-        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], gap=value["gap"])
+        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"])
         instance.main_beam_key = value["main_beam_key"]
         instance.cross_beam_key = value["cross_beam_key"]
         return instance
-
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
-
-    @property
-    def joint_type(self):
-        return "T-Butt"
 
     def get_cutting_plane(self):
         assert self.main_beam and self.cross_beam  # should never happen
@@ -84,6 +67,7 @@ class TButtJoint(Joint):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
         self.main_beam = assembly.find_by_key(self.main_beam_key)
         self.cross_beam = assembly.find_by_key(self.cross_beam_key)
+        self._beams = (self.main_beam, self.cross_beam)
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).

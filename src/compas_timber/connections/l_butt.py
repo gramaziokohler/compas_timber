@@ -15,8 +15,6 @@ class LButtJoint(Joint):
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.TimberAssembly`
-        The assembly associated with the beams to be joined.
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
@@ -30,10 +28,16 @@ class LButtJoint(Joint):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
-        The beams joined by this joint.
-    joint_type : str
-        A string representation of this joint's type.
+    main_beam : :class:`~compas_timber.parts.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
+    small_beam_butts : bool, default False
+        If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
+    modify_cross : bool, default True
+        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
+    reject_i : bool, default False
+        If True, the joint will be rejected if the beams are not in I topology (i.e. main butts at crosses end).
 
     """
 
@@ -42,7 +46,7 @@ class LButtJoint(Joint):
     def __init__(
         self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs
     ):
-        super(LButtJoint, self).__init__(**kwargs)
+        super(LButtJoint, self).__init__(beams=(main_beam, cross_beam), **kwargs)
 
         if small_beam_butts and main_beam and cross_beam:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
@@ -82,14 +86,6 @@ class LButtJoint(Joint):
         instance.cross_beam_key = value["cross_beam_key"]
         return instance
 
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
-
-    @property
-    def joint_type(self):
-        return "L-Butt"
-
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
 
@@ -112,6 +108,7 @@ class LButtJoint(Joint):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
         self.main_beam = assemly.find_by_key(self.main_beam_key)
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+        self._beams = (self.main_beam, self.cross_beam)
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
