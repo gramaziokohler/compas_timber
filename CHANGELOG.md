@@ -23,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
-* Added `beam_names` attribute to `JointOptions` class.
-* Added `beam_names` attribute to all GH JointOption Components.
 
 ### Changed
 
@@ -36,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed GH Categories for joint rules.
 * Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
 * Extended `DecomposeBeam` component to optionally show beam frame and faces.
-* Changed `Direct Joint` and `Category Joint` GH Components to have adaptive inputs that change based on what type of joint is input.
 
 ### Removed
 

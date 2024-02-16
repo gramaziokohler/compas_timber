@@ -271,8 +271,6 @@ class JointOptions(object):
         The type of the joint.
     kwargs : dict
         The keyword arguments to be passed to the joint.
-    beam_names : list(str)
-        The names of the beams to be joined.
 
     Attributes
     ----------
@@ -280,15 +278,12 @@ class JointOptions(object):
         The type of the joint.
     kwargs : dict
         The keyword arguments to be passed to the joint.
-    beam_names : list(str)
-        The names of the beams to be joined.
 
     """
 
-    def __init__(self, type, beam_names, **kwargs):
+    def __init__(self, type, **kwargs):
         self.type = type
         self.kwargs = kwargs
-        self.beam_names = beam_names
 
     def __repr__(self):
         return "{}({}{})".format(JointOptions.__name__, self.type, self.kwargs)
