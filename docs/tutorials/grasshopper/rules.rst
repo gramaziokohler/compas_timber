@@ -7,7 +7,7 @@ Joint Rules
 |
 The joints between beams are defined by rules. There are three different levels of rules, where each of them overrides any lower-priority rule. The rules are listed hereafter from lowest to highest level of priority:
 
-1. **Topological Joint Rules** - the lowest-priority-level rule, applied on the entire assembly. It automatically recognises the joint topology (L, T or X) between each beam and applies joint type the corresponding the joint topology. See also :doc:`joints`
+1. **Topological Joint Rules** - the lowest-priority-level rule, applied on the entire assembly. It automatically recognises the joint topology (L, T or X) between each beam and applies joint type corresponding to the joint topology. See also :doc:`joints`
 
    Inputs:
 
@@ -15,7 +15,7 @@ The joints between beams are defined by rules. There are three different levels 
    * `T` - joint type to be applied to T topology. Default type is T-Butt.
    * `X` - joint type to be applied to X topology. Default type is X-HalfLap.
 |
-2. **Category Joint Rules** - the second level, defines a single joint type for a specific topology between two categories of beams. The categories are assigned through the string-input `Category` in the component :code:`Beam` and added to the rhino lines.
+1. **Category Joint Rules** - the second level, defines a single joint type for a specific topology between two categories of beams. The categories are assigned through the string-input `Category` in the component :code:`Beam` and added to the rhino lines.
 
    Inputs:
 

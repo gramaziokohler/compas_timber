@@ -10,8 +10,8 @@ The *origin* is located at the start of the centerline.
 .. image:: ../images/beam_01png.png
     :width: 40%
 |
-Beams are created with the components **Beam** - to create a beam from a Grasshopper `Line` or `LineCurve`, or from a `Guid` of a `Line` object referenced from an active Rhino document.
-The latter is intended for a design workflow, where the input geometry (centerlines etc.) is drawn or stored in a Rhino document instead of Grasshopper.
+Beams are created with the component :code:`Beam` - to create a beam from a Grasshopper `Line` or `LineCurve`, or from a `Guid` of a `Line` object referenced from an active Rhino document.
+The latter is intended for a design workflow, where the input geometry (centerlines, etc.) is drawn or stored in a Rhino document instead of generated within the Grasshopper environment.
 
 Inputs:
 
