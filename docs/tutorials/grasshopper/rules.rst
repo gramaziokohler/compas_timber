@@ -5,7 +5,7 @@ Joint Rules
 .. image:: ../images/gh_joint_rules.png
     :width: 75%
 |
-The joints between beams are defined by rules. There are three different levels of rules, where each of them overrides any lower-priority rule. The ru are listed hereafter from lowest to highest level of priority:
+The joints between beams are defined by rules. There are three different levels of rules, where each of them overrides any lower-priority rule. The rules are listed hereafter from lowest to highest level of priority:
 
 1. **Topological Joint Rules** - the lowest-priority-level rule, applied on the entire assembly. It automatically recognises the joint topology (L, T or X) between each beam and applies joint type the corresponding the joint topology. See also :doc:`joints`
 
