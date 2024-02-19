@@ -64,8 +64,8 @@ Inputs:
 
 A L-Butt extends one beam and shortens the other beam with a planar cut, to create a clean corner joint.
 
-.. image:: ../images/LButt_diagramm.png
-    :width: 50%
+.. image:: ../images/Joints_L-Butt.png
+    :width: 80%
 
 :code:`L-Butt Options` component
 
@@ -83,8 +83,8 @@ Inputs:
 A *L-Half Lap* topology is when two beams meet at their ends at an angle.
 An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.
 
-.. image:: ../images/LButt_diagramm.png
-    :width: 50%
+.. image:: ../images/Joints_L-HalfLap.png
+    :width: 80%
 
 :code:`L-Half Lap Options` component
 
@@ -100,8 +100,8 @@ Inputs:
 
 A L-Miter joint extends and connects the two beams with a planar cut at a bisector of the angle between them.
 
-.. image:: ../images/LButt_diagramm.png
-    :width: 50%
+.. image:: ../images/Joints_L-Miter.png
+    :width: 80%
 
 :code:`L-Miter joint Options` component
 
