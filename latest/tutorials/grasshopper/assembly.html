@@ -515,6 +515,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Assembly</a></li>
 <li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
@@ -590,15 +591,36 @@ document.write(`
                   
   <section id="assembly">
 <h1>Assembly</h1>
-<p><strong>Assembly</strong> component creates a frame structure made of joined <code class="code docutils literal notranslate"><span class="pre">Beam</span></code> objects.
-It connects the beams and adds features based on provided <cite>Joints</cite> (<a class="reference internal" href="joints.html"><span class="doc">Joints</span></a>) and <cite>Features</cite> (<a class="reference internal" href="features.html"><span class="doc">Features</span></a>) definitions.</p>
+<p><strong>Assembly</strong> component creates a structure composed of joined <code class="code docutils literal notranslate"><span class="pre">Beam</span></code> objects. It connects the beams with joints and adds
+features based on the <a class="reference internal" href="joints.html"><span class="doc">Joints</span></a> and <a class="reference internal" href="features.html"><span class="doc">Features</span></a> inputs provided.</p>
 <p>Geometric operations like cutting, trimming and solid boolean subtractions, which are implied by joints and features,
 may be computationally expensive, and are disabled by default.
-To activate it, set <cite>applyFeatures</cite> to <code class="code docutils literal notranslate"><span class="pre">True</span></code>.
-Output parameter <cite>Errors</cite> provides a log of unsuccessful feature-apply operations.</p>
-<p>Assembly as such is an abstract object. To visualize it (to visualize the beams in the assembly),
-use the <code class="code docutils literal notranslate"><span class="pre">ShowAssembly</span></code> component that returns the <em>Brep</em> geometry of the beams.</p>
-<a class="reference internal image-reference" href="../../_images/assembly_01.png"><img alt="../../_images/assembly_01.png" src="../../_images/assembly_01.png" style="width: 50%;" /></a>
+To activate it, set <cite>CreateGeometry</cite> to <code class="code docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<a class="reference internal image-reference" href="../../_images/gh_assembly.png"><img alt="../../_images/gh_assembly.png" src="../../_images/gh_assembly.png" style="width: 20%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>Beams</cite> : collection of beams.</p></li>
+<li><p><cite>JointsRules</cite> : collection of joint rules.</p></li>
+<li><p><cite>Features</cite> : collection of features definitions.</p></li>
+<li><p><cite>MaxDist</cite> : Max Distance Tolerance for topology detection.</p></li>
+<li><p><cite>CreateGeometry</cite> : If True, Beam and joint geometry is created for visualisation. Default is False.</p></li>
+</ul>
+<p>Outputs</p>
+<ul class="simple">
+<li><p><cite>Assembly</cite> : Assembly object.</p></li>
+<li><p><cite>Geometry</cite> : Geometry of the beams and joints.</p></li>
+<li><p><cite>DebugInfo</cite> : Debug information object in the case of feature or joining errors.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Visualisation</strong></p>
+<p>Assembly as such is an abstract object. To visualise the beams in the assembly, the <code class="code docutils literal notranslate"><span class="pre">ShowAssembly</span></code> component returns a <em>Brep</em> geometry of the beams. See <a class="reference internal" href="show.html"><span class="doc">Show</span></a> for the visualisation  of other helpful
+information such as <em>Joint Type</em> or <em>Beam Index</em>, spatially located.</p>
+<p>For debugging, the <code class="code docutils literal notranslate"><span class="pre">ShowFeatureErrors</span></code> component or <code class="code docutils literal notranslate"><span class="pre">ShowJoiningErrors</span></code> component visualise the errors that occur during the assembly process. See <a class="reference internal" href="show.html"><span class="doc">Show</span></a>.</p>
+</div>
 </section>
 
 

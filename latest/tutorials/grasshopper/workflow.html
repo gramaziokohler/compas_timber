@@ -515,6 +515,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
 <li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
 <li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
@@ -593,7 +594,7 @@ document.write(`
 <p>To build a timber frame <strong>Assembly</strong>, you need to:</p>
 <ul class="simple">
 <li><p>create <strong>Beams</strong></p></li>
-<li><p>define <strong>Joints</strong> between these beams</p></li>
+<li><p>define <strong>Joints</strong> between these beams and <strong>Rules</strong> how the joints are applied.</p></li>
 <li><p>define other <strong>Features</strong> (optional)</p></li>
 </ul>
 <p>Based on this, <strong>Assembly</strong> takes care of generating the final geometry of the structure.</p>
@@ -603,7 +604,7 @@ document.write(`
 <div class="line"><br /></div>
 </div>
 <p><strong>Example:</strong></p>
-<a class="reference internal image-reference" href="../../_images/workflow_gh_example.png"><img alt="../../_images/workflow_gh_example.png" src="../../_images/workflow_gh_example.png" style="width: 75%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_WorkflowDef.png"><img alt="../../_images/gh_WorkflowDef.png" src="../../_images/gh_WorkflowDef.png" style="width: 75%;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -611,7 +612,7 @@ document.write(`
 <p class="admonition-title">Note</p>
 <p><strong>Important!</strong></p>
 <ul class="simple">
-<li><p>The order in the list of <strong>Joints</strong> and <strong>Features</strong> matters! For example: if there are two different joints defined for the same pair of beams in the list, the last one will be applied (overrides entries earlier in the list).</p></li>
+<li><p>There are three Types of <strong>Joint Rules</strong> 1. By <strong>Topology</strong>, 2. by <strong>Category</strong> and 3. <strong>Direct</strong> Joints. In this order, they will be applied to the Assembly. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules. See <a class="reference internal" href="rules.html"><span class="doc">Joint Rules</span></a>.</p></li>
 <li><p>The <strong>Joints</strong> are processed first, then <strong>Features</strong>.</p></li>
 </ul>
 </div>

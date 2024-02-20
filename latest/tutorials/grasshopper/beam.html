@@ -515,6 +515,7 @@ document.write(`
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
 <li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
 <li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
@@ -595,16 +596,11 @@ It has a local coordinate system, where the X-axis corresponds with the <em>cent
 Y-axis with the <em>width</em> of the cross-section and Z-axis with the <em>height</em> of the cross-section.
 The <em>origin</em> is located at the start of the centerline.</p>
 <a class="reference internal image-reference" href="../../_images/beam_01png.png"><img alt="../../_images/beam_01png.png" src="../../_images/beam_01png.png" style="width: 40%;" /></a>
-<p>The Grasshopper plugin has two components to create beams:</p>
-<ul class="simple">
-<li><p><strong>BeamFromCurve</strong> - to create a beam form a Grasshopper <cite>Line</cite> or <cite>LineCurve</cite></p></li>
-<li><p><strong>BeamFromCurveGuid</strong> - to create a beam from a <cite>Guid</cite> of a <cite>Line</cite> object referenced from an active Rhino document.
-This one is intended for a design workflow, where the input geometry (centerlines etc.) is drawn or stored in a Rhino document
-instead of Grasshopper.</p></li>
-</ul>
+<p>Beams are created with the component <code class="code docutils literal notranslate"><span class="pre">Beam</span></code> - to create a beam from a Grasshopper <cite>Line</cite> or <cite>LineCurve</cite>, or from a <cite>Guid</cite> of a <cite>Line</cite> object referenced from an active Rhino document.
+The latter is intended for a design workflow, where the input geometry (centerlines, etc.) is drawn or stored in a Rhino document instead of generated within the Grasshopper environment.</p>
 <p>Inputs:</p>
 <ul class="simple">
-<li><p><cite>Centerline</cite> : the centerline of the beam, also called the major axis.</p></li>
+<li><p><cite>Centerline</cite> : one or more centerline of the beam(s), also called the major axis.</p></li>
 <li><p><cite>ZVector</cite>: (optional) a vector used to define the rotation of the cross-section around the centerline.
 Together with the centerline it indicates the plane in which the Z-axis of the beam lies,
 which is to say that <cite>ZVector</cite> does not have to be perpendicular, but cannot be parallel, to the centerline.
@@ -616,15 +612,22 @@ If <code class="code docutils literal notranslate"><span class="pre">None</span>
 </li>
 <li><p><cite>Width</cite>: the smaller dimension of the cross-section (by convention).</p></li>
 <li><p><cite>Height</cite>: the larger dimension of the cross-section (by convention).</p></li>
-<li><p><cite>Category</cite>: (optional) a string as an additional attribute, used later to define joint rules in <strong>JointCategoryRule</strong> component for the <strong>AutomaticJoint</strong> tool. See also <a class="reference internal" href="joints.html"><span class="doc">Joints</span></a>.</p></li>
-<li><p><cite>updateRefObj</cite>: (optional, in BeamFromCurveGuid) set it to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to write the new attributes to the source Line objects. See also <a class="reference internal" href="attributes.html"><span class="doc">Attributes</span></a>.</p></li>
+<li><p><cite>Category</cite>: (optional) a string as an additional attribute, used later to define joint rules in <strong>Direct Joint Rules</strong> component. See also <a class="reference internal" href="workflow.html"><span class="doc">Workflow</span></a>.</p></li>
+<li><p><cite>updateRefObj</cite>: (optional) set it to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to write the new attributes to the source Line objects. See also <a class="reference internal" href="attributes.html"><span class="doc">Attributes</span></a>.</p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/beam_02.png"><img alt="../../_images/beam_02.png" src="../../_images/beam_02.png" style="width: 30%;" /></a>
-<div class="line-block">
-<div class="line"><br /></div>
-</div>
-<p>Once a <code class="code docutils literal notranslate"><span class="pre">Beam</span></code> is created, you can preview its shape, coordinate system and extract its geometry and parameters using these components:</p>
-<a class="reference internal image-reference" href="../../_images/beam_04.png"><img alt="../../_images/beam_04.png" src="../../_images/beam_04.png" style="width: 40%;" /></a>
+<p>Outputs:</p>
+<ul class="simple">
+<li><p><cite>Beam</cite> : the resulting beam(s).</p></li>
+<li><p><cite>Blank</cite>: the corresponding blank beam. The blank represents the raw material from which the beam is cut and without <a class="reference internal" href="features.html"><span class="doc">Features</span></a>. It is used to define the stock size for the beam.</p></li>
+</ul>
+<a class="reference internal image-reference" href="../../_images/gh_beam.png"><img alt="../../_images/gh_beam.png" src="../../_images/gh_beam.png" style="width: 40%;" /></a>
+<p>Once a <code class="code docutils literal notranslate"><span class="pre">Beam</span></code> is created, it can be used as an input for the <a class="reference internal" href="assembly.html"><span class="doc">Assembly</span></a> component or the following components:</p>
+<ul class="simple">
+<li><p><strong>DecomposeBeam</strong> : extracts the frame, centreline, box, width and height from a beam.</p></li>
+<li><p><strong>FindBeamByRhinoGeometry</strong> : finds the beam corresponding to a referenced Rhino curve or line.</p></li>
+</ul>
+<a class="reference internal image-reference" href="../../_images/gh_beamDecompose.png"><img alt="../../_images/gh_beamDecompose.png" src="../../_images/gh_beamDecompose.png" style="width: 40%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_beamGUID.png"><img alt="../../_images/gh_beamGUID.png" src="../../_images/gh_beamGUID.png" style="width: 40%;" /></a>
 </section>
 
 

@@ -322,6 +322,10 @@ document.write(`
   
 
   
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
 </div>
 
     </nav>
@@ -515,6 +519,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
 <li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Show</a></li>
@@ -590,15 +595,31 @@ document.write(`
                   
   <section id="show">
 <h1>Show</h1>
-<p>Tools for previewing, inspecting and extracting geometry:</p>
+<p>Tools for previewing, inspecting and extracting geometry and data from the assembly.</p>
+<section id="visualisation">
+<h2>Visualisation</h2>
+<section id="geometries">
+<h3>Geometries</h3>
 <ul class="simple">
-<li><p><strong>ShowBeam</strong>: returns the <em>Box</em> geometry of the original beam object, i.e. before any joints and features are applied.</p></li>
-<li><p><strong>ShowBeamFrame</strong>: display the local coordinate system of the beam.</p></li>
-<li><p><strong>ShowAssembly</strong>: returns the <em>Brep</em> geometry of the parts (beams) in the assembly. Note: Whether this geometry has features and joints are applied depends on the setting in the <strong>Assembly</strong> component.</p></li>
-<li><p><strong>ShowBeamIndex</strong>: displays the index of the beam in the assembly.</p></li>
-<li><p><strong>ShowJointTypes</strong>: displays type names of joints in the assembly.</p></li>
+<li><p><strong>ShowBeamFaces</strong> : display the faces of the beams.</p></li>
+<li><p><strong>ShowBeamIndex</strong> : display the index of the beams. Based on a global list of the beams in the assembly.</p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/Show_diagramm.png"><img alt="../../_images/Show_diagramm.png" src="../../_images/Show_diagramm.png" style="width: 100%;" /></a>
+</section>
+<section id="errors">
+<h3>Errors</h3>
+<ul class="simple">
+<li><p><strong>ShowFeatureErrors</strong> :</p></li>
+<li><p><strong>ShowJoiningErrors</strong> :</p></li>
+</ul>
+</section>
+<section id="types">
+<h3>Types</h3>
+<ul class="simple">
+<li><p><strong>ShowJointTypes</strong> : display the type names of each joints in the assembly.</p></li>
+<li><p><strong>ShowTopologyTypes</strong> : display the type names of each joints in the assembly.</p></li>
+</ul>
+</section>
+</section>
 </section>
 
 
@@ -613,6 +634,25 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualisation">Visualisation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#geometries">Geometries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#errors">Errors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types">Types</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

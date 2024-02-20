@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Features" href="features.html" />
+    <link rel="next" title="Joint Rules" href="rules.html" />
     <link rel="prev" title="Attributes" href="attributes.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -519,6 +519,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Joints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
 <li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
 <li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
@@ -594,63 +595,196 @@ document.write(`
                   
   <section id="joints">
 <h1>Joints</h1>
-<p>In COMPAS TIMBER you can connect two beams using one of the three types of joints: <code class="code docutils literal notranslate"><span class="pre">T-Butt</span></code>, <code class="code docutils literal notranslate"><span class="pre">L-Butt</span></code> and <code class="code docutils literal notranslate"><span class="pre">L-Miter</span></code>.</p>
+<p>In COMPAS Timber the joints between the beams are defined according to their topology and a joint type is then applied.</p>
 <section id="joint-topologies">
 <h2>Joint Topologies</h2>
-<p>The prefixes in the joint names refer to how the two beams are positioned relatively to each other.
-We distinguish four (topological) situations: <strong>I</strong>, <strong>L</strong>, <strong>T</strong> and <strong>X</strong>:</p>
-<ul>
-<li><p><strong>I</strong> - a splice, i.e. beams are co-linear and connect at their ends</p></li>
-<li><p><strong>L</strong> - a corner, i.e. two beam meet at their ends at an angle</p></li>
-<li><p><strong>T</strong> - one beam (here called <em>main beam</em>) connects with one of its ends along the length of the other (here called <em>cross beam</em>)</p></li>
-<li><p><strong>X</strong> - the beams cross each other</p>
-<blockquote>
-<div><a class="reference internal image-reference" href="../../_images/joint_topologies_diagramm.png"><img alt="../../_images/joint_topologies_diagramm.png" src="../../_images/joint_topologies_diagramm.png" style="width: 30%;" /></a>
-</div></blockquote>
-</li>
+<p>There are three main topologies of how beams can connect to each other: <strong>L</strong>, <strong>T</strong> and <strong>X</strong>.</p>
+<ul class="simple">
+<li><p><strong>L</strong> - a corner, i.e. two beams meet at their ends at an angle.</p></li>
+<li><p><strong>T</strong> - one beam connects with one of its ends along the length of the other.</p></li>
+<li><p><strong>X</strong> - the beams cross each other.</p></li>
 </ul>
+<a class="reference internal image-reference" href="../../_images/joint_topologies_diagramm.png"><img alt="../../_images/joint_topologies_diagramm.png" src="../../_images/joint_topologies_diagramm.png" style="width: 30%;" /></a>
 </section>
-<section id="joint-components">
-<h2>Joint components</h2>
-<section id="t-butt">
-<h3>T-Butt</h3>
-<p>In a <code class="code docutils literal notranslate"><span class="pre">T-Butt</span></code> joint, one beam (here called <em>main beam</em>) connects with one of its ends to the side of the other (here called <em>cross beam</em>).
-The side to connect to is selected automatically based on the angles between the main beam and the sides of the cross beam.</p>
-<blockquote>
-<div><a class="reference internal image-reference" href="../../_images/TButt_diagramm.png"><img alt="../../_images/TButt_diagramm.png" src="../../_images/TButt_diagramm.png" style="width: 50%;" /></a>
-</div></blockquote>
-</section>
-<section id="l-butt">
-<h3>L-Butt</h3>
-<p>An <code class="code docutils literal notranslate"><span class="pre">L-Butt</span></code> joint is similar to the <code class="code docutils literal notranslate"><span class="pre">T-Butt</span></code> joint but additionally the cross beam is trimmed with the respective side
-of the main beam to create a clean corner joint.</p>
-<blockquote>
-<div><a class="reference internal image-reference" href="../../_images/LButt_diagramm.png"><img alt="../../_images/LButt_diagramm.png" src="../../_images/LButt_diagramm.png" style="width: 50%;" /></a>
-</div></blockquote>
-</section>
-<section id="l-miter">
-<h3>L-Miter</h3>
-<p>An <code class="code docutils literal notranslate"><span class="pre">L-Miter</span></code> joint connects two beams with a planar cut at a bisector of an angle between them.</p>
-<blockquote>
-<div><a class="reference internal image-reference" href="../../_images/LMiter_diagramm.png"><img alt="../../_images/LMiter_diagramm.png" src="../../_images/LMiter_diagramm.png" style="width: 50%;" /></a>
-</div></blockquote>
-</section>
-</section>
-<section id="automaticjoint-wizzard">
-<h2>AutomaticJoint wizzard</h2>
-<p>Connecting beams can be automated using <strong>JointCategoryRule</strong> and <strong>AutomaticJoints</strong> components.</p>
-<p><strong>JointCategoryRule</strong> component serves to define which joint type should be applied when a beam of the first category (<cite>CatA</cite>) meets a beam of the second category (<cite>CatB</cite>).</p>
-<p><strong>AutomaticJoints</strong> component does two things: First, it determines if two beams connect and if yes, determines the joint topology (I, L, T or X).
-Then, it assigns the join type to every connecting pair of beams according to the defined rules.
-If the defined joint type has a different topology than the beams, no joint is assigned
-(Example: two beams form a corner (L) but the rule tries to assign a T-Butt joint).</p>
+<section id="joint-types">
+<h2>Joint Types</h2>
+<section id="joints-for-l-topologies">
+<h3>Joints for <em>L</em> Topologies</h3>
+<p>For a <em>L</em> topology, several types of joint can be applied. Four of these are implemented in the current version of the COMPAS Timber: <em>French Ridge Lap</em>, <em>L-Butt</em>, <em>L-Half Lap</em> and <em>L-Miter</em>.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>L-Butt</strong> joint</p>
+<p>The L-Butt extends one beam and shortens the other beam with a planar cut, to create a clean corner joint.</p>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-Butt.png"><img alt="../../_images/gh_Joint_L-Butt.png" src="../../_images/gh_Joint_L-Butt.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-Butt.png"><img alt="../../_images/Joint_L-Butt.png" src="../../_images/Joint_L-Butt.png" style="width: 100%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">L-Butt</span> <span class="pre">Options</span></code> component</p>
 <p>Inputs:</p>
 <ul class="simple">
-<li><p><cite>Beams</cite>: list of beams. To avoid unintended results, it should be the same list that is later used as an input to <strong>Assembly</strong>.</p></li>
-<li><p><cite>Rules</cite>: rules defined using <strong>JointCategoryRule</strong> components</p></li>
-<li><p><cite>MaxDistance</cite>: (optional) tolerance for finding connecting beams if the centerlines to not intersect exactly but are at a certain distance from each other. Default is 0.000001.</p></li>
+<li><p><cite>SmallBeamButts</cite> : If true, the beam with a larger cross-section is considered as the cross beam.</p></li>
+<li><p><cite>ModifyCross</cite> : If true, the cross beam is extended to the opposite face of the main beam and cut flush with it.</p></li>
+<li><p><cite>RejectI</cite> : If true, joint will not apply when the cross beam meets the main beam in an I topology.</p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/Joints4Categories_diagramm.png"><img alt="../../_images/Joints4Categories_diagramm.png" src="../../_images/Joints4Categories_diagramm.png" style="width: 50%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>L-Half Lap</strong> joint</p>
+<p>The <em>L-Half Lap</em> topology is when two beams meet at their ends at an angle.
+An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.</p>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-HalfLap.png"><img alt="../../_images/gh_Joint_L-HalfLap.png" src="../../_images/gh_Joint_L-HalfLap.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-HalfLap.png"><img alt="../../_images/Joint_L-HalfLap.png" src="../../_images/Joint_L-HalfLap.png" style="width: 100%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">L-Half</span> <span class="pre">Lap</span> <span class="pre">Options</span></code> component</p>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>FlipLapSide</cite> : Flips the lap side.</p></li>
+<li><p><cite>CutPlaneBias</cite> : Determines the depth of lap cuts on the beams.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>L-Miter</strong> joint</p>
+<p>The L-Miter joint extends and connects the two beams with a planar cut at a bisector of the angle between them.</p>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-Miter.png"><img alt="../../_images/gh_Joint_L-Miter.png" src="../../_images/gh_Joint_L-Miter.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-Miter.png"><img alt="../../_images/Joint_L-Miter.png" src="../../_images/Joint_L-Miter.png" style="width: 100%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">L-Miter</span> <span class="pre">joint</span> <span class="pre">Options</span></code> component</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>French Ridge Lap</strong> joint (<em>not fully implemented</em>)</p>
+<p>The French ridge lap joint extends two beams and removes the upper half of the overlap on one beam and the lower half on the other.
+Unlike the L-Half Lap (presented above) joint, where the cut is made parallel in the centre of the beams, the cut of the French ridge lap joint is angled to keep the beams securely in place, preventing them from shifting.</p>
+<p>The tilted cut plane is generated by sequentially connecting the following points:</p>
+<ul class="simple">
+<li><p>a point at the middle of the inner vertical edges of the overlap;</p></li>
+<li><p>a point at the bottom third of the outer vertical edge of the overlap along the lower beam;</p></li>
+<li><p>a point at the middle of the outer vertical edge of the overlap;</p></li>
+<li><p>a point at the top third of the outer vertical edge of the overlap along the upper beam.</p></li>
+</ul>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-FrenchRidge.png"><img alt="../../_images/gh_Joint_L-FrenchRidge.png" src="../../_images/gh_Joint_L-FrenchRidge.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-FrenchRidge.png"><img alt="../../_images/Joint_L-FrenchRidge.png" src="../../_images/Joint_L-FrenchRidge.png" style="width: 100%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">French</span> <span class="pre">Ridge</span> <span class="pre">Lap</span> <span class="pre">Options</span></code> component</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>Cutoff</cite> : For very acute angles, limit the extension of the tip/beak of the joint.</p></li>
+</ul>
+</section>
+<section id="joints-for-t-topologies">
+<h3>Joints for <em>T</em> Topologies</h3>
+<p>The <em>T</em> topology is when one beam connects with one of its ends along the length of the other beam.
+For a <em>T</em> topology, several types of joint can be applied. Two of these are implemented in the current version of the COMPAS Timber: <em>T-Butt</em> and <em>T-Half Lap</em>.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>T-Butt</strong> joint</p>
+<p>The T-Butt joint shortens the <em>cross beam</em> with a planar cut, to match the side of the <em>main beam</em>. The <em>main beam</em> remains unchanged.</p>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_T-Butt.png"><img alt="../../_images/gh_Joint_T-Butt.png" src="../../_images/gh_Joint_T-Butt.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/Joint_T-Butt.png"><img alt="../../_images/Joint_T-Butt.png" src="../../_images/Joint_T-Butt.png" style="width: 100%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">T-Butt</span> <span class="pre">Options</span></code> component</p>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>Gap</cite> : Gap for tolerance between the beams, i.e., if the distance between the beams is less than the gap, the joint will be applied.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>T-Half Lap</strong> joint</p>
+<p>A T-Half Lap joint crates an overlap between the <em>main beam</em> and the <em>cross beam</em>. The <em>cross beam</em> is extended to the opposite face of the <em>main beam</em> and cut flush with it to create a planar surface.
+It is similar to a L-Half Lap joint: the upper half of the overlap of the cross beam is removed from the main beam and the lower half of the overlap of the main beam is removed from the cross beam.</p>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_T-HalfLap.png"><img alt="../../_images/gh_Joint_T-HalfLap.png" src="../../_images/gh_Joint_T-HalfLap.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/Joint_T-HalfLap.png"><img alt="../../_images/Joint_T-HalfLap.png" src="../../_images/Joint_T-HalfLap.png" style="width: 100%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">T-Half</span> <span class="pre">Lap</span></code> component</p>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>FlipLapSide</cite> : Flips the lap side.</p></li>
+<li><p><cite>CutPlaneBias</cite> : Determines the depth of lap cuts on the beams.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="joints-for-x-topologies">
+<h3>Joints for <em>X</em> Topologies</h3>
+<p>The <em>X</em> topology is when two beams cross each other along their length.
+For a <em>X</em> topology, several types of joint can be applied. One of these are implemented in the current version of the COMPAS Timber: <em>T-Butt</em> and <em>T-Half Lap</em>.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>X-Half Lap</strong> joint</p>
+<p>The X-Half Lap joint removes the upper half of the overlap from one beam and the lower half from the other.</p>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_X-HalfLap.png"><img alt="../../_images/gh_Joint_X-HalfLap.png" src="../../_images/gh_Joint_X-HalfLap.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/Joint_X-HalfLap.png"><img alt="../../_images/Joint_X-HalfLap.png" src="../../_images/Joint_X-HalfLap.png" style="width: 100%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">X-HalfLap</span> <span class="pre">Options</span></code> component</p>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>FlipLapSide</cite> : Flips the lap side.</p></li>
+<li><p><cite>CutPlaneBias</cite> : Determines the depth of lap cuts on the beams.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+</div>
+<p><strong>Null Joint</strong> joint</p>
+<p>The NullJoint is to be used in situations where no joint is to be applied. This function can also help to create and control complex joints with more than 3 beams, or with specific categories
+(in combination with a <a class="reference internal" href="rules.html"><span class="doc">Joint Rules</span></a> component).</p>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_NullJoints.png"><img alt="../../_images/gh_Joint_NullJoints.png" src="../../_images/gh_Joint_NullJoints.png" style="width: 20%;" /></a>
+<p><code class="code docutils literal notranslate"><span class="pre">Null</span> <span class="pre">Joint</span></code> component</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="summary-table">
+<h2>Summary Table</h2>
+<p>The following table summarises the joint types that can be applied to the different joint topologies.</p>
+<table class="table" id="id1">
+<caption><span class="caption-text">Joint Topologies and Joint Types</span></caption>
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head stub"></th>
+<th class="head"><p>L Topology</p></th>
+<th class="head"><p>T Topology</p></th>
+<th class="head"><p>X Topology</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><th class="stub"><p>Butt Joints</p></th>
+<td><p>x</p></td>
+<td><p>x</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>Miter Joints</p></th>
+<td><p>x</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>Half Lap Joints</p></th>
+<td><p>x</p></td>
+<td><p>x</p></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>French Ridge Lap joints</p></th>
+<td><p>x</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Output</p>
+<p>The joint output is to be connected to the <code class="code docutils literal notranslate"><span class="pre">Assembly</span></code> component to visualise and generate the geometry of the final assembly of the beams, with their joints.</p>
+</div>
 </section>
 </section>
 
@@ -676,13 +810,13 @@ If the defined joint type has a different topology than the beams, no joint is a
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-topologies">Joint Topologies</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-components">Joint components</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#t-butt">T-Butt</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#l-butt">L-Butt</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#l-miter">L-Miter</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-types">Joint Types</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#joints-for-l-topologies">Joints for <em>L</em> Topologies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#joints-for-t-topologies">Joints for <em>T</em> Topologies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#joints-for-x-topologies">Joints for <em>X</em> Topologies</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#automaticjoint-wizzard">AutomaticJoint wizzard</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-table">Summary Table</a></li>
 </ul>
   </nav></div>
 
