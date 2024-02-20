@@ -189,12 +189,12 @@ Inputs:
 * `CutPlaneBias` : Determines the depth of lap cuts on the beams.
 
 |
-
+|
 
 **Null Joint** joint
 
-
-The Null joint is used to define the joint between two beams when....
+The NullJoint is to be used in situations where no joint is to be applied. This function can also help to create and control complex joints with more than 3 beams, or with specific categories
+(in combination with a :doc:`rules` component).
 
 .. image:: ../images/gh_Joint_NullJoints.png
     :width: 20%
