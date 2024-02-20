@@ -28,6 +28,6 @@ Based on this, **Assembly** takes care of generating the final geometry of the s
 
     **Important!**
 
-    * There are three Types of **Joint Rules** 1. By **Topology**, 2. by **Category** and 3. **Direct** Joints. In this order, they will be applied to the Assembly. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules. See :doc:`Joint Rules`.
+    * There are three Types of **Joint Rules** 1. By **Topology**, 2. by **Category** and 3. **Direct** Joints. In this order, they will be applied to the Assembly. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules. See :doc:`rules`.
     * The **Joints** are processed first, then **Features**.
 

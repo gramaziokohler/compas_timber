@@ -9,7 +9,7 @@ The *origin* is located at the start of the centerline.
 
 .. image:: ../images/beam_01png.png
     :width: 40%
-|
+
 Beams are created with the component :code:`Beam` - to create a beam from a Grasshopper `Line` or `LineCurve`, or from a `Guid` of a `Line` object referenced from an active Rhino document.
 The latter is intended for a design workflow, where the input geometry (centerlines, etc.) is drawn or stored in a Rhino document instead of generated within the Grasshopper environment.
 
@@ -36,7 +36,7 @@ Outputs:
 
 .. image:: ../images/gh_beam.png
     :width: 40%
-|
+
 Once a :code:`Beam` is created, it can be used as an input for the :doc:`assembly` component or the following components:
 
 *   **DecomposeBeam** : extracts the frame, centreline, box, width and height from a beam.
