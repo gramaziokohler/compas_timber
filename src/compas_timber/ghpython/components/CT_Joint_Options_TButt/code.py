@@ -10,6 +10,6 @@ class TButtJointOptions(component):
         args = {}
         if Gap:
             args["gap"] = Gap
-        options = JointOptions(TButtJoint, ["main_beam", "cross_beam"], **args)
+        options = JointOptions(TButtJoint, ["MainBeam", "CrossBeam"], **args)
 
         return options
