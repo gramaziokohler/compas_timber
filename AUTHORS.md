@@ -23,3 +23,4 @@ Authors
 * Gonzalo Casas <casas@arch.ethz.ch> `@gonzalocasas <https://github.com/gonzalocasas>`_
 * Jonas Haldemann <haldemann@arch.ethz.ch> `@jonashaldemann <https://github.com/jonashaldemann>`_
 * Oliver Appling Bucklin <bucklin@arch.ethz.ch> `@obucklin <https://github.com/obucklin>`_
+* Aurèle L. Gheyselinck <gheyselinck@arch.ethz.ch> `@gheyselinck <https://github.com/gheyselinck`>_
