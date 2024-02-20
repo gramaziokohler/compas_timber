@@ -21,7 +21,8 @@ Joint Types
 ----------------
 
 Joints for *L* Topologies
-^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 For a *L* topology, several types of joint can be applied. Four of these are implemented in the current version of the COMPAS Timber: *French Ridge Lap*, *L-Butt*, *L-Half Lap* and *L-Miter*.
 
@@ -115,7 +116,7 @@ Inputs:
 
 
 Joints for *T* Topologies
-^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The *T* topology is when one beam connects with one of its ends along the length of the other beam.
 For a *T* topology, several types of joint can be applied. Two of these are implemented in the current version of the COMPAS Timber: *T-Butt* and *T-Half Lap*.
@@ -163,7 +164,7 @@ Inputs:
 
 
 Joints for *X* Topologies
-^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The *X* topology is when two beams cross each other along their length.
 For a *X* topology, several types of joint can be applied. One of these are implemented in the current version of the COMPAS Timber: *T-Butt* and *T-Half Lap*.
