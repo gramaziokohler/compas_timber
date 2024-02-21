@@ -1,6 +1,12 @@
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-import Grasshopper
+import re
+
+
+try:
+    from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
+    from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+    import Grasshopper
+except (ImportError, SyntaxError):
+    pass
 
 
 def list_input_valid(component, Param, name):
@@ -31,7 +37,7 @@ def add_GH_param(name, io, ghenv):   #we could also make beam_names a dict with 
     Parameters
     ----------
     name : str
-        The name of the parameter.
+        The name of the parameter.b
     io : str
         The direction of the parameter. Either "Input" or "Output".
     ghenv : object
@@ -54,7 +60,7 @@ def add_GH_param(name, io, ghenv):   #we could also make beam_names a dict with 
         index = getattr(ghenv.Component.Params, io).Count
         registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
         getattr(ghenv.Component.Params, registers[io])(param, index)
-        ghenv.Component.Params.OnParametersChanged()
+
 
 
 def clear_GH_params(ghenv, permanent_param_count=1):
@@ -74,13 +80,14 @@ def clear_GH_params(ghenv, permanent_param_count=1):
     """
     changed = False
     while len(ghenv.Component.Params.Input) > permanent_param_count:
+        ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1].IsolateObject()
         ghenv.Component.Params.UnregisterInputParameter(
             ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1],
             True
         )
         changed = True
-    if changed:
-        ghenv.Component.ExpireSolution(True)
+    ghenv.Component.Params.OnParametersChanged()
+    return changed
 
 
 def manage_dynamic_params(input_names, ghenv, permanent_param_count=1):
@@ -100,9 +107,10 @@ def manage_dynamic_params(input_names, ghenv, permanent_param_count=1):
     None
 
     """
+
     if not input_names:  # if no names are input
-        clear_GH_params(ghenv, permanent_param_count)
-        return
+        return clear_GH_params(ghenv, permanent_param_count)
+
     else:
         register_params = False
         if len(ghenv.Component.Params.Input) == len(input_names) + permanent_param_count:           #if param count matches beam_names count
@@ -116,5 +124,9 @@ def manage_dynamic_params(input_names, ghenv, permanent_param_count=1):
             clear_GH_params(ghenv, permanent_param_count)       #we could consider renaming params if we don't want to disconnect GH component inputs
             for name in input_names:
                 add_GH_param(name, "Input", ghenv)
-            ghenv.Component.ExpireSolution(True)
+            return True
+        else:
+            return False
 
+# def expired_callback():
+#     ghenv.Component.ExpireSolution(True)
