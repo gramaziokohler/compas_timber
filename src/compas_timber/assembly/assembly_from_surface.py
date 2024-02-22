@@ -114,8 +114,10 @@ class SurfaceAssembly(object):
         beams = []
         for key, value in self.centerlines.items():
             for line in value:
-                beams.append(Beam.from_centerline(centerline=line, width=self.beam_width, height=self.beam_height, z_vector=self.normal))
-                beams[-1].attributes["category"] = key
+                beam = Beam.from_centerline(centerline=line, width=self.beam_width, height=self.beam_height, z_vector=self.normal)
+                beam.attributes["category"] = str(key)
+                print(beam.attributes["category"])
+                beams.append(beam)
         return beams
 
 
