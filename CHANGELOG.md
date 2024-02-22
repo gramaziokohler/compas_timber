@@ -14,6 +14,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## [0.7.0] 2024-02-15
+
+### Added
+
+* Added `debug_geometries` attribute to `BeamJoiningError`.
+* (Re)added `BooleanSubtraction` feature.
+* Added flag `modify_cross` to `L-Butt` joint.
+* Added flag `reject_i` to `L-Butt` joint.
+* Added new `NullJoint`.
+
+### Changed
+
+* `BeamFromCurve` GH component accepts now referenced Rhino curves, referenced Rhino object IDs and internalized lines.
+* `BeamFromCurve` GH component accepts now referenced Rhino curves, referenced Rhino object IDs and internalized lines.
+* Fixed `FeatureError` when L-Butt applies the cutting plane.
+* Fixed T-Butt doesn't get extended to cross beam's plane.
+* `SimpleSequenceGenerator` updated to work with `compas.datastructures.assembly` and generates building plan acording to type.
+* Changed GH Categories for joint rules.
+* Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
+* Extended `DecomposeBeam` component to optionally show beam frame and faces.
+
+### Removed
+
+* Removed component `ShowBeamFrame`.
+* Changed GH Categories for joint rules
+* `BrepGeometryConsumer` continues to apply features even after the first error.
+* `DrillHole` component calculates length from input line.
+* `DrillHole` has default diameter proportional to beam cross-section.
+* Removed input `Length` from `DrillHole` component.
+* Fixed broken `TrimmingFeature` component.
+
+## [0.6.1] 2024-02-02
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.6.0] 2024-02-02
+
+### Added
+
+### Changed
+
+* Updated COMPAS dependency to `2.0.0`!
+
+### Removed
+
+
+## [0.5.1] 2024-01-31
+
+### Added
+
+* Added missing documentation for module `ghpython.workflow.py`.
+* Added missing documentation for package `connections`.
+* `compas_timber.__version__` now returns current version.
+
+### Changed
+
+### Removed
+
+
+## [0.5.0] 2024-01-31
+
+### Added
+
+* Added class `DebugInformation` to `workflow.py`.
+* Added new component `ShowFeatureErrors`.
+* Added new component `ShowJoiningErrors`.
+* Added `FeatureApplicator` classes which report errors during feature application.
+* Added `L-HalfLapJoint`.
+* Added `T-HalfLapJoint`.
+* Added `ShowTopologyTypes` GH Component.
+
+### Changed
+
+* Feature application now fails more gracefully (un-processed geometry is returned).
+* Attempting to join beams which are already joined raises `BeamJoiningError` instead of `AssemblyError`
+* `Joint.add_features` which fails to calculate anything raises `BeamJoiningError`.
+* Changed COMPAS dependency to `compas==2.0.0beta.4`.
+* Assembly component shows blanks when `CeateGeometry` flag is set to `False`. 
+
+### Removed
+
+* Removed `JointDef` GH components.
+* Removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`.
+
 ## [0.4.0] 2024-01-24
 
 ### Added
@@ -36,9 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added `btlx_processes` folder and processes `JackCut` and `FrenchRidgeHalfLap`
 * added `BTLx` Grasshopper component
 * added `FrenchRidgeHalfLap` joint
-* added `L-HalfLapJoint`
-* added `T-HalfLapJoint`
-* added `ShowTopologyTypes` GH Component
+
 
 ### Changed
 
@@ -53,8 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed call to `rs.Redraw()` in `BakeBoxMap` which was causing GH document to lock (cannot drag).
 
 ### Removed
-* removed `JointDef` GH components
-* removed `AutomaticJoint` GH Component. Joint rules are now input directly into `TimberAssembly`
+
 
 ## [0.3.2] 2023-11-17
 

@@ -19,7 +19,7 @@
                 "name": "Geometry",
                 "description": "Brep Geometry to subtract form Beam(s) (one or more).",
                 "typeHintID": "brep",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [

@@ -36,7 +36,7 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type."""
+    """Creates a Joint Rule that directly joins two beams."""
 
     def __init__(self, joint_type, beams, **kwargs):
         self.beams = beams
@@ -293,3 +293,46 @@ class JointOptions(object):
 
     def is_identical(self, other):
         return isinstance(other, JointOptions) and self.kwargs == other.kwargs
+
+
+class DebugInfomation(object):
+    """Container for debugging information allowing visual inspection of joint and features related errors.
+
+    Attributes
+    ----------
+    feature_errors : list(:class:`~compas_timber.consumers.FeatureApplicationError`)
+        List of errors that occured during the application of features.
+    joint_errors : list(:class:`~compas_timber.connections.BeamJoiningError`)
+        List of errors that occured during the joining of beams.
+
+    See Also
+    --------
+    :class:`~compas_timber.consumers.FeatureApplicationError`
+    :class:`~compas_timber.connections.BeamJoiningError`
+
+    """
+
+    def __init__(self):
+        self.feature_errors = []
+        self.joint_errors = []
+
+    def __repr__(self):
+        return "{}({} feature errors, {} joining errors)".format(
+            DebugInfomation.__name__, len(self.feature_errors), len(self.joint_errors)
+        )
+
+    def ToString(self):
+        return repr(self)
+
+    @property
+    def has_errors(self):
+        return self.feature_errors or self.joint_errors
+
+    def add_feature_error(self, error):
+        if isinstance(error, list):
+            self.feature_errors.extend(error)
+        else:
+            self.feature_errors.append(error)
+
+    def add_joint_error(self, error):
+        self.joint_errors.append(error)

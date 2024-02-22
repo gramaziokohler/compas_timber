@@ -2,7 +2,7 @@
     "name": "WriteBTLx",
     "nickname": "WriteBTLx",
     "category": "COMPAS Timber",
-    "subcategory": "Utils",
+    "subcategory": "Fabrication",
     "description": "Writes a BTLx file for machining of assembly parts.",
     "exposure": 4,
     "ghpython": {

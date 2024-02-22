@@ -7,6 +7,7 @@ from compas.geometry import cross_vectors
 from compas_timber.parts.features import CutFeature
 from compas_timber.utils import intersection_line_line_3D
 
+from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -51,18 +52,18 @@ class LMiterJoint(Joint):
         self.features = []
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "beam_a": self.beam_a_key,
             "beam_b": self.beam_b_key,
             "cutoff": self.cutoff,
         }
-        data_dict.update(Joint.data.fget(self))
+        data_dict.update(super(LMiterJoint, self).__data__)
         return data_dict
 
     @classmethod
-    def from_data(cls, value):
-        instance = cls(frame=Frame.from_data(value["frame"]), key=value["key"], cutoff=value["cutoff"])
+    def __from_data__(cls, value):
+        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], cutoff=value["cutoff"])
         instance.beam_a_key = value["beam_a"]
         instance.beam_b_key = value["beam_b"]
         instance.cutoff = value["cutoff"]
@@ -76,8 +77,7 @@ class LMiterJoint(Joint):
     def beams(self):
         return [self.beam_a, self.beam_b]
 
-    @property
-    def cutting_planes(self):
+    def get_cutting_planes(self):
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
 
@@ -121,13 +121,24 @@ class LMiterJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
+        assert self.beam_a and self.beam_b  # should never happen
+
         if self.features:
             self.beam_a.remove_features(self.features)
             self.beam_b.remove_features(self.features)
 
-        plane_a, plane_b = self.cutting_planes
-        start_a, end_a = self.beam_a.extension_to_plane(plane_a)
-        start_b, end_b = self.beam_b.extension_to_plane(plane_b)
+        start_a, start_b = None, None
+        try:
+            plane_a, plane_b = self.get_cutting_planes()
+            start_a, end_a = self.beam_a.extension_to_plane(plane_a)
+            start_b, end_b = self.beam_b.extension_to_plane(plane_b)
+        except AttributeError as ae:
+            # I want here just the plane that caused the error
+            geometries = [plane_b] if start_a is not None else [plane_a]
+            raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
+        except Exception as ex:
+            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+
         self.beam_a.add_blank_extension(start_a, end_a, self.key)
         self.beam_b.add_blank_extension(start_b, end_b, self.key)
 

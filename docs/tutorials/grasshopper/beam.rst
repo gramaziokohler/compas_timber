@@ -10,16 +10,12 @@ The *origin* is located at the start of the centerline.
 .. image:: ../images/beam_01png.png
     :width: 40%
 
-The Grasshopper plugin has two components to create beams:
-
-* 	**BeamFromCurve** - to create a beam form a Grasshopper `Line` or `LineCurve`
-* 	**BeamFromCurveGuid** - to create a beam from a `Guid` of a `Line` object referenced from an active Rhino document.
-	This one is intended for a design workflow, where the input geometry (centerlines etc.) is drawn or stored in a Rhino document
-	instead of Grasshopper.
+Beams are created with the component :code:`Beam` - to create a beam from a Grasshopper `Line` or `LineCurve`, or from a `Guid` of a `Line` object referenced from an active Rhino document.
+The latter is intended for a design workflow, where the input geometry (centerlines, etc.) is drawn or stored in a Rhino document instead of generated within the Grasshopper environment.
 
 Inputs:
 
-*	`Centerline` : the centerline of the beam, also called the major axis.
+*	`Centerline` : one or more centerline of the beam(s), also called the major axis.
 * 	`ZVector`: (optional) a vector used to define the rotation of the cross-section around the centerline.
 	Together with the centerline it indicates the plane in which the Z-axis of the beam lies,
 	which is to say that `ZVector` does not have to be perpendicular, but cannot be parallel, to the centerline.
@@ -30,16 +26,25 @@ Inputs:
 
 * 	`Width`: the smaller dimension of the cross-section (by convention).
 * 	`Height`: the larger dimension of the cross-section (by convention).
-* 	`Category`: (optional) a string as an additional attribute, used later to define joint rules in **JointCategoryRule** component for the **AutomaticJoint** tool. See also :doc:`joints`.
-*   `updateRefObj`: (optional, in BeamFromCurveGuid) set it to :code:`True` to write the new attributes to the source Line objects. See also :doc:`attributes`.
+* 	`Category`: (optional) a string as an additional attribute, used later to define joint rules in **Direct Joint Rules** component. See also :doc:`workflow`.
+*   `updateRefObj`: (optional) set it to :code:`True` to write the new attributes to the source Line objects. See also :doc:`attributes`.
 
-.. image:: ../images/beam_02.png
-    :width: 30%
+Outputs:
 
-|
+*	`Beam` : the resulting beam(s).
+* 	`Blank`: the corresponding blank beam. The blank represents the raw material from which the beam is cut and without :doc:`features`. It is used to define the stock size for the beam.
 
-Once a :code:`Beam` is created, you can preview its shape, coordinate system and extract its geometry and parameters using these components:
+.. image:: ../images/gh_beam.png
+    :width: 40%
 
-.. image:: ../images/beam_04.png
+Once a :code:`Beam` is created, it can be used as an input for the :doc:`assembly` component or the following components:
+
+*   **DecomposeBeam** : extracts the frame, centreline, box, width and height from a beam.
+*   **FindBeamByRhinoGeometry** : finds the beam corresponding to a referenced Rhino curve or line.
+
+.. image:: ../images/gh_beamDecompose.png
+    :width: 40%
+
+.. image:: ../images/gh_beamGUID.png
     :width: 40%
 

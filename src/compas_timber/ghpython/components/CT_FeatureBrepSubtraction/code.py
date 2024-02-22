@@ -3,26 +3,20 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.ghpython import FeatureDefinition
-from compas_timber.parts import BeamBooleanSubtraction
+from compas_timber.parts import BrepSubtraction
 
 
 class BrepSubtractionFeature(component):
-    def RunScript(self, Beam, Geometry):
-        if not Beam:
+    def RunScript(self, beam, geometry):
+        if not beam:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-        if not Geometry:
+        if not geometry:
             self.AddRuntimeMessage(Warning, "Input parameter Geometry failed to collect data")
-        if not (Beam and Geometry):
+        if not (beam and geometry):
             return
 
-        if not isinstance(Beam, list):
-            Beam = [Beam]
-        if not isinstance(Geometry, list):
-            Geometry = [Geometry]
+        if not isinstance(beam, list):
+            beam = [beam]
 
-        Feature = []
-        for brep in Geometry:
-            feature = BeamBooleanSubtraction(Brep.from_native(brep))
-            Feature.append(FeatureDefinition(feature, Beam))
-
-        return Feature
+        feature = BrepSubtraction(Brep.from_native(geometry))
+        return FeatureDefinition(feature, beam)

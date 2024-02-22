@@ -1,4 +1,5 @@
 """Read attributes encoded in the referenced object's name."""
+
 import Rhino
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark

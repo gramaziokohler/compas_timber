@@ -11,13 +11,17 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Joint
-    TButtJoint
-    LButtJoint
-    LMiterJoint
-    XHalfLapJoint
-    JointTopology
     ConnectionSolver
+    FrenchRidgeLapJoint
+    Joint
+    JointTopology
+    LapJoint
+    LButtJoint
+    LHalfLapJoint
+    LMiterJoint
+    TButtJoint
+    THalfLapJoint
+    XHalfLapJoint
 
 Functions
 =========

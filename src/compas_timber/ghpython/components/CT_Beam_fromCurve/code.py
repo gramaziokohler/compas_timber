@@ -1,12 +1,14 @@
 """Creates a Beam from a LineCurve."""
-from compas.geometry import Line
-from compas.scene import Scene
-from compas_rhino.conversions import curve_to_compas
-from compas_rhino.conversions import vector_to_compas
+
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.RhinoDoc import ActiveDoc
+import rhinoscriptsyntax as rs
+
+from compas.scene import Scene
+from compas_rhino.conversions import line_to_compas
+from compas_rhino.conversions import vector_to_compas
 
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
 from compas_timber.parts import Beam as CTBeam
@@ -62,15 +64,17 @@ class Beam_fromCurve(component):
             if len(Category) != N:
                 Category = [Category[0] for _ in range(N)]
 
-            for guid, z, w, h, c in zip(Centerline, ZVector, Width, Height, Category):
-                curve = curve_to_compas(ActiveDoc.Objects.FindId(guid))
-                line = Line(curve.start, curve.end)
+            for line, z, w, h, c in zip(Centerline, ZVector, Width, Height, Category):
+                guid, geometry = self._get_guid_and_geometry(line)
+                rhino_line = rs.coerceline(geometry)
+                line = line_to_compas(rhino_line)
+
                 z = vector_to_compas(z) if z else None
                 beam = CTBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
-                beam.attributes["rhino_guid"] = str(guid)
+                beam.attributes["rhino_guid"] = str(guid) if guid else None
                 beam.attributes["category"] = c
-
-                if updateRefObj:
+                print(guid)
+                if updateRefObj and guid:
                     update_rhobj_attributes_name(guid, "width", str(w))
                     update_rhobj_attributes_name(guid, "height", str(h))
                     update_rhobj_attributes_name(guid, "zvector", str(list(beam.frame.zaxis)))
@@ -79,6 +83,17 @@ class Beam_fromCurve(component):
                 Beam.append(beam)
                 scene.add(beam.blank)
 
-        Blank = scene.redraw()
+        Blank = scene.draw()
 
         return Beam, Blank
+
+    def _get_guid_and_geometry(self, line):
+        # internalized curves and GH geometry will not have persistent GUIDs, referenced Rhino objects will
+        # type hint on the input has to be 'ghdoc' for this to work
+        guid = None
+        geometry = line
+        rhino_obj = ActiveDoc.Objects.FindId(line)
+        if rhino_obj:
+            guid = line
+            geometry = rhino_obj.Geometry
+        return guid, geometry

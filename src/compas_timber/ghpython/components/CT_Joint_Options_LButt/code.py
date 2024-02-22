@@ -6,12 +6,15 @@ from compas_timber.ghpython import JointOptions
 
 
 class LButtJointOptions(component):
-    def RunScript(self, gap, small_beam_butts):
+    def RunScript(self, small_beam_butts, modify_cross, reject_i):
         args = {}
-        if gap:
-            args["gap"] = gap
-        if small_beam_butts:
+        if small_beam_butts is not None:
             args["small_beam_butts"] = small_beam_butts
+        if modify_cross is not None:
+            args["modify_cross"] = modify_cross
+        if reject_i is not None:
+            args["reject_i"] = reject_i
+
         options = JointOptions(LButtJoint, **args)
 
         return options
