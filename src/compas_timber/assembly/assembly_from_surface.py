@@ -1,3 +1,4 @@
+import math
 from compas.geometry import Brep
 from compas_timber.parts import Beam
 from compas.geometry import Vector
@@ -21,12 +22,18 @@ from compas.geometry import Point
 from compas.geometry import Line
 
 
-
-
-
-
 class SurfaceAssembly(object):
-    def __init__(self, surface, beam_width, beam_height, stud_spacing, z_axis = Vector.Zaxis(), sheeting_thickness = None, sheeting_inside = None, lintel_posts = True):
+    def __init__(
+        self,
+        surface,
+        beam_width,
+        beam_height,
+        stud_spacing,
+        z_axis=Vector.Zaxis(),
+        sheeting_thickness=None,
+        sheeting_inside=None,
+        lintel_posts=True,
+    ):
         """Create a timber assembly from a surface.
 
         Parameters
@@ -57,18 +64,18 @@ class SurfaceAssembly(object):
         :class:`compas_timber.assembly.TimberAssembly`
         """
 
-# if not isinstance(surface, Brep):
-#     raise TypeError('Expected a compas.geometry.Surface, got: {}'.format(type(surface)))
-# if not isinstance(z_axis, Vector):
-#     raise TypeError('Expected a compas.geometry.Vector, got: {}'.format(type(z_axis)))
-# if stud_spacing is not None and not isinstance(stud_spacing, float):
-#     raise TypeError('Expected a float, got: {}'.format(type(stud_spacing)))
-# if sheeting_thickness is not None and not isinstance(sheeting_thickness, float):
-#     raise TypeError('Expected a float, got: {}'.format(type(sheeting_thickness)))
-# if sheeting_inside is not None and not isinstance(sheeting_inside, float):
-#     raise TypeError('Expected a float, got: {}'.format(type(sheeting_inside)))
-# if not isinstance(lintel_posts, bool):
-#     raise TypeError('Expected a bool, got: {}'.format(type(lintel_posts)))
+        # if not isinstance(surface, Brep):
+        #     raise TypeError('Expected a compas.geometry.Surface, got: {}'.format(type(surface)))
+        # if not isinstance(z_axis, Vector):
+        #     raise TypeError('Expected a compas.geometry.Vector, got: {}'.format(type(z_axis)))
+        # if stud_spacing is not None and not isinstance(stud_spacing, float):
+        #     raise TypeError('Expected a float, got: {}'.format(type(stud_spacing)))
+        # if sheeting_thickness is not None and not isinstance(sheeting_thickness, float):
+        #     raise TypeError('Expected a float, got: {}'.format(type(sheeting_thickness)))
+        # if sheeting_inside is not None and not isinstance(sheeting_inside, float):
+        #     raise TypeError('Expected a float, got: {}'.format(type(sheeting_inside)))
+        # if not isinstance(lintel_posts, bool):
+        #     raise TypeError('Expected a bool, got: {}'.format(type(lintel_posts)))
 
         self.surface = surface
         self.beam_width = beam_width
@@ -78,22 +85,30 @@ class SurfaceAssembly(object):
         self.sheeting_thickness = sheeting_thickness
         self.sheeting_inside = sheeting_inside
         self.lintel_posts = lintel_posts
-        self.frame = None
         self._normal = None
         self.outer_polyline = None
         self.inner_polylines = []
-        self.points = []
         self.test_points = []
         self.edges = []
-        self.panel_length = 0
-        self.panel_height = 0
+        self._frame = None
+        self._panel_length = None
+        self._panel_height = None
 
+        self.edge_studs = []
+        self.cripples = []
+        self.king_studs = []
+        self.headers = []
+        self.sills = []
+        self.headers = []
+        self.plates = []
+        self.jack_studs = []
+        self.studs = []
 
         self.parse_loops()
-        self.generate_frame()
-        self.parse_outline()
-        self.generate_studs()
-        self.generate_openings()
+        self.offsets_outlines()
+        self.generate_elements()
+
+
 
     @property
     def centerlines(self):
@@ -108,81 +123,126 @@ class SurfaceAssembly(object):
         centerlines["studs"] = self.studs
         return centerlines
 
-
     @property
     def beams(self):
         beams = []
         for key, value in self.centerlines.items():
             for line in value:
-                beam = Beam.from_centerline(centerline=line, width=self.beam_width, height=self.beam_height, z_vector=self.normal)
+                width = self.header_height(line) if key == "headers" else self.beam_width
+                beam = Beam.from_centerline(
+                    centerline=line, width=width, height=self.beam_height, z_vector=self.normal
+                )
                 beam.attributes["category"] = str(key)
-                print(beam.attributes["category"])
                 beams.append(beam)
         return beams
 
-
+    @property
+    def points(self):
+        return self.base_outline.points
     @property
     def normal(self):
         if not self._normal:
             self._normal = self.surface.native_brep.Faces[0].NormalAt(0.5, 0.5)
         return self._normal
 
+    @property
+    def panel_length(self):
+        if not self._panel_length:
+            _ = self.frame
+        return self._panel_length
 
-    def generate_frame(self):
-        frame = Frame(self.points[0], cross_vectors(self.z_axis, self.normal), self.z_axis)
-        pts_on_xy = [Point(point.x, point.y, point.z) for point in self.points]
-        for point in pts_on_xy:
-            point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
-        box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
-        pt = Point(box_min[0], box_min[1], box_min[2])
-        self.panel_length = box_max[0] - box_min[0]
-        self.panel_height = box_max[1] - box_min[1]
-        pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
-        frame.point = pt
-        self.frame = frame
+    @property
+    def panel_height(self):
+        if not self._panel_height:
+            _ = self.frame
+        return self._panel_height
 
+    @property
+    def frame(self):
+        if not self._frame:
+            frame = Frame(self.points[0], cross_vectors(self.z_axis, self.normal), self.z_axis)
+            pts_on_xy = [Point(point.x, point.y, point.z) for point in self.points]
+            for point in pts_on_xy:
+                point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
+            box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
+            pt = Point(box_min[0], box_min[1], box_min[2])
+            self._panel_length = box_max[0] - box_min[0]
+            self._panel_height = box_max[1] - box_min[1]
+            pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
+            frame.point = pt
+            self._frame = frame
+        return self._frame
 
-
+    def header_height(self, segment):
+        return math.ceil((segment.length/15)/self.beam_width)*self.beam_width
 
 
     def parse_loops(self):
         for loop in self.surface.loops:
             polyline_points = []
             for i, edge in enumerate(loop.edges):
-                self.edges.append(Line(edge.start_vertex.point, edge.end_vertex.point))
                 if not edge.is_line:
-                    raise ValueError('function only supprorts polyline edges')
-                if edge.start_vertex.point in [loop.edges[i-1].start_vertex.point, loop.edges[i-1].end_vertex.point]:
+                    raise ValueError("function only supprorts polyline edges")
+                if edge.start_vertex.point in [
+                    loop.edges[i - 1].start_vertex.point,
+                    loop.edges[i - 1].end_vertex.point,
+                ]:
                     polyline_points.append(edge.start_vertex.point)
                 else:
                     polyline_points.append(edge.end_vertex.point)
             polyline_points.append(polyline_points[0])
-
             if loop.is_outer:
-                self.points = polyline_points
+                self.base_outline = Polyline(polyline_points)
                 polyline = Polyline(polyline_points)
                 polyline.translate(self.normal * 0.5 * self.beam_height)
-                polyline = self.offset_closed_pline(polyline, self.beam_width/2, self.normal)
                 self.outer_polyline = polyline
+                self.parse_exterior_polyline()
             else:
                 polyline = Polyline(polyline_points)
                 polyline.translate(self.normal * 0.5 * self.beam_height)
-                polyline = self.offset_closed_pline(polyline, self.beam_width/2, self.normal)
+                self.parse_interior_polyline(polyline)
                 self.inner_polylines.append(polyline)
 
 
-    def get_interior_corner(self, polyline):
-        out = []
-        for index in range(len(polyline)):
-            if index == 0:
-                angle = angle_vectors_signed(polyline[-1] - polyline[0], polyline[1] - polyline[0], self.normal, deg = True)
-            elif index == len(polyline) - 1:
-                angle = angle_vectors_signed(polyline[-2] - polyline[-1], polyline[0] - polyline[-1], self.normal, deg = True)
+    def parse_exterior_polyline(self):
+        interior_segments, exterior_segments = self.sort_interior_and_exterior_segments(self.outer_polyline)
+        for segment in interior_segments:
+            if (
+                angle_vectors(segment.direction, self.z_axis, deg=True) < 1
+                or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+            ):
+                self.jack_studs.append(segment)
             else:
-                angle = angle_vectors_signed(polyline[index-1] - polyline[index], polyline[index+1] - polyline[index], self.normal, deg = True)
-            if angle > 0:
-                out.append(index)
-        return out
+                self.headers.append(segment)
+
+        for segment in exterior_segments:
+            if (
+                angle_vectors(segment.direction, self.z_axis, deg=True) < 1
+                or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+            ):
+                self.edge_studs.append(segment)
+            else:
+                self.plates.append(segment)
+
+    def parse_interior_polyline(self, polyline):
+            horos = []
+            center = Point(0.0,0.0,0.0)
+            for i in range(len(polyline)-2):
+                center += polyline[i]
+            for val in center:
+                val /= len(polyline)-1
+            # print(center)
+            for segment in polyline.lines:
+                if (
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                ):
+                    self.jack_studs.append(segment)
+                else:
+                    horos.append(segment)
+            horos.sort(key=lambda x: dot_vectors(x.start + x.end, self.z_axis))
+            self.sills.append(horos[0])
+            self.headers.append(horos[-1])
 
 
     def sort_interior_and_exterior_segments(self, polyline):
@@ -201,128 +261,120 @@ class SurfaceAssembly(object):
         return interior, exterior
 
 
-    def parse_outline(self):
-
-        beams = []
-        joints = []
-        sheeting = []
-
-        self.edge_studs = []
-        self.cripples = []
-        self.king_studs = []
-        self.headers = []
-        self.sills = []
-        self.headers = []
-        self.plates = []
-        self.jack_studs = []
-
-        interior_segments, exterior_segments = self.sort_interior_and_exterior_segments(self.outer_polyline)
-        # self.edges = interior_segments
-        for segment in interior_segments:
-            if angle_vectors(segment.direction, self.z_axis, deg = True) < 1 or angle_vectors(segment.direction, self.z_axis, deg = True) > 179:
-                self.jack_studs.append(segment)
-                pts = offset_line(segment, self.beam_width, self.normal)
-                self.king_studs.append(Line(pts[0], pts[1]))
+    def get_interior_corner(self, polyline):
+        out = []
+        for index in range(len(polyline)):
+            if index == 0:
+                angle = angle_vectors_signed(
+                    polyline[-1] - polyline[0], polyline[1] - polyline[0], self.normal, deg=True
+                )
+            elif index == len(polyline) - 1:
+                angle = angle_vectors_signed(
+                    polyline[-2] - polyline[-1], polyline[0] - polyline[-1], self.normal, deg=True
+                )
             else:
-                self.headers.append(segment)
+                angle = angle_vectors_signed(
+                    polyline[index - 1] - polyline[index], polyline[index + 1] - polyline[index], self.normal, deg=True
+                )
+            if angle > 0:
+                out.append(index)
+        return out
 
-        for segment in exterior_segments:
-            if angle_vectors(segment.direction, self.z_axis, deg = True) < 1 or angle_vectors(segment.direction, self.z_axis, deg = True) > 179:
-                self.edge_studs.append(segment)
-            else:
-                self.plates.append(segment)
+
+
+    def offsets_outlines(self):
+
+        self.outer_polyline = self.offset_closed_pline(self.outer_polyline, self.beam_width / 2, self.normal)
+        for polyline in self.inner_polylines:
+            print(polyline)
+            polyline.translate(self.normal * 0.5 * self.beam_height)
+            polyline = self.offset_closed_pline(polyline, self.beam_width / 2, self.normal)
+
 
     def offset_closed_pline(self, polyline, distance, normal):
-            offset_segs = []
-            offset_pline_pts = []
-            for segment in polyline.lines:
-                offset_segs.append(Polyline(offset_line(segment, distance, normal)))
-            for i in range(len(offset_segs)):
-                point = intersection_line_line(offset_segs[i], offset_segs[i-1], 0.01)[0]
-                offset_pline_pts.append(point)
-            offset_pline_pts.append(offset_pline_pts[0])
-            return Polyline(offset_pline_pts)
+        offset_segs = []
+        offset_pline_pts = []
+        for segment in polyline.lines:
 
-    def generate_studs(self):
-        x_position = self.stud_spacing + (self.beam_width/2.0)
+            if segment in self.headers:
+                print(self.header_height(segment))
+                offset_segs.append(Polyline(offset_line(segment, self.header_height(segment)/2, normal)))
+            else:
+                offset_segs.append(Polyline(offset_line(segment, distance, normal)))
+        for i in range(len(offset_segs)):
+            point = intersection_line_line(offset_segs[i], offset_segs[i - 1], 0.01)[0]
+            offset_pline_pts.append(point)
+        offset_pline_pts.append(offset_pline_pts[0])
+        return Polyline(offset_pline_pts)
+
+
+    def generate_elements(self):
+        self.generate_studs_lines()
+        self.trim_jack_studs()
+        self.trim_king_studs()
+        self.trim_studs()
+
+
+
+    def generate_studs_lines(self):
+        x_position = self.stud_spacing + (self.beam_width / 2.0)
         studs = []
         while x_position < self.panel_length:
-            start_point = Point(x_position, 0,0)
+            start_point = Point(x_position, 0, 0)
             start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
             start_point.translate(self.normal * 0.5 * self.beam_height)
-            studs.append(Line.from_point_and_vector(start_point, self.z_axis*self.panel_height))
+            studs.append(Line.from_point_and_vector(start_point, self.z_axis * self.panel_height))
             x_position += self.stud_spacing
-        self.studs=studs
-
-    def generate_openings(self):
-        for outline in self.inner_polylines:
-            horos = []
-            for segment in outline.lines:
-                if angle_vectors(segment.direction, self.z_axis, deg = True) < 1 or angle_vectors(segment.direction, self.z_axis, deg = True) > 179:
-                    self.jack_studs.append(segment)
-                    pts = offset_line(segment, self.beam_width, self.normal)
-                    self.king_studs.append(Line(pts[0], pts[1]))
-                else:
-                    horos.append(segment)
-
-            horos.sort(key=lambda x: dot_vectors(x.start+x.end, self.z_axis ))
-            self.sills.append(horos[0])
-            self.headers.append(horos[-1])
+        self.studs = studs
 
 
+    def get_intersections(self, line, *line_lists_to_intersect):
+        intersections = []
+        for line_list in line_lists_to_intersect:
+            for line_to_intersect in line_list:
+                point = intersection_line_segment(line, line_to_intersect, 0.01)[0]
+                if point:
+                    intersections.append(point)
+        if len(intersections) > 1:
+            intersections.sort(key=lambda x: dot_vectors(x, self.z_axis))
+            dots = [
+                dot_vectors(Vector.from_start_end(line.start, x), self.z_axis) / line.length for x in intersections
+            ]
+        return intersections, dots
 
+
+
+    def trim_jack_studs(self):
         new_lines = []
         for line in self.jack_studs:
-
-            intersections = []
-            line_pts = [line.start, line.end]
-            line_pts.sort(key=lambda x: dot_vectors(x, self.z_axis))
-            for plate in self.plates:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            for plate in self.headers:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            if len(intersections)>1:
-                intersections.sort(key=lambda x: dot_vectors(x, self.z_axis))
-                dots = [dot_vectors(Vector.from_start_end(line_pts[0], x) , self.z_axis)/line.length for x in intersections]
+            pts = offset_line(line, self.beam_width, self.normal)
+            self.king_studs.append(Line(pts[0], pts[1]))
+            if dot_vectors(line.direction, self.z_axis) < 0:
+                line = Line(line.end, line.start)
+            intersections, dots = self.get_intersections(line, self.plates, self.headers)
+            if len(intersections) > 1:
                 bottom, top = None, None
                 for i, dot in enumerate(dots):
                     if dot < 0:
                         bottom = intersections[i]
-                    if abs(dot-1) < 0.01:
+                    if abs(dot - 1) < 0.01:
                         top = intersections[i]
                         break
                 if not bottom:
-                    bottom = line_pts[0]
+                    bottom = line.start
                 if not top:
-                    top = line_pts[1]
+                    top = line.end
             new_lines.append(Line(bottom, top))
-
         self.jack_studs = new_lines
 
+
+    def trim_king_studs(self):
         new_lines = []
         for line in self.king_studs:
-            intersections = []
-            line_pts = [line.start, line.end]
-            line_pts.sort(key=lambda x: dot_vectors(x, self.z_axis))
-            for plate in self.plates:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            for plate in self.headers:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            for plate in self.sills:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            if len(intersections)>1:
-                intersections.sort(key=lambda x: dot_vectors(x, self.z_axis))
-                dots = [dot_vectors(Vector.from_start_end(line_pts[0], x), self.z_axis)/line.length for x in intersections]
+            if dot_vectors(line.direction, self.z_axis) < 0:
+                line = Line(line.end, line.start)
+            intersections, dots = self.get_intersections(line, self.plates, self.headers, self.sills)
+            if len(intersections) > 1:
                 bottom, top = None, None
                 for i, dot in enumerate(dots):
                     if dot < 0:
@@ -331,34 +383,25 @@ class SurfaceAssembly(object):
                         top = intersections[i]
                         break
                 if not bottom:
-                    bottom = line_pts[0]
+                    bottom = line.start
                 if not top:
-                    top = line_pts[1]
+                    top = line.end
             new_lines.append(Line(bottom, top))
 
         self.king_studs = new_lines
+
+
+    def trim_studs(self):
         new_lines = []
         for line in self.studs:
-            intersections = []
-            line_pts = [line.start, line.end]
-            line_pts.sort(key=lambda x: dot_vectors(x, self.z_axis))
-            for plate in self.plates:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            for plate in self.headers:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            for plate in self.sills:
-                point = intersection_line_segment(line, plate, 0.01)[0]
-                if point:
-                    intersections.append(point)
-            if len(intersections)>1:
-                intersections.sort(key=lambda x: dot_vectors(x, self.z_axis))
+            if dot_vectors(line.direction, self.z_axis) < 0:
+                line = Line(line.end, line.start)
+            intersections, _ = self.get_intersections(line, self.plates, self.headers, self.sills)
             while len(intersections) > 1:
                 top = intersections.pop()
                 bottom = intersections.pop()
                 new_lines.append(Line(bottom, top))
 
         self.studs = new_lines
+
+
