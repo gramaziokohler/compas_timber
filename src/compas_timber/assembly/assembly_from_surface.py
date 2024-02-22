@@ -283,7 +283,6 @@ class SurfaceAssembly(object):
 
 
     def offsets_outlines(self):
-
         self.outer_polyline = self.offset_closed_pline(self.outer_polyline, self.beam_width / 2, self.normal)
         for polyline in self.inner_polylines:
             print(polyline)
@@ -295,9 +294,7 @@ class SurfaceAssembly(object):
         offset_segs = []
         offset_pline_pts = []
         for segment in polyline.lines:
-
             if segment in self.headers:
-                print(self.header_height(segment))
                 offset_segs.append(Polyline(offset_line(segment, self.header_height(segment)/2, normal)))
             else:
                 offset_segs.append(Polyline(offset_line(segment, distance, normal)))
