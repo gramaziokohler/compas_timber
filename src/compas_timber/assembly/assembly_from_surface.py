@@ -1,3 +1,6 @@
+from ast import parse
+from calendar import c
+from email import header
 import math
 from compas.geometry import Brep
 from compas_timber.parts import Beam
@@ -29,7 +32,7 @@ class SurfaceAssembly(object):
         beam_width,
         beam_height,
         stud_spacing,
-        z_axis=Vector.Zaxis(),
+        z_axis = None,
         sheeting_thickness=None,
         sheeting_inside=None,
         lintel_posts=True,
@@ -80,8 +83,9 @@ class SurfaceAssembly(object):
         self.surface = surface
         self.beam_width = beam_width
         self.beam_height = beam_height
+        self.header_height = 25
         self.stud_spacing = stud_spacing
-        self.z_axis = z_axis
+        self.z_axis = z_axis or Vector.Zaxis()
         self.sheeting_thickness = sheeting_thickness
         self.sheeting_inside = sheeting_inside
         self.lintel_posts = lintel_posts
@@ -93,20 +97,22 @@ class SurfaceAssembly(object):
         self._frame = None
         self._panel_length = None
         self._panel_height = None
+        self.jack_stud_indices = []
+        self.sill_indices = []
+        self.header_indices = []
+        self.edge_stud_indices = []
+        self.plate_indices = []
+        self.outer_segments = []
+        self.elements = []
 
-        self.edge_studs = []
-        self.cripples = []
+
         self.king_studs = []
-        self.headers = []
-        self.sills = []
-        self.headers = []
-        self.plates = []
-        self.jack_studs = []
         self.studs = []
 
         self.parse_loops()
-        self.offsets_outlines()
-        self.generate_elements()
+        self.process_outline()
+        self.make_windows()
+        self.trim_studs()
 
 
 
@@ -139,6 +145,7 @@ class SurfaceAssembly(object):
     @property
     def points(self):
         return self.base_outline.points
+
     @property
     def normal(self):
         if not self._normal:
@@ -160,21 +167,31 @@ class SurfaceAssembly(object):
     @property
     def frame(self):
         if not self._frame:
-            frame = Frame(self.points[0], cross_vectors(self.z_axis, self.normal), self.z_axis)
-            pts_on_xy = [Point(point.x, point.y, point.z) for point in self.points]
-            for point in pts_on_xy:
-                point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
-            box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
-            pt = Point(box_min[0], box_min[1], box_min[2])
-            self._panel_length = box_max[0] - box_min[0]
-            self._panel_height = box_max[1] - box_min[1]
-            pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
-            frame.point = pt
-            self._frame = frame
+            self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.normal, self.z_axis)
         return self._frame
 
-    def header_height(self, segment):
-        return math.ceil((segment.length/15)/self.beam_width)*self.beam_width
+    @property
+    def jack_studs(self):
+        curves = [self.segments[i] for i in self.jack_stud_indices]
+        curves.extend([window.jack_studs for window in self.windows])
+        return curves
+
+    @property
+    def sills(self):
+        curves = [self.segments[i] for i in self.sill_indices]
+        curves.extend([window.sills for window in self.windows])
+        return curves
+
+    @property
+    def headers(self):
+        curves = [self.segments[i] for i in self.header_indices]
+        curves.extend([window.headers for window in self.windows])
+        return curves
+
+    @property
+    def plates(self):
+        return [self.segments[i] for i in self.plate_indices]
+
 
 
     def parse_loops(self):
@@ -196,69 +213,49 @@ class SurfaceAssembly(object):
                 polyline = Polyline(polyline_points)
                 polyline.translate(self.normal * 0.5 * self.beam_height)
                 self.outer_polyline = polyline
-                self.parse_exterior_polyline()
+
             else:
                 polyline = Polyline(polyline_points)
                 polyline.translate(self.normal * 0.5 * self.beam_height)
-                self.parse_interior_polyline(polyline)
                 self.inner_polylines.append(polyline)
 
 
-    def parse_exterior_polyline(self):
-        interior_segments, exterior_segments = self.sort_interior_and_exterior_segments(self.outer_polyline)
-        for segment in interior_segments:
-            if (
+
+    def process_outline(self):
+        interior_indices = self.get_interior_segment_indices(self.outer_polyline)
+        for i, segment in enumerate(self.outer_polyline.lines):
+            print(segment)
+            self.outer_segments.append(segment)
+            if i in interior_indices:
+                print("interior")
+                if (
                 angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                 or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
-            ):
-                self.jack_studs.append(segment)
-            else:
-                self.headers.append(segment)
+                ):
 
-        for segment in exterior_segments:
-            if (
-                angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
-            ):
-                self.edge_studs.append(segment)
+                    self.jack_stud_indices.append(i)
+                else:
+                    self.header_indices.append(i)
             else:
-                self.plates.append(segment)
-
-    def parse_interior_polyline(self, polyline):
-            horos = []
-            center = Point(0.0,0.0,0.0)
-            for i in range(len(polyline)-2):
-                center += polyline[i]
-            for val in center:
-                val /= len(polyline)-1
-            # print(center)
-            for segment in polyline.lines:
+                print(self.z_axis)
                 if (
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
-                    self.jack_studs.append(segment)
+                    self.edge_stud_indices.append(i)
                 else:
-                    horos.append(segment)
-            horos.sort(key=lambda x: dot_vectors(x.start + x.end, self.z_axis))
-            self.sills.append(horos[0])
-            self.headers.append(horos[-1])
+                    self.plate_indices.append(i)
+        self.offset_outline()
 
 
-    def sort_interior_and_exterior_segments(self, polyline):
+    def get_interior_segment_indices(self, polyline):
         interior = []
-        exterior = []
         interior_corners = self.get_interior_corner(polyline)
-        for segment in polyline.lines:
-            is_interior = False
-            for i in interior_corners:
-                if polyline[i] == segment[0] or polyline[i] == segment[1]:
-                    interior.append(segment)
-                    is_interior = True
-                    break
-            if not is_interior:
-                exterior.append(segment)
-        return interior, exterior
+        for i in interior_corners:
+            interior.append(polyline.lines[i-1])
+            interior.append(polyline.lines[i])
+        interior = set(interior)
+        return interior
 
 
     def get_interior_corner(self, polyline):
@@ -281,31 +278,36 @@ class SurfaceAssembly(object):
         return out
 
 
-
-    def offsets_outlines(self):
-        self.outer_polyline = self.offset_closed_pline(self.outer_polyline, self.beam_width / 2, self.normal)
+    def make_windows(self):
         for polyline in self.inner_polylines:
-            print(polyline)
-            polyline.translate(self.normal * 0.5 * self.beam_height)
-            polyline = self.offset_closed_pline(polyline, self.beam_width / 2, self.normal)
+            self.windows.append(Window(polyline, self.frame, self.beam_width, self.beam_width, self.header_height))
 
 
-    def offset_closed_pline(self, polyline, distance, normal):
+    def offset_outline(self):
         offset_segs = []
-        offset_pline_pts = []
-        for segment in polyline.lines:
-            if segment in self.headers:
-                offset_segs.append(Polyline(offset_line(segment, self.header_height(segment)/2, normal)))
+        for i, seg in enumerate(self.outer_segments):
+            if i in self.header_indices:
+                offset_segs.append(Line(offset_line(seg, self.header_height/2, self.normal)))
+            elif i in self.sill_indices:
+                offset_segs.append(Line(offset_line(seg, self.sill_height/2, self.normal)))
+            elif i in self.jack_stud_indices:
+                offset_segs.append(Line(offset_line(seg, self.beam_width/2, self.normal)))
+                self.king_studs.append(offset_line(seg, self.beam_width, self.normal))
             else:
-                offset_segs.append(Polyline(offset_line(segment, distance, normal)))
-        for i in range(len(offset_segs)):
-            point = intersection_line_line(offset_segs[i], offset_segs[i - 1], 0.01)[0]
-            offset_pline_pts.append(point)
-        offset_pline_pts.append(offset_pline_pts[0])
-        return Polyline(offset_pline_pts)
+                ln = offset_line(seg, self.beam_width/2, self.normal)
+                offset_segs.append(Line(ln[0], ln[1]))
+            offset_pline_pts = []
+            print(offset_segs)
+            for i, seg in enumerate(offset_segs):
+                point = intersection_line_line(seg, offset_segs[i - 1], 0.01)[0]
+                print("point = ", point)
+                offset_pline_pts.append(point)
+            print("pts = ", offset_pline_pts)
+            offset_pline_pts.append(offset_pline_pts[0])
+            self.segments = Polyline(offset_pline_pts).lines
 
 
-    def generate_elements(self):
+    def trim_studs(self):
         self.generate_studs_lines()
         self.trim_jack_studs()
         self.trim_king_studs()
@@ -327,6 +329,7 @@ class SurfaceAssembly(object):
 
     def get_intersections(self, line, *line_lists_to_intersect):
         intersections = []
+        dots = []
         for line_list in line_lists_to_intersect:
             for line_to_intersect in line_list:
                 point = intersection_line_segment(line, line_to_intersect, 0.01)[0]
@@ -402,3 +405,144 @@ class SurfaceAssembly(object):
         self.studs = new_lines
 
 
+class Window(object):
+    def __init__(self, outline, frame, stud_width, sill_height, header_height = None):
+        self.outline = outline
+        self._sill_height = sill_height
+        self._header_height = header_height
+        self.stud_width = stud_width
+        self.panel_frame = frame
+
+        self.z_axis = frame.yaxis
+        self.normal = frame.zaxis
+        self.jack_stud_indices = []
+        self.sill_indices = []
+        self.header_indices = []
+        self.segments = []
+        self._length = None
+        self._height = None
+        self._normal = None
+        self._frame = None
+        self._center_point = None
+
+        self.sort_outline()
+        self.offset_lines()
+
+
+    @property
+    def jack_studs(self):
+        return [self.segments[i] for i in self.jack_stud_indices]
+
+    @property
+    def sills(self):
+        return [self.segments[i] for i in self.sill_indices]
+
+    @property
+    def headers(self):
+        return [self.segments[i] for i in self.header_indices]
+
+    @property
+    def sill_height(self):
+        return self.stud_width
+
+    @property
+    def header_height(self, segment):
+        if not self._header_height:
+            self._header_height = math.ceil((segment.length/15)/self.beam_width)*self.beam_width
+        return self._header_height
+
+    @property
+    def length(self):
+        if not self._length:
+            _ = self.frame
+        return self._length
+
+    @property
+    def height(self):
+        if not self._height:
+            _ = self.frame
+        return self._height
+
+    @property
+    def frame(self):
+        if not self._frame:
+            self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.panel_frame.normal, self.zaxis)
+        return self._frame
+
+    @property
+    def center_point(self):
+        if self._center_point:
+            pt_xy = Point(self.length/2, self.height/2, 0)
+            pt_xy.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
+            self._center_point = pt_xy
+        return self._center_point
+
+
+    def sort_outline(self):
+            center = Point(0.0,0.0,0.0)
+            for i in range(len(self.outline)-2):
+                center += self.outline[i]
+            for val in center:
+                val /= len(self.outline)-1
+            for i, segment in enumerate(self.outline.lines):
+                self.segments.append(segment)
+                if (
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                ):
+                    self.jack_stud_indices.append(i)
+                else:
+                    ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
+                    pts = [intersection_line_segment(ray, seg, 0.01) for seg in self.outline.lines if seg != segment]
+                    if len(pts) > 1:
+                        print(pts)
+                        raise ValueError("Window outline is wonky")
+                    else:
+                        if dot_vectors(pts[0]-segment.point_at(0.5), self.z_axis) > 0:
+                            self.sill_indices.append(i)
+                        else:
+                            self.header_indices.append(i)
+
+
+    def offset_lines(self):
+        offset_segs = []
+        for i, seg in enumerate(self.segments):
+            if i in self.header_indices:
+                offset_segs.append(Line(offset_line(seg, self.header_height, self.normal)))
+            elif i in self.sill_indices:
+                offset_segs.append(Line(offset_line(seg, self.sill_height, self.normal)))
+            else:
+                offset_segs.append(Line(offset_line(seg, self.stud_width, self.normal)))
+                self.king_studs.append(offset_line(seg, self.stud_width, self.normal))
+            offset_pline_pts = []
+            for i in range(len(offset_segs)):
+                point = intersection_line_line(offset_segs[i], offset_segs[i - 1], 0.01)[0]
+                offset_pline_pts.append(point)
+            offset_pline_pts.append(offset_pline_pts[0])
+            self.segments = Polyline(offset_pline_pts).lines
+
+
+    class BeamElement(object):
+        def __init__(self, centerline, width, height, z_axis, type=None, segment_index = None, polyline=None):
+            self.centerline = centerline
+            self.width = width
+            self.height = height
+            self.z_axis = z_axis
+            self.type = type
+            self.polyline = polyline
+            self.segment_index = segment_index
+
+
+
+def get_frame(points, normal, z_axis):
+        frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
+        pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
+        for point in pts_on_xy:
+            point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
+        box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
+        pt = Point(box_min[0], box_min[1], box_min[2])
+        box_length = box_max[0] - box_min[0]
+        box_height = box_max[1] - box_min[1]
+        pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
+        frame.point = pt
+        return frame, box_length, box_height
