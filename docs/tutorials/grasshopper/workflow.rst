@@ -4,9 +4,9 @@ Workflow
 
 To build a timber frame **Assembly**, you need to:
 
-*   create **Beams** 
-*   define **Joints** between these beams
-*   define other **Features** (optional)  
+*   create **Beams**
+*   define **Joints** between these beams and **Rules** how the joints are applied.
+*   define other **Features** (optional)
 
 Based on this, **Assembly** takes care of generating the final geometry of the structure.
 
@@ -16,17 +16,18 @@ Based on this, **Assembly** takes care of generating the final geometry of the s
 |
 |
 
-**Example:**   
+**Example:**
 
-.. image:: ../images/workflow_gh_example.png
+.. image:: ../images/gh_WorkflowDef.png
     :width: 75%
 
 
 |
 
 .. note::
-    
-    **Important!**   
 
-    * The order in the list of **Joints** and **Features** matters! For example: if there are two different joints defined for the same pair of beams in the list, the last one will be applied (overrides entries earlier in the list).
+    **Important!**
+
+    * There are three Types of **Joint Rules** 1. By **Topology**, 2. by **Category** and 3. **Direct** Joints. In this order, they will be applied to the Assembly. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules. See :doc:`rules`.
     * The **Joints** are processed first, then **Features**.
+

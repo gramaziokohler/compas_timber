@@ -8,7 +8,6 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 
-from .joint import beam_side_incidence
 from .joint import Joint
 
 
@@ -131,28 +130,34 @@ class LapJoint(Joint):
         )
 
     def get_main_cutting_frame(self):
-        angles_faces = beam_side_incidence(self.beams[0], self.beams[1])
-        cfr = max(angles_faces, key=lambda x: x[0])[1]
+        beam_a, beam_b = self.beams
+        assert beam_a and beam_b
+
+        _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     def get_cross_cutting_frame(self):
-        angles_faces = beam_side_incidence(self.beams[1], self.beams[0])
-        cfr = max(angles_faces, key=lambda x: x[0])[1]
+        beam_a, beam_b = self.beams
+        assert beam_a and beam_b
+        _, cfr = self.get_face_most_towards_beam(beam_b, beam_a)
         return cfr
 
     def _create_negative_volumes(self):
+        beam_a, beam_b = self.beams
+        assert beam_a and beam_b
+
         # Get Cut Plane
-        plane_cut_vector = self.beams[0].centerline.vector.cross(self.beams[1].centerline.vector)
+        plane_cut_vector = beam_a.centerline.vector.cross(beam_b.centerline.vector)
 
         if self.flip_lap_side:
             plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
-        planes_main = self._sort_beam_planes(self.beams[0], plane_cut_vector)
+        planes_main = self._sort_beam_planes(beam_a, plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_main
 
-        planes_cross = self._sort_beam_planes(self.beams[1], -plane_cut_vector)
+        planes_cross = self._sort_beam_planes(beam_b, -plane_cut_vector)
         plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
 
         # Lines as Frame Intersections

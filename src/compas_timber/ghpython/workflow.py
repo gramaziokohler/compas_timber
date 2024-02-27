@@ -36,7 +36,7 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type."""
+    """Creates a Joint Rule that directly joins two beams."""
 
     def __init__(self, joint_type, beams, **kwargs):
         self.beams = beams
@@ -329,7 +329,10 @@ class DebugInfomation(object):
         return self.feature_errors or self.joint_errors
 
     def add_feature_error(self, error):
-        self.feature_errors.append(error)
+        if isinstance(error, list):
+            self.feature_errors.extend(error)
+        else:
+            self.feature_errors.append(error)
 
     def add_joint_error(self, error):
         self.joint_errors.append(error)

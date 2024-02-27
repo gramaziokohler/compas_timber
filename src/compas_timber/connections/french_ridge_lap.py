@@ -6,7 +6,6 @@ from compas.geometry import cross_vectors
 
 from .joint import BeamJoinningError
 from .joint import Joint
-from .joint import beam_side_incidence
 from .solver import JointTopology
 
 
@@ -77,15 +76,13 @@ class FrenchRidgeLapJoint(Joint):
 
     @property
     def cutting_plane_top(self):
-        angles_faces = beam_side_incidence(self.beam_a, self.beam_b)
-        cfr = max(angles_faces, key=lambda x: x[0])[1]
+        _, cfr = self.get_face_most_towards_beam(self.beam_a, self.beam_b, ignore_ends=True)
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         return cfr
 
     @property
     def cutting_plane_bottom(self):
-        angles_faces = beam_side_incidence(self.beam_b, self.beam_a)
-        cfr = max(angles_faces, key=lambda x: x[0])[1]
+        _, cfr = self.get_face_most_towards_beam(self.beam_b, self.beam_b, ignore_ends=True)
         return cfr
 
     def restore_beams_from_keys(self, assemly):

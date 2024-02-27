@@ -2,7 +2,7 @@
 COMPAS TIMBER
 ********************************************************************************
 
-.. figure:: /_images/compas_timber.png
+.. figure:: /_images/compas_timber.jpg
      :figclass: figure
      :class: figure-img img-fluid
 

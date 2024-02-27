@@ -4,7 +4,6 @@ from compas_timber.parts import CutFeature
 
 from .joint import BeamJoinningError
 from .joint import Joint
-from .joint import beam_side_incidence
 from .solver import JointTopology
 
 
@@ -75,8 +74,9 @@ class TButtJoint(Joint):
         return "T-Butt"
 
     def get_cutting_plane(self):
-        angles_faces = beam_side_incidence(self.main_beam, self.cross_beam)
-        cfr = min(angles_faces, key=lambda x: x[0])[1]
+        assert self.main_beam and self.cross_beam  # should never happen
+
+        _, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
@@ -95,14 +95,16 @@ class TButtJoint(Joint):
 
         if self.features:
             self.main_beam.remove_features(self.features)
-
+        cutting_plane = None
         try:
             cutting_plane = self.get_cutting_plane()
+            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
         trim_feature = CutFeature(cutting_plane)
