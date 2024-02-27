@@ -8,6 +8,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import offset_line
+from compas.geometry import offset_polyline
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import bounding_box_xy
@@ -103,7 +104,7 @@ class SurfaceAssembly(object):
 
 
         self.parse_loops()
-        self.generate_elements()
+        self.generate_perimeter_elements()
         self.generate_windows()
         self.generate_studs()
 
@@ -127,7 +128,6 @@ class SurfaceAssembly(object):
             CategoryRule(TButtJoint, "king_stud", "header"),
 
             CategoryRule(TButtJoint, "sill", "jack_stud")
-
         ]
 
 
@@ -143,8 +143,6 @@ class SurfaceAssembly(object):
     def beams(self):
         beams = []
         for element in self.elements:
-            if element.centerline.length < 0.01:
-                print(element.type)
             width = self.header_height if element.type == "header" else self.beam_width
             centerline = element.centerline
             centerline.translate(self.normal * 0.5 * self.beam_height)
@@ -234,13 +232,19 @@ class SurfaceAssembly(object):
                     polyline_points.append(edge.end_vertex.point)
             polyline_points.append(polyline_points[0])
             if loop.is_outer:
-                self.outer_polyline = Polyline(polyline_points)
+                offset_loop = offset_polyline(Polyline(polyline_points), 10, self.normal)
+                outer_polyline = Polyline(polyline_points)
+                if offset_loop.length > outer_polyline:
+                    outer_polyline.flip()
+                self.outer_polyline = outer_polyline
             else:
-                self.inner_polylines.append(Polyline(polyline_points))
+                offset_loop = offset_polyline(Polyline(polyline_points), 10, self.normal)
+                inner_polyline = Polyline(polyline_points)
+                if offset_loop.length < outer_polyline:
+                    outer_polyline.flip()
+                self.inner_polylines.append(inner_polyline)
 
-
-
-    def generate_elements(self):
+    def generate_perimeter_elements(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
         for i, segment in enumerate(self.outer_polyline.lines):
             element = self.BeamElement(segment, segment_index=i, parent = self)
