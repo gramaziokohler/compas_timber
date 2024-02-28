@@ -1,0 +1,62 @@
+{
+    "name": "AssemblyFromSurface",
+    "nickname": "AssemblyFromSurface",
+    "category": "COMPAS Timber",
+    "subcategory": "Assembly",
+    "description": "Creates Beams and joint rules from a planar brep.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "plate",
+                "description": "Tuple of two floats that determine width and height of plate elements in AssemblyFromSurface.",
+                "typeHintID": "list(float, float)",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "edge_stud",
+                "description": "Tuple of two floats that determine width and height of edge_stud elements in AssemblyFromSurface.",
+                "typeHintID": "list(float, float)",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "king_stud",
+                "description": "Tuple of two floats that determine width and height of king_stud elements in AssemblyFromSurface.",
+                "typeHintID": "list(float, float)",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "jack_stud",
+                "description": "Tuple of two floats that determine width and height of jack_stud elements in AssemblyFromSurface.",
+                "typeHintID": "list(float, float)",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "stud",
+                "description": "Tuple of two floats that determine width and height of stud elements in AssemblyFromSurface.",
+                "typeHintID": "list(float, float)",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "sill",
+                "description": "Tuple of two floats that determine width and height of sill elements in AssemblyFromSurface.",
+                "typeHintID": "list(float, float)",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "header",
+                "description": "Tuple of two floats that determine width and height of header elements in AssemblyFromSurface.",
+                "typeHintID": "list(float, float)",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Dimensions",
+                "description": "BeamDimensions object for FrameFromSurface custom_dimensions."
+            }
+        ]
+    }
+}

@@ -1,0 +1,78 @@
+{
+    "name": "AssemblyBeamDimensions",
+    "nickname": "AssemblyFromSurface",
+    "category": "COMPAS Timber",
+    "subcategory": "Assembly",
+    "description": "Creates Beams and joint rules from a planar brep.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "surface",
+                "description": "Referenced planar surface from which to generate beams and joint rules.",
+                "typeHintID": "brep",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "stud_spacing",
+                "description": "spacing between studs.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "beam_width",
+                "description": "Width of the cross-section.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "frame_depth",
+                "description": "thickness of the frame section of the resulting assembly. used to set Beam.height",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "stud_direction",
+                "description": "(optional) Vector defining the direction of stud in the assembly. Default is world-Z",
+                "typeHintID": "vector",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "sheeting_outside",
+                "description": "(optional) Thickness of sheeting on the side of assembly closest to input surface. If zero, no sheeting will be added.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "sheeting_inside",
+                "description": "(optional) Thickness of sheeting on the side of assembly furthest from input surface. If zero, no sheeting will be added.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "lintel_posts",
+                "description": "(optional) If False, jack studs will not be generated and headers will butt directly onto king studs.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "custom_dimensions",
+                "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
+                "typeHintID": "BeamDimensions",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Beams",
+                "description": "Beam objects."
+            },
+            {
+                "name": "Rules",
+                "description": "List of category rules."
+            }
+        ]
+    }
+}

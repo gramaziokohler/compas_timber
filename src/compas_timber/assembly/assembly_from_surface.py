@@ -19,6 +19,7 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_segment_segment
 from compas.geometry import closest_point_on_segment
 from compas.geometry import bounding_box
+from compas.geometry import distance_point_point_sqrd
 from compas.geometry import Point
 from compas.geometry import Line
 from compas_timber.ghpython import CategoryRule
@@ -31,11 +32,11 @@ class SurfaceAssembly(object):
     def __init__(
         self,
         surface,
-        beam_width,
-        beam_height,
         stud_spacing,
+        beam_width = None,
+        frame_depth = None,
         z_axis = None,
-        sheeting_thickness=None,
+        sheeting_outside=None,
         sheeting_inside=None,
         lintel_posts=True,
         custom_dimensions = None
@@ -46,16 +47,16 @@ class SurfaceAssembly(object):
         ----------
         surface : :class:`compas.geometry.Surface`
             The surface to create the assembly from. must be planar.
-        beam_height : float
-            The height of the beams aka thickness of wall cavity normal to the surface.
         beam_width : float
+            The height of the beams aka thickness of wall cavity normal to the surface.
+        frame_depth : float
             The width of the beams.
         stud_spacing : float
             The spacing between the studs.
         z_axis : :class:`compas.geometry.Vector`, optional
             Determines the orientation of the posts inside the frame.
             Default is ``Vector.Zaxis``.
-        sheeting_thickness : :class:`compas.geometry.Surface`, optional
+        sheeting_outside : :class:`compas.geometry.Surface`, optional
             The thickness of sheeting applied to the assembly. Applies to both sides of assembly unless sheeting_inside is specified.
             Default is ``None``.
         sheeting_inside : :class:`compas.geometry.Surface`, optional
@@ -70,25 +71,14 @@ class SurfaceAssembly(object):
         :class:`compas_timber.assembly.TimberAssembly`
         """
 
-        # if not isinstance(surface, Brep):
-        #     raise TypeError('Expected a compas.geometry.Surface, got: {}'.format(type(surface)))
-        # if not isinstance(z_axis, Vector):
-        #     raise TypeError('Expected a compas.geometry.Vector, got: {}'.format(type(z_axis)))
-        # if stud_spacing is not None and not isinstance(stud_spacing, float):
-        #     raise TypeError('Expected a float, got: {}'.format(type(stud_spacing)))
-        # if sheeting_thickness is not None and not isinstance(sheeting_thickness, float):
-        #     raise TypeError('Expected a float, got: {}'.format(type(sheeting_thickness)))
-        # if sheeting_inside is not None and not isinstance(sheeting_inside, float):
-        #     raise TypeError('Expected a float, got: {}'.format(type(sheeting_inside)))
-        # if not isinstance(lintel_posts, bool):
-        #     raise TypeError('Expected a bool, got: {}'.format(type(lintel_posts)))
+
 
         self.surface = surface
         self.beam_width = beam_width
-        self.frame_thickness = beam_height
+        self.frame_depth = frame_depth
         self.stud_spacing = stud_spacing
-        self.z_axis = z_axis or Vector.Zaxis()
-        self.sheeting_thickness = sheeting_thickness
+        self._z_axis = z_axis or Vector.Zaxis()
+        self.sheeting_outside = sheeting_outside
         self.sheeting_inside = sheeting_inside
         self.lintel_posts = lintel_posts
         self._normal = None
@@ -101,13 +91,13 @@ class SurfaceAssembly(object):
         self._elements = []
         self.windows = []
         self.beam_dimensions = {
-            "plate": [self.beam_width, self.frame_thickness],
-            "edge_stud": [self.beam_width, self.frame_thickness],
-            "king_stud": [self.beam_width, self.frame_thickness],
-            "jack_stud": [self.beam_width, self.frame_thickness],
-            "stud": [self.beam_width, self.frame_thickness],
-            "sill": [self.beam_width, self.frame_thickness],
-            "header": [self.beam_width, self.frame_thickness]
+            "plate": [self.beam_width, self.frame_depth],
+            "edge_stud": [self.beam_width, self.frame_depth],
+            "king_stud": [self.beam_width, self.frame_depth],
+            "jack_stud": [self.beam_width, self.frame_depth],
+            "stud": [self.beam_width, self.frame_depth],
+            "sill": [self.beam_width, self.frame_depth],
+            "header": [self.beam_width, self.frame_depth]
         }
         if custom_dimensions:
             for key, value in custom_dimensions.items():
@@ -119,6 +109,11 @@ class SurfaceAssembly(object):
         self.generate_perimeter_elements()
         self.generate_windows()
         self.generate_studs()
+
+    @property
+    def z_axis(self):
+        cross = cross_vectors(self.normal, self._z_axis)
+        return Vector(*cross_vectors(cross, self.normal))
 
 
     @property
@@ -242,13 +237,11 @@ class SurfaceAssembly(object):
             if loop.is_outer:
                 offset_loop = Polyline(offset_polyline(Polyline(polyline_points), 10, self.normal))
                 if offset_loop.length > Polyline(polyline_points).length:
-                    print("reversing outer")
                     polyline_points.reverse()
                 self.outer_polyline = Polyline(polyline_points)
             else:
                 offset_loop = Polyline(offset_polyline(Polyline(polyline_points), 10, self.normal))
                 if offset_loop.length < Polyline(polyline_points).length:
-                    print("reversing inner")
                     polyline_points.reverse()
                 self.inner_polylines.append(Polyline(polyline_points))
 
@@ -277,7 +270,8 @@ class SurfaceAssembly(object):
         self._elements = self.offset_elements(self._elements)
         for element in self._elements:
             if element.type == "jack_stud":
-                king_line = offset_line(element.centerline, self.beam_width, self.normal)
+                offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0])/2
+                king_line = offset_line(element.centerline, offset, self.normal)
                 self._elements.append(self.BeamElement(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
@@ -307,7 +301,6 @@ class SurfaceAssembly(object):
         new_elements = []
         for element in element_loop:
             element.offset(self.beam_dimensions[element.type][0]/2)
-            print(element.type, self.beam_dimensions[element.type][0]/2)
             offset_loop.append(element)
         for i, element in enumerate(offset_loop):
                 point = intersection_line_line(element.centerline, offset_loop[i - 1].centerline, 0.01)[0]
@@ -327,6 +320,7 @@ class SurfaceAssembly(object):
         self.trim_jack_studs()
         self.trim_king_studs()
         self.trim_studs()
+        self.cull_overlaps()
 
 
     def generate_studs_lines(self):
@@ -400,6 +394,30 @@ class SurfaceAssembly(object):
                         stud_elements.append(self.BeamElement(Line(bottom, top), type="stud", parent=self))
                     self._elements.remove(element)
         self._elements.extend(stud_elements)
+
+    def cull_overlaps(self):
+        for element in self.studs:
+            for other_element in self.king_studs + self.jack_studs:
+                if self.distance_between_elements(element, other_element) < self.beam_width:
+                    self._elements.remove(element)
+                    break
+
+
+    def distance_between_elements(self, element_one, element_two):
+        distances = []
+        for pt in element_one.centerline:
+            cp = closest_point_on_segment(pt, element_two.centerline)
+            distances.append(distance_point_point_sqrd(pt, cp))
+        for pt in element_two.centerline:
+            cp = closest_point_on_segment(pt, element_one.centerline)
+            distances.append(distance_point_point_sqrd(pt, cp))
+        return math.sqrt(min(distances))
+
+
+
+
+
+
 
 
     class Window(object):
@@ -485,7 +503,8 @@ class SurfaceAssembly(object):
                     self.elements.append(element)
                 self.elements = self.parent.offset_elements(self.elements)
                 for element in self.jack_studs:
-                    king_line = offset_line(element.centerline, self.parent.beam_dimensions["king_stud"][0], self.normal)
+                    offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0])/2
+                    king_line = offset_line(element.centerline, offset, self.normal)
                     self.elements.append(self.parent.BeamElement(king_line, type="king_stud", parent=self))
 
 
