@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
+* Added new `SurfaceAssembly` class
+* Added GH components for `SurfaceAssembly`
 
 ### Changed
 
