@@ -1,38 +1,34 @@
+import clr
 from ghpythonlib.componentbase import executingcomponent as component
-import Grasshopper, GhPython
 import System
-import Rhino
-import rhinoscriptsyntax as rs
+from compas_timber.assembly import SurfaceAssembly
 
-class BeamDimensionContainer(object):
-    def __init__(self, plate, edge_stud, king_stud, jack_stud, stud, sill, header):
-        self.dims = {
-                "plate": (plate[0]if not None, plate[1]),
-                "edge_stud": (edge_stud[0], edge_stud[1]),
-                "king_stud": (king_stud[0], king_stud[1]),
-                "jack_stud": (jack_stud[0], jack_stud[1]),
-                "stud": (stud[0], stud[1]),
-                "sill": (sill[0], sill[1]),
-                "header": (header[0], header[1])
-            }
+beam_category_names = SurfaceAssembly.beam_category_names()
+
+def on_item_click(sender, event_info):
+    item = clr.Convert(sender, System.Windows.Forms.ToolStripItem)
+    item.Checked = not item.Checked
+    ghenv.Component.ExpireSolution(True)
 
 
-def parse_input(input):
-    if input:
-        if len(input) == 1 or isinstance(input, float) or isinstance(input, int):
-            return (input, None)
-        if len(input) == 2:
-            return (input[0], input[1])
+class CustomBeamDimensions(component):
+    def __init__(self):
+        super(CustomBeamDimensions, self).__init__()
+        self.items = []
+
+    def RunScript(self, width, height):
+        self.dims = {}
+        if self.items:
+            for i, item in enumerate(self.items):
+                if item.Checked and (width or height):
+                    self.dims[beam_category_names[i]] = (width or 0, height or 0)
+        return (self.dims,)  # return a tuple to allow passing dict between components
+
+    def AppendAdditionalMenuItems(self, menu):
+        if self.items:
+            for item in self.items:
+                menu.Items.Add(item)
         else:
-            raise ValueError("Input must be a single value or a list of two values.")
-
-
-class BeamDimensions(component):
-    def RunScript(self, *args):
-        dim_args = []
-        for arg in args:
-            arg = parse_input(arg)
-            dim_args.append(arg)
-
-        dims = BeamDimensionContainer(*dim_args)
-        return dims
+            for name in beam_category_names:
+                item = menu.Items.Add(name, None, on_item_click)
+                self.items.append(item)

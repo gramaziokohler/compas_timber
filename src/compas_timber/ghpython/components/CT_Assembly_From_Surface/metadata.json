@@ -1,9 +1,9 @@
 {
-    "name": "AssemblyBeamDimensions",
+    "name": "AssemblyFromSurface",
     "nickname": "AssemblyFromSurface",
     "category": "COMPAS Timber",
     "subcategory": "Assembly",
-    "description": "Creates Beams and joint rules from a planar brep.",
+    "description": "Creates Beams and joint rules from a planar brep surface.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
@@ -13,37 +13,37 @@
                 "name": "surface",
                 "description": "Referenced planar surface from which to generate beams and joint rules.",
                 "typeHintID": "brep",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "stud_spacing",
                 "description": "spacing between studs.",
                 "typeHintID": "float",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "beam_width",
                 "description": "Width of the cross-section.",
                 "typeHintID": "float",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "frame_depth",
                 "description": "thickness of the frame section of the resulting assembly. used to set Beam.height",
                 "typeHintID": "float",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "stud_direction",
                 "description": "(optional) Vector defining the direction of stud in the assembly. Default is world-Z",
                 "typeHintID": "vector",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "sheeting_outside",
                 "description": "(optional) Thickness of sheeting on the side of assembly closest to input surface. If zero, no sheeting will be added.",
                 "typeHintID": "float",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "sheeting_inside",
@@ -60,7 +60,7 @@
             {
                 "name": "custom_dimensions",
                 "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
-                "typeHintID": "BeamDimensions",
+                "typeHintID": "none",
                 "scriptParamAccess": 0
             }
         ],
@@ -72,6 +72,10 @@
             {
                 "name": "Rules",
                 "description": "List of category rules."
+            },
+            {
+                "name": "Blanks",
+                "description": "Beam blanks."
             }
         ]
     }

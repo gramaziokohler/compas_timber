@@ -1,24 +1,19 @@
 import math
-from compas.geometry import Brep
 from compas_timber.parts import Beam
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import offset_line
 from compas.geometry import offset_polyline
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import bounding_box_xy
-from compas.geometry import transform_points
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import intersection_line_segment
 from compas.geometry import intersection_line_line
-from compas.geometry import intersection_segment_segment
 from compas.geometry import closest_point_on_segment
-from compas.geometry import bounding_box
 from compas.geometry import distance_point_point_sqrd
 from compas.geometry import Point
 from compas.geometry import Line
@@ -27,19 +22,21 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 
 
-
 class SurfaceAssembly(object):
+
+    BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill"]
+
     def __init__(
         self,
         surface,
         stud_spacing,
-        beam_width = None,
-        frame_depth = None,
-        z_axis = None,
+        beam_width=None,
+        frame_depth=None,
+        z_axis=None,
         sheeting_outside=None,
         sheeting_inside=None,
         lintel_posts=True,
-        custom_dimensions = None
+        custom_dimensions=None,
     ):
         """Create a timber assembly from a surface.
 
@@ -71,8 +68,6 @@ class SurfaceAssembly(object):
         :class:`compas_timber.assembly.TimberAssembly`
         """
 
-
-
         self.surface = surface
         self.beam_width = beam_width
         self.frame_depth = frame_depth
@@ -90,21 +85,16 @@ class SurfaceAssembly(object):
         self._panel_height = None
         self._elements = []
         self.windows = []
-        self.beam_dimensions = {
-            "plate": [self.beam_width, self.frame_depth],
-            "edge_stud": [self.beam_width, self.frame_depth],
-            "king_stud": [self.beam_width, self.frame_depth],
-            "jack_stud": [self.beam_width, self.frame_depth],
-            "stud": [self.beam_width, self.frame_depth],
-            "sill": [self.beam_width, self.frame_depth],
-            "header": [self.beam_width, self.frame_depth]
-        }
+        self.beam_dimensions = {}
+        for key in self.BEAM_CATEGORY_NAMES:
+            self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
         if custom_dimensions:
             for key, value in custom_dimensions.items():
-                if value[0] != None:
-                    self.beam_dimensions[key][0] = value[0]
-                if value[1] != None:
-                    self.beam_dimensions[key][1] = value[1]
+                if value:
+                    if value[0] != 0:
+                        self.beam_dimensions[key][0] = value[0]
+                    if value[1] != 0:
+                        self.beam_dimensions[key][1] = value[1]
         self.parse_loops()
         self.generate_perimeter_elements()
         self.generate_windows()
@@ -115,26 +105,21 @@ class SurfaceAssembly(object):
         cross = cross_vectors(self.normal, self._z_axis)
         return Vector(*cross_vectors(cross, self.normal))
 
-
     @property
     def rules(self):
         return [
             CategoryRule(LButtJoint, "edge_stud", "plate"),
-
             CategoryRule(TButtJoint, "stud", "plate"),
             CategoryRule(TButtJoint, "stud", "header"),
             CategoryRule(TButtJoint, "stud", "sill"),
-
             CategoryRule(LButtJoint, "jack_stud", "plate"),
             CategoryRule(TButtJoint, "jack_stud", "plate"),
             CategoryRule(LButtJoint, "jack_stud", "header"),
             CategoryRule(TButtJoint, "jack_stud", "header"),
-
             CategoryRule(TButtJoint, "king_stud", "plate"),
             CategoryRule(TButtJoint, "king_stud", "sill"),
             CategoryRule(TButtJoint, "king_stud", "header"),
-
-            CategoryRule(TButtJoint, "sill", "jack_stud")
+            CategoryRule(TButtJoint, "sill", "jack_stud"),
         ]
 
     @property
@@ -147,11 +132,9 @@ class SurfaceAssembly(object):
         for element in self.elements:
             width = self.beam_dimensions[element.type][0]
             height = self.beam_dimensions[element.type][1]
-            centerline = element.centerline
-            centerline.translate(self.normal * 0.5 * height)
-            beam = Beam.from_centerline(
-                centerline=centerline, width=width, height=height, z_vector=self.normal
-            )
+            centerline = Line(*element.centerline)
+            centerline.translate(self.normal * height / 2.0)
+            beam = Beam.from_centerline(centerline=centerline, width=width, height=height, z_vector=self.normal)
             beam.attributes["category"] = element.type
             beams.append(beam)
         return beams
@@ -212,13 +195,16 @@ class SurfaceAssembly(object):
     def plates(self):
         return [element for element in self.elements if element.type == "plate"]
 
-
     @property
     def elements(self):
         elements = [element for element in self._elements]
         for window in self.windows:
             elements.extend(window.elements)
         return elements
+
+    @classmethod
+    def beam_category_names(cls):
+        return SurfaceAssembly.BEAM_CATEGORY_NAMES
 
     def parse_loops(self):
         for loop in self.surface.loops:
@@ -245,15 +231,14 @@ class SurfaceAssembly(object):
                     polyline_points.reverse()
                 self.inner_polylines.append(Polyline(polyline_points))
 
-
     def generate_perimeter_elements(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
         for i, segment in enumerate(self.outer_polyline.lines):
-            element = self.BeamElement(segment, segment_index=i, parent = self)
+            element = self.BeamElement(segment, segment_index=i, parent=self)
             if i in interior_indices:
                 if (
-                angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
                     element.type = "jack_stud"
                 else:
@@ -270,7 +255,7 @@ class SurfaceAssembly(object):
         self._elements = self.offset_elements(self._elements)
         for element in self._elements:
             if element.type == "jack_stud":
-                offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0])/2
+                offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
                 king_line = offset_line(element.centerline, offset, self.normal)
                 self._elements.append(self.BeamElement(king_line, type="king_stud", parent=self))
 
@@ -291,22 +276,21 @@ class SurfaceAssembly(object):
                 )
             if angle > 0:
                 out.append(index)
-        if len(out)>0:
-            out.insert(1, out[0]-1)
+        if len(out) > 0:
+            out.insert(1, out[0] - 1)
         return out
-
 
     def offset_elements(self, element_loop):
         offset_loop = []
         new_elements = []
         for element in element_loop:
-            element.offset(self.beam_dimensions[element.type][0]/2)
+            element.offset(self.beam_dimensions[element.type][0] / 2)
             offset_loop.append(element)
         for i, element in enumerate(offset_loop):
-                point = intersection_line_line(element.centerline, offset_loop[i - 1].centerline, 0.01)[0]
-                if point:
-                    element.centerline.start = point
-                    offset_loop[i - 1].centerline.end = point
+            point = intersection_line_line(element.centerline, offset_loop[i - 1].centerline, 0.01)[0]
+            if point:
+                element.centerline.start = point
+                offset_loop[i - 1].centerline.end = point
         offset_loop.extend(new_elements)
         return offset_loop
 
@@ -314,14 +298,12 @@ class SurfaceAssembly(object):
         for polyline in self.inner_polylines:
             self.windows.append(self.Window(polyline, parent=self))
 
-
     def generate_studs(self):
         self.generate_studs_lines()
         self.trim_jack_studs()
         self.trim_king_studs()
         self.trim_studs()
         self.cull_overlaps()
-
 
     def generate_studs_lines(self):
         x_position = self.stud_spacing
@@ -332,23 +314,24 @@ class SurfaceAssembly(object):
             self._elements.append(self.BeamElement(line, type="stud", parent=self))
             x_position += self.stud_spacing
 
-
     def get_element_intersections(self, element, *element_lists_to_intersect):
         intersections = []
         dots = []
         for element_list in element_lists_to_intersect:
             for element_to_intersect in element_list:
-                point = intersection_line_segment(element.z_aligned_centerline, element_to_intersect.centerline, 0.01)[0]
+                point = intersection_line_segment(element.z_aligned_centerline, element_to_intersect.centerline, 0.01)[
+                    0
+                ]
                 if point:
                     intersections.append(point)
         if len(intersections) > 1:
             intersections.sort(key=lambda x: dot_vectors(x, self.z_axis))
             dots = [
-                dot_vectors(Vector.from_start_end(element.z_aligned_centerline.start, x), self.z_axis) / element.centerline.length for x in intersections
+                dot_vectors(Vector.from_start_end(element.z_aligned_centerline.start, x), self.z_axis)
+                / element.centerline.length
+                for x in intersections
             ]
         return intersections, dots
-
-
 
     def trim_jack_studs(self):
         for element in self.jack_studs:
@@ -363,7 +346,6 @@ class SurfaceAssembly(object):
                     bottom = element.z_aligned_centerline.start
             element.set_centerline(Line(bottom, top))
 
-
     def trim_king_studs(self):
         for element in self.king_studs:
             intersections, dots = self.get_element_intersections(element, self.plates, self.headers, self.sills)
@@ -371,16 +353,15 @@ class SurfaceAssembly(object):
                 bottom, top = None, None
                 for i, dot in enumerate(dots):
                     if dot < 0.01:
-                        bottom = intersections[i]           # last intersection below sill
-                    if dot  > 1:
-                        top = intersections[i]          # first intersection above header
+                        bottom = intersections[i]  # last intersection below sill
+                    if dot > 1:
+                        top = intersections[i]  # first intersection above header
                         break
                 if not bottom:
                     bottom = element.z_aligned_centerline.start
                 if not top:
                     top = element.z_aligned_centerline.end
                 element.set_centerline(Line(bottom, top))
-
 
     def trim_studs(self):
         stud_elements = []
@@ -402,7 +383,6 @@ class SurfaceAssembly(object):
                     self._elements.remove(element)
                     break
 
-
     def distance_between_elements(self, element_one, element_two):
         distances = []
         for pt in element_one.centerline:
@@ -413,15 +393,8 @@ class SurfaceAssembly(object):
             distances.append(distance_point_point_sqrd(pt, cp))
         return math.sqrt(min(distances))
 
-
-
-
-
-
-
-
     class Window(object):
-        def __init__(self, outline, sill_height = None, header_height = None, parent = None):
+        def __init__(self, outline, sill_height=None, header_height=None, parent=None):
             self.outline = outline
             if sill_height:
                 self.sill_height = sill_height
@@ -442,7 +415,6 @@ class SurfaceAssembly(object):
             self._height = None
             self._frame = None
             self.process_outlines()
-
 
         @property
         def jack_studs(self):
@@ -471,47 +443,56 @@ class SurfaceAssembly(object):
         @property
         def frame(self):
             if not self._frame:
-                self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
+                self._frame, self._panel_length, self._panel_height = get_frame(
+                    self.points, self.parent.normal, self.zaxis
+                )
             return self._frame
 
-
         def process_outlines(self):
-                for i, segment in enumerate(self.outline.lines):
+            for i, segment in enumerate(self.outline.lines):
 
-                    element = SurfaceAssembly.BeamElement(segment, segment_index=i, parent=self)
-                    if (
-                        angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                        or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
-                    ):
-                        element.type = "jack_stud"
-                    else:
-                        ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
-                        pts = []
-                        for seg in self.outline.lines:
-                            if seg != segment:
-                                pt = intersection_line_segment(ray, seg, 0.01)[0]
-                                if pt:
-                                    pts.append(Point(*pt))
-                        if len(pts) > 1:
-                            raise ValueError("Window outline is wonky")
-                        elif len(pts) == 1:
-                            vector = Vector.from_start_end(ray.start, pts[0])
-                            if dot_vectors(vector, self.z_axis) < 0:
-                                element.type = "header"
-                            else:
-                                element.type = "sill"
-                    self.elements.append(element)
-                self.elements = self.parent.offset_elements(self.elements)
-                for element in self.jack_studs:
-                    offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0])/2
-                    king_line = offset_line(element.centerline, offset, self.normal)
-                    self.elements.append(self.parent.BeamElement(king_line, type="king_stud", parent=self))
-
-
-
+                element = SurfaceAssembly.BeamElement(segment, segment_index=i, parent=self)
+                if (
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                ):
+                    element.type = "jack_stud"
+                else:
+                    ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
+                    pts = []
+                    for seg in self.outline.lines:
+                        if seg != segment:
+                            pt = intersection_line_segment(ray, seg, 0.01)[0]
+                            if pt:
+                                pts.append(Point(*pt))
+                    if len(pts) > 1:
+                        raise ValueError("Window outline is wonky")
+                    elif len(pts) == 1:
+                        vector = Vector.from_start_end(ray.start, pts[0])
+                        if dot_vectors(vector, self.z_axis) < 0:
+                            element.type = "header"
+                        else:
+                            element.type = "sill"
+                self.elements.append(element)
+            self.elements = self.parent.offset_elements(self.elements)
+            for element in self.jack_studs:
+                offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]) / 2
+                king_line = offset_line(element.centerline, offset, self.normal)
+                self.elements.append(self.parent.BeamElement(king_line, type="king_stud", parent=self))
 
     class BeamElement(object):
-        def __init__(self, centerline, width = None, height = None, z_axis = None, normal = None, type = None, segment_index = None, polyline=None, parent = None):
+        def __init__(
+            self,
+            centerline,
+            width=None,
+            height=None,
+            z_axis=None,
+            normal=None,
+            type=None,
+            segment_index=None,
+            polyline=None,
+            parent=None,
+        ):
             self.original_centerline = centerline
             self.centerline = Line(centerline[0], centerline[1])
             self._width = width
@@ -541,6 +522,7 @@ class SurfaceAssembly(object):
                 return Line(self.centerline.end, self.centerline.start)
             else:
                 return self.centerline
+
         @property
         def normal(self):
             return self._normal if self._normal else self.parent.normal
@@ -561,14 +543,14 @@ class SurfaceAssembly(object):
 
 
 def get_frame(points, normal, z_axis):
-        frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
-        pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
-        for point in pts_on_xy:
-            point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
-        box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
-        pt = Point(box_min[0], box_min[1], box_min[2])
-        box_length = box_max[0] - box_min[0]
-        box_height = box_max[1] - box_min[1]
-        pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
-        frame.point = pt
-        return frame, box_length, box_height
+    frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
+    pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
+    for point in pts_on_xy:
+        point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
+    box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
+    pt = Point(box_min[0], box_min[1], box_min[2])
+    box_length = box_max[0] - box_min[0]
+    box_height = box_max[1] - box_min[1]
+    pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
+    frame.point = pt
+    return frame, box_length, box_height

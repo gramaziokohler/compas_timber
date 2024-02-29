@@ -1,61 +1,31 @@
 {
-    "name": "AssemblyFromSurface",
-    "nickname": "AssemblyFromSurface",
+    "name": "CustomBeamDimensions",
+    "nickname": "CustomDimensions",
     "category": "COMPAS Timber",
     "subcategory": "Assembly",
-    "description": "Creates Beams and joint rules from a planar brep.",
+    "description": "Defines custom beam profile dimensions by category for AssemblyFromSurface component. The Beam category is selected in the Context menu(right click on component).",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "plate",
-                "description": "Tuple of two floats that determine width and height of plate elements in AssemblyFromSurface.",
-                "typeHintID": "list(float, float)",
-                "scriptParamAccess": 1
+                "name": "width",
+                "description": "Width dimension of beams of the selected type.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
             },
             {
-                "name": "edge_stud",
-                "description": "Tuple of two floats that determine width and height of edge_stud elements in AssemblyFromSurface.",
-                "typeHintID": "list(float, float)",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "king_stud",
-                "description": "Tuple of two floats that determine width and height of king_stud elements in AssemblyFromSurface.",
-                "typeHintID": "list(float, float)",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "jack_stud",
-                "description": "Tuple of two floats that determine width and height of jack_stud elements in AssemblyFromSurface.",
-                "typeHintID": "list(float, float)",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "stud",
-                "description": "Tuple of two floats that determine width and height of stud elements in AssemblyFromSurface.",
-                "typeHintID": "list(float, float)",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "sill",
-                "description": "Tuple of two floats that determine width and height of sill elements in AssemblyFromSurface.",
-                "typeHintID": "list(float, float)",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "header",
-                "description": "Tuple of two floats that determine width and height of header elements in AssemblyFromSurface.",
-                "typeHintID": "list(float, float)",
-                "scriptParamAccess": 1
+                "name": "height",
+                "description": "Height dimension of beams of the selected type. This corresponds to the Frame Depth in the AssemblyFromSurface component. WARNING: this tends to make the joints fail",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
                 "name": "Dimensions",
-                "description": "BeamDimensions object for FrameFromSurface custom_dimensions."
+                "description": "BeamDimension dict object for FrameFromSurface custom_dimensions."
             }
         ]
     }
