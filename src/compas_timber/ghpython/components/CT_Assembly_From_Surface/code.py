@@ -17,9 +17,6 @@ class Assembly_From_Surface(component):
         beam_width,
         frame_depth,
         z_axis,
-        sheeting_outside,
-        sheeting_inside,
-        lintel_posts,
         custom_dimensions,
     ):
         # minimum inputs required
@@ -34,13 +31,6 @@ class Assembly_From_Surface(component):
 
         if z_axis is not None and not isinstance(z_axis, RhinoVector):
             raise TypeError("Expected a compas.geometry.Vector, got: {}".format(type(z_axis)))
-
-        if sheeting_outside is not None and not isinstance(sheeting_outside, float):
-            raise TypeError("sheeting_outside expected a float, got: {}".format(type(sheeting_outside)))
-        if sheeting_inside is not None and not isinstance(sheeting_inside, float):
-            raise TypeError("sheeting_inside expected a float, got: {}".format(type(sheeting_inside)))
-        if lintel_posts is not None and not isinstance(lintel_posts, bool):
-            raise TypeError("lintel_posts expected a bool, got: {}".format(type(lintel_posts)))
 
         if not ((beam_width and frame_depth) or custom_dimensions):
             raise ValueError(

@@ -38,15 +38,7 @@ class SurfaceAssembly(object):
     z_axis : :class:`compas.geometry.Vector`, optional
         Determines the orientation of the posts inside the frame.
         Default is ``Vector.Zaxis``.
-    sheeting_outside : :class:`compas.geometry.Surface`, optional
-        The thickness of sheeting applied to the assembly. Applies to both sides of assembly unless sheeting_inside is specified.
-        Default is ``None``.
-    sheeting_inside : :class:`compas.geometry.Surface`, optional
-        The inside sheeting thickness of the assembly.
-        Default is ``None``.
-    lintel_posts : bool, optional
-        Add lintel posts to the assembly.
-        Default is ``True``.
+
 
     Attributes
     ----------
@@ -89,9 +81,6 @@ class SurfaceAssembly(object):
         beam_width=None,
         frame_depth=None,
         z_axis=None,
-        sheeting_outside=None,
-        sheeting_inside=None,
-        lintel_posts=True,
         custom_dimensions=None,
     ):
         self.surface = surface
@@ -99,9 +88,6 @@ class SurfaceAssembly(object):
         self.frame_depth = frame_depth
         self.stud_spacing = stud_spacing
         self._z_axis = z_axis or Vector.Zaxis()
-        self.sheeting_outside = sheeting_outside
-        self.sheeting_inside = sheeting_inside
-        self.lintel_posts = lintel_posts
         self._normal = None
         self.outer_polyline = None
         self.inner_polylines = []
