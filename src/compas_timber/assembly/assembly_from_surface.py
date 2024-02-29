@@ -23,6 +23,62 @@ from compas_timber.connections import TButtJoint
 
 
 class SurfaceAssembly(object):
+    """Create a timber assembly from a surface.
+
+    Parameters
+    ----------
+    surface : :class:`compas.geometry.Surface`
+        The surface to create the assembly from. must be planar.
+    beam_width : float
+        The height of the beams aka thickness of wall cavity normal to the surface.
+    frame_depth : float
+        The width of the beams.
+    stud_spacing : float
+        The spacing between the studs.
+    z_axis : :class:`compas.geometry.Vector`, optional
+        Determines the orientation of the posts inside the frame.
+        Default is ``Vector.Zaxis``.
+    sheeting_outside : :class:`compas.geometry.Surface`, optional
+        The thickness of sheeting applied to the assembly. Applies to both sides of assembly unless sheeting_inside is specified.
+        Default is ``None``.
+    sheeting_inside : :class:`compas.geometry.Surface`, optional
+        The inside sheeting thickness of the assembly.
+        Default is ``None``.
+    lintel_posts : bool, optional
+        Add lintel posts to the assembly.
+        Default is ``True``.
+
+    Attributes
+    ----------
+    beams : list of :class:`compas_timber.parts.Beam`
+        The beams of the assembly.
+    rules : list of :class:`compas_timber.ghpython.CategoryRule`
+        The rules for the assembly.
+    centerlines : list of :class:`compas.geometry.Line`
+        The centerlines of the beams.
+    normal : :class:`compas.geometry.Vector`
+        The normal of the surface.
+    panel_length : float
+        The length of the panel.
+    panel_height : float
+        The height of the panel.
+    frame : :class:`compas.geometry.Frame`
+        The frame of the assembly.
+    jack_studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+        The jack studs of the assembly.
+    king_studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+        The king studs of the assembly.
+    edge_studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+        The edge studs of the assembly.
+    studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+        The studs of the assembly.
+    sills : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+        The sills of the assembly.
+    headers : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+        The headers of the assembly.
+    plates : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+
+    """
 
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill"]
 
@@ -38,36 +94,6 @@ class SurfaceAssembly(object):
         lintel_posts=True,
         custom_dimensions=None,
     ):
-        """Create a timber assembly from a surface.
-
-        Parameters
-        ----------
-        surface : :class:`compas.geometry.Surface`
-            The surface to create the assembly from. must be planar.
-        beam_width : float
-            The height of the beams aka thickness of wall cavity normal to the surface.
-        frame_depth : float
-            The width of the beams.
-        stud_spacing : float
-            The spacing between the studs.
-        z_axis : :class:`compas.geometry.Vector`, optional
-            Determines the orientation of the posts inside the frame.
-            Default is ``Vector.Zaxis``.
-        sheeting_outside : :class:`compas.geometry.Surface`, optional
-            The thickness of sheeting applied to the assembly. Applies to both sides of assembly unless sheeting_inside is specified.
-            Default is ``None``.
-        sheeting_inside : :class:`compas.geometry.Surface`, optional
-            The inside sheeting thickness of the assembly.
-            Default is ``None``.
-        lintel_posts : bool, optional
-            Add lintel posts to the assembly.
-            Default is ``True``.
-
-        Returns
-        -------
-        :class:`compas_timber.assembly.TimberAssembly`
-        """
-
         self.surface = surface
         self.beam_width = beam_width
         self.frame_depth = frame_depth
@@ -130,13 +156,7 @@ class SurfaceAssembly(object):
     def beams(self):
         beams = []
         for element in self.elements:
-            width = self.beam_dimensions[element.type][0]
-            height = self.beam_dimensions[element.type][1]
-            centerline = Line(*element.centerline)
-            centerline.translate(self.normal * height / 2.0)
-            beam = Beam.from_centerline(centerline=centerline, width=width, height=height, z_vector=self.normal)
-            beam.attributes["category"] = element.type
-            beams.append(beam)
+            beams.append(element.to_beam())
         return beams
 
     @property
@@ -234,7 +254,7 @@ class SurfaceAssembly(object):
     def generate_perimeter_elements(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
         for i, segment in enumerate(self.outer_polyline.lines):
-            element = self.BeamElement(segment, segment_index=i, parent=self)
+            element = self.BeamElement(segment, parent=self)
             if i in interior_indices:
                 if (
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
@@ -379,7 +399,10 @@ class SurfaceAssembly(object):
     def cull_overlaps(self):
         for element in self.studs:
             for other_element in self.king_studs + self.jack_studs:
-                if self.distance_between_elements(element, other_element) < self.beam_width:
+                if (
+                    self.distance_between_elements(element, other_element)
+                    < (self.beam_dimensions[element.type][0] + self.beam_dimensions[other_element.type][0]) / 2
+                ):
                     self._elements.remove(element)
                     break
 
@@ -394,6 +417,47 @@ class SurfaceAssembly(object):
         return math.sqrt(min(distances))
 
     class Window(object):
+        """
+        A window object for the SurfaceAssembly.
+
+        Parameters
+        ----------
+        outline : :class:`compas.geometry.Polyline`
+            The outline of the window.
+        sill_height : float, optional
+            The height of the sill.
+        header_height : float, optional
+            The height of the header.
+        parent : :class:`compas_timber.assembly.SurfaceAssembly`
+            The parent of the window.
+
+        Attributes
+        ----------
+        outline : :class:`compas.geometry.Polyline`
+            The outline of the window.
+        sill_height : float
+            The height of the sill.
+        header_height : float
+            The height of the header.
+        parent : :class:`compas_timber.assembly.SurfaceAssembly`
+            The parent of the window.
+        z_axis : :class:`compas.geometry.Vector`
+            The z axis of the parent.
+        normal : :class:`compas.geometry.Vector`
+            The normal of the parent.
+        beam_dimensions : dict
+            The beam dimensions of the parent.
+        elements : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+            The elements of the window.
+        length : float
+            The length of the window.
+        height : float
+            The height of the window.
+        frame : :class:`compas.geometry.Frame`
+            The frame of the window.
+
+        """
+
         def __init__(self, outline, sill_height=None, header_height=None, parent=None):
             self.outline = outline
             if sill_height:
@@ -407,9 +471,7 @@ class SurfaceAssembly(object):
             self.parent = parent
             self.z_axis = parent.frame.yaxis
             self.normal = parent.frame.zaxis
-            self.jack_stud_indices = []
-            self.sill_indices = []
-            self.header_indices = []
+            self.beam_dimensions = parent.beam_dimensions
             self.elements = []
             self._length = None
             self._height = None
@@ -450,8 +512,7 @@ class SurfaceAssembly(object):
 
         def process_outlines(self):
             for i, segment in enumerate(self.outline.lines):
-
-                element = SurfaceAssembly.BeamElement(segment, segment_index=i, parent=self)
+                element = SurfaceAssembly.BeamElement(segment, parent=self)
                 if (
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
@@ -481,6 +542,44 @@ class SurfaceAssembly(object):
                 self.elements.append(self.parent.BeamElement(king_line, type="king_stud", parent=self))
 
     class BeamElement(object):
+        """
+        Container for Beam attributes before beam is instantiated.
+
+        Parameters
+        ----------
+        centerline : :class:`compas.geometry.Line`
+            The centerline of the beam.
+        width : float, optional
+            The width of the beam.
+        height : float, optional
+            The height of the beam.
+        z_axis : :class:`compas.geometry.Vector`, optional
+            The z axis of the beam.
+        normal : :class:`compas.geometry.Vector`, optional
+            The normal of the beam.
+        type : str, optional
+            The type of the beam.
+        polyline : :class:`compas.geometry.Polyline`, optional
+            The polyline of the beam.
+        parent : :class:`compas_timber.assembly.SurfaceAssembly` or :class:`compas_timber.assembly.SurfaceAssembly.Window`
+            The parent of the beam.
+
+        Attributes
+        ----------
+        centerline : :class:`compas.geometry.Line`
+            The centerline of the beam element.
+        width : float
+            The width of the beam element.
+        height : float
+            The height of the beam element.
+        z_axis : :class:`compas.geometry.Vector`
+            The z axis of the parent (Not the Beam).
+        normal : :class:`compas.geometry.Vector`
+            The normal of the parent.
+
+
+        """
+
         def __init__(
             self,
             centerline,
@@ -489,32 +588,23 @@ class SurfaceAssembly(object):
             z_axis=None,
             normal=None,
             type=None,
-            segment_index=None,
-            polyline=None,
             parent=None,
         ):
             self.original_centerline = centerline
             self.centerline = Line(centerline[0], centerline[1])
             self._width = width
             self._height = height
-            self._z_axis = z_axis
             self._normal = normal
             self.type = type
-            self.polyline = polyline
-            self.segment_index = segment_index
             self.parent = parent
 
         @property
         def width(self):
-            return self._width if self._width else self.parent.beam_width
+            return self._width if self._width else self.parent.beam_dimensions[self.type][0]
 
         @property
         def height(self):
-            return self._height if self._height else self.parent.beam_height
-
-        @property
-        def z_axis(self):
-            return self._z_axis if self._z_axis else self.parent.z_axis
+            return self._height if self._height else self.parent.beam_dimensions[self.type][1]
 
         @property
         def z_aligned_centerline(self):
@@ -535,8 +625,11 @@ class SurfaceAssembly(object):
             self.centerline.transform(vector)
 
         def to_beam(self):
-            centerline = self.centerline.translate(self.normal * 0.5 * self.height)
-            return Beam.from_centerline(centerline, self.width, self.height, self.z_axis)
+            centerline = Line(*self.centerline)
+            centerline.translate(self.normal * 0.5 * self.height)
+            beam = Beam.from_centerline(centerline, self.width, self.height, self.normal)
+            beam.attributes["category"] = self.type
+            return beam
 
         def set_centerline(self, line):
             self.centerline = line

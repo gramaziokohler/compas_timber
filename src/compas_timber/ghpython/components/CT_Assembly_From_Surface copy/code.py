@@ -5,6 +5,7 @@ from compas_timber.assembly import SurfaceAssembly
 
 beam_category_names = SurfaceAssembly.beam_category_names()
 
+
 def on_item_click(sender, event_info):
     item = clr.Convert(sender, System.Windows.Forms.ToolStripItem)
     item.Checked = not item.Checked

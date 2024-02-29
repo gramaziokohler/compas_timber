@@ -9,7 +9,6 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 class BeamDecompose(component):
-
     RED = Color.FromArgb(255, 255, 100, 100)
     GREEN = Color.FromArgb(200, 50, 220, 100)
     BLUE = Color.FromArgb(200, 50, 150, 255)
