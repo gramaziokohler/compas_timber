@@ -44,38 +44,24 @@ class LapJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(LapJoint, self).__init__(frame=frame, key=key)
+    @property
+    def __data__(self):
+        data = super(LapJoint, self).__data__
+        data["main_beam"] = self.main_beam_key
+        data["cross_beam"] = self.cross_beam_key
+        data["flip_lap_side"] = self.flip_lap_side
+        data["cut_plane_bias"] = self.cut_plane_bias
+        return data
+
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5):
+        super(LapJoint, self).__init__()
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.main_beam_key = main_beam.guid if main_beam else None
+        self.cross_beam_key = cross_beam.guid if cross_beam else None
         self.features = []
-
-    @property
-    def __data__(self):
-        data_dict = {
-            "main_beam": self.main_beam_key,
-            "cross_beam": self.cross_beam_key,
-            "flip_lap_side": self.flip_lap_side,
-            "cut_plane_bias": self.cut_plane_bias,
-        }
-        data_dict.update(super(LapJoint, self).__data__)
-        return data_dict
-
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(
-            frame=Frame.__from_data__(value["frame"]),
-            key=value["key"],
-            cut_plane_bias=value["cut_plane_bias"],
-            flip_lap_side=value["flip_lap_side"],
-        )
-        instance.main_beam_key = value["main_beam"]
-        instance.cross_beam_key = value["cross_beam"]
-        return instance
 
     @property
     def beams(self):

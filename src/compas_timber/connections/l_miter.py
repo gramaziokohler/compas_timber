@@ -42,32 +42,22 @@ class LMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, frame=None, key=None):
-        super(LMiterJoint, self).__init__(frame, key)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
-        self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
-        self.features = []
-
     @property
     def __data__(self):
-        data_dict = {
-            "beam_a": self.beam_a_key,
-            "beam_b": self.beam_b_key,
-            "cutoff": self.cutoff,
-        }
-        data_dict.update(super(LMiterJoint, self).__data__)
-        return data_dict
+        data = super(LMiterJoint, self).__data__
+        data["beam_a"] = self.beam_a_key
+        data["beam_b"] = self.beam_b_key
+        data["cutoff"] = self.cutoff
+        return data
 
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], cutoff=value["cutoff"])
-        instance.beam_a_key = value["beam_a"]
-        instance.beam_b_key = value["beam_b"]
-        instance.cutoff = value["cutoff"]
-        return instance
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None):
+        super(LMiterJoint, self).__init__()
+        self.beam_a = beam_a
+        self.beam_b = beam_b
+        self.beam_a_key = beam_a.guid if beam_a else None
+        self.beam_b_key = beam_b.guid if beam_b else None
+        self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
+        self.features = []
 
     @property
     def joint_type(self):
@@ -78,6 +68,8 @@ class LMiterJoint(Joint):
         return [self.beam_a, self.beam_b]
 
     def get_cutting_planes(self):
+        assert self.beam_a and self.beam_b
+
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
 
@@ -139,9 +131,8 @@ class LMiterJoint(Joint):
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
 
-        self.beam_a.add_blank_extension(start_a, end_a, self.key)
-        self.beam_b.add_blank_extension(start_b, end_b, self.key)
-
+        self.beam_a.add_blank_extension(start_a, end_a, self.guid)
+        self.beam_b.add_blank_extension(start_b, end_b, self.guid)
         f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
         self.beam_a.add_features(f1)
         self.beam_b.add_features(f2)

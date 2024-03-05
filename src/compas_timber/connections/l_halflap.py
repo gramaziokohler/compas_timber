@@ -48,8 +48,8 @@ class LHalfLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, frame, key)
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5):
+        super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias)
 
     @property
     def joint_type(self):
@@ -69,9 +69,9 @@ class LHalfLapJoint(LapJoint):
         start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_frame)
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
         self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
         )
 
         self.main_beam.add_features(MillVolume(negative_brep_main_beam))

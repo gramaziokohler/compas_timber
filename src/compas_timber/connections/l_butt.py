@@ -39,6 +39,16 @@ class LButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
+    @property
+    def __data__(self):
+        data = super(LButtJoint, self).__data__
+        data["main_beam_key"] = self.main_beam_key
+        data["cross_beam_key"] = self.cross_beam_key
+        data["small_beam_butts"] = self.small_beam_butts
+        data["modify_cross"] = self.modify_cross
+        data["reject_i"] = self.reject_i
+        return data
+
     def __init__(
         self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs
     ):
@@ -50,37 +60,12 @@ class LButtJoint(Joint):
 
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.main_beam_key = main_beam.guid if main_beam else None
+        self.cross_beam_key = cross_beam.guid if cross_beam else None
         self.modify_cross = modify_cross
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
         self.features = []
-
-    @property
-    def __data__(self):
-        data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
-            "small_beam_butts": self.small_beam_butts,
-            "modify_cross": self.modify_cross,
-            "reject_i": self.reject_i,
-        }
-        data_dict.update(super(LButtJoint, self).__data__)
-        return data_dict
-
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(
-            frame=Frame.__from_data__(value["frame"]),
-            key=value["key"],
-            small_beam_butts=value["small_beam_butts"],
-            modify_cross=value["modify_cross"],
-            reject_i=value["reject_i"],
-        )
-        instance.main_beam_key = value["main_beam_key"]
-        instance.cross_beam_key = value["cross_beam_key"]
-        return instance
 
     @property
     def beams(self):
@@ -142,14 +127,13 @@ class LButtJoint(Joint):
 
         if self.modify_cross:
             self.cross_beam.add_blank_extension(
-                start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+                start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
             )
             f_cross = CutFeature(cross_cutting_plane)
             self.cross_beam.add_features(f_cross)
             self.features.append(f_cross)
 
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
-
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
         f_main = CutFeature(main_cutting_plane)
         self.main_beam.add_features(f_main)
         self.features.append(f_main)

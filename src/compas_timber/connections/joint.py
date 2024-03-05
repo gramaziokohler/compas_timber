@@ -4,6 +4,8 @@ from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 
+from compas_model.interactions import Interaction
+
 from .solver import JointTopology
 
 
@@ -34,7 +36,7 @@ class BeamJoinningError(Exception):
         self.debug_geometries = debug_geometries or []
 
 
-class Joint(Data):
+class Joint(Interaction):
     """Base class for a joint connecting two beams.
 
     This is a base class and should not be instantiated directly.
@@ -51,15 +53,8 @@ class Joint(Data):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
 
-    def __init__(self, frame=None, key=None):
-        super(Joint, self).__init__()
-        self.frame = frame or Frame.worldXY()
-        self.key = key
-        self.attributes = {}
-
-    @property
-    def __data__(self):
-        return {"frame": self.frame.__data__, "key": self.key, "beams": [beam.key for beam in self.beams]}
+    def __init__(self):
+        super(Joint, self).__init__(name=self.__class__.__name__)
 
     @property
     def beams(self):
