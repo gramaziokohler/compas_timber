@@ -1,4 +1,28 @@
 from compas.data import Data
+from compas.geometry import Brep
+from compas.geometry import Cylinder
+from compas.geometry import Frame
+from compas.geometry import Plane
+
+
+class FeatureApplicationError(Exception):
+    """Raised when a feature cannot be applied to a beam geometry.
+
+    Attributes
+    ----------
+    feature_geometry : :class:`~compas.geometry.Geometry`
+        The geometry of the feature that could not be applied.
+    beam_geometry : :class:`~compas.geometry.Geometry`
+        The geometry of the beam that could not be modified.
+    message : str
+        The error message.
+
+    """
+
+    def __init__(self, feature_geometry, beam_geometry, message):
+        self.feature_geometry = feature_geometry
+        self.beam_geometry = beam_geometry
+        self.message = message
 
 
 class Feature(Data):
@@ -44,6 +68,33 @@ class CutFeature(Feature):
         data_dict.update(super(CutFeature, self).__data__)
         return data_dict
 
+    def apply(self, beam_geometry):
+        """Apply the feature to the beam geometry.
+
+        Raises
+        ------
+        :class:`compas_timber.consumers.FeatureApplicationError`
+            If the cutting plane does not intersect with the beam geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        try:
+            results = beam_geometry.trimmed(self.cutting_plane)
+            # TODO: figure out the discrepency between OCCBrep and RhinoBrep here
+            if isinstance(results, list):
+                return results[0]
+            else:
+                return results
+        except IndexError:
+            raise FeatureApplicationError(
+                self.cutting_plane,
+                beam_geometry,
+                "The cutting plane does not intersect with beam geometry.",
+            )
 
 class DrillFeature(Feature):
     """Parametric drill hole to be made on a beam.
@@ -71,6 +122,33 @@ class DrillFeature(Feature):
         data_dict.update(super(DrillFeature, self).__data__)
         return data_dict
 
+    def apply(self, beam_geometry):
+        """Apply the feature to the beam geometry.
+
+        Raises
+        ------
+        :class:`compas_timber.consumers.FeatureApplicationError`
+            If the drill volume is not contained in the beam geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        print("applying drill hole feature to beam")
+        plane = Plane(point=self.line.start, normal=self.line.vector)
+        plane.point += plane.normal * 0.5 * self.length
+        drill_volume = Cylinder(frame=Frame.from_plane(plane), radius=self.diameter / 2.0, height=self.length)
+
+        try:
+            return beam_geometry - Brep.from_cylinder(drill_volume)
+        except IndexError:
+            raise FeatureApplicationError(
+                drill_volume,
+                beam_geometry,
+                "The drill volume is not contained in the beam geometry.",
+            )
 
 class MillVolume(Feature):
     """A volume to be milled out of a beam.
@@ -81,16 +159,39 @@ class MillVolume(Feature):
         The volume to be milled out of the beam.
 
     """
+    @property
+    def __data__(self):
+        data = super(MillVolume, self).__data__
+        data["volume"] = self.mesh_volume
+        return data
 
     def __init__(self, volume, **kwargs):
         super(MillVolume, self).__init__(**kwargs)
-        self.volume = volume
+        self.mesh_volume = volume
 
-    @property
-    def __data__(self):
-        data_dict = {"volume": self.volume}
-        data_dict.update(super(MillVolume, self).__data__)
-        return data_dict
+    def apply(self, beam_geometry):
+        """Apply the feature to the beam geometry.
+
+        Raises
+        ------
+        :class:`compas_timber.consumers.FeatureApplicationError`
+            If the volume does not intersect with the beam geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        volume = Brep.from_mesh(self.mesh_volume)
+        try:
+            return beam_geometry - volume
+        except IndexError:
+            raise FeatureApplicationError(
+                volume,
+                beam_geometry,
+                "The volume does not intersect with beam geometry.",
+            )
 
 
 class BrepSubtraction(Feature):
@@ -112,3 +213,26 @@ class BrepSubtraction(Feature):
         data_dict = {"volume": self.volume}
         data_dict.update(super(BrepSubtraction, self).__data__)
         return data_dict
+
+    def apply(self, beam_geometry):
+        """Apply the feature to the beam geometry.
+
+        Raises
+        ------
+        :class:`compas_timber.consumers.FeatureApplicationError`
+            If the volume does not intersect with the beam geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        try:
+            return beam_geometry - self.volume
+        except IndexError:
+            raise FeatureApplicationError(
+                self.volume,
+                beam_geometry,
+                "The volume does not intersect with beam geometry.",
+            )
