@@ -40,12 +40,6 @@ class Assembly_From_Surface(component):
         # reformat unset parameters for consistency
         if not z_axis:
             z_axis = None
-        if not sheeting_outside:
-            sheeting_outside = None
-        if not sheeting_inside:
-            sheeting_inside = None
-        if not lintel_posts:
-            lintel_posts = None
 
         assembly = SurfaceAssembly(
             Brep.from_native(surface),
