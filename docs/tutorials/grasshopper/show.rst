@@ -2,13 +2,27 @@
 Show
 ****
 
-Tools for previewing, inspecting and extracting geometry:
+Tools for previewing, inspecting and extracting geometry and data from the assembly.
 
-* **ShowBeam**: returns the *Box* geometry of the original beam object, i.e. before any joints and features are applied.
-* **ShowBeamFrame**: display the local coordinate system of the beam.
-* **ShowAssembly**: returns the *Brep* geometry of the parts (beams) in the assembly. Note: Whether this geometry has features and joints are applied depends on the setting in the **Assembly** component.
-* **ShowBeamIndex**: displays the index of the beam in the assembly. 
-* **ShowJointTypes**: displays type names of joints in the assembly.
+Visualisation
+-------------
 
-.. image:: ../images/Show_diagramm.png
-    :width: 100%
+Geometries
+**********
+
+* **ShowBeamFaces** : display the faces of the beams.
+* **ShowBeamIndex** : display the index of the beams. Based on a global list of the beams in the assembly.
+
+Errors
+******
+
+* **ShowFeatureErrors** :
+* **ShowJoiningErrors** :
+
+
+Types
+*****
+
+* **ShowJointTypes** : display the type names of each joints in the assembly.
+* **ShowTopologyTypes** : display the type names of each joints in the assembly.
+

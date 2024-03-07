@@ -32,6 +32,7 @@ Then, the following sections explain in detail the concepts and tools:
     tutorials/grasshopper/beam
     tutorials/grasshopper/attributes
     tutorials/grasshopper/joints
+    tutorials/grasshopper/rules
     tutorials/grasshopper/features
     tutorials/grasshopper/assembly
     tutorials/grasshopper/show
