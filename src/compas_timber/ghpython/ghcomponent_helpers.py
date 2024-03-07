@@ -46,7 +46,7 @@ def add_GH_param(name, io, ghenv):   #we could also make beam_names a dict with 
     Parameters
     ----------
     name : str
-        The name of the parameter.b
+        The name of the parameter.
     io : str
         The direction of the parameter. Either "Input" or "Output".
     ghenv : object
@@ -69,7 +69,7 @@ def add_GH_param(name, io, ghenv):   #we could also make beam_names a dict with 
         index = getattr(ghenv.Component.Params, io).Count
         registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
         getattr(ghenv.Component.Params, registers[io])(param, index)
-
+        ghenv.Component.Params.OnParametersChanged()
 
 
 def clear_GH_params(ghenv, permanent_param_count=1):
@@ -89,7 +89,6 @@ def clear_GH_params(ghenv, permanent_param_count=1):
     """
     changed = False
     while len(ghenv.Component.Params.Input) > permanent_param_count:
-        ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1].IsolateObject()
         ghenv.Component.Params.UnregisterInputParameter(
             ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1],
             True
@@ -139,10 +138,9 @@ def manage_dynamic_params(input_names, ghenv, rename_count = 0, permanent_param_
     None
 
     """
-
     if not input_names:  # if no names are input
-        return clear_GH_params(ghenv, permanent_param_count)
-
+        clear_GH_params(ghenv, permanent_param_count)
+        return
     else:
         if keep_connections:
             to_remove = []
@@ -178,5 +176,3 @@ def manage_dynamic_params(input_names, ghenv, rename_count = 0, permanent_param_
                         add_GH_param(name, "Input", ghenv)
 
 
-# def expired_callback():
-#     ghenv.Component.ExpireSolution(True)
