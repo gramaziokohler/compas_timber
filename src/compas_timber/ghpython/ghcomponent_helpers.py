@@ -1,5 +1,5 @@
 import re
-
+import System
 
 try:
     from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
@@ -29,6 +29,15 @@ def item_input_valid(component, Param, name):
     else:
         return True
     return False
+
+
+def get_all_subclasses(cls):
+    subclasses = []
+    for subclass in cls.__subclasses__():
+        if not get_all_subclasses(subclass):
+            subclasses.append(subclass)
+        subclasses.extend(get_all_subclasses(subclass))
+    return subclasses
 
 
 def add_GH_param(name, io, ghenv):   #we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components
@@ -90,7 +99,30 @@ def clear_GH_params(ghenv, permanent_param_count=1):
     return changed
 
 
-def manage_dynamic_params(input_names, ghenv, permanent_param_count=1):
+def rename_GH_param(input_name, index, ghenv):
+    """Renames a parameter in the Grasshopper component.
+
+    Parameters
+    ----------
+    ghenv : object
+        The Grasshopper environment object.
+    input_name : str
+        The new name of the parameter.
+    index : int
+        The index of the parameter to rename.
+
+    Returns
+    -------
+    None
+
+    """
+    param = ghenv.Component.Params.Input[index]
+    param.NickName = input_name
+    param.Name = input_name
+    param.Description = input_name
+    ghenv.Component.Params.OnParametersChanged()
+
+def manage_dynamic_params(input_names, ghenv, rename_count = 0, permanent_param_count=1, keep_connections=True):
     """Clears all input parameters from the component.
 
     Parameters
@@ -112,21 +144,39 @@ def manage_dynamic_params(input_names, ghenv, permanent_param_count=1):
         return clear_GH_params(ghenv, permanent_param_count)
 
     else:
-        register_params = False
-        if len(ghenv.Component.Params.Input) == len(input_names) + permanent_param_count:           #if param count matches beam_names count
+        if keep_connections:
+            to_remove = []
+            for param in ghenv.Component.Params.Input[permanent_param_count + rename_count:]:
+                if param.Name not in input_names:
+                    to_remove.append(param)
+            for param in to_remove:
+                param.IsolateObject()
+                ghenv.Component.Params.UnregisterInputParameter(param, True)
             for i, name in enumerate(input_names):
-                if ghenv.Component.Params.Input[i + permanent_param_count].Name != name:            #if param names don't match
-                    register_params = True
-                    break
+                if i < rename_count:
+                    rename_GH_param(name, i+permanent_param_count, ghenv)
+                elif name not in [param.Name for param in ghenv.Component.Params.Input]:
+                    add_GH_param(name, "Input", ghenv)
+
         else:
-            register_params = True
-        if register_params:
-            clear_GH_params(ghenv, permanent_param_count)       #we could consider renaming params if we don't want to disconnect GH component inputs
-            for name in input_names:
-                add_GH_param(name, "Input", ghenv)
-            return True
-        else:
-            return False
+            register_params = False
+            if len(ghenv.Component.Params.Input) == len(input_names) + permanent_param_count :           #if param count matches beam_names count
+                for i, name in enumerate(input_names):
+                    if ghenv.Component.Params.Input[i + permanent_param_count].Name != name:            #if param names don't match
+                        register_params = True
+                        break
+            else:
+                register_params = True
+            if register_params:
+                clear_GH_params(ghenv, permanent_param_count + rename_count)       #we could consider renaming params if we don't want to disconnect GH component inputs
+                for i, name in enumerate(input_names):
+                    if i<permanent_param_count:
+                        continue
+                    elif i < rename_count:
+                        rename_GH_param(name, i, ghenv)
+                    else:
+                        add_GH_param(name, "Input", ghenv)
+
 
 # def expired_callback():
 #     ghenv.Component.ExpireSolution(True)
