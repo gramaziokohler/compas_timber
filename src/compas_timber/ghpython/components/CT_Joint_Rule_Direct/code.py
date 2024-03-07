@@ -1,62 +1,100 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-import Grasshopper
+import clr
+import System
+import inspect
+import itertools
 
+from compas_timber.connections import Joint
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
+
+from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
+from compas_timber.ghpython.ghcomponent_helpers import get_all_subclasses
 from compas_timber.ghpython import DirectRule
-from compas_timber.ghpython import manage_dynamic_params
 
 
 class DirectJointRule(component):
-    def RunScript(self, joint_options, *args):
-        names = None
-        if joint_options:
-            names = [name + " category" for name in joint_options.beam_names]
+    def __init__(self):
+        super(DirectJointRule, self).__init__()
+        self.classes =  {}
+        for cls in get_all_subclasses(Joint):
+            self.classes[cls.__name__] = cls
+        self.items = []
+        self.joint_type = None
+        self.joint_name = None
 
-        manage_dynamic_params(names, ghenv)
 
-        if not args or not names:  # check that dynamic params generated
-            return
+    def RunScript(self, *args):
+        if not self.joint_type:
+            ghenv.Component.Message = "Select joint type from context menu (right click)"
+            self.AddRuntimeMessage(Warning, "Select joint type from context menu (right click)")
+            return None
+        else:
+            ghenv.Component.Message = self.joint_name
+            beam_a = args[0]
+            beam_b = args[1]
+            kwargs = {}
+            for i, val in enumerate(args[2:]):
+                if val:
+                    kwargs[self.arg_names()[i+2]] = val
 
-        if len(args) != len(names):  # check that dynamic params generated correctly
-            self.AddRuntimeMessage(Error, "Input parameter error.")
-            return
-
-        beams = []
-        create_rule = True
-        for i in range(len(joint_options.beam_names)):
-            if not args[i]:  # test that input recieved data
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(joint_options.beam_names[i])
-                )
-                create_rule = False
-            else:
-                beam_args = []
-                if not isinstance(args[i], list):
-                    beam_args = [args[i]]
-                beams.append(beam_args)
-
-        if create_rule:
-            if len(beams[0]) != len(beams[1]):  # test that beam list lengths match
-                self.AddRuntimeMessage(
-                    Error,
-                    "Number of items in {} and {} must match!".format(
-                        joint_options.beam_names[0], joint_options.beam_names[1]
-                    ),
-                )
+            if not beam_a:
+                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0]))
+            if not beam_b:
+                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1]))
+            if not (args[0] and args[1]):
                 return
-            rules = []
-            for main, secondary in zip(beams[0], beams[1]):
+            if not isinstance(beam_a, list):
+                MainBeam = [beam_a]
+            if not isinstance(beam_b, list):
+                SecondaryBeam = [beam_b]
+            if len(MainBeam) != len(SecondaryBeam):
+                self.AddRuntimeMessage(Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1]))
+                return
+            Rules = []
+            for main, secondary in zip(MainBeam, SecondaryBeam):
                 topology, _, _ = ConnectionSolver().find_topology(main, secondary)
-                if topology != joint_options.type.SUPPORTED_TOPOLOGY:
+                if topology != self.joint_type.SUPPORTED_TOPOLOGY:
                     self.AddRuntimeMessage(
                         Warning,
                         "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                            JointTopology.get_name(topology), joint_options.type.__name__
+                            JointTopology.get_name(topology), self.joint_type.__name__
                         ),
                     )
                     continue
-                rules.append(DirectRule(joint_options.type, [main, secondary], **joint_options.kwargs))
-            return rules
+                Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
+            return Rules
+
+
+    def arg_names(self):
+        return inspect.getargspec(self.joint_type.__init__)[0][1:]
+
+
+    def AppendAdditionalMenuItems(self, menu):
+        if self.items:
+            for item in self.items:
+                menu.Items.Add(item)
+        else:
+            for name in self.classes.keys():
+                item = menu.Items.Add(name, None, self.on_item_click)
+                self.items.append(item)
+
+
+    def on_item_click(self, sender, event_info):
+        active_item = clr.Convert(sender, System.Windows.Forms.ToolStripItem)
+        active_item.Checked = True
+
+        for item in self.items:
+            if str(item) != str(sender):
+                item.Checked = False
+
+        self.joint_name = str(sender)
+
+        self.joint_type = self.classes[self.joint_name]
+
+
+        manage_dynamic_params(self.arg_names(), ghenv, rename_count = 2, permanent_param_count = 0)
+
+        ghenv.Component.ExpireSolution(True)
