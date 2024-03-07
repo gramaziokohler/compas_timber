@@ -47,14 +47,14 @@ class DirectJointRule(component):
             if not (args[0] and args[1]):
                 return
             if not isinstance(beam_a, list):
-                MainBeam = [beam_a]
+                beam_a = [beam_a]
             if not isinstance(beam_b, list):
-                SecondaryBeam = [beam_b]
-            if len(MainBeam) != len(SecondaryBeam):
+                beam_b = [beam_b]
+            if len(beam_a) != len(beam_b):
                 self.AddRuntimeMessage(Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1]))
                 return
             Rules = []
-            for main, secondary in zip(MainBeam, SecondaryBeam):
+            for main, secondary in zip(beam_a, beam_b):
                 topology, _, _ = ConnectionSolver().find_topology(main, secondary)
                 if topology != self.joint_type.SUPPORTED_TOPOLOGY:
                     self.AddRuntimeMessage(
@@ -63,14 +63,12 @@ class DirectJointRule(component):
                             JointTopology.get_name(topology), self.joint_type.__name__
                         ),
                     )
-                    continue
                 Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
             return Rules
 
 
     def arg_names(self):
         return inspect.getargspec(self.joint_type.__init__)[0][1:]
-
 
     def AppendAdditionalMenuItems(self, menu):
         if self.items:

@@ -1,7 +1,8 @@
+from operator import index
 import re
-import System
 
 try:
+    import System
     from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
     from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
     import Grasshopper
@@ -40,7 +41,7 @@ def get_all_subclasses(cls):
     return subclasses
 
 
-def add_GH_param(name, io, ghenv):   #we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components
+def add_GH_param(name, io, ghenv, index = None):   #we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components
     """Adds a parameter to the Grasshopper component.
 
     Parameters
@@ -66,7 +67,9 @@ def add_GH_param(name, io, ghenv):   #we could also make beam_names a dict with 
         param.Description = name
         param.Access = Grasshopper.Kernel.GH_ParamAccess.item
         param.Optional = True
-        index = getattr(ghenv.Component.Params, io).Count
+        if not index:
+            index = getattr(ghenv.Component.Params, io).Count
+
         registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
         getattr(ghenv.Component.Params, registers[io])(param, index)
         ghenv.Component.Params.OnParametersChanged()
@@ -154,7 +157,7 @@ def manage_dynamic_params(input_names, ghenv, rename_count = 0, permanent_param_
                 if i < rename_count:
                     rename_GH_param(name, i+permanent_param_count, ghenv)
                 elif name not in [param.Name for param in ghenv.Component.Params.Input]:
-                    add_GH_param(name, "Input", ghenv)
+                    add_GH_param(name, "Input", ghenv, index = i+permanent_param_count)
 
         else:
             register_params = False
