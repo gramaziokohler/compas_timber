@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
+* Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
+* Added GH component param supporting funtions in `compas_timber.ghpython.ghcomponent_helpers.py`
 
 ### Changed
 
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed GH Categories for joint rules.
 * Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
 * Extended `DecomposeBeam` component to optionally show beam frame and faces.
+* Changed `CategoryJointRule` and `DirectJointRule` to a dynamic interface where joint type is selected with right click menu
 
 ### Removed
 
