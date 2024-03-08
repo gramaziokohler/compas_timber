@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
 * Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
-* Added GH component param supporting funtions in `compas_timber.ghpython.ghcomponent_helpers.py`
+* Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
 
 ### Changed
 
