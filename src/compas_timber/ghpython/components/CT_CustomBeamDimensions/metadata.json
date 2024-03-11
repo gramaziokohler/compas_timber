@@ -25,7 +25,7 @@
         "outputParameters": [
             {
                 "name": "Dimensions",
-                "description": "BeamDimension dict object for FrameFromSurface custom_dimensions."
+                "description": "Beam Dimension dict object for SurfaceAssemblyOptions custom_dimensions."
             }
         ]
     }

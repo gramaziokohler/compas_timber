@@ -1,6 +1,6 @@
 {
-    "name": "AssemblyFromSurface",
-    "nickname": "AssemblyFromSurface",
+    "name": "SurfaceAssembly",
+    "nickname": "SurfaceAssembly",
     "category": "COMPAS Timber",
     "subcategory": "Assembly",
     "description": "Creates Beams and joint rules from a planar brep surface.",
@@ -40,42 +40,30 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "sheeting_outside",
-                "description": "(optional) Thickness of sheeting on the side of assembly closest to input surface. If zero, no sheeting will be added.",
-                "typeHintID": "float",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "sheeting_inside",
-                "description": "(optional) Thickness of sheeting on the side of assembly furthest from input surface. If zero, no sheeting will be added.",
-                "typeHintID": "float",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "lintel_posts",
-                "description": "(optional) If False, jack studs will not be generated and headers will butt directly onto king studs.",
-                "typeHintID": "bool",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "custom_dimensions",
-                "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
+                "name": "options",
+                "description": "(optional) SurfaceAssembly options.",
                 "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "CreateGeometry",
+                "description": "generate joint and feature geometry",
+                "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
-                "name": "Beams",
-                "description": "Beam objects."
+                "name": "Assembly",
+                "description": "compas_timber TimberAssembly object."
             },
             {
-                "name": "Rules",
-                "description": "List of category rules."
+                "name": "Geometry",
+                "description": "Assembly geometry."
             },
             {
-                "name": "Blanks",
-                "description": "Beam blanks."
+                "name": "debug",
+                "description": "debug_info."
             }
         ]
     }

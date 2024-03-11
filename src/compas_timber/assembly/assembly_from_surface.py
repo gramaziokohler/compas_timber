@@ -1,4 +1,5 @@
 import math
+
 from compas_timber.parts import Beam
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
@@ -20,6 +21,9 @@ from compas.geometry import Line
 from compas_timber.ghpython import CategoryRule
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import JointTopology
+from compas_timber.assembly import TimberAssembly
 
 
 class SurfaceAssembly(object):
@@ -92,6 +96,7 @@ class SurfaceAssembly(object):
         sheeting_outside=None,
         sheeting_inside=None,
         lintel_posts=True,
+        edge_stud_offset=0.0,
         custom_dimensions=None,
     ):
         self.surface = surface
@@ -101,6 +106,7 @@ class SurfaceAssembly(object):
         self._z_axis = z_axis or Vector.Zaxis()
         self.sheeting_outside = sheeting_outside
         self.sheeting_inside = sheeting_inside
+        self.edge_stud_offset = edge_stud_offset or 0.0
         self.lintel_posts = lintel_posts
         self._normal = None
         self.outer_polyline = None
@@ -134,7 +140,11 @@ class SurfaceAssembly(object):
     @property
     def rules(self):
         return [
-            CategoryRule(LButtJoint, "edge_stud", "plate"),
+            (
+                CategoryRule(LButtJoint, "edge_stud", "plate")
+                if self.edge_stud_offset == 0
+                else CategoryRule(TButtJoint, "edge_stud", "plate")
+            ),
             CategoryRule(TButtJoint, "stud", "plate"),
             CategoryRule(TButtJoint, "stud", "header"),
             CategoryRule(TButtJoint, "stud", "sill"),
@@ -143,6 +153,7 @@ class SurfaceAssembly(object):
             CategoryRule(LButtJoint, "jack_stud", "header"),
             CategoryRule(TButtJoint, "jack_stud", "header"),
             CategoryRule(TButtJoint, "king_stud", "plate"),
+            CategoryRule(LButtJoint, "king_stud", "plate"),
             CategoryRule(TButtJoint, "king_stud", "sill"),
             CategoryRule(TButtJoint, "king_stud", "header"),
             CategoryRule(TButtJoint, "sill", "jack_stud"),
@@ -151,6 +162,34 @@ class SurfaceAssembly(object):
     @property
     def centerlines(self):
         return [element.centerline for element in self.elements]
+
+    @property
+    def assembly(self):
+        assembly = TimberAssembly()
+        for beam in self.beams:
+            assembly.add_beam(beam)
+        topologies = []
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(assembly.beams, rtree=True, max_distance=0.1)
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=0.1)
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
+                for rule in self.rules:
+                    if not rule.comply(pair):
+                        continue
+                    if beam_a.key == 4 and beam_b.key == 5:
+                        print(rule)
+                    if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
+                        continue
+                    else:
+                        if rule.joint_type == LButtJoint:
+                            beam_a, beam_b = rule.reorder([beam_a, beam_b])
+                        rule.joint_type.create(assembly, beam_a, beam_b, **rule.kwargs)
+        assembly.set_topologies(topologies)
+
+        return assembly
 
     @property
     def beams(self):
@@ -260,7 +299,11 @@ class SurfaceAssembly(object):
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
-                    element.type = "jack_stud"
+
+                    if self.lintel_posts:
+                        element.type = "jack_stud"
+                    else:
+                        element.type = "king_stud"
                 else:
                     element.type = "header"
             else:
@@ -273,11 +316,12 @@ class SurfaceAssembly(object):
                     element.type = "plate"
             self._elements.append(element)
         self._elements = self.offset_elements(self._elements)
-        for element in self._elements:
-            if element.type == "jack_stud":
-                offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-                king_line = offset_line(element.centerline, offset, self.normal)
-                self._elements.append(self.BeamElement(king_line, type="king_stud", parent=self))
+        if self.lintel_posts:
+            for element in self._elements:
+                if element.type == "jack_stud":
+                    offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
+                    king_line = offset_line(element.centerline, offset, self.normal)
+                    self._elements.append(self.BeamElement(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
         out = []
@@ -302,16 +346,20 @@ class SurfaceAssembly(object):
 
     def offset_elements(self, element_loop):
         offset_loop = []
-        new_elements = []
         for element in element_loop:
             element.offset(self.beam_dimensions[element.type][0] / 2)
+            if element.type == "edge_stud":
+                element.offset(self.edge_stud_offset)
             offset_loop.append(element)
+            # self.edges.append(Line(element.centerline[0], element.centerline[1]))
         for i, element in enumerate(offset_loop):
-            point = intersection_line_line(element.centerline, offset_loop[i - 1].centerline, 0.01)[0]
-            if point:
-                element.centerline.start = point
-                offset_loop[i - 1].centerline.end = point
-        offset_loop.extend(new_elements)
+            if element.type != "plate":
+                element_before = offset_loop[i - 1]
+                element_after = offset_loop[(i + 1) % len(offset_loop)]
+                start_point = intersection_line_line(element.centerline, element_before.centerline, 0.01)[0]
+                end_point = intersection_line_line(element.centerline, element_after.centerline, 0.01)[0]
+                if start_point and end_point:
+                    element.centerline = Line(start_point, end_point)
         return offset_loop
 
     def generate_windows(self):
@@ -319,13 +367,13 @@ class SurfaceAssembly(object):
             self.windows.append(self.Window(polyline, parent=self))
 
     def generate_studs(self):
-        self.generate_studs_lines()
+        self.generate_stud_lines()
         self.trim_jack_studs()
         self.trim_king_studs()
         self.trim_studs()
         self.cull_overlaps()
 
-    def generate_studs_lines(self):
+    def generate_stud_lines(self):
         x_position = self.stud_spacing
         while x_position < self.panel_length:
             start_point = Point(x_position, 0, 0)
@@ -372,9 +420,9 @@ class SurfaceAssembly(object):
             if len(intersections) > 1:
                 bottom, top = None, None
                 for i, dot in enumerate(dots):
-                    if dot < 0.01:
+                    if dot < -0.01:
                         bottom = intersections[i]  # last intersection below sill
-                    if dot > 1:
+                    if dot > 1.01:
                         top = intersections[i]  # first intersection above header
                         break
                 if not bottom:
@@ -517,7 +565,10 @@ class SurfaceAssembly(object):
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
-                    element.type = "jack_stud"
+                    if self.parent.lintel_posts:
+                        element.type = "jack_stud"
+                    else:
+                        element.type = "king_stud"
                 else:
                     ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
                     pts = []
@@ -536,10 +587,13 @@ class SurfaceAssembly(object):
                             element.type = "sill"
                 self.elements.append(element)
             self.elements = self.parent.offset_elements(self.elements)
-            for element in self.jack_studs:
-                offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]) / 2
-                king_line = offset_line(element.centerline, offset, self.normal)
-                self.elements.append(self.parent.BeamElement(king_line, type="king_stud", parent=self))
+            if self.parent.lintel_posts:
+                for element in self.jack_studs:
+                    offset = (
+                        self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]
+                    ) / 2
+                    king_line = offset_line(element.centerline, offset, self.normal)
+                    self.elements.append(self.parent.BeamElement(king_line, type="king_stud", parent=self))
 
     class BeamElement(object):
         """
