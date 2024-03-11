@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `NullJoint`.
 * Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
 * Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
+* Added `topos` attribute to `CategoryRule` to filter when joints get applied
 
 ### Changed
 
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
 * Extended `DecomposeBeam` component to optionally show beam frame and faces.
 * Changed `CategoryJointRule` and `DirectJointRule` to a dynamic interface where joint type is selected with right click menu
+* Changed `Assembly` GH component to apply category joints if the detected topology is in `CategoryRule.topos`
 
 ### Removed
 

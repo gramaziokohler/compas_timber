@@ -75,6 +75,15 @@ class Assembly(component):
                             ),
                         )
                         continue
+                    if rule.topos and detected_topo not in rule.topos:
+                        msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule allows: {}"
+                        self.AddRuntimeMessage(
+                            Warning,
+                            msg.format(
+                                beam_a.key, beam_b.key, JointTopology.get_name(detected_topo), [JointTopology.get_name(topo) for topo in rule.topos]
+                            ),
+                        )
+                        continue
                     # sort by category to allow beam role by order (main beam first, cross beam second)
                     beam_a, beam_b = rule.reorder([beam_a, beam_b])
                     joints.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
