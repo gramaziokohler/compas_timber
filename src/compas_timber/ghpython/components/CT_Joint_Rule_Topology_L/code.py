@@ -19,8 +19,12 @@ class L_TopologyJointRule(component):
         for cls in get_leaf_subclasses(Joint):
             if cls.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L:
                 self.classes[cls.__name__] = cls
-        self.joint_type = LMiterJoint
-        self.clicked = False
+        if ghenv.Component.Params.Output[0].NickName == "Rule":
+            self.joint_type = LMiterJoint
+            self.clicked = False
+        else:
+            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
+            self.clicked = True
 
     def RunScript(self, *args):
         if not self.clicked:
