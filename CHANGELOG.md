@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Extended `DecomposeBeam` component to optionally show beam frame and faces.
 * Changed `CategoryJointRule` and `DirectJointRule` to a dynamic interface where joint type is selected with right click menu
 * Changed `Assembly` GH component to apply category joints if the detected topology is in `CategoryRule.topos`
+* Changed `TopologyJoints` GH component to `DefaultJoints` Component, which applies default joints based on topology. 
 
 ### Removed
 
@@ -49,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `DrillHole` has default diameter proportional to beam cross-section.
 * Removed input `Length` from `DrillHole` component.
 * Fixed broken `TrimmingFeature` component.
+* Removed all `JointOption` components. these are accessed in context menu of joint rules.
 
 ## [0.6.1] 2024-02-02
 
