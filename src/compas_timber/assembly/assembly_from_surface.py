@@ -1,3 +1,4 @@
+from email.policy import default
 import math
 
 from compas_timber.parts import Beam
@@ -90,6 +91,7 @@ class SurfaceAssembly(object):
         lintel_posts=True,
         edge_stud_offset=0.0,
         custom_dimensions=None,
+        rule_overrides=None,
     ):
         self.surface = surface
         self.beam_width = beam_width
@@ -108,8 +110,11 @@ class SurfaceAssembly(object):
         self._panel_length = None
         self._panel_height = None
         self._elements = []
+        self._rules = []
         self.windows = []
         self.beam_dimensions = {}
+        self.rule_overrides = rule_overrides
+
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
         if custom_dimensions:
@@ -129,8 +134,9 @@ class SurfaceAssembly(object):
         cross = cross_vectors(self.normal, self._z_axis)
         return Vector(*cross_vectors(cross, self.normal))
 
+
     @property
-    def rules(self):
+    def default_rules(self):
         return [
             (
                 CategoryRule(LButtJoint, "edge_stud", "plate")
@@ -150,6 +156,22 @@ class SurfaceAssembly(object):
             CategoryRule(TButtJoint, "king_stud", "header"),
             CategoryRule(TButtJoint, "sill", "jack_stud"),
         ]
+
+
+
+    @property
+    def rules(self):
+        if not self._rules:
+            self._rules = self.default_rules
+            if self.rule_overrides:
+                for rule in self.rule_overrides:
+                        rule_set = set(rule.category_a, rule.category_b)
+                        for _rule in self._rules:
+                            _set = set(_rule.category_a, _rule.category_b)
+                            if rule_set == _set:
+                                _rule = rule
+                                break
+        return self._rules
 
     @property
     def centerlines(self):
