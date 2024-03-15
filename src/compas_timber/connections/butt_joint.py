@@ -44,9 +44,15 @@ class ButtJoint(Joint):
 
     """
 
-
     def __init__(
-        self, main_beam=None, cross_beam=None, mill_depth = 0, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs
+        self,
+        main_beam=None,
+        cross_beam=None,
+        mill_depth=0,
+        small_beam_butts=False,
+        modify_cross=True,
+        reject_i=False,
+        **kwargs
     ):
         super(ButtJoint, self).__init__(**kwargs)
 
@@ -120,21 +126,21 @@ class ButtJoint(Joint):
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def side_surfaces_cross(self):
-        face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends = True)
+        face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         face_indices = face_dict.keys()
         angles = face_dict.values()
         angles, face_indices = zip(*sorted(zip(angles, face_indices)))
-        return self.cross_beam.faces[face_indices[1]],self.cross_beam.faces[face_indices[2]]
+        return self.cross_beam.faces[face_indices[1]], self.cross_beam.faces[face_indices[2]]
 
     def front_back_surface_main(self):
-        face_dict = Joint._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends = True)
+        face_dict = Joint._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         face_indices = face_dict.keys()
         angles = face_dict.values()
         angles, face_indices = zip(*sorted(zip(angles, face_indices)))
-        return self.main_beam.faces[face_indices[0]],self.main_beam.faces[face_indices[3]]
+        return self.main_beam.faces[face_indices[0]], self.main_beam.faces[face_indices[3]]
 
     def back_surface_main(self):
-        face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends = True)
+        face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         face_dict.sort(lambda x: x.values())
         return face_dict.values()[3]
 
@@ -147,7 +153,11 @@ class ButtJoint(Joint):
             top_frame, bottom_frame = self.get_main_cutting_plane()
             for frame in [top_frame, bottom_frame]:
                 for fr in self.front_back_surface_main():
-                    points.append(intersection_plane_plane_plane(Plane.from_frame(side), Plane.from_frame(frame), Plane.from_frame(fr)))
+                    points.append(
+                        intersection_plane_plane_plane(
+                            Plane.from_frame(side), Plane.from_frame(frame), Plane.from_frame(fr)
+                        )
+                    )
             pv = [subtract_vectors(pt, self.cross_beam.centerline.start) for pt in points]
             dots = [dot_vectors(v, self.cross_beam.centerline.direction) for v in pv]
             dots, points = zip(*sorted(zip(dots, points)))
@@ -164,29 +174,19 @@ class ButtJoint(Joint):
 
         center = (vertices[0] + vertices[1] + vertices[2] + vertices[3]) * 0.25
 
-        angle = angle_vectors_signed(subtract_vectors(vertices[0], center), subtract_vectors(vertices[1], center), sides[0].zaxis)
+        angle = angle_vectors_signed(
+            subtract_vectors(vertices[0], center), subtract_vectors(vertices[1], center), sides[0].zaxis
+        )
         if angle > 0:
-            ph = Polyhedron(vertices, [
-                [0, 1, 2, 3],
-                [1,0, 4, 5],
-                [2,1, 5, 6],
-                [3,2, 6, 7],
-                [0,3, 7, 4],
-                [7, 6, 5, 4]
-                ])
+            ph = Polyhedron(
+                vertices, [[0, 1, 2, 3], [1, 0, 4, 5], [2, 1, 5, 6], [3, 2, 6, 7], [0, 3, 7, 4], [7, 6, 5, 4]]
+            )
         else:
-            ph = Polyhedron(vertices, [
-                [3,2, 1, 0],
-                [5,4, 0, 1],
-                [6,5, 1, 2],
-                [7,6, 2, 3],
-                [4,7, 3, 0],
-                [4, 5, 6, 7]
-                ])
-
+            ph = Polyhedron(
+                vertices, [[3, 2, 1, 0], [5, 4, 0, 1], [6, 5, 1, 2], [7, 6, 2, 3], [4, 7, 3, 0], [4, 5, 6, 7]]
+            )
 
         return ph
-
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.

@@ -41,7 +41,14 @@ class LButtJoint(ButtJoint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     def __init__(
-        self, main_beam=None, cross_beam=None, mill_depth = 0, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs
+        self,
+        main_beam=None,
+        cross_beam=None,
+        mill_depth=0,
+        small_beam_butts=False,
+        modify_cross=True,
+        reject_i=False,
+        **kwargs
     ):
         super(LButtJoint, self).__init__(**kwargs)
 
@@ -94,7 +101,6 @@ class LButtJoint(ButtJoint):
     def joint_type(self):
         return "L-Butt"
 
-
     def get_cross_cutting_plane(self):
         assert self.main_beam and self.cross_beam
         _, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)
@@ -104,7 +110,6 @@ class LButtJoint(ButtJoint):
     #     """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
     #     self.main_beam = assemly.find_by_key(self.main_beam_key)
     #     self.cross_beam = assemly.find_by_key(self.cross_beam_key)
-
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.

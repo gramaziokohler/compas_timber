@@ -40,7 +40,7 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth = 0, gap=None, frame=None, key=None):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, gap=None, frame=None, key=None):
         super(TButtJoint, self).__init__(frame, key)
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
@@ -69,7 +69,6 @@ class TButtJoint(ButtJoint):
         instance.mill_depth = value["mill_depth"]
         instance.gap = value["gap"]
         return instance
-
 
     @property
     def joint_type(self):
