@@ -97,6 +97,7 @@ class TButtJoint(ButtJoint):
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
         trim_feature = CutFeature(cutting_plane)
-        self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
+        if self.mill_depth:
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
         self.main_beam.add_features(trim_feature)
         self.features = [trim_feature]

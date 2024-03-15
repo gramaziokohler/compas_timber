@@ -149,6 +149,7 @@ class LButtJoint(ButtJoint):
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
         f_main = CutFeature(main_cutting_plane)
-        self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
+        if self.mill_depth:
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
         self.main_beam.add_features(f_main)
         self.features.append(f_main)
