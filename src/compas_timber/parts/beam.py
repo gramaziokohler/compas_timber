@@ -233,7 +233,7 @@ class Beam(Element):
         return blank_geo
 
     def compute_aabb(self, inflate=0.0):
-        # type: (float) -> tuple[float, float, float, float, float, float]
+        # type: (float) -> compas.geometry.Box
         """Computes the Axis Aligned Bounding Box (AABB) of the element.
 
         Parameters
@@ -243,15 +243,16 @@ class Beam(Element):
 
         Returns
         -------
-        tuple(float, float, float, float, float, float)
+        :class:`~compas.geometry.Box`
             The AABB of the element.
 
         """
         vertices, _ = self.blank.to_vertices_and_faces()
-        x = [p.x for p in vertices]
-        y = [p.y for p in vertices]
-        z = [p.z for p in vertices]
-        return min(x), min(y), min(z), max(x), max(y), max(z)
+        box = Box.from_bounding_box(bounding_box(vertices))
+        box.xsize += inflate
+        box.ysize += inflate
+        box.zsize += inflate
+        return box
 
     def compute_obb(self, inflate=0.0):
         # type: (float | None) -> compas.geometry.Box
@@ -268,7 +269,15 @@ class Beam(Element):
             The OBB of the element.
 
         """
+        # TODO: rhino plugin for this?
+        # TODO: is this not simply `blank`?
         raise NotImplementedError
+        # vertices, _ = self.blank.to_vertices_and_faces()
+        # box = Box.from_bounding_box(oriented_bounding_box(vertices))
+        # box.xsize += inflate
+        # box.ysize += inflate
+        # box.zsize += inflate
+        # return box
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
@@ -280,8 +289,8 @@ class Beam(Element):
             The collision geometry of the element.
 
         """
-        raise NotImplementedError
-
+        # TODO: that's it?
+        return self.blank.to_mesh()
 
     # ==========================================================================
     # Alternative constructors

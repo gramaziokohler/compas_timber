@@ -35,9 +35,8 @@ def find_neighboring_beams(beams, inflate_by=None):
     rtree = Rhino.Geometry.RTree()
     bboxes = []
     for index, beam in enumerate(beams):
-        bb = Rhino.Geometry.BoundingBox(*beam.aabb)
-        if inflate_by is not None:
-            bb.Inflate(inflate_by)
+        aabb = beam.compute_aabb(inflate_by)
+        bb = Rhino.Geometry.BoundingBox(aabb.xmin, aabb.ymin, aabb.zmin, aabb.xmax, aabb.ymax, aabb.zmax)
         bboxes.append(bb)
         rtree.Insert(bb, index)
 
