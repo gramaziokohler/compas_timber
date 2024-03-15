@@ -15,9 +15,9 @@ class XHalfLapJoint(LapJoint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -28,9 +28,9 @@ class XHalfLapJoint(LapJoint):
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
-    main_beam : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     main_beam_key : str
         The key of the main beam.
@@ -46,20 +46,20 @@ class XHalfLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(XHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, frame, key)
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
+        super(XHalfLapJoint, self).__init__(beam_a, beam_b, flip_lap_side, cut_plane_bias, frame, key)
 
     @property
     def joint_type(self):
         return "X-HalfLap"
 
     def add_features(self):
-        assert self.main_beam and self.cross_beam  # should never happen
+        assert self.beam_a and self.beam_b  # should never happen
 
         try:
             negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        self.main_beam.add_features(MillVolume(negative_brep_beam_a))
-        self.cross_beam.add_features(MillVolume(negative_brep_beam_b))
+        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
+        self.beam_b.add_features(MillVolume(negative_brep_beam_b))
