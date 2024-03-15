@@ -89,6 +89,7 @@ class SurfaceAssembly(object):
         sheeting_inside=None,
         lintel_posts=True,
         edge_stud_offset=0.0,
+        mill_depth=None,
         custom_dimensions=None,
         joint_overrides=None,
     ):
@@ -100,6 +101,7 @@ class SurfaceAssembly(object):
         self.sheeting_outside = sheeting_outside
         self.sheeting_inside = sheeting_inside
         self.edge_stud_offset = edge_stud_offset or 0.0
+        self.mill_depth = mill_depth
         self.lintel_posts = lintel_posts
         self._normal = None
         self.outer_polyline = None
@@ -136,24 +138,27 @@ class SurfaceAssembly(object):
 
     @property
     def default_rules(self):
+        kwargs = {}
+        if self.mill_depth:
+            kwargs["mill_depth"] = self.mill_depth
         return [
             (
-                CategoryRule(LButtJoint, "edge_stud", "plate")
+                CategoryRule(LButtJoint, "edge_stud", "plate", **kwargs)
                 if self.edge_stud_offset == 0
-                else CategoryRule(TButtJoint, "edge_stud", "plate")
+                else CategoryRule(TButtJoint, "edge_stud", "plate", **kwargs)
             ),
-            CategoryRule(TButtJoint, "stud", "plate"),
-            CategoryRule(TButtJoint, "stud", "header"),
-            CategoryRule(TButtJoint, "stud", "sill"),
-            CategoryRule(LButtJoint, "jack_stud", "plate"),
-            CategoryRule(TButtJoint, "jack_stud", "plate"),
-            CategoryRule(LButtJoint, "jack_stud", "header"),
-            CategoryRule(TButtJoint, "jack_stud", "header"),
-            CategoryRule(TButtJoint, "king_stud", "plate"),
-            CategoryRule(LButtJoint, "king_stud", "plate"),
-            CategoryRule(TButtJoint, "king_stud", "sill"),
-            CategoryRule(TButtJoint, "king_stud", "header"),
-            CategoryRule(TButtJoint, "sill", "jack_stud"),
+            CategoryRule(TButtJoint, "stud", "plate", **kwargs),
+            CategoryRule(TButtJoint, "stud", "header", **kwargs),
+            CategoryRule(TButtJoint, "stud", "sill", **kwargs),
+            CategoryRule(LButtJoint, "jack_stud", "plate", **kwargs),
+            CategoryRule(TButtJoint, "jack_stud", "plate", **kwargs),
+            CategoryRule(LButtJoint, "jack_stud", "header", **kwargs),
+            CategoryRule(TButtJoint, "jack_stud", "header", **kwargs),
+            CategoryRule(TButtJoint, "king_stud", "plate", **kwargs),
+            CategoryRule(LButtJoint, "king_stud", "plate", **kwargs),
+            CategoryRule(TButtJoint, "king_stud", "sill", **kwargs),
+            CategoryRule(TButtJoint, "king_stud", "header", **kwargs),
+            CategoryRule(TButtJoint, "sill", "jack_stud", **kwargs),
         ]
 
 
@@ -471,7 +476,7 @@ class SurfaceAssembly(object):
 
     def cull_overlaps(self):
         for element in self.studs:
-            for other_element in self.king_studs + self.jack_studs:
+            for other_element in self.king_studs + self.jack_studs + self.edge_studs:
                 if (
                     self.distance_between_elements(element, other_element)
                     < (self.beam_dimensions[element.type][0] + self.beam_dimensions[other_element.type][0]) / 2

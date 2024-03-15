@@ -33,13 +33,25 @@
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             },
-
+            {
+                "name": "mill_depth",
+                "description": "(optional) Mill depth of defualt butt joints.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
             {
                 "name": "custom_dimensions",
                 "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "joint_override",
+                "description": "(optional) from joint override component. allows users to override default joints on Surface Assemlby with other joints or joint parameters.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
             }
+
         ],
         "outputParameters": [
             {
