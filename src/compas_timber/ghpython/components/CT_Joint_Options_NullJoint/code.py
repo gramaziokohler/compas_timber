@@ -7,6 +7,5 @@ from compas_timber.ghpython import JointOptions
 
 class NullJointComponent(component):
     def RunScript(self):
-
         options = JointOptions(NullJoint, **{})
         return options
