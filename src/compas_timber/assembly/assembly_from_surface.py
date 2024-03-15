@@ -1,4 +1,3 @@
-from email.policy import default
 import math
 
 from compas_timber.parts import Beam
@@ -91,7 +90,7 @@ class SurfaceAssembly(object):
         lintel_posts=True,
         edge_stud_offset=0.0,
         custom_dimensions=None,
-        rule_overrides=None,
+        joint_overrides=None,
     ):
         self.surface = surface
         self.beam_width = beam_width
@@ -113,7 +112,7 @@ class SurfaceAssembly(object):
         self._rules = []
         self.windows = []
         self.beam_dimensions = {}
-        self.rule_overrides = rule_overrides
+        self.joint_overrides = joint_overrides
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
@@ -163,14 +162,18 @@ class SurfaceAssembly(object):
     def rules(self):
         if not self._rules:
             self._rules = self.default_rules
-            if self.rule_overrides:
-                for rule in self.rule_overrides:
-                        rule_set = set(rule.category_a, rule.category_b)
-                        for _rule in self._rules:
-                            _set = set(_rule.category_a, _rule.category_b)
+            if self.joint_overrides:
+                for rule in self.joint_overrides:
+                        rule_set = set([rule.category_a, rule.category_b])
+                        for i, _rule in enumerate(self._rules):
+                            _set = set([_rule.category_a, _rule.category_b])
+                            print(rule_set, _set)
                             if rule_set == _set:
-                                _rule = rule
+                                print(_rule)
+                                self._rules[i] = rule
+                                print(_rule)
                                 break
+        print(self._rules)
         return self._rules
 
     @property
@@ -367,7 +370,15 @@ class SurfaceAssembly(object):
             offset_loop.append(element)
             # self.edges.append(Line(element.centerline[0], element.centerline[1]))
         for i, element in enumerate(offset_loop):
-            if element.type != "plate":
+            if self.edge_stud_offset > 0:
+                if element.type != "plate":
+                    element_before = offset_loop[i - 1]
+                    element_after = offset_loop[(i + 1) % len(offset_loop)]
+                    start_point = intersection_line_line(element.centerline, element_before.centerline, 0.01)[0]
+                    end_point = intersection_line_line(element.centerline, element_after.centerline, 0.01)[0]
+                    if start_point and end_point:
+                        element.centerline = Line(start_point, end_point)
+            else:
                 element_before = offset_loop[i - 1]
                 element_after = offset_loop[(i + 1) % len(offset_loop)]
                 start_point = intersection_line_line(element.centerline, element_before.centerline, 0.01)[0]
