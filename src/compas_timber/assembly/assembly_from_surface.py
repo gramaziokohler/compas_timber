@@ -1,5 +1,6 @@
 import math
 
+from compas_timber.ghpython.workflow import FeatureDefinition
 from compas_timber.parts import Beam
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
@@ -18,13 +19,16 @@ from compas.geometry import closest_point_on_segment
 from compas.geometry import distance_point_point_sqrd
 from compas.geometry import Point
 from compas.geometry import Line
+from compas.geometry import Brep
+from compas_rhino.conversions import curve_to_compas_polyline
 from compas_timber.ghpython import CategoryRule
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.assembly import TimberAssembly
-
+from compas_timber.parts import MillVolume
+from compas_timber.parts import BrepSubtraction
 
 class SurfaceAssembly(object):
     """Create a timber assembly from a surface.
@@ -85,6 +89,7 @@ class SurfaceAssembly(object):
         beam_width=None,
         frame_depth=None,
         z_axis=None,
+        openings = None,
         sheeting_outside=None,
         sheeting_inside=None,
         lintel_posts=True,
@@ -92,6 +97,7 @@ class SurfaceAssembly(object):
         mill_depth=None,
         custom_dimensions=None,
         joint_overrides=None,
+        subtraction_volumes = None
     ):
         self.surface = surface
         self.beam_width = beam_width
@@ -103,6 +109,9 @@ class SurfaceAssembly(object):
         self.edge_stud_offset = edge_stud_offset or 0.0
         self.mill_depth = mill_depth
         self.lintel_posts = lintel_posts
+        self.openings = [curve_to_compas_polyline(opening) for opening in openings if openings]
+        self.subtraction_volumes = [Brep.from_native(volume) for volume in subtraction_volumes if subtraction_volumes]
+
         self._normal = None
         self.outer_polyline = None
         self.inner_polylines = []
@@ -172,13 +181,9 @@ class SurfaceAssembly(object):
                         rule_set = set([rule.category_a, rule.category_b])
                         for i, _rule in enumerate(self._rules):
                             _set = set([_rule.category_a, _rule.category_b])
-                            print(rule_set, _set)
                             if rule_set == _set:
-                                print(_rule)
                                 self._rules[i] = rule
-                                print(_rule)
                                 break
-        print(self._rules)
         return self._rules
 
     @property
@@ -188,8 +193,17 @@ class SurfaceAssembly(object):
     @property
     def assembly(self):
         assembly = TimberAssembly()
+        features = []
         for beam in self.beams:
             assembly.add_beam(beam)
+            # for volume in self.subtraction_volumes:
+            #     beam.add_features(MillVolume(volume))
+            #     b_sub = BrepSubtraction
+            # features.extend([MillVolume(BrepSubtraction(volume)) for volume in self.subtraction_volumes])
+        f_defs = []
+        for vol in self.subtraction_volumes:
+            bs = BrepSubtraction(vol)
+            f_defs.append(FeatureDefinition(bs, assembly.beams))
         topologies = []
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(assembly.beams, rtree=True, max_distance=0.1)
@@ -201,14 +215,18 @@ class SurfaceAssembly(object):
                 for rule in self.rules:
                     if not rule.comply(pair):
                         continue
-                    if beam_a.key == 4 and beam_b.key == 5:
-                        print(rule)
                     if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
                         continue
                     else:
                         if rule.joint_type == LButtJoint:
                             beam_a, beam_b = rule.reorder([beam_a, beam_b])
                         rule.joint_type.create(assembly, beam_a, beam_b, **rule.kwargs)
+        if f_defs:
+            features = [f for f in f_defs if f is not None]
+            for f_def in features:
+                for beam in assembly.beams:
+                    beam.add_features(f_def.feature)
+
         assembly.set_topologies(topologies)
 
         return assembly
@@ -311,6 +329,14 @@ class SurfaceAssembly(object):
                 if offset_loop.length < Polyline(polyline_points).length:
                     polyline_points.reverse()
                 self.inner_polylines.append(Polyline(polyline_points))
+            if self.openings:
+
+                for opening in self.openings:
+                    offset_loop = Polyline(offset_polyline(opening, 10, self.normal))
+                    if offset_loop.length < Polyline(opening).length:
+                        opening = opening.points
+                        opening.reverse()
+                    self.inner_polylines.append(Polyline(opening))
 
     def generate_perimeter_elements(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
