@@ -2,7 +2,7 @@ from compas.plugins import plugin
 
 
 @plugin(category="solvers", requires=["Rhino"])
-def find_neighboring_beams(beams, inflate_by=None):
+def find_neighboring_beams(beams, inflate_by=0.0):
     """Uses the Rhino.Geometry.RTree implementation of RTree to find neighboring beams.
 
     Parameters

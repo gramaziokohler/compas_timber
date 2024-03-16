@@ -88,10 +88,15 @@ class Assembly(component):
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
         if not (Beams):  # shows beams even if no joints are found
             return
+        if MaxDistance is None:
+            MaxDistance = 0.0
 
         Assembly = TimberModel()
         debug_info = DebugInfomation()
         for beam in Beams:
+            beam.remove_features()
+            beam.remove_blank_extension()
+            beam.debug_infos = []
             Assembly.add_beam(beam)
         topologies = []
         solver = ConnectionSolver()
@@ -125,8 +130,7 @@ class Assembly(component):
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
-                beams_to_modify = self._get_copied_beams(f_def.beams)
-                for beam in beams_to_modify:
+                for beam in f_def.beams:
                     beam.add_features(f_def.feature)
 
         Geometry = None
