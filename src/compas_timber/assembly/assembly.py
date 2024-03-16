@@ -112,7 +112,6 @@ class TimberModel(Model):
         self.remove_interaction(a, b)
         self._joints.remove(joint)
 
-
     def set_topologies(self, topologies):
         self._topologies = topologies
 

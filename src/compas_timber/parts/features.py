@@ -96,6 +96,7 @@ class CutFeature(Feature):
                 "The cutting plane does not intersect with beam geometry.",
             )
 
+
 class DrillFeature(Feature):
     """Parametric drill hole to be made on a beam.
 
@@ -150,6 +151,7 @@ class DrillFeature(Feature):
                 "The drill volume is not contained in the beam geometry.",
             )
 
+
 class MillVolume(Feature):
     """A volume to be milled out of a beam.
 
@@ -159,6 +161,7 @@ class MillVolume(Feature):
         The volume to be milled out of the beam.
 
     """
+
     @property
     def __data__(self):
         data = super(MillVolume, self).__data__

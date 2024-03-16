@@ -1,5 +1,3 @@
-from compas.data import Data
-from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line

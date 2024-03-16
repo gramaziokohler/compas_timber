@@ -1,9 +1,6 @@
 import functools
 import math
 
-import compas
-import compas.geometry
-import compas.datastructures
 from compas_model.elements import Element
 from compas.geometry import Brep
 from compas.geometry import Box
@@ -33,6 +30,7 @@ def invlidate_geometry(func):
             raise ValueError("`invlidate_geometry` decorator can only be used on Element instance methods!")
         func(*args, **kwargs)
         element._geometry = None
+
     return wrapper
 
 
@@ -95,9 +93,9 @@ class Beam(Element):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
-        data["width"] = self.width,
-        data["height"] = self.height,
-        data["length"] = self.length,
+        data["width"] = (self.width,)
+        data["height"] = (self.height,)
+        data["length"] = (self.length,)
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
