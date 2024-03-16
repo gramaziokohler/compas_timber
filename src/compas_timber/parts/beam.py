@@ -1,3 +1,4 @@
+import functools
 import math
 
 import compas
@@ -15,7 +16,6 @@ from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import bounding_box
-from compas.geometry import oriented_bounding_box
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 
@@ -23,6 +23,17 @@ from .features import FeatureApplicationError
 
 ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
+
+
+def invlidate_geometry(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        element = args[0]
+        if not isinstance(element, Element):
+            raise ValueError("`invlidate_geometry` decorator can only be used on Element instance methods!")
+        func(*args, **kwargs)
+        element._geometry = None
+    return wrapper
 
 
 class Beam(Element):
@@ -210,6 +221,7 @@ class Beam(Element):
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
+
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
         """Compute the geometry of the element.
@@ -359,6 +371,11 @@ class Beam(Element):
         boxframe.point += depth_offset
         return Box(xsize, ysize, zsize, frame=boxframe)
 
+    # ==========================================================================
+    # Featrues
+    # ==========================================================================
+
+    @invlidate_geometry
     def add_features(self, features):
         """Adds one or more features to the beam.
 
@@ -371,8 +388,8 @@ class Beam(Element):
         if not isinstance(features, list):
             features = [features]
         self.features.extend(features)
-        self._geometry = None
 
+    @invlidate_geometry
     def remove_features(self, features=None):
         """Removes a feature from the beam.
 
@@ -407,7 +424,7 @@ class Beam(Element):
             end += e
         self._blank_extensions[joint_key] = (start, end)
 
-    def remove_blank_extension(self, joint_key):
+    def remove_blank_extension(self, joint_key=None):
         """Removes a blank extension from the beam.
 
         Parameters
@@ -416,7 +433,10 @@ class Beam(Element):
             The key of the joint which required this extension.
 
         """
-        del self._blank_extensions[joint_key]
+        if joint_key is None:
+            self._blank_extensions = {}
+        else:
+            del self._blank_extensions[joint_key]
 
     def _resolve_blank_extensions(self):
         """Returns the max amount by which to extend the beam at both ends."""
