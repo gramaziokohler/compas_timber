@@ -125,6 +125,7 @@ class Beam(Element):
 
     @property
     def blank_frame(self):
+        assert self.frame
         start, _ = self._resolve_blank_extensions()
         frame = self.frame.copy()
         frame.point += -frame.xaxis * start  # "extension" to the start edge
@@ -132,6 +133,7 @@ class Beam(Element):
 
     @property
     def faces(self):
+        assert self.frame
         return [
             Frame(
                 Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
@@ -167,18 +169,17 @@ class Beam(Element):
 
     @property
     def centerline_start(self):
+        assert self.frame
         return self.frame.point
 
     @property
     def centerline_end(self):
+        assert self.frame
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
-    def aabb(self):
-        return self.compute_aabb()
-
-    @property
     def long_edges(self):
+        assert self.frame
         y = self.frame.yaxis
         z = self.frame.zaxis
         w = self.width * 0.5
@@ -190,6 +191,7 @@ class Beam(Element):
 
     @property
     def midpoint(self):
+        assert self.frame
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     @property
@@ -269,15 +271,11 @@ class Beam(Element):
             The OBB of the element.
 
         """
-        # TODO: rhino plugin for this?
-        # TODO: is this not simply `blank`?
-        raise NotImplementedError
-        # vertices, _ = self.blank.to_vertices_and_faces()
-        # box = Box.from_bounding_box(oriented_bounding_box(vertices))
-        # box.xsize += inflate
-        # box.ysize += inflate
-        # box.zsize += inflate
-        # return box
+        obb = self.blank.copy()
+        obb.xsize += inflate
+        obb.ysize += inflate
+        obb.zsize += inflate
+        return obb
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
@@ -289,7 +287,6 @@ class Beam(Element):
             The collision geometry of the element.
 
         """
-        # TODO: that's it?
         return self.blank.to_mesh()
 
     # ==========================================================================
@@ -357,8 +354,6 @@ class Beam(Element):
 
     @staticmethod
     def _create_shape(frame, xsize, ysize, zsize):
-        # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
-        # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
         boxframe = frame.copy()
         depth_offset = boxframe.xaxis * xsize * 0.5
         boxframe.point += depth_offset
@@ -463,21 +458,6 @@ class Beam(Element):
             tmax = max(x.keys())
             de = (tmax - 1.0) * self.length
         return -ds, de
-
-    def align_z(self, vector):
-        """Align the z_axis of the beam's definition with the given vector.
-
-        TODO: Not used anywhere. Needed?
-
-        Parameters
-        ----------
-        vector : :class:`~compas.geometry.Vector`
-            The vector with which to align the z_axis.
-
-        """
-        y_vector = Vector(*cross_vectors(self.frame.xaxis, vector)) * -1.0
-        frame = Frame(self.frame.point, self.frame.xaxis, y_vector)
-        self.frame = frame
 
     @staticmethod
     def _calculate_z_vector_from_centerline(centerline_vector):
