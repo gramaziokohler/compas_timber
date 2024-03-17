@@ -1,3 +1,4 @@
+from compas.tolerance import TOL
 from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
@@ -89,11 +90,12 @@ class Assembly(component):
         if not (Beams):  # shows beams even if no joints are found
             return
         if MaxDistance is None:
-            MaxDistance = 0.0
+            MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
         Assembly = TimberModel()
         debug_info = DebugInfomation()
         for beam in Beams:
+            # prepare beams for downstream processing
             beam.remove_features()
             beam.remove_blank_extension()
             beam.debug_infos = []
