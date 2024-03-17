@@ -14,7 +14,7 @@ from compas.plugins import pluggable
 
 
 @pluggable(category="solvers")
-def find_neighboring_beams(beams, inflate_by=None):
+def find_neighboring_beams(beams, inflate_by=0.0):
     """Finds neighboring pairs of beams in the given list of beams, using R-tree search.
 
     The inputs to the R-tree algorithm are the axis-aligned bounding boxes of the beams (beam.aabb), enlarged by the `inflate_by` amount.
@@ -88,7 +88,7 @@ class ConnectionSolver(object):
     TOLERANCE = 1e-6
 
     @classmethod
-    def find_intersecting_pairs(cls, beams, rtree=False, max_distance=None):
+    def find_intersecting_pairs(cls, beams, rtree=False, max_distance=0.0):
         """Finds pairs of intersecting beams in the given list of beams.
 
         Parameters

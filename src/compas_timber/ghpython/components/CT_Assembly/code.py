@@ -1,9 +1,9 @@
+from compas.tolerance import TOL
 from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.assembly import TimberAssembly
-from compas_timber.consumers import BrepGeometryConsumer
+from compas_timber.assembly import TimberModel
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import BeamJoinningError
@@ -15,17 +15,6 @@ from compas_timber.ghpython import DebugInfomation
 
 
 class Assembly(component):
-    def __init__(self):
-        # maintains relationship of old_beam.id => new_beam_obj for referencing
-        # lets us modify copies of the beams while referencing them using their old identities.
-        self._beam_map = {}
-
-    def _get_copied_beams(self, old_beams):
-        """For the given old_beams returns their respective copies."""
-        new_beams = []
-        for beam in old_beams:
-            new_beams.append(self._beam_map[id(beam)])
-        return new_beams
 
     def get_joints_from_rules(self, beams, rules, topologies):
         if not isinstance(rules, list):
@@ -100,10 +89,17 @@ class Assembly(component):
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
         if not (Beams):  # shows beams even if no joints are found
             return
+        if MaxDistance is None:
+            MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
-        Assembly = TimberAssembly()
+        Assembly = TimberModel()
         debug_info = DebugInfomation()
-
+        for beam in Beams:
+            # prepare beams for downstream processing
+            beam.remove_features()
+            beam.remove_blank_extension()
+            beam.debug_infos = []
+            Assembly.add_beam(beam)
         topologies = []
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
@@ -114,14 +110,7 @@ class Assembly(component):
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
         Assembly.set_topologies(topologies)
 
-        self._beam_map = {}
-        beams = [b for b in Beams if b is not None]
-        for beam in beams:
-            c_beam = beam.copy()
-            Assembly.add_beam(c_beam)
-            self._beam_map[id(beam)] = c_beam
         beams = Assembly.beams
-
         joints = self.get_joints_from_rules(beams, JointRules, topologies)
 
         if joints:
@@ -129,7 +118,7 @@ class Assembly(component):
             joints = [j for j in joints if j is not None]
             # apply reversed. later joints in orginal list override ealier ones
             for joint in joints[::-1]:
-                beams_to_pair = self._get_copied_beams(joint.beams)
+                beams_to_pair = joint.beams
                 beam_pair_ids = set([id(beam) for beam in beams_to_pair])
                 if beam_pair_ids in handled_beams:
                     continue
@@ -143,20 +132,17 @@ class Assembly(component):
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
-                beams_to_modify = self._get_copied_beams(f_def.beams)
-                for beam in beams_to_modify:
+                for beam in f_def.beams:
                     beam.add_features(f_def.feature)
 
         Geometry = None
         scene = Scene()
-        if CreateGeometry:
-            vis_consumer = BrepGeometryConsumer(Assembly)
-            for result in vis_consumer.result:
-                scene.add(result.geometry)
-                if result.debug_info:
-                    debug_info.add_feature_error(result.debug_info)
-        else:
-            for beam in Assembly.beams:
+        for beam in Assembly.beams:
+            if CreateGeometry:
+                scene.add(beam.geometry)
+                if beam.debug_infos:
+                    debug_info.add_feature_error(beam.debug_infos)
+            else:
                 scene.add(beam.blank)
 
         if debug_info.has_errors:

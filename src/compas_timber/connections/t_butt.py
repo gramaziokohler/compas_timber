@@ -39,31 +39,22 @@ class TButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, gap=None, frame=None, key=None):
-        super(TButtJoint, self).__init__(frame, key)
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
+    @property
+    def __data__(self):
+        data = super(TButtJoint, self).__data__
+        data["main_beam_key"] = self.main_beam_key
+        data["cross_beam_key"] = self.cross_beam_key
+        data["gap"] = self.gap
+        return data
+
+    def __init__(self, main_beam=None, cross_beam=None, gap=None):
+        super(TButtJoint, self).__init__()
+        self.main_beam_key = main_beam.guid if main_beam else None
+        self.cross_beam_key = cross_beam.guid if cross_beam else None
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.gap = gap
         self.features = []
-
-    @property
-    def __data__(self):
-        data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
-            "gap": self.gap,
-        }
-        data_dict.update(super(TButtJoint, self).__data__)
-        return data_dict
-
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], gap=value["gap"])
-        instance.main_beam_key = value["main_beam_key"]
-        instance.cross_beam_key = value["cross_beam_key"]
-        return instance
 
     @property
     def beams(self):
@@ -105,7 +96,7 @@ class TButtJoint(Joint):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
         trim_feature = CutFeature(cutting_plane)
         self.main_beam.add_features(trim_feature)

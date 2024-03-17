@@ -1,3 +1,3 @@
-from .assembly import TimberAssembly
+from .assembly import TimberModel
 
-__all__ = ["TimberAssembly"]
+__all__ = ["TimberModel"]

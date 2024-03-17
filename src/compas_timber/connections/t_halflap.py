@@ -48,8 +48,8 @@ class THalfLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(THalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, frame, key)
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5):
+        super(THalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias)
 
     @property
     def joint_type(self):
@@ -71,7 +71,7 @@ class THalfLapJoint(LapJoint):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
         self.main_beam.add_features(MillVolume(negative_brep_main_beam))
         self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
