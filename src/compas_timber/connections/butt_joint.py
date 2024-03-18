@@ -68,6 +68,8 @@ class ButtJoint(Joint):
         self.modify_cross = modify_cross
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
+        self.btlx_params_main = {}
+        self.btlx_params_cross = {}
         self.features = []
 
     @property
@@ -108,13 +110,13 @@ class ButtJoint(Joint):
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
 
-        index, _ = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=False)
-        if self.reject_i and index in [4, 5]:
+        self.reference_side_index, _ = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=False)
+        if self.reject_i and self.reference_side_index in [4, 5]:
             raise BeamJoinningError(
                 beams=self.beams, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
             )
 
-        index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        self.reference_side_index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
         cross_mating_frame = cfr.copy()
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         cfr.point = cfr.point + cfr.zaxis * self.mill_depth
@@ -126,11 +128,19 @@ class ButtJoint(Joint):
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def side_surfaces_cross(self):
-        face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
-        face_indices = face_dict.keys()
-        angles = face_dict.values()
-        angles, face_indices = zip(*sorted(zip(angles, face_indices)))
-        return self.cross_beam.faces[face_indices[1]], self.cross_beam.faces[face_indices[2]]
+        if self.reference_side_index == 0:
+            return self.cross_beam.faces[3], self.cross_beam.faces[1]
+        elif self.reference_side_index < 3: # 1 or 2
+            return self.cross_beam.faces[self.reference_side_index-1], self.cross_beam.faces[self.reference_side_index+1]
+        else:
+            return self.cross_beam.faces[2], self.cross_beam.faces[0]
+
+
+        # face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        # face_indices = face_dict.keys()
+        # angles = face_dict.values()
+        # angles, face_indices = zip(*sorted(zip(angles, face_indices)))
+        # return self.cross_beam.faces[face_indices[1]], self.cross_beam.faces[face_indices[2]]
 
     def front_back_surface_main(self):
         face_dict = Joint._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
@@ -158,11 +168,14 @@ class ButtJoint(Joint):
                             Plane.from_frame(side), Plane.from_frame(frame), Plane.from_frame(fr)
                         )
                     )
-            pv = [subtract_vectors(pt, self.cross_beam.centerline.start) for pt in points]
+            pv = [subtract_vectors(pt, self.cross_beam.blank_frame.point) for pt in points]
             dots = [dot_vectors(v, self.cross_beam.centerline.direction) for v in pv]
             dots, points = zip(*sorted(zip(dots, points)))
             min_pt, max_pt = points[0], points[-1]
+            self.btlx_params_cross["StartX"] = min_pt[0]
+
             top_line = Line(*intersection_plane_plane(Plane.from_frame(side), Plane.from_frame(top_frame)))
+            self.btlx_params_cross["Angle"] = angle_vectors_signed(bottom_frame.xaxis, top_line.direction, bottom_frame.zaxis)
             bottom_line = Line(*intersection_plane_plane(Plane.from_frame(side), Plane.from_frame(bottom_frame)))
             top_min = Point(*closest_point_on_line(min_pt, top_line))
             dir_pts.append(top_min)
@@ -187,6 +200,8 @@ class ButtJoint(Joint):
             )
 
         return ph
+
+
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
