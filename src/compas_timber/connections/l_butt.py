@@ -1,12 +1,13 @@
 from compas.geometry import Frame
+from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.parts import CutFeature
+from compas_timber.parts import MillVolume
 
 from .joint import BeamJoinningError
-from .joint import Joint
 from .solver import JointTopology
 
 
-class LButtJoint(Joint):
+class LButtJoint(ButtJoint):
     """Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.
 
     This joint type is compatible with beams in L topology.
@@ -40,7 +41,14 @@ class LButtJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     def __init__(
-        self, main_beam=None, cross_beam=None, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs
+        self,
+        main_beam=None,
+        cross_beam=None,
+        mill_depth=0,
+        small_beam_butts=False,
+        modify_cross=True,
+        reject_i=False,
+        **kwargs
     ):
         super(LButtJoint, self).__init__(**kwargs)
 
@@ -52,6 +60,7 @@ class LButtJoint(Joint):
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.mill_depth = mill_depth
         self.modify_cross = modify_cross
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
@@ -62,6 +71,7 @@ class LButtJoint(Joint):
         data_dict = {
             "main_beam_key": self.main_beam_key,
             "cross_beam_key": self.cross_beam_key,
+            "mill_depth": self.mill_depth,
             "small_beam_butts": self.small_beam_butts,
             "modify_cross": self.modify_cross,
             "reject_i": self.reject_i,
@@ -74,6 +84,7 @@ class LButtJoint(Joint):
         instance = cls(
             frame=Frame.__from_data__(value["frame"]),
             key=value["key"],
+            mill_depth=value["mill_depth"],
             small_beam_butts=value["small_beam_butts"],
             modify_cross=value["modify_cross"],
             reject_i=value["reject_i"],
@@ -82,36 +93,23 @@ class LButtJoint(Joint):
         instance.cross_beam_key = value["cross_beam_key"]
         return instance
 
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
+    # @property
+    # def beams(self):
+    #     return [self.main_beam, self.cross_beam]
 
     @property
     def joint_type(self):
         return "L-Butt"
-
-    def get_main_cutting_plane(self):
-        assert self.main_beam and self.cross_beam
-
-        index, _ = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=False)
-        if self.reject_i and index in [4, 5]:
-            raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
-            )
-
-        index, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
-        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
-        return cfr
 
     def get_cross_cutting_plane(self):
         assert self.main_beam and self.cross_beam
         _, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)
         return cfr
 
-    def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.main_beam = assemly.find_by_key(self.main_beam_key)
-        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+    # def restore_beams_from_keys(self, assemly):
+    #     """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
+    #     self.main_beam = assemly.find_by_key(self.main_beam_key)
+    #     self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
@@ -125,7 +123,7 @@ class LButtJoint(Joint):
         start_main, start_cross = None, None
 
         try:
-            main_cutting_plane = self.get_main_cutting_plane()
+            main_cutting_plane = self.get_main_cutting_plane()[0]
             cross_cutting_plane = self.get_cross_cutting_plane()
             start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
             start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
@@ -151,5 +149,7 @@ class LButtJoint(Joint):
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
         f_main = CutFeature(main_cutting_plane)
+        if self.mill_depth:
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
         self.main_beam.add_features(f_main)
         self.features.append(f_main)
