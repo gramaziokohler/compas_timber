@@ -160,74 +160,12 @@ class BTLxPart(object):
         self.length = beam.length
         self.width = beam.height
         self.height = beam.width
-        self.frame = Frame(
-            self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
-            beam.frame.xaxis,
-            beam.frame.yaxis,
-        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        self.frame = beam.part_ref  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self.blank_length = beam.blank_length
-        self._reference_surfaces = []
         self.processings = []
         self._et_element = None
+        self.faces = beam.faces
 
-    def reference_surface_from_beam_face(self, beam_face):
-        """Finds the reference surface with normal that matches the normal of the beam face argument
-
-        Parameters
-        -----------
-        beam_face : :class:`~compas.geometry.Frame`
-            The frame of a beam face from beam.faces.
-
-        Returns
-        --------
-        key : str
-            The key(index 1-6) of the reference surface.
-
-        """
-        for key, face in self.reference_surfaces.items():
-            if face.normal == beam_face.normal:
-                return key
-
-    def reference_surface_planes(self, index):
-        """Returns the reference surface planes for a given index per BTLx docs.
-
-        Parameters
-        ----------
-        index : int
-            The index of the reference surface.
-
-        Returns
-        -------
-        dict
-            The BTLx reference surface frame.
-
-        """
-        if len(self._reference_surfaces) != 6:
-            self._reference_surfaces = {
-                "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
-                "2": Frame(
-                    self.frame.point + self.frame.yaxis * self.width,
-                    self.frame.xaxis,
-                    -self.frame.yaxis,
-                ),
-                "3": Frame(
-                    self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
-                    self.frame.xaxis,
-                    -self.frame.zaxis,
-                ),
-                "4": Frame(
-                    self.frame.point + self.frame.zaxis * self.height,
-                    self.frame.xaxis,
-                    self.frame.yaxis,
-                ),
-                "5": Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
-                "6": Frame(
-                    self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
-                    self.frame.zaxis,
-                    -self.frame.yaxis,
-                ),
-            }
-        return self._reference_surfaces[str(index)]
 
     @property
     def attr(self):
