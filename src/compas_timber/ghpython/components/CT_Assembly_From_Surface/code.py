@@ -13,7 +13,7 @@ from compas_timber.consumers import BrepGeometryConsumer
 
 
 class SurfaceAssemblyComponent(component):
-    def RunScript(self, surface, stud_spacing, beam_width, frame_depth, z_axis, options, CreateGeometry=False):
+    def RunScript(self, surface, stud_spacing, beam_width, frame_depth, z_axis, openings, options, CreateGeometry=False):
         # minimum inputs required
         if not surface:
             return
@@ -32,7 +32,8 @@ class SurfaceAssemblyComponent(component):
         if not options:
             options = {}
 
-        assembly = SurfaceAssembly(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, **options)
+
+        assembly = SurfaceAssembly(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, openings = openings, **options)
 
         debug_info = DebugInfomation()
         Geometry = None
@@ -42,7 +43,11 @@ class SurfaceAssemblyComponent(component):
             for result in vis_consumer.result:
                 scene.add(result.geometry)
                 if result.debug_info:
-                    debug_info.add_feature_error(result.debug_info)
+                    debug_info._has_errors = False
+                    for error in result.debug_info:
+                        if error.message != "The volume does not intersect with beam geometry.":
+                            debug_info.add_feature_error(result.debug_info)
+                            debug_info._has_errors = True
         else:
             for beam in assembly.beams:
                 scene.add(beam.blank)

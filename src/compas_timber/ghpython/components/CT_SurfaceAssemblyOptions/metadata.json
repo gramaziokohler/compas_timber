@@ -50,6 +50,12 @@
                 "description": "(optional) from joint override component. allows users to override default joints on Surface Assemlby with other joints or joint parameters.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "subtraction_volumes",
+                "description": "(optional) Closed Breps that subtract from the elements of the assembly. For features such as floor slabs or wiring.",
+                "typeHintID": "brep",
+                "scriptParamAccess": 1
             }
 
         ],

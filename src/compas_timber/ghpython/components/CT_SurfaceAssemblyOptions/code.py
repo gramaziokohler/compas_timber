@@ -3,7 +3,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 class SurfaceAssemblyOptions(component):
 
-    def RunScript(self, sheeting_outside, sheeting_inside, lintel_posts, edge_stud_offset, mill_depth, custom_dimensions, joint_overrides):
+    def RunScript(self, sheeting_outside, sheeting_inside, lintel_posts, edge_stud_offset, mill_depth, custom_dimensions, joint_overrides, subtraction_volumes):
 
         if sheeting_outside is not None and not isinstance(sheeting_outside, float):
             raise TypeError("sheeting_outside expected a float, got: {}".format(type(sheeting_outside)))
@@ -24,7 +24,8 @@ class SurfaceAssemblyOptions(component):
             "edge_stud_offset": edge_stud_offset,
             "mill_depth": mill_depth,
             "custom_dimensions": dims,
-            "joint_overrides": joint_overrides
+            "joint_overrides": joint_overrides,
+            "subtraction_volumes": subtraction_volumes
         }
 
         return (dict,)

@@ -40,6 +40,12 @@
                 "scriptParamAccess": 0
             },
             {
+                "name": "openings",
+                "description": "(optional) opening outlines for doors and windows. should probably be rectilinear for now.",
+                "typeHintID": "curve",
+                "scriptParamAccess": 1
+            },
+            {
                 "name": "options",
                 "description": "(optional) SurfaceAssembly options.",
                 "typeHintID": "none",
