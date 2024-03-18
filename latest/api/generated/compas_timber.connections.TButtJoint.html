@@ -594,8 +594,8 @@ document.write(`
 <h1>TButtJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.TButtJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e99fc20/src/compas_timber/connections/t_butt.py#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/f32c9f0/src/compas_timber/connections/t_butt.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ButtJoint</span></code></p>
 <p>Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
 trimming the main beam.</p>
 <p>This joint type is compatible with beams in T topology.</p>
@@ -630,12 +630,6 @@ trimming the main beam.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.add_features.html#compas_timber.connections.TButtJoint.add_features" title="compas_timber.connections.TButtJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds the trimming plane to the main beam (no features for the cross beam).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.get_cutting_plane.html#compas_timber.connections.TButtJoint.get_cutting_plane" title="compas_timber.connections.TButtJoint.get_cutting_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cutting_plane</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.restore_beams_from_keys.html#compas_timber.connections.TButtJoint.restore_beams_from_keys" title="compas_timber.connections.TButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
-<td><p>After de-serialization, resotres references to the main and cross beams saved in the assembly.</p></td>
-</tr>
 </tbody>
 </table>
 <p class="rubric">Inherited Methods</p>
@@ -644,17 +638,23 @@ trimming the main beam.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.ToString.html#compas_timber.connections.TButtJoint.ToString" title="compas_timber.connections.TButtJoint.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
 <td><p>Converts the instance to a string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.copy.html#compas_timber.connections.TButtJoint.copy" title="compas_timber.connections.TButtJoint.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.back_surface_main.html#compas_timber.connections.TButtJoint.back_surface_main" title="compas_timber.connections.TButtJoint.back_surface_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">back_surface_main</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.copy.html#compas_timber.connections.TButtJoint.copy" title="compas_timber.connections.TButtJoint.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.create.html#compas_timber.connections.TButtJoint.create" title="compas_timber.connections.TButtJoint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.create.html#compas_timber.connections.TButtJoint.create" title="compas_timber.connections.TButtJoint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
 <td><p>Creates an instance of this joint and creates the new connection in <cite>assembly</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.from_json.html#compas_timber.connections.TButtJoint.from_json" title="compas_timber.connections.TButtJoint.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.from_json.html#compas_timber.connections.TButtJoint.from_json" title="compas_timber.connections.TButtJoint.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.from_jsonstring.html#compas_timber.connections.TButtJoint.from_jsonstring" title="compas_timber.connections.TButtJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.from_jsonstring.html#compas_timber.connections.TButtJoint.from_jsonstring" title="compas_timber.connections.TButtJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.front_back_surface_main.html#compas_timber.connections.TButtJoint.front_back_surface_main" title="compas_timber.connections.TButtJoint.front_back_surface_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">front_back_surface_main</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.get_face_most_ortho_to_beam.html#compas_timber.connections.TButtJoint.get_face_most_ortho_to_beam" title="compas_timber.connections.TButtJoint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal is most orthogonal to <cite>beam_a</cite>.</p></td>
@@ -662,8 +662,20 @@ trimming the main beam.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.get_face_most_towards_beam.html#compas_timber.connections.TButtJoint.get_face_most_towards_beam" title="compas_timber.connections.TButtJoint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal most faces <cite>beam_a</cite>.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.get_main_cutting_plane.html#compas_timber.connections.TButtJoint.get_main_cutting_plane" title="compas_timber.connections.TButtJoint.get_main_cutting_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_main_cutting_plane</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.restore_beams_from_keys.html#compas_timber.connections.TButtJoint.restore_beams_from_keys" title="compas_timber.connections.TButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<td><p>After de-serialization, resotres references to the main and cross beams saved in the assembly.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.sha256.html#compas_timber.connections.TButtJoint.sha256" title="compas_timber.connections.TButtJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.side_surfaces_cross.html#compas_timber.connections.TButtJoint.side_surfaces_cross" title="compas_timber.connections.TButtJoint.side_surfaces_cross"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_surfaces_cross</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.subtraction_volume.html#compas_timber.connections.TButtJoint.subtraction_volume" title="compas_timber.connections.TButtJoint.subtraction_volume"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subtraction_volume</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.to_json.html#compas_timber.connections.TButtJoint.to_json" title="compas_timber.connections.TButtJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
