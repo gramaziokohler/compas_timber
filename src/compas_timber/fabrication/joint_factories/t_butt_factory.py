@@ -27,9 +27,30 @@ class TButtFactory(object):
 
         """
 
+
+        reference_surface = joint.get_main_cutting_plane()[0]
+        main_front, main_back = joint.front_back_surface_main()
+
+
+
+
+
+
+
+
+
         part = parts[str(joint.main_beam.key)]
         cut_plane = joint.get_main_cutting_plane()[0]
         part.processings.append(BTLxJackCut.create_process(part, cut_plane, "T-Butt Joint"))
 
 
+
+
+
+
+
+
+
 BTLx.register_joint(TButtJoint, TButtFactory)
+
+
