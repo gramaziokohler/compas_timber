@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `NullJoint`.
 * Added `mill_depth` argument to butt joints, with geometric representation of milled recess in cross beam.
 * Added `ButtJoint` class with methods common to `LButtJoint` and `TButtJoint`
+* Added BTLx support for `TButtJoint` and `LButtJoint`
+* Added `BTLxLap` process class
 
 ### Changed
 
@@ -36,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed GH Categories for joint rules.
 * Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
 * Extended `DecomposeBeam` component to optionally show beam frame and faces.
+* Changed `Beam.faces` to match position and orientation of BTLx `ReferenceSide`
 
 ### Removed
 
