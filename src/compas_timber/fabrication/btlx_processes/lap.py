@@ -5,7 +5,6 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import angle_vectors_signed
 from compas.geometry import cross_vectors
-from matplotlib.pylab import f
 
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
@@ -29,9 +28,9 @@ class BTLxLap(object):
 
     PROCESS_TYPE = "Lap"
 
-    def __init__(self, joint_name=None, **kwargs):
+    def __init__(self, param_dict, joint_name=None, **kwargs):
         self.apply_process = True
-
+        self.reference_plane_id = ""
         self.orientation = "start"
         self.start_x = 0.0
         self.start_y = 0.0
@@ -47,10 +46,11 @@ class BTLxLap(object):
         self.lead_inclination = 90.0
         self.machining_limits = []
 
-        for key, value in kwargs.items():
+        for key, value in param_dict.items():
             setattr(self, key, value)
 
-        self.generate_process()
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
         if joint_name:
             self.name = joint_name
@@ -65,7 +65,7 @@ class BTLxLap(object):
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": "1",
+            "ReferencePlaneID": str(self.reference_plane_id + 1)
         }
 
     @property
@@ -78,10 +78,10 @@ class BTLxLap(object):
                 [
                     ("Orientation", str(self.orientation)),
                     ("StartX", "{:.{prec}f}".format(self.start_x, prec=BTLx.POINT_PRECISION)),
-                    ("StartY", "{:.{prec}f}".format(self.start_z, prec=BTLx.POINT_PRECISION)),
+                    ("StartY", "{:.{prec}f}".format(self.start_y, prec=BTLx.POINT_PRECISION)),
                     ("Angle", "{:.{prec}f}".format(self.angle, prec=BTLx.ANGLE_PRECISION)),
                     ("Inclination", "{:.{prec}f}".format(self.inclination, prec=BTLx.ANGLE_PRECISION)),
-                    ("Slope Inclination", "{:.{prec}f}".format(self.slope_inclination, prec=BTLx.ANGLE_PRECISION)),
+                    ("Slope", "{:.{prec}f}".format(self.slope_inclination, prec=BTLx.ANGLE_PRECISION)),
                     ("Length", "{:.{prec}f}".format(self.length, prec=BTLx.POINT_PRECISION)),
                     ("Width", "{:.{prec}f}".format(self.width, prec=BTLx.POINT_PRECISION)),
                     ("Depth", "{:.{prec}f}".format(self.depth, prec=BTLx.POINT_PRECISION)),
@@ -92,11 +92,12 @@ class BTLxLap(object):
                     ("MachiningLimits", self.machining_limits)
                 ]
             )
+            print("param dict", od)
             return od
         else:
             return None
 
     @classmethod
-    def create_process(cls, params, joint_name=None):
-        lap = BTLxLap(params, joint_name)
+    def create_process(cls, param_dict, joint_name=None, **kwargs):
+        lap = BTLxLap(param_dict, joint_name, **kwargs)
         return BTLxProcess(BTLxLap.PROCESS_TYPE, lap.header_attributes, lap.process_params)

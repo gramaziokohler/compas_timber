@@ -78,8 +78,9 @@ class BTLx(object):
         self.ET_element.append(self.file_history)
         self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
         self.parts_element = ET.SubElement(self.project_element, "Parts")
-
+        print(MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   "))
         for part in self.parts.values():
+            print(MD.parseString(ET.tostring(part.et_element)).toprettyxml(indent="   "))
             self.parts_element.append(part.et_element)
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 

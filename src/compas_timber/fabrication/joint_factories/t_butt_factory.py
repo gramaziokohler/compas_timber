@@ -1,6 +1,7 @@
 from compas_timber.connections import TButtJoint
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
+from compas_timber.fabrication.btlx_processes.lap import BTLxLap
 
 
 class TButtFactory(object):
@@ -27,23 +28,12 @@ class TButtFactory(object):
 
         """
 
-
-        reference_surface = joint.get_main_cutting_plane()[0]
-        main_front, main_back = joint.front_back_surface_main()
-
-
-
-
-
-
-
-
-
-        part = parts[str(joint.main_beam.key)]
+        main_part = parts[str(joint.main_beam.key)]
         cut_plane = joint.get_main_cutting_plane()[0]
-        part.processings.append(BTLxJackCut.create_process(part, cut_plane, "T-Butt Joint"))
+        main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 
-
+        cross_part = parts[str(joint.cross_beam.key)]
+        cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
 
 
 
