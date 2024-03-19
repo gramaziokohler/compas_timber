@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
+* Added `mill_depth` argument to butt joints, with geometric representation of milled recess in cross beam.
+* Added `ButtJoint` class with methods common to `LButtJoint` and `TButtJoint`
 * Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
 * Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
 * Added `topos` attribute to `CategoryRule` to filter when joints get applied
