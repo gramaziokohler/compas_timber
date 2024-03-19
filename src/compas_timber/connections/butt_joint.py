@@ -158,7 +158,7 @@ class ButtJoint(Joint):
         dir_pts = []
         vertices = []
         sides = self.side_surfaces_cross()
-        for i, side in enumerate(sides):
+        for side in sides:
             points = []
             top_frame, bottom_frame = self.get_main_cutting_plane()
             for frame in [top_frame, bottom_frame]:
