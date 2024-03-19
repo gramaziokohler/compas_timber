@@ -130,9 +130,11 @@ class Beam(Part):
     @property
     def part_ref(self):
         frame = self.blank_frame
-        return Frame(Point(*(frame.point + (frame.yaxis * self.width * 0.5)-(frame.zaxis * self.height * 0.5))),
-                        frame.xaxis,
-                        frame.zaxis)
+        return Frame(
+            Point(*(frame.point + (frame.yaxis * self.width * 0.5) - (frame.zaxis * self.height * 0.5))),
+            frame.xaxis,
+            frame.zaxis,
+        )
 
     @property
     def faces(self):

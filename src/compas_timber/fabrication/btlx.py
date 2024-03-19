@@ -166,7 +166,6 @@ class BTLxPart(object):
         self._et_element = None
         self.faces = beam.faces
 
-
     @property
     def attr(self):
         return {

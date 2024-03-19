@@ -84,9 +84,7 @@ class BTLxJackCut(object):
             self.orientation = "end"
         angle_direction = cross_vectors(self.reference_side.normal, self.cut_plane.normal)
         self.angle = (
-            angle_vectors_signed(self.reference_side.xaxis, angle_direction, self.reference_side.zaxis)
-            * 180
-            / math.pi
+            angle_vectors_signed(self.reference_side.xaxis, angle_direction, self.reference_side.zaxis) * 180 / math.pi
         )
 
         self.angle = abs(self.angle)
