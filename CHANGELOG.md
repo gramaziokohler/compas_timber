@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `NullJoint`.
 * Added `mill_depth` argument to butt joints, with geometric representation of milled recess in cross beam.
 * Added `ButtJoint` class with methods common to `LButtJoint` and `TButtJoint`
+* Added BTLx support for `TButtJoint` and `LButtJoint`
+* Added `BTLxLap` process class
 
 ### Changed
 

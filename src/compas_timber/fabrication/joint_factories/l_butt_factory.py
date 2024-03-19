@@ -1,6 +1,7 @@
 from compas_timber.connections import LButtJoint
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
+from compas_timber.fabrication import BTLxLap
 
 
 class LButtFactory(object):
@@ -36,6 +37,8 @@ class LButtFactory(object):
         cross_part.processings.append(
             BTLxJackCut.create_process(cross_part, joint.get_cross_cutting_plane(), "L-Butt Joint")
         )
+        if joint.mill_depth > 0:
+            cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
 
 
 BTLx.register_joint(LButtJoint, LButtFactory)

@@ -1,14 +1,6 @@
-import math
 from collections import OrderedDict
-
-from compas.geometry import Line
-from compas.geometry import Plane
-from compas.geometry import angle_vectors_signed
-from compas.geometry import cross_vectors
-
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
-from compas_timber.utils.compas_extra import intersection_line_plane
 
 
 class BTLxLap(object):
@@ -17,12 +9,12 @@ class BTLxLap(object):
 
     Parameters
     ----------
-    part : :class:`~compas_timber.fabrication.btlx_part.BTLxPart`
-        The BTLxPart object representing the beam.
-    frame : :class:`~compas.geometry.Frame`
-        The frame object representing the cutting plane.
-    joint_name : str, optional
-        The name of the joint. Defaults to None.
+    param_dict : dict
+        A dictionary containing the parameters for the BTLx lap process.
+    joint_name : str
+        The name of the joint. If not provided, the default name is "lap".
+    kwargs : dict
+        Additional keyword arguments to be added to the object.
 
     """
 
@@ -65,12 +57,12 @@ class BTLxLap(object):
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": str(self.reference_plane_id + 1)
+            "ReferencePlaneID": str(self.reference_plane_id + 1),
         }
 
     @property
     def process_params(self):
-        """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint. """
+        """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
             """the following attributes are specific to Lap"""
@@ -89,7 +81,7 @@ class BTLxLap(object):
                     ("LeadAngle", "{:.{prec}f}".format(self.lead_angle, prec=BTLx.ANGLE_PRECISION)),
                     ("LeadInclinationParallel", "yes"),
                     ("LeadInclination", "{:.{prec}f}".format(self.lead_inclination, prec=BTLx.ANGLE_PRECISION)),
-                    ("MachiningLimits", self.machining_limits)
+                    ("MachiningLimits", self.machining_limits),
                 ]
             )
             print("param dict", od)
@@ -99,5 +91,6 @@ class BTLxLap(object):
 
     @classmethod
     def create_process(cls, param_dict, joint_name=None, **kwargs):
+        """Creates a lap process from a dictionary of parameters."""
         lap = BTLxLap(param_dict, joint_name, **kwargs)
         return BTLxProcess(BTLxLap.PROCESS_TYPE, lap.header_attributes, lap.process_params)
