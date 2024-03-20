@@ -1,5 +1,3 @@
-from compas.geometry import Frame
-
 from .joint import Joint
 from .solver import JointTopology
 
@@ -30,7 +28,7 @@ class NullJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L  # TODO: this really supports all..
 
     def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(NullJoint, self).__init__(beams=(beam_a, beam_b), **kwargs)
+        super(NullJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
@@ -47,10 +45,7 @@ class NullJoint(Joint):
 
     @classmethod
     def __from_data__(cls, value):
-        instance = cls(
-            frame=Frame.__from_data__(value["frame"]),
-            key=value["key"],
-        )
+        instance = cls(**value)
         instance.beam_a_key = value["main_beam_key"]
         instance.beam_b_key = value["cross_beam_key"]
         return instance

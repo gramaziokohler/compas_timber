@@ -39,7 +39,7 @@ class LMiterJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(LMiterJoint, self).__init__(beams=(beam_a, beam_b), **kwargs)
+        super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
@@ -48,17 +48,17 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data_dict = {
-            "beam_a": self.beam_a_key,
-            "beam_b": self.beam_b_key,
+            "beam_a_key": self.beam_a_key,
+            "beam_b_key": self.beam_b_key,
         }
         data_dict.update(super(LMiterJoint, self).__data__)
         return data_dict
 
     @classmethod
     def __from_data__(cls, value):
-        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"])
-        instance.beam_a_key = value["beam_a"]
-        instance.beam_b_key = value["beam_b"]
+        instance = cls(**value)
+        instance.beam_a_key = value["beam_a_key"]
+        instance.beam_b_key = value["beam_b_key"]
         return instance
 
     def get_cutting_planes(self):

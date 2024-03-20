@@ -59,7 +59,7 @@ class Joint(Data):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
 
-    def __init__(self, frame=None, key=None, beams=None):
+    def __init__(self, frame=None, key=None, beams=None, **kwargs):
         super(Joint, self).__init__()
         self.frame = frame or Frame.worldXY()
         self.key = key
@@ -69,7 +69,7 @@ class Joint(Data):
 
     @property
     def __data__(self):
-        return {"frame": self.frame.__data__, "key": self.key, "beams": [beam.key for beam in self.beams]}
+        return {"frame": self.frame.__data__, "key": self.key}
 
     @property
     def beams(self):

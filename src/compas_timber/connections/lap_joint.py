@@ -53,8 +53,8 @@ class LapJoint(Joint):
     @property
     def __data__(self):
         data_dict = {
-            "main_beam": self.main_beam_key,
-            "cross_beam": self.cross_beam_key,
+            "main_beam_key": self.main_beam_key,
+            "cross_beam_key": self.cross_beam_key,
             "flip_lap_side": self.flip_lap_side,
             "cut_plane_bias": self.cut_plane_bias,
         }
@@ -63,14 +63,9 @@ class LapJoint(Joint):
 
     @classmethod
     def __from_data__(cls, value):
-        instance = cls(
-            frame=Frame.__from_data__(value["frame"]),
-            key=value["key"],
-            cut_plane_bias=value["cut_plane_bias"],
-            flip_lap_side=value["flip_lap_side"],
-        )
-        instance.main_beam_key = value["main_beam"]
-        instance.cross_beam_key = value["cross_beam"]
+        instance = cls(**value)
+        instance.main_beam_key = value["main_beam_key"]
+        instance.cross_beam_key = value["cross_beam_key"]
         return instance
 
     def restore_beams_from_keys(self, assemly):
