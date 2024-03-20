@@ -15,6 +15,7 @@ class Feature(Data):
         Indicates whether this feature is a result of joinery.
 
     """
+
     PRIORITY = FeaturePriority.EARLY
 
     def __init__(self, name=None, is_joinery=True):
@@ -64,6 +65,7 @@ class DrillFeature(Feature):
         The length (depth?) of the drill hole.
 
     """
+
     PRIORITY = FeaturePriority.LATER
 
     def __init__(self, line, diameter, length, **kwargs):
