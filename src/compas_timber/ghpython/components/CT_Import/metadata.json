@@ -26,6 +26,10 @@
             {
                 "name": "Assembly",
                 "description": "The imported TimberAssembly."
+            },
+            {
+                "name": "Geometry",
+                "description": "Assembly geometry."
             }
         ]
     }
