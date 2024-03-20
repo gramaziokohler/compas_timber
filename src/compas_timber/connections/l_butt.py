@@ -1,9 +1,10 @@
-from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
 
 from .joint import BeamJoinningError
 from .solver import JointTopology
+
+from .butt_joint import ButtJoint
 
 
 class LButtJoint(ButtJoint):
