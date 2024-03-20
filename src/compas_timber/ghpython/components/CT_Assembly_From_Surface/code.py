@@ -2,9 +2,10 @@
 
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-
+from scriptcontext import sticky
 from Rhino.Geometry import Brep as RhinoBrep
 from Rhino.Geometry import Vector3d as RhinoVector
+
 from compas.scene import Scene
 from compas.geometry import Brep
 from compas_timber.assembly import SurfaceAssembly
@@ -19,18 +20,41 @@ class SurfaceAssemblyComponent(component):
             return
         if not isinstance(surface, RhinoBrep):
             raise TypeError("Expected a compas.geometry.Surface, got: {}".format(type(surface)))
+
         if not stud_spacing:
-            self.AddRuntimeMessage(Warning, "Input parameter 'spacing' failed to collect data")
+            vals =  sticky.get("surface_assembly_defaults", None)
+            if vals:
+                stud_spacing = vals.get("stud_spacing", None)
+            if not stud_spacing:
+                self.AddRuntimeMessage(Warning, "stud_spacing failed to collect data")
         if not isinstance(stud_spacing, float):
             raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
-        if z_axis is not None and not isinstance(z_axis, RhinoVector):
-            raise TypeError("Expected a compas.geometry.Vector, got: {}".format(type(z_axis)))
+
+        if not beam_width:
+            vals =  sticky.get("surface_assembly_defaults", None)
+            if vals:
+                beam_width = vals.get("beam_width", None)
+            if not beam_width:
+                self.AddRuntimeMessage(Warning, "beam_width failed to collect data")
+        if not isinstance(beam_width, float):
+            raise TypeError("beam_width expected a float, got: {}".format(type(beam_width)))
+
+        if not frame_depth:
+            vals =  sticky.get("surface_assembly_defaults", None)
+            if vals:
+                frame_depth = vals.get("frame_depth", None)
+            if not frame_depth:
+                self.AddRuntimeMessage(Warning, "frame_depth failed to collect data")
+        if not isinstance(frame_depth, float):
+            raise TypeError("frame_depth expected a float, got: {}".format(type(frame_depth)))
 
         # reformat unset parameters for consistency
         if not z_axis:
             z_axis = None
         if not options:
-            options = {}
+            vals =  sticky.get("surface_assembly_defaults", None)
+            if vals:
+                options = vals.get("options", {})
 
 
         assembly = SurfaceAssembly(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, openings = openings, **options)

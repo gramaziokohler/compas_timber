@@ -109,8 +109,15 @@ class SurfaceAssembly(object):
         self.edge_stud_offset = edge_stud_offset or 0.0
         self.mill_depth = mill_depth
         self.lintel_posts = lintel_posts
-        self.openings = [curve_to_compas_polyline(opening) for opening in openings if openings]
-        self.subtraction_volumes = [Brep.from_native(volume) for volume in subtraction_volumes if subtraction_volumes]
+
+        if openings:
+            self.openings = [curve_to_compas_polyline(opening) for opening in openings if openings]
+        else:
+            self.openings = []
+        if subtraction_volumes:
+            self.subtraction_volumes = [Brep.from_native(volume) for volume in subtraction_volumes if subtraction_volumes]
+        else:
+            self.subtraction_volumes = []
 
         self._normal = None
         self.outer_polyline = None
