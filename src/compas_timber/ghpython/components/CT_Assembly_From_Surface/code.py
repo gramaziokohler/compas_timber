@@ -1,6 +1,3 @@
-"""Creates a Beam from a LineCurve."""
-
-from nis import cat
 from compas_timber.ghpython.workflow import CategoryRule
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
@@ -10,7 +7,7 @@ from Rhino.Geometry import Vector3d as RhinoVector
 
 from compas.scene import Scene
 from compas.geometry import Brep
-from compas_timber.assembly import SurfaceAssembly
+from compas_timber.assembly.assembly_from_surface import SurfaceAssembly
 from compas_timber.ghpython import DebugInfomation
 from compas_timber.consumers import BrepGeometryConsumer
 
