@@ -1,5 +1,7 @@
 """Creates a Beam from a LineCurve."""
 
+from nis import cat
+from compas_timber.ghpython.workflow import CategoryRule
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from scriptcontext import sticky
@@ -18,6 +20,7 @@ class SurfaceAssemblyComponent(component):
         # minimum inputs required
         if not surface:
             return
+
         if not isinstance(surface, RhinoBrep):
             raise TypeError("Expected a compas.geometry.Surface, got: {}".format(type(surface)))
 
@@ -51,11 +54,29 @@ class SurfaceAssemblyComponent(component):
         # reformat unset parameters for consistency
         if not z_axis:
             z_axis = None
-        if not options:
-            vals =  sticky.get("surface_assembly_defaults", None)
-            if vals:
-                options = vals.get("options", {})
+        default_vals =  sticky.get("surface_assembly_defaults", None).copy()
+        default_options = default_vals.get("options", {})
 
+
+        if default_options:
+            if not options:
+                options = default_options
+            else:
+                for key, value in default_options.items():
+                    if options.get(key, None) is None:
+                        options[key] = value
+                    elif isinstance(value, dict):
+                        for k, v in value.items():
+                            if options[key].get(k) is None:
+                                options[key][k] = v
+                    elif isinstance(value, list):
+                        for v in value:
+                            if isinstance(v, CategoryRule):
+                                sets = [set(rule.category_a, rule.category_b) for rule in options[key]]
+                                if set(v.category_a, v.category_b) not in sets:
+                                    options[key].append(v)
+
+        print(options)
 
         assembly = SurfaceAssembly(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, openings = openings, **options)
 
