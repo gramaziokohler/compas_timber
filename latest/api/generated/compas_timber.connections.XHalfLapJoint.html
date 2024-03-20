@@ -594,7 +594,7 @@ document.write(`
 <h1>XHalfLapJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.XHalfLapJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">XHalfLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/f32c9f0/src/compas_timber/connections/x_halflap.py#L8"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">XHalfLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0cc8b66/src/compas_timber/connections/x_halflap.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.LapJoint.html#compas_timber.connections.LapJoint" title="compas_timber.connections.lap_joint.LapJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p>
 <p>Represents a X-Lap type joint which joins the end of a beam along the length of another beam,
 trimming the main beam.</p>
@@ -610,24 +610,6 @@ trimming the main beam.</p>
 <dt><strong>flip_lap_side</strong><span class="classifier">bool</span></dt><dd><p>If True, the lap is flipped to the other side of the beams.</p>
 </dd>
 <dt><strong>cut_plane_bias</strong><span class="classifier">float</span></dt><dd><p>Allows lap to be shifted deeper into one beam or the other. Value should be between 0 and 1.0 without completely cutting through either beam. Default is 0.5.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Attributes<span class="colon">:</span></dt>
-<dd class="field-even"><dl>
-<dt><strong>beams</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>)</span></dt><dd><p>The beams joined by this joint.</p>
-</dd>
-<dt><strong>main_beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The main beam to be joined.</p>
-</dd>
-<dt><strong>cross_beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The cross beam to be joined.</p>
-</dd>
-<dt><strong>main_beam_key</strong><span class="classifier">str</span></dt><dd><p>The key of the main beam.</p>
-</dd>
-<dt><strong>cross_beam_key</strong><span class="classifier">str</span></dt><dd><p>The key of the cross beam.</p>
-</dd>
-<dt><strong>features</strong><span class="classifier">list(<code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code>)</span></dt><dd><p>The features created by this joint.</p>
-</dd>
-<dt><strong>joint_type</strong><span class="classifier">str</span></dt><dd><p>A string representation of this joint’s type.</p>
 </dd>
 </dl>
 </dd>
