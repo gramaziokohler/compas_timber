@@ -272,7 +272,7 @@ class BrepGeometryConsumer(object):
 
     def _apply_features(self, geometry, features):
         debug_info = []
-        for feature in features:
+        for feature in sorted(features, key=lambda f: f.PRIORITY):
             cls = self.FEATURE_MAP.get(type(feature), None)
             if not cls:
                 raise ValueError("No applicator found for feature type: {}".format(type(feature)))

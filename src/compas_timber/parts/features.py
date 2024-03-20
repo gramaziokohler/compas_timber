@@ -1,6 +1,11 @@
 from compas.data import Data
 
 
+class FeaturePriority(object):
+    EARLY = 0
+    LATER = 1
+
+
 class Feature(Data):
     """
 
@@ -11,7 +16,9 @@ class Feature(Data):
 
     """
 
-    def __init__(self, name=None, is_joinery=False):
+    PRIORITY = FeaturePriority.EARLY
+
+    def __init__(self, name=None, is_joinery=True):
         super(Feature, self).__init__(name)
         self._is_joiney = is_joinery
 
@@ -58,6 +65,8 @@ class DrillFeature(Feature):
         The length (depth?) of the drill hole.
 
     """
+
+    PRIORITY = FeaturePriority.LATER
 
     def __init__(self, line, diameter, length, **kwargs):
         super(DrillFeature, self).__init__(**kwargs)
