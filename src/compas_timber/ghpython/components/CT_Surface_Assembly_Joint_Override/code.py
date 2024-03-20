@@ -12,7 +12,7 @@ from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import rename_GH_output
 from compas_timber.ghpython import CategoryRule
-from compas_timber.assembly import SurfaceAssembly
+from compas_timber.assembly.assembly_from_surface import SurfaceAssembly
 
 
 class CategoryJointRule(component):
