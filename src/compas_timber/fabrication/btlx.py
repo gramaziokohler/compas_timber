@@ -1,4 +1,5 @@
 import os
+from types import NoneType
 import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
@@ -9,6 +10,7 @@ from datetime import datetime
 import compas
 from compas.geometry import Frame
 from compas.geometry import Transformation
+from compas_timber.connections import NullJoint
 
 
 class BTLx(object):
@@ -90,7 +92,10 @@ class BTLx(object):
             self.parts[str(beam.key)] = BTLxPart(beam)
         for joint in self.joints:
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
-            factory_type.apply_processings(joint, self.parts)
+            print(factory_type)
+            if factory_type is not None:
+                factory_type.apply_processings(joint, self.parts)
+
 
     @classmethod
     def register_joint(cls, joint_type, joint_factory):
