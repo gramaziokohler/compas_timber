@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
+* Added `mill_depth` argument to butt joints, with geometric representation of milled recess in cross beam.
+* Added `ButtJoint` class with methods common to `LButtJoint` and `TButtJoint`
 
 ### Changed
 
