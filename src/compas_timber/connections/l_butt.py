@@ -1,4 +1,3 @@
-from compas.geometry import Frame
 from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
@@ -54,28 +53,18 @@ class LButtJoint(ButtJoint):
         reject_i=False,
         **kwargs
     ):
-        super(LButtJoint, self).__init__(beams=(main_beam, cross_beam), **kwargs)
-
         if small_beam_butts and main_beam and cross_beam:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
 
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
-        self.mill_depth = mill_depth
+        super(LButtJoint, self).__init__(main_beam, cross_beam, mill_depth, **kwargs)
         self.modify_cross = modify_cross
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
-        self.features = []
 
     @property
     def __data__(self):
         data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
-            "mill_depth": self.mill_depth,
             "small_beam_butts": self.small_beam_butts,
             "modify_cross": self.modify_cross,
             "reject_i": self.reject_i,
@@ -83,24 +72,20 @@ class LButtJoint(ButtJoint):
         data_dict.update(super(LButtJoint, self).__data__)
         return data_dict
 
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(
-            frame=Frame.__from_data__(value["frame"]),
-            key=value["key"],
-            mill_depth=value["mill_depth"],
-            small_beam_butts=value["small_beam_butts"],
-            modify_cross=value["modify_cross"],
-            reject_i=value["reject_i"],
-        )
-        instance.main_beam_key = value["main_beam_key"]
-        instance.cross_beam_key = value["cross_beam_key"]
-        return instance
-
     def get_cross_cutting_plane(self):
         assert self.main_beam and self.cross_beam
         _, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)
         return cfr
+
+    def get_main_cutting_plane(self):
+        assert self.main_beam and self.cross_beam
+
+        index, _ = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=False)
+        if self.reject_i and index in [4, 5]:
+            raise BeamJoinningError(
+                beams=self.beams, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
+            )
+        return super(LButtJoint, self).get_main_cutting_plane()
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.

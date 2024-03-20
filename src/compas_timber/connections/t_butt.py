@@ -1,4 +1,3 @@
-from compas.geometry import Frame
 from compas_timber.connections.butt_joint import ButtJoint
 
 from compas_timber.parts import CutFeature
@@ -34,30 +33,8 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, **kwargs):
-        super(TButtJoint, self).__init__(beams=(main_beam, cross_beam), **kwargs)
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-
-    @property
-    def __data__(self):
-        data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
-        }
-        data_dict.update(super(TButtJoint, self).__data__)
-        return data_dict
-
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"])
-        instance.main_beam_key = value["main_beam_key"]
-        instance.cross_beam_key = value["cross_beam_key"]
-        instance.mill_depth = value["mill_depth"]
-        instance.gap = value["gap"]
-        return instance
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
+        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, **kwargs)
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).
