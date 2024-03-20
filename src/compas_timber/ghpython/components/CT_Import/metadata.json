@@ -1,0 +1,32 @@
+{
+    "name": "ImportTimberAssembly",
+    "nickname": "ImportTimberAssembly",
+    "category": "COMPAS Timber",
+    "subcategory": "Assembly",
+    "description": "Import TimberAssembly to a COMPAS Timber file.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Filepath",
+                "description": "The filepath to save the TimberAssembly to.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Import",
+                "description": "Press to import",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Assembly",
+                "description": "The imported TimberAssembly."
+            }
+        ]
+    }
+}
