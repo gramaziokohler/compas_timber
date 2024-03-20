@@ -66,7 +66,7 @@ class BTLxFrenchRidgeLap(object):
         self.drill_hole_diameter = 10.0
 
         self.ref_face_index = self.joint.reference_face_indices[str(self.beam.key)]
-        self.ref_face = self.part.reference_surfaces[str(self.ref_face_index)]
+        self.ref_face = self.part.faces[self.ref_face_index]
 
         """
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.

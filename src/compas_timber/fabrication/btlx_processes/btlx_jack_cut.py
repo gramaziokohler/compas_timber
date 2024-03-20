@@ -32,7 +32,7 @@ class BTLxJackCut(object):
         self.cut_plane = frame
         self.part = part
         self.apply_process = True
-        self.reference_surface = self.part.reference_surface_planes(1)
+        self.reference_side = self.part.faces[0]
         self.generate_process()
         if joint_name:
             self.name = joint_name
@@ -75,25 +75,23 @@ class BTLxJackCut(object):
         self.startY = 0.0
         self.start_depth = 0.0
 
-        self.x_edge = Line.from_point_and_vector(self.reference_surface.point, self.reference_surface.xaxis)
+        self.x_edge = Line.from_point_and_vector(self.reference_side.point, self.reference_side.xaxis)
 
         self.startX = intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
         if self.startX < self.part.blank_length / 2:
             self.orientation = "start"
         else:
             self.orientation = "end"
-        angle_direction = cross_vectors(self.reference_surface.normal, self.cut_plane.normal)
+        angle_direction = cross_vectors(self.reference_side.normal, self.cut_plane.normal)
         self.angle = (
-            angle_vectors_signed(self.reference_surface.xaxis, angle_direction, self.reference_surface.zaxis)
-            * 180
-            / math.pi
+            angle_vectors_signed(self.reference_side.xaxis, angle_direction, self.reference_side.zaxis) * 180 / math.pi
         )
 
         self.angle = abs(self.angle)
         self.angle = 90 - (self.angle - 90)
 
         self.inclination = (
-            angle_vectors_signed(self.reference_surface.zaxis, self.cut_plane.normal, angle_direction) * 180 / math.pi
+            angle_vectors_signed(self.reference_side.zaxis, self.cut_plane.normal, angle_direction) * 180 / math.pi
         )
         self.inclination = abs(self.inclination)
         self.inclination = 90 - (self.inclination - 90)
