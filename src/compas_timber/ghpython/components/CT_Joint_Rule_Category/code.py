@@ -43,7 +43,7 @@ class CategoryJointRule(component):
 
             kwargs = {}
             for i, val in enumerate(args[2:]):
-                if val:
+                if val != None:
                     kwargs[self.arg_names()[i + 2]] = val
             print(kwargs)
             if not cat_a:

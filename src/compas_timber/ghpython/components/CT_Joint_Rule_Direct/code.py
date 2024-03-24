@@ -37,7 +37,7 @@ class DirectJointRule(component):
             beam_b = args[1]
             kwargs = {}
             for i, val in enumerate(args[2:]):
-                if val:
+                if val != None:
                     kwargs[self.arg_names()[i + 2]] = val
 
             if not beam_a:

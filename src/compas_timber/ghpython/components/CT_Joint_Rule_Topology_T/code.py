@@ -35,7 +35,7 @@ class T_TopologyJointRule(component):
             ghenv.Component.Message = self.joint_type.__name__
             kwargs = {}
             for i, val in enumerate(args):
-                if val:
+                if val != None:
                     kwargs[self.arg_names()[i]] = val
             if self.joint_type.SUPPORTED_TOPOLOGY != JointTopology.TOPO_T:
                 self.AddRuntimeMessage(Warning, "Joint type does not match topology. Joint may not be generated.")
