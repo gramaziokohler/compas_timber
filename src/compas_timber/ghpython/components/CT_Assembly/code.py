@@ -11,6 +11,7 @@ from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import CategoryRule
 from compas_timber.ghpython import TopologyRule
 from compas_timber.ghpython import DirectRule
+from compas_timber.ghpython import DefaultRule
 from compas_timber.ghpython import DebugInfomation
 
 
@@ -40,7 +41,13 @@ class Assembly(component):
 
         for r in rules:  # separate category and topo and direct joint rules
             if isinstance(r, TopologyRule):
-                topo_rules[r.topology_type] = r
+                if topo_rules.get(r.topology_type, None):  # if rule for this Topo exists
+                    if (r.joint_type != DefaultRule.DEFAULTS[r.topology_type]) or (
+                        len(r.kwargs) != 0
+                    ):  # if this rule is NOT default
+                        topo_rules[r.topology_type] = r
+                else:
+                    topo_rules[r.topology_type] = r
             elif isinstance(r, CategoryRule):
                 cat_rules.append(r)
             if isinstance(r, DirectRule):
@@ -72,6 +79,18 @@ class Assembly(component):
                             Warning,
                             msg.format(
                                 beam_a.key, beam_b.key, JointTopology.get_name(detected_topo), rule.joint_type.__name__
+                            ),
+                        )
+                        continue
+                    if rule.topos and detected_topo not in rule.topos:
+                        msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule allows: {}"
+                        self.AddRuntimeMessage(
+                            Warning,
+                            msg.format(
+                                beam_a.key,
+                                beam_b.key,
+                                JointTopology.get_name(detected_topo),
+                                [JointTopology.get_name(topo) for topo in rule.topos],
                             ),
                         )
                         continue

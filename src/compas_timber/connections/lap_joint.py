@@ -18,9 +18,9 @@ class LapJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -33,9 +33,9 @@ class LapJoint(Joint):
         The beams joined by this joint.
     beams : list(:class:`~compas_timber.parts.Beam`)
         The main beam to be joined.
-    main_beam_key : str
+    beam_a_key : str
         The key of the main beam.
-    cross_beam_key : str
+    beam_b_key : str
         The key of the cross beam.
     features : list(:class:`~compas_timber.parts.Feature`)
         The features created by this joint.
@@ -44,21 +44,21 @@ class LapJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
         super(LapJoint, self).__init__(frame=frame, key=key)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
+        self.beam_a = beam_a
+        self.beam_b = beam_b
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.beam_a_key = beam_a.key if beam_a else None
+        self.beam_b_key = beam_b.key if beam_b else None
         self.features = []
 
     @property
     def __data__(self):
         data_dict = {
-            "main_beam": self.main_beam_key,
-            "cross_beam": self.cross_beam_key,
+            "beam_a": self.beam_a_key,
+            "beam_b": self.beam_b_key,
             "flip_lap_side": self.flip_lap_side,
             "cut_plane_bias": self.cut_plane_bias,
         }
@@ -73,18 +73,18 @@ class LapJoint(Joint):
             cut_plane_bias=value["cut_plane_bias"],
             flip_lap_side=value["flip_lap_side"],
         )
-        instance.main_beam_key = value["main_beam"]
-        instance.cross_beam_key = value["cross_beam"]
+        instance.beam_a_key = value["beam_a"]
+        instance.beam_b_key = value["beam_b"]
         return instance
 
     @property
     def beams(self):
-        return [self.main_beam, self.cross_beam]
+        return [self.beam_a, self.beam_b]
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.main_beam = assemly.find_by_key(self.main_beam_key)
-        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+        self.beam_a = assemly.find_by_key(self.beam_a_key)
+        self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
@@ -180,6 +180,6 @@ class LapJoint(Joint):
         lines.append(Line(pt_a, pt_b))
 
         # Create Polyhedrons
-        negative_polyhedron_main_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
-        negative_polyhedron_cross_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
-        return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
+        negative_polyhedron_beam_a = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
+        negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
+        return negative_polyhedron_beam_a, negative_polyhedron_beam_b
