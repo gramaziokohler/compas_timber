@@ -74,7 +74,7 @@ class SurfaceAssemblyComponent(component):
                                     options[key].append(v)
 
         print(options)
-
+        options = options or {}
         assembly = SurfaceAssembly(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, openings = openings, **options)
 
         debug_info = DebugInfomation()
