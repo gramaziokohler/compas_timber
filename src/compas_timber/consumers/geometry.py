@@ -124,7 +124,8 @@ class CutFeatureGeometry(FeatureApplicator):
         """
         try:
             results = self.beam_geometry.trimmed(self.cutting_plane)
-            return results[0]
+            results = results[0] if isinstance(results, list) else results
+            return results
         except IndexError:
             raise FeatureApplicationError(
                 self.cutting_plane,
