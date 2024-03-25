@@ -18,17 +18,22 @@ class Feature(Data):
 
     PRIORITY = FeaturePriority.EARLY
 
-    def __init__(self, name=None, is_joinery=True):
+    def __init__(self, name=None, is_joinery=True, owner=None):
         super(Feature, self).__init__(name)
         self._is_joiney = is_joinery
+        self._owner = owner
 
     @property
     def is_joinery(self):
         return self._is_joiney
 
     @property
+    def owner(self):
+        return self._owner
+
+    @property
     def __data__(self):
-        return {"is_joinery": self._is_joiney}
+        return {"is_joinery": self._is_joiney, "owner": self._owner}
 
 
 class CutFeature(Feature):

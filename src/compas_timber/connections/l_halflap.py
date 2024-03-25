@@ -72,14 +72,14 @@ class LHalfLapJoint(LapJoint):
         self.beam_a.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
         self.beam_b.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.key)
 
-        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
-        self.beam_b.add_features(MillVolume(negative_brep_beam_b))
+        self.beam_a.add_features(MillVolume(negative_brep_beam_a, owner=self.__class__.__name__))
+        self.beam_b.add_features(MillVolume(negative_brep_beam_b, owner=self.__class__.__name__))
 
-        f_cross = CutFeature(cross_cutting_frame)
+        f_cross = CutFeature(cross_cutting_frame, owner=self.__class__.__name__)
         self.beam_b.add_features(f_cross)
         self.features.append(f_cross)
 
         trim_frame = Frame(main_cutting_frame.point, main_cutting_frame.xaxis, -main_cutting_frame.yaxis)
-        f_main = CutFeature(trim_frame)
+        f_main = CutFeature(trim_frame, owner=self.__class__.__name__)
         self.beam_a.add_features(f_main)
         self.features.append(f_main)

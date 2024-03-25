@@ -61,5 +61,5 @@ class XHalfLapJoint(LapJoint):
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
-        self.beam_b.add_features(MillVolume(negative_brep_beam_b))
+        self.beam_a.add_features(MillVolume(negative_brep_beam_a, owner=self.__class__.__name__))
+        self.beam_b.add_features(MillVolume(negative_brep_beam_b, owner=self.__class__.__name__))
