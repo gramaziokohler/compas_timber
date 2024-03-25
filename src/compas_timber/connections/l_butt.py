@@ -121,10 +121,9 @@ class LButtJoint(ButtJoint):
         if self.features:
             self.main_beam.remove_features(self.features)
         start_main, start_cross = None, None
-
+        main_cutting_plane = self.get_main_cutting_plane()[0]
+        cross_cutting_plane = self.get_cross_cutting_plane()
         try:
-            main_cutting_plane = self.get_main_cutting_plane()[0]
-            cross_cutting_plane = self.get_cross_cutting_plane()
             start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
             start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
         except BeamJoinningError as be:
