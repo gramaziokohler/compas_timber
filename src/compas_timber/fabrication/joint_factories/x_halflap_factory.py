@@ -1,5 +1,5 @@
 from compas_timber.connections import XHalfLapJoint
-from compas_timber.fabrication import BTLxJoint
+from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxLap
 from compas.geometry import Vector, Plane
 from compas.geometry import angle_vectors
@@ -162,4 +162,4 @@ class XHalfLapFactory(object):
         )
 
 
-BTLxJoint.register_joint(XHalfLapJoint, XHalfLapFactory)
+BTLx.register_joint(XHalfLapJoint, XHalfLapFactory)
