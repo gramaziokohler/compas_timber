@@ -19,7 +19,7 @@
                 "name": "Plane",
                 "description": "Cutting plane(s).",
                 "typeHintID": "plane",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [

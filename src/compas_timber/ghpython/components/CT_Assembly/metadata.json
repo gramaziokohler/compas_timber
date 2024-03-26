@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Assembly",
     "description": "Creates an Assembly",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
@@ -49,6 +49,10 @@
             {
                 "name": "Geometry",
                 "description": "Geometry of the beams and joints."
+            },
+            {
+                "name": "DebugInfo",
+                "description": "Debug information object in the case of feature or joining errors."
             }
         ]
     }

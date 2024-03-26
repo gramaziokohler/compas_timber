@@ -2,12 +2,14 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 from compas_timber.connections import FrenchRidgeLapJoint
-from compas_timber.connections.joint import JointOptions
+from compas_timber.ghpython import JointOptions
 
 
-class MyComponent(component):
+class FrenchRidgeLapOptions(component):
     def RunScript(self, Cutoff):
-        args = {"cutoff": Cutoff}
+        args = {}
+        if Cutoff:
+            args["cutoff"] = Cutoff
         options = JointOptions(FrenchRidgeLapJoint, **args)
 
         return options

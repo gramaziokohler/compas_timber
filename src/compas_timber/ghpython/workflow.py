@@ -36,7 +36,7 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type."""
+    """Creates a Joint Rule that directly joins two beams."""
 
     def __init__(self, joint_type, beams, **kwargs):
         self.beams = beams
@@ -53,8 +53,8 @@ class DirectRule(JointRule):
     def comply(self, beams):
         try:
             return set(self.beams) == set(beams)
-        except KeyError:
-            print("key error")
+        except TypeError:
+            print("unable to comply direct joint beam sets")
             return False
 
 
@@ -258,3 +258,81 @@ def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l
 
     for beamA, beamB in connectivity["X"]:
         pass
+
+
+class JointOptions(object):
+    """Container for options to be passed to a joint.
+
+    This allows delaying the actual joining of the beams to a downstream component.
+
+    Parameters
+    ----------
+    type :  cls(:class:`compas_timber.connections.Joint`)
+        The type of the joint.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+
+    Attributes
+    ----------
+    type :  cls(:class:`compas_timber.connections.Joint`)
+        The type of the joint.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+
+    """
+
+    def __init__(self, type, **kwargs):
+        self.type = type
+        self.kwargs = kwargs
+
+    def __repr__(self):
+        return "{}({}{})".format(JointOptions.__name__, self.type, self.kwargs)
+
+    def ToString(self):
+        return repr(self)
+
+    def is_identical(self, other):
+        return isinstance(other, JointOptions) and self.kwargs == other.kwargs
+
+
+class DebugInfomation(object):
+    """Container for debugging information allowing visual inspection of joint and features related errors.
+
+    Attributes
+    ----------
+    feature_errors : list(:class:`~compas_timber.consumers.FeatureApplicationError`)
+        List of errors that occured during the application of features.
+    joint_errors : list(:class:`~compas_timber.connections.BeamJoiningError`)
+        List of errors that occured during the joining of beams.
+
+    See Also
+    --------
+    :class:`~compas_timber.consumers.FeatureApplicationError`
+    :class:`~compas_timber.connections.BeamJoiningError`
+
+    """
+
+    def __init__(self):
+        self.feature_errors = []
+        self.joint_errors = []
+
+    def __repr__(self):
+        return "{}({} feature errors, {} joining errors)".format(
+            DebugInfomation.__name__, len(self.feature_errors), len(self.joint_errors)
+        )
+
+    def ToString(self):
+        return repr(self)
+
+    @property
+    def has_errors(self):
+        return self.feature_errors or self.joint_errors
+
+    def add_feature_error(self, error):
+        if isinstance(error, list):
+            self.feature_errors.extend(error)
+        else:
+            self.feature_errors.append(error)
+
+    def add_joint_error(self, error):
+        self.joint_errors.append(error)

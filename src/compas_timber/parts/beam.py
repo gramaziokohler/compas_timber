@@ -1,5 +1,6 @@
 import math
 
+from compas.datastructures import Part
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -9,7 +10,6 @@ from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
-from compas.datastructures import Part
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 
@@ -55,8 +55,10 @@ class Beam(Part):
         Width of the cross-section
     height : float
         Height of the cross-section
-    blank : :class:`~compas.geometry.Box`
+    shape : :class:`~compas.geometry.Box`
         A feature-less box representing the parametric geometry of this beam.
+    blank : :class:`~compas.geometry.Box`
+        A feature-less box representing the material stock geometry to produce this beam.
     faces : list(:class:`~compas.geometry.Frame`)
         A list of frames representing the 6 faces of this beam.
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -89,9 +91,9 @@ class Beam(Part):
         self._blank_extensions = {}
 
     @property
-    def data(self):
+    def __data__(self):
         data = {
-            "frame": self.frame.data,
+            "frame": self.frame.__data__,
             "key": self.key,
             "width": self.width,
             "height": self.height,
@@ -100,10 +102,14 @@ class Beam(Part):
         return data
 
     @classmethod
-    def from_data(cls, data):
-        instance = cls(Frame.from_data(data["frame"]), data["length"], data["width"], data["height"])
+    def __from_data__(cls, data):
+        instance = cls(Frame.__from_data__(data["frame"]), data["length"], data["width"], data["height"])
         instance.key = data["key"]
         return instance
+
+    @property
+    def shape(self):
+        return _create_box(self.frame, self.length, self.width, self.height)
 
     @property
     def blank(self):

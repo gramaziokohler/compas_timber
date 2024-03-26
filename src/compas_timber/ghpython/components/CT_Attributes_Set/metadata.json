@@ -38,14 +38,14 @@
                 "description": "Category.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
-            },         
+            },
             {
                 "name": "update",
                 "description": "Set to True to apply. Nothing happens if None or False.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
-            
+
         ],
         "outputParameters": [
 

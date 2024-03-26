@@ -1,23 +1,32 @@
-from compas.geometry import Frame
-from compas.geometry import Line
-from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import Polyhedron
-from compas.geometry import Vector
-from compas.geometry import angle_vectors
-from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_plane_plane
-from compas.geometry import length_vector
-from compas.geometry import midpoint_point_point
-
 from compas_timber.parts import MillVolume
-from compas_timber.utils import intersection_line_line_3D
 
-from .joint import Joint
 from .solver import JointTopology
+from .joint import BeamJoinningError
+
+from .lap_joint import LapJoint
 
 
-class XHalfLapJoint(Joint):
+class XHalfLapJoint(LapJoint):
+    """Represents a X-Lap type joint which joins the end of a beam along the length of another beam,
+    trimming the main beam.
+
+    This joint type is compatible with beams in T topology.
+
+    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
+
+    Parameters
+    ----------
+    main_beam : :class:`~compas_timber.parts.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
+    flip_lap_side : bool
+        If True, the lap is flipped to the other side of the beams.
+    cut_plane_bias : float
+        Allows lap to be shifted deeper into one beam or the other. Value should be between 0 and 1.0 without completely cutting through either beam. Default is 0.5.
+
+    """
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
     def __init__(self, beam_a=None, beam_b=None, cut_plane_choice=None, cut_plane_bias = 0.5, frame=None, key=None):
@@ -95,12 +104,14 @@ class XHalfLapJoint(Joint):
         if length_vector(cutplane_vector_b) < 1e-6:
             cutplane_vector_b = plane_cut.normal * -1
 
-        self.cutplane = plane_cut
+            self.cutplane = plane_cut
 
         return plane_cut, cutplane_vector_a, cutplane_vector_b
 
     @staticmethod
-    def _sort_beam_planes_old(beam, cutplane_vector):  # TODO delete this if the new function works!!!
+    def _sort_beam_planes_old(beam, cutplane_vector): # TODO delete this if the new function works!!!
+        # Sorts the Beam Face Planes according to the Cut Plane
+
         frames = beam.faces[:4]
         planes = []
         planes_angles = []
@@ -109,7 +120,7 @@ class XHalfLapJoint(Joint):
             planes_angles.append(angle_vectors(cutplane_vector, i.normal))
         planes_angles, planes = zip(*sorted(zip(planes_angles, planes)))
         return planes
-
+   
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
         # Reorders the Beam Planes based on which Plane is the Operation Face
@@ -126,6 +137,7 @@ class XHalfLapJoint(Joint):
             planes_sorted.append(Plane.from_frame(i))
         return frames_sorted, planes_sorted, min_item
 
+
     @staticmethod
     def _create_polyhedron(plane_a, plane_b, lines):  # Hexahedron from 2 Planes and 4 Lines
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
@@ -133,6 +145,8 @@ class XHalfLapJoint(Joint):
         for i in lines:
             point_top = intersection_line_plane(i, plane_a)
             point_bottom = intersection_line_plane(i, plane_b)
+            point_top = Point(*point_top)
+            point_bottom = Point(*point_bottom)
             int_points.append(point_top)
             int_points.append(point_bottom)
 
@@ -163,7 +177,7 @@ class XHalfLapJoint(Joint):
         # Get Cut Plane
         plane_cut, plane_cut_vector_a, plane_cut_vector_b = self._cutplane()
 
-        # Get Beam Faces (Planes) in right order
+       # Get Beam Faces (Planes) in right order
         self.sorted_frames_a, self.sorted_planes_a, self.operation_plane_a = self._sort_beam_planes(
             self.beam_a, plane_cut_vector_a
         )
@@ -173,6 +187,7 @@ class XHalfLapJoint(Joint):
             self.beam_b, plane_cut_vector_b
         )
         plane_b0, plane_b1, plane_b2, plane_b3, plane_b4, plane_b5 = self.sorted_planes_b
+
 
         # Lines as Frame Intersections
         lines = []
@@ -196,6 +211,14 @@ class XHalfLapJoint(Joint):
         self.beam_b = assemly.find_by_key(self.beam_b_key)
 
     def add_features(self):
-        negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
-        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
-        self.beam_b.add_features(MillVolume(negative_brep_beam_b))
+        assert self.main_beam and self.cross_beam  # should never happen
+
+        try:
+            negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+        volume_a = MillVolume(negative_brep_beam_a)
+        volume_b = MillVolume(negative_brep_beam_b)
+        self.main_beam.add_features(volume_a)
+        self.cross_beam.add_features(volume_b)
+        self.features = [volume_a, volume_b]

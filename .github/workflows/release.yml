@@ -86,11 +86,7 @@ jobs:
         with:
           source: src/compas_timber/ghpython/components
           target: src/compas_timber/ghpython/components/ghuser
-          prefix: "(COMPAS_TIMBER) "
-
-      - name: Copy manual components
-        run: |
-          cp src/compas_timber/ghpython/ghuser_manual/* src/compas_timber/ghpython/components/ghuser/
+          prefix: "CT: "
 
       - shell: bash
         run: |

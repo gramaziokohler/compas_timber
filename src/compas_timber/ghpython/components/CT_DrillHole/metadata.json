@@ -1,0 +1,38 @@
+{
+    "name": "Drill Hole Feature",
+    "nickname": "Drill Hole",
+    "category": "COMPAS Timber",
+    "subcategory": "Features",
+    "description": "Creates a Feature representing a drill hole in Beam. Specify multiple Beams to drill through all Beams with the same hole.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beam",
+                "description": "Beam(s) to subtract Geometry from.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Line",
+                "description": "Line representing the axis of the drill hole.",
+                "typeHintID": "line",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Diameter",
+                "description": "The diameter of the drill hole",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Feature",
+                "description": "Defined Feature(s)."
+            }
+        ]
+    }
+}

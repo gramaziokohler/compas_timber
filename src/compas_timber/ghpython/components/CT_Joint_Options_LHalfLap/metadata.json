@@ -1,0 +1,32 @@
+{
+    "name": "L-Half Lap Joint Options",
+    "nickname": "L-Half Lap",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "defines and gives access to L-Half Lap joint and its parameters",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "FlipLapSide",
+                "description": "flip the side of the lap joint",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "CutPlaneBias",
+                "description": "determines the depth of lap cuts on the beams",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "L-Half Lap",
+                "description": "L-Half Lap Joint Options."
+            }
+        ]
+    }
+}

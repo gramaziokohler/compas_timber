@@ -1,15 +1,17 @@
+from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas.scene import Scene
 from compas_timber.assembly import TimberAssembly
 from compas_timber.consumers import BrepGeometryConsumer
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
+from compas_timber.connections import BeamJoinningError
 from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import CategoryRule
 from compas_timber.ghpython import TopologyRule
 from compas_timber.ghpython import DirectRule
+from compas_timber.ghpython import DebugInfomation
 
 
 class Assembly(component):
@@ -25,15 +27,12 @@ class Assembly(component):
             new_beams.append(self._beam_map[id(beam)])
         return new_beams
 
-    def get_joint_definitions_from_rules(self, beams, rules, MaxDistance = 0):
+    def get_joints_from_rules(self, beams, rules, topologies):
         if not isinstance(rules, list):
             rules = [rules]
         rules = [r for r in rules if r is not None]
 
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=MaxDistance)
-        self.joints = []
-        Info = []
+        joints = []
         # rules have to be resolved into joint definitions
         topo_rules = {}
         cat_rules = []
@@ -47,9 +46,11 @@ class Assembly(component):
             if isinstance(r, DirectRule):
                 direct_rules.append(r)
 
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
+        for topo in topologies:
+            beam_a = topo["beam_a"]
+            beam_b = topo["beam_b"]
+            detected_topo = topo["detected_topo"]
+            pair = beam_a, beam_b
             pair_joined = False
 
             if detected_topo == JointTopology.TOPO_UNKNOWN:
@@ -57,7 +58,7 @@ class Assembly(component):
 
             for rule in direct_rules:  # apply direct rules first
                 if rule.comply(pair):
-                    self.joints.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+                    joints.append(JointDefinition(rule.joint_type, rule.beams, **rule.kwargs))
                     pair_joined = True
                     break
 
@@ -67,39 +68,52 @@ class Assembly(component):
                         continue
                     if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
                         msg = "Conflict detected! Beams: {}, {} meet with topology: {} but rule assigns: {}"
-                        Info.append(
-                            msg.format(beam_a, beam_b, JointTopology.get_name(detected_topo), rule.joint_type.__name__)
+                        self.AddRuntimeMessage(
+                            Warning,
+                            msg.format(
+                                beam_a.key, beam_b.key, JointTopology.get_name(detected_topo), rule.joint_type.__name__
+                            ),
                         )
                         continue
                     # sort by category to allow beam role by order (main beam first, cross beam second)
                     beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                    self.joints.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+                    joints.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
                     break  # first matching rule
 
                 else:  # no category rule applies, apply topology rules
-                    if not detected_topo in topo_rules:
+                    if detected_topo not in topo_rules:
                         continue
                     else:
-                        self.joints.append(
+                        joints.append(
                             JointDefinition(
-                                topo_rules[detected_topo].joint_type, [beam_a, beam_b], **topo_rules[detected_topo].kwargs
+                                topo_rules[detected_topo].joint_type,
+                                [beam_a, beam_b],
+                                **topo_rules[detected_topo].kwargs
                             )
                         )
-
+        return joints
 
     def RunScript(self, Beams, JointRules, Features, MaxDistance, CreateGeometry):
-
         if not Beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-            pass
         if not JointRules:
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
-        if not (Beams and JointRules):
+        if not (Beams):  # shows beams even if no joints are found
             return
 
-        self.get_joint_definitions_from_rules(Beams, JointRules, MaxDistance=MaxDistance)
-
         Assembly = TimberAssembly()
+        debug_info = DebugInfomation()
+
+        topologies = []
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
+        Assembly.set_topologies(topologies)
+
         self._beam_map = {}
         beams = [b for b in Beams if b is not None]
         for beam in beams:
@@ -108,24 +122,30 @@ class Assembly(component):
             self._beam_map[id(beam)] = c_beam
         beams = Assembly.beams
 
-        if self.joints:
+        joints = self.get_joints_from_rules(beams, JointRules, topologies)
+
+        if joints:
             handled_beams = []
-            joints = [j for j in self.joints if j is not None]
+            joints = [j for j in joints if j is not None]
             # apply reversed. later joints in orginal list override ealier ones
             for joint in joints[::-1]:
                 beams_to_pair = self._get_copied_beams(joint.beams)
                 beam_pair_ids = set([id(beam) for beam in beams_to_pair])
                 if beam_pair_ids in handled_beams:
                     continue
-                joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
-                handled_beams.append(beam_pair_ids)
+                try:
+                    joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
+                except BeamJoinningError as bje:
+                    debug_info.add_joint_error(bje)
+                else:
+                    handled_beams.append(beam_pair_ids)
 
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
                 beams_to_modify = self._get_copied_beams(f_def.beams)
                 for beam in beams_to_modify:
-                    beam.add_feature(f_def.feature)
+                    beam.add_features(f_def.feature)
 
         Geometry = None
         scene = Scene()
@@ -133,7 +153,14 @@ class Assembly(component):
             vis_consumer = BrepGeometryConsumer(Assembly)
             for result in vis_consumer.result:
                 scene.add(result.geometry)
+                if result.debug_info:
+                    debug_info.add_feature_error(result.debug_info)
+        else:
+            for beam in Assembly.beams:
+                scene.add(beam.blank)
 
-        Geometry = scene.redraw()
+        if debug_info.has_errors:
+            self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
-        return Assembly, Geometry
+        Geometry = scene.draw()
+        return Assembly, Geometry, debug_info

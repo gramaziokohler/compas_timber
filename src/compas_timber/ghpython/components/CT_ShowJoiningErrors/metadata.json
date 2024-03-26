@@ -1,0 +1,35 @@
+{
+    "name": "ShowJoiningErrors",
+    "nickname": "JoiningErrors",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "Shows infomation helpful for debugging errors occured while attempting to join beams.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+
+            {
+                "name": "DebugInfo",
+                "description": "DebugInformation object containing joining errors.",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "i",
+                "description": "Index of the joining error to show. This index wraps around the number of errors.",
+                "type": "int"
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Info",
+                "description": "Information about the joining error."
+            },
+            {
+                "name": "Geometry",
+                "description": "Geometry of the beam blanks related to the selected joining error."
+            }
+        ]
+    }
+}
