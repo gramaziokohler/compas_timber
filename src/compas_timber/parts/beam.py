@@ -128,33 +128,43 @@ class Beam(Part):
         return frame
 
     @property
+    def part_ref(self):
+        frame = self.blank_frame
+        return Frame(
+            Point(*(frame.point + (frame.yaxis * self.width * 0.5) - (frame.zaxis * self.height * 0.5))),
+            frame.xaxis,
+            frame.zaxis,
+        )
+
+    @property
     def faces(self):
+        frame = self.part_ref
         return [
             Frame(
-                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
-                self.frame.xaxis,
-                -self.frame.zaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
+                frame.point,
                 self.frame.xaxis,
                 -self.frame.yaxis,
             ),
             Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
+                Point(*add_vectors(frame.point, self.frame.zaxis * self.height)),
                 self.frame.xaxis,
-                self.frame.zaxis,
+                -self.frame.zaxis,
             ),
             Frame(
-                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                Point(*(frame.point - self.frame.yaxis * self.width + self.frame.zaxis * self.height)),
                 self.frame.xaxis,
                 self.frame.yaxis,
             ),
-            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
             Frame(
-                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
-                self.frame.yaxis,
+                Point(*add_vectors(frame.point, -self.frame.yaxis * self.width)),
+                self.frame.xaxis,
                 self.frame.zaxis,
+            ),
+            Frame(frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
+            Frame(
+                Point(*(frame.point + self.frame.xaxis * self.blank_length + self.frame.zaxis * self.height)),
+                -self.frame.yaxis,
+                -self.frame.zaxis,
             ),  # small face at end point
         ]
 
