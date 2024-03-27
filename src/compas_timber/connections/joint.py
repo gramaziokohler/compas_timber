@@ -253,3 +253,47 @@ class Joint(Data):
             face_angles[face_index] = angle_vectors(face.normal, centerline_vec)
 
         return face_angles
+
+    @staticmethod
+    def beam_side_incidence_from_vector(beam, vector, ignore_ends=True):
+        """Returns a map of face indices of beam and the angle of their normal with a vector.
+
+        This is used to find a cutting plane when joining the two beams.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.parts.Beam`
+            The beam whose faces this funciton returns.
+
+        vector : :class:`~compas.geometry.Vector`
+            The vector to which the angle of the faces of `beam` are calculated.
+
+        ignore_ends : bool, optional
+            If True, only the first four faces of `beam_b` are considered. Otherwise all faces are considered.
+
+        Examples
+        --------
+        >>> face_angles = Joint.beam_side_incidence(beam_a, beam_b)
+        >>> closest_face_index = min(face_angles, key=face_angles.get)
+        >>> cutting_plane = beam_b.faces[closest_face_index]
+
+        Returns
+        -------
+        dict(int, float)
+            A map of face indices of beam_b and their respective angle with beam_a's centerline.
+
+        """
+        # find the orientation of beam_a's centerline so that it's pointing outward of the joint
+        # find the closest end
+
+
+        if ignore_ends:
+            beam_faces = beam.faces[:4]
+        else:
+            beam_faces = beam.faces
+
+        face_angles = {}
+        for face_index, face in enumerate(beam_faces):
+            face_angles[face_index] = angle_vectors(face.normal, vector)
+
+        return face_angles

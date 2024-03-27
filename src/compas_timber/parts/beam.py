@@ -190,14 +190,7 @@ class Beam(Part):
 
     @property
     def long_edges(self):
-        y = self.frame.yaxis
-        z = self.frame.zaxis
-        w = self.width * 0.5
-        h = self.height * 0.5
-        ps = self.centerline_start
-        pe = self.centerline_end
-
-        return [Line(ps + v, pe + v) for v in (y * w + z * h, -y * w + z * h, -y * w - z * h, y * w - z * h)]
+        return [Line.from_point_and_vector(frame.point, frame.xaxis) for frame in self.faces[0:4]]
 
     @property
     def midpoint(self):

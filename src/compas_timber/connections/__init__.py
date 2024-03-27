@@ -2,6 +2,7 @@ from .french_ridge_lap import FrenchRidgeLapJoint
 from .joint import BeamJoinningError
 from .joint import Joint
 from .lap_joint import LapJoint
+from .new_lap_joint import NewLapJoint
 from .butt_joint import ButtJoint
 from .l_butt import LButtJoint
 from .l_miter import LMiterJoint
@@ -17,6 +18,7 @@ from .null_joint import NullJoint
 __all__ = [
     "Joint",
     "LapJoint",
+    "NewLapJoint",
     "ButtJoint",
     "BeamJoinningError",
     "TButtJoint",
