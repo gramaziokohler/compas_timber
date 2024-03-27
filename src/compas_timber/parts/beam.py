@@ -88,6 +88,8 @@ class Beam(Part):
         self.height = height
         self.length = length
         self.features = []
+        self.attributes = {}
+        self.attributes.update(kwargs)
         self._blank_extensions = {}
 
     @property
@@ -98,6 +100,9 @@ class Beam(Part):
             "width": self.width,
             "height": self.height,
             "length": self.length,
+            # joinery features are readded when deserializing via the assembly
+            "features": [feature for feature in self.features if not feature.is_joinery],
+            "attributes": self.attributes,
         }
         return data
 
@@ -105,6 +110,8 @@ class Beam(Part):
     def __from_data__(cls, data):
         instance = cls(Frame.__from_data__(data["frame"]), data["length"], data["width"], data["height"])
         instance.key = data["key"]
+        instance.features = data["features"]
+        instance.attributes.update(data.get("attributes", {}))
         return instance
 
     @property
