@@ -61,22 +61,6 @@ class TStirnversatzJoint(Joint):
         return [self.main_beam, self.cross_beam]
 
     @staticmethod
-    def _get_planes(list):
-        # Get Planes from Beams
-        output = []
-        for i in list:
-            result = Plane.from_frame(i)
-            output.append(result)
-        return output
-
-    @staticmethod
-    def _get_plane_normals(list):
-        output = []
-        for i in list:
-            output.append(i[1])
-        return output
-
-    @staticmethod
     def _bisector_plane(plane1, plane2, angle_factor):
         bisector = plane1[1] + plane2[1] * angle_factor
         intersection = intersection_plane_plane(plane1, plane2)
@@ -86,90 +70,8 @@ class TStirnversatzJoint(Joint):
         bisector.transform(R)
         plane = Plane(origin, bisector)
         return plane, plane1[1], plane2[1]
-
-    @staticmethod
-    def _plane_between(plane1, plane2, shift_factor):
-        # Sets a Plane between plane1 and plane2 with a Shift Factor
-        vector = Vector.from_start_end(plane1[0], plane2[0])
-        vector = vector * shift_factor
-        origin = plane1[0] + vector
-        return Plane(origin, plane1[1])
-
-    @staticmethod
-    def _plane_dir_correction(targetplane, operationplane):
-        # Flips targetplane if its normal points into the opposite direction of operationplane
-        a = angle_vectors(targetplane[1], operationplane[1])
-        b = angle_vectors(targetplane[1] * -1, operationplane[1])
-        if a > b:
-            return targetplane
-        else:
-            return Plane(targetplane[0], targetplane[1] * -1)
-
-    @staticmethod
-    def _mesh_to_brep(negative_polyhedron):
-        # Show Polyhedrons
-        negative_polyhedron = Artist(negative_polyhedron).draw()
-
-        # Breps from Polyhedrons
-        negative_brep = RhinoBrep.CreateFromMesh(rs.coercemesh(negative_polyhedron), True)
-        return negative_brep
-
-    def _create_features(self):
-        # Get Planes and Normals for the Beam Faces
-        planes_a = self._get_planes(self.main_beam.faces[:4])
-        planes_b = self._get_planes(self.cross_beam.faces[:4])
-        normals_b = self._get_plane_normals(planes_b)
-
-        # Find plane_a0 where cross_beam meets main_beam and shift it to position 0 in planes_a
-        b_centerline = self.cross_beam.centerline[0], self.cross_beam.centerline[1]
-        b_centerline = Polyline(b_centerline)
-        for idx, i in enumerate(planes_a):
-            intersect = intersection_polyline_plane(b_centerline, i)
-            if intersect != []:
-                plane_a0 = i
-                index = idx
-        planes_a = planes_a[index:] + planes_a[:index]
-
-        # Sort planes_b by their angle in relation to plane_a0
-        angles = []
-        for i in normals_b:
-            angle = angle_vectors(i, plane_a0[1])
-            angles.append(angle)
-        angles, planes_b = zip(*sorted(zip(angles, planes_b)))
-
-        # Plane b1 as Feature for cross_beam
-        plane_cross_beam1 = self._bisector_plane(plane_a0, planes_b[0], 1)[0]
-
-        # Plane b2 as Feature for cross_beam
-        planebetween = self._plane_between(planes_a[0], planes_a[2], self.cut_depth)
-        point1 = intersection_plane_plane_plane(plane_cross_beam1, planebetween, planes_b[1])
-        point2 = intersection_plane_plane_plane(planes_a[0], planes_b[3], planes_b[1])
-        point3 = intersection_plane_plane_plane(planes_a[0], planes_b[3], planes_b[2])
-        plane_cross_beam2 = Plane.from_three_points(point1, point2, point3)
-        plane_cross_beam2 = self._plane_dir_correction(plane_cross_beam2, planes_b[0])
-
-        # Triangular Prism as Negative Volume for main_beam: Find 3 Prism Edges Lines
-        edge_1 = intersection_plane_plane(plane_a0, plane_cross_beam1)
-        edge_2 = intersection_plane_plane(plane_a0, plane_cross_beam2)
-        edge_3 = intersection_plane_plane(plane_cross_beam1, plane_cross_beam2)
-
-        # Find 6 intersection Points for constructing the Prism
-        points = []
-        points.append(intersection_line_plane(edge_1, planes_a[1]))
-        points.append(intersection_line_plane(edge_2, planes_a[1]))
-        points.append(intersection_line_plane(edge_3, planes_a[1]))
-        points.append(intersection_line_plane(edge_1, planes_a[3]))
-        points.append(intersection_line_plane(edge_2, planes_a[3]))
-        points.append(intersection_line_plane(edge_3, planes_a[3]))
-
-        # Create the Prism from Points 0-5
-        polyhedron = Polyhedron(points, [[0, 1, 2], [3, 4, 5], [0, 3, 4, 1], [1, 4, 5, 2], [2, 5, 3, 0]])
-
-        # Mesh to Brep
-        negative_brep_main_beam = self._mesh_to_brep(polyhedron)
-
-        return plane_cross_beam1, plane_cross_beam2, negative_brep_main_beam
     
+    #TODO Remove if not used
     def get_main_cutting_frame(self):
         assert self.beams
         main_beam, cross_beam = self.beams
@@ -178,15 +80,16 @@ class TStirnversatzJoint(Joint):
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
     
+    # TODO Remove if not used
     def get_cross_cutting_frame(self):
         assert self.beams
         main_beam, cross_beam = self.beams
         _, cfr = self.get_face_most_towards_beam(cross_beam, main_beam)
         return cfr
 
+    #find the Face on main_beam where cross_beam intersects
+    #TODO simplify with Chen!
     def get_main_intersection_frame(self):
-        #find the Face on main_beam where cross_beam intersects
-        #TODO simplify with Chen!
         diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
         main_frames = self.main_beam.faces[:4]
         cross_centerline = self.cross_beam.centerline
@@ -254,15 +157,31 @@ class TStirnversatzJoint(Joint):
         cross_cutting_plane2 = Plane.from_frame(Frame(p1, Vector.from_start_end(p1, p2), split_plane.normal))
 
         # Main Cutting Volume
-        l1 = intersection_plane_plane(cross_cutting_plane1, main_intersection_plane)
-        l2 = intersection_plane_plane(cross_cutting_plane1, cross_cutting_plane2)
-        l3 = intersection_plane_plane(cross_cutting_plane2, main_intersection_plane)
+        l1 = intersection_plane_plane(main_intersection_plane, cross_cutting_plane1)
+        l2 = intersection_plane_plane(main_intersection_plane, cross_cutting_plane2)
+        l3 = intersection_plane_plane(cross_cutting_plane1, cross_cutting_plane2)
         main_frames_sorted = self._sort_frames_according_normals(main_intersection_frame, self.main_beam.faces[:4])
-        p4 = Plane.from_frame(main_frames_sorted[1])
-        p5 = Plane.from_frame(main_frames_sorted[3])
-        #TODO Polyhedron!!!
+        pl1 = Plane.from_frame(main_frames_sorted[1])
+        pl2 = Plane.from_frame(main_frames_sorted[3])
+        lines = [l1, l2, l3]
+        points = []
+        for i in lines:
+            points.append(intersection_line_plane(i, pl1))
+            points.append(intersection_line_plane(i, pl2))
+        
+        main_cutting_volume = Polyhedron(points, 
+                   [
+                [0, 1, 2],  # front
+                [5, 4, 3],  # back
+                [0, 3, 4, 1],  # first
+                [1, 4, 5, 2],  # second
+                [2, 5, 3, 0],  # third
+            ],
+            )
 
         self.cross_beam.add_features(cross_cutting_plane1)
         self.cross_beam.add_features(cross_cutting_plane2)
 
-        return cross_cutting_plane1, cross_cutting_plane2
+        volume = MillVolume(main_cutting_volume)
+        self.main_beam.add_features(volume)
+        self.features = volume
