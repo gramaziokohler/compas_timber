@@ -10,6 +10,6 @@ class TStirnversatzJointOptions(component):
         args = {}
         if Gap:
             args["gap"] = Gap
-        options = JointOptions(TButtJoint, **args)
+        options = JointOptions(TStirnversatzJoint, **args)
 
         return options
