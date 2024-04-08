@@ -1,0 +1,26 @@
+{
+    "name": "T-Stirnversatz Options",
+    "nickname": "T-Stirnversatz",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "defines and gives access to T-Stirnversatz joint and its parameters",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Gap",
+                "description": "Gap for tolerance.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "T-Stirnversatz",
+                "description": "T-Stirnversatz Joint Options."
+            }
+        ]
+    }
+}
