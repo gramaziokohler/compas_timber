@@ -3,33 +3,25 @@ from .solver import JointTopology
 from .joint import BeamJoinningError
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
-from compas.geometry import Plane, Polyhedron, Brep, Polyline, Vector, Box, Frame, Point
+from compas.geometry import Plane, Polyhedron, Vector, Frame
 from compas.geometry import Rotation
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_polyline_plane
 from compas.geometry import angle_vectors
-from compas.geometry import angle_planes
 from compas.geometry import distance_point_point
 from compas.geometry import midpoint_line
 from compas.geometry import project_point_plane
-from compas.geometry import length_vector
 from compas.geometry import translate_points
 import math
 
-# BREP HACK CHEN
-# from compas.artists import Artist
-# import rhinoscriptsyntax as rs
-# from Rhino.Geometry import Brep as RhinoBrep
-# from Rhino.Geometry import Plane as RhinoPlane
-
 
 class TStirnversatzJoint(Joint):
+    
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, assembly=None, main_beam=None, cross_beam=None):
-        super(TStirnversatzJoint, self).__init__(assembly, [main_beam, cross_beam])
+    def __init__(self, cross_beam=None, main_beam=None): #TODO Why main & cross swapped???
+        super(TStirnversatzJoint, self).__init__(main_beam, cross_beam)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = None
@@ -40,8 +32,8 @@ class TStirnversatzJoint(Joint):
     @property
     def data(self):
         data_dict = {
-            "main_beam": self.main_beam_key,
             "cross_beam": self.cross_beam_key,
+            "main_beam": self.main_beam_key,
         }
         data_dict.update(Joint.data.fget(self))
         return data_dict
@@ -49,8 +41,8 @@ class TStirnversatzJoint(Joint):
     # @data.setter
     # def data(self, value):
     #     Joint.data.fset(self, value)
-    #     self.main_beam_key = value["main_beam"]
     #     self.cross_beam_key = value["cross_beam"]
+    #     self.main_beam_key = value["main_beam"]
 
     @property
     def joint_type(self):
@@ -74,7 +66,7 @@ class TStirnversatzJoint(Joint):
     #TODO Remove if not used
     def get_main_cutting_frame(self):
         assert self.beams
-        main_beam, cross_beam = self.beams
+        cross_beam, main_beam = self.beams
 
         _, cfr = self.get_face_most_ortho_to_beam(main_beam, cross_beam, True)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
@@ -83,11 +75,11 @@ class TStirnversatzJoint(Joint):
     # TODO Remove if not used
     def get_cross_cutting_frame(self):
         assert self.beams
-        main_beam, cross_beam = self.beams
-        _, cfr = self.get_face_most_towards_beam(cross_beam, main_beam)
+        cross_beam, main_beam = self.beams
+        _, cfr = self.get_face_most_towards_beam(main_beam, cross_beam)
         return cfr
 
-    #find the Face on main_beam where cross_beam intersects
+    #find the Face on cross_beam where main_beam intersects
     #TODO simplify with Chen!
     def get_main_intersection_frame(self):
         diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
@@ -120,6 +112,7 @@ class TStirnversatzJoint(Joint):
         angles, frames = zip(*sorted(zip(angles, frames)))
         return frames
     
+    #TODO Delete if not needed
     @staticmethod
     def _rotation_plane(plane1, plane2):
         line = intersection_plane_plane(plane1, plane2)
@@ -127,12 +120,15 @@ class TStirnversatzJoint(Joint):
         plane = Plane(line[0], vector)
         return plane
     
+    #TODO Delete if not needed
     @staticmethod
     def _angle_plane_normals(plane1, plane2):
         return angle_vectors(plane1.normal, plane2.normal)
 
-
     def add_features(self):
+
+        assert self.main_beam and self.cross_beam  # should never happen
+
         # Cross Cutting Plane 1
         main_intersection_frame = self.get_main_intersection_frame()
         main_intersection_plane = Plane.from_frame(main_intersection_frame)
@@ -162,7 +158,7 @@ class TStirnversatzJoint(Joint):
         l3 = intersection_plane_plane(cross_cutting_plane1, cross_cutting_plane2)
         main_frames_sorted = self._sort_frames_according_normals(main_intersection_frame, self.main_beam.faces[:4])
         pl1 = Plane.from_frame(main_frames_sorted[1])
-        pl2 = Plane.from_frame(main_frames_sorted[3])
+        pl2 = Plane.from_frame(main_frames_sorted[2])
         lines = [l1, l2, l3]
         points = []
         for i in lines:
@@ -171,17 +167,21 @@ class TStirnversatzJoint(Joint):
         
         main_cutting_volume = Polyhedron(points, 
                    [
-                [0, 1, 2],  # front
-                [5, 4, 3],  # back
-                [0, 3, 4, 1],  # first
-                [1, 4, 5, 2],  # second
-                [2, 5, 3, 0],  # third
+                [0, 2, 4],  # front
+                [1, 5, 3],  # back
+                [0, 1, 3, 2],  # first
+                [2, 3, 5, 4],  # second
+                [4, 5, 1, 0],  # third
             ],
             )
+        
+        print(main_cutting_volume) #TODO just for debugging, remove...
+        print("polyhedron is closed: " + str(main_cutting_volume.is_closed())) #TODO just for debugging, remove...
 
-        self.cross_beam.add_features(cross_cutting_plane1)
-        self.cross_beam.add_features(cross_cutting_plane2)
+        trim_feature = CutFeature(cross_cutting_plane1)
+        self.cross_beam.add_features(trim_feature)
+        trim_feature = CutFeature(cross_cutting_plane2)
+        self.cross_beam.add_features(trim_feature)
 
         volume = MillVolume(main_cutting_volume)
         self.main_beam.add_features(volume)
-        self.features = volume
