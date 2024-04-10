@@ -124,39 +124,39 @@ class TStirnversatzJoint(Joint):
     @staticmethod
     def _angle_plane_normals(plane1, plane2):
         return angle_vectors(plane1.normal, plane2.normal)
+    
+    def get_cross_cutting_planes(self):
+        main_int_frame = self.get_main_intersection_frame()
+        main_int_plane = Plane.from_frame(main_int_frame)
+        cross_faces = self.cross_beam.faces[:4]
+        cross_faces_sorted = self._sort_frames_according_normals(main_int_frame, cross_faces)
+        cross_face = Plane.from_frame(cross_faces_sorted[0])
+        cutplane_1 = self._bisector_plane(main_int_plane, cross_face, 0.5)
+
+        cut_depth_point = project_point_plane(self.main_beam.frame.point, main_int_plane)
+        cut_depth = distance_point_point(self.main_beam.frame.point, cut_depth_point) / 2 #TODO implement cut depth factor
+        split_plane = Plane(main_int_frame.point, main_int_frame.yaxis)
+        p1 = intersection_plane_plane_plane(main_int_plane, Plane.from_frame(cross_faces_sorted[3]), split_plane)
+        origin = translate_points([p1], main_int_frame.zaxis * -cut_depth)[0]
+        cut_depth_plane = Plane(origin, main_int_frame.zaxis)
+        p2 = intersection_plane_plane_plane(cut_depth_plane, cutplane_1[0], split_plane)
+        cutplane_2 = Plane.from_frame(Frame(p1, Vector.from_start_end(p1, p2), split_plane.normal))
+        print(cutplane_1[0], cutplane_2[0])
+        return cutplane_1[0], cutplane_2
 
     def add_features(self):
 
         assert self.main_beam and self.cross_beam  # should never happen
 
-        # Cross Cutting Plane 1
-        main_intersection_frame = self.get_main_intersection_frame()
-        main_intersection_plane = Plane.from_frame(main_intersection_frame)
-        cross_frames = self.cross_beam.faces
-        cross_frames_sorted = self._sort_frames_according_normals(main_intersection_frame, cross_frames[:4])
-        cross_frame = cross_frames_sorted[0]
-        bisector_plane = self._bisector_plane(main_intersection_plane, Plane.from_frame(cross_frame), 0.5)
-        cross_cutting_plane1 = bisector_plane[0]
-
-        # Cut Depth
-        cut_depth_point = project_point_plane(self.main_beam.frame.point, main_intersection_plane)
-        cut_depth = distance_point_point(self.main_beam.frame.point, cut_depth_point) / 2 #TODO implement cut depth factor
-
-        # SplitPlane
-        split_plane =  Plane(main_intersection_frame.point, main_intersection_frame.yaxis)
-
-        # Cross Cutting Plane 2
-        p1 = intersection_plane_plane_plane(Plane.from_frame(main_intersection_frame), Plane.from_frame(cross_frames_sorted[3]), split_plane)
-        origin = translate_points([p1], main_intersection_frame.zaxis * -cut_depth)[0]
-        cut_depth_plane = Plane(origin, main_intersection_frame.zaxis)
-        p2 = intersection_plane_plane_plane(cut_depth_plane, bisector_plane[0], split_plane)
-        cross_cutting_plane2 = Plane.from_frame(Frame(p1, Vector.from_start_end(p1, p2), split_plane.normal))
+        cross_cutting_plane1, cross_cutting_plane2 = self.get_cross_cutting_planes()
 
         # Main Cutting Volume
-        l1 = intersection_plane_plane(main_intersection_plane, cross_cutting_plane1)
-        l2 = intersection_plane_plane(main_intersection_plane, cross_cutting_plane2)
+        main_int_frame = self.get_main_intersection_frame()
+        main_int_plane = Plane.from_frame(main_int_frame)
+        l1 = intersection_plane_plane(main_int_plane, cross_cutting_plane1)
+        l2 = intersection_plane_plane(main_int_plane, cross_cutting_plane2)
         l3 = intersection_plane_plane(cross_cutting_plane1, cross_cutting_plane2)
-        main_frames_sorted = self._sort_frames_according_normals(main_intersection_frame, self.main_beam.faces[:4])
+        main_frames_sorted = self._sort_frames_according_normals(main_int_frame, self.main_beam.faces[:4])
         pl1 = Plane.from_frame(main_frames_sorted[1])
         pl2 = Plane.from_frame(main_frames_sorted[2])
         lines = [l1, l2, l3]
