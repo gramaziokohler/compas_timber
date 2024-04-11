@@ -103,14 +103,6 @@ class TStirnversatzJoint(Joint):
         return frames
     
     @staticmethod
-    def _get_vector_most_same_direction(vectors, checkvector):
-        angles = []
-        for i in vectors:
-            angles.append(angle_vectors(i, checkvector))
-        angles, vectors = zip(*sorted(zip(angles, vectors)))
-        return vectors[0]
-    
-    @staticmethod
     def _flip_plane_according_vector(plane, vector):
         if angle_vectors(plane.normal, vector, True) > 90:
             plane = Plane(plane.point, plane.normal * -1)
