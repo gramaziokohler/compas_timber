@@ -28,6 +28,12 @@ class TStirnversatzJoint(Joint):
         self.cross_beam_key = None
         self.cut_depth = 0.25  # TODO How to make this changable by user?
         self.features = []
+        self.cross_cutting_plane_1 = None
+        self.cross_cutting_plane_2 = None
+        self.planetogh = [] # TODO Remove
+        self.linetogh = [] # TODO Remove
+        self.pointtogh = [] # TODO Remove
+        self.polyhedrontogh = [] # TODO Remove
 
     @property
     def data(self):
@@ -54,31 +60,15 @@ class TStirnversatzJoint(Joint):
 
     @staticmethod
     def _bisector_plane(plane1, plane2, angle_factor):
-        bisector = plane1[1] + plane2[1] * angle_factor
+        bisector = plane1.normal + plane2.normal * angle_factor
         intersection = intersection_plane_plane(plane1, plane2)
         rotation_axis = Vector.from_start_end(*intersection)
         origin = intersection[0]
         R = Rotation.from_axis_and_angle(rotation_axis, math.radians(90))
         bisector.transform(R)
         plane = Plane(origin, bisector)
-        return plane, plane1[1], plane2[1]
-    
-    #TODO Remove if not used
-    def get_main_cutting_frame(self):
-        assert self.beams
-        cross_beam, main_beam = self.beams
-
-        _, cfr = self.get_face_most_ortho_to_beam(main_beam, cross_beam, True)
-        cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
-        return cfr
-    
-    # TODO Remove if not used
-    def get_cross_cutting_frame(self):
-        assert self.beams
-        cross_beam, main_beam = self.beams
-        _, cfr = self.get_face_most_towards_beam(main_beam, cross_beam)
-        return cfr
-
+        return plane
+       
     #find the Face on cross_beam where main_beam intersects
     #TODO simplify with Chen!
     def get_main_intersection_frame(self):
@@ -112,19 +102,20 @@ class TStirnversatzJoint(Joint):
         angles, frames = zip(*sorted(zip(angles, frames)))
         return frames
     
-    #TODO Delete if not needed
     @staticmethod
-    def _rotation_plane(plane1, plane2):
-        line = intersection_plane_plane(plane1, plane2)
-        vector = Vector.from_start_end(line[0], line[1])
-        plane = Plane(line[0], vector)
+    def _get_vector_most_same_direction(vectors, checkvector):
+        angles = []
+        for i in vectors:
+            angles.append(angle_vectors(i, checkvector))
+        angles, vectors = zip(*sorted(zip(angles, vectors)))
+        return vectors[0]
+    
+    @staticmethod
+    def _flip_plane_according_vector(plane, vector):
+        if angle_vectors(plane.normal, vector, True) > 90:
+            plane = Plane(plane.point, plane.normal * -1)
         return plane
-    
-    #TODO Delete if not needed
-    @staticmethod
-    def _angle_plane_normals(plane1, plane2):
-        return angle_vectors(plane1.normal, plane2.normal)
-    
+        
     def get_cross_cutting_planes(self):
         main_int_frame = self.get_main_intersection_frame()
         main_int_plane = Plane.from_frame(main_int_frame)
@@ -132,39 +123,42 @@ class TStirnversatzJoint(Joint):
         cross_faces_sorted = self._sort_frames_according_normals(main_int_frame, cross_faces)
         cross_face = Plane.from_frame(cross_faces_sorted[0])
         cutplane_1 = self._bisector_plane(main_int_plane, cross_face, 0.5)
-
         cut_depth_point = project_point_plane(self.main_beam.frame.point, main_int_plane)
         cut_depth = distance_point_point(self.main_beam.frame.point, cut_depth_point) / 2 #TODO implement cut depth factor
         split_plane = Plane(main_int_frame.point, main_int_frame.yaxis)
         p1 = intersection_plane_plane_plane(main_int_plane, Plane.from_frame(cross_faces_sorted[3]), split_plane)
         origin = translate_points([p1], main_int_frame.zaxis * -cut_depth)[0]
         cut_depth_plane = Plane(origin, main_int_frame.zaxis)
-        p2 = intersection_plane_plane_plane(cut_depth_plane, cutplane_1[0], split_plane)
+        p2 = intersection_plane_plane_plane(cut_depth_plane, cutplane_1, split_plane)
         cutplane_2 = Plane.from_frame(Frame(p1, Vector.from_start_end(p1, p2), split_plane.normal))
-        print(cutplane_1[0], cutplane_2[0])
-        return cutplane_1[0], cutplane_2
+        cutplane_2 = self._flip_plane_according_vector(cutplane_2, main_int_frame.zaxis * -1)
 
-    def add_features(self):
-
-        assert self.main_beam and self.cross_beam  # should never happen
-
-        cross_cutting_plane1, cross_cutting_plane2 = self.get_cross_cutting_planes()
-
-        # Main Cutting Volume
+        self.cross_cutting_plane_1 = cutplane_1
+        self.cross_cutting_plane_2 = cutplane_2
+        return self.cross_cutting_plane_1, self.cross_cutting_plane_2
+    
+    def get_main_cutting_volume(self):
         main_int_frame = self.get_main_intersection_frame()
         main_int_plane = Plane.from_frame(main_int_frame)
-        l1 = intersection_plane_plane(main_int_plane, cross_cutting_plane1)
-        l2 = intersection_plane_plane(main_int_plane, cross_cutting_plane2)
-        l3 = intersection_plane_plane(cross_cutting_plane1, cross_cutting_plane2)
+        l1 = intersection_plane_plane(main_int_plane, self.cross_cutting_plane_1)
+        l2 = intersection_plane_plane(main_int_plane, self.cross_cutting_plane_2)
+        l3 = intersection_plane_plane(self.cross_cutting_plane_1, self.cross_cutting_plane_2)
         main_frames_sorted = self._sort_frames_according_normals(main_int_frame, self.main_beam.faces[:4])
-        pl1 = Plane.from_frame(main_frames_sorted[1])
-        pl2 = Plane.from_frame(main_frames_sorted[2])
+        plane_side_1 = Plane.from_frame(main_frames_sorted[1])
+        plane_side_2 = Plane.from_frame(main_frames_sorted[2])
         lines = [l1, l2, l3]
         points = []
         for i in lines:
-            points.append(intersection_line_plane(i, pl1))
-            points.append(intersection_line_plane(i, pl2))
+            points.append(intersection_line_plane(i, plane_side_1))
+            points.append(intersection_line_plane(i, plane_side_2))
+
+        self.linetogh.append(l1)
+        self.linetogh.append(l2)
+        self.linetogh.append(l3)
         
+        self.pointtogh = points
+
+        #TODO fix with Chen: Polyhedron.from_planes not working because numpy missing ?????
         main_cutting_volume = Polyhedron(points, 
                    [
                 [0, 2, 4],  # front
@@ -174,14 +168,28 @@ class TStirnversatzJoint(Joint):
                 [4, 5, 1, 0],  # third
             ],
             )
+        main_cutting_volume = Polyhedron(points, [[0, 2, 4]])
         
-        print(main_cutting_volume) #TODO just for debugging, remove...
-        print("polyhedron is closed: " + str(main_cutting_volume.is_closed())) #TODO just for debugging, remove...
+        planes = [main_int_plane, self.cross_cutting_plane_1, self.cross_cutting_plane_2, plane_side_1, plane_side_2]
+        self.planetogh = planes
+        #main_cutting_volume = Polyhedron.from_planes(planes)
+
+        self.polyhedrontogh = main_cutting_volume
+
+        return main_cutting_volume
+
+    def add_features(self):
+
+        assert self.main_beam and self.cross_beam  # should never happen
+
+        cross_cutting_plane1, cross_cutting_plane2 = self.get_cross_cutting_planes()
+        main_cutting_vol = self.get_main_cutting_volume()
+
+        print("polyhedron is closed: " + str(main_cutting_vol.is_closed())) #TODO just for debugging, remove...
 
         trim_feature = CutFeature(cross_cutting_plane1)
         self.cross_beam.add_features(trim_feature)
         trim_feature = CutFeature(cross_cutting_plane2)
         self.cross_beam.add_features(trim_feature)
-
-        volume = MillVolume(main_cutting_volume)
+        volume = MillVolume(main_cutting_vol)
         self.main_beam.add_features(volume)
