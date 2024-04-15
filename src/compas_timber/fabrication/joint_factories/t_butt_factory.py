@@ -10,6 +10,9 @@ class TButtFactory(object):
     def __init__(self):
         pass
 
+    def calc_params():
+        pass
+
     @classmethod
     def apply_processings(cls, joint, parts):
         """
@@ -30,6 +33,11 @@ class TButtFactory(object):
 
         main_part = parts[str(joint.main_beam.key)]
         cut_plane = joint.get_main_cutting_plane()[0]
+        # if joint.birdsmouth == True:
+        #     #calculate the process params
+                #joint_params = calc_params(cross_beam, main_beam, joint)
+        #      #main_part.processings.append(BTLxDoubleCut.create_process(joint_params, "T-Butt Joint"))
+        #     #put processing here
         main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 
         if joint.mill_depth > 0:
