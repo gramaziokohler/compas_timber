@@ -28,7 +28,7 @@ class TButtFactory(object):
         """
 
         part = parts[str(joint.main_beam.key)]
-        cut_plane = joint.cutting_plane
+        cut_plane = joint.get_main_cutting_plane()[0]
         part.processings.append(BTLxJackCut.create_process(part, cut_plane, "T-Butt Joint"))
 
 

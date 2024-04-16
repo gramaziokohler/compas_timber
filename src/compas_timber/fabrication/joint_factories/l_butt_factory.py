@@ -30,8 +30,8 @@ class LButtFactory(object):
 
         main_part = parts[str(joint.main_beam.key)]
         cross_part = parts[str(joint.cross_beam.key)]
-        main_part.processings.append(BTLxJackCut.create_process(main_part, joint.cutting_plane_main, "L-Butt Joint"))
-        cross_part.processings.append(BTLxJackCut.create_process(cross_part, joint.cutting_plane_cross, "L-Butt Joint"))
+        main_part.processings.append(BTLxJackCut.create_process(main_part, joint.get_main_cutting_plane()[0], "L-Butt Joint"))
+        cross_part.processings.append(BTLxJackCut.create_process(cross_part, joint.get_cross_cutting_plane(), "L-Butt Joint"))
 
 
 BTLx.register_joint(LButtJoint, LButtFactory)

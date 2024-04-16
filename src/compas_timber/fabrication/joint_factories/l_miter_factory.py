@@ -28,12 +28,15 @@ class LMiterFactory(object):
         None
 
         """
+        cutting_planes = joint.get_cutting_planes()
+        print("joint.beams: ", joint.beams)
 
-        parts[str(joint.beams[0].key)].processings.append(
-            BTLxJackCut.create_process(parts[str(joint.beams[0].key)], joint.cutting_planes[0], "L-Miter Joint")
+        part_a, part_b = parts[str(joint.beam_a.key)], parts[str(joint.beam_b.key)]
+        part_a.processings.append(
+            BTLxJackCut.create_process(part_a, cutting_planes[0], "L-Miter Joint")
         )
-        parts[str(joint.beams[1].key)].processings.append(
-            BTLxJackCut.create_process(parts[str(joint.beams[1].key)], joint.cutting_planes[1], "L-Miter Joint")
+        part_b.processings.append(
+            BTLxJackCut.create_process(part_b, cutting_planes[1], "L-Miter Joint")
         )
 
 
