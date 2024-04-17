@@ -20,13 +20,14 @@ class TStirnversatzJoint(Joint):
     
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, cross_beam=None, main_beam=None, cut_depth=0.25): #TODO Why main & cross swapped???
+    def __init__(self, cross_beam=None, main_beam=None, cut_depth=0.25, extend_cut=True): #TODO Why main & cross swapped???
         super(TStirnversatzJoint, self).__init__(main_beam, cross_beam, cut_depth)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = None
         self.cross_beam_key = None
         self.cut_depth = cut_depth
+        self.extend_cut = extend_cut
         self.features = []
         self.cross_cutting_plane_1 = None
         self.cross_cutting_plane_2 = None
@@ -136,7 +137,13 @@ class TStirnversatzJoint(Joint):
         l2 = intersection_plane_plane(main_int_plane, self.cross_cutting_plane_2)
         l3 = intersection_plane_plane(self.cross_cutting_plane_1, self.cross_cutting_plane_2)
         main_frames_sorted = self._sort_frames_according_normals(self.main_beam.faces[:4], main_int_frame.zaxis)
-        plane_side = [Plane.from_frame(main_frames_sorted[1]), Plane.from_frame(main_frames_sorted[2])]
+        cut_frames_sorted = self._sort_frames_according_normals(self.cross_beam.faces[:4], main_int_frame.zaxis)
+        
+        # Extend Cut True or False
+        if self.extend_cut == True:
+            plane_side = [Plane.from_frame(main_frames_sorted[1]), Plane.from_frame(main_frames_sorted[2])]
+        else:
+            plane_side = [Plane.from_frame(cut_frames_sorted[1]), Plane.from_frame(cut_frames_sorted[2])]
         
         crossvector = cross_vectors(self.cross_cutting_plane_2.normal, self.cross_cutting_plane_1.normal)
         plane_side = self._sort_frames_according_normals(plane_side, crossvector)

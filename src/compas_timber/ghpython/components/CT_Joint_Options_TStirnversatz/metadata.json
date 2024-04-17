@@ -20,6 +20,12 @@
                 "description": "Cut Depth into Main Beam.",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
+            },
+            {
+                "name": "ExtendCut",
+                "description": "Extend Cut to Main Beam: True or False",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
