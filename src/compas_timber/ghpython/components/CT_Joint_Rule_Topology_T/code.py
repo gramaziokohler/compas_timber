@@ -19,7 +19,7 @@ class T_TopologyJointRule(component):
         for cls in get_leaf_subclasses(Joint):
             if cls.SUPPORTED_TOPOLOGY == JointTopology.TOPO_T:
                 self.classes[cls.__name__] = cls
-        if ghenv.Component.Params.Output[0].NickName == 'Rule':
+        if ghenv.Component.Params.Output[0].NickName == "Rule":
             self.joint_type = TButtJoint
             self.clicked = False
         else:
