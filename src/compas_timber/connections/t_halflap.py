@@ -27,33 +27,12 @@ class THalfLapJoint(LapJoint):
     cut_plane_bias : float
         Allows lap to be shifted deeper into one beam or the other. Value should be between 0 and 1.0 without completely cutting through either beam. Default is 0.5.
 
-    Attributes
-    ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
-        The beams joined by this joint.
-    beam_a : :class:`~compas_timber.parts.Beam`
-        The main beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
-        The cross beam to be joined.
-    beam_a_key : str
-        The key of the main beam.
-    beam_b_key : str
-        The key of the cross beam.
-    features : list(:class:`~compas_timber.parts.Feature`)
-        The features created by this joint.
-    joint_type : str
-        A string representation of this joint's type.
-
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, frame=None, key=None):
-        super(THalfLapJoint, self).__init__(beam_a, beam_b, flip_lap_side, cut_plane_bias, frame, key)
-
-    @property
-    def joint_type(self):
-        return "T-HalfLap"
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
+        super(THalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
     def add_features(self):
         assert self.beam_a and self.beam_b  # should never happen
@@ -73,10 +52,13 @@ class THalfLapJoint(LapJoint):
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.beam_a.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
-        self.beam_a.add_features(MillVolume(negative_brep_beam_a))
-        self.beam_b.add_features(MillVolume(negative_brep_beam_b))
+        main_volume = MillVolume(negative_brep_main_beam)
+        cross_volume = MillVolume(negative_brep_cross_beam)
+        self.main_beam.add_features(main_volume)
+        self.cross_beam.add_features(cross_volume)
 
         trim_frame = Frame(main_cutting_frame.point, main_cutting_frame.xaxis, -main_cutting_frame.yaxis)
         f_main = CutFeature(trim_frame)
-        self.beam_a.add_features(f_main)
-        self.features.append(f_main)
+        self.main_beam.add_features(f_main)
+
+        self.features = [main_volume, cross_volume, f_main]

@@ -4,7 +4,7 @@ from compas.data import Data
 class Feature(Data):
     """
 
-    Attirbutes
+    Attributes
     ----------
     is_joinery : bool
         Indicates whether this feature is a result of joinery.

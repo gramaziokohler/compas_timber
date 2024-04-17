@@ -21,7 +21,7 @@ class ShowJointTypes(component):
             p2 = point_to_rhino(p2)
 
             self.pt.append((p2 + p1) / 2)
-            self.txt.append(joint.joint_type)
+            self.txt.append(joint.__class__.__name__)
 
     def DrawViewportWires(self, arg):
         if self.Locked:
