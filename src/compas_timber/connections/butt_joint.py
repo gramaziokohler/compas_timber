@@ -11,7 +11,6 @@ from compas.geometry import Line
 from compas.geometry import Polyhedron
 from compas.geometry import Point
 from compas.geometry import angle_vectors_signed
-from .joint import BeamJoinningError
 from .joint import Joint
 
 
@@ -44,22 +43,8 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(
-        self,
-        main_beam=None,
-        cross_beam=None,
-        mill_depth=0,
-        small_beam_butts=False,
-        modify_cross=True,
-        reject_i=False,
-        **kwargs
-    ):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
-
-        if small_beam_butts and main_beam and cross_beam:
-            if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
-                main_beam, cross_beam = cross_beam, main_beam
-
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
@@ -79,23 +64,13 @@ class ButtJoint(Joint):
             "main_beam_key": self.main_beam_key,
             "cross_beam_key": self.cross_beam_key,
             "mill_depth": self.mill_depth,
-            "small_beam_butts": self.small_beam_butts,
-            "modify_cross": self.modify_cross,
-            "reject_i": self.reject_i,
         }
         data_dict.update(super(ButtJoint, self).__data__)
         return data_dict
 
     @classmethod
     def __from_data__(cls, value):
-        instance = cls(
-            frame=Frame.__from_data__(value["frame"]),
-            key=value["key"],
-            mill_depth=value["mill_depth"],
-            small_beam_butts=value["small_beam_butts"],
-            modify_cross=value["modify_cross"],
-            reject_i=value["reject_i"],
-        )
+        instance = cls(**value)
         instance.main_beam_key = value["main_beam_key"]
         instance.cross_beam_key = value["cross_beam_key"]
         return instance
@@ -147,12 +122,27 @@ class ButtJoint(Joint):
             return self.cross_beam.faces[2], self.cross_beam.faces[0]
 
     def front_back_surface_main(self):
+        assert self.main_beam and self.cross_beam
+
         """Returns the front and back surfaces of the main beam."""
         face_dict = Joint._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         face_indices = face_dict.keys()
         angles = face_dict.values()
         angles, face_indices = zip(*sorted(zip(angles, face_indices)))
         return self.main_beam.faces[face_indices[0]], self.main_beam.faces[face_indices[3]]
+
+    def back_surface_main(self):
+        face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        face_dict.sort(lambda x: x.values())
+        return face_dict.values()[3]
+
+    def get_main_cutting_plane(self):
+        assert self.main_beam and self.cross_beam
+        _, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        cross_mating_frame = cfr.copy()
+        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
+        cfr.point = cfr.point + cfr.zaxis * self.mill_depth
+        return cfr, cross_mating_frame
 
     def subtraction_volume(self):
         """Returns the volume to be subtracted from the cross beam."""
