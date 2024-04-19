@@ -1,7 +1,7 @@
 from compas_timber.connections import TButtJoint
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
-from compas_timber.fabrication.btlx_processes.lap import BTLxLap
+from compas_timber.fabrication.btlx_processes.btlx_lap import BTLxLap
 
 
 class TButtFactory(object):

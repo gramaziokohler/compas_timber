@@ -22,7 +22,7 @@ class BTLxLap(object):
 
     def __init__(self, param_dict, joint_name=None, **kwargs):
         self.apply_process = True
-        self.reference_plane_id = ""
+        self.reference_plane_id = 0
         self.orientation = "start"
         self.start_x = 0.0
         self.start_y = 0.0
@@ -57,7 +57,7 @@ class BTLxLap(object):
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": str(self.reference_plane_id + 1),
+            "ReferencePlaneID": str(self.reference_plane_id),
         }
 
     @property
@@ -76,7 +76,7 @@ class BTLxLap(object):
                     ("Slope", "{:.{prec}f}".format(self.slope_inclination, prec=BTLx.ANGLE_PRECISION)),
                     ("Length", "{:.{prec}f}".format(self.length, prec=BTLx.POINT_PRECISION)),
                     ("Width", "{:.{prec}f}".format(self.width, prec=BTLx.POINT_PRECISION)),
-                    ("Depth", "{:.{prec}f}".format(self.depth, prec=BTLx.POINT_PRECISION)),
+                    ("Depth", "{:.{prec}f}".format(float(self.depth), prec=BTLx.POINT_PRECISION)),
                     ("LeadAngleParallel", "yes"),
                     ("LeadAngle", "{:.{prec}f}".format(self.lead_angle, prec=BTLx.ANGLE_PRECISION)),
                     ("LeadInclinationParallel", "yes"),
@@ -92,5 +92,6 @@ class BTLxLap(object):
     @classmethod
     def create_process(cls, param_dict, joint_name=None, **kwargs):
         """Creates a lap process from a dictionary of parameters."""
+        print(param_dict)
         lap = BTLxLap(param_dict, joint_name, **kwargs)
         return BTLxProcess(BTLxLap.PROCESS_TYPE, lap.header_attributes, lap.process_params)
