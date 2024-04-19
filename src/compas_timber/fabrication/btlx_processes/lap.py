@@ -1,4 +1,5 @@
 from collections import OrderedDict
+
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
 
@@ -36,7 +37,7 @@ class BTLxLap(object):
         self.lead_angle = 90.0
         self.lead_inclination_parallel = "yes"
         self.lead_inclination = 90.0
-        self.machining_limits = []
+        self.machining_limits = None
 
         for key, value in param_dict.items():
             setattr(self, key, value)
@@ -66,6 +67,7 @@ class BTLxLap(object):
 
         if self.apply_process:
             """the following attributes are specific to Lap"""
+            print("machiningLimits are: ", self.machining_limits)
             od = OrderedDict(
                 [
                     ("Orientation", str(self.orientation)),

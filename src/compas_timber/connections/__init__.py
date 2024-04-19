@@ -4,6 +4,7 @@ from .joint import Joint
 from .lap_joint import LapJoint
 from .butt_joint import ButtJoint
 from .l_butt import LButtJoint
+from .t_butt import TButtJoint
 from .l_miter import LMiterJoint
 from .x_halflap import XHalfLapJoint
 from .t_halflap import THalfLapJoint

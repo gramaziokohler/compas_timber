@@ -3,6 +3,7 @@ import math
 from compas.geometry import Frame
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
+from compas_timber.parts import CutFeature
 
 from .joint import BeamJoinningError
 from .joint import Joint
@@ -126,3 +127,47 @@ class FrenchRidgeLapJoint(Joint):
         else:
             raise (BeamJoinningError("part not aligned with corner normal, no French Ridge Lap possible"))
         self.reference_face_indices = {str(self.beam_a.key): indices[0], str(self.beam_b.key): indices[1]}
+
+    def add_features(self):
+
+        assert self.beam_a and self.beam_b  # should never happen
+
+        if self.features:
+            self.main_beam.remove_features(self.features)
+        cutting_plane = None
+        try:
+            cutting_plane = self.get_main_cutting_plane()[0]
+            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+
+        trim_feature = CutFeature(cutting_plane)
+        if self.mill_depth:
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
+        self.main_beam.add_features(trim_feature)
+        self.features = [trim_feature]
+
+
+
+
+
+
+
+
+
+
+        _, cut_plane_a = self.get_face_most_towards_beam(self.beam_a, self.beam_b, ignore_ends=True)
+        _, cut_plane_b = self.get_face_most_towards_beam(self.beam_b, self.beam_a, ignore_ends=True)
+
+        f_a = CutFeature(cut_plane_a)
+        self.beam_a.add_features(f_a)
+        self.features.append(f_a)
+
+        f_b = CutFeature(cut_plane_b)
+        self.beam_a.add_features(f_b)
+        self.features.append(f_b)

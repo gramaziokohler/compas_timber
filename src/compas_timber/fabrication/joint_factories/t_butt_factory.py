@@ -33,7 +33,9 @@ class TButtFactory(object):
         main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 
         if joint.mill_depth > 0:
+            joint.machining_limits = {"FaceLimitedFront": "no", "FaceLimitedBack": "no"}
             cross_part = parts[str(joint.cross_beam.key)]
+            print(joint.machining_limits)
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
 
 
