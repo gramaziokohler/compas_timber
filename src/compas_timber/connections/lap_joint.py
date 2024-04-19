@@ -18,9 +18,9 @@ class LapJoint(Joint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -57,8 +57,8 @@ class LapJoint(Joint):
         self.cross_beam = cross_beam
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
+        self.main_beam_key = main_beam.key if main_beam else None
+        self.cross_beam_key = cross_beam.key if cross_beam else None
         self.features = []
 
     @property
@@ -130,33 +130,33 @@ class LapJoint(Joint):
 
     def get_main_cutting_frame(self):
         assert self.beams
-        beam_a, beam_b = self.beams
+        main_beam, cross_beam = self.beams
 
-        _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
+        _, cfr = self.get_face_most_towards_beam(main_beam, cross_beam)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     def get_cross_cutting_frame(self):
         assert self.beams
-        beam_a, beam_b = self.beams
-        _, cfr = self.get_face_most_towards_beam(beam_b, beam_a)
+        main_beam, cross_beam = self.beams
+        _, cfr = self.get_face_most_towards_beam(cross_beam, main_beam)
         return cfr
 
     def _create_negative_volumes(self):
         assert self.beams
-        beam_a, beam_b = self.beams
+        main_beam, cross_beam = self.beams
 
         # Get Cut Plane
-        plane_cut_vector = beam_a.centerline.vector.cross(beam_b.centerline.vector)
+        plane_cut_vector = main_beam.centerline.vector.cross(cross_beam.centerline.vector)
 
         if self.flip_lap_side:
             plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
-        planes_main = self._sort_beam_planes(beam_a, plane_cut_vector)
+        planes_main = self._sort_beam_planes(main_beam, plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_main
 
-        planes_cross = self._sort_beam_planes(beam_b, -plane_cut_vector)
+        planes_cross = self._sort_beam_planes(cross_beam, -plane_cut_vector)
         plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
 
         # Lines as Frame Intersections
@@ -179,6 +179,6 @@ class LapJoint(Joint):
         lines.append(Line(pt_a, pt_b))
 
         # Create Polyhedrons
-        negative_polyhedron_beam_a = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
-        negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
-        return negative_polyhedron_beam_a, negative_polyhedron_beam_b
+        negative_polyhedron_main_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
+        negative_polyhedron_cross_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
+        return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
