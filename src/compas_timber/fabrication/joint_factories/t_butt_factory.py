@@ -34,6 +34,7 @@ class TButtFactory(object):
 
         if joint.mill_depth > 0:
             cross_part = parts[str(joint.cross_beam.key)]
+            joint.btlx_params_cross["machining_limits"] = {"FaceLimitedFront": "no", "FaceLimitedBack": "no"}
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
 
 
