@@ -261,46 +261,6 @@ def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l
         pass
 
 
-class JointOptions(object):
-    """Container for options to be passed to a joint.
-
-    This allows delaying the actual joining of the beams to a downstream component.
-
-    Parameters
-    ----------
-    type :  cls(:class:`compas_timber.connections.Joint`)
-        The type of the joint.
-    kwargs : dict
-        The keyword arguments to be passed to the joint.
-    beam_names : list(str)
-        The names of the beams to be joined.
-
-    Attributes
-    ----------
-    type :  cls(:class:`compas_timber.connections.Joint`)
-        The type of the joint.
-    kwargs : dict
-        The keyword arguments to be passed to the joint.
-    beam_names : list(str)
-        The names of the beams to be joined.
-
-    """
-
-    def __init__(self, type, beam_names=[], **kwargs):
-        self.type = type
-        self.kwargs = kwargs
-        self.beam_names = beam_names
-
-    def __repr__(self):
-        return "{}({}{})".format(JointOptions.__name__, self.type, self.kwargs)
-
-    def ToString(self):
-        return repr(self)
-
-    def is_identical(self, other):
-        return isinstance(other, JointOptions) and self.kwargs == other.kwargs
-
-
 class DebugInfomation(object):
     """Container for debugging information allowing visual inspection of joint and features related errors.
 
