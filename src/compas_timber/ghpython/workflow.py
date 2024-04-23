@@ -61,11 +61,11 @@ class DirectRule(JointRule):
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the beams, this rule assigns"""
 
-    def __init__(self, joint_type, category_a, category_b, topos=[], **kwargs):
+    def __init__(self, joint_type, category_a, category_b, topos=None, **kwargs):
         self.joint_type = joint_type
         self.category_a = category_a
         self.category_b = category_b
-        self.topos = topos
+        self.topos = topos or []
         self.kwargs = kwargs
 
     def ToString(self):
@@ -73,8 +73,8 @@ class CategoryRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
-            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b
+        return "{}({}, {}, {}, {})".format(
+            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos
         )
 
     def comply(self, beams):
