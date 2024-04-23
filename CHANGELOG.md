@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed argument `cutoff` from `LMiterJoint` as it was not used anywhere.
 * Removed argument `gap` from `TButtJoint` as it was not used anywhere.
 * Removed argument `gap` from `FrenchRidgeLap` as it was not used anywhere.
+* Removed class `JointOptions` as not used anymore.
 
 ## [0.7.0] 2024-02-15
 
