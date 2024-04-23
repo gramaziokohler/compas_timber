@@ -118,9 +118,10 @@ class TButtFactory(object):
         main_part = parts[str(joint.main_beam.key)]
         cross_part = parts[str(joint.cross_beam.key)]
         cut_plane = joint.get_main_cutting_plane()[0]
-        if joint.birdsmouth == True:
+        if joint.birdsmouth:
             joint_params = TButtFactory.calc_params_birdsmouth(joint, main_part, cross_part)
-            if joint_params == False:
+            print(joint_params)
+            if joint_params:
                 main_part.processings.append(BTLxDoubleCut.create_process(joint_params, "T-Butt Joint"))
             else:
                 main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))

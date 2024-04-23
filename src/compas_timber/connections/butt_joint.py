@@ -88,7 +88,9 @@ class ButtJoint(Joint):
         face_indices = face_dict.keys()
         angles = face_dict.values()
         angles, face_indices = zip(*sorted(zip(angles, face_indices)))
-        return self.cross_beam.faces[face_indices[1]], self.cross_beam.faces[face_indices[2]]
+        return self.cross_beam.faces[(face_indices[0]+1)%4], self.cross_beam.faces[(face_indices[0]+3)%4]
+
+        # return self.cross_beam.faces[face_indices[1]], self.cross_beam.faces[face_indices[2]]
 
     def front_back_surface_main(self):
         assert self.main_beam and self.cross_beam
@@ -132,7 +134,7 @@ class ButtJoint(Joint):
             dots = [dot_vectors(v, self.cross_beam.centerline.direction) for v in pv]
             dots, points = zip(*sorted(zip(dots, points)))
             min_pt, max_pt = points[0], points[-1]
-            if i == 1:
+            if i == 0:
                 self.btlx_params_cross["start_x"] = abs(dots[0])
 
             top_line = Line(*intersection_plane_plane(Plane.from_frame(side), Plane.from_frame(top_frame)))
