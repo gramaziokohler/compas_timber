@@ -1,10 +1,9 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-import clr
-import System
-import inspect
 from System.Windows.Forms import ToolStripSeparator
 from System.Windows.Forms import ToolStripMenuItem
+
+import inspect
 from collections import OrderedDict
 
 from compas_timber.connections import Joint
@@ -43,7 +42,7 @@ class CategoryJointRule(component):
 
             kwargs = {}
             for i, val in enumerate(args[2:]):
-                if val != None:
+                if val is not None:
                     kwargs[self.arg_names()[i + 2]] = val
             print(kwargs)
             if not cat_a:
