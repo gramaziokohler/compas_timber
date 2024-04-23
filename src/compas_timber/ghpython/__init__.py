@@ -1,7 +1,6 @@
 from .workflow import CategoryRule
 from .workflow import TopologyRule
 from .workflow import DirectRule
-from .workflow import DefaultRule
 from .workflow import FeatureDefinition
 from .workflow import JointOptions
 from .workflow import JointDefinition
@@ -16,7 +15,6 @@ __all__ = [
     "CategoryRule",
     "TopologyRule",
     "DirectRule",
-    "DefaultRule",
     "FeatureDefinition",
     "JointOptions",
     "DebugInfomation",

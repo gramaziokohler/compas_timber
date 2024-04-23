@@ -7,12 +7,21 @@ from compas_timber.consumers import BrepGeometryConsumer
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import BeamJoinningError
+from compas_timber.connections import XHalfLapJoint
+from compas_timber.connections import TButtJoint
+from compas_timber.connections import LMiterJoint
 from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import CategoryRule
 from compas_timber.ghpython import TopologyRule
 from compas_timber.ghpython import DirectRule
-from compas_timber.ghpython import DefaultRule
 from compas_timber.ghpython import DebugInfomation
+
+
+JOINT_DEFAULTS = {
+    JointTopology.TOPO_X: XHalfLapJoint,
+    JointTopology.TOPO_T: TButtJoint,
+    JointTopology.TOPO_L: LMiterJoint,
+}
 
 
 class Assembly(component):
@@ -39,10 +48,11 @@ class Assembly(component):
         cat_rules = []
         direct_rules = []
 
+        # TODO: refactor this into some kind of a rule reloving class/function
         for r in rules:  # separate category and topo and direct joint rules
             if isinstance(r, TopologyRule):
                 if topo_rules.get(r.topology_type, None):  # if rule for this Topo exists
-                    if (r.joint_type != DefaultRule.DEFAULTS[r.topology_type]) or (
+                    if (r.joint_type != JOINT_DEFAULTS[r.topology_type]) or (
                         len(r.kwargs) != 0
                     ):  # if this rule is NOT default
                         topo_rules[r.topology_type] = r

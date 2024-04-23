@@ -1,7 +1,5 @@
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import XHalfLapJoint
-from compas_timber.connections.solver import JointTopology
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
@@ -108,36 +106,6 @@ class CategoryRule(JointRule):
             return beam_a, beam_b
         else:
             return beam_b, beam_a
-
-
-class DefaultRule(JointRule):
-    """Applies default joint rules based on topology type:
-    L: LMiterJoint
-    T: TButtJoint
-    X: XHalfLapJoint
-    I, K: Not implemented
-
-    parameters
-    ----------
-    None
-
-    """
-
-    DEFAULTS = {
-        JointTopology.TOPO_X: XHalfLapJoint,
-        JointTopology.TOPO_T: TButtJoint,
-        JointTopology.TOPO_L: LMiterJoint,
-    }
-
-    def __init__(self):
-        pass
-
-    def ToString(self):
-        # GH doesn't know
-        return "DefaultJointRule: L_Topo: LMiterJoint,  T_Topo: TButtJoint,  X_Topo: XHalfLapJoint"
-
-    def __repr__(self):
-        return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type)
 
 
 class TopologyRule(JointRule):
