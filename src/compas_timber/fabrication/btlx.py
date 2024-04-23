@@ -166,6 +166,7 @@ class BTLxPart(object):
         self.processings = []
         self._et_element = None
         self.faces = beam.faces
+        self._reference_surfaces = {}
 
     @property
     def attr(self):
@@ -222,6 +223,66 @@ class BTLxPart(object):
             "Y": "{:.{prec}f}".format(point.y, prec=BTLx.POINT_PRECISION),
             "Z": "{:.{prec}f}".format(point.z, prec=BTLx.POINT_PRECISION),
         }
+
+
+    def reference_surface_from_beam_face(self, beam_face):
+        """Finds the reference surface with normal that matches the normal of the beam face argument
+
+        Parameters
+        -----------
+        beam_face : :class:`~compas.geometry.Frame`
+            The frame of a beam face from beam.faces.
+
+        Returns
+        --------
+        key : str
+            The key(index 1-6) of the reference surface.
+
+        """
+        for key, face in self.reference_surfaces.items():
+            if face.normal == beam_face.normal:
+                return key
+
+    def reference_surface_planes(self, index):
+        """Returns the reference surface planes for a given index per BTLx docs.
+
+        Parameters
+        ----------
+        index : int
+            The index of the reference surface.
+
+        Returns
+        -------
+        dict
+            The BTLx reference surface frame.
+
+        """
+        if len(self._reference_surfaces) != 6:
+            self._reference_surfaces = {
+                "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
+                "2": Frame(
+                    self.frame.point + self.frame.yaxis * self.width,
+                    self.frame.xaxis,
+                    -self.frame.yaxis,
+                ),
+                "3": Frame(
+                    self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
+                    self.frame.xaxis,
+                    -self.frame.zaxis,
+                ),
+                "4": Frame(
+                    self.frame.point + self.frame.zaxis * self.height,
+                    self.frame.xaxis,
+                    self.frame.yaxis,
+                ),
+                "5": Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
+                "6": Frame(
+                    self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
+                    self.frame.zaxis,
+                    -self.frame.yaxis,
+                ),
+            }
+        return self._reference_surfaces[str(index)]
 
     @property
     def et_element(self):
