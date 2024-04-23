@@ -16,9 +16,9 @@ class XHalfLapJoint(LapJoint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -33,7 +33,7 @@ class XHalfLapJoint(LapJoint):
         super(XHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
     def add_features(self):
-        assert self.beam_a and self.beam_b  # should never happen
+        assert self.main_beam and self.cross_beam  # should never happen
 
         try:
             negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()

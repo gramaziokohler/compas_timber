@@ -18,9 +18,9 @@ class LapJoint(Joint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -46,8 +46,8 @@ class LapJoint(Joint):
         self.cross_beam = cross_beam
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
+        self.main_beam_key = main_beam.key if main_beam else None
+        self.cross_beam_key = cross_beam.key if cross_beam else None
         self.features = []
 
     @property
@@ -168,6 +168,6 @@ class LapJoint(Joint):
         lines.append(Line(pt_a, pt_b))
 
         # Create Polyhedrons
-        negative_polyhedron_beam_a = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
-        negative_polyhedron_beam_b = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
-        return negative_polyhedron_beam_a, negative_polyhedron_beam_b
+        negative_polyhedron_main_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
+        negative_polyhedron_cross_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
+        return negative_polyhedron_main_beam, negative_polyhedron_cross_beam

@@ -17,9 +17,9 @@ class LHalfLapJoint(LapJoint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -30,13 +30,13 @@ class LHalfLapJoint(LapJoint):
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
-    beam_a : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
-    beam_a_key : str
+    main_beam_key : str
         The key of the main beam.
-    beam_b_key : str
+    cross_beam_key : str
         The key of the cross beam.
     features : list(:class:`~compas_timber.parts.Feature`)
         The features created by this joint.
@@ -51,21 +51,23 @@ class LHalfLapJoint(LapJoint):
         super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
     def add_features(self):
-        assert self.beam_a and self.beam_b
+        assert self.main_beam and self.cross_beam
 
         try:
             main_cutting_frame = self.get_main_cutting_frame()
             cross_cutting_frame = self.get_cross_cutting_frame()
-            negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
+            negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        start_main, end_main = self.beam_a.extension_to_plane(main_cutting_frame)
-        start_cross, end_cross = self.beam_b.extension_to_plane(cross_cutting_frame)
+        start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
+        start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_frame)
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.beam_a.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
-        self.beam_b.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.cross_beam.add_blank_extension(
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+        )
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)
