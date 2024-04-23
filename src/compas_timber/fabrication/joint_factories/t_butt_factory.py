@@ -3,7 +3,7 @@ from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
 from compas_timber.fabrication.btlx_processes.btlx_lap import BTLxLap
 from compas_timber.fabrication.btlx_processes.btlx_doublecut import BTLxDoubleCut
-from compas.geometry import intersection_plane_plane, intersection_plane_plane_plane, Vector, Plane, Frame, Transformation, Point
+from compas.geometry import intersection_plane_plane, intersection_plane_plane_plane, Vector, Plane, Frame, Transformation, Point, angle_vectors
 import math
 
 class TButtFactory(object):
@@ -32,14 +32,14 @@ class TButtFactory(object):
         face_dict = joint._beam_side_incidence(main_part.beam, cross_part.beam, ignore_ends=True)
         sorted_keys = sorted(face_dict.keys(), key=face_dict.get)
 
+        cross_vector = main_part.beam.centerline.direction.cross(cross_part.beam.centerline.direction)
 
+        frame1, frame2 = joint.get_main_cutting_plane()[0], cross_part.beam.faces[sorted_keys[1]]
+        angle = angle_vectors(cross_vector, frame2.normal, deg=True)
+        if angle<1.0 or angle>179.0:
+            return False
 
-
-
-        frame1, frame2 = cross_part.beam.faces[sorted_keys[0]], cross_part.beam.faces[sorted_keys[1]]
-
-        # frame1 = Frame(frame1.point, frame1.xaxis, -frame1.yaxis)
-
+        frame1 = Frame(frame1.point, frame1.xaxis, -frame1.yaxis)
         print(frame1, cross_part.beam.faces[sorted_keys[0]])
         plane1, plane2 = Plane.from_frame(frame1), Plane.from_frame(frame2)
         intersect_vec = Vector.from_start_end(*intersection_plane_plane(plane2, plane1))
@@ -48,8 +48,11 @@ class TButtFactory(object):
         for i, face in enumerate(main_part.beam.faces[0:4]):
             angles_dict[i] = (face.normal.angle(intersect_vec))
         ref_frame_id = min(angles_dict, key=angles_dict.get)
-        print("ref_frame_id", ref_frame_id)
         ref_frame = main_part.reference_surface_planes(ref_frame_id+1)
+
+        print("ref_frame", ref_frame)
+        joint.test.append(ref_frame)
+
 
         dot_frame1 = plane1.normal.dot(ref_frame.yaxis)
         if dot_frame1 > 0:
@@ -116,10 +119,11 @@ class TButtFactory(object):
         cross_part = parts[str(joint.cross_beam.key)]
         cut_plane = joint.get_main_cutting_plane()[0]
         if joint.birdsmouth == True:
-            #calculate the process params
             joint_params = TButtFactory.calc_params_birdsmouth(joint, main_part, cross_part)
-            main_part.processings.append(BTLxDoubleCut.create_process(joint_params, "T-Butt Joint"))
-            #put processing here
+            if joint_params == False:
+                main_part.processings.append(BTLxDoubleCut.create_process(joint_params, "T-Butt Joint"))
+            else:
+                main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
         else:
             main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 

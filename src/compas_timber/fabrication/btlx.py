@@ -261,17 +261,17 @@ class BTLxPart(object):
             self._reference_surfaces = {
                 "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
                 "2": Frame(
-                    self.frame.point + self.frame.yaxis * self.width,
+                    self.frame.point + self.frame.yaxis * self.height,
                     self.frame.xaxis,
                     -self.frame.yaxis,
                 ),
                 "3": Frame(
-                    self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
+                    self.frame.point + self.frame.yaxis * self.height + self.frame.zaxis * self.width,
                     self.frame.xaxis,
                     -self.frame.zaxis,
                 ),
                 "4": Frame(
-                    self.frame.point + self.frame.zaxis * self.height,
+                    self.frame.point + self.frame.zaxis * self.width,
                     self.frame.xaxis,
                     self.frame.yaxis,
                 ),
