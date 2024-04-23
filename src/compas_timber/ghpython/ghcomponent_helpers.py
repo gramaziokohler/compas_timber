@@ -37,7 +37,7 @@ def get_leaf_subclasses(cls):
     return subclasses
 
 
-def add_GH_param(
+def add_gh_param(
     name, io, ghenv, index=None
 ):  # we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components
     """Adds a parameter to the Grasshopper component.
@@ -73,7 +73,7 @@ def add_GH_param(
         ghenv.Component.Params.OnParametersChanged()
 
 
-def clear_GH_params(ghenv, permanent_param_count=1):
+def clear_gh_params(ghenv, permanent_param_count=1):
     """Clears all input parameters from the component.
 
     Parameters
@@ -98,7 +98,7 @@ def clear_GH_params(ghenv, permanent_param_count=1):
     return changed
 
 
-def rename_GH_input(input_name, index, ghenv):
+def rename_gh_input(input_name, index, ghenv):
     """Renames a parameter in the Grasshopper component.
 
     Parameters
@@ -122,7 +122,7 @@ def rename_GH_input(input_name, index, ghenv):
     ghenv.Component.Params.OnParametersChanged()
 
 
-def rename_GH_output(output_name, index, ghenv):
+def rename_gh_output(output_name, index, ghenv):
     """Renames a parameter in the Grasshopper component.
 
     Parameters
@@ -164,7 +164,7 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
 
     """
     if not input_names:  # if no names are input
-        clear_GH_params(ghenv, permanent_param_count)
+        clear_gh_params(ghenv, permanent_param_count)
         return
     else:
         if keep_connections:
@@ -177,9 +177,9 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
                 ghenv.Component.Params.UnregisterInputParameter(param, True)
             for i, name in enumerate(input_names):
                 if i < rename_count:
-                    rename_GH_input(name, i + permanent_param_count, ghenv)
+                    rename_gh_input(name, i + permanent_param_count, ghenv)
                 elif name not in [param.Name for param in ghenv.Component.Params.Input]:
-                    add_GH_param(name, "Input", ghenv, index=i + permanent_param_count)
+                    add_gh_param(name, "Input", ghenv, index=i + permanent_param_count)
 
         else:
             register_params = False
@@ -195,13 +195,13 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
             else:
                 register_params = True
             if register_params:
-                clear_GH_params(
+                clear_gh_params(
                     ghenv, permanent_param_count + rename_count
                 )  # we could consider renaming params if we don't want to disconnect GH component inputs
                 for i, name in enumerate(input_names):
                     if i < permanent_param_count:
                         continue
                     elif i < rename_count:
-                        rename_GH_input(name, i, ghenv)
+                        rename_gh_input(name, i, ghenv)
                     else:
-                        add_GH_param(name, "Input", ghenv)
+                        add_gh_param(name, "Input", ghenv)

@@ -4,7 +4,7 @@ import inspect
 
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import rename_GH_output
+from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
@@ -54,6 +54,6 @@ class L_TopologyJointRule(component):
     def on_item_click(self, sender, event_info):
         self.clicked = True
         self.joint_type = self.classes[str(sender)]
-        rename_GH_output(self.joint_type.__name__, 0, ghenv)
+        rename_gh_output(self.joint_type.__name__, 0, ghenv)
         manage_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=0)
         ghenv.Component.ExpireSolution(True)

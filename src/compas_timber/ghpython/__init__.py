@@ -4,8 +4,8 @@ from .workflow import DirectRule
 from .workflow import FeatureDefinition
 from .workflow import JointDefinition
 from .workflow import DebugInfomation
-from .ghcomponent_helpers import clear_GH_params
-from .ghcomponent_helpers import add_GH_param
+from .ghcomponent_helpers import clear_gh_params
+from .ghcomponent_helpers import add_gh_param
 from .ghcomponent_helpers import manage_dynamic_params
 
 
@@ -16,7 +16,7 @@ __all__ = [
     "DirectRule",
     "FeatureDefinition",
     "DebugInfomation",
-    "clear_GH_params",
-    "add_GH_param",
+    "clear_gh_params",
+    "add_gh_param",
     "manage_dynamic_params",
 ]
