@@ -1,9 +1,9 @@
 {
-    "name": "Assembly",
-    "nickname": "Assembly",
+    "name": "Beam Nester",
+    "nickname": "Nester",
     "category": "COMPAS Timber",
     "subcategory": "Fabrication",
-    "description": "Creates an Assembly",
+    "description": "Nests beams into stock lengths.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
