@@ -1,0 +1,48 @@
+{
+    "name": "Assembly",
+    "nickname": "Assembly",
+    "category": "COMPAS Timber",
+    "subcategory": "Fabrication",
+    "description": "Creates an Assembly",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Assembly",
+                "description": "Compas_Timber Assembly",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Stock Length",
+                "description": "length of timber stock the beams are packed into.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Tolerance",
+                "description": "amount of cutoff per stock piece that is considered complete.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Iterations",
+                "description": "number of cycles the nester will run.",
+                "typeHintID": "int",
+                "scriptParamAccess":0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Packing",
+                "description": "Packing info as a tree."
+            },
+            {
+                "name": "Info",
+                "description": "General info about packing."
+            }
+        ]
+    }
+}
