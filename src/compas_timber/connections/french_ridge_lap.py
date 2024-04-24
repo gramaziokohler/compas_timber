@@ -38,14 +38,12 @@ class FrenchRidgeLapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, beam_a=None, beam_b=None, gap=0.0, frame=None, key=None):
-        super(FrenchRidgeLapJoint, self).__init__(frame=frame, key=key)
+    def __init__(self, beam_a=None, beam_b=None, **kwargs):
+        super(FrenchRidgeLapJoint, self).__init__(beams=(beam_a, beam_b), **kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
-        self.gap = gap
-        self.features = []
         self.reference_face_indices = {}
         self.check_geometry()
 
@@ -54,25 +52,16 @@ class FrenchRidgeLapJoint(Joint):
         data_dict = {
             "beam_a_key": self.beam_a_key,
             "beam_b_key": self.beam_b_key,
-            "gap": self.gap,
         }
         data_dict.update(super(FrenchRidgeLapJoint, self).__data__)
         return data_dict
 
     @classmethod
     def __from_data__(cls, value):
-        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"], gap=value["gap"])
+        instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"])
         instance.beam_a_key = value["beam_a_key"]
         instance.beam_b_key = value["beam_b_key"]
         return instance
-
-    @property
-    def beams(self):
-        return [self.beam_a, self.beam_b]
-
-    @property
-    def joint_type(self):
-        return "French Ridge Lap"
 
     @property
     def cutting_plane_top(self):
@@ -89,6 +78,7 @@ class FrenchRidgeLapJoint(Joint):
         """After de-serialization, restores references to the top and bottom beams saved in the assembly."""
         self.beam_a = assemly.find_by_key(self.beam_a_key)
         self.beam_b = assemly.find_by_key(self.beam_b_key)
+        self._beams = (self.beam_a, self.beam_b)
 
     def check_geometry(self):
         """
