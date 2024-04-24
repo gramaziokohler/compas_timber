@@ -8,12 +8,17 @@ from compas_timber.fabrication import BTLx
 class WriteBTLx(component):
     def RunScript(self, assembly, path, write):
         if not assembly:
+    def RunScript(self, assembly, path, write):
+        if not assembly:
             self.AddRuntimeMessage(Warning, "Input parameter Assembly failed to collect data")
             return
 
         btlx = BTLx(assembly)
+        btlx = BTLx(assembly)
         btlx.history["FileName"] = Rhino.RhinoDoc.ActiveDoc.Name
 
+        if write:
+            if not path:
         if write:
             if not path:
                 self.AddRuntimeMessage(Warning, "Input parameter Path failed to collect data")
