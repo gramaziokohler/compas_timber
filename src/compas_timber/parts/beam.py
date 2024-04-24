@@ -18,12 +18,18 @@ DEFAULT_TOLERANCE = 1e-6
 
 
 def _create_box(frame, xsize, ysize, zsize):
-    # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
-    # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
-    boxframe = frame.copy()
-    depth_offset = boxframe.xaxis * xsize * 0.5
-    boxframe.point += depth_offset
+    boxframe = _from_corner_to_center(frame, xsize, ysize, zsize)
     return Box(xsize, ysize, zsize, frame=boxframe)
+
+def _from_corner_to_center(corner, xsize, ysize, zsize):
+    result = corner.copy()
+    x_offset = result.xaxis * xsize * 0.5
+    y_offset = result.yaxis * ysize * 0.5
+    z_offset = result.zaxis * zsize * 0.5
+    result.point += x_offset
+    result.point += y_offset
+    result.point += z_offset
+    return result
 
 
 class Beam(Part):
@@ -109,11 +115,11 @@ class Beam(Part):
 
     @property
     def shape(self):
-        return _create_box(self.frame, self.length, self.width, self.height)
+        return _create_box(self.frame, self.length, self.height, self.width)
 
     @property
     def blank(self):
-        return _create_box(self.blank_frame, self.blank_length, self.width, self.height)
+        return _create_box(self.blank_frame, self.blank_length, self.height, self.width)
 
     @property
     def blank_length(self):
@@ -234,10 +240,18 @@ class Beam(Part):
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
         if y_vector.length < DEFAULT_TOLERANCE:
             raise ValueError("The given z_vector seems to be parallel to the given centerline.")
-        frame = Frame(centerline.start, x_vector, y_vector)
+        frame_origin = cls._get_beam_origin_from_centerline(centerline, width, height)
+        frame = Frame(frame_origin, x_vector, z_vector)
         length = centerline.length
 
         return cls(frame, length, width, height)
+
+    @staticmethod
+    def _get_beam_origin_from_centerline(centerline, width, height):
+        origin = centerline.start.copy()
+        origin.y += width * 0.5
+        origin.z -= height * 0.5
+        return origin
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
