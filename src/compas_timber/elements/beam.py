@@ -1,5 +1,6 @@
 import math
 
+import compas
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -18,6 +19,22 @@ from compas_model.elements import reset_computed
 from compas_timber.utils.compas_extra import intersection_line_plane
 
 from .features import FeatureApplicationError
+
+
+def _create_box(frame, xsize, ysize, zsize):
+    boxframe = _from_corner_to_center(frame, xsize, ysize, zsize)
+    return Box(xsize, ysize, zsize, frame=boxframe)
+
+
+def _from_corner_to_center(corner, xsize, ysize, zsize):
+    result = corner.copy()
+    x_offset = result.xaxis * xsize * 0.5
+    y_offset = result.yaxis * ysize * 0.5
+    z_offset = result.zaxis * zsize * 0.5
+    result.point += x_offset
+    result.point += y_offset
+    result.point += z_offset
+    return result
 
 
 class Beam(Element):
@@ -317,10 +334,18 @@ class Beam(Element):
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
         if y_vector.length < TOL.absolute:
             raise ValueError("The given z_vector seems to be parallel to the given centerline.")
-        frame = Frame(centerline.start, x_vector, y_vector)
+        frame_origin = cls._get_beam_origin_from_centerline(centerline, width, height)
+        frame = Frame(frame_origin, x_vector, z_vector)
         length = centerline.length
 
         return cls(frame, length, width, height)
+
+    @staticmethod
+    def _get_beam_origin_from_centerline(centerline, width, height):
+        origin = centerline.start.copy()
+        origin.y += width * 0.5
+        origin.z -= height * 0.5
+        return origin
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
