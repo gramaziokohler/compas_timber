@@ -88,6 +88,7 @@ class Beam(Part):
         self.height = height
         self.length = length
         self.features = []
+        self._blank_frame = None
         self._blank_extensions = {}
 
     @property
@@ -122,23 +123,30 @@ class Beam(Part):
 
     @property
     def blank_frame(self):
-        start, _ = self._resolve_blank_extensions()
-        frame = self.frame.copy()
-        frame.point += -frame.xaxis * start  # "extension" to the start edge
-        return frame
+        if self._blank_frame is None:
+            start, _ = self._resolve_blank_extensions()
+            self._blank_frame = self.frame.copy()
+            self._blank_frame.point += -self._blank_frame.xaxis * start  # "extension" to the start edge
+
+        return self._blank_frame
 
     @property
     def part_ref(self):
         frame = self.blank_frame
+        if self.key == 2:
+            print("1", self.blank_frame.point)
         return Frame(
-            Point(*(frame.point + (frame.yaxis * self.width * 0.5) - (frame.zaxis * self.height * 0.5))),
-            frame.xaxis,
-            frame.zaxis,
+            Point(*(self.blank_frame.point + (self.blank_frame.yaxis * self.width * 0.5) - (self.blank_frame.zaxis * self.height * 0.5))),
+            self.blank_frame.xaxis,
+            self.blank_frame.zaxis,
         )
 
     @property
     def faces(self):
         frame = self.part_ref
+        self.test_frame = frame.copy()
+        if self.key == 2:
+            print("2", frame.point)
         return [
             Frame(
                 frame.point,

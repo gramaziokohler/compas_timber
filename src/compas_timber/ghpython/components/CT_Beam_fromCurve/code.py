@@ -15,56 +15,56 @@ from compas_timber.parts import Beam as CTBeam
 
 
 class Beam_fromCurve(component):
-    def RunScript(self, Centerline, ZVector, Width, Height, Category, updateRefObj):
+    def RunScript(self, centerline, z_vector, width, height, category, updateRefObj):
         # minimum inputs required
-        if not Centerline:
+        if not centerline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")
-        if not Width:
+        if not width:
             self.AddRuntimeMessage(Warning, "Input parameter 'Width' failed to collect data")
-        if not Height:
+        if not height:
             self.AddRuntimeMessage(Warning, "Input parameter 'Height' failed to collect data")
 
         # reformat unset parameters for consistency
-        if not ZVector:
-            ZVector = [None]
-        if not Category:
-            Category = [None]
+        if not z_vector:
+            z_vector = [None]
+        if not category:
+            category = [None]
 
-        Beam = []
-        Blank = []
+        beams = []
+        blanks = []
         scene = Scene()
 
-        if Centerline and Height and Width:
+        if centerline and height and width:
             # check list lengths for consistency
-            N = len(Centerline)
-            if len(ZVector) not in (0, 1, N):
+            N = len(centerline)
+            if len(z_vector) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter."
                 )
-            if len(Width) not in (1, N):
+            if len(width) not in (1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'W' I need either one or the same number of inputs as the Crv parameter."
                 )
-            if len(Height) not in (1, N):
+            if len(height) not in (1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'H' I need either one or the same number of inputs as the Crv parameter."
                 )
-            if len(Category) not in (0, 1, N):
+            if len(category) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
                 )
 
             # duplicate data if None or single value
-            if len(ZVector) != N:
-                ZVector = [ZVector[0] for _ in range(N)]
-            if len(Width) != N:
-                Width = [Width[0] for _ in range(N)]
-            if len(Height) != N:
-                Height = [Height[0] for _ in range(N)]
-            if len(Category) != N:
-                Category = [Category[0] for _ in range(N)]
+            if len(z_vector) != N:
+                z_vector = [z_vector[0] for _ in range(N)]
+            if len(width) != N:
+                width = [width[0] for _ in range(N)]
+            if len(height) != N:
+                height = [height[0] for _ in range(N)]
+            if len(category) != N:
+                category = [category[0] for _ in range(N)]
 
-            for line, z, w, h, c in zip(Centerline, ZVector, Width, Height, Category):
+            for line, z, w, h, c in zip(centerline, z_vector, width, height, category):
                 guid, geometry = self._get_guid_and_geometry(line)
                 rhino_line = rs.coerceline(geometry)
                 line = line_to_compas(rhino_line)
@@ -80,12 +80,12 @@ class Beam_fromCurve(component):
                     update_rhobj_attributes_name(guid, "zvector", str(list(beam.frame.zaxis)))
                     update_rhobj_attributes_name(guid, "category", c)
 
-                Beam.append(beam)
+                beams.append(beam)
                 scene.add(beam.blank)
 
-        Blank = scene.draw()
+        blanks = scene.draw()
 
-        return Beam, Blank
+        return beams, blanks
 
     def _get_guid_and_geometry(self, line):
         # internalized curves and GH geometry will not have persistent GUIDs, referenced Rhino objects will

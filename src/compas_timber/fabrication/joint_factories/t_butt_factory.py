@@ -3,56 +3,14 @@ from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
 from compas_timber.fabrication.btlx_processes.btlx_lap import BTLxLap
 from compas_timber.fabrication.btlx_processes.btlx_doublecut import BTLxDoubleCut
-from compas.geometry import intersection_plane_plane, intersection_plane_plane_plane, Vector, Plane, Frame, Transformation, Point, angle_vectors, Line
+from compas.geometry import intersection_plane_plane, intersection_plane_plane_plane, Vector, Plane, Frame, Transformation, Point, angle_vectors
 import math
-
-from compas_timber.utils.compas_extra import intersection_line_plane
 
 class TButtFactory(object):
     """Factory class for creating T-Butt joints."""
 
     def __init__(self):
         pass
-
-
-    @staticmethod
-    def line_intersects_face(line, face, x_max, y_max):
-        """
-        Check if a line intersects a face.
-
-        Parameters:
-        ----------
-            line (object): The line object.
-            face (object): The face object.
-
-        Returns:
-        ----------
-            bool: True if the line intersects the face, False otherwise.
-
-        """
-        point = intersection_line_plane(line, Plane.from_frame(face))[0]
-        point.transform(Transformation.from_frame_to_frame(face, Frame.worldXY()))
-        print(point)
-        if point.x >= 0 and point.x <= x_max:
-            if point.y >= 0 and point.y <= y_max:
-                print("found it!!!!")
-                return True
-        return False
-
-
-
-    @staticmethod
-    def get_intersecting_face(intersect_line, main_part, cross_part):
-        print(main_part, cross_part)
-        print(cross_part.beam.faces)
-        for i, face in enumerate(main_part.beam.faces[0:4]):
-            if i % 2 == 0:
-                if TButtFactory.line_intersects_face(intersect_line, face, cross_part.blank_length, cross_part.width):
-                    return i, face
-            else:
-                if TButtFactory.line_intersects_face(intersect_line, face, cross_part.blank_length, cross_part.height):
-                    return i, face
-
 
 
     @staticmethod
@@ -85,24 +43,14 @@ class TButtFactory(object):
         print(frame1, cross_part.beam.faces[sorted_keys[0]])
         plane1, plane2 = Plane.from_frame(frame1), Plane.from_frame(frame2)
         intersect_vec = Vector.from_start_end(*intersection_plane_plane(plane2, plane1))
-        intersect_line = Line(*intersection_plane_plane(plane2, plane1))
-
-        ind, main_ref_frame = TButtFactory.get_intersecting_face(intersect_line, main_part, cross_part)
-
-        print (ind, main_ref_frame)
-
-
-
 
         angles_dict = {}
         for i, face in enumerate(main_part.beam.faces[0:4]):
-            angles_dict[i] = (face.normal.angle(cross_part.beam.centerline.direction))
-        ref_frame_id = min(angles_dict.keys(), key=angles_dict.get)
+            angles_dict[i] = (face.normal.angle(intersect_vec))
+        ref_frame_id = min(angles_dict, key=angles_dict.get)
         ref_frame = main_part.reference_surface_planes(ref_frame_id+1)
 
-        print(angles_dict)
-
-        print("ref_frame", ref_frame_id)
+        print("ref_frame", ref_frame)
         joint.test.append(ref_frame)
 
 
