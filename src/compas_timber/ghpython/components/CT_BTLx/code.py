@@ -8,8 +8,6 @@ from compas_timber.fabrication import BTLx
 class WriteBTLx(component):
     def RunScript(self, assembly, path, write):
         if not assembly:
-    def RunScript(self, assembly, path, write):
-        if not assembly:
             self.AddRuntimeMessage(Warning, "Input parameter Assembly failed to collect data")
             return
 
