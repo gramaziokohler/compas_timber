@@ -17,8 +17,6 @@ class WriteBTLx(component):
 
         if write:
             if not path:
-        if write:
-            if not path:
                 self.AddRuntimeMessage(Warning, "Input parameter Path failed to collect data")
                 return
             if path[-5:] != ".btlx":
