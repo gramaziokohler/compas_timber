@@ -109,6 +109,8 @@ class ButtJoint(Joint):
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
         self.reference_side_index_cross, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        if self.key == 2:
+            print("3", self.reference_side_index_cross.point)
         self.btlx_params_cross["reference_plane_id"] = self.reference_side_index_cross + 1
         cross_mating_frame = cfr.copy()
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
@@ -130,8 +132,11 @@ class ButtJoint(Joint):
                             Plane.from_frame(side), Plane.from_frame(frame), Plane.from_frame(fr)
                         )
                     )
-            pv = [subtract_vectors(pt, self.cross_beam.blank_frame.point) for pt in points]
-            dots = [dot_vectors(v, self.cross_beam.centerline.direction) for v in pv]
+            if self.key == 2:
+                print("4", top_frame.point)
+            self.ref_surface = top_frame.copy()
+            pv = [subtract_vectors(pt, top_frame.point) for pt in points]
+            dots = [dot_vectors(v, self.cross_beam.blank_frame.xaxis) for v in pv]
             dots, points = zip(*sorted(zip(dots, points)))
             min_pt, max_pt = points[0], points[-1]
             if i == 0:
