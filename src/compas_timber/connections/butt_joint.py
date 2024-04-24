@@ -85,9 +85,8 @@ class ButtJoint(Joint):
 
         face_dict = Joint._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         face_indices = face_dict.keys()
-        angles = face_dict.values()
-        angles, face_indices = zip(*sorted(zip(angles, face_indices)))
-        return self.cross_beam.faces[face_indices[1]], self.cross_beam.faces[face_indices[2]]
+        index = min(face_indices, key = face_dict.get)
+        return self.cross_beam.faces[index - 1], self.cross_beam.faces[(index + 1)%4]
 
     def front_back_surface_main(self):
         assert self.main_beam and self.cross_beam
@@ -117,8 +116,7 @@ class ButtJoint(Joint):
         vertices = []
         front_frame, back_frame = self.front_back_surface_main()
         top_frame, bottom_frame = self.get_main_cutting_plane()
-        sides = self.side_surfaces_cross()
-        for i, side in enumerate(sides):
+        for i, side in enumerate(self.side_surfaces_cross()):
             points = []
             for frame in [bottom_frame, top_frame]:
                 for fr in [front_frame, back_frame]:

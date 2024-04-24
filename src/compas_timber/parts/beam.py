@@ -137,6 +137,11 @@ class Beam(Part):
         )
 
     @property
+    def ref_edges(self):
+        return [Line.from_point_direction_length(face.point, face.xaxis, self.blank_length) for face in self.faces]
+
+
+    @property
     def faces(self):
         frame = self.part_ref
         return [
