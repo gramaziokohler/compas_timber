@@ -7,14 +7,14 @@ from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
 class ShowJointTypes(component):
-    def RunScript(self, Assembly):
+    def RunScript(self, assembly):
         self.pt = []
         self.txt = []
 
-        if not Assembly:
+        if not assembly:
             return
 
-        for joint in Assembly.joints:
+        for joint in assembly.joints:
             line_a, line_b = joint.beams[0].centerline, joint.beams[1].centerline
             [p1, t1], [p2, t2] = intersection_line_line_3D(line_a, line_b, float("inf"), False, 1e-3)
             p1 = point_to_rhino(p1)
