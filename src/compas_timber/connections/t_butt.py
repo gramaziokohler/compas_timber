@@ -51,10 +51,6 @@ class TButtJoint(ButtJoint):
         self.gap = gap
         self.features = []
 
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
-
     def get_cutting_plane(self):
         assert self.main_beam and self.cross_beam  # should never happen
 

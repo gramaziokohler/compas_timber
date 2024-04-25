@@ -76,14 +76,6 @@ class LButtJoint(ButtJoint):
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
 
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
-
-    @property
-    def joint_type(self):
-        return "L-Butt"
-
     def get_cross_cutting_plane(self):
         assert self.main_beam and self.cross_beam
         _, cfr = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)
