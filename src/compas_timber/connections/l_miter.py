@@ -55,6 +55,10 @@ class LMiterJoint(Joint):
         self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
         self.features = []
 
+    @property
+    def beams(self):
+        return [self.beam_a, self.beam_b]
+
     def get_cutting_planes(self):
         assert self.beam_a and self.beam_b
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
