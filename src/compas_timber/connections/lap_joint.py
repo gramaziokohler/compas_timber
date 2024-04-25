@@ -29,18 +29,14 @@ class LapJoint(Joint):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
-        The beams joined by this joint.
-    beams : list(:class:`~compas_timber.parts.Beam`)
+    main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
-    main_beam_key : str
-        The key of the main beam.
-    cross_beam_key : str
-        The key of the cross beam.
-    features : list(:class:`~compas_timber.parts.Feature`)
-        The features created by this joint.
-    joint_type : str
-        A string representation of this joint's type.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
+    flip_lap_side : bool
+        If True, the lap is flipped to the other side of the beams.
+    cut_plane_bias : float
+        Allows lap to be shifted deeper into one beam or the other. Value should be between 0 and 1.0 without completely cutting through either beam. Default is 0.5.
 
     """
 
@@ -71,6 +67,7 @@ class LapJoint(Joint):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
         self.main_beam = assemly.find_by_key(self.main_beam_key)
         self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+        self._beams = (self.main_beam, self.cross_beam)
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
@@ -116,22 +113,22 @@ class LapJoint(Joint):
         )
 
     def get_main_cutting_frame(self):
+        assert self.beams
         beam_a, beam_b = self.beams
-        assert beam_a and beam_b
 
         _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     def get_cross_cutting_frame(self):
+        assert self.beams
         beam_a, beam_b = self.beams
-        assert beam_a and beam_b
         _, cfr = self.get_face_most_towards_beam(beam_b, beam_a)
         return cfr
 
     def _create_negative_volumes(self):
+        assert self.beams
         beam_a, beam_b = self.beams
-        assert beam_a and beam_b
 
         # Get Cut Plane
         plane_cut_vector = beam_a.centerline.vector.cross(beam_b.centerline.vector)

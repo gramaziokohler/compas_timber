@@ -28,7 +28,7 @@ class FeatureApplicationError(Exception):
 class Feature(Data):
     """
 
-    Attirbutes
+    Attributes
     ----------
     is_joinery : bool
         Indicates whether this feature is a result of joinery.

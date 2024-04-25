@@ -22,8 +22,6 @@ class LMiterJoint(Joint):
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.TimberAssembly`
-        The assembly associated with the beams to be joined.
     beam_a : :class:`~compas_timber.parts.Beam`
         First beam to be joined.
     beam_b : :class:`~compas_timber.parts.Beam`
@@ -31,12 +29,10 @@ class LMiterJoint(Joint):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
-        The beams joined by this joint.
-    cutting_planes : tuple(:class:`~compas.geometry.Frame`, :class:`~compas.geometry.Frame`)
-        A trimming plane for each of the beams. The normals of the planes point at opposite directions.
-    joint_type : str
-        A string representation of this joint's type.
+    beam_a : :class:`~compas_timber.parts.Beam`
+        First beam to be joined.
+    beam_b : :class:`~compas_timber.parts.Beam`
+        Second beam to be joined.
 
     """
 
@@ -59,17 +55,8 @@ class LMiterJoint(Joint):
         self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
         self.features = []
 
-    @property
-    def joint_type(self):
-        return "L-Miter"
-
-    @property
-    def beams(self):
-        return [self.beam_a, self.beam_b]
-
     def get_cutting_planes(self):
         assert self.beam_a and self.beam_b
-
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
 
@@ -138,7 +125,8 @@ class LMiterJoint(Joint):
         self.beam_b.add_features(f2)
         self.features = [f1, f2]
 
-    def restore_beams_from_keys(self, assemly):
+    def restore_beams_from_keys(self, assembly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.beam_a = assemly.find_by_key(self.beam_a_key)
-        self.beam_b = assemly.find_by_key(self.beam_b_key)
+        self.beam_a = assembly.find_by_key(self.beam_a_key)
+        self.beam_b = assembly.find_by_key(self.beam_b_key)
+        self._beams = [self.beam_a, self.beam_b]

@@ -11,8 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Reduced some boilerplate code in `Joint` subclasses.
+* Added argument `beams` to `Joint.__init__()` which expects tuple containing beams from implementing class instance.
+
 ### Removed
 
+* Removed `joint_type` attributes from all `Joint` classes.
+* Removed argument `cutoff` from `LMiterJoint` as it was not used anywhere.
+* Removed argument `gap` from `TButtJoint` as it was not used anywhere.
+* Removed argument `gap` from `FrenchRidgeLap` as it was not used anywhere.
 
 ## [0.7.0] 2024-02-15
 
@@ -23,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
+* Added `mill_depth` argument to butt joints, with geometric representation of milled recess in cross beam.
+* Added `ButtJoint` class with methods common to `LButtJoint` and `TButtJoint`
 
 ### Changed
 

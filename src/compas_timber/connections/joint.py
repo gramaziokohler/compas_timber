@@ -42,10 +42,18 @@ class Joint(Interaction):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
+    beams : tuple(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
     ends : dict(:class:`~compas_timber.parts.Beam`, str)
         A map of which end of each beam is joined by this joint.
+    frame : :class:`~compas.geometry.Frame`
+        The frame of the joint.
+    key : str
+        A unique identifier for this joint.
+    features : list(:class:`~compas_timber.parts.Feature`)
+        A list of features that were added to the beams by this joint.
+    attributes : dict
+        A dictionary of additional attributes for this joint.
 
     """
 

@@ -8,6 +8,7 @@ from compas.geometry import Vector
 
 from compas_timber.assembly import TimberAssembly
 from compas_timber.connections import LButtJoint
+from compas_timber.connections import TButtJoint
 from compas_timber.parts import Beam
 
 
@@ -129,3 +130,29 @@ def test_beams_have_keys_after_serialization():
     A = json_loads(json_dumps(A))
 
     assert keys == [beam.key for beam in A.beams]
+
+
+def test_serialization_with_l_butt_joints(mocker):
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
+    F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
+    A = TimberAssembly()
+    A.add_beam(B1)
+    A.add_beam(B2)
+    _ = LButtJoint.create(A, B1, B2)
+
+    A = json_loads(json_dumps(A))
+
+
+def test_serialization_with_t_butt_joints(mocker):
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
+    A = TimberAssembly()
+    B1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    B2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    A.add_beam(B1)
+    A.add_beam(B2)
+    _ = TButtJoint.create(A, B1, B2)
+
+    A = json_loads(json_dumps(A))

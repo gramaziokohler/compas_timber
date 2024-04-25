@@ -1,10 +1,10 @@
 from compas.geometry import Frame
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
-from compas_timber.connections.lap_joint import LapJoint
 
 from .joint import BeamJoinningError
 from .solver import JointTopology
+from .lap_joint import LapJoint
 
 
 class LHalfLapJoint(LapJoint):
@@ -43,17 +43,12 @@ class LHalfLapJoint(LapJoint):
     joint_type : str
         A string representation of this joint's type.
 
-
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5):
-        super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias)
-
-    @property
-    def joint_type(self):
-        return "L-HalfLap"
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
+        super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
     def add_features(self):
         assert self.main_beam and self.cross_beam
@@ -74,14 +69,17 @@ class LHalfLapJoint(LapJoint):
             start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
         )
 
-        self.main_beam.add_features(MillVolume(negative_brep_main_beam))
-        self.cross_beam.add_features(MillVolume(negative_brep_cross_beam))
+        main_volume = MillVolume(negative_brep_main_beam)
+        cross_volume = MillVolume(negative_brep_cross_beam)
+
+        self.main_beam.add_features(main_volume)
+        self.cross_beam.add_features(cross_volume)
 
         f_cross = CutFeature(cross_cutting_frame)
         self.cross_beam.add_features(f_cross)
-        self.features.append(f_cross)
 
         trim_frame = Frame(main_cutting_frame.point, main_cutting_frame.xaxis, -main_cutting_frame.yaxis)
         f_main = CutFeature(trim_frame)
         self.main_beam.add_features(f_main)
-        self.features.append(f_main)
+
+        self.features = [main_volume, cross_volume, f_main, f_cross]

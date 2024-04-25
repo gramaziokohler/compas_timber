@@ -1,13 +1,14 @@
 from compas.geometry import Frame
 
+from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.parts import CutFeature
+from compas_timber.parts import MillVolume
 
 from .joint import BeamJoinningError
-from .joint import Joint
 from .solver import JointTopology
 
 
-class TButtJoint(Joint):
+class TButtJoint(ButtJoint):
     """Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
     trimming the main beam.
 
@@ -17,8 +18,6 @@ class TButtJoint(Joint):
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.TimberAssembly`
-        The assembly associated with the beams to be joined.
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
@@ -26,14 +25,10 @@ class TButtJoint(Joint):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
-        The beams joined by this joint.
-    cutting_plane_main : :class:`~compas.geometry.Frame`
-        The frame by which the main beam is trimmed.
-    cutting_plane_cross : :class:`~compas.geometry.Frame`
-        The frame by which the cross beam is trimmed.
-    joint_type : str
-        A string representation of this joint's type.
+    main_beam : :class:`~compas_timber.parts.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.parts.Beam`
+        The cross beam to be joined.
 
     """
 
@@ -60,10 +55,6 @@ class TButtJoint(Joint):
     def beams(self):
         return [self.main_beam, self.cross_beam]
 
-    @property
-    def joint_type(self):
-        return "T-Butt"
-
     def get_cutting_plane(self):
         assert self.main_beam and self.cross_beam  # should never happen
 
@@ -88,7 +79,7 @@ class TButtJoint(Joint):
             self.main_beam.remove_features(self.features)
         cutting_plane = None
         try:
-            cutting_plane = self.get_cutting_plane()
+            cutting_plane = self.get_main_cutting_plane()[0]
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -99,5 +90,7 @@ class TButtJoint(Joint):
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
         trim_feature = CutFeature(cutting_plane)
+        if self.mill_depth:
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
         self.main_beam.add_features(trim_feature)
         self.features = [trim_feature]
