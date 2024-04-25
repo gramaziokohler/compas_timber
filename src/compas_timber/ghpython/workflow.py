@@ -61,10 +61,11 @@ class DirectRule(JointRule):
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the beams, this rule assigns"""
 
-    def __init__(self, joint_type, category_a, category_b, **kwargs):
+    def __init__(self, joint_type, category_a, category_b, topos=None, **kwargs):
         self.joint_type = joint_type
         self.category_a = category_a
         self.category_b = category_b
+        self.topos = topos or []
         self.kwargs = kwargs
 
     def ToString(self):
@@ -72,8 +73,8 @@ class CategoryRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
-            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b
+        return "{}({}, {}, {}, {})".format(
+            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos
         )
 
     def comply(self, beams):
@@ -258,41 +259,6 @@ def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l
 
     for beamA, beamB in connectivity["X"]:
         pass
-
-
-class JointOptions(object):
-    """Container for options to be passed to a joint.
-
-    This allows delaying the actual joining of the beams to a downstream component.
-
-    Parameters
-    ----------
-    type :  cls(:class:`compas_timber.connections.Joint`)
-        The type of the joint.
-    kwargs : dict
-        The keyword arguments to be passed to the joint.
-
-    Attributes
-    ----------
-    type :  cls(:class:`compas_timber.connections.Joint`)
-        The type of the joint.
-    kwargs : dict
-        The keyword arguments to be passed to the joint.
-
-    """
-
-    def __init__(self, type, **kwargs):
-        self.type = type
-        self.kwargs = kwargs
-
-    def __repr__(self):
-        return "{}({}{})".format(JointOptions.__name__, self.type, self.kwargs)
-
-    def ToString(self):
-        return repr(self)
-
-    def is_identical(self, other):
-        return isinstance(other, JointOptions) and self.kwargs == other.kwargs
 
 
 class DebugInfomation(object):

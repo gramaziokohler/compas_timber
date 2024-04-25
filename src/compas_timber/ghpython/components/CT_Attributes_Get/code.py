@@ -9,29 +9,29 @@ from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attribut
 
 
 class Attributes_Get(component):
-    def RunScript(self, RefCrv):
-        if not RefCrv:
+    def RunScript(self, ref_crv):
+        if not ref_crv:
             self.AddRuntimeMessage(Warning, "Input parameter RefCrv failed to collect data")
 
-        ZVector = []
-        Width = []
-        Height = []
-        Category = []
-        Group = []
+        z_vector = []
+        width = []
+        height = []
+        category = []
+        group = []
 
-        guid = RefCrv
+        guid = ref_crv
         if guid:
             # get attributes from the name string ==========================================
             attr = get_obj_attributes(guid)
             if attr:
                 if "width" in attr:
-                    Width = float(attr["width"])
+                    width = float(attr["width"])
                 if "height" in attr:
-                    Height = float(attr["height"])
+                    height = float(attr["height"])
                 if "category" in attr:
-                    Category = attr["category"]
+                    category = attr["category"]
                 if "zvector" in attr:
-                    ZVector = attr["zvector"]
+                    z_vector = attr["zvector"]
                     # it's a string, but Grasshopper will automatically cast this input as Vector3d
 
             # get the group if objects are grouped =========================================
@@ -44,9 +44,9 @@ class Attributes_Get(component):
                     self.AddRuntimeMessage(
                         Remark, "Some objects belong to more than one group! (I will pick the first group I find.)"
                     )
-                Group = gl[0]
+                group = gl[0]
 
             else:
-                Group = []
+                group = []
 
-        return (ZVector, Width, Height, Category, Group)
+        return (z_vector, width, height, category, group)
