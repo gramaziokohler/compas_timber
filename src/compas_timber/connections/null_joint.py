@@ -27,13 +27,6 @@ class NullJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L  # TODO: this really supports all..
 
-    def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(NullJoint, self).__init__(**kwargs)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
-
     @property
     def __data__(self):
         data_dict = {
@@ -49,6 +42,17 @@ class NullJoint(Joint):
         instance.beam_a_key = value["main_beam_key"]
         instance.beam_b_key = value["cross_beam_key"]
         return instance
+
+    def __init__(self, beam_a=None, beam_b=None, **kwargs):
+        super(NullJoint, self).__init__(**kwargs)
+        self.beam_a = beam_a
+        self.beam_b = beam_b
+        self.beam_a_key = beam_a.key if beam_a else None
+        self.beam_b_key = beam_b.key if beam_b else None
+
+    @property
+    def beams(self):
+        return [self.beam_a, self.beam_b]
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
