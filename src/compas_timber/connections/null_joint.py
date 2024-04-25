@@ -47,8 +47,8 @@ class NullJoint(Joint):
         super(NullJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
+        self.beam_a_key = str(beam_a.guid) if beam_a else None
+        self.beam_b_key = str(beam_b.guid) if beam_b else None
 
     @property
     def beams(self):

@@ -40,16 +40,6 @@ class ButtJoint(Joint):
         A string representation of this joint's type.
 
     """
-
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
-        super(ButtJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
-        self.mill_depth = mill_depth
-        self.features = []
-
     @property
     def __data__(self):
         data_dict = {
@@ -66,6 +56,15 @@ class ButtJoint(Joint):
         instance.main_beam_key = value["main_beam_key"]
         instance.cross_beam_key = value["cross_beam_key"]
         return instance
+
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
+        super(ButtJoint, self).__init__(**kwargs)
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
+        self.main_beam_key = str(main_beam.guid) if main_beam else None
+        self.cross_beam_key = str(cross_beam.guid) if cross_beam else None
+        self.mill_depth = mill_depth
+        self.features = []
 
     @property
     def beams(self):

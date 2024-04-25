@@ -55,8 +55,8 @@ class LapJoint(Joint):
         self.cross_beam = cross_beam
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.main_beam_key = main_beam.guid if main_beam else None
-        self.cross_beam_key = cross_beam.guid if cross_beam else None
+        self.main_beam_key = str(main_beam.guid) if main_beam else None
+        self.cross_beam_key = str(cross_beam.guid) if cross_beam else None
         self.features = []
 
     @property

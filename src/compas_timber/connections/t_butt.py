@@ -34,22 +34,8 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    @property
-    def __data__(self):
-        data = super(TButtJoint, self).__data__
-        data["main_beam_key"] = self.main_beam_key
-        data["cross_beam_key"] = self.cross_beam_key
-        data["gap"] = self.gap
-        return data
-
-    def __init__(self, main_beam=None, cross_beam=None, gap=None):
-        super(TButtJoint, self).__init__()
-        self.main_beam_key = main_beam.guid if main_beam else None
-        self.cross_beam_key = cross_beam.guid if cross_beam else None
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.gap = gap
-        self.features = []
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
+        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, **kwargs)
 
     def get_cutting_plane(self):
         assert self.main_beam and self.cross_beam  # should never happen
