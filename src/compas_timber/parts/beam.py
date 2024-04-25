@@ -93,9 +93,9 @@ class Beam(Element):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
-        data["width"] = (self.width,)
-        data["height"] = (self.height,)
-        data["length"] = (self.length,)
+        data["width"] = self.width
+        data["height"] = self.height
+        data["length"] = self.length
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
