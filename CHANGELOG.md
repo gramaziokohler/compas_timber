@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `center_of_mass` property to Assembly class.
+* Added `volume` property to Assembly class.
 
 ### Changed
 

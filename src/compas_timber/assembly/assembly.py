@@ -218,12 +218,12 @@ class TimberAssembly(Assembly):
         for beam in self._beams:
             vol = beam.blank.volume
             point = beam.blank_frame.point
-            point += beam.blank_frame.xaxis * (beam.blank_length / 2) 
-            total_vol += vol 
+            point += beam.blank_frame.xaxis * (beam.blank_length / 2)
+            total_vol += vol
             total_position += point * vol
 
         return Point(*total_position) * (1.0 / total_vol)
-    
+
     @property
     def volume(self):
         """Returns the center of mass of the assembly.
