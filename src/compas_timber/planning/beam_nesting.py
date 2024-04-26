@@ -43,10 +43,17 @@ class Nester(object):
         """returns the total space remaining in all bins, AKA total waste"""
         return sum([self.space_remaining(bin) for bin in bin_dict.values()])
 
-    def get_initial_bins(self, beams):
+    def get_initial_bins(self, beams, sort=True, shuffle=False):
         """returns a dictionary of bins with beams nested in them"""
+        if sort:
+            beams_sorted = sorted(beams, key=lambda z: z.length, reverse=True)
+        elif shuffle:
+            beams_sorted = beams
+            self.shuffle(beams_sorted)
+        else:
+            beams_sorted = beams
         bins = OrderedDict([(0, [])])
-        for beam in beams:
+        for beam in beams_sorted:
             fits = False
             bins = self.sorted_dict(bins)
             for bin in bins.values():
@@ -58,9 +65,14 @@ class Nester(object):
                 bins[str(len(bins))] = [beam]
         return bins
 
-    def fill_bins(self, bins, beams):
+    def fill_bins(self, bins, beams, sort=True, shuffle=False):
         """fills a partial bins dictionary with beams, returns a dictionary of bins with beams nested in them"""
-        for beam in beams:
+        if sort:
+            beams_sorted = sorted(beams, key=lambda z: z.length, reverse=True)
+        elif shuffle:
+            beams_sorted = beams
+            self.shuffle(beams_sorted)
+        for beam in beams_sorted:
             fits = False
             bins = self.sorted_dict(bins)
             for bin in bins.values():
@@ -71,6 +83,11 @@ class Nester(object):
             if not fits:
                 bins[str(len(bins))] = [beam]
         return bins
+
+    def longest_cutoff(self, bin_dict):
+        """returns the longest cutoff in a bin dictionary"""
+        sorted_bins = self.sorted_dict(bin_dict)
+        return [self.space_remaining(bin) for bin in sorted_bins.values()]
 
     def parse_bins(self, bin_dict):
         """evaluates the success of the nesting, returns a dictionary with the results of the nesting process"""
@@ -92,7 +109,7 @@ class Nester(object):
             dict_out["recycled_beams"] = recycled_beams
             return dict_out
 
-    def get_bins(self, beams, stock_length, tolerance=1, iterations=10):
+    def get_bins(self, beams, stock_length, tolerance=None, iterations=0):
         """returns a dictionary of bins with beams nested in them
 
         Parameters
@@ -109,47 +126,48 @@ class Nester(object):
         """
 
         self.stock_length = stock_length
-        self.tolerance = tolerance
         if tolerance is None:
-            self.tolerance = 1
+            tolerance = stock_length / 100
+            self.tolerance = tolerance
+
+        else:
+            self.tolerance = tolerance
         if iterations is None:
-            iterations = 10
+            iterations = 0
 
         self.total_length = sum([beam.blank_length for beam in beams])
-        sort = False
         bins_out = None
         all_bins = []
-        solved = False
+
+        if iterations == 0:
+            return self.get_initial_bins(beams)
 
         for i in range(iterations):
-            if solved:
-                break
             these_beams = beams
             these_bins = self.get_initial_bins(these_beams)
             results_dict = self.parse_bins(these_bins)
             if results_dict["done"]:
                 bins_out = results_dict["finished_bins"]
             else:
+                sort = True
+                shuffle = False
                 for x in range(iterations):
-                    if sort:
-                        beams_sorted = sorted(results_dict["recycled_beams"], key=lambda z: z.length, reverse=True)
-                    else:
-                        beams_sorted = results_dict["recycled_beams"]
-                        self.shuffle(beams_sorted)
-
-                    temp_bins = self.fill_bins(results_dict["temporary_bins"], beams_sorted)
+                    these_beams = results_dict["recycled_beams"]
+                    temp_bins = self.fill_bins(results_dict["temporary_bins"], these_beams, sort, shuffle)
 
                     results_dict = self.parse_bins(temp_bins)
 
                     if results_dict["done"]:
                         bins_out = results_dict["finished_bins"]
                         print("success after {0} iterations.".format(x))
-                        solved = True
                         break
                     elif x == iterations - 1:
                         all_bins.append(results_dict["finished_bins"])
                     else:
                         sort = not sort
+                        shuffle = not shuffle
+            if results_dict["done"]:
+                break
 
         if not bins_out:
             bins_out = min(all_bins, key=lambda x: len(x))

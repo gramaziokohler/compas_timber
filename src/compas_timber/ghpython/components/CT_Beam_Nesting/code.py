@@ -37,4 +37,4 @@ class NestingComponent(component):
         if set(beam_list_out) != set(assembly.beams):
             self.AddRuntimeMessage(Error, "beams inputs and outputs dont match")
 
-        return info, data_tree
+        return data_tree, info
