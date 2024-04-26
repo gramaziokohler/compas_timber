@@ -11,8 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Reduced some boilerplate code in `Joint` subclasses.
+* Added argument `beams` to `Joint.__init__()` which expects tuple containing beams from implementing class instance.
+
 ### Removed
 
+* Removed `joint_type` attributes from all `Joint` classes.
+* Removed argument `cutoff` from `LMiterJoint` as it was not used anywhere.
+* Removed argument `gap` from `TButtJoint` as it was not used anywhere.
+* Removed argument `gap` from `FrenchRidgeLap` as it was not used anywhere.
+* Removed class `JointOptions` as not used anymore.
 
 ## [0.7.0] 2024-02-15
 
@@ -23,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added flag `modify_cross` to `L-Butt` joint.
 * Added flag `reject_i` to `L-Butt` joint.
 * Added new `NullJoint`.
+* Added `mill_depth` argument to butt joints, with geometric representation of milled recess in cross beam.
+* Added `ButtJoint` class with methods common to `LButtJoint` and `TButtJoint`
+* Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
+* Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
+* Added `topos` attribute to `CategoryRule` to filter when joints get applied
 * Added new `SurfaceAssembly` class
 * Added GH component `SurfaceAssembly` which directly generates a `TimberAssembly` with standard wall framing from a planar surface. 
 * Added GH component `SurfaceAssemblyOptions`
@@ -38,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed GH Categories for joint rules.
 * Made `beam_side_incident` a `staticmethod` of `Joint` and reworked it.
 * Extended `DecomposeBeam` component to optionally show beam frame and faces.
+* Changed `CategoryJointRule` and `DirectJointRule` to a dynamic interface where joint type is selected with right click menu
+* Changed `Assembly` GH component to apply category joints if the detected topology is in `CategoryRule.topos`
+* Changed `TopologyJoints` GH component to `DefaultJoints` Component, which applies default joints based on topology. 
 
 ### Removed
 
@@ -48,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `DrillHole` has default diameter proportional to beam cross-section.
 * Removed input `Length` from `DrillHole` component.
 * Fixed broken `TrimmingFeature` component.
+* Removed all `JointOption` components. these are accessed in context menu of joint rules.
 
 ## [0.6.1] 2024-02-02
 

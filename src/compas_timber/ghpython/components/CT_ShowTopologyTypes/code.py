@@ -7,13 +7,13 @@ from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
 class ShowTopologyTypes(component):
-    def RunScript(self, Assembly):
+    def RunScript(self, assembly):
         self.pt = []
         self.txt = []
 
-        if not Assembly:
+        if not assembly:
             return
-        for topo in Assembly.topologies:
+        for topo in assembly.topologies:
             beam_a = topo["beam_a"]
             beam_b = topo["beam_b"]
             topology = topo.get("detected_topo")
