@@ -43,15 +43,9 @@ class Nester(object):
         """returns the total space remaining in all bins, AKA total waste"""
         return sum([self.space_remaining(bin) for bin in bin_dict.values()])
 
-    def get_initial_bins(self, beams, sort=True, shuffle=False):
-        """returns a dictionary of bins with beams nested in them"""
-        if sort:
-            beams_sorted = sorted(beams, key=lambda z: z.length, reverse=True)
-        elif shuffle:
-            beams_sorted = beams
-            self.shuffle(beams_sorted)
-        else:
-            beams_sorted = beams
+    def get_bins_basic(self, beams):
+        """returns a dictionary of bins with beams nested in them"""    
+        beams_sorted = sorted(beams, key=lambda z: z.length, reverse=True)
         bins = OrderedDict([(0, [])])
         for beam in beams_sorted:
             fits = False
@@ -109,6 +103,14 @@ class Nester(object):
             dict_out["recycled_beams"] = recycled_beams
             return dict_out
 
+    def validate_bin_results(self, bins, beams):
+        beam_list_out = []
+        for val in bins.values():
+            beam_list_out.extend(val)
+
+        if set(beam_list_out) != set(beams):
+            raise Exception("beams inputs and outputs dont match")
+
     def get_bins(self, beams, stock_length, tolerance=None, iterations=0):
         """returns a dictionary of bins with beams nested in them
 
@@ -127,9 +129,7 @@ class Nester(object):
 
         self.stock_length = stock_length
         if tolerance is None:
-            tolerance = stock_length / 100
-            self.tolerance = tolerance
-
+            self.tolerance = stock_length / 100
         else:
             self.tolerance = tolerance
         if iterations is None:
@@ -140,43 +140,39 @@ class Nester(object):
         all_bins = []
 
         if iterations == 0:
-            return self.get_initial_bins(beams)
-
-        for i in range(iterations):
-            these_beams = beams
-            these_bins = self.get_initial_bins(these_beams)
-            results_dict = self.parse_bins(these_bins)
-            if results_dict["done"]:
-                bins_out = results_dict["finished_bins"]
-            else:
-                sort = True
-                shuffle = False
-                for x in range(iterations):
-                    these_beams = results_dict["recycled_beams"]
-                    temp_bins = self.fill_bins(results_dict["temporary_bins"], these_beams, sort, shuffle)
-
-                    results_dict = self.parse_bins(temp_bins)
-
-                    if results_dict["done"]:
-                        bins_out = results_dict["finished_bins"]
-                        print("success after {0} iterations.".format(x))
-                        break
-                    elif x == iterations - 1:
-                        all_bins.append(results_dict["finished_bins"])
-                    else:
-                        sort = not sort
-                        shuffle = not shuffle
-            if results_dict["done"]:
-                break
+            return self.get_bins_basic(beams)
+        
+        else:
+            for i in range(iterations):     #try with different shuffling
+                these_beams = beams
+                these_bins = self.get_bins_basic(these_beams)
+                results_dict = self.parse_bins(these_bins)
+                if results_dict["done"]:                          #if the nesting is successful
+                    bins_out = results_dict["finished_bins"]
+                else:
+                    sort = False
+                    shuffle = True
+                    for x in range(iterations):         #tries to repack the beams that don't fit in the bins within the cutoff tolerance
+                        these_beams = results_dict["recycled_beams"]
+                        temp_bins = self.fill_bins(results_dict["temporary_bins"], these_beams, sort, shuffle)
+                        results_dict = self.parse_bins(temp_bins)
+                        if results_dict["done"]:
+                            bins_out = results_dict["finished_bins"]
+                            print("success after {0} iterations.".format(x))
+                            break
+                        elif x == iterations - 1: #if the last iteration is reached, the best result is taken
+                            all_bins.append(results_dict["finished_bins"])
+                        else:
+                            sort = not sort
+                            shuffle = not shuffle
+                if results_dict["done"]:
+                    break
 
         if not bins_out:
-            bins_out = min(all_bins, key=lambda x: len(x))
+            bins_out = min(all_bins, key=lambda x: len(x)) #if no successful nesting is found, the one with the least bins is taken
 
-        beam_list_out = []
-        for val in bins_out.values():
-            beam_list_out.extend(val)
-
-        if set(beam_list_out) != set(beams):
-            raise Exception("beams inputs and outputs dont match")
+        self.validate_bin_results(bins_out, beams)
 
         return bins_out
+
+
