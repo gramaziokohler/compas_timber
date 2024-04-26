@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Joint Rules",
     "description": "Generates a direct joint between two beams. This overrides other joint rules.",
-    "exposure": 2,
+    "exposure": 8,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
