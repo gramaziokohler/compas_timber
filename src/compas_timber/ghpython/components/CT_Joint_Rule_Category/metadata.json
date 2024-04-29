@@ -10,20 +10,14 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "JointOptions",
-                "description": "Joint Options component.",
-                "typeHintID": "none",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "CatA",
+                "name": "Cat A",
                 "description": "Categeory of the first Beam.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             },
             {
-                "name": "CatB",
-                "description": "Category of the sectond Beam.",
+                "name": "Cat B",
+                "description": "Category of the second Beam.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             }
