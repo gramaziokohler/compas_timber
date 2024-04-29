@@ -148,7 +148,6 @@ class ButtJoint(Joint):
         top_front = Line(vertices[0], vertices[4])
         top_back = Line(vertices[1], vertices[5])
         _len = distance_line_line(top_front, top_back)
-        print(_len)
 
         front_line = Line(*intersection_plane_plane(Plane.from_frame(front_frame), Plane.from_frame(top_frame)))
 
@@ -176,5 +175,5 @@ class ButtJoint(Joint):
             ph = Polyhedron(
                 vertices, [[3, 2, 1, 0], [5, 4, 0, 1], [6, 5, 1, 2], [7, 6, 2, 3], [4, 7, 3, 0], [4, 5, 6, 7]]
             )
-        # self.test = vertices
+
         return ph

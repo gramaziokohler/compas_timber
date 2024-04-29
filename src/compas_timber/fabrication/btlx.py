@@ -340,7 +340,10 @@ class BTLxProcess(object):
     def et_element(self):
         element = ET.Element(self.process_type, self.header_attributes)
         for key, value in self.process_parameters.items():
-            child = ET.Element(key)
-            child.text = value
+            if isinstance(value, dict):
+                child = ET.Element(key, value)
+            else:
+                child = ET.Element(key)
+                child.text = value
             element.append(child)
         return element
