@@ -208,7 +208,7 @@ class TimberAssembly(Assembly):
 
         Returns
         -------
-        list
+        compas.geometry.Point
             The center of mass of the assembly.
 
         """
@@ -226,12 +226,12 @@ class TimberAssembly(Assembly):
 
     @property
     def volume(self):
-        """Returns the center of mass of the assembly.
+        """Returns the volume of the assembly.
 
         Returns
         -------
-        list
-            The center of mass of the assembly.
+        float
+            The sum of the volumes of all beam.blank's in the assembly.
 
         """
         return sum([beam.blank.volume for beam in self._beams])
