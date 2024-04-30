@@ -143,7 +143,9 @@ class Joint(Data):
 
         self._ends = {}
         for index, beam in enumerate(self.beams):
-            if distance_point_line(beam.centerline.start, self.beams[index - 1].centerline) < distance_point_line(beam.centerline.end, self.beams[index - 1].centerline):
+            if distance_point_line(beam.centerline.start, self.beams[index - 1].centerline) < distance_point_line(
+                beam.centerline.end, self.beams[index - 1].centerline
+            ):
                 self._ends[str(beam.key)] = "start"
             else:
                 self._ends[str(beam.key)] = "end"

@@ -67,7 +67,7 @@ class BTLxDoubleCut(object):
                     ("Angle1", "{:.{prec}f}".format(self.angle1, prec=BTLx.ANGLE_PRECISION)),
                     ("Inclination1", "{:.{prec}f}".format(self.inclination1, prec=BTLx.ANGLE_PRECISION)),
                     ("Angle2", "{:.{prec}f}".format(self.angle2, prec=BTLx.ANGLE_PRECISION)),
-                    ("Inclination2", "{:.{prec}f}".format(self.inclination2, prec=BTLx.ANGLE_PRECISION))
+                    ("Inclination2", "{:.{prec}f}".format(self.inclination2, prec=BTLx.ANGLE_PRECISION)),
                 ]
             )
             return od

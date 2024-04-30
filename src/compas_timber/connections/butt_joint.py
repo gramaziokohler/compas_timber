@@ -1,4 +1,3 @@
-from weakref import ref
 from compas.geometry import Frame
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import subtract_vectors
@@ -6,7 +5,6 @@ from compas.geometry import dot_vectors
 from compas.geometry import closest_point_on_line
 from compas.geometry import distance_line_line
 from compas.geometry import intersection_plane_plane
-from compas.geometry import intersection_line_plane
 from compas.geometry import Plane
 from compas.geometry import Line
 from compas.geometry import Polyhedron
@@ -16,7 +14,6 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors_signed
 from compas.geometry import angle_vectors
 from .joint import Joint
-import math
 
 
 class ButtJoint(Joint):
@@ -48,7 +45,7 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth = False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -95,8 +92,7 @@ class ButtJoint(Joint):
         angles = face_dict.values()
         angles, face_indices = zip(*sorted(zip(angles, face_indices)))
 
-
-        return self.cross_beam.faces[(face_indices[0]+1)%4], self.cross_beam.faces[(face_indices[0]+3)%4]
+        return self.cross_beam.faces[(face_indices[0] + 1) % 4], self.cross_beam.faces[(face_indices[0] + 3) % 4]
 
     def front_back_surface_main(self):
         assert self.main_beam and self.cross_beam
@@ -114,7 +110,9 @@ class ButtJoint(Joint):
 
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
-        self.reference_side_index_cross, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        self.reference_side_index_cross, cfr = self.get_face_most_ortho_to_beam(
+            self.main_beam, self.cross_beam, ignore_ends=True
+        )
 
         cross_mating_frame = cfr.copy()
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
@@ -279,7 +277,7 @@ class ButtJoint(Joint):
         face_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         face_keys = sorted([key for key in face_dict.keys()], key=face_dict.get)
 
-        frame1 = self.get_main_cutting_plane()[0]       #offset pocket mill plane
+        frame1 = self.get_main_cutting_plane()[0]  # offset pocket mill plane
         frame2 = self.cross_beam.faces[face_keys[1]]
 
         plane1, plane2 = Plane(frame1.point, -frame1.zaxis), Plane.from_frame(frame2)
@@ -287,7 +285,7 @@ class ButtJoint(Joint):
 
         angles_dict = {}
         for i, face in enumerate(self.main_beam.faces[0:4]):
-            angles_dict[i] = (face.normal.angle(intersect_vec))
+            angles_dict[i] = face.normal.angle(intersect_vec)
         ref_frame_id = min(angles_dict.keys(), key=angles_dict.get)
         ref_frame = self.main_beam.faces[ref_frame_id]
 
@@ -327,7 +325,7 @@ class ButtJoint(Joint):
         Inclination1 = angle_vectors(ref_frame.zaxis, plane1.normal, deg=True)
         Inclination2 = angle_vectors(ref_frame.zaxis, plane2.normal, deg=True)
 
-        self.btlx_params_main =  {
+        self.btlx_params_main = {
             "Orientation": self.ends[str(self.main_beam.key)],
             "StartX": StartX,
             "StartY": StartY,
@@ -335,5 +333,5 @@ class ButtJoint(Joint):
             "Inclination1": Inclination1,
             "Angle2": Angle2,
             "Inclination2": Inclination2,
-            "ReferencePlaneID": ref_frame_id
+            "ReferencePlaneID": ref_frame_id,
         }

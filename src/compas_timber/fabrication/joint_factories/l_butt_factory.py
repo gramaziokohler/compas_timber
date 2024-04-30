@@ -39,9 +39,17 @@ class LButtFactory(object):
         )
         if joint.mill_depth > 0:
             if joint.ends[1] == "start":
-                joint.btlx_params_cross["machining_limits"] = {"FaceLimitedStart": "no", "FaceLimitedFront": "no", "FaceLimitedBack": "no"}
+                joint.btlx_params_cross["machining_limits"] = {
+                    "FaceLimitedStart": "no",
+                    "FaceLimitedFront": "no",
+                    "FaceLimitedBack": "no",
+                }
             else:
-                joint.btlx_params_cross["machining_limits"] = {"FaceLimitedEnd": "no", "FaceLimitedFront": "no", "FaceLimitedBack": "no"}
+                joint.btlx_params_cross["machining_limits"] = {
+                    "FaceLimitedEnd": "no",
+                    "FaceLimitedFront": "no",
+                    "FaceLimitedBack": "no",
+                }
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "L-Butt Joint"))
 
 

@@ -186,7 +186,7 @@ class BTLxPart(object):
 
         """
         for i in range(1, 7):
-            if angle_vectors(self.reference_surface_planes(i).normal, beam_face.normal, deg = True) < 1e-3:
+            if angle_vectors(self.reference_surface_planes(i).normal, beam_face.normal, deg=True) < 1e-3:
                 return i
 
     def reference_surface_planes(self, index):
