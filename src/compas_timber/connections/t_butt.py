@@ -33,8 +33,8 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
-        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth = False, **kwargs):
+        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, birdsmouth, **kwargs)
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).

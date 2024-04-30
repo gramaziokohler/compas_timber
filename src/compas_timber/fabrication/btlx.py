@@ -8,6 +8,7 @@ from datetime import datetime
 
 import compas
 from compas.geometry import Frame
+from compas.geometry import angle_vectors
 from compas.geometry import Transformation
 
 
@@ -157,7 +158,7 @@ class BTLxPart(object):
     def __init__(self, beam):
         self.beam = beam
         self.key = beam.key
-        self.length = beam.length
+        self.length = beam.blank_length
         self.width = beam.height
         self.height = beam.width
         self.frame = Frame(
@@ -184,9 +185,9 @@ class BTLxPart(object):
             The key(index 1-6) of the reference surface.
 
         """
-        for key, face in self.reference_surfaces.items():
-            if face.normal == beam_face.normal:
-                return key
+        for i in range(1, 7):
+            if angle_vectors(self.reference_surface_planes(i).normal, beam_face.normal, deg = True) < 1e-3:
+                return i
 
     def reference_surface_planes(self, index):
         """Returns the reference surface planes for a given index per BTLx docs.

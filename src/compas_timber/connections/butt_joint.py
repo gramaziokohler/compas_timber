@@ -1,3 +1,4 @@
+from weakref import ref
 from compas.geometry import Frame
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import subtract_vectors
@@ -5,12 +6,17 @@ from compas.geometry import dot_vectors
 from compas.geometry import closest_point_on_line
 from compas.geometry import distance_line_line
 from compas.geometry import intersection_plane_plane
+from compas.geometry import intersection_line_plane
 from compas.geometry import Plane
 from compas.geometry import Line
 from compas.geometry import Polyhedron
 from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import Transformation
 from compas.geometry import angle_vectors_signed
+from compas.geometry import angle_vectors
 from .joint import Joint
+import math
 
 
 class ButtJoint(Joint):
@@ -42,13 +48,14 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth = False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
         self.mill_depth = mill_depth
+        self.birdsmouth = birdsmouth
         self.btlx_params_main = {}
         self.btlx_params_cross = {}
         self.features = []
@@ -87,7 +94,9 @@ class ButtJoint(Joint):
         face_indices = face_dict.keys()
         angles = face_dict.values()
         angles, face_indices = zip(*sorted(zip(angles, face_indices)))
-        return self.cross_beam.faces[face_indices[1]], self.cross_beam.faces[face_indices[2]]
+
+
+        return self.cross_beam.faces[(face_indices[0]+1)%4], self.cross_beam.faces[(face_indices[0]+3)%4]
 
     def front_back_surface_main(self):
         assert self.main_beam and self.cross_beam
@@ -106,7 +115,7 @@ class ButtJoint(Joint):
     def get_main_cutting_plane(self):
         assert self.main_beam and self.cross_beam
         self.reference_side_index_cross, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
-        self.btlx_params_cross["reference_plane_id"] = self.reference_side_index_cross + 1
+
         cross_mating_frame = cfr.copy()
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         cfr.point = cfr.point + cfr.zaxis * self.mill_depth
@@ -152,8 +161,9 @@ class ButtJoint(Joint):
         front_line = Line(*intersection_plane_plane(Plane.from_frame(front_frame), Plane.from_frame(top_frame)))
 
         self.btlx_params_cross["depth"] = self.mill_depth
+
         self.btlx_params_cross["width"] = (
-            self.cross_beam.width if self.reference_side_index_cross % 2 == 0 else self.cross_beam.height
+            self.cross_beam.height if self.reference_side_index_cross % 2 == 0 else self.cross_beam.width
         )
 
         self.btlx_params_cross["length"] = _len
@@ -177,3 +187,153 @@ class ButtJoint(Joint):
             )
 
         return ph
+
+    # @staticmethod
+    # def calc_params_birdsmouth(joint, main_part, cross_part):
+    #     """
+    #     Calculate the parameters for a birdsmouth joint.
+
+    #     Parameters:
+    #     ----------
+    #         joint (object): The joint object.
+    #         main_part (object): The main part object.
+    #         cross_part (object): The cross part object.
+
+    #     Returns:
+    #     ----------
+    #         dict: A dictionary containing the calculated parameters for the birdsmouth joint
+
+    #     """
+    #     face_dict = joint._beam_side_incidence(main_part.beam, cross_part.beam, ignore_ends=True)
+    #     face_dict = sorted(face_dict, key=face_dict.get)
+
+    #     # frame1 = joint.get_main_cutting_plane()[0]
+    #     frame1 = joint.get_main_cutting_plane()[0]
+    #     frame2 = cross_part.beam.faces[face_dict[1]]
+
+    #     plane1, plane2 = Plane.from_frame(frame1), Plane.from_frame(frame2)
+    #     intersect_vec = Vector.from_start_end(*intersection_plane_plane(plane2, plane1))
+
+    #     angles_dict = {}
+    #     for i, face in enumerate(main_part.beam.faces):
+    #         angles_dict[i] = (face.normal.angle(intersect_vec))
+    #     ref_frame_id = min(angles_dict, key=angles_dict.get)
+    #     ref_frame = main_part.reference_surface_planes(ref_frame_id+1)
+
+    #     dot_frame1 = plane1.normal.dot(ref_frame.yaxis)
+    #     if dot_frame1 > 0:
+    #         plane1, plane2 = plane2, plane1
+
+    #     start_point = Point(*intersection_plane_plane_plane(plane1, plane2, Plane.from_frame(ref_frame)))
+    #     start_point.transform(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
+    #     StartX, StartY = start_point[0], start_point[1]
+
+    #     intersect_vec1 = Vector.from_start_end(*intersection_plane_plane(plane1, Plane.from_frame(ref_frame)))
+    #     intersect_vec2 = Vector.from_start_end(*intersection_plane_plane(plane2, Plane.from_frame(ref_frame)))
+
+    #     dot_2 = math.degrees(intersect_vec1.dot(ref_frame.yaxis))
+    #     if dot_2 < 0:
+    #         intersect_vec1 = -intersect_vec1
+
+    #     dot_1 = math.degrees(intersect_vec2.dot(ref_frame.yaxis))
+    #     if dot_1 < 0:
+    #         intersect_vec2 = -intersect_vec2
+
+    #     if joint.ends[str(main_part.key)] == "start":
+    #         reference_frame = ref_frame.xaxis
+    #     else:
+    #         reference_frame = -ref_frame.xaxis
+
+    #     Angle1 = math.degrees(intersect_vec1.angle(reference_frame))
+    #     Angle2 = math.degrees(intersect_vec2.angle(reference_frame))
+
+    #     Inclination1 = math.degrees(plane1.normal.angle(ref_frame.zaxis))
+    #     Inclination2 = math.degrees(plane2.normal.angle(ref_frame.zaxis))
+
+    #     return {
+    #         "Orientation": joint.ends[str(main_part.key)],
+    #         "StartX": StartX,
+    #         "StartY": StartY,
+    #         "Angle1": Angle1,
+    #         "Inclination1": Inclination1,
+    #         "Angle2": Angle2,
+    #         "Inclination2": Inclination2,
+    #         "ReferencePlaneID": ref_frame_id
+    #     }
+
+    def calc_params_birdsmouth(self):
+        """
+        Calculate the parameters for a birdsmouth joint.
+
+        Parameters:
+        ----------
+            joint (object): The joint object.
+            main_part (object): The main part object.
+            cross_part (object): The cross part object.
+
+        Returns:
+        ----------
+            dict: A dictionary containing the calculated parameters for the birdsmouth joint
+
+        """
+        face_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        face_keys = sorted([key for key in face_dict.keys()], key=face_dict.get)
+
+        frame1 = self.get_main_cutting_plane()[0]       #offset pocket mill plane
+        frame2 = self.cross_beam.faces[face_keys[1]]
+
+        plane1, plane2 = Plane(frame1.point, -frame1.zaxis), Plane.from_frame(frame2)
+        intersect_vec = Vector.from_start_end(*intersection_plane_plane(plane2, plane1))
+
+        angles_dict = {}
+        for i, face in enumerate(self.main_beam.faces[0:4]):
+            angles_dict[i] = (face.normal.angle(intersect_vec))
+        ref_frame_id = min(angles_dict.keys(), key=angles_dict.get)
+        ref_frame = self.main_beam.faces[ref_frame_id]
+
+        ref_frame.point = self.main_beam.blank_frame.point
+        if ref_frame_id % 2 == 0:
+            ref_frame.point = ref_frame.point - ref_frame.yaxis * self.main_beam.height * 0.5
+            ref_frame.point = ref_frame.point + ref_frame.zaxis * self.main_beam.width * 0.5
+        else:
+            ref_frame.point = ref_frame.point - ref_frame.yaxis * self.main_beam.width * 0.5
+            ref_frame.point = ref_frame.point + ref_frame.zaxis * self.main_beam.height * 0.5
+        self.test.append(ref_frame)
+
+        start_point = Point(*intersection_plane_plane_plane(plane1, plane2, Plane.from_frame(ref_frame)))
+        start_point.transform(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
+        StartX, StartY = start_point[0], start_point[1]
+
+        dot_frame1 = plane1.normal.dot(ref_frame.yaxis)
+        if dot_frame1 > 0:
+            plane1, plane2 = plane2, plane1
+
+        intersect_vec1 = Vector.from_start_end(*intersection_plane_plane(plane1, Plane.from_frame(ref_frame)))
+        intersect_vec2 = Vector.from_start_end(*intersection_plane_plane(plane2, Plane.from_frame(ref_frame)))
+
+        if self.ends[str(self.main_beam.key)] == "start":
+            reference_vector = ref_frame.xaxis
+        else:
+            reference_vector = -ref_frame.xaxis
+
+        if intersect_vec1.dot(ref_frame.yaxis) < 0:
+            intersect_vec1 = -intersect_vec1
+        if intersect_vec2.dot(ref_frame.yaxis) < 0:
+            intersect_vec2 = -intersect_vec2
+
+        Angle1 = angle_vectors(intersect_vec1, reference_vector, deg=True)
+        Angle2 = angle_vectors(intersect_vec2, reference_vector, deg=True)
+
+        Inclination1 = angle_vectors(ref_frame.zaxis, plane1.normal, deg=True)
+        Inclination2 = angle_vectors(ref_frame.zaxis, plane2.normal, deg=True)
+
+        self.btlx_params_main =  {
+            "Orientation": self.ends[str(self.main_beam.key)],
+            "StartX": StartX,
+            "StartY": StartY,
+            "Angle1": Angle1,
+            "Inclination1": Inclination1,
+            "Angle2": Angle2,
+            "Inclination2": Inclination2,
+            "ReferencePlaneID": ref_frame_id
+        }
