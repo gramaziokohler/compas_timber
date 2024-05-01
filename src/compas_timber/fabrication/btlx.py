@@ -8,6 +8,7 @@ from datetime import datetime
 
 import compas
 from compas.geometry import Frame
+from compas.geometry import angle_vectors
 from compas.geometry import Transformation
 
 
@@ -78,9 +79,8 @@ class BTLx(object):
         self.ET_element.append(self.file_history)
         self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
         self.parts_element = ET.SubElement(self.project_element, "Parts")
-        print(MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   "))
+
         for part in self.parts.values():
-            print(MD.parseString(ET.tostring(part.et_element)).toprettyxml(indent="   "))
             self.parts_element.append(part.et_element)
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
@@ -158,15 +158,77 @@ class BTLxPart(object):
     def __init__(self, beam):
         self.beam = beam
         self.key = beam.key
-        self.length = beam.length
-        self.width = beam.width
-        self.height = beam.height
-        self.frame = beam.part_ref
+        self.length = beam.blank_length
+        self.width = beam.height
+        self.height = beam.width
+        self.frame = Frame(
+            self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
+            beam.frame.xaxis,
+            beam.frame.yaxis,
+        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self.blank_length = beam.blank_length
+        self._reference_surfaces = []
         self.processings = []
         self._et_element = None
-        self.faces = beam.faces
-        self._reference_surfaces = {}
+
+    def reference_surface_from_beam_face(self, beam_face):
+        """Finds the reference surface with normal that matches the normal of the beam face argument
+
+        Parameters
+        -----------
+        beam_face : :class:`~compas.geometry.Frame`
+            The frame of a beam face from beam.faces.
+
+        Returns
+        --------
+        key : str
+            The key(index 1-6) of the reference surface.
+
+        """
+        for i in range(1, 7):
+            if angle_vectors(self.reference_surface_planes(i).normal, beam_face.normal, deg=True) < 1e-3:
+                return i
+
+    def reference_surface_planes(self, index):
+        """Returns the reference surface planes for a given index per BTLx docs.
+
+        Parameters
+        ----------
+        index : int
+            The index of the reference surface.
+
+        Returns
+        -------
+        dict
+            The BTLx reference surface frame.
+
+        """
+        if len(self._reference_surfaces) != 6:
+            self._reference_surfaces = {
+                "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
+                "2": Frame(
+                    self.frame.point + self.frame.yaxis * self.width,
+                    self.frame.xaxis,
+                    -self.frame.yaxis,
+                ),
+                "3": Frame(
+                    self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
+                    self.frame.xaxis,
+                    -self.frame.zaxis,
+                ),
+                "4": Frame(
+                    self.frame.point + self.frame.zaxis * self.height,
+                    self.frame.xaxis,
+                    self.frame.yaxis,
+                ),
+                "5": Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
+                "6": Frame(
+                    self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
+                    self.frame.zaxis,
+                    -self.frame.yaxis,
+                ),
+            }
+        return self._reference_surfaces[str(index)]
 
     @property
     def attr(self):

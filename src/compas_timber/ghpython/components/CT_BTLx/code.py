@@ -12,6 +12,7 @@ class WriteBTLx(component):
             return
 
         btlx = BTLx(assembly)
+        btlx = BTLx(assembly)
         btlx.history["FileName"] = Rhino.RhinoDoc.ActiveDoc.Name
 
         if write:

@@ -2,9 +2,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
 from compas_timber.fabrication.btlx_processes.btlx_lap import BTLxLap
-from compas_timber.fabrication.btlx_processes.btlx_doublecut import BTLxDoubleCut
-from compas.geometry import intersection_plane_plane, intersection_plane_plane_plane, Vector, Plane, Frame, Transformation, Point, angle_vectors, Line
-import math
+from compas_timber.fabrication.btlx_processes.btlx_double_cut import BTLxDoubleCut
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 
@@ -169,19 +167,19 @@ class TButtFactory(object):
 
         main_part = parts[str(joint.main_beam.key)]
         cross_part = parts[str(joint.cross_beam.key)]
-        cut_plane = joint.get_main_cutting_plane()[0]
+        cut_plane, ref_plane = joint.get_main_cutting_plane()
+
         if joint.birdsmouth:
-            joint_params = TButtFactory.calc_params_birdsmouth(joint, main_part, cross_part)
-            print(joint_params)
-            if joint_params:
-                main_part.processings.append(BTLxDoubleCut.create_process(joint_params, "T-Butt Joint"))
-            else:
-                main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
+            joint.calc_params_birdsmouth()
+            ref_face = main_part.beam.faces[joint.btlx_params_main["ReferencePlaneID"]]
+            joint.btlx_params_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
+            main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, "T-Butt Joint"))
         else:
             main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 
+        joint.btlx_params_cross["reference_plane_id"] = cross_part.reference_surface_from_beam_face(ref_plane)
         if joint.mill_depth > 0:
-            cross_part = parts[str(joint.cross_beam.key)]
+            joint.btlx_params_cross["machining_limits"] = {"FaceLimitedFront": "no", "FaceLimitedBack": "no"}
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
 
 
