@@ -31,14 +31,14 @@ class FrenchRidgeFactory(object):
 
         top_key = joint.beams[0].key
         top_part = parts[str(top_key)]
-        top_part._test.append(top_part.reference_surface_planes(joint.reference_face_indices[str(top_part.beam.key)]))
+        # top_part._test.append(top_part.reference_surface_planes(joint.reference_face_indices[str(top_part.beam.key)]))
         top_part.processings.append(BTLxFrenchRidgeLap.create_process(top_part, joint, True))
 
         bottom_key = joint.beams[1].key
         bottom_part = parts[str(bottom_key)]
-        bottom_part._test.append(
-            bottom_part.reference_surface_planes(joint.reference_face_indices[str(bottom_part.beam.key)])
-        )
+        # bottom_part._test.append(
+            # bottom_part.reference_surface_planes(joint.reference_face_indices[str(bottom_part.beam.key)])
+        # )
         bottom_part.processings.append(BTLxFrenchRidgeLap.create_process(bottom_part, joint, False))
 
 
