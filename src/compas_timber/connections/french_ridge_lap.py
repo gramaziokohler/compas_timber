@@ -71,7 +71,7 @@ class FrenchRidgeLapJoint(Joint):
 
     @property
     def cutting_plane_bottom(self):
-        _, cfr = self.get_face_most_towards_beam(self.beam_b, self.beam_b, ignore_ends=True)
+        _, cfr = self.get_face_most_towards_beam(self.beam_b, self.beam_a, ignore_ends=True)
         return cfr
 
     def restore_beams_from_keys(self, assemly):
@@ -80,15 +80,20 @@ class FrenchRidgeLapJoint(Joint):
         self.beam_b = assemly.find_by_key(self.beam_b_key)
         self._beams = (self.beam_a, self.beam_b)
 
+    def add_features(self):
+        self.beam_a.add_blank_extension(*self.beam_a.extension_to_plane(self.cutting_plane_top), joint_key = self.key)
+        self.beam_b.add_blank_extension(*self.beam_b.extension_to_plane(self.cutting_plane_bottom), joint_key = self.key)
+        self.features = []
+
     def check_geometry(self):
         """
         This method checks whether the parts are aligned as necessary to create French Ridge Lap and determines which face is used as reference face for machining.
         """
         if not (self.beam_a and self.beam_b):
-            raise (BeamJoinningError("French Ridge Lap requires 2 beams"))
+            raise (BeamJoinningError(beams=self.beams, joint=self, debug_info="beams not set"))
 
         if not (self.beam_a.width == self.beam_b.width and self.beam_a.height == self.beam_b.height):
-            raise (BeamJoinningError("widths and heights for both beams must match for the French Ridge Lap"))
+            raise (BeamJoinningError(beams=self.beams, joint=self, debug_info="beams are not of same size"))
 
         normal = cross_vectors(self.beam_a.frame.xaxis, self.beam_b.frame.xaxis)
 
@@ -103,7 +108,13 @@ class FrenchRidgeLapJoint(Joint):
         elif angle_vectors(normal, -self.beam_a.frame.zaxis) < 0.001:
             indices.append(2)
         else:
-            raise (BeamJoinningError("part not aligned with corner normal, no French Ridge Lap possible"))
+            raise (
+                BeamJoinningError(
+                    beams=self.beams,
+                    joint=self,
+                    debug_info="part not aligned with corner normal, no French Ridge Lap possible",
+                )
+            )
 
         if abs(angle_vectors(normal, self.beam_b.frame.yaxis) - math.pi) < 0.001:
             indices.append(3)
@@ -114,5 +125,11 @@ class FrenchRidgeLapJoint(Joint):
         elif abs(angle_vectors(normal, -self.beam_b.frame.zaxis) - math.pi) < 0.001:
             indices.append(2)
         else:
-            raise (BeamJoinningError("part not aligned with corner normal, no French Ridge Lap possible"))
+            raise (
+                BeamJoinningError(
+                    beams=self.beams,
+                    joint=self,
+                    debug_info="part not aligned with corner normal, no French Ridge Lap possible",
+                )
+            )
         self.reference_face_indices = {str(self.beam_a.key): indices[0], str(self.beam_b.key): indices[1]}
