@@ -3,8 +3,9 @@ from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
 from compas_timber.fabrication.btlx_processes.btlx_lap import BTLxLap
 from compas_timber.fabrication.btlx_processes.btlx_double_cut import BTLxDoubleCut
-
+from compas.geometry import Frame, Plane, Transformation, Point, Vector, Line, intersection_plane_plane, intersection_plane_plane_plane, angle_vectors
 from compas_timber.utils.compas_extra import intersection_line_plane
+import math
 
 class TButtFactory(object):
     """Factory class for creating T-Butt joints."""
@@ -41,8 +42,8 @@ class TButtFactory(object):
 
     @staticmethod
     def get_intersecting_face(intersect_line, main_part, cross_part):
-        print(main_part, cross_part)
-        print(cross_part.beam.faces)
+        print(main_part, cross_part, "intersecting_face")
+        print(cross_part.beam.faces, "cross_faces")
         for i, face in enumerate(main_part.beam.faces[0:4]):
             if i % 2 == 0:
                 if TButtFactory.line_intersects_face(intersect_line, face, cross_part.blank_length, cross_part.width):
