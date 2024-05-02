@@ -52,6 +52,7 @@ class BTLxLap(object):
     @property
     def header_attributes(self):
         """the following attributes are required for all processes, but the keys and values of header_attributes are process specific."""
+
         return {
             "Name": self.name,
             "Process": "yes",

@@ -38,7 +38,10 @@ class LButtFactory(object):
             BTLxJackCut.create_process(cross_part, joint.get_cross_cutting_plane(), "L-Butt Joint")
         )
         if joint.mill_depth > 0:
-            if joint.ends[1] == "start":
+            ref_face = cross_part.beam.faces[joint.reference_side_index_cross]
+            joint.btlx_params_cross["reference_plane_id"] = str(cross_part.reference_surface_from_beam_face(ref_face))
+            print("ref ID", joint.btlx_params_cross["reference_plane_id"])
+            if joint.ends[str(cross_part.key)] == "start":
                 joint.btlx_params_cross["machining_limits"] = {
                     "FaceLimitedStart": "no",
                     "FaceLimitedFront": "no",
