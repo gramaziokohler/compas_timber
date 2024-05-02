@@ -1,0 +1,38 @@
+{
+    "name": "L-Butt Options",
+    "nickname": "L-Butt",
+    "category": "COMPAS Timber",
+    "subcategory": "Joints",
+    "description": "defines and gives access to L-Butt joint and its parameters",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "SmallBeamButts",
+                "description": "If true, the beam with a larger cross-section is considered as the cross beam.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "ModifyCross",
+                "description": "If true, the cross beam is extended to the opposite face of the main beam and cut flush with it.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "RejectI",
+                "description": "If true, joint will not apply when the cross beam meets the main beam in an I topology.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "L-Butt",
+                "description": "L-Butt Joint Options."
+            }
+        ]
+    }
+}
