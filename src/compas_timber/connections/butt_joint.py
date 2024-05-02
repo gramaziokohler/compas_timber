@@ -92,7 +92,7 @@ class ButtJoint(Joint):
         angles = face_dict.values()
         angles, face_indices = zip(*sorted(zip(angles, face_indices)))
 
-        return self.cross_beam.faces[(face_indices[0] + 1) % 4], self.cross_beam.faces[(face_indices[0] + 3) % 4]
+        return [self.cross_beam.faces[(face_indices[0] + 1) % 4], self.cross_beam.faces[(face_indices[0] + 3) % 4]]
 
     def front_back_surface_main(self):
         assert self.main_beam and self.cross_beam
@@ -124,6 +124,8 @@ class ButtJoint(Joint):
 
     def subtraction_volume(self):
         """Returns the volume to be subtracted from the cross beam."""
+        print("main_beam extensions", self.main_beam._blank_extensions)
+        print("cross_beam extensions", self.cross_beam._blank_extensions)
         vertices = []
         front_frame, back_frame = self.front_back_surface_main()
         top_frame, bottom_frame = self.get_main_cutting_plane()
@@ -141,9 +143,9 @@ class ButtJoint(Joint):
             dots = [dot_vectors(v, self.cross_beam.centerline.direction) for v in pv]
             dots, points = zip(*sorted(zip(dots, points)))
             min_pt, max_pt = points[0], points[-1]
-            if i == 0:
+            if i == 1:
                 self.btlx_params_cross["start_x"] = abs(dots[0])
-
+                print("start_x", self.btlx_params_cross["start_x"])
             top_line = Line(*intersection_plane_plane(Plane.from_frame(side), Plane.from_frame(top_frame)))
             top_min = Point(*closest_point_on_line(min_pt, top_line))
             top_max = Point(*closest_point_on_line(max_pt, top_line))
