@@ -264,7 +264,7 @@ class BTLxPart(object):
             "AlignmentHorizontal": "center",
             "AlignmentMultiline": "center",
             "TextHeight": 20,
-            "Text": self.beam.attributes["module_number"] + "_" + self.beam.attributes["assembly_number"] + "_" + self.beam.attributes["beam_number"]
+            "Text": self.beam.attributes["airModule_no"] + "_" + self.beam.attributes["assemblyModule_no"] + "_" + self.beam.attributes["beam_no"]
         }
 
     @property

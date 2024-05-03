@@ -79,7 +79,12 @@ class Beam(Part):
         A list containing the 4 lines along the long axis of this beam.
     midpoint : :class:`~compas.geometry.Point`
         The point at the middle of the centerline of this beam.
-
+    airModule_no : string
+        The air module number the assembly module of the beam is part of.
+    assemblyModule_no : string
+        The assembly module number the beam is part of.
+    beam_no : string
+        The beam number. (irrelevant of the assembly sequence)
     """
 
     def __init__(self, frame, length, width, height, **kwargs):
@@ -89,6 +94,10 @@ class Beam(Part):
         self.length = length
         self.features = []
         self._blank_extensions = {}
+        self.intersections = []
+        self.airModule_no = [] ### TODO names to be defined
+        self.assemblyModule_no = [] ### TODO names to be defined
+        self.beam_no = [] ### TODO names to be defined
 
     @property
     def __data__(self):
