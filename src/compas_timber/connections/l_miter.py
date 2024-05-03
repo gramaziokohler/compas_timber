@@ -100,6 +100,26 @@ class LMiterJoint(Joint):
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
 
+    def add_extensions(self):
+        """Adds the extensions to the main beam and cross beam.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+
+        assert self.main_beam and self.cross_beam
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+
+        extension_plane_main = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
+        start_main, end_main = self.main_beam.extension_to_plane(extension_plane_main)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+
+        extension_plane_cross = self.get_face_most_ortho_to_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
+        start_cross, end_cross = self.cross_beam.extension_to_plane(extension_plane_cross)
+        self.cross_beam.add_blank_extension(
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+        )
+
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
@@ -115,17 +135,12 @@ class LMiterJoint(Joint):
         start_a, start_b = None, None
         try:
             plane_a, plane_b = self.get_cutting_planes()
-            start_a, end_a = self.beam_a.extension_to_plane(plane_a)
-            start_b, end_b = self.beam_b.extension_to_plane(plane_b)
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [plane_b] if start_a is not None else [plane_a]
             raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
-
-        self.beam_a.add_blank_extension(start_a, end_a, self.key)
-        self.beam_b.add_blank_extension(start_b, end_b, self.key)
 
         f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
         self.beam_a.add_features(f1)

@@ -22,7 +22,7 @@ class BTLxLap(object):
 
     def __init__(self, param_dict, joint_name=None, **kwargs):
         self.apply_process = True
-        self.reference_plane_id = 0
+        self.reference_plane_id = param_dict["ReferencePlaneID"]
         self.orientation = "start"
         self.start_x = 0.0
         self.start_y = 0.0

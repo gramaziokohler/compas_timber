@@ -286,7 +286,6 @@ class BTLxPart(object):
             "Z": "{:.{prec}f}".format(point.z, prec=BTLx.POINT_PRECISION),
         }
 
-
     @property
     def et_element(self):
         if not self._et_element:

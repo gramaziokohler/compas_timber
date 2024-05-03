@@ -16,11 +16,14 @@ from compas.geometry import translate_points
 from compas.geometry import cross_vectors
 import math
 
+
 class TStirnversatzJoint(Joint):
-    
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, cross_beam=None, main_beam=None, cut_depth=0.25, extend_cut=True): #TODO Why main & cross swapped???
+    def __init__(
+        self, cross_beam=None, main_beam=None, cut_depth=0.25, extend_cut=True
+    ):  # TODO Why main & cross swapped???
         super(TStirnversatzJoint, self).__init__(main_beam, cross_beam, cut_depth)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -31,10 +34,10 @@ class TStirnversatzJoint(Joint):
         self.features = []
         self.cross_cutting_plane_1 = None
         self.cross_cutting_plane_2 = None
-        self.planetogh = [] # TODO Remove
-        self.linetogh = [] # TODO Remove
-        self.pointtogh = [] # TODO Remove
-        self.polyhedrontogh = [] # TODO Remove
+        self.planetogh = []  # TODO Remove
+        self.linetogh = []  # TODO Remove
+        self.pointtogh = []  # TODO Remove
+        self.polyhedrontogh = []  # TODO Remove
 
     @property
     def data(self):
@@ -69,11 +72,11 @@ class TStirnversatzJoint(Joint):
         bisector.transform(R)
         plane = Plane(origin, bisector)
         return plane
-       
-    #find the Face on cross_beam where main_beam intersects
-    #TODO simplify with Chen!
+
+    # find the Face on cross_beam where main_beam intersects
+    # TODO simplify with Chen!
     def get_main_intersection_frame(self):
-        diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
+        diagonal = math.sqrt(self.main_beam.width**2 + self.main_beam.height**2)
         main_frames = self.main_beam.faces[:4]
         cross_centerline = self.cross_beam.centerline
         cross_centerpoint = midpoint_line(self.cross_beam.centerline)
@@ -102,13 +105,13 @@ class TStirnversatzJoint(Joint):
             angles.append(angle_vectors(checkvector, i.normal))
         angles, frames = zip(*sorted(zip(angles, frames)))
         return frames
-    
+
     @staticmethod
     def _flip_plane_according_vector(plane, vector):
         if angle_vectors(plane.normal, vector, True) > 90:
             plane = Plane(plane.point, plane.normal * -1)
         return plane
-        
+
     def get_cross_cutting_planes(self):
         main_int_frame = self.get_main_intersection_frame()
         main_int_plane = Plane.from_frame(main_int_frame)
@@ -129,7 +132,7 @@ class TStirnversatzJoint(Joint):
         self.cross_cutting_plane_1 = cutplane_1
         self.cross_cutting_plane_2 = cutplane_2
         return self.cross_cutting_plane_1, self.cross_cutting_plane_2
-    
+
     def get_main_cutting_volume(self):
         main_int_frame = self.get_main_intersection_frame()
         main_int_plane = Plane.from_frame(main_int_frame)
@@ -138,13 +141,13 @@ class TStirnversatzJoint(Joint):
         l3 = intersection_plane_plane(self.cross_cutting_plane_1, self.cross_cutting_plane_2)
         main_frames_sorted = self._sort_frames_according_normals(self.main_beam.faces[:4], main_int_frame.zaxis)
         cut_frames_sorted = self._sort_frames_according_normals(self.cross_beam.faces[:4], main_int_frame.zaxis)
-        
+
         # Extend Cut True or False
         if self.extend_cut == True:
             plane_side = [Plane.from_frame(main_frames_sorted[1]), Plane.from_frame(main_frames_sorted[2])]
         else:
             plane_side = [Plane.from_frame(cut_frames_sorted[1]), Plane.from_frame(cut_frames_sorted[2])]
-        
+
         crossvector = cross_vectors(self.cross_cutting_plane_2.normal, self.cross_cutting_plane_1.normal)
         plane_side = self._sort_frames_according_normals(plane_side, crossvector)
 
@@ -154,18 +157,22 @@ class TStirnversatzJoint(Joint):
             points.append(intersection_line_plane(i, plane_side[0]))
             points.append(intersection_line_plane(i, plane_side[1]))
 
-        #TODO fix with Chen: Polyhedron.from_planes not working because numpy missing ?????
-        main_cutting_volume = Polyhedron(points, 
-                   [
+        # TODO fix with Chen: Polyhedron.from_planes not working because numpy missing ?????
+        main_cutting_volume = Polyhedron(
+            points,
+            [
                 [0, 2, 4],  # front
                 [1, 5, 3],  # back
                 [0, 1, 3, 2],  # first
                 [2, 3, 5, 4],  # second
                 [4, 5, 1, 0],  # third
             ],
-            )
+        )
 
         return main_cutting_volume
+
+    def add_extensions(self):
+        pass
 
     def add_features(self):
 

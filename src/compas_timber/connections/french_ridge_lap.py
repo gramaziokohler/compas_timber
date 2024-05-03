@@ -80,9 +80,11 @@ class FrenchRidgeLapJoint(Joint):
         self.beam_b = assemly.find_by_key(self.beam_b_key)
         self._beams = (self.beam_a, self.beam_b)
 
+    def add_extensions(self):
+        self.beam_a.add_blank_extension(*self.beam_a.extension_to_plane(self.cutting_plane_top), joint_key=self.key)
+        self.beam_b.add_blank_extension(*self.beam_b.extension_to_plane(self.cutting_plane_bottom), joint_key=self.key)
+
     def add_features(self):
-        self.beam_a.add_blank_extension(*self.beam_a.extension_to_plane(self.cutting_plane_top), joint_key = self.key)
-        self.beam_b.add_blank_extension(*self.beam_b.extension_to_plane(self.cutting_plane_bottom), joint_key = self.key)
         self.features = []
 
     def check_geometry(self):

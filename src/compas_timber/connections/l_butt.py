@@ -49,6 +49,7 @@ class LButtJoint(ButtJoint):
         main_beam=None,
         cross_beam=None,
         mill_depth=0,
+        birdsmouth=False,
         small_beam_butts=False,
         modify_cross=True,
         reject_i=False,
@@ -58,7 +59,7 @@ class LButtJoint(ButtJoint):
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
 
-        super(LButtJoint, self).__init__(main_beam, cross_beam, mill_depth, **kwargs)
+        super(LButtJoint, self).__init__(main_beam, cross_beam, mill_depth, birdsmouth, **kwargs)
         self.modify_cross = modify_cross
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
@@ -88,6 +89,32 @@ class LButtJoint(ButtJoint):
             )
         return super(LButtJoint, self).get_main_cutting_plane()
 
+    def add_extensions(self):
+        """Adds the required extensions to both beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+        assert self.main_beam and self.cross_beam
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+        if self.birdsmouth:
+            extension_plane_main = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)[
+                1
+            ]
+        else:
+            extension_plane_main = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
+        start_main, end_main = self.main_beam.extension_to_plane(extension_plane_main)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+
+        extension_plane_cross = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
+        print("EPC = ", extension_plane_cross)
+        self.test.append(extension_plane_cross)
+        start_cross, end_cross = self.cross_beam.extension_to_plane(extension_plane_cross)
+        self.cross_beam.add_blank_extension(
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+        )
+        print("lbutt extensions", self.cross_beam._blank_extensions)
+
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
@@ -102,8 +129,7 @@ class LButtJoint(ButtJoint):
         try:
             main_cutting_plane = self.get_main_cutting_plane()[0]
             cross_cutting_plane = self.get_cross_cutting_plane()
-            start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
-            start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
+
         except BeamJoinningError as be:
             raise be
         except AttributeError as ae:
@@ -113,17 +139,11 @@ class LButtJoint(ButtJoint):
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-
         if self.modify_cross:
-            self.cross_beam.add_blank_extension(
-                start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
-            )
+
             f_cross = CutFeature(cross_cutting_plane)
             self.cross_beam.add_features(f_cross)
             self.features.append(f_cross)
-
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
         f_main = CutFeature(main_cutting_plane)
         if self.mill_depth:

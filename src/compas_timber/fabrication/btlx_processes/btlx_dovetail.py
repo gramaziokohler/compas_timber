@@ -3,8 +3,9 @@ from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
 
 FLANK_ANGLE = 15.0
-SHAPE_RADIUS = 30##CHECK
+SHAPE_RADIUS = 30  ##CHECK
 LENGTH_LIMITED_BOTTOM = True
+
 
 class BTLxDoveTailTenon(object):
     """
@@ -23,8 +24,6 @@ class BTLxDoveTailTenon(object):
 
     PROCESS_TYPE = "DoveTail_Tenon"
 
-
-
     def __init__(self, param_dict, joint_name=None, **kwargs):
         self.apply_process = True
         self.reference_plane_id = param_dict["ReferencePlaneID"]
@@ -42,9 +41,9 @@ class BTLxDoveTailTenon(object):
         self.height = param_dict["Height"]
         self.cone_angle = param_dict["ConeAngle"]
         self.use_flank_angle = bool(True)
-        self.flank_angle = FLANK_ANGLE ##check
+        self.flank_angle = FLANK_ANGLE  ##check
         self.shape = str("automatic")
-        self.shape_radius = SHAPE_RADIUS #check
+        self.shape_radius = SHAPE_RADIUS  # check
 
         for key, value in param_dict.items():
             setattr(self, key, value)
@@ -92,7 +91,7 @@ class BTLxDoveTailTenon(object):
                     ("UseFlankAngle", bool(self.use_flank_angle)),
                     ("FlankAngle", "{:.{prec}f}".format(self.flank_angle, prec=BTLx.POINT_PRECISION)),
                     ("Shape", str(self.shape)),
-                    ("ShapeRadius", "{:.{prec}f}".format(self.shape_radius, prec=BTLx.POINT_PRECISION))
+                    ("ShapeRadius", "{:.{prec}f}".format(self.shape_radius, prec=BTLx.POINT_PRECISION)),
                 ]
             )
             return od
@@ -104,7 +103,6 @@ class BTLxDoveTailTenon(object):
         """Creates a dovetail_tenon process from a dictionary of parameters."""
         dovetail_t = BTLxDoveTailTenon(param_dict, joint_name, **kwargs)
         return BTLxProcess(BTLxDoveTailTenon.PROCESS_TYPE, dovetail_t.header_attributes, dovetail_t.process_params)
-
 
 
 class BTLxDoveTailMortise(object):
@@ -124,8 +122,6 @@ class BTLxDoveTailMortise(object):
 
     PROCESS_TYPE = "DoveTail_Mortise"
 
-
-
     def __init__(self, param_dict, joint_name=None, **kwargs):
         self.apply_process = True
         self.reference_plane_id = param_dict["ReferencePlaneID"]
@@ -140,12 +136,12 @@ class BTLxDoveTailMortise(object):
         self.length_limited_bottom = bool(LENGTH_LIMITED_BOTTOM)
         self.length = param_dict["Length"]
         self.width = param_dict["Width"]
-        self.depth =  param_dict["Depth"]
+        self.depth = param_dict["Depth"]
         self.cone_angle = param_dict["ConeAngle"]
         self.use_flank_angle = bool(True)
-        self.flank_angle = FLANK_ANGLE ##check
+        self.flank_angle = FLANK_ANGLE  ##check
         self.shape = str("automatic")
-        self.shape_radius = SHAPE_RADIUS #check
+        self.shape_radius = SHAPE_RADIUS  # check
 
         for key, value in param_dict.items():
             setattr(self, key, value)
@@ -192,7 +188,7 @@ class BTLxDoveTailMortise(object):
                     ("UseFlankAngle", bool(self.use_flank_angle)),
                     ("FlankAngle", "{:.{prec}f}".format(self.flank_angle, prec=BTLx.POINT_PRECISION)),
                     ("Shape", str(self.shape)),
-                    ("ShapeRadius", "{:.{prec}f}".format(self.shape_radius, prec=BTLx.POINT_PRECISION))
+                    ("ShapeRadius", "{:.{prec}f}".format(self.shape_radius, prec=BTLx.POINT_PRECISION)),
                 ]
             )
             return od

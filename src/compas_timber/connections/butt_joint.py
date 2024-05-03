@@ -16,6 +16,7 @@ from compas.geometry import angle_vectors
 from .joint import Joint
 import math
 
+
 class ButtJoint(Joint):
     """Abstract Lap type joint with functions common to L-Butt and T-Butt Joints.
 
@@ -118,8 +119,6 @@ class ButtJoint(Joint):
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         cfr.point = cfr.point + cfr.zaxis * self.mill_depth
 
-
-
         return cfr, cross_mating_frame
 
     def subtraction_volume(self):
@@ -191,79 +190,6 @@ class ButtJoint(Joint):
 
         return ph
 
-    # @staticmethod
-    # def calc_params_birdsmouth(joint, main_part, cross_part):
-    #     """
-    #     Calculate the parameters for a birdsmouth joint.
-
-    #     Parameters:
-    #     ----------
-    #         joint (object): The joint object.
-    #         main_part (object): The main part object.
-    #         cross_part (object): The cross part object.
-
-    #     Returns:
-    #     ----------
-    #         dict: A dictionary containing the calculated parameters for the birdsmouth joint
-
-    #     """
-    #     face_dict = joint._beam_side_incidence(main_part.beam, cross_part.beam, ignore_ends=True)
-    #     face_dict = sorted(face_dict, key=face_dict.get)
-
-    #     # frame1 = joint.get_main_cutting_plane()[0]
-    #     frame1 = joint.get_main_cutting_plane()[0]
-    #     frame2 = cross_part.beam.faces[face_dict[1]]
-
-    #     plane1, plane2 = Plane.from_frame(frame1), Plane.from_frame(frame2)
-    #     intersect_vec = Vector.from_start_end(*intersection_plane_plane(plane2, plane1))
-
-    #     angles_dict = {}
-    #     for i, face in enumerate(main_part.beam.faces):
-    #         angles_dict[i] = (face.normal.angle(intersect_vec))
-    #     ref_frame_id = min(angles_dict, key=angles_dict.get)
-    #     ref_frame = main_part.reference_surface_planes(ref_frame_id+1)
-
-    #     dot_frame1 = plane1.normal.dot(ref_frame.yaxis)
-    #     if dot_frame1 > 0:
-    #         plane1, plane2 = plane2, plane1
-
-    #     start_point = Point(*intersection_plane_plane_plane(plane1, plane2, Plane.from_frame(ref_frame)))
-    #     start_point.transform(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
-    #     StartX, StartY = start_point[0], start_point[1]
-
-    #     intersect_vec1 = Vector.from_start_end(*intersection_plane_plane(plane1, Plane.from_frame(ref_frame)))
-    #     intersect_vec2 = Vector.from_start_end(*intersection_plane_plane(plane2, Plane.from_frame(ref_frame)))
-
-    #     dot_2 = math.degrees(intersect_vec1.dot(ref_frame.yaxis))
-    #     if dot_2 < 0:
-    #         intersect_vec1 = -intersect_vec1
-
-    #     dot_1 = math.degrees(intersect_vec2.dot(ref_frame.yaxis))
-    #     if dot_1 < 0:
-    #         intersect_vec2 = -intersect_vec2
-
-    #     if joint.ends[str(main_part.key)] == "start":
-    #         reference_frame = ref_frame.xaxis
-    #     else:
-    #         reference_frame = -ref_frame.xaxis
-
-    #     Angle1 = math.degrees(intersect_vec1.angle(reference_frame))
-    #     Angle2 = math.degrees(intersect_vec2.angle(reference_frame))
-
-    #     Inclination1 = math.degrees(plane1.normal.angle(ref_frame.zaxis))
-    #     Inclination2 = math.degrees(plane2.normal.angle(ref_frame.zaxis))
-
-    #     return {
-    #         "Orientation": joint.ends[str(main_part.key)],
-    #         "StartX": StartX,
-    #         "StartY": StartY,
-    #         "Angle1": Angle1,
-    #         "Inclination1": Inclination1,
-    #         "Angle2": Angle2,
-    #         "Inclination2": Inclination2,
-    #         "ReferencePlaneID": ref_frame_id
-    #     }
-
     def calc_params_birdsmouth(self):
         """
         Calculate the parameters for a birdsmouth joint.
@@ -301,7 +227,6 @@ class ButtJoint(Joint):
         else:
             ref_frame.point = ref_frame.point - ref_frame.yaxis * self.main_beam.width * 0.5
             ref_frame.point = ref_frame.point + ref_frame.zaxis * self.main_beam.height * 0.5
-        self.test.append(ref_frame)
 
         start_point = Point(*intersection_plane_plane_plane(plane1, plane2, Plane.from_frame(ref_frame)))
         start_point.transform(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
