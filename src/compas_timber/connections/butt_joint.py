@@ -239,7 +239,6 @@ class ButtJoint(Joint):
         self.test.append(Line(og_frame.point, og_frame.point + cross_ref_main * 100))
         angle = angle_vectors(cross_ref_main, og_frame.yaxis, deg=True)
         if angle < 1.0 or angle > 179.0:
-            print("angle 2", angle)
             self.birdsmouth = False
             return False
 
