@@ -1,6 +1,7 @@
 from compas_timber.connections import TButtJoint
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
+from compas_timber.fabrication.btlx_processes.btlx_drilling import BTLxDrilling
 from compas_timber.fabrication.btlx_processes.btlx_lap import BTLxLap
 from compas_timber.fabrication.btlx_processes.btlx_double_cut import BTLxDoubleCut
 
@@ -45,6 +46,10 @@ class TButtFactory(object):
         if joint.mill_depth > 0:
             joint.btlx_params_cross["machining_limits"] = {"FaceLimitedFront": "no", "FaceLimitedBack": "no"}
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
+
+        if joint.drill_diameter > 0:
+            joint.btlx_drilling_params_cross["reference_plane_id"] = cross_part.reference_surface_from_beam_face(ref_plane)
+            cross_part.processings.append(BTLxDrilling.create_process(joint.btlx_drilling_params_cross, "T-Butt Joint"))
 
 
 BTLx.register_joint(TButtJoint, TButtFactory)
