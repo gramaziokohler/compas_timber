@@ -99,20 +99,17 @@ class LButtJoint(ButtJoint):
         assert self.main_beam and self.cross_beam
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         if self.birdsmouth:
-            extension_plane_main = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)[
-                1
-            ]
-        else:
             extension_plane_main = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
+        else:
+            extension_plane_main = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
         start_main, end_main = self.main_beam.extension_to_plane(extension_plane_main)
+        print("start_main, end_main", start_main, end_main)
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
         extension_plane_cross = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
         self.test.append(extension_plane_cross)
         start_cross, end_cross = self.cross_beam.extension_to_plane(extension_plane_cross)
-        self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
-        )
+        self.cross_beam.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.key)
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
