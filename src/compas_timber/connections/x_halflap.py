@@ -32,6 +32,9 @@ class XHalfLapJoint(LapJoint):
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
         super(XHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
+    def add_extensions(self):
+        pass
+
     def add_features(self):
         assert self.main_beam and self.cross_beam  # should never happen
 

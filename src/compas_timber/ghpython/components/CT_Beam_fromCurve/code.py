@@ -73,7 +73,6 @@ class Beam_fromCurve(component):
                 beam = CTBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
                 beam.attributes["rhino_guid"] = str(guid) if guid else None
                 beam.attributes["category"] = c
-                print(guid)
                 if updateRefObj and guid:
                     update_rhobj_attributes_name(guid, "width", str(w))
                     update_rhobj_attributes_name(guid, "height", str(h))

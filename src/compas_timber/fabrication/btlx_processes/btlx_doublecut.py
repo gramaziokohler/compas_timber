@@ -22,7 +22,7 @@ class BTLxDoubleCut(object):
 
     def __init__(self, param_dict, joint_name=None, **kwargs):
         self.apply_process = True
-        self.reference_plane_id = str(param_dict["ReferencePlaneID"])
+        self.reference_plane_id = param_dict["ReferencePlaneID"]
         self.orientation = param_dict["Orientation"]
         self.start_x = param_dict["StartX"]
         self.start_y = param_dict["StartY"]
@@ -40,7 +40,7 @@ class BTLxDoubleCut(object):
         if joint_name:
             self.name = joint_name
         else:
-            self.name = "double_cut"
+            self.name = "lap"
 
     @property
     def header_attributes(self):
@@ -50,7 +50,7 @@ class BTLxDoubleCut(object):
             "Process": "yes",
             "Priority": "0",
             "ProcessID": "0",
-            "ReferencePlaneID": self.reference_plane_id,
+            "ReferencePlaneID": str(self.reference_plane_id + 1),
         }
 
     @property
@@ -58,7 +58,7 @@ class BTLxDoubleCut(object):
         """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
-            """the following attributes are specific to a Double Cut process."""
+            """the following attributes are specific to Lap"""
             od = OrderedDict(
                 [
                     ("Orientation", str(self.orientation)),
@@ -70,12 +70,13 @@ class BTLxDoubleCut(object):
                     ("Inclination2", "{:.{prec}f}".format(self.inclination2, prec=BTLx.ANGLE_PRECISION)),
                 ]
             )
+            print("param dict", od)
             return od
         else:
             return None
 
     @classmethod
     def create_process(cls, param_dict, joint_name=None, **kwargs):
-        """Creates a double cut process from a dictionary of parameters."""
-        double_cut = BTLxDoubleCut(param_dict, joint_name, **kwargs)
-        return BTLxProcess(BTLxDoubleCut.PROCESS_TYPE, double_cut.header_attributes, double_cut.process_params)
+        """Creates a lap process from a dictionary of parameters."""
+        lap = BTLxDoubleCut(param_dict, joint_name, **kwargs)
+        return BTLxProcess(BTLxDoubleCut.PROCESS_TYPE, lap.header_attributes, lap.process_params)
