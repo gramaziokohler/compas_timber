@@ -117,14 +117,29 @@ class ButtJoint(Joint):
         cross_mating_frame = cfr.copy()
         cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
         cfr.point = cfr.point + cfr.zaxis * self.mill_depth
+
+        # if self.birdsmouth:
+        #     face_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        #     face_keys = sorted([key for key in face_dict.keys()], key=face_dict.get)
+        #     frame2 = self.cross_beam.faces[face_keys[1]]
+
+        #     plane1, plane2 = Plane(cfr.point, -cfr.zaxis), Plane.from_frame(frame2)
+        #     intersection_points = intersection_plane_plane(plane2, plane1)
+        #     intersect_vec = Vector.from_start_end(*intersection_points)
+
+        #     # rotate main_cutting plane to create inclined pocket
+        #     tolerance_offset = 0.1
+        #     offset_angle = math.atan(self.mill_depth / self.cross_beam.width)
+        #     cfr.rotate(offset_angle, intersect_vec, intersection_points[0])
+
         return cfr, cross_mating_frame
 
     def subtraction_volume(self):
         """Returns the volume to be subtracted from the cross beam."""
         vertices = []
-        front_frame, back_frame = self.front_back_surface_main()
-        top_frame, bottom_frame = self.get_main_cutting_plane()
-        sides = self.side_surfaces_cross()
+        front_frame, back_frame = self.front_back_surface_main() #main_beam
+        top_frame, bottom_frame = self.get_main_cutting_plane() #cross_beam -- cutting/offsetted_cutting plane
+        sides = self.side_surfaces_cross() #cross_beam -- side faces
         for i, side in enumerate(sides):
             points = []
             for frame in [bottom_frame, top_frame]:
