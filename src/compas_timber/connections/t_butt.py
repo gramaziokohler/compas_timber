@@ -76,10 +76,14 @@ class TButtJoint(ButtJoint):
         if self.mill_depth:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
             self.features.append(MillVolume(self.subtraction_volume()))
+        do_jack = False
         if self.birdsmouth:
-            self.calc_params_birdsmouth()
-            self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))
-            self.features.append(BrepSubtraction(self.bm_sub_volume))
-        else:
+            if self.calc_params_birdsmouth():
+                self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))
+                self.features.append(BrepSubtraction(self.bm_sub_volume))
+
+            else:
+                do_jack = True
+        if do_jack:
             self.main_beam.add_features(CutFeature(cutting_plane))
             self.features.append(cutting_plane)

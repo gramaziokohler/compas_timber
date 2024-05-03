@@ -13,6 +13,7 @@ from compas.geometry import Vector
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors_signed
 from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
 from compas.geometry import Brep
 from compas.geometry import Scale
 from .joint import Joint
@@ -201,7 +202,7 @@ class ButtJoint(Joint):
 
         Returns:
         ----------
-            dict: A dictionary containing the calculated parameters for the birdsmouth joint
+            bool: True if the joint creation is successful, False otherwise.
 
         """
         face_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
@@ -209,6 +210,8 @@ class ButtJoint(Joint):
 
         frame1, og_frame = self.get_main_cutting_plane()  # offset pocket mill plane
         frame2 = self.cross_beam.faces[face_keys[1]]
+
+        self.test.append(og_frame)
 
         plane1, plane2 = Plane(frame1.point, -frame1.zaxis), Plane.from_frame(frame2)
         intersect_vec = Vector.from_start_end(*intersection_plane_plane(plane2, plane1))
@@ -219,6 +222,10 @@ class ButtJoint(Joint):
         self.main_face_index = min(angles_dict.keys(), key=angles_dict.get)
         ref_frame = self.main_beam.faces[self.main_face_index]
 
+        if angle_vectors(og_frame.zaxis, self.main_beam.centerline.direction, deg = True) < 1:
+            self.birdsmouth = False
+            return False
+
         ref_frame.point = self.main_beam.blank_frame.point
         if self.main_face_index % 2 == 0:
             ref_frame.point = ref_frame.point - ref_frame.yaxis * self.main_beam.height * 0.5
@@ -226,6 +233,15 @@ class ButtJoint(Joint):
         else:
             ref_frame.point = ref_frame.point - ref_frame.yaxis * self.main_beam.width * 0.5
             ref_frame.point = ref_frame.point + ref_frame.zaxis * self.main_beam.height * 0.5
+
+
+        cross_ref_main = cross_vectors(og_frame.zaxis, self.main_beam.centerline.direction)
+        self.test.append(Line(og_frame.point, og_frame.point + cross_ref_main * 100))
+        angle = angle_vectors(cross_ref_main, og_frame.yaxis, deg=True)
+        if angle < 1.0 or angle > 179.0:
+            print("angle 2", angle)
+            self.birdsmouth = False
+            return False
 
         start_point = Point(*intersection_plane_plane_plane(plane1, plane2, Plane.from_frame(ref_frame)))
         coord_point = start_point.transformed(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
@@ -271,5 +287,6 @@ class ButtJoint(Joint):
             "ReferencePlaneID": self.main_face_index,
         }
 
+        return True
 
 

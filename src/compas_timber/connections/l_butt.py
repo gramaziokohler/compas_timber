@@ -143,11 +143,15 @@ class LButtJoint(ButtJoint):
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
             self.features.append(MillVolume(self.subtraction_volume()))
 
+        do_jack = False
         if self.birdsmouth:
-            self.calc_params_birdsmouth()
-            self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))
-            self.features.append(BrepSubtraction(self.bm_sub_volume))
-        else:
+            if self.calc_params_birdsmouth():
+                self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))
+                self.features.append(BrepSubtraction(self.bm_sub_volume))
+
+            else:
+                do_jack = True
+        if do_jack:
             f_main = CutFeature(main_cutting_plane)
             self.main_beam.add_features(f_main)
             self.features.append(f_main)
