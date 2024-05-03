@@ -10,6 +10,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
 from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
+from compas.geometry import intersection_line_line
 from compas.plugins import pluggable
 
 
@@ -89,7 +90,7 @@ class ConnectionSolver(object):
 
     @classmethod
     def find_intersecting_pairs(cls, beams, rtree=False, max_distance=None):
-        """Finds pairs of intersecting beams in the given list of beams.
+        """Finds pairs of intersecting beams in the given list of beams and stores the intersection parameters for each specific beam.
 
         Parameters
         ----------
@@ -107,7 +108,20 @@ class ConnectionSolver(object):
             List containing sets or neightboring pairs beams.
 
         """
-        return find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
+
+        pair_indexes = find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
+        for i, beam in enumerate(beams):
+            beam[i].attributes["intersecitons"]=[]
+            for pair in pair_indexes:
+                if i in pair:
+                    a = pair[0]
+                    b = pair[1]
+                    intersection_points = intersection_line_line(beam[a].centerline, beam[b].centerline)[0]
+                    intersection_param = beam[i].centerline.closest_point(intersection_points[0], return_parameter=True)
+                    beam[i].attributes["intersecitons"].append(intersection_param)
+
+        return pair_indexes
+
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
