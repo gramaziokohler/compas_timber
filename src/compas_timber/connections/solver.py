@@ -111,14 +111,14 @@ class ConnectionSolver(object):
 
         pair_indexes = find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
         for i, beam in enumerate(beams):
-            beam[i].attributes["intersecitons"]=[]
+            beam.attributes["intersecitons"]=[]
             for pair in pair_indexes:
                 if i in pair:
                     a = pair[0]
                     b = pair[1]
                     intersection_points = intersection_line_line(beam[a].centerline, beam[b].centerline)[0]
-                    intersection_param = beam[i].centerline.closest_point(intersection_points[0], return_parameter=True)
-                    beam[i].attributes["intersecitons"].append(intersection_param)
+                    intersection_param = beam.centerline.closest_point(intersection_points[0], return_parameter=True)
+                    beam.attributes["intersecitons"].append(intersection_param)
 
         return pair_indexes
 
