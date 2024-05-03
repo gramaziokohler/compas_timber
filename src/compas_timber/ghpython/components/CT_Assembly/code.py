@@ -168,7 +168,8 @@ class Assembly(component):
                     debug_info.add_joint_error(bje)
                 else:
                     handled_beams.append(beam_pair_ids)
-
+            for joint in Assembly.joints:
+                joint.add_features()
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:

@@ -1,7 +1,7 @@
 import math
 from collections import OrderedDict
 
-from compas.geometry import angle_vectors_signed
+from compas.geometry import angle_vectors_signed, angle_vectors
 
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
@@ -66,7 +66,7 @@ class BTLxFrenchRidgeLap(object):
         self.drill_hole_diameter = 10.0
 
         self.ref_face_index = self.joint.reference_face_indices[str(self.beam.key)]
-        self.ref_face = self.part.faces[self.ref_face_index]
+        self.ref_face = self.part.reference_surface_planes(str(self.ref_face_index))
 
         """
         the following attributes are required for all processes, but the keys and values of header_attributes are process specific.
@@ -127,29 +127,46 @@ class BTLxFrenchRidgeLap(object):
             other_vector = -other_vector
 
         self.angle_rad = angle_vectors_signed(self.ref_face.xaxis, other_vector, self.ref_face.normal)
+        self.angle_lines = angle_vectors(self.ref_face.xaxis, other_vector)
 
         if self.orientation == "start":
-            if self.angle_rad < math.pi / 2 and self.angle_rad > -math.pi / 2:
-                raise Exception("french ridge lap joint beams must join at 90-180 degrees")
-            elif self.angle_rad < -math.pi / 2:
+            # if self.angle_rad < math.pi / 3 and self.angle_rad > -math.pi / 2:
+            #     raise Exception("french ridge lap joint beams must join at 90-180 degrees")
+            if self.angle_rad < 0:
                 self._ref_edge = False
                 self.angle_rad = abs(self.angle_rad)
+
+            self.startX = abs(self.beam.width / math.tan(self.angle_rad))
+            print(self.angle_lines, "angle_lines")
+            print(self.startX)
+            if self.angle_lines < math.pi / 2:
+                self.startX = 0.0
 
         else:
-            if self.angle_rad < -math.pi / 2 or self.angle_rad > math.pi / 2:
-                raise Exception("french ridge lap joint beams must join at 90-180 degrees")
-            elif self.angle_rad < 0:
+            # if self.angle_rad < -math.pi / 2 or self.angle_rad > math.pi / 2:
+            #     raise Exception("french ridge lap joint beams must join at 90-180 degrees")
+            if self.angle_rad < 0:
                 self.angle_rad = abs(self.angle_rad)
                 self._ref_edge = False
-            self.angle_rad = math.pi - self.angle_rad
 
-        self.startX = self.beam.width / abs(math.tan(self.angle_rad))
+            self.angle_rad = math.pi - self.angle_rad
+            self.startX = abs(self.beam.width / math.tan(self.angle_rad))
 
         if self.orientation == "end":
             if self._ref_edge:
                 self.startX = self.beam.blank_length - self.startX
             else:
                 self.startX = self.beam.blank_length + self.startX
+
+        print("orientation: ", self.orientation, " angle: ", self.angle_rad, " start: ", self.startX)
+        print(
+            "ref_edge: ",
+            self.ref_edge,
+            " drill_hole: ",
+            self.drill_hole,
+            " drill_hole_diameter: ",
+            self.drill_hole_diameter,
+        )
 
     @classmethod
     def create_process(cls, part, joint, is_top):

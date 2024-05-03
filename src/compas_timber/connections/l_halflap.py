@@ -50,6 +50,26 @@ class LHalfLapJoint(LapJoint):
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
         super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
+    def add_extensions(self):
+        """Adds the extensions to the main beam and cross beam.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+
+        assert self.main_beam and self.cross_beam
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+
+        extension_plane_main = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
+        start_main, end_main = self.main_beam.extension_to_plane(extension_plane_main)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+
+        extension_plane_cross = self.get_face_most_ortho_to_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
+        start_cross, end_cross = self.cross_beam.extension_to_plane(extension_plane_cross)
+        self.cross_beam.add_blank_extension(
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+        )
+
     def add_features(self):
         assert self.main_beam and self.cross_beam
 
@@ -59,15 +79,6 @@ class LHalfLapJoint(LapJoint):
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-
-        start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
-        start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_frame)
-
-        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
-        self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
-        )
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)

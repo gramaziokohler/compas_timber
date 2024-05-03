@@ -76,6 +76,17 @@ class Joint(Data):
     def beams(self):
         return self._beams
 
+    def add_extensions(self):
+        """Adds the features defined by this joint to affected beam(s).
+
+        Raises
+        ------
+        :class:`~compas_timber.connections.BeamJoinningError`
+            Should be raised whenever the joint was not able to calculate the features to be applied to the beams.
+
+        """
+        raise NotImplementedError
+
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
 
@@ -134,7 +145,7 @@ class Joint(Data):
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
         joint = cls(*beams, **kwargs)
         assembly.add_joint(joint, beams)
-        joint.add_features()
+        joint.add_extensions()
         return joint
 
     @property
@@ -238,7 +249,6 @@ class Joint(Data):
             raise AssertionError("No intersection found")
 
         end, _ = beam_a.endpoint_closest_to_point(Point(*p1x))
-
         if end == "start":
             centerline_vec = beam_a.centerline.vector
         else:
