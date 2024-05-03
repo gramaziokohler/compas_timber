@@ -40,7 +40,7 @@ class BTLxDoubleCut(object):
         if joint_name:
             self.name = joint_name
         else:
-            self.name = "lap"
+            self.name = "double_cut"
 
     @property
     def header_attributes(self):
@@ -58,7 +58,7 @@ class BTLxDoubleCut(object):
         """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
-            """the following attributes are specific to Lap"""
+            """the following attributes are specific to a Double Cut process."""
             od = OrderedDict(
                 [
                     ("Orientation", str(self.orientation)),
@@ -76,6 +76,6 @@ class BTLxDoubleCut(object):
 
     @classmethod
     def create_process(cls, param_dict, joint_name=None, **kwargs):
-        """Creates a lap process from a dictionary of parameters."""
-        lap = BTLxDoubleCut(param_dict, joint_name, **kwargs)
-        return BTLxProcess(BTLxDoubleCut.PROCESS_TYPE, lap.header_attributes, lap.process_params)
+        """Creates a double cut process from a dictionary of parameters."""
+        double_cut = BTLxDoubleCut(param_dict, joint_name, **kwargs)
+        return BTLxProcess(BTLxDoubleCut.PROCESS_TYPE, double_cut.header_attributes, double_cut.process_params)
