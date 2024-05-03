@@ -3,9 +3,9 @@ from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
 
 
-class BTLxDoubleCut(object):
+class BTLxText(object):
     """
-    Represents a double cut process for timber fabrication.
+    Represents an engraving process of a text for timber fabrication.
 
     Parameters
     ----------
@@ -18,18 +18,18 @@ class BTLxDoubleCut(object):
 
     """
 
-    PROCESS_TYPE = "DoubleCut"
+    PROCESS_TYPE = "Text"
 
-    def __init__(self, param_dict, joint_name=None, **kwargs):
+    def __init__(self, param_dict, joint_name=None, **kwargs): # joint_name replace by "feature_name"?
         self.apply_process = True
         self.reference_plane_id = param_dict["ReferencePlaneID"]
-        self.orientation = param_dict["Orientation"]
         self.start_x = param_dict["StartX"]
         self.start_y = param_dict["StartY"]
-        self.angle1 = param_dict["Angle1"]
-        self.inclination1 = param_dict["Inclination1"]
-        self.angle2 = param_dict["Angle2"]
-        self.inclination2 = param_dict["Inclination2"]
+        self.angle = param_dict["Angle"]
+        self.inclination = param_dict["Inclination"]
+        self.depth_limited = param_dict["DepthLimited"]
+        self.depth = param_dict["Depth"]
+        self.diameter = param_dict["Diameter"]
 
         for key, value in param_dict.items():
             setattr(self, key, value)
@@ -37,10 +37,10 @@ class BTLxDoubleCut(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        if joint_name:
+        if joint_name: # to delete since no joint?
             self.name = joint_name
         else:
-            self.name = "double_cut"
+            self.name = "lap" # what instead?
 
     @property
     def header_attributes(self):
@@ -58,16 +58,16 @@ class BTLxDoubleCut(object):
         """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
-            """the following attributes are specific to a Double Cut process."""
+            """the following attributes are specific to Lap"""
             od = OrderedDict(
                 [
-                    ("Orientation", str(self.orientation)),
                     ("StartX", "{:.{prec}f}".format(self.start_x, prec=BTLx.POINT_PRECISION)),
                     ("StartY", "{:.{prec}f}".format(self.start_y, prec=BTLx.POINT_PRECISION)),
-                    ("Angle1", "{:.{prec}f}".format(self.angle1, prec=BTLx.ANGLE_PRECISION)),
-                    ("Inclination1", "{:.{prec}f}".format(self.inclination1, prec=BTLx.ANGLE_PRECISION)),
-                    ("Angle2", "{:.{prec}f}".format(self.angle2, prec=BTLx.ANGLE_PRECISION)),
-                    ("Inclination2", "{:.{prec}f}".format(self.inclination2, prec=BTLx.ANGLE_PRECISION)),
+                    ("Angle", "{:.{prec}f}".format(self.angle, prec=BTLx.ANGLE_PRECISION)),
+                    ("Inclination", "{:.{prec}f}".format(self.inclination, prec=BTLx.ANGLE_PRECISION)),
+                    ("DepthLimited", str(self.depth_limited)),
+                    ("Depth", "{:.{prec}f}".format(self.depth, prec=BTLx.POINT_PRECISION)),
+                    ("Diameter", "{:.{prec}f}".format(self.diameter, prec=BTLx.POINT_PRECISION)),
                 ]
             )
             return od
@@ -75,7 +75,7 @@ class BTLxDoubleCut(object):
             return None
 
     @classmethod
-    def create_process(cls, param_dict, joint_name=None, **kwargs):
-        """Creates a double cut process from a dictionary of parameters."""
-        double_cut = BTLxDoubleCut(param_dict, joint_name, **kwargs)
-        return BTLxProcess(BTLxDoubleCut.PROCESS_TYPE, double_cut.header_attributes, double_cut.process_params)
+    def create_process(cls, param_dict, joint_name=None, **kwargs): # joint_name replace by "feature_name"?
+        """Creates a lap process from a dictionary of parameters."""
+        lap = BTLxDrilling(param_dict, joint_name, **kwargs) ###change lap???
+        return BTLxProcess(BTLxDrilling.PROCESS_TYPE, lap.header_attributes, lap.process_params)
