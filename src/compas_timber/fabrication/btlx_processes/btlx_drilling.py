@@ -40,7 +40,7 @@ class BTLxDrilling(object):
         if joint_name: # to delete since no joint?
             self.name = joint_name
         else:
-            self.name = "lap" # what instead?
+            self.name = "drilling" # what instead?
 
     @property
     def header_attributes(self):
@@ -58,7 +58,7 @@ class BTLxDrilling(object):
         """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
-            """the following attributes are specific to Lap"""
+            """the following attributes are specific to Drilling"""
             od = OrderedDict(
                 [
                     ("StartX", "{:.{prec}f}".format(self.start_x, prec=BTLx.POINT_PRECISION)),
@@ -76,6 +76,6 @@ class BTLxDrilling(object):
 
     @classmethod
     def create_process(cls, param_dict, joint_name=None, **kwargs): # joint_name replace by "feature_name"?
-        """Creates a lap process from a dictionary of parameters."""
-        lap = BTLxDrilling(param_dict, joint_name, **kwargs) ###change lap???
-        return BTLxProcess(BTLxDrilling.PROCESS_TYPE, lap.header_attributes, lap.process_params)
+        """Creates a drilling process from a dictionary of parameters."""
+        drilling = BTLxDrilling(param_dict, joint_name, **kwargs)
+        return BTLxProcess(BTLxDrilling.PROCESS_TYPE, drilling.header_attributes, drilling.process_params)

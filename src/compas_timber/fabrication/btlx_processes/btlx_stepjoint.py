@@ -10,9 +10,9 @@ class BTLxStepJoint(object):
     Parameters
     ----------
     param_dict : dict
-        A dictionary containing the parameters for the BTLx lap process.
+        A dictionary containing the parameters for the BTLx Step Joint process.
     joint_name : str
-        The name of the joint. If not provided, the default name is "lap".
+        The name of the joint. If not provided, the default name is "step joint".
     kwargs : dict
         Additional keyword arguments to be added to the object.
 
@@ -42,7 +42,7 @@ class BTLxStepJoint(object):
         if joint_name:
             self.name = joint_name
         else:
-            self.name = "lap"
+            self.name = "step joint"
 
     @property
     def header_attributes(self):
@@ -60,7 +60,7 @@ class BTLxStepJoint(object):
         """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
-            """the following attributes are specific to Lap"""
+            """the following attributes are specific to Step Joint"""
             od = OrderedDict(
                 [
                     ("Orientation", str(self.orientation)),
@@ -81,6 +81,6 @@ class BTLxStepJoint(object):
 
     @classmethod
     def create_process(cls, param_dict, joint_name=None, **kwargs):
-        """Creates a lap process from a dictionary of parameters."""
-        lap = BTLxStepJoint(param_dict, joint_name, **kwargs)
-        return BTLxProcess(BTLxStepJoint.PROCESS_TYPE, lap.header_attributes, lap.process_params)
+        """Creates a Step Joint process from a dictionary of parameters."""
+        step_joint = BTLxStepJoint(param_dict, joint_name, **kwargs)
+        return BTLxProcess(BTLxStepJoint.PROCESS_TYPE, step_joint.header_attributes, step_joint.process_params)
