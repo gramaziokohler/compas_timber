@@ -5,6 +5,7 @@ from compas.geometry import dot_vectors
 from compas.geometry import closest_point_on_line
 from compas.geometry import distance_line_line
 from compas.geometry import intersection_plane_plane
+from compas.geometry import intersection_line_plane
 from compas.geometry import Plane
 from compas.geometry import Line
 from compas.geometry import Polyhedron
@@ -14,7 +15,7 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors_signed
 from compas.geometry import angle_vectors
 from .joint import Joint
-
+import math
 
 class ButtJoint(Joint):
     """Abstract Lap type joint with functions common to L-Butt and T-Butt Joints.
@@ -45,7 +46,7 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, drill_depth=0, birdsmouth=False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, birdsmouth=False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -53,7 +54,6 @@ class ButtJoint(Joint):
         self.cross_beam_key = cross_beam.key if cross_beam else None
         self.mill_depth = mill_depth
         self.drill_diameter = drill_diameter
-        self.drill_depth = drill_depth
         self.birdsmouth = birdsmouth
         self.btlx_params_main = {}
         self.btlx_params_cross = {}
@@ -369,12 +369,26 @@ class ButtJoint(Joint):
             dict: A dictionary containing the calculated parameters for the drilling joint
 
         """
-        if self.drill_depth > 0:
-            DepthLimited = "yes"
+        ref_frame_id, ref_frame = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_plane = Plane.from_frame(ref_frame)
+        point_xyz = (intersection_line_plane(self.main_beam.centerline, ref_plane))
+        start_point = Point(*point_xyz)
+        ref_point = start_point.transformed(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
+        StartX, StartY = ref_point[0], ref_point[1]
+
+        param_point_on_line = self.main_beam.centerline.closest_point(start_point, True)[1]
+        if param_point_on_line > 0.5:
+            line_point = self.main_beam.centerline.end
         else:
-            DepthLimited = "no"
+            line_point = self.main_beam.centerline.start
+        projected_point = ref_plane.projected_point(line_point)
 
-
+        center_line_vec = Vector.from_start_end(start_point, line_point)
+        projected_vec = Vector.from_start_end(start_point, projected_point)
+        Angle = ref_frame.xaxis.angle(projected_vec, True)
+        print "Angle = ", Angle
+        Inclination = projected_vec.angle(center_line_vec, True)
+        print "Inclination = ", Inclination
 
 
         self.btlx_drilling_params_cross = {
@@ -383,7 +397,15 @@ class ButtJoint(Joint):
             "StartY": StartY,
             "Angle": Angle,
             "Inclination": Inclination,
-            "DepthLimited": DepthLimited,
-            "Depth": self.drill_depth,
-            "Diameter": self.drill_diameter
+            "Diameter": self.drill_diameter,
+            "DepthLimited": False,
+            "Depth": 0.0
+
         }
+
+        # Rhino geometry visualization
+        line = Line(start_point, line_point)
+        line.start.translate(-line.vector)
+        normal_centerline_angle = 180-math.degrees(ref_frame.zaxis.angle(self.main_beam.centerline.direction))
+        length = self.cross_beam.width/(math.cos(math.radians(normal_centerline_angle)))
+        return line, self.drill_diameter, length*3

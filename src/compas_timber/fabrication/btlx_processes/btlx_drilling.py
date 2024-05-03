@@ -75,7 +75,7 @@ class BTLxDrilling(object):
             return None
 
     @classmethod
-    def create_process(cls, param_dict, joint_name=None, **kwargs): # joint_name replace by "feature_name"?
+    def create_process(cls, param_dict, joint_name=None, **kwargs):
         """Creates a drilling process from a dictionary of parameters."""
         drilling = BTLxDrilling(param_dict, joint_name, **kwargs)
         return BTLxProcess(BTLxDrilling.PROCESS_TYPE, drilling.header_attributes, drilling.process_params)

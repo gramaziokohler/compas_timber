@@ -2,6 +2,7 @@ from compas_timber.connections.butt_joint import ButtJoint
 
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
+from compas_timber.parts import DrillFeature
 
 from .joint import BeamJoinningError
 from .solver import JointTopology
@@ -33,8 +34,8 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, drill_depth=0, birdsmouth=False, **kwargs):
-        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, drill_diameter, drill_depth, birdsmouth, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, birdsmouth=False, **kwargs):
+        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, drill_diameter, birdsmouth, **kwargs)
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).
@@ -61,5 +62,7 @@ class TButtJoint(ButtJoint):
         trim_feature = CutFeature(cutting_plane)
         if self.mill_depth:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
+        if self.drill_diameter:
+            self.cross_beam.add_features(DrillFeature(*self.calc_params_drilling()))
         self.main_beam.add_features(trim_feature)
         self.features = [trim_feature]
