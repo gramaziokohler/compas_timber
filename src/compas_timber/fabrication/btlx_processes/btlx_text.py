@@ -26,10 +26,13 @@ class BTLxText(object):
         self.start_x = param_dict["StartX"]
         self.start_y = param_dict["StartY"]
         self.angle = param_dict["Angle"]
-        self.inclination = param_dict["Inclination"]
-        self.depth_limited = param_dict["DepthLimited"]
-        self.depth = param_dict["Depth"]
-        self.diameter = param_dict["Diameter"]
+        self.alignment_vertical = param_dict["AlignmentVertical"]
+        self.alignment_horizontal = param_dict["AlignmentHorizontal"]
+        self.alignment_multiline = param_dict["AlignmentMultiline"]
+        self.stacked_marking = param_dict["StackedMarking"]
+        self.text_height_auto = param_dict["TextHeightAuto"]
+        self.text_height = param_dict["TextHeight"]
+        self.text = param_dict["Text"]
 
         for key, value in param_dict.items():
             setattr(self, key, value)
@@ -37,10 +40,10 @@ class BTLxText(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        if joint_name: # to delete since no joint?
+        if joint_name:
             self.name = joint_name
         else:
-            self.name = "lap" # what instead?
+            self.name = "text_engraving"
 
     @property
     def header_attributes(self):
@@ -58,16 +61,20 @@ class BTLxText(object):
         """This property is required for all process types. It returns a dict with the geometric parameters to fabricate the joint."""
 
         if self.apply_process:
-            """the following attributes are specific to Lap"""
+            """the following attributes are specific to a text engraving"""
             od = OrderedDict(
                 [
                     ("StartX", "{:.{prec}f}".format(self.start_x, prec=BTLx.POINT_PRECISION)),
                     ("StartY", "{:.{prec}f}".format(self.start_y, prec=BTLx.POINT_PRECISION)),
                     ("Angle", "{:.{prec}f}".format(self.angle, prec=BTLx.ANGLE_PRECISION)),
-                    ("Inclination", "{:.{prec}f}".format(self.inclination, prec=BTLx.ANGLE_PRECISION)),
-                    ("DepthLimited", str(self.depth_limited)),
-                    ("Depth", "{:.{prec}f}".format(self.depth, prec=BTLx.POINT_PRECISION)),
-                    ("Diameter", "{:.{prec}f}".format(self.diameter, prec=BTLx.POINT_PRECISION)),
+                    ("AlignmentVertical", str(self.alignment_vertical)),
+                    ("AlignmentHorizontal", str(self.alignment_horizontal)),
+                    ("AlignmentMultiline", str(self.alignment_multiline)),
+                    ("StackedMarking", bool(self.stacked_marking)),
+                    ("TextHeightAuto", bool(self.text_height_auto)),
+                    ("TextHeight", "{:.{prec}f}".format(self.text_height, prec=BTLx.POINT_PRECISION)),
+                    ("Text", str(self.text)),
+
                 ]
             )
             return od
@@ -75,7 +82,7 @@ class BTLxText(object):
             return None
 
     @classmethod
-    def create_process(cls, param_dict, joint_name=None, **kwargs): # joint_name replace by "feature_name"?
-        """Creates a lap process from a dictionary of parameters."""
-        lap = BTLxDrilling(param_dict, joint_name, **kwargs) ###change lap???
-        return BTLxProcess(BTLxDrilling.PROCESS_TYPE, lap.header_attributes, lap.process_params)
+    def create_process(cls, param_dict, joint_name=None, **kwargs):
+        """Creates a text process from a dictionary of parameters."""
+        text = BTLxText(param_dict, joint_name, **kwargs)
+        return BTLxProcess(BTLxText.PROCESS_TYPE, text.header_attributes, text.process_params)

@@ -10,7 +10,7 @@ import compas
 from compas.geometry import Frame
 from compas.geometry import angle_vectors
 from compas.geometry import Transformation
-
+from compas_timber.fabrication.btlx_processes.btlx_text import BTLxText
 
 class BTLx(object):
     """Class representing a BTLx object.
@@ -92,6 +92,13 @@ class BTLx(object):
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
             factory_type.apply_processings(joint, self.parts)
 
+        for part in self.parts.values():
+            if part.processings:
+                ref_plane_id = part.processing[0].header_attributes.get("ReferencePlaneID", 1)
+            params_dict = part.get_text_engraving_params()
+            params_dict["ReferencePlaneID"] = ref_plane_id
+            part.processings.append(BTLxText.create_process(params_dict))
+
     @classmethod
     def register_joint(cls, joint_type, joint_factory):
         """Registers a joint type and its corresponding factory.
@@ -148,6 +155,8 @@ class BTLxPart(object):
         The frame of the blank.
     blank_length : float
         The blank length of the beam.
+    intersections : list
+        A list of the intersection parameters on the beam
     processings : list
         A list of the processings applied to the beam.
     et_element : :class:`~xml.etree.ElementTree.Element`
@@ -167,6 +176,7 @@ class BTLxPart(object):
             beam.frame.yaxis,
         )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self.blank_length = beam.blank_length
+        self.intersections = beam.intersections
         self._reference_surfaces = []
         self.processings = []
         self._et_element = None
@@ -229,6 +239,33 @@ class BTLxPart(object):
                 ),
             }
         return self._reference_surfaces[str(index)]
+
+    def get_engraving_position(self):
+        """Finds the optimal parameter on the line for the text engraving process."""
+        all_points = sorted([0] + self.intersections + [1])
+
+        max_length = 0
+        optimal_midpoint = None
+        for i in range(len(all_points) - 1):
+            seg_length = all_points[i+1] - all_points[i]
+            if seg_length > max_length:
+                max_length = seg_length
+                optimal_midpoint = (all_points[i] + all_points[i+1]) / 2
+        return optimal_midpoint
+
+    def get_text_engraving_params(self):
+        """Returns the text engraving parameters for the BTLx part."""
+        return {
+            "ReferencePlaneID": 1, #default face
+            "StartX": self.get_engraving_position(),
+            "StartY": self.width/2, #always set it to the middle of the beam
+            "Angle": 0,
+            "AlignmentVertical": "center",
+            "AlignmentHorizontal": "center",
+            "AlignmentMultiline": "center",
+            "TextHeight": 20,
+            "Text": self.beam.attributes["module_number"] + "_" + self.beam.attributes["assembly_number"] + "_" + self.beam.attributes["beam_number"]
+        }
 
     @property
     def attr(self):
