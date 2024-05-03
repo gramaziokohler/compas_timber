@@ -45,16 +45,19 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, drill_depth=0, birdsmouth=False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
         self.mill_depth = mill_depth
+        self.drill_diameter = drill_diameter
+        self.drill_depth = drill_depth
         self.birdsmouth = birdsmouth
         self.btlx_params_main = {}
         self.btlx_params_cross = {}
+        self.btlx_drilling_params_cross = {}
         self.features = []
         self.test = []
 
@@ -334,4 +337,38 @@ class ButtJoint(Joint):
             "Angle2": Angle2,
             "Inclination2": Inclination2,
             "ReferencePlaneID": ref_frame_id,
+        }
+
+    def calc_params_drilling(self):
+        """
+        Calculate the parameters for a drilling joint.
+
+        Parameters:
+        ----------
+            joint (object): The joint object.
+            main_part (object): The main part object.
+            cross_part (object): The cross part object.
+
+        Returns:
+        ----------
+            dict: A dictionary containing the calculated parameters for the drilling joint
+
+        """
+        if self.drill_depth > 0:
+            DepthLimited = "yes"
+        else:
+            DepthLimited = "no"
+
+
+
+
+        self.btlx_drilling_params_cross = {
+            "ReferencePlaneID": ref_frame_id,
+            "StartX": StartX,
+            "StartY": StartY,
+            "Angle": Angle,
+            "Inclination": Inclination,
+            "DepthLimited": DepthLimited,
+            "Depth": self.drill_depth,
+            "Diameter": self.drill_diameter
         }
