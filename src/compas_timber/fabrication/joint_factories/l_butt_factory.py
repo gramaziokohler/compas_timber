@@ -54,7 +54,6 @@ class LButtFactory(object):
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "L-Butt Joint"))
 
         if joint.birdsmouth:
-            print("Birdsmouth")
             ref_face = main_part.beam.faces[joint.main_face_index]
             joint.btlx_params_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
             main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, "L-Butt Joint"))
