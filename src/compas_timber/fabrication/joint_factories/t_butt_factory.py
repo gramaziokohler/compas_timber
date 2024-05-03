@@ -34,8 +34,7 @@ class TButtFactory(object):
         cut_plane, ref_plane = joint.get_main_cutting_plane()
 
         if joint.birdsmouth:
-            joint.calc_params_birdsmouth()
-            ref_face = main_part.beam.faces[joint.btlx_params_main["ReferencePlaneID"]]
+            ref_face = main_part.beam.faces[joint.main_face_index]
             joint.btlx_params_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
             main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, "T-Butt Joint"))
         else:

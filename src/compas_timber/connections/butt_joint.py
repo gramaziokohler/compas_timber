@@ -13,6 +13,8 @@ from compas.geometry import Vector
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors_signed
 from compas.geometry import angle_vectors
+from compas.geometry import Brep
+from compas.geometry import Scale
 from .joint import Joint
 import math
 
@@ -123,8 +125,6 @@ class ButtJoint(Joint):
 
     def subtraction_volume(self):
         """Returns the volume to be subtracted from the cross beam."""
-        print("main_beam extensions", self.main_beam._blank_extensions)
-        print("cross_beam extensions", self.cross_beam._blank_extensions)
         vertices = []
         front_frame, back_frame = self.front_back_surface_main()
         top_frame, bottom_frame = self.get_main_cutting_plane()
@@ -144,7 +144,6 @@ class ButtJoint(Joint):
             min_pt, max_pt = points[0], points[-1]
             if i == 1:
                 self.btlx_params_cross["start_x"] = abs(dots[0])
-                print("start_x", self.btlx_params_cross["start_x"])
             top_line = Line(*intersection_plane_plane(Plane.from_frame(side), Plane.from_frame(top_frame)))
             top_min = Point(*closest_point_on_line(min_pt, top_line))
             top_max = Point(*closest_point_on_line(max_pt, top_line))
@@ -208,7 +207,7 @@ class ButtJoint(Joint):
         face_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         face_keys = sorted([key for key in face_dict.keys()], key=face_dict.get)
 
-        frame1 = self.get_main_cutting_plane()[0]  # offset pocket mill plane
+        frame1, og_frame = self.get_main_cutting_plane()  # offset pocket mill plane
         frame2 = self.cross_beam.faces[face_keys[1]]
 
         plane1, plane2 = Plane(frame1.point, -frame1.zaxis), Plane.from_frame(frame2)
@@ -217,11 +216,11 @@ class ButtJoint(Joint):
         angles_dict = {}
         for i, face in enumerate(self.main_beam.faces[0:4]):
             angles_dict[i] = face.normal.angle(intersect_vec)
-        ref_frame_id = min(angles_dict.keys(), key=angles_dict.get)
-        ref_frame = self.main_beam.faces[ref_frame_id]
+        self.main_face_index = min(angles_dict.keys(), key=angles_dict.get)
+        ref_frame = self.main_beam.faces[self.main_face_index]
 
         ref_frame.point = self.main_beam.blank_frame.point
-        if ref_frame_id % 2 == 0:
+        if self.main_face_index % 2 == 0:
             ref_frame.point = ref_frame.point - ref_frame.yaxis * self.main_beam.height * 0.5
             ref_frame.point = ref_frame.point + ref_frame.zaxis * self.main_beam.width * 0.5
         else:
@@ -229,8 +228,14 @@ class ButtJoint(Joint):
             ref_frame.point = ref_frame.point + ref_frame.zaxis * self.main_beam.height * 0.5
 
         start_point = Point(*intersection_plane_plane_plane(plane1, plane2, Plane.from_frame(ref_frame)))
-        start_point.transform(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
-        StartX, StartY = start_point[0], start_point[1]
+        coord_point = start_point.transformed(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
+        StartX, StartY = coord_point[0], coord_point[1]
+
+        self.bm_sub_volume = Brep.from_box(self.cross_beam.blank)
+        self.bm_sub_volume.translate(Vector.from_start_end(og_frame.point, frame1.point))
+        s = Scale.from_factors([10.0, 10.0, 10.0], Frame(start_point, ref_frame.xaxis, ref_frame.yaxis))
+        self.bm_sub_volume.transform(s)
+
 
         dot_frame1 = plane1.normal.dot(ref_frame.yaxis)
         if dot_frame1 > 0:
@@ -263,5 +268,8 @@ class ButtJoint(Joint):
             "Inclination1": Inclination1,
             "Angle2": Angle2,
             "Inclination2": Inclination2,
-            "ReferencePlaneID": ref_frame_id,
+            "ReferencePlaneID": self.main_face_index,
         }
+
+
+

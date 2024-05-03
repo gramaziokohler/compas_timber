@@ -1,5 +1,6 @@
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
+from compas_timber.parts import BrepSubtraction
 
 from .joint import BeamJoinningError
 from .solver import JointTopology
@@ -107,13 +108,11 @@ class LButtJoint(ButtJoint):
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
         extension_plane_cross = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
-        print("EPC = ", extension_plane_cross)
         self.test.append(extension_plane_cross)
         start_cross, end_cross = self.cross_beam.extension_to_plane(extension_plane_cross)
         self.cross_beam.add_blank_extension(
             start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
         )
-        print("lbutt extensions", self.cross_beam._blank_extensions)
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
@@ -145,8 +144,17 @@ class LButtJoint(ButtJoint):
             self.cross_beam.add_features(f_cross)
             self.features.append(f_cross)
 
-        f_main = CutFeature(main_cutting_plane)
         if self.mill_depth:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
-        self.main_beam.add_features(f_main)
-        self.features.append(f_main)
+            self.features.append(MillVolume(self.subtraction_volume()))
+
+        if self.birdsmouth:
+            self.calc_params_birdsmouth()
+            self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))
+            self.test.append(self.bm_sub_volume)
+            self.features.append(BrepSubtraction(self.bm_sub_volume))
+        else:
+            f_main = CutFeature(main_cutting_plane)
+            self.main_beam.add_features(f_main)
+            self.features.append(f_main)
+

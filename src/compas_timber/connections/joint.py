@@ -249,7 +249,6 @@ class Joint(Data):
             raise AssertionError("No intersection found")
 
         end, _ = beam_a.endpoint_closest_to_point(Point(*p1x))
-        print(end)
         if end == "start":
             centerline_vec = beam_a.centerline.vector
         else:

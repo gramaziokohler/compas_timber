@@ -1,6 +1,7 @@
 from compas_timber.connections.butt_joint import ButtJoint
 
 from compas_timber.parts import CutFeature
+from compas_timber.parts import BrepSubtraction
 from compas_timber.parts import MillVolume
 
 from .joint import BeamJoinningError
@@ -72,8 +73,15 @@ class TButtJoint(ButtJoint):
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        trim_feature = CutFeature(cutting_plane)
+        self.features = []
+
         if self.mill_depth:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
-        self.main_beam.add_features(trim_feature)
-        self.features = [trim_feature]
+            self.features.append(MillVolume(self.subtraction_volume()))
+        if self.birdsmouth:
+            self.calc_params_birdsmouth()
+            self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))
+            self.features.append(BrepSubtraction(self.bm_sub_volume))
+        else:
+            self.main_beam.add_features(CutFeature(cutting_plane))
+            self.features.append(cutting_plane)
