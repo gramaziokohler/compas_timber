@@ -13,7 +13,7 @@ from compas_timber.connections import (
     XHalfLapJoint,
     find_neighboring_beams,
 )
-from compas_timber.parts import Beam
+from compas_timber.elements import Beam
 
 geometry_type = "mesh"
 

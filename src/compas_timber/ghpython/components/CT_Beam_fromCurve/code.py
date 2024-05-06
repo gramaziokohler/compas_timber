@@ -10,7 +10,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
-from compas_timber.parts import Beam as CTBeam
+from compas_timber.elements import Beam as CTBeam
 
 
 class Beam_fromCurve(component):

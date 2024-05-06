@@ -1,8 +1,8 @@
 from compas.geometry import Frame
 
 from compas_timber.connections.lap_joint import LapJoint
-from compas_timber.parts import CutFeature
-from compas_timber.parts import MillVolume
+from compas_timber.elements import CutFeature
+from compas_timber.elements import MillVolume
 
 from .joint import BeamJoinningError
 from .solver import JointTopology

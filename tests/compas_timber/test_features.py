@@ -1,5 +1,5 @@
 from compas.geometry import Point, close
-from compas_timber.parts import Beam
+from compas_timber.elements import Beam
 
 
 def test_add_extend_start_feature():

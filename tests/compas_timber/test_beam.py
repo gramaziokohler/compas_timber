@@ -2,7 +2,7 @@ import copy
 
 import pytest
 from compas.geometry import Frame, Point, Vector, close
-from compas_timber.parts.beam import Beam
+from compas_timber.elements.beam import Beam
 
 
 @pytest.fixture

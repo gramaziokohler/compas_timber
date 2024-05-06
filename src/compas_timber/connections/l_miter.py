@@ -4,7 +4,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.parts.features import CutFeature
+from compas_timber.elements.features import CutFeature
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import BeamJoinningError

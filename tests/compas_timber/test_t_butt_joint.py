@@ -1,7 +1,7 @@
 from compas.geometry import Point, Vector
 from compas_timber.model import TimberModel
 from compas_timber.connections import TButtJoint
-from compas_timber.parts import Beam
+from compas_timber.elements import Beam
 
 
 def test_create():
