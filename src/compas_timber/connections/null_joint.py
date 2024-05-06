@@ -7,7 +7,7 @@ class NullJoint(Joint):
 
     Can be used to join to beams which shouldn't join.
 
-    Please use `NullJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `NullJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
@@ -55,7 +55,7 @@ class NullJoint(Joint):
         return [self.beam_a, self.beam_b]
 
     def restore_beams_from_keys(self, model):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
+        """After de-serialization, resotres references to the main and cross beams saved in the model."""
         self.beam_a = model.elementdict[self.beam_a_key]
         self.beam_b = model.elementdict[self.beam_b_key]
 

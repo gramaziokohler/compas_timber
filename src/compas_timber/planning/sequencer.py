@@ -3,7 +3,7 @@ from compas.data import json_dump
 from compas.data import json_load
 from compas.geometry import Frame
 
-from compas_timber.assembly import TimberModel
+from compas_timber.model import TimberModel
 
 
 class Actor(object):

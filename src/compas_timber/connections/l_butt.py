@@ -11,7 +11,7 @@ class LButtJoint(ButtJoint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LButtJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `LButtJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------

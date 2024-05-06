@@ -18,7 +18,7 @@ class LMiterJoint(Joint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------

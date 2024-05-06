@@ -4,7 +4,7 @@ import compas
 import pytest
 from compas.data import json_load
 from compas.geometry import Frame, Line, Point, Vector
-from compas_timber.assembly import TimberModel
+from compas_timber.model import TimberModel
 from compas_timber.connections import (
     LButtJoint,
     LHalfLapJoint,

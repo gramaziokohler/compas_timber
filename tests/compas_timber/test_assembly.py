@@ -1,6 +1,6 @@
 from compas.data import json_dumps, json_loads
 from compas.geometry import Frame, Point, Vector
-from compas_timber.assembly import TimberModel
+from compas_timber.model import TimberModel
 from compas_timber.connections import LButtJoint, TButtJoint
 from compas_timber.parts import Beam
 

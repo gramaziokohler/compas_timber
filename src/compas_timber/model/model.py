@@ -2,16 +2,16 @@ from compas_model.model import Model
 
 
 class TimberModel(Model):
-    """Represents a timber assembly containing beams and joints etc.
+    """Represents a timber model containing beams and joints etc.
 
     Attributes
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
-        A list of beams assigned to this assembly.
+        A list of beams assigned to this model.
     joints : list(:class:`~compas_timber.connections.Joint`)
-        A list of joints assigned to this assembly.
+        A list of joints assigned to this model.
     topologies :  list(dict)
-        A list of JointTopology for assembly. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key}
+        A list of JointTopology for model. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key}
         See :class:`~compas_timber.connections.JointTopology`.
 
     """
@@ -35,7 +35,7 @@ class TimberModel(Model):
         self._topologies = []  # added to avoid calculating multiple times
 
     def __str__(self):
-        """Returns a formatted string representation of this assembly.
+        """Returns a formatted string representation of this model.
 
         Return
         ------
@@ -57,12 +57,12 @@ class TimberModel(Model):
         return self._joints
 
     def add_beam(self, beam):
-        """Adds a Beam to this assembly.
+        """Adds a Beam to this model.
 
         Parameters
         ----------
         beam : :class:`~compas_timber.parts.Beam`
-            The beam to add to the assembly.
+            The beam to add to the model.
 
         Returns
         -------
@@ -74,7 +74,7 @@ class TimberModel(Model):
         self._beams.append(beam)
 
     def add_joint(self, joint, parts):
-        """Add a joint object to the assembly.
+        """Add a joint object to the model.
 
         Parameters
         ----------
@@ -87,7 +87,7 @@ class TimberModel(Model):
         Returns
         -------
         int
-            The identifier of the joint in the current assembly graph.
+            The identifier of the joint in the current model graph.
 
         """
         # self._validate_joining_operation(joint, parts)
@@ -100,7 +100,7 @@ class TimberModel(Model):
         self._joints.append(joint)
 
     def remove_joint(self, joint):
-        """Removes this joint object from the assembly.
+        """Removes this joint object from the model.
 
         Parameters
         ----------

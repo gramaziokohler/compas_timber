@@ -11,7 +11,7 @@ class XHalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------

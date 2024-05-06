@@ -16,12 +16,12 @@ from .joint import Joint
 class ButtJoint(Joint):
     """Abstract Lap type joint with functions common to L-Butt and T-Butt Joints.
 
-    Do not instantiate directly. Please use `**LapJoint.create()` to properly create an instance of lap sub-class and associate it with an assembly.
+    Do not instantiate directly. Please use `**LapJoint.create()` to properly create an instance of lap sub-class and associate it with an model.
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.TimberAssembly`
-        The assembly associated with the beams to be joined.
+    model : :class:`~compas_timber.model.TimberAssembly`
+        The model associated with the beams to be joined.
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
@@ -73,7 +73,7 @@ class ButtJoint(Joint):
         return [self.main_beam, self.cross_beam]
 
     def restore_beams_from_keys(self, model):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
+        """After de-serialization, resotres references to the main and cross beams saved in the model."""
         self.main_beam = model.elementdict[self.main_beam_key]
         self.cross_beam = model.elementdict[self.cross_beam_key]
 

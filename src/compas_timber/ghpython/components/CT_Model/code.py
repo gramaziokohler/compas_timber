@@ -3,7 +3,7 @@ from compas.tolerance import TOL
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.assembly import TimberModel
+from compas_timber.model import TimberModel
 from compas_timber.connections import BeamJoinningError
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -23,7 +23,7 @@ JOINT_DEFAULTS = {
 }
 
 
-class Assembly(component):
+class ModelComponent(component):
     def get_joints_from_rules(self, beams, rules, topologies):
         if not isinstance(rules, list):
             rules = [rules]
@@ -119,14 +119,14 @@ class Assembly(component):
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
-        Assembly = TimberModel()
+        Model = TimberModel()
         debug_info = DebugInfomation()
         for beam in Beams:
             # prepare beams for downstream processing
             beam.remove_features()
             beam.remove_blank_extension()
             beam.debug_infos = []
-            Assembly.add_beam(beam)
+            Model.add_beam(beam)
         topologies = []
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
@@ -135,9 +135,9 @@ class Assembly(component):
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-        Assembly.set_topologies(topologies)
+        Model.set_topologies(topologies)
 
-        beams = Assembly.beams
+        beams = Model.beams
         joints = self.get_joints_from_rules(beams, JointRules, topologies)
 
         if joints:
@@ -150,7 +150,7 @@ class Assembly(component):
                 if beam_pair_ids in handled_beams:
                     continue
                 try:
-                    joint.joint_type.create(Assembly, *beams_to_pair, **joint.kwargs)
+                    joint.joint_type.create(Model, *beams_to_pair, **joint.kwargs)
                 except BeamJoinningError as bje:
                     debug_info.add_joint_error(bje)
                 else:
@@ -164,7 +164,7 @@ class Assembly(component):
 
         Geometry = None
         scene = Scene()
-        for beam in Assembly.beams:
+        for beam in Model.beams:
             if CreateGeometry:
                 scene.add(beam.geometry)
                 if beam.debug_infos:
@@ -176,4 +176,4 @@ class Assembly(component):
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
         Geometry = scene.draw()
-        return Assembly, Geometry, debug_info
+        return Model, Geometry, debug_info
