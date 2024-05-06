@@ -59,7 +59,7 @@ class Joint(Interaction):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
 
     @property

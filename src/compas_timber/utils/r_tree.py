@@ -29,7 +29,8 @@ def find_neighboring_beams(beams, inflate_by=0.0):
     r_tree = Index(properties=p, interleaved=True)  # interleaved => x_min, y_min, z_min, x_max, y_max, z_max
     b_boxes = []
     for index, beam in enumerate(beams):
-        bbox = beam.compute_aabb(inflate_by)
+        aabb = beam.compute_aabb(inflate_by)
+        bbox = (aabb.xmin, aabb.ymin, aabb.zmin, aabb.xmax, aabb.ymax, aabb.zmax)
         b_boxes.append(bbox)
         r_tree.insert(index, bbox)
 

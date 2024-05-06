@@ -54,11 +54,10 @@ class NullJoint(Joint):
     def beams(self):
         return [self.beam_a, self.beam_b]
 
-    def restore_beams_from_keys(self, assemly):
+    def restore_beams_from_keys(self, model):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.beam_a = assemly.find_by_key(self.beam_a_key)
-        self.beam_b = assemly.find_by_key(self.beam_b_key)
-        self._beams = (self.beam_a, self.beam_b)
+        self.beam_a = model.elementdict[self.beam_a_key]
+        self.beam_b = model.elementdict[self.beam_b_key]
 
     def add_features(self):
         """This joint does not add any features to the beams."""

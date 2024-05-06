@@ -63,11 +63,10 @@ class LapJoint(Joint):
     def beams(self):
         return [self.main_beam, self.cross_beam]
 
-    def restore_beams_from_keys(self, assemly):
+    def restore_beams_from_keys(self, model):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.main_beam = assemly.find_by_key(self.main_beam_key)
-        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
-        self._beams = (self.main_beam, self.cross_beam)
+        self.main_beam = model.elementdict[self.main_beam_key]
+        self.cross_beam = model.elementdict[self.cross_beam_key]
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):

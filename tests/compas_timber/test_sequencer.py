@@ -3,14 +3,14 @@ from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
 
-from compas_timber.assembly import TimberAssembly
+from compas_timber.assembly import TimberModel
 from compas_timber.parts import Beam
 from compas_timber.planning import SimpleSequenceGenerator
 
 
 @pytest.fixture
 def mock_assembly():
-    assembly = TimberAssembly()
+    assembly = TimberModel()
     b1 = Beam(Frame.worldXY(), length=2.0, width=0.1, height=0.1)
     b2 = Beam(Frame.worldXY(), length=2.0, width=0.1, height=0.1)
     b3 = Beam(Frame.worldXY(), length=2.0, width=0.1, height=0.1)
@@ -27,7 +27,7 @@ def test_simple_sequence_generator(mock_assembly):
 
     assert len(plan) == len(mock_assembly.beams)
     for step, beam in zip(plan, mock_assembly.beams):
-        assert beam.key == step.element_ids[0]
+        assert str(beam.guid) == step.element_ids[0]
 
 
 def test_simple_sequence_generator_get_beam(mock_assembly):
@@ -36,8 +36,8 @@ def test_simple_sequence_generator_get_beam(mock_assembly):
 
     assert len(plan) == len(mock_assembly.beams)
     for step, beam in zip(plan, mock_assembly.beams):
-        beam_key = step.element_ids[0]
-        assert beam is mock_assembly.find_by_key(beam_key)
+        beam_guid = step.element_ids[0]
+        assert beam is mock_assembly.elementdict[beam_guid]
 
 
 def test_serialize_plan(mock_assembly):
@@ -49,4 +49,4 @@ def test_serialize_plan(mock_assembly):
 
     assert len(plan) == len(assembly.beams)
     for step, beam in zip(plan, assembly.beams):
-        assert beam.key == step.element_ids[0]
+        assert str(beam.guid) == step.element_ids[0]

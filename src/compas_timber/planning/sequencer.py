@@ -2,7 +2,7 @@ from compas.data import Data
 from compas.data import json_dump
 from compas.data import json_load
 from compas.geometry import Frame
-from compas_timber.assembly import TimberAssembly
+from compas_timber.assembly import TimberModel
 
 
 class Actor(object):
@@ -284,11 +284,11 @@ class SimpleSequenceGenerator(object):
 
     @property
     def result(self):
-        if isinstance(self.assembly, TimberAssembly):
+        if isinstance(self.assembly, TimberModel):
             parts = self.assembly.beams
         else:
             parts = self.assembly.parts()
         plan = BuildingPlan()
         for part in parts:
-            plan.add_step(Step(element_ids=[part.key], actor=Actor.HUMAN, location=part.frame))
+            plan.add_step(Step(element_ids=[str(part.guid)], actor=Actor.HUMAN, location=part.frame))
         return plan

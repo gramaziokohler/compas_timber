@@ -21,13 +21,13 @@ class TimberModel(Model):
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
+        print(f"de-serializing data[elementlist]: {data['elementlist']}")
         for element in model.elementlist:
-            if isinstance(element, Beam):
-                model._beams.append(element)
-            if isinstance(element, Joint):
-                model._joints.append(element)
-        for joint in model.joints:
-            joint.add_features()
+            model._beams.append(element)
+        for interaction in model.interactionlist:
+            model._joints.append(interaction)
+            interaction.restore_beams_from_keys(model)
+            interaction.add_features()
         return model
 
     def __init__(self, *args, **kwargs):
@@ -50,10 +50,12 @@ class TimberModel(Model):
 
     @property
     def beams(self):
+        # type: () -> list[Beam]
         return self._beams
 
     @property
     def joints(self):
+        # type: () -> list[Joint]
         return self._joints
 
     def add_beam(self, beam):
@@ -108,7 +110,7 @@ class TimberModel(Model):
             The joint to remove.
 
         """
-        a, b = joint.parts
+        a, b = joint.beams
         self.remove_interaction(a, b)
         self._joints.remove(joint)
 
