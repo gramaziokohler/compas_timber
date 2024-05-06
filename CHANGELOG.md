@@ -9,10 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added attribute `geometry` to `Beam`.
+
 ### Changed
 
 * Reduced some boilerplate code in `Joint` subclasses.
 * Added argument `beams` to `Joint.__init__()` which expects tuple containing beams from implementing class instance.
+* Renamed `TimberAssembly` to `TimberModel`.
+* Renamed `compas_timber.assembly` to `compas_timber.model`.
+* Renamed `compas_timber.parts` to `compas_timber.elements`.
+* Based `Beam` on new `compas_model.elements.Element`.
+* Based `TimberModel` on new `compas_model.model.Model`.
+* Based `Joint` on new `compas_model.interactions.Interaction`.
 
 ### Removed
 
@@ -21,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed argument `gap` from `TButtJoint` as it was not used anywhere.
 * Removed argument `gap` from `FrenchRidgeLap` as it was not used anywhere.
 * Removed class `JointOptions` as not used anymore.
+* Removed module `compas_timber.consumers`.
 
 ## [0.7.0] 2024-02-15
 
