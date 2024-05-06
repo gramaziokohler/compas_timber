@@ -10,7 +10,7 @@ import compas
 from compas.geometry import Frame
 from compas.geometry import angle_vectors
 from compas.geometry import Transformation
-from compas_timber.fabrication import BTLxText
+from compas_timber.fabrication import BTLxText ##TODO this creates an importing loop // we need to redefine the conceptual logic
 
 class BTLx(object):
     """Class representing a BTLx object.
