@@ -1,6 +1,5 @@
-"""Creates a Beam from a LineCurve."""
+"""Creates an Assembly from a planar surface."""
 
-from nis import cat
 from compas_timber.ghpython.workflow import CategoryRule
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
