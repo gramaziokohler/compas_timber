@@ -51,7 +51,7 @@ class BTLxFrenchRidgeLap(object):
 
     PROCESS_TYPE = "FrenchRidgeLap"
 
-    def __init__(self, part, joint, is_top):
+    def __init__(self, part, joint, is_top, drill_diameter=0.0):
         for beam in joint.beams:
             if beam.key == part.key:
                 self.beam = beam
@@ -62,8 +62,8 @@ class BTLxFrenchRidgeLap(object):
         self.is_top = is_top
         self.orientation = joint.ends[str(part.key)]
         self._ref_edge = True
-        self._drill_hole = True
-        self.drill_hole_diameter = 10.0
+        self._drill_hole = True if drill_diameter > 0 else False
+        self.drill_hole_diameter = drill_diameter
 
         self.ref_face_index = self.joint.reference_face_indices[str(self.beam.key)]
         self.ref_face = self.part.reference_surface_planes(str(self.ref_face_index))
@@ -169,8 +169,8 @@ class BTLxFrenchRidgeLap(object):
         )
 
     @classmethod
-    def create_process(cls, part, joint, is_top):
-        frl_process = BTLxFrenchRidgeLap(part, joint, is_top)
+    def create_process(cls, part, joint, is_top, drill_diameter):
+        frl_process = BTLxFrenchRidgeLap(part, joint, is_top, drill_diameter)
         return BTLxProcess(
             BTLxFrenchRidgeLap.PROCESS_TYPE, frl_process.header_attributes, frl_process.process_parameters
         )
