@@ -307,8 +307,29 @@ class ButtJoint(Joint):
             dict: A dictionary containing the calculated parameters for the drilling joint
 
         """
-        ref_frame_id, ref_frame = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
-        ref_plane = Plane.from_frame(ref_frame)
+        # ref_frame_id, ref_frame = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        # print ref_frame_id
+
+        _cut_plane, cutting_frame = self.get_main_cutting_plane()
+        print "ref_ frame type : ", type(cutting_frame)
+        ref_plane = Plane.from_frame(cutting_frame)
+
+        angles_dict = {}
+        for i, face in enumerate(self.cross_beam.faces[0:4]):
+            angles_dict[i] = face.normal.angle(cutting_frame.normal)
+        cross_face_index = min(angles_dict.keys(), key=angles_dict.get)
+        print cross_face_index
+        ref_frame = self.cross_beam.faces[cross_face_index]
+
+        ref_frame.point = self.cross_beam.blank_frame.point
+        if cross_face_index % 2 == 0:
+            ref_frame.point = ref_frame.point - ref_frame.yaxis * self.cross_beam.height * 0.5
+            ref_frame.point = ref_frame.point + ref_frame.zaxis * self.cross_beam.width * 0.5
+        else:
+            ref_frame.point = ref_frame.point - ref_frame.yaxis * self.cross_beam.width * 0.5
+            ref_frame.point = ref_frame.point + ref_frame.zaxis * self.cross_beam.height * 0.5
+
+        # ref_plane = Plane.from_frame(ref_frame)
         point_xyz = (intersection_line_plane(self.main_beam.centerline, ref_plane))
         start_point = Point(*point_xyz)
         ref_point = start_point.transformed(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
@@ -324,20 +345,21 @@ class ButtJoint(Joint):
 
         center_line_vec = Vector.from_start_end(start_point, line_point)
         projected_vec = Vector.from_start_end(start_point, projected_point)
-        Angle = ref_frame.xaxis.angle(projected_vec, True)
-        print "Angle = ", Angle
+        Angle = 180 - math.degrees(ref_frame.xaxis.angle_signed(projected_vec, ref_frame.zaxis))
+        # Angle = ref_frame.xaxis.angle(projected_vec, True)
+        # print "Angle = ", Angle
         Inclination = projected_vec.angle(center_line_vec, True)
-        print "Inclination = ", Inclination
+        # print "Inclination = ", Inclination
 
 
         self.btlx_drilling_params_cross = {
-            "ReferencePlaneID": ref_frame_id,
+            "ReferencePlaneID": cross_face_index, # "0" is a placeholder, should be replaced with the actual reference plane id
             "StartX": StartX,
             "StartY": StartY,
             "Angle": Angle,
             "Inclination": Inclination,
             "Diameter": self.drill_diameter,
-            "DepthLimited": False,
+            "DepthLimited": "no",
             "Depth": 0.0
 
         }
@@ -347,5 +369,5 @@ class ButtJoint(Joint):
         line.start.translate(-line.vector)
         normal_centerline_angle = 180-math.degrees(ref_frame.zaxis.angle(self.main_beam.centerline.direction))
         length = self.cross_beam.width/(math.cos(math.radians(normal_centerline_angle)))
-        print length
+        # print length
         return line, self.drill_diameter, length*3
