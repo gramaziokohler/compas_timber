@@ -1,15 +1,11 @@
 attrs >=17.4
-black
-bump2version >=1.0.1
-check-manifest >=0.36
+black >=22.12.0
+bump-my-version
 compas_invocations2
-doc8
-flake8
-importlib_metadata <5.0
 invoke >=0.14
-isort
-pytest-mock
+ruff
 sphinx_compas2_theme
 twine
 wheel
+pytest-mock
 -e .
