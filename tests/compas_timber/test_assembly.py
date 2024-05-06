@@ -1,8 +1,13 @@
-from compas.data import json_dumps, json_loads
-from compas.geometry import Frame, Point, Vector
-from compas_timber.model import TimberModel
-from compas_timber.connections import LButtJoint, TButtJoint
+from compas.data import json_dumps
+from compas.data import json_loads
+from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Vector
+
+from compas_timber.connections import LButtJoint
+from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
+from compas_timber.model import TimberModel
 
 
 def test_create():

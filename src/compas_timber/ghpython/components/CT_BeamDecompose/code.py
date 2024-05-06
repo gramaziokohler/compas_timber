@@ -1,11 +1,10 @@
 # flake8: noqa
-from System.Drawing import Color
 from compas.geometry import Line
+from compas_rhino.conversions import frame_to_rhino_plane
 from compas_rhino.conversions import line_to_rhino
 from compas_rhino.conversions import point_to_rhino
-from compas_rhino.conversions import frame_to_rhino_plane
-
 from ghpythonlib.componentbase import executingcomponent as component
+from System.Drawing import Color
 
 
 class BeamDecompose(component):

@@ -2,16 +2,16 @@
 import math
 import random
 
-from Rhino import Render
-from Rhino.Geometry import Plane
-from Rhino.Geometry import Interval
-from Rhino.RhinoDoc import ActiveDoc
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
-from ghpythonlib.componentbase import executingcomponent as component
 import rhinoscriptsyntax as rs
-
 from compas_rhino.conversions import frame_to_rhino
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Rhino import Render
+from Rhino.Geometry import Interval
+from Rhino.Geometry import Plane
+from Rhino.RhinoDoc import ActiveDoc
+
 from compas_timber.consumers import BrepGeometryConsumer
 
 

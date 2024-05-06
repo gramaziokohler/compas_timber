@@ -3,7 +3,6 @@ from compas.tolerance import TOL
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.model import TimberModel
 from compas_timber.connections import BeamJoinningError
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -15,6 +14,7 @@ from compas_timber.ghpython import DebugInfomation
 from compas_timber.ghpython import DirectRule
 from compas_timber.ghpython import JointDefinition
 from compas_timber.ghpython import TopologyRule
+from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
     JointTopology.TOPO_X: XHalfLapJoint,

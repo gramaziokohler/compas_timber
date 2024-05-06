@@ -20,7 +20,8 @@ Pluggables
 
 """
 
-from compas.plugins import PluginNotInstalledError, pluggable
+from compas.plugins import PluginNotInstalledError
+from compas.plugins import pluggable
 
 
 @pluggable(category="solvers")
