@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Based `Beam` on new `compas_model.elements.Element`.
 * Based `TimberModel` on new `compas_model.model.Model`.
 * Based `Joint` on new `compas_model.interactions.Interaction`.
+* Removed support for Python `3.8`.
 
 ### Removed
 
