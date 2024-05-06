@@ -1,16 +1,15 @@
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-import clr
-import System
-import inspect
 from System.Windows.Forms import ToolStripSeparator
 from System.Windows.Forms import ToolStripMenuItem
+
+import inspect
 from collections import OrderedDict
 
 from compas_timber.connections import Joint
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import rename_GH_output
+from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 from compas_timber.ghpython import CategoryRule
 
 
@@ -43,7 +42,7 @@ class CategoryJointRule(component):
 
             kwargs = {}
             for i, val in enumerate(args[2:]):
-                if val:
+                if val is not None:
                     kwargs[self.arg_names()[i + 2]] = val
             print(kwargs)
             if not cat_a:
@@ -93,11 +92,11 @@ class CategoryJointRule(component):
 
     def on_topo_click(self, sender, event_info):
         self.topo_bools[str(sender)] = not self.topo_bools[str(sender)]
-        rename_GH_output(self.output_name(), 0, ghenv)
+        rename_gh_output(self.output_name(), 0, ghenv)
         ghenv.Component.ExpireSolution(True)
 
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
-        rename_GH_output(self.output_name(), 0, ghenv)
+        rename_gh_output(self.output_name(), 0, ghenv)
         manage_dynamic_params(self.arg_names(), ghenv, rename_count=2, permanent_param_count=0)
         ghenv.Component.ExpireSolution(True)

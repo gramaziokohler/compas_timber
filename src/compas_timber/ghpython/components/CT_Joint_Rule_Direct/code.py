@@ -10,7 +10,7 @@ from compas_timber.connections import JointTopology
 
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import rename_GH_output
+from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 from compas_timber.ghpython import DirectRule
 
 
@@ -37,7 +37,7 @@ class DirectJointRule(component):
             beam_b = args[1]
             kwargs = {}
             for i, val in enumerate(args[2:]):
-                if val:
+                if val is not None:
                     kwargs[self.arg_names()[i + 2]] = val
 
             if not beam_a:
@@ -83,6 +83,6 @@ class DirectJointRule(component):
 
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
-        rename_GH_output(self.joint_type.__name__, 0, ghenv)
+        rename_gh_output(self.joint_type.__name__, 0, ghenv)
         manage_dynamic_params(self.arg_names(), ghenv, rename_count=2, permanent_param_count=0)
         ghenv.Component.ExpireSolution(True)

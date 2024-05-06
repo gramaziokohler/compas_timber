@@ -5,14 +5,14 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 
 class Attributes_Set_Custom(component):
-    def RunScript(self, RefObj, Attribute, update):
-        o = list_input_valid(self, RefObj, "RefObj")
-        a = list_input_valid(self, Attribute, "Attribute")
+    def RunScript(self, ref_obj, attribute, update):
+        o = list_input_valid(self, ref_obj, "RefObj")
+        a = list_input_valid(self, attribute, "Attribute")
 
         if update and o and a:
-            for attr in Attribute:
+            for attr in attribute:
                 if attr:
-                    for guid in RefObj:
+                    for guid in ref_obj:
                         if guid:
                             update_rhobj_attributes_name(guid, attr.name, attr.value)
 

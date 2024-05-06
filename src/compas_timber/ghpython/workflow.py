@@ -1,7 +1,5 @@
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import XHalfLapJoint
-from compas_timber.connections.solver import JointTopology
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
@@ -63,11 +61,11 @@ class DirectRule(JointRule):
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the beams, this rule assigns"""
 
-    def __init__(self, joint_type, category_a, category_b, topos=[], **kwargs):
+    def __init__(self, joint_type, category_a, category_b, topos=None, **kwargs):
         self.joint_type = joint_type
         self.category_a = category_a
         self.category_b = category_b
-        self.topos = topos
+        self.topos = topos or []
         self.kwargs = kwargs
 
     def ToString(self):
@@ -75,8 +73,8 @@ class CategoryRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
-            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b
+        return "{}({}, {}, {}, {})".format(
+            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos
         )
 
     def comply(self, beams):
@@ -108,36 +106,6 @@ class CategoryRule(JointRule):
             return beam_a, beam_b
         else:
             return beam_b, beam_a
-
-
-class DefaultRule(JointRule):
-    """Applies default joint rules based on topology type:
-    L: LMiterJoint
-    T: TButtJoint
-    X: XHalfLapJoint
-    I, K: Not implemented
-
-    parameters
-    ----------
-    None
-
-    """
-
-    DEFAULTS = {
-        JointTopology.TOPO_X: XHalfLapJoint,
-        JointTopology.TOPO_T: TButtJoint,
-        JointTopology.TOPO_L: LMiterJoint,
-    }
-
-    def __init__(self):
-        pass
-
-    def ToString(self):
-        # GH doesn't know
-        return "DefaultJointRule: L_Topo: LMiterJoint,  T_Topo: TButtJoint,  X_Topo: XHalfLapJoint"
-
-    def __repr__(self):
-        return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type)
 
 
 class TopologyRule(JointRule):
@@ -291,46 +259,6 @@ def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l
 
     for beamA, beamB in connectivity["X"]:
         pass
-
-
-class JointOptions(object):
-    """Container for options to be passed to a joint.
-
-    This allows delaying the actual joining of the beams to a downstream component.
-
-    Parameters
-    ----------
-    type :  cls(:class:`compas_timber.connections.Joint`)
-        The type of the joint.
-    kwargs : dict
-        The keyword arguments to be passed to the joint.
-    beam_names : list(str)
-        The names of the beams to be joined.
-
-    Attributes
-    ----------
-    type :  cls(:class:`compas_timber.connections.Joint`)
-        The type of the joint.
-    kwargs : dict
-        The keyword arguments to be passed to the joint.
-    beam_names : list(str)
-        The names of the beams to be joined.
-
-    """
-
-    def __init__(self, type, beam_names=[], **kwargs):
-        self.type = type
-        self.kwargs = kwargs
-        self.beam_names = beam_names
-
-    def __repr__(self):
-        return "{}({}{})".format(JointOptions.__name__, self.type, self.kwargs)
-
-    def ToString(self):
-        return repr(self)
-
-    def is_identical(self, other):
-        return isinstance(other, JointOptions) and self.kwargs == other.kwargs
 
 
 class DebugInfomation(object):
