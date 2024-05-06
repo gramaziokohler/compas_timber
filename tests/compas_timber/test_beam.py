@@ -1,11 +1,7 @@
 import copy
 
 import pytest
-from compas.geometry import Frame
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import close
-
+from compas.geometry import Frame, Point, Vector, close
 from compas_timber.parts.beam import Beam
 
 

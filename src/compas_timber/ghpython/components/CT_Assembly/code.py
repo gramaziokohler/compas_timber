@@ -1,21 +1,20 @@
-from compas.tolerance import TOL
 from compas.scene import Scene
+from compas.tolerance import TOL
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.assembly import TimberModel
+from compas_timber.connections import BeamJoinningError
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
-from compas_timber.connections import BeamJoinningError
-from compas_timber.connections import XHalfLapJoint
-from compas_timber.connections import TButtJoint
 from compas_timber.connections import LMiterJoint
-from compas_timber.ghpython import JointDefinition
+from compas_timber.connections import TButtJoint
+from compas_timber.connections import XHalfLapJoint
 from compas_timber.ghpython import CategoryRule
-from compas_timber.ghpython import TopologyRule
-from compas_timber.ghpython import DirectRule
 from compas_timber.ghpython import DebugInfomation
-
+from compas_timber.ghpython import DirectRule
+from compas_timber.ghpython import JointDefinition
+from compas_timber.ghpython import TopologyRule
 
 JOINT_DEFAULTS = {
     JointTopology.TOPO_X: XHalfLapJoint,
@@ -25,7 +24,6 @@ JOINT_DEFAULTS = {
 
 
 class Assembly(component):
-
     def get_joints_from_rules(self, beams, rules, topologies):
         if not isinstance(rules, list):
             rules = [rules]

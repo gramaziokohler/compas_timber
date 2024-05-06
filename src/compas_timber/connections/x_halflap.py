@@ -1,9 +1,8 @@
 from compas_timber.parts import MillVolume
 
-from .solver import JointTopology
 from .joint import BeamJoinningError
-
 from .lap_joint import LapJoint
+from .solver import JointTopology
 
 
 class XHalfLapJoint(LapJoint):

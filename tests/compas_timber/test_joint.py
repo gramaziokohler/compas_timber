@@ -1,21 +1,18 @@
 import os
-from copy import deepcopy
 
 import compas
 import pytest
 from compas.data import json_load
-from compas.geometry import Frame
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import Line
-
+from compas.geometry import Frame, Line, Point, Vector
 from compas_timber.assembly import TimberModel
-from compas_timber.connections import TButtJoint
-from compas_timber.connections import LButtJoint
-from compas_timber.connections import XHalfLapJoint
-from compas_timber.connections import THalfLapJoint
-from compas_timber.connections import LHalfLapJoint
-from compas_timber.connections import find_neighboring_beams
+from compas_timber.connections import (
+    LButtJoint,
+    LHalfLapJoint,
+    TButtJoint,
+    THalfLapJoint,
+    XHalfLapJoint,
+    find_neighboring_beams,
+)
 from compas_timber.parts import Beam
 
 geometry_type = "mesh"

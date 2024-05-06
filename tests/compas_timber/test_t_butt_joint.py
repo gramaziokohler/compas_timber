@@ -1,6 +1,4 @@
-from compas.geometry import Point
-from compas.geometry import Vector
-
+from compas.geometry import Point, Vector
 from compas_timber.assembly import TimberModel
 from compas_timber.connections import TButtJoint
 from compas_timber.parts import Beam

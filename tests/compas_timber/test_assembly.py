@@ -1,14 +1,7 @@
-from copy import deepcopy
-
-from compas.data import json_dumps
-from compas.data import json_loads
-from compas.geometry import Frame
-from compas.geometry import Point
-from compas.geometry import Vector
-
+from compas.data import json_dumps, json_loads
+from compas.geometry import Frame, Point, Vector
 from compas_timber.assembly import TimberModel
-from compas_timber.connections import LButtJoint
-from compas_timber.connections import TButtJoint
+from compas_timber.connections import LButtJoint, TButtJoint
 from compas_timber.parts import Beam
 
 
@@ -36,7 +29,7 @@ def test_add_joint():
 
     model.add_beam(b1)
     model.add_beam(b2)
-    joint = LButtJoint.create(model, b1, b2)
+    _ = LButtJoint.create(model, b1, b2)
 
     assert len(model.beams) == 2
     assert len(model.joints) == 1
@@ -116,4 +109,3 @@ def test_serialization_with_t_butt_joints(mocker):
 
     assert len(a.joints) == 1
     assert type(a.joints[0]) is TButtJoint
-

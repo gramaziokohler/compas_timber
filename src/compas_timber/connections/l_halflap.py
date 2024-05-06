@@ -1,10 +1,11 @@
 from compas.geometry import Frame
+
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
 
 from .joint import BeamJoinningError
-from .solver import JointTopology
 from .lap_joint import LapJoint
+from .solver import JointTopology
 
 
 class LHalfLapJoint(LapJoint):

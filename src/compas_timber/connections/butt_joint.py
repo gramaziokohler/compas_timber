@@ -1,14 +1,15 @@
 from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Polyhedron
+from compas.geometry import angle_vectors_signed
+from compas.geometry import closest_point_on_line
+from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import subtract_vectors
-from compas.geometry import dot_vectors
-from compas.geometry import closest_point_on_line
-from compas.geometry import intersection_plane_plane
-from compas.geometry import Plane
-from compas.geometry import Line
-from compas.geometry import Polyhedron
-from compas.geometry import Point
-from compas.geometry import angle_vectors_signed
+
 from .joint import Joint
 
 
@@ -40,6 +41,7 @@ class ButtJoint(Joint):
         A string representation of this joint's type.
 
     """
+
     @property
     def __data__(self):
         data_dict = {

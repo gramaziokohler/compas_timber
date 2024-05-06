@@ -1,8 +1,5 @@
 from compas_model.model import Model
 
-from compas_timber.parts import Beam
-from compas_timber.connections import Joint
-
 
 class TimberModel(Model):
     """Represents a timber assembly containing beams and joints etc.
@@ -14,7 +11,8 @@ class TimberModel(Model):
     joints : list(:class:`~compas_timber.connections.Joint`)
         A list of joints assigned to this assembly.
     topologies :  list(dict)
-        A list of JointTopology for assembly. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key} See :class:`~compas_timber.connections.JointTopology`.
+        A list of JointTopology for assembly. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key}
+        See :class:`~compas_timber.connections.JointTopology`.
 
     """
 

@@ -1,9 +1,8 @@
 import functools
 import math
 
-import compas
-from compas.geometry import Brep
 from compas.geometry import Box
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,8 +10,8 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
-from compas.geometry import cross_vectors
 from compas.geometry import bounding_box
+from compas.geometry import cross_vectors
 from compas_model.elements import Element
 
 from compas_timber.utils.compas_extra import intersection_line_plane

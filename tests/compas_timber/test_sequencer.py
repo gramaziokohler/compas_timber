@@ -1,8 +1,7 @@
-import pytest
-from compas.data import json_dumps
-from compas.data import json_loads
-from compas.geometry import Frame
 
+import pytest
+from compas.data import json_dumps, json_loads
+from compas.geometry import Frame
 from compas_timber.assembly import TimberModel
 from compas_timber.parts import Beam
 from compas_timber.planning import SimpleSequenceGenerator
