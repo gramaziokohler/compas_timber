@@ -10,7 +10,7 @@ import compas
 from compas.geometry import Frame
 from compas.geometry import angle_vectors
 from compas.geometry import Transformation
-# from compas_timber.fabrication import BTLxText
+from compas_timber.fabrication import BTLxText
 
 class BTLx(object):
     """Class representing a BTLx object.
@@ -92,13 +92,13 @@ class BTLx(object):
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
             factory_type.apply_processings(joint, self.parts)
 
-        # for part in self.parts.values():
-        #     if self.beam.engrave:
-        #         if part.processings:
-        #             ref_plane_id = part.processing[0].header_attributes.get("ReferencePlaneID", 1)
-        #         params_dict = part.get_text_engraving_params()
-        #         params_dict["ReferencePlaneID"] = ref_plane_id
-        #         part.processings.append(BTLxText.create_process(params_dict))
+        for part in self.parts.values():
+            if self.beam.engrave:
+                if part.processings:
+                    ref_plane_id = part.processing[0].header_attributes.get("ReferencePlaneID", 1)
+                params_dict = part.get_text_engraving_params()
+                params_dict["ReferencePlaneID"] = ref_plane_id
+                part.processings.append(BTLxText.create_process(params_dict))
 
     @classmethod
     def register_joint(cls, joint_type, joint_factory):
