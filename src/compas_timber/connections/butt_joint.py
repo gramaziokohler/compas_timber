@@ -292,3 +292,60 @@ class ButtJoint(Joint):
         return True
 
 
+    def calc_params_drilling(self):
+        """
+        Calculate the parameters for a drilling joint.
+
+        Parameters:
+        ----------
+            joint (object): The joint object.
+            main_part (object): The main part object.
+            cross_part (object): The cross part object.
+
+        Returns:
+        ----------
+            dict: A dictionary containing the calculated parameters for the drilling joint
+
+        """
+        ref_frame_id, ref_frame = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_plane = Plane.from_frame(ref_frame)
+        point_xyz = (intersection_line_plane(self.main_beam.centerline, ref_plane))
+        start_point = Point(*point_xyz)
+        ref_point = start_point.transformed(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
+        StartX, StartY = ref_point[0], ref_point[1]
+        print StartX, StartY
+
+        param_point_on_line = self.main_beam.centerline.closest_point(start_point, True)[1]
+        if param_point_on_line > 0.5:
+            line_point = self.main_beam.centerline.end
+        else:
+            line_point = self.main_beam.centerline.start
+        projected_point = ref_plane.projected_point(line_point)
+
+        center_line_vec = Vector.from_start_end(start_point, line_point)
+        projected_vec = Vector.from_start_end(start_point, projected_point)
+        Angle = ref_frame.xaxis.angle(projected_vec, True)
+        print "Angle = ", Angle
+        Inclination = projected_vec.angle(center_line_vec, True)
+        print "Inclination = ", Inclination
+
+
+        self.btlx_drilling_params_cross = {
+            "ReferencePlaneID": ref_frame_id,
+            "StartX": StartX,
+            "StartY": StartY,
+            "Angle": Angle,
+            "Inclination": Inclination,
+            "Diameter": self.drill_diameter,
+            "DepthLimited": False,
+            "Depth": 0.0
+
+        }
+
+        # Rhino geometry visualization
+        line = Line(start_point, line_point)
+        line.start.translate(-line.vector)
+        normal_centerline_angle = 180-math.degrees(ref_frame.zaxis.angle(self.main_beam.centerline.direction))
+        length = self.cross_beam.width/(math.cos(math.radians(normal_centerline_angle)))
+        print length
+        return line, self.drill_diameter, length*3
