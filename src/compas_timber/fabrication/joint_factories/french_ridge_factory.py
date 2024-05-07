@@ -1,6 +1,7 @@
 from compas_timber.connections import FrenchRidgeLapJoint
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxFrenchRidgeLap
+from compas_timber.fabrication.btlx_processes.btlx_drilling import BTLxDrilling
 
 
 class FrenchRidgeFactory(object):
@@ -31,11 +32,11 @@ class FrenchRidgeFactory(object):
 
         top_key = joint.beams[0].key
         top_part = parts[str(top_key)]
-        top_part.processings.append(BTLxFrenchRidgeLap.create_process(top_part, joint, True))
+        top_part.processings.append(BTLxFrenchRidgeLap.create_process(top_part, joint, True, joint.drill_diameter))
 
         bottom_key = joint.beams[1].key
         bottom_part = parts[str(bottom_key)]
-        bottom_part.processings.append(BTLxFrenchRidgeLap.create_process(bottom_part, joint, False))
+        bottom_part.processings.append(BTLxFrenchRidgeLap.create_process(bottom_part, joint, False, 0.0))
 
 
 BTLx.register_joint(FrenchRidgeLapJoint, FrenchRidgeFactory)

@@ -76,24 +76,19 @@ class TButtJoint(ButtJoint):
 
         """
         assert self.main_beam and self.cross_beam  # should never happen
-
         if self.features:
             self.main_beam.remove_features(self.features)
         cutting_plane = None
         try:
             cutting_plane = self.get_main_cutting_plane()[0]
-
         except AttributeError as ae:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         self.features = []
-
         if self.mill_depth:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
-        if self.drill_diameter:
-            self.cross_beam.add_features(DrillFeature(*self.calc_params_drilling()))
             self.features.append(MillVolume(self.subtraction_volume()))
         do_jack = False
         if self.birdsmouth:
@@ -106,3 +101,6 @@ class TButtJoint(ButtJoint):
         if do_jack:
             self.main_beam.add_features(CutFeature(cutting_plane))
             self.features.append(cutting_plane)
+        if self.drill_diameter > 0:
+            self.cross_beam.add_features(DrillFeature(*self.calc_params_drilling()))
+            self.features.append(DrillFeature(*self.calc_params_drilling()))
