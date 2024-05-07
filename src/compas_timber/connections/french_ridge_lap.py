@@ -38,11 +38,11 @@ class FrenchRidgeLapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, beam_a=None, beam_b=None, drill_diameter=0, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, drill_diameter=0.0, **kwargs):
         super(FrenchRidgeLapJoint, self).__init__(beams=(beam_a, beam_b), **kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
-        self.drill_diameter = drill_diameter
+        self.drill_diameter = float(drill_diameter)
         self.beam_a_key = beam_a.key if beam_a else None
         self.beam_b_key = beam_b.key if beam_b else None
         self.reference_face_indices = {}

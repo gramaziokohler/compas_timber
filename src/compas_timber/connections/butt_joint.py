@@ -50,14 +50,14 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, birdsmouth=False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0.0, birdsmouth=False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = main_beam.key if main_beam else None
         self.cross_beam_key = cross_beam.key if cross_beam else None
         self.mill_depth = mill_depth
-        self.drill_diameter = drill_diameter
+        self.drill_diameter = float(drill_diameter)
         self.birdsmouth = birdsmouth
         self.btlx_params_main = {}
         self.btlx_params_cross = {}
@@ -350,8 +350,8 @@ class ButtJoint(Joint):
             "ReferencePlaneID": cross_face_index,
             "StartX": StartX,
             "StartY": StartY,
-            "Angle": Angle,
-            "Inclination": Inclination,
+            "Angle": float(Angle),
+            "Inclination": float(Inclination),
             "Diameter": self.drill_diameter,
             "DepthLimited": "no",
             "Depth": 0.0

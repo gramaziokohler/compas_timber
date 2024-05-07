@@ -48,8 +48,6 @@ class TButtFactory(object):
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
 
         if joint.drill_diameter > 0:
-            print("drill_diameter", joint.btlx_drilling_params_cross)
-            print(str(joint.btlx_params_cross["ReferencePlaneID"]))
             joint.btlx_drilling_params_cross["ReferencePlaneID"] = str(joint.btlx_params_cross["ReferencePlaneID"])
             cross_part.processings.append(BTLxDrilling.create_process(joint.btlx_drilling_params_cross, "T-Butt Joint"))
 

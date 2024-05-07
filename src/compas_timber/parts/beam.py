@@ -95,8 +95,8 @@ class Beam(Part):
         self.features = []
         self._blank_extensions = {}
         self.intersections = []
-        self.attributes["airModule_no"] = [] ### TODO names to be defined
-        self.attributes["assemblyModule_no"] = [] ### TODO names to be defined
+        self.attributes["air_no"] = [] ### TODO names to be defined
+        self.attributes["assembly_no"] = [] ### TODO names to be defined
         self.attributes["beam_no"] = [] ### TODO names to be defined
 
     @property

@@ -23,13 +23,13 @@ class BTLxDrilling(object):
     def __init__(self, param_dict, joint_name=None, **kwargs): # joint_name replace by "feature_name"?
         self.apply_process = True
         self.reference_plane_id = param_dict["ReferencePlaneID"]
-        self.start_x = param_dict["StartX"]
-        self.start_y = param_dict["StartY"]
-        self.angle = param_dict["Angle"]
-        self.inclination = param_dict["Inclination"]
+        self.start_x = float(param_dict["StartX"])
+        self.start_y = float(param_dict["StartY"])
+        self.angle = float(param_dict["Angle"])
+        self.inclination = float(param_dict["Inclination"])
         self.depth_limited = param_dict["DepthLimited"]
-        self.depth = param_dict["Depth"]
-        self.diameter = param_dict["Diameter"]
+        self.depth = float(param_dict["Depth"])
+        self.diameter = float(param_dict["Diameter"])
 
         for key, value in param_dict.items():
             setattr(self, key, value)
