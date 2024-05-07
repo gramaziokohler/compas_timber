@@ -1,6 +1,6 @@
 from compas.datastructures import Assembly
 from compas.datastructures import AssemblyError
-
+from compas.geometry import Point
 from compas_timber.connections import Joint
 from compas_timber.connections import BeamJoinningError
 from compas_timber.parts import Beam
@@ -201,3 +201,37 @@ class TimberAssembly(Assembly):
     @property
     def topologies(self):
         return self._topologies
+
+    @property
+    def center_of_mass(self):
+        """Returns the center of mass of the assembly.
+
+        Returns
+        -------
+        compas.geometry.Point
+            The center of mass of the assembly.
+
+        """
+        total_vol = 0
+        total_position = Point(0, 0, 0)
+
+        for beam in self._beams:
+            vol = beam.blank.volume
+            point = beam.blank_frame.point
+            point += beam.blank_frame.xaxis * (beam.blank_length / 2)
+            total_vol += vol
+            total_position += point * vol
+
+        return Point(*total_position) * (1.0 / total_vol)
+
+    @property
+    def volume(self):
+        """Returns the volume of the assembly.
+
+        Returns
+        -------
+        float
+            The sum of the volumes of all beam.blank's in the assembly.
+
+        """
+        return sum([beam.blank.volume for beam in self._beams])
