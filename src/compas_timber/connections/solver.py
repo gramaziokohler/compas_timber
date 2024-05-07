@@ -109,18 +109,21 @@ class ConnectionSolver(object):
 
         """
 
-        pair_indexes = find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
-        for i, beam in enumerate(beams):
-            beam.attributes["intersecitons"]=[]
-            for pair in pair_indexes:
-                if i in pair:
-                    a = pair[0]
-                    b = pair[1]
-                    intersection_points = intersection_line_line(beam[a].centerline, beam[b].centerline)[0]
-                    intersection_param = beam.centerline.closest_point(intersection_points[0], return_parameter=True)
-                    beam.attributes["intersecitons"].append(intersection_param)
+        neighboring_pairs = find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
+        return neighboring_pairs
 
-        return pair_indexes
+    @classmethod
+    def find_intersection_parameters(cls, beams, tol=None):
+        generic_pair_indeces = itertools.combinations(range(len(beams)), 2)
+        for pair in generic_pair_indeces:
+            pair_centerlines = [beams[p].centerline for p in pair]
+            intersection_points = intersection_line_line(*pair_centerlines, tol=10.0)
+            if intersection_points:
+                if all(abs(p1 - p2) < cls.TOLERANCE for p1, p2 in zip(intersection_points[0], intersection_points[1])):
+                    intersection_point = Point(*intersection_points[0])
+                    intersection_params = [beams[p].centerline.closest_point(intersection_point, return_parameter=True)[1] for p in pair]
+                    for i, p in enumerate(pair):
+                        beams[p].intersections.append(float("{:.2f}".format(intersection_params[i])))
 
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
