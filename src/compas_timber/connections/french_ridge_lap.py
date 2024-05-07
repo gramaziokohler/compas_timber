@@ -136,34 +136,3 @@ class FrenchRidgeLapJoint(Joint):
                 )
             )
         self.reference_face_indices = {str(self.beam_a.key): indices[0], str(self.beam_b.key): indices[1]}
-
-    def calc_params_dilling(self):
-        """Calculates the parameters for drilling process."""
-
-        _cut_plane, cutting_frame = self.get_main_cutting_plane()
-        ref_plane = Plane.from_frame(cutting_frame)
-
-        angles_dict = {}
-        for i, face in enumerate(self.cross_beam.faces[0:4]):
-            angles_dict[i] = face.normal.angle(cutting_frame.normal)
-        cross_face_index = min(angles_dict.keys(), key=angles_dict.get)
-        ref_frame = self.cross_beam.faces[cross_face_index]
-
-        ref_frame.point = self.cross_beam.blank_frame.point
-        if cross_face_index % 2 == 0:
-            ref_frame.point = ref_frame.point - ref_frame.yaxis * self.cross_beam.height * 0.5
-            ref_frame.point = ref_frame.point + ref_frame.zaxis * self.cross_beam.width * 0.5
-        else:
-            ref_frame.point = ref_frame.point - ref_frame.yaxis * self.cross_beam.width * 0.5
-            ref_frame.point = ref_frame.point + ref_frame.zaxis * self.cross_beam.height * 0.5
-
-        self.btlx_drilling_params_cross = {
-            "ReferencePlaneID": cross_face_index,
-            "StartX": StartX,
-            "StartY": StartY,
-            "Angle": Angle,
-            "Inclination": Inclination,
-            "Diameter": self.drill_diameter,
-            "DepthLimited": "no",
-            "Depth": 0.0
-        }
