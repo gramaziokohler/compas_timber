@@ -118,13 +118,15 @@ class ConnectionSolver(object):
         for pair in generic_pair_indeces:
             pair_centerlines = [beams[p].centerline for p in pair]
             intersection_points = intersection_line_line(*pair_centerlines, tol=10.0)
-            if intersection_points:
-                if all(abs(p1 - p2) < cls.TOLERANCE for p1, p2 in zip(intersection_points[0], intersection_points[1])):
-                    intersection_point = Point(*intersection_points[0])
-                    intersection_params = [beams[p].centerline.closest_point(intersection_point, return_parameter=True)[1] for p in pair]
-                    for i, p in enumerate(pair):
-                        beams[p].intersections.append(float("{:.2f}".format(intersection_params[i])))
-
+            if None in intersection_points:
+                continue
+            if all(abs(p1 - p2) < cls.TOLERANCE for p1, p2 in zip(intersection_points[0], intersection_points[1])):
+                intersection_point = Point(*intersection_points[0])
+                intersection_params = [cls._parameter_on_line(intersection_point, beams[p].centerline) for p in pair]
+                for i, p in enumerate(pair):
+                    # Check if the parameter is within [0, 1], if not, adjust it
+                    intersection_params[i]= max(0, min(1,(intersection_params[i]))) #//TODO: this is just a temporal solution
+                    beams[p].intersections.append(intersection_params[i])
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
@@ -234,6 +236,14 @@ class ConnectionSolver(object):
 
         # X-joint (both meeting somewhere along the line)
         return JointTopology.TOPO_X, beam_a, beam_b
+
+    @staticmethod
+    def _parameter_on_line(point, line):
+        # Vector from the start of the line segment to the given point
+        point_vector = [(point.x - line.start.x), (point.y - line.start.y), (point.z - line.start.z)]
+        # Calculate the parameter (t) using dot product
+        t = dot_vectors(point_vector, line.vector) / dot_vectors(line.vector, line.vector)
+        return t
 
     @staticmethod
     def _calc_t(line, plane):

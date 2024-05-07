@@ -12,18 +12,21 @@ class TextFactory(object):
     @staticmethod
     def get_engraving_position(part):
         """Finds the optimal parameter on the line for the text engraving process."""
-        [part.intersections.append(i) for i in {0, 1} if i not in part.intersections]
-        all_points = sorted(part.intersections)
-        print("intersections", all_points)
+        intersections = set(part.intersections)
+        intersections.update({0, 1})  # Ensure 0 and 1 are included
+        all_intersections = sorted(intersections)
+
         max_length = 0
-        optimal_midpoint = 0.5
-        for i in range(len(all_points) - 1):
-            seg_length = all_points[i+1] - all_points[i]
+        optimal_parameter = 0.5
+        for i in range(len(all_intersections) - 1):
+            seg_length = all_intersections[i+1] - all_intersections[i]
             if seg_length > max_length:
                 max_length = seg_length
-                optimal_midpoint = (all_points[i] + all_points[i+1]) / 2
-        print("Optimal midpoint: ", optimal_midpoint*part.length, "optimal parameter", optimal_midpoint)
-        return float(optimal_midpoint*part.length)
+                optimal_parameter = (all_intersections[i] + all_intersections[i+1]) / 2
+
+        optimal_parameter = 0.5 if optimal_parameter in {0, 1} else optimal_parameter #//TODO: this is a temporal fix
+        optimal_position = optimal_parameter * part.length
+        return optimal_position
 
     @staticmethod
     def get_text_engraving_params(part):
@@ -38,7 +41,7 @@ class TextFactory(object):
             "AlignmentMultiline": "center",
             "TextHeight": 20.0,
             # "Text": part.beam.attributes["airModule_no"]
-            "Text": "Hello you 023"
+            "Text": "AM01_05"
         }
 
     @classmethod
