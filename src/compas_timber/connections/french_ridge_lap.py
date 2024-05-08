@@ -38,7 +38,7 @@ class FrenchRidgeLapJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, beam_a=None, beam_b=None, drill_diameter=0, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, drill_diameter=0.0, **kwargs):
         super(FrenchRidgeLapJoint, self).__init__(beams=(beam_a, beam_b), **kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b

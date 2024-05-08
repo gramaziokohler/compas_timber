@@ -35,8 +35,8 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, birdsmouth=False, **kwargs):
-        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, drill_diameter, birdsmouth, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, birdsmouth=False, stepjoint=False, **kwargs):
+        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, drill_diameter, birdsmouth, stepjoint, **kwargs)
 
 
     def add_extensions(self):
@@ -95,7 +95,6 @@ class TButtJoint(ButtJoint):
             if self.calc_params_birdsmouth():
                 self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))
                 self.features.append(BrepSubtraction(self.bm_sub_volume))
-
             else:
                 do_jack = True
         if do_jack:
@@ -104,3 +103,8 @@ class TButtJoint(ButtJoint):
         if self.drill_diameter > 0:
             self.cross_beam.add_features(DrillFeature(*self.calc_params_drilling()))
             self.features.append(DrillFeature(*self.calc_params_drilling()))
+        if self.stepjoint:
+            if self.calc_params_stepjoint():
+                self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))#not correct
+                self.features.append(BrepSubtraction(self.bm_sub_volume))#not correct
+

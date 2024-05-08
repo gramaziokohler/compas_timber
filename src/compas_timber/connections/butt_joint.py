@@ -50,7 +50,7 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, birdsmouth=False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, drill_diameter=0, birdsmouth=False, stepjoint=False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -59,9 +59,12 @@ class ButtJoint(Joint):
         self.mill_depth = mill_depth
         self.drill_diameter = drill_diameter
         self.birdsmouth = birdsmouth
+        self.stepjoint = stepjoint
         self.btlx_params_main = {}
         self.btlx_params_cross = {}
         self.btlx_drilling_params_cross = {}
+        self.btlx_stepjoint_params_main = {}
+        self.btlx_params_stepjoint_main = {}
         self.features = []
         self.test = []
 
@@ -278,6 +281,15 @@ class ButtJoint(Joint):
         Inclination1 = angle_vectors(ref_frame.zaxis, plane1.normal, deg=True)
         Inclination2 = angle_vectors(ref_frame.zaxis, plane2.normal, deg=True)
 
+        print "orientation: ", self.ends[str(self.main_beam.key)]
+        print "StartX: ", StartX
+        print "StartY: ", StartY
+        print "Angle1: ", Angle1
+        print "Inclination1: ", Inclination1
+        print "Angle2: ", Angle2
+        print "Inclination2: ", Inclination2
+        print "ReferencePlaneID: ", self.main_face_index
+
         self.btlx_params_main = {
             "Orientation": self.ends[str(self.main_beam.key)],
             "StartX": StartX,
@@ -343,15 +355,26 @@ class ButtJoint(Joint):
         center_line_vec = Vector.from_start_end(start_point, line_point)
         projected_vec = Vector.from_start_end(start_point, projected_point)
         Angle = 180 - math.degrees(ref_frame.xaxis.angle_signed(projected_vec, ref_frame.zaxis))
-        Inclination = projected_vec.angle(center_line_vec, True)
+        inclination = projected_vec.angle(center_line_vec, True)
+        if inclination == 0:
+            Inclination = 90.0
+        else:
+            Inclination = inclination
 
+
+        print "ReferencePlaneID: ", cross_face_index
+        print "StartX: ", StartX
+        print "StartY: ", StartY
+        print "Angle: ", Angle
+        print "Inclination: ", Inclination
+        print "Diameter: ", self.drill_diameter
 
         self.btlx_drilling_params_cross = {
             "ReferencePlaneID": cross_face_index,
             "StartX": StartX,
             "StartY": StartY,
             "Angle": Angle,
-            "Inclination": Inclination,
+            "Inclination": float(Inclination),
             "Diameter": self.drill_diameter,
             "DepthLimited": "no",
             "Depth": 0.0
@@ -364,3 +387,109 @@ class ButtJoint(Joint):
         normal_centerline_angle = 180-math.degrees(ref_frame.zaxis.angle(self.main_beam.centerline.direction))
         length = self.cross_beam.width/(math.cos(math.radians(normal_centerline_angle)))
         return line, self.drill_diameter, length*3
+
+    def calc_params_stepjoint(self):
+        """
+        Calculate the parameters for a step joint based on a Double Cut BTLx process.
+
+        Parameters:
+        ----------
+            joint (object): The joint object.
+            main_part (object): The main part object.
+            cross_part (object): The cross part object.
+            StepDepth (float): The depth of the step joint.
+
+        Returns:
+        ----------
+            dict: A dictionary containing the calculated parameters for the step joint (double cut process)
+
+        """
+
+        # only valid for Heel Step Joint at 15mm depth
+        StepDepth = 0.0
+        HeelDepth = 15.0
+        StepShape = "heel"
+        Tenon = "no"
+        TenonWidth = 0.0
+        TenonHeight = 0.0
+
+        # finding face facing the cross beam the least
+        ref_face_id, ref_face = self.get_face_most_ortho_to_beam(self.cross_beam, self.main_beam, ignore_ends=True)
+        print "ref_face_id: ", ref_face_id
+
+
+        # face_dict = joint._beam_side_incidence(cross_part.beam, main_part.beam, ignore_ends=True)
+        # ref_frame_id = min(face_dict, key=face_dict.get)
+        # ref_frame = main_part.beam.faces[ref_frame_id]
+
+        Inclination1 = 90.0
+        Inclination2 = 90.0
+
+
+        # finding the inclination of the strut based on the two centerlines
+        StrutInclination = math.degrees(self.cross_beam.centerline.direction.angle(self.main_beam.centerline.direction))
+        # print (StrutInclination)
+        angle1 = (180 - StrutInclination)/2
+
+        # find StartX
+        buried_depth = math.sin(math.radians(90-StrutInclination))*self.main_beam.width/2
+        blank_vert_depth = self.cross_beam.width/2 - buried_depth
+        blank_edge_depth = abs(blank_vert_depth)/math.sin(math.radians(StrutInclination))
+        # print blank_edge_depth
+        startx = blank_edge_depth/2
+        starty = self.main_beam.width/4
+
+        outside_length = self.main_beam.width/math.tan(math.radians(StrutInclination))
+        x_main_cutting_face = outside_length + blank_edge_depth
+
+        vec_angle2 = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(x_main_cutting_face, 0))
+        vec_xaxis = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(0, self.cross_beam.width - starty))
+        angle2 = vec_xaxis.angle(vec_angle2, True)
+
+        if self.ends[str(self.main_beam.key)] == "start":
+            StartX = startx
+            StartY = self.main_beam.width - starty
+            Angle1 = angle2
+            Angle2 = angle1
+        else:
+            StartX = self.main_beam.blank_length - startx
+            StartY = starty
+            Angle1 = 180 - angle1
+            Angle2 = 180 - angle2
+
+        self.bm_sub_volume = Brep.from_box(self.cross_beam.blank)
+        print "orientation: ", self.ends[str(self.main_beam.key)]
+        print "StartX: ", StartX
+        print "StartY: ", StartY
+        print "Angle1: ", Angle1
+        print "Inclination1: ", Inclination1
+        print "Angle2: ", Angle2
+        print "Inclination2: ", Inclination2
+        print "ReferencePlaneID: ", ref_face_id
+
+
+        self.btlx_stepjoint_params_main = {
+            "Orientation": self.ends[str(self.main_beam.key)],
+            "StartX": StartX,
+            "StrutInclination": StrutInclination,
+            "StepDepth": StepDepth,
+            "HeelDepth": HeelDepth,
+            "StepShape": StepShape,
+            "Tenon": Tenon,
+            "TenonWidth": TenonWidth,
+            "TenonHeight": TenonHeight,
+            "ReferencePlaneID": ref_face_id
+        }
+
+        self.btlx_params_stepjoint_main = {
+            "Orientation": self.ends[str(self.main_beam.key)],
+            "StartX": float(StartX),
+            "StartY": float(StartY),
+            "Angle1": float(Angle1),
+            "Inclination1": float(Inclination1),
+            "Angle2": Angle2,
+            "Inclination2": Inclination2,
+            "ReferencePlaneID": ref_face_id,
+        }
+
+        return True
