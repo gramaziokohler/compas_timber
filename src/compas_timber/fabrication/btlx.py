@@ -10,7 +10,6 @@ import compas
 from compas.geometry import Frame
 from compas.geometry import angle_vectors
 from compas.geometry import Transformation
-# from compas_timber.fabrication import BTLxText ##TODO this creates an importing loop // we need to redefine the conceptual logic
 
 class BTLx(object):
     """Class representing a BTLx object.
@@ -38,6 +37,7 @@ class BTLx(object):
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
     REGISTERED_JOINTS = {}
+    REGISTERED_FEATURES = {}
     FILE_ATTRIBUTES = OrderedDict(
         [
             ("xmlns", "https://www.design2machine.com"),
@@ -91,14 +91,9 @@ class BTLx(object):
         for joint in self.joints:
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
             factory_type.apply_processings(joint, self.parts)
-
-        # for part in self.parts.values():
-        #     if self.beam.engrave:
-        #         if part.processings:
-        #             ref_plane_id = part.processing[0].header_attributes.get("ReferencePlaneID", 1)
-        #         params_dict = part.get_text_engraving_params()
-        #         params_dict["ReferencePlaneID"] = ref_plane_id
-        #         part.processings.append(BTLxText.create_process(params_dict))
+        for part in self.parts.values():
+            factory_type = self.REGISTERED_FEATURES.get("TextID")
+            factory_type.apply_processings(part)
 
     @classmethod
     def register_joint(cls, joint_type, joint_factory):
@@ -117,6 +112,24 @@ class BTLx(object):
 
         """
         cls.REGISTERED_JOINTS[str(joint_type)] = joint_factory
+
+    @classmethod
+    def register_feature(cls, feature_type, feature_factory):
+        """Registers a feature type and its corresponding factory.
+
+        Parameters
+        ----------
+        feature_type : type
+            The type of the feature.
+        feature_factory : : class:`~compas_timber.fabrication.feature_factories.feature_factory.FeatureFactory`
+            The factory for creating the feature.
+
+        Returns
+        -------
+        None
+
+        """
+        cls.REGISTERED_FEATURES[str(feature_type)] = feature_factory
 
     @property
     def file_history(self):
@@ -177,10 +190,12 @@ class BTLxPart(object):
             beam.frame.yaxis,
         )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self.blank_length = beam.blank_length
+        # self.intersections = beam.attributes["intersections"]
         self.intersections = beam.intersections
         self._reference_surfaces = []
         self.processings = []
         self._et_element = None
+
 
     def reference_surface_from_beam_face(self, beam_face):
         """Finds the reference surface with normal that matches the normal of the beam face argument
@@ -240,33 +255,6 @@ class BTLxPart(object):
                 ),
             }
         return self._reference_surfaces[str(index)]
-
-    def get_engraving_position(self):
-        """Finds the optimal parameter on the line for the text engraving process."""
-        all_points = sorted([0] + self.intersections + [1])
-
-        max_length = 0
-        optimal_midpoint = None
-        for i in range(len(all_points) - 1):
-            seg_length = all_points[i+1] - all_points[i]
-            if seg_length > max_length:
-                max_length = seg_length
-                optimal_midpoint = (all_points[i] + all_points[i+1]) / 2
-        return optimal_midpoint
-
-    def get_text_engraving_params(self):
-        """Returns the text engraving parameters for the BTLx part."""
-        return {
-            "ReferencePlaneID": 1, #default face
-            "StartX": self.get_engraving_position(),
-            "StartY": self.width/2, #always set it to the middle of the beam
-            "Angle": 0,
-            "AlignmentVertical": "center",
-            "AlignmentHorizontal": "center",
-            "AlignmentMultiline": "center",
-            "TextHeight": 20,
-            "Text": self.beam.attributes["airModule_no"] + "_" + self.beam.attributes["assemblyModule_no"] + "_" + self.beam.attributes["beam_no"]
-        }
 
     @property
     def attr(self):

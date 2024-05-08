@@ -63,7 +63,7 @@ class BTLxFrenchRidgeLap(object):
         self.orientation = joint.ends[str(part.key)]
         self._ref_edge = True
         self._drill_hole = True if drill_diameter > 0 else False
-        self.drill_hole_diameter = drill_diameter
+        self.drill_hole_diameter = float(drill_diameter)
 
         self.ref_face_index = self.joint.reference_face_indices[str(self.beam.key)]
         self.ref_face = self.part.reference_surface_planes(str(self.ref_face_index))
@@ -137,8 +137,8 @@ class BTLxFrenchRidgeLap(object):
                 self.angle_rad = abs(self.angle_rad)
 
             self.startX = abs(self.beam.width / math.tan(self.angle_rad))
-            print(self.angle_lines, "angle_lines")
-            print(self.startX)
+            # print(self.angle_lines, "angle_lines")
+            # print(self.startX)
             if self.angle_lines < math.pi / 2:
                 self.startX = 0.0
 
@@ -158,15 +158,15 @@ class BTLxFrenchRidgeLap(object):
             else:
                 self.startX = self.beam.blank_length + self.startX
 
-        print("orientation: ", self.orientation, " angle: ", self.angle_rad, " start: ", self.startX)
-        print(
-            "ref_edge: ",
-            self.ref_edge,
-            " drill_hole: ",
-            self.drill_hole,
-            " drill_hole_diameter: ",
-            self.drill_hole_diameter,
-        )
+        # print("orientation: ", self.orientation, " angle: ", self.angle_rad, " start: ", self.startX)
+        # print(
+        #     "ref_edge: ",
+        #     self.ref_edge,
+        #     " drill_hole: ",
+        #     self.drill_hole,
+        #     " drill_hole_diameter: ",
+        #     self.drill_hole_diameter,
+        # )
 
     @classmethod
     def create_process(cls, part, joint, is_top, drill_diameter):

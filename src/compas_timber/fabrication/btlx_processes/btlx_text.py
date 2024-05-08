@@ -1,10 +1,6 @@
 from collections import OrderedDict
-# from compas_timber.fabrication import BTLx ##TODO if not disabled it creates a loop when we import it in the BTLx module
+from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
-
-##TODO hardcode the values in here instead of the BTLx module
-POINT_PRECISION = 3
-ANGLE_PRECISION = 3
 
 class BTLxText(object):
     """
@@ -32,8 +28,6 @@ class BTLxText(object):
         self.alignment_vertical = param_dict["AlignmentVertical"]
         self.alignment_horizontal = param_dict["AlignmentHorizontal"]
         self.alignment_multiline = param_dict["AlignmentMultiline"]
-        self.stacked_marking = param_dict["StackedMarking"]
-        self.text_height_auto = param_dict["TextHeightAuto"]
         self.text_height = param_dict["TextHeight"]
         self.text = param_dict["Text"]
 
@@ -67,15 +61,13 @@ class BTLxText(object):
             """the following attributes are specific to a text engraving"""
             od = OrderedDict(
                 [
-                    ("StartX", "{:.{prec}f}".format(self.start_x, prec=POINT_PRECISION)),
-                    ("StartY", "{:.{prec}f}".format(self.start_y, prec=POINT_PRECISION)),
-                    ("Angle", "{:.{prec}f}".format(self.angle, prec=ANGLE_PRECISION)),
+                    ("StartX", "{:.{prec}f}".format(self.start_x, prec=BTLx.POINT_PRECISION)),
+                    ("StartY", "{:.{prec}f}".format(self.start_y, prec=BTLx.POINT_PRECISION)),
+                    ("Angle", "{:.{prec}f}".format(self.angle, prec=BTLx.ANGLE_PRECISION)),
                     ("AlignmentVertical", str(self.alignment_vertical)),
                     ("AlignmentHorizontal", str(self.alignment_horizontal)),
                     ("AlignmentMultiline", str(self.alignment_multiline)),
-                    ("StackedMarking", bool(self.stacked_marking)),
-                    ("TextHeightAuto", bool(self.text_height_auto)),
-                    ("TextHeight", "{:.{prec}f}".format(self.text_height, prec=POINT_PRECISION)),
+                    ("TextHeight", "{:.{prec}f}".format(self.text_height, prec=BTLx.POINT_PRECISION)),
                     ("Text", str(self.text)),
 
                 ]
