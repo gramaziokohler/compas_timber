@@ -361,14 +361,6 @@ class ButtJoint(Joint):
         else:
             Inclination = inclination
 
-
-        print "ReferencePlaneID: ", cross_face_index
-        print "StartX: ", StartX
-        print "StartY: ", StartY
-        print "Angle: ", Angle
-        print "Inclination: ", Inclination
-        print "Diameter: ", self.drill_diameter
-
         self.btlx_drilling_params_cross = {
             "ReferencePlaneID": cross_face_index,
             "StartX": StartX,
@@ -385,7 +377,7 @@ class ButtJoint(Joint):
         line = Line(start_point, line_point)
         line.start.translate(-line.vector)
         normal_centerline_angle = 180-math.degrees(ref_frame.zaxis.angle(self.main_beam.centerline.direction))
-        length = self.cross_beam.width/(math.cos(math.radians(normal_centerline_angle)))
+        length = abs(self.cross_beam.width/(math.cos(math.radians(normal_centerline_angle))))
         return line, self.drill_diameter, length*3
 
     def calc_params_stepjoint(self):
@@ -428,34 +420,52 @@ class ButtJoint(Joint):
 
         # finding the inclination of the strut based on the two centerlines
         StrutInclination = math.degrees(self.cross_beam.centerline.direction.angle(self.main_beam.centerline.direction))
+        print "StrutInclination: ", StrutInclination
         # print (StrutInclination)
-        angle1 = (180 - StrutInclination)/2
+        if StrutInclination < 90:
+            angle1 = (180 - StrutInclination)/2
+            strutinclination = StrutInclination
+        else:
+            angle1 = StrutInclination/2
+            strutinclination = 180 - StrutInclination
 
         # find StartX
-        buried_depth = math.sin(math.radians(90-StrutInclination))*self.main_beam.width/2
+        buried_depth = math.sin(math.radians(90-strutinclination))*self.main_beam.width/2
         blank_vert_depth = self.cross_beam.width/2 - buried_depth
-        blank_edge_depth = abs(blank_vert_depth)/math.sin(math.radians(StrutInclination))
+        blank_edge_depth = abs(blank_vert_depth)/math.sin(math.radians(strutinclination))
         # print blank_edge_depth
         startx = blank_edge_depth/2
         starty = self.main_beam.width/4
 
-        outside_length = self.main_beam.width/math.tan(math.radians(StrutInclination))
+        outside_length = self.main_beam.width/math.tan(math.radians(strutinclination))
         x_main_cutting_face = outside_length + blank_edge_depth
 
         vec_angle2 = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(x_main_cutting_face, 0))
         vec_xaxis = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(0, self.cross_beam.width - starty))
         angle2 = vec_xaxis.angle(vec_angle2, True)
-
-        if self.ends[str(self.main_beam.key)] == "start":
-            StartX = startx
-            StartY = self.main_beam.width - starty
-            Angle1 = angle2
-            Angle2 = angle1
+        print StrutInclination
+        if StrutInclination < 90:
+            if self.ends[str(self.main_beam.key)] == "start":
+                StartX = startx
+                StartY = self.main_beam.width - starty
+                Angle1 = angle2
+                Angle2 = angle1
+            else:
+                StartX = self.main_beam.blank_length - startx
+                StartY = starty
+                Angle1 = 180 - angle1
+                Angle2 = 180 - angle2
         else:
-            StartX = self.main_beam.blank_length - startx
-            StartY = starty
-            Angle1 = 180 - angle1
-            Angle2 = 180 - angle2
+            if self.ends[str(self.main_beam.key)] == "start":
+                StartX = startx
+                StartY = starty
+                Angle1 = 180-angle1
+                Angle2 = 180-angle2
+            else:
+                StartX = self.main_beam.blank_length - startx
+                StartY = self.main_beam.width - starty
+                Angle1 = angle2
+                Angle2 = angle1
 
         self.bm_sub_volume = Brep.from_box(self.cross_beam.blank)
         print "orientation: ", self.ends[str(self.main_beam.key)]

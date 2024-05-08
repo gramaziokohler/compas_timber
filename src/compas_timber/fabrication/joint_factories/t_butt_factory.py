@@ -39,6 +39,9 @@ class TButtFactory(object):
             ref_face = main_part.beam.faces[joint.main_face_index]
             joint.btlx_params_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
             main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, "T-Butt Joint"))
+        elif joint.stepjoint:
+            joint.btlx_params_stepjoint_main["ReferencePlaneID"] = str(4)
+            main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_stepjoint_main, "T-Butt Joint"))
         else:
             main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 
@@ -49,11 +52,7 @@ class TButtFactory(object):
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
 
         if joint.drill_diameter > 0:
-            joint.btlx_drilling_params_cross["ReferencePlaneID"] = str(joint.btlx_params_cross["ReferencePlaneID"])
+            joint.btlx_drilling_params_cross["ReferencePlaneID"] = str(cross_part.reference_surface_from_beam_face(ref_plane))
             cross_part.processings.append(BTLxDrilling.create_process(joint.btlx_drilling_params_cross, "T-Butt Joint"))
-
-        if joint.stepjoint:
-            joint.btlx_params_stepjoint_main["ReferencePlaneID"] = str(4)
-            main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_stepjoint_main, "T-Butt Joint"))
 
 BTLx.register_joint(TButtJoint, TButtFactory)
