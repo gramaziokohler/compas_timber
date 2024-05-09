@@ -40,8 +40,8 @@ class TextFactory(object):
             "AlignmentHorizontal": "center",
             "AlignmentMultiline": "center",
             "TextHeight": 20.0,
-            # "Text": part.beam.attributes["airModule_no"]
-            "Text": "AM01_05"
+            "Text": part.ID
+            # "Text": "AM01_05"
         }
 
     @classmethod
@@ -68,6 +68,7 @@ class TextFactory(object):
             ref_plane_id = "1"
         params_dict = TextFactory.get_text_engraving_params(part)
         params_dict["ReferencePlaneID"] = ref_plane_id
+        print(params_dict["Text"])
         part.processings.append(BTLxText.create_process(params_dict, "Text"))
 
 BTLx.register_feature("TextID", TextFactory)
