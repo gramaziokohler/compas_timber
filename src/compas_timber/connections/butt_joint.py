@@ -281,15 +281,6 @@ class ButtJoint(Joint):
         Inclination1 = angle_vectors(ref_frame.zaxis, plane1.normal, deg=True)
         Inclination2 = angle_vectors(ref_frame.zaxis, plane2.normal, deg=True)
 
-        print "orientation: ", self.ends[str(self.main_beam.key)]
-        print "StartX: ", StartX
-        print "StartY: ", StartY
-        print "Angle1: ", Angle1
-        print "Inclination1: ", Inclination1
-        print "Angle2: ", Angle2
-        print "Inclination2: ", Inclination2
-        print "ReferencePlaneID: ", self.main_face_index
-
         self.btlx_params_main = {
             "Orientation": self.ends[str(self.main_beam.key)],
             "StartX": StartX,
@@ -407,7 +398,6 @@ class ButtJoint(Joint):
 
         # finding face facing the cross beam the least
         ref_face_id, ref_face = self.get_face_most_ortho_to_beam(self.cross_beam, self.main_beam, ignore_ends=True)
-        print "ref_face_id: ", ref_face_id
 
 
         # face_dict = joint._beam_side_incidence(cross_part.beam, main_part.beam, ignore_ends=True)
@@ -420,8 +410,6 @@ class ButtJoint(Joint):
 
         # finding the inclination of the strut based on the two centerlines
         StrutInclination = math.degrees(self.cross_beam.centerline.direction.angle(self.main_beam.centerline.direction))
-        print "StrutInclination: ", StrutInclination
-        # print (StrutInclination)
         if StrutInclination < 90:
             angle1 = (180 - StrutInclination)/2
             strutinclination = StrutInclination
@@ -443,7 +431,6 @@ class ButtJoint(Joint):
         vec_angle2 = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(x_main_cutting_face, 0))
         vec_xaxis = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(0, self.cross_beam.width - starty))
         angle2 = vec_xaxis.angle(vec_angle2, True)
-        print StrutInclination
         if StrutInclination < 90:
             if self.ends[str(self.main_beam.key)] == "start":
                 StartX = startx
@@ -468,15 +455,6 @@ class ButtJoint(Joint):
                 Angle2 = angle1
 
         self.bm_sub_volume = Brep.from_box(self.cross_beam.blank)
-        print "orientation: ", self.ends[str(self.main_beam.key)]
-        print "StartX: ", StartX
-        print "StartY: ", StartY
-        print "Angle1: ", Angle1
-        print "Inclination1: ", Inclination1
-        print "Angle2: ", Angle2
-        print "Inclination2: ", Inclination2
-        print "ReferencePlaneID: ", ref_face_id
-
 
         self.btlx_stepjoint_params_main = {
             "Orientation": self.ends[str(self.main_beam.key)],
