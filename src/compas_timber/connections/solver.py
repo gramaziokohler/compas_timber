@@ -242,7 +242,7 @@ class ConnectionSolver(object):
         # Vector from the start of the line segment to the given point
         point_vector = [(point.x - line.start.x), (point.y - line.start.y), (point.z - line.start.z)]
         # Calculate the parameter (t) using dot product
-        t = dot_vectors(point_vector, line.vector) / dot_vectors(line.vector, line.vector)
+        t = dot_vectors(point_vector, line.vector) / dot_vectors(line.vector, line.vector) #denomenator is the length^2 of the vector
         return t
 
     @staticmethod
