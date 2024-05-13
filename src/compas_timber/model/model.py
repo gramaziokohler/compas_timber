@@ -1,10 +1,5 @@
-import uuid
-
 from compas.geometry import Point
 from compas_model.models import Model
-
-from ..elements import Beam
-from ..connections import Joint
 
 
 class TimberModel(Model):
@@ -158,4 +153,3 @@ class TimberModel(Model):
 
     def set_topologies(self, topologies):
         self._topologies = topologies
-
