@@ -37,7 +37,7 @@ def test_simple_sequence_generator_get_beam(mock_assembly):
     assert len(plan) == len(mock_assembly.beams)
     for step, beam in zip(plan, mock_assembly.beams):
         beam_guid = step.element_ids[0]
-        assert beam is mock_assembly.elementdict[beam_guid]
+        assert beam is mock_assembly.beam_by_guid(beam_guid)
 
 
 def test_serialize_plan(mock_assembly):

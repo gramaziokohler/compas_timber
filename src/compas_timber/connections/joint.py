@@ -76,7 +76,7 @@ class Joint(Interaction):
         """
         raise NotImplementedError
 
-    def restore_beams_from_keys(self):
+    def restore_beams_from_keys(self, model):
         """Restores the reference to the beams associate with this joint.
 
         During serialization, :class:`compas_timber.parts.Beam` objects

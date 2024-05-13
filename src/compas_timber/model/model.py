@@ -1,4 +1,8 @@
-from compas_model.model import Model
+import uuid
+from compas_model.models import Model
+
+from ..elements import Beam
+from ..connections import Joint
 
 
 class TimberModel(Model):
@@ -19,10 +23,9 @@ class TimberModel(Model):
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
-        print(f"de-serializing data[elementlist]: {data['elementlist']}")
-        for element in model.elementlist:
+        for element in model.elements():
             model._beams.append(element)
-        for interaction in model.interactionlist:
+        for interaction in model.interactions():
             model._joints.append(interaction)
             interaction.restore_beams_from_keys(model)
             interaction.add_features()
@@ -55,6 +58,10 @@ class TimberModel(Model):
     def joints(self):
         # type: () -> list[Joint]
         return self._joints
+
+    def beam_by_guid(self, guid):
+        # type: (uuid.UUID) -> Beam
+        return self._guid_element[guid]
 
     def add_beam(self, beam):
         """Adds a Beam to this model.
