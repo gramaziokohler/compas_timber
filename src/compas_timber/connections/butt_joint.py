@@ -79,27 +79,6 @@ class ButtJoint(Joint):
     def joint_type(self):
         return "Butt"
 
-    def get_main_cutting_plane(self):
-        """Returns the cutting plane for the main beam and the beam.face from which it is derived."""
-        assert self.main_beam and self.cross_beam
-
-        self.reference_side_index_cross, _ = self.get_face_most_towards_beam(
-            self.main_beam, self.cross_beam, ignore_ends=False
-        )
-        if self.reject_i and self.reference_side_index_cross in [4, 5]:
-            raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
-            )
-
-        self.reference_side_index_cross, cfr = self.get_face_most_ortho_to_beam(
-            self.main_beam, self.cross_beam, ignore_ends=True
-        )
-        self.btlx_params_cross["reference_plane_id"] = self.reference_side_index_cross
-        cross_mating_frame = cfr.copy()
-        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
-        cfr.point = cfr.point + cfr.zaxis * self.mill_depth
-        return cfr, cross_mating_frame
-
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
         self.main_beam = assemly.find_by_key(self.main_beam_key)
