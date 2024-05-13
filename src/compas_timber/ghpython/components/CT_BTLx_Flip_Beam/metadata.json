@@ -1,0 +1,50 @@
+{
+    "name": "WriteBTLx",
+    "nickname": "WriteBTLx",
+    "category": "COMPAS Timber",
+    "subcategory": "Fabrication",
+    "description": "Writes a BTLx file for machining of assembly parts.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Assembly",
+                "description": "Assembly object.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Path",
+                "description": "Filepath for new BTLx.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Write",
+                "description": "Write to file.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Beam Key",
+                "description": "beam key of beam to split",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "flip once",
+                "description": "splits BTLx file into 2. if false, splits into 4.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "BTLx",
+                "description": "BTLx with two parts representing the two sides of the beam."
+            }
+        ]
+    }
+}
