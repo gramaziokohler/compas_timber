@@ -1,4 +1,5 @@
 import os
+from re import split
 import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
@@ -73,6 +74,37 @@ class BTLx(object):
             "Comment": "",
         }
 
+    def get_split_strings(self, beam_key, split_into_two = True):
+
+        if split_into_two:
+            split_lists = [[1,2,6],[3,4,5]]
+        else:
+            split_lists = [[1],[2],[3],[4,5,6]]
+
+        part = self.parts[str(beam_key)]
+
+        start_ref_plane = part.get_start_end_ref_plane()
+        print("start_ref_plane", start_ref_plane)
+        for i, list in enumerate(split_lists):
+            if start_ref_plane in list:
+                last_list = split_lists.pop(i)
+                split_lists.append(last_list)
+                break
+        print("split_lists", split_lists)
+        ET_element = ET.Element("BTLx", BTLx.FILE_ATTRIBUTES)
+        ET_element.append(self.file_history)
+        project_element = ET.SubElement(ET_element, "Project", Name="testProject")
+        parts_element = ET.SubElement(project_element, "Parts")
+
+        for i, ref_plane_list in enumerate(split_lists):
+            part.element_number = str(i+1)
+            parts_element.append(part.et_element(ref_plane_list))
+
+
+        return MD.parseString(ET.tostring(ET_element)).toprettyxml(indent="   ")
+
+
+
     def btlx_string(self):
         """Returns a pretty XML string for visualization in GH, Terminal, etc."""
         self.ET_element = ET.Element("BTLx", BTLx.FILE_ATTRIBUTES)
@@ -81,7 +113,7 @@ class BTLx(object):
         self.parts_element = ET.SubElement(self.project_element, "Parts")
 
         for part in self.parts.values():
-            self.parts_element.append(part.et_element)
+            self.parts_element.append(part.et_element())
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
     def process_assembly(self):
@@ -192,10 +224,10 @@ class BTLxPart(object):
         )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self.blank_length = beam.blank_length
         self.ID = beam.attributes["ID"]
+        self.element_number = 0
         self.intersections = beam.intersections
         self._reference_surfaces = []
         self.processings = []
-        self._et_element = None
 
 
     def reference_surface_from_beam_face(self, beam_face):
@@ -278,7 +310,7 @@ class BTLxPart(object):
             "Weight": "0",
             "ProcessingQuality": "automatic",
             "StoreyType": "",
-            "ElementNumber": "00",
+            "ElementNumber": str(self.element_number),
             "Layer": "0",
             "ModuleNumber": "",
         }
@@ -313,19 +345,33 @@ class BTLxPart(object):
             "Z": "{:.{prec}f}".format(point.z, prec=BTLx.POINT_PRECISION),
         }
 
-    @property
-    def et_element(self):
-        if not self._et_element:
-            self._et_element = ET.Element("Part", self.attr)
-            self._shape_strings = None
-            self._et_element.append(self.et_transformations)
-            self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
-            self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
-            processings_et = ET.Element("Processings")
-            for process in self.processings:
+    def get_start_end_ref_plane(self):
+        result = 0
+        for process in self.processings:
+            name = process.header_attributes.get("Name")
+            if name.split(" ")[0] == "start":
+                result = process.header_attributes.get("ReferencePlaneID")
+        return int(result)
+
+
+    def et_element(self, ref_sides = [1,2,3,4,5,6]):
+
+        self._et_element = ET.Element("Part", self.attr)
+        self._shape_strings = None
+        self._et_element.append(self.et_transformations)
+        self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
+        self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
+        processings_et = ET.Element("Processings")
+
+        for process in self.processings:
+            print(process.header_attributes.get("ReferencePlaneID"))
+            print(ref_sides)
+            if int(process.header_attributes.get("ReferencePlaneID")) in ref_sides:
+                print("in ref sides")
                 processings_et.append(process.et_element)
-            self._et_element.append(processings_et)
-            self._et_element.append(self.et_shape)
+
+        self._et_element.append(processings_et)
+        self._et_element.append(self.et_shape)
         return self._et_element
 
     @property

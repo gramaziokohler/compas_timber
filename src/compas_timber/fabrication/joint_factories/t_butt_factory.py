@@ -38,12 +38,12 @@ class TButtFactory(object):
         if joint.birdsmouth:
             ref_face = main_part.beam.faces[joint.main_face_index]
             joint.btlx_params_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
-            main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, "T-Butt Joint"))
+            main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, joint.ends[str(main_part.key)] + " T-Butt Joint"))
         elif joint.stepjoint:
             joint.btlx_params_stepjoint_main["ReferencePlaneID"] = str(4)
-            main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_stepjoint_main, "T-Butt Joint"))
+            main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_stepjoint_main, joint.ends[str(main_part.key)] + " T-Butt Joint"))
         else:
-            main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
+            main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, joint.ends[str(main_part.key)] + " T-Butt Joint"))
 
         joint.btlx_params_cross["reference_plane_id"] = str(cross_part.reference_surface_from_beam_face(ref_plane))
         if joint.mill_depth > 0:
