@@ -242,9 +242,19 @@ class ButtJoint(Joint):
 
 
         cross_ref_main = cross_vectors(og_frame.zaxis, self.main_beam.centerline.direction)
+        cross_centerlines = cross_vectors(self.main_beam.centerline.direction, self.cross_beam.centerline.direction)
         self.test.append(Line(og_frame.point, og_frame.point + cross_ref_main * 100))
         angle = angle_vectors(cross_ref_main, og_frame.yaxis, deg=True)
-        if angle < 1.0 or angle > 179.0:
+        angle2 = angle_vectors(cross_centerlines, self.main_beam.frame.zaxis, deg=True)
+        angle2 = round(angle2, 1) - 180
+        print("angle2", angle2+180)
+        threshold_angle = 3.0
+        # if angle < 1.0 or angle > 179.0:
+        #     self.birdsmouth = False
+        #     return False
+
+        if abs(angle2)%90 <= threshold_angle or abs((abs(angle2)-90)%90) <= threshold_angle:
+            print("smaller than threshold", abs(angle2%90))
             self.birdsmouth = False
             return False
 
