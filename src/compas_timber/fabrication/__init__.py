@@ -9,6 +9,7 @@ from .btlx_processes.btlx_drilling import BTLxDrilling
 from .joint_factories.french_ridge_factory import FrenchRidgeFactory
 from .joint_factories.l_butt_factory import LButtFactory
 from .joint_factories.l_miter_factory import LMiterFactory
+from .joint_factories.l_halflap_factory import LHalfLapFactory
 from .joint_factories.t_butt_factory import TButtFactory
 from .joint_factories.text_factory import TextFactory
 
@@ -21,7 +22,8 @@ __all__ = [
     "BTLxDoubleCut",
     "BTLxDrilling",
     "BTLxFrenchRidgeLap",
-    "LButtFactory",
+    "LButtFactory"
+    "LHalfLapFactory",
     "TButtFactory",
     "LMiterFactory",
     "FrenchRidgeFactory",

@@ -1,4 +1,5 @@
 from compas.geometry import Frame
+from compas.geometry import angle_vectors
 from compas_timber.parts import CutFeature
 from compas_timber.parts import MillVolume
 
@@ -47,8 +48,48 @@ class LHalfLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, drill_diameter=0.0, **kwargs):
+        super(LHalfLapJoint, self).__init__(**kwargs)
+
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
+        self.main_beam_key = main_beam.key if main_beam else None
+        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.flip_lap_side = flip_lap_side
+        self.cut_plane_bias = cut_plane_bias
+        self.drill_diameter = float(drill_diameter)
+        self.btlx_params_main = {}
+        self.btlx_params_cross = {}
+        self.btlx_drilling_params_main = {}
+        self.features = []
+        self.test = []
+        self.top_cross_plane = self.get_world_top_bottom_faces(self.cross_beam)[0]
+        self.bottom_main_plane = self.get_world_top_bottom_faces(self.main_beam)[1]
+
+    @property
+    def __data__(self):
+        data_dict = {
+            "main_beam_key": self.main_beam_key,
+            "cross_beam_key": self.cross_beam_key,
+        }
+        data_dict.update(super(LHalfLapJoint, self).__data__)
+        return data_dict
+
+    @classmethod
+    def __from_data__(cls, value):
+        instance = cls(**value)
+        instance.main_beam_key = value["main_beam_key"]
+        instance.cross_beam_key = value["cross_beam_key"]
+        return instance
+
+    @property
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
+
+    def restore_beams_from_keys(self, assemly):
+        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
+        self.main_beam = assemly.find_by_key(self.main_beam_key)
+        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
 
     def add_extensions(self):
         """Adds the extensions to the main beam and cross beam.
@@ -74,11 +115,18 @@ class LHalfLapJoint(LapJoint):
         assert self.main_beam and self.cross_beam
 
         try:
-            main_cutting_frame = self.get_main_cutting_frame()
-            cross_cutting_frame = self.get_cross_cutting_frame()
+            main_cutting_frame = self.main_beam.faces[self.bottom_main_plane]
+            cross_cutting_frame =  self.cross_beam.faces[self.top_cross_plane]
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
+            print(ex)
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+
+        #call functions to calculate the parameters
+        self.calc_params_cross()
+        self.calc_params_main()
+        if self.drill_diameter > 0:
+            self.calc_params_drilling_main()
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)
@@ -94,3 +142,86 @@ class LHalfLapJoint(LapJoint):
         self.main_beam.add_features(f_main)
 
         self.features = [main_volume, cross_volume, f_main, f_cross]
+
+    def get_world_top_bottom_faces(self, beam):
+        faces = beam.faces
+        face_normals = [face.zaxis for face in faces]
+        angles = [angle_vectors(face_normal, [0, 0, 1]) for face_normal in face_normals]
+
+        top_face_index = angles.index(min(angles))
+        bottom_face_index = angles.index(max(angles))
+        return top_face_index, bottom_face_index
+
+    def calc_params_main(self):
+        if self.ends[str(self.main_beam.key)] == "start":
+            start_x = 0.0
+        else:
+            start_x = self.main_beam.blank_length
+
+        self.btlx_params_main["ReferencePlaneID"] = str(self.bottom_main_plane)
+        self.btlx_params_cross["Orientation"] = self.ends[str(self.main_beam.key)]
+        self.btlx_params_cross["start_x"] = start_x
+        self.btlx_params_cross["start_y"] = 0.0
+        self.btlx_params_main["depth"] = 30.0
+        self.btlx_params_main["width"] = 60.0
+        self.btlx_params_main["length"] = 60.0
+        self.btlx_params_main["machining_limits"] = {
+        "FaceLimitedFront": "no",
+        "FaceLimitedBack": "no",
+                }
+
+    def calc_params_cross(self):
+        if self.ends[str(self.cross_beam.key)] == "start":
+            start_x = 0.0
+        else:
+            start_x = self.cross_beam.blank_length
+
+        self.btlx_params_cross["ReferencePlaneID"] = str(self.top_cross_plane)
+        self.btlx_params_cross["Orientation"] = self.ends[str(self.cross_beam.key)]
+        self.btlx_params_cross["start_x"] = start_x
+        self.btlx_params_cross["start_y"] = 0.0
+        self.btlx_params_cross["length"] = 60.0
+        self.btlx_params_cross["width"] = 60.0
+        self.btlx_params_cross["depth"] = 30.0
+        self.btlx_params_cross["machining_limits"] = {
+        "FaceLimitedFront": "no",
+        "FaceLimitedBack": "no",
+                }
+
+    def calc_params_drilling_main(self):
+        """
+        Calculate the parameters for a drilling joint.
+
+        Parameters:
+        ----------
+            joint (object): The joint object.
+            main_part (object): The main part object.
+
+        Returns:
+        ----------
+            dict: A dictionary containing the calculated parameters for the drilling joint
+
+        """
+        if self.ends[str(self.cross_beam.key)] == "start":
+            start_x = 30.0
+        else:
+            start_x = self.cross_beam.blank_length - 30.0
+
+        self.btlx_drilling_params_main = {
+            "ReferencePlaneID": self.bottom_main_plane,
+            "StartX": start_x,
+            "StartY": 30.0,
+            "Angle": 0.0,
+            "Inclination": 90.0,
+            "Diameter": self.drill_diameter,
+            "DepthLimited": "no",
+            "Depth": 0.0
+
+        }
+
+        # # Rhino geometry visualization
+        # line = Line(start_point, line_point)
+        # line.start.translate(-line.vector)
+        # normal_centerline_angle = 180-math.degrees(ref_frame.zaxis.angle(self.main_beam.centerline.direction))
+        # length = abs(self.cross_beam.width/(math.cos(math.radians(normal_centerline_angle))))
+        # return line, self.drill_diameter, length*3
