@@ -1,4 +1,6 @@
 import uuid
+
+from compas.geometry import Point
 from compas_model.models import Model
 
 from ..elements import Beam
@@ -59,6 +61,44 @@ class TimberModel(Model):
         # type: () -> list[Joint]
         return self._joints
 
+    @property
+    def topologies(self):
+        return self._topologies
+
+    @property
+    def center_of_mass(self):
+        """Returns the center of mass of the assembly.
+
+        Returns
+        -------
+        compas.geometry.Point
+            The center of mass of the assembly.
+
+        """
+        total_vol = 0
+        total_position = Point(0, 0, 0)
+
+        for beam in self._beams:
+            vol = beam.blank.volume
+            point = beam.blank_frame.point
+            point += beam.blank_frame.xaxis * (beam.blank_length / 2)
+            total_vol += vol
+            total_position += point * vol
+
+        return Point(*total_position) * (1.0 / total_vol)
+
+    @property
+    def volume(self):
+        """Returns the volume of the assembly.
+
+        Returns
+        -------
+        float
+            The sum of the volumes of all beam.blank's in the assembly.
+
+        """
+        return sum([beam.blank.volume for beam in self._beams])
+
     def beam_by_guid(self, guid):
         # type: (uuid.UUID) -> Beam
         return self._guid_element[guid]
@@ -97,9 +137,6 @@ class TimberModel(Model):
             The identifier of the joint in the current model graph.
 
         """
-        # self._validate_joining_operation(joint, parts)
-        # create an unconnected node in the graph for the joint object
-        # TODO: for each two parts pairwise do.. in the meantime, allow only two parts
         if len(parts) != 2:
             raise ValueError("Expected 2 parts. Got instead: {}".format(len(parts)))
         a, b = parts
@@ -122,6 +159,3 @@ class TimberModel(Model):
     def set_topologies(self, topologies):
         self._topologies = topologies
 
-    @property
-    def topologies(self):
-        return self._topologies
