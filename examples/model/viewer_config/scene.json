@@ -1,0 +1,28 @@
+{
+    "dtype": "compas_viewer.configurations/ViewerConfig",
+    "data": {
+        "pointcolor": {
+            "dtype": "compas.colors/Color",
+            "data": { "red": 0.2, "green": 0.2, "blue": 0.2, "alpha": 1.0 }
+        },
+        "linecolor": {
+            "dtype": "compas.colors/Color",
+            "data": { "red": 0.4, "green": 0.4, "blue": 0.4, "alpha": 1.0 }
+        },
+        "surfacecolor": {
+            "dtype": "compas.colors/Color",
+            "data": { "red": 0.8, "green": 0.8, "blue": 0.8, "alpha": 1.0 }
+        },
+        "show_points": true,
+        "show_lines": true,
+        "show_faces": true,
+        "lineswidth": 1.0,
+        "pointssize": 10.0,
+        "opacity": 1.0,
+        "hide_coplanaredges": false,
+        "use_vertexcolors": false,
+        "framesize": [0.1, 10, 0.1, 10],
+        "show_framez": true,
+        "vectorsize": 0.3
+    }
+}

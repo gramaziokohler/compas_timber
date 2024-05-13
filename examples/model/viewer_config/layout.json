@@ -1,0 +1,123 @@
+{
+    "dtype": "compas_viewer.configurations/LayoutConfig",
+    "data": {
+        "window": {
+            "dtype": "compas_viewer.configurations/WindowConfig",
+            "data": {
+                "about": "compas_viewer is the standalone viewer for COMPAS.",
+                "title": "COMPAS VIEWER",
+                "width": 1600,
+                "height": 900,
+                "fullscreen": false
+            }
+        },
+        "statusbar": {
+            "dtype": "compas_viewer.configurations/StatusbarConfig",
+            "data": {
+                "text": "compas_viewer",
+                "show_fps": true
+            }
+        },
+        "menubar": {
+            "dtype": "compas_viewer.configurations/MenubarConfig",
+            "data": {
+                "config": {
+                    "File": {
+                        "Import": {
+                            "action": "import_file"
+                        },
+                        "Export": {
+                            "action": "export_file"
+                        }
+                    },
+                    "About": {
+                        "COMPAS Framework": {
+                            "action": "url",
+                            "kwargs": {
+                                "url": "https://compas.dev/"
+                            }
+                        },
+                        "COMPAS Viewer": {
+                            "action": "url",
+                            "kwargs": {
+                                "url": "https://compas.dev/compas_viewer/latest/"
+                            }
+                        },
+                        "COMPAS Core": {
+                            "action": "url",
+                            "kwargs": {
+                                "url": "https://compas.dev/compas/latest/"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "viewport": {
+            "dtype": "compas_viewer.configurations/ViewportConfig",
+            "data": {
+                "config": {
+                    "render_1": {
+                        "category": "render",
+                        "config_path": "render.json"
+                    }
+                }
+            }
+        },
+        "toolbar": {
+            "dtype": "compas_viewer.configurations/ToolbarConfig",
+            "data": {
+                "config": {
+                    "basic": {
+                        "import_file": {
+                            "action": "import_file",
+                            "kwargs": {}
+                        },
+                        "export_file": {
+                            "action": "export_file",
+                            "kwargs": {}
+                        },
+                        "zoom_selected": {
+                            "action": "zoom_selected",
+                            "kwargs": {}
+                        },
+                        "delete_selected": {
+                            "action": "delete_selected",
+                            "kwargs": {}
+                        },
+                        "camera_info": {
+                            "action": "camera_info",
+                            "kwargs": {}
+                        },
+                        "selection_info": {
+                            "action": "selection_info",
+                            "kwargs": {}
+                        },
+                        "gl_info": {
+                            "action": "gl_info",
+                            "kwargs": {}
+                        }
+                    },
+                    "view": {
+                        "view_perspective": {
+                            "action": "view_perspective",
+                            "kwargs": {}
+                        },
+                        "view_right": {
+                            "action": "view_right",
+                            "kwargs": {}
+                        },
+                        "view_front": {
+                            "action": "view_front",
+                            "kwargs": {}
+                        },
+                        "view_top": {
+                            "action": "view_top",
+                            "kwargs": {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
