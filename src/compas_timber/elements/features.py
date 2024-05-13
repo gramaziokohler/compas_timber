@@ -3,6 +3,7 @@ from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import Polyhedron
 
 
 class FeatureApplicationError(Exception):
@@ -186,7 +187,11 @@ class MillVolume(Feature):
             The resulting geometry after processing.
 
         """
-        volume = Brep.from_mesh(self.mesh_volume)
+        # NOTE: while very similar, Polyhedron and Mesh have slightly different interface where this below is concerned
+        mesh = self.mesh_volume
+        if isinstance(self.mesh_volume, Polyhedron):
+            mesh = self.mesh_volume.to_mesh()
+        volume = Brep.from_mesh(mesh)
         try:
             return beam_geometry - volume
         except IndexError:
