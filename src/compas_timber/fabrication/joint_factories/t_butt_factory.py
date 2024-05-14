@@ -4,7 +4,6 @@ from compas_timber.fabrication import BTLxJackCut
 from compas_timber.fabrication.btlx_processes.btlx_drilling import BTLxDrilling
 from compas_timber.fabrication.btlx_processes.btlx_lap import BTLxLap
 from compas_timber.fabrication.btlx_processes.btlx_double_cut import BTLxDoubleCut
-from compas_timber.fabrication.btlx_processes.btlx_stepjoint import BTLxStepJoint
 
 
 class TButtFactory(object):
@@ -40,8 +39,13 @@ class TButtFactory(object):
             joint.btlx_params_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
             main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, "T-Butt Joint"))
         elif joint.stepjoint:
-            joint.btlx_params_stepjoint_main["ReferencePlaneID"] = str(4)
+            ref_face = main_part.beam.faces[joint.ref_face_id]
+            joint.btlx_params_stepjoint_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
             main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_stepjoint_main, "T-Butt Joint"))
+
+            ref_face_cross = cross_part.beam.faces[joint.cross_face_id]
+            joint.btlx_params_stepjoint_cross["ReferencePlaneID"] = str(cross_part.reference_surface_from_beam_face(ref_face_cross))
+            cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_stepjoint_cross, "T-Butt Joint pocket"))
         else:
             main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 
