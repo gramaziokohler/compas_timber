@@ -105,6 +105,10 @@ class TButtJoint(ButtJoint):
             self.features.append(DrillFeature(*self.calc_params_drilling()))
         if self.stepjoint:
             if self.calc_params_stepjoint():
-                self.main_beam.add_features(BrepSubtraction(self.bm_sub_volume))#not correct
-                self.features.append(BrepSubtraction(self.bm_sub_volume))#not correct
-
+                self.main_beam.add_features(BrepSubtraction(self.sj_main_sub_volume))#not correct
+                self.features.append(BrepSubtraction(self.sj_main_sub_volume))#not correct
+                # print(self.ph_sj_cross)
+                self.cross_beam.add_features(BrepSubtraction(self.sj_cross_sub_volume))#not correct
+                self.features.append(BrepSubtraction(self.sj_cross_sub_volume))#not correct
+                # self.cross_beam.add_features(MillVolume(self.ph_sj_cross))#not correct
+                # self.features.append(MillVolume(self.ph_sj_cross))#not correct
