@@ -206,7 +206,7 @@ class LHalfLapJoint(LapJoint):
         if self.ends[str(self.cross_beam.key)] == "start":
             start_x = 30.0
         else:
-            start_x = self.cross_beam.blank_length - 30.0
+            start_x = float(self.cross_beam.blank_length - 30.0)
 
         self.btlx_drilling_params_main = {
             "ReferencePlaneID": self.bottom_main_plane,
