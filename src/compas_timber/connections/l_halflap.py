@@ -48,7 +48,9 @@ class LHalfLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, drill_diameter=0.0, **kwargs):
+    def __init__(
+        self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, drill_diameter=0.0, **kwargs
+    ):
         super(LHalfLapJoint, self).__init__(**kwargs)
 
         self.main_beam = main_beam
@@ -101,28 +103,26 @@ class LHalfLapJoint(LapJoint):
         assert self.main_beam and self.cross_beam
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
 
-        extension_plane_main = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
+        extension_plane_main = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
         start_main, end_main = self.main_beam.extension_to_plane(extension_plane_main)
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
-
-        extension_plane_cross = self.get_face_most_ortho_to_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
+        self.main_beam.add_blank_extension(start_main, end_main, self.key)
+        print("extension_plane_main", start_main, end_main, extension_plane_main)
+        extension_plane_cross = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
         start_cross, end_cross = self.cross_beam.extension_to_plane(extension_plane_cross)
-        self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
-        )
+        self.cross_beam.add_blank_extension(start_cross, end_cross, self.key)
 
     def add_features(self):
         assert self.main_beam and self.cross_beam
 
         try:
             main_cutting_frame = self.main_beam.faces[self.bottom_main_plane]
-            cross_cutting_frame =  self.cross_beam.faces[self.top_cross_plane]
+            cross_cutting_frame = self.cross_beam.faces[self.top_cross_plane]
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
             print(ex)
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        #call functions to calculate the parameters
+        # call functions to calculate the parameters
         self.calc_params_cross()
         self.calc_params_main()
         if self.drill_diameter > 0:
@@ -166,9 +166,9 @@ class LHalfLapJoint(LapJoint):
         self.btlx_params_main["width"] = 60.0
         self.btlx_params_main["length"] = 60.0
         self.btlx_params_main["machining_limits"] = {
-        "FaceLimitedFront": "no",
-        "FaceLimitedBack": "no",
-                }
+            "FaceLimitedFront": "no",
+            "FaceLimitedBack": "no",
+        }
 
     def calc_params_cross(self):
         if self.ends[str(self.cross_beam.key)] == "start":
@@ -184,9 +184,9 @@ class LHalfLapJoint(LapJoint):
         self.btlx_params_cross["width"] = 60.0
         self.btlx_params_cross["depth"] = 30.0
         self.btlx_params_cross["machining_limits"] = {
-        "FaceLimitedFront": "no",
-        "FaceLimitedBack": "no",
-                }
+            "FaceLimitedFront": "no",
+            "FaceLimitedBack": "no",
+        }
 
     def calc_params_drilling_main(self):
         """
@@ -215,8 +215,7 @@ class LHalfLapJoint(LapJoint):
             "Inclination": 90.0,
             "Diameter": self.drill_diameter,
             "DepthLimited": "no",
-            "Depth": 0.0
-
+            "Depth": 0.0,
         }
 
         # # Rhino geometry visualization
