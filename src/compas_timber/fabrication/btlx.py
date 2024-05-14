@@ -92,8 +92,9 @@ class BTLx(object):
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
             factory_type.apply_processings(joint, self.parts)
         for part in self.parts.values():
-            factory_type = self.REGISTERED_FEATURES.get("TextID")
-            factory_type.apply_processings(part)
+            if part.ID:
+                factory_type = self.REGISTERED_FEATURES.get("TextID")
+                factory_type.apply_processings(part)
 
     @classmethod
     def register_joint(cls, joint_type, joint_factory):
@@ -190,7 +191,7 @@ class BTLxPart(object):
             beam.frame.yaxis,
         )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self.blank_length = beam.blank_length
-        # self.intersections = beam.attributes["intersections"]
+        self.ID = beam.attributes["ID"]
         self.intersections = beam.intersections
         self._reference_surfaces = []
         self.processings = []

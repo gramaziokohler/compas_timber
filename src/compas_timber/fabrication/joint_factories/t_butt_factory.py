@@ -51,6 +51,8 @@ class TButtFactory(object):
 
         joint.btlx_params_cross["reference_plane_id"] = str(cross_part.reference_surface_from_beam_face(ref_plane))
         if joint.mill_depth > 0:
+            if joint.btlx_params_cross["length"] <= 61:
+                joint.btlx_params_cross["length"] = 61.5
             joint.btlx_params_cross["machining_limits"] = {"FaceLimitedFront": "no", "FaceLimitedBack": "no"}
             joint.btlx_params_cross["ReferencePlaneID"] = str(cross_part.reference_surface_from_beam_face(ref_plane))
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))
