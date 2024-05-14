@@ -157,11 +157,11 @@ class LHalfLapJoint(LapJoint):
             start_x = 0.0
         else:
             start_x = self.main_beam.blank_length
-
-        self.btlx_params_main["ReferencePlaneID"] = str(self.bottom_main_plane)
-        self.btlx_params_cross["Orientation"] = self.ends[str(self.main_beam.key)]
-        self.btlx_params_cross["start_x"] = start_x
-        self.btlx_params_cross["start_y"] = 0.0
+        self.btlx_params_main["ReferencePlaneID"] = str(self.bottom_main_plane + 1)
+        self.btlx_params_main["orientation"] = self.ends[str(self.main_beam.key)]
+        self.btlx_params_main["start_x"] = start_x
+        print("start_x", start_x)
+        self.btlx_params_main["start_y"] = 0.0
         self.btlx_params_main["depth"] = 30.0
         self.btlx_params_main["width"] = 60.0
         self.btlx_params_main["length"] = 60.0
@@ -176,9 +176,10 @@ class LHalfLapJoint(LapJoint):
         else:
             start_x = self.cross_beam.blank_length
 
-        self.btlx_params_cross["ReferencePlaneID"] = str(self.top_cross_plane)
-        self.btlx_params_cross["Orientation"] = self.ends[str(self.cross_beam.key)]
+        self.btlx_params_cross["ReferencePlaneID"] = str(self.top_cross_plane + 1)
+        self.btlx_params_cross["orientation"] = self.ends[str(self.cross_beam.key)]
         self.btlx_params_cross["start_x"] = start_x
+        print("start_x", start_x)
         self.btlx_params_cross["start_y"] = 0.0
         self.btlx_params_cross["length"] = 60.0
         self.btlx_params_cross["width"] = 60.0
