@@ -183,8 +183,8 @@ class BTLxPart(object):
         self.beam = beam
         self.key = beam.key
         self.length = beam.blank_length
-        self.width = beam.height
-        self.height = beam.width
+        self.width = beam.width
+        self.height = beam.height
         self.frame = Frame(
             self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
             beam.frame.xaxis,
