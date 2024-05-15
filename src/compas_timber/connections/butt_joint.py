@@ -397,6 +397,22 @@ class ButtJoint(Joint):
             dict: A dictionary containing the calculated parameters for the step joint (double cut process)
 
         """
+        #check if beams are coplanar
+        cross_product_centerlines = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction).unitized()
+        dot_product_cp_crossbnormal = float(abs(cross_product_centerlines.dot(self.cross_beam.frame.normal)))
+        dot_product_centerline = float(abs(self.main_beam.centerline.direction.dot(self.cross_beam.centerline.direction)))
+        if 0.999 < dot_product_cp_crossbnormal or dot_product_cp_crossbnormal < 0.001:
+            self.mill_depth = 0.0
+        else:
+            self.stepjoint = False
+            return False
+
+        # if 0.999 < dot_product_centerline or dot_product_centerline < 0.001:
+        #     self.stepjoint = False
+        #     return False
+        # else:
+        #     self.mill_depth = 0.0
+
 
         face_dict = self._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         face_keys = sorted([key for key in face_dict.keys()], key=face_dict.get)
@@ -432,13 +448,15 @@ class ButtJoint(Joint):
         else:
             ref_face.point = ref_face.point - ref_face.yaxis * self.main_beam.width * 0.5
             ref_face.point = ref_face.point + ref_face.zaxis * self.main_beam.height * 0.5
-
+        # print("StrutInclination", StrutInclination)
         if StrutInclination < 90:
             angle1 = (180 - StrutInclination)/2
             strut_inclination = StrutInclination
         else:
             angle1 = StrutInclination/2
             strut_inclination = 180 - StrutInclination
+        # print("angle1", angle1)
+        # print("strut_inclination", strut_inclination)
 
         buried_depth = math.sin(math.radians(90-strut_inclination))*self.main_beam.width/2
         blank_vert_depth = self.cross_beam.width/2 - buried_depth
@@ -464,7 +482,9 @@ class ButtJoint(Joint):
             Angle1 = angle2
             Angle2 = angle1
 
-        self.sj_main_sub_volume = Brep.from_box(self.cross_beam.blank)
+        # print("Angle1", Angle1)
+        # print("Angle2", Angle2)
+
 
         Inclination1 = 90.0
         Inclination2 = 90.0
@@ -480,7 +500,6 @@ class ButtJoint(Joint):
         }
 
         #find params lap cross beam
-
         angles_dict_cross = {}
         for i, face in enumerate(self.cross_beam.faces[0:4]):
             angles_dict_cross[i] = face.normal.dot(ref_face.normal)
@@ -547,7 +566,7 @@ class ButtJoint(Joint):
                 else:
                     orientation = "start"
                     Angle_cross = Angle2
-                    LeadAngle = (180 - Angle1) + Angle2 #correct
+                    LeadAngle = (180 - Angle1) + Angle2
 
 
         main_most_towards = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
@@ -559,14 +578,6 @@ class ButtJoint(Joint):
         intersection_pt2 = Point(*intersection_plane_plane_plane(Plane.from_frame(main_most_ortho), Plane.from_frame(cross_most_ortho), Plane.from_frame(ref_face)))
         # print("intersection_pt", intersection_pt)
         # print("intersection_pt2", intersection_pt2)
-
-        face_angle1 = main_most_towards.rotated(Angle1, Vector.Zaxis(), intersection_pt)
-        face_angle2 = main_most_ortho.rotated(-Angle2, Vector.Zaxis(), intersection_pt2)
-
-        doublecut_origin = Point(*intersection_plane_plane_plane(Plane.from_frame(face_angle1), Plane.from_frame(face_angle2), Plane.from_frame(ref_face)))
-        # print("doublecut_origin", doublecut_origin)
-
-        self.sj_cross_sub_volume = Brep.from_box(self.main_beam.blank)
 
         self.btlx_params_stepjoint_cross = {
             "orientation": orientation,
@@ -580,22 +591,32 @@ class ButtJoint(Joint):
         }
 
 
+        #brep for main beam sub volume
+        if (inter_param > 0.5 and StrutInclination < 90) or (inter_param < 0.5 and StrutInclination > 90):
+            self.sj_main_sub_volume0 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume0.rotate(math.radians(180+Angle_cross+LeadAngle), ref_face.normal, intersection_pt2)
+            self.sj_main_sub_volume1 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume1.rotate(math.radians(Angle_cross), ref_face.normal, intersection_pt)
+        else:
+            self.sj_main_sub_volume0 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume0.rotate(math.radians(Angle_cross), ref_face.normal, intersection_pt2)
+            self.sj_main_sub_volume1 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume1.rotate(math.radians(180+Angle_cross+LeadAngle), ref_face.normal, intersection_pt)
+
+
         #brep for cross beam sub volume
         pts_ph = [worldxy_xypoint, intersection_pt, intersection_pt2]
         vertices_ph_sj_cross = pts_ph
         vertices_ph_sj_cross.extend([pt.translated(-ref_face.normal*60) for pt in pts_ph])
-        self.ph_sj_cross = Polyhedron(vertices_ph_sj_cross, [[0, 1, 2], [3, 4, 5], [0, 1, 4, 3], [1, 2, 5, 4], [0, 3, 5, 2]])
-        # self.brep_sj_cross = Brep.to_brep(self.ph_sj_cross)
-        # print self.ph_sj_cross
-        # print (vertices)
-        # polyline = Polyline([worldxy_xypoint, intersection_pt, intersection_pt2, worldxy_xypoint])
-        # pl_curve = Curve([worldxy_xypoint, intersection_pt, intersection_pt2, worldxy_xypoint])
-        # print(type(pl_curve))
-        # print(polyline.is_closed)
-        # # print(-ref_face.normal*60)
-        # brep = Brep.from_extrusion(polyline, -ref_face.normal*60.0)
-        # print(brep)
-        # print(brep.is_closed)
-        # print(brep.vertices)
+        # print(vertices_ph_sj_cross)
+        if (inter_param > 0.5 and StrutInclination < 90) or (inter_param < 0.5 and StrutInclination > 90):
+            # print("yes")
+            self.ph_sj_cross = Polyhedron(vertices_ph_sj_cross, [[0, 1, 2], [3, 5, 4], [0, 3, 4, 1], [1, 4, 5, 2], [0, 2, 5, 3]])
+        else:
+            # print("no")
+            self.ph_sj_cross = Polyhedron(vertices_ph_sj_cross, [[0, 2, 1], [3, 4, 5], [0, 1, 4, 3], [1, 2, 5, 4], [0, 3, 5, 2]])
+        self.brep_sj_cross = Brep.from_mesh(self.ph_sj_cross)
+        # print(self.brep_sj_cross)
+
 
         return True

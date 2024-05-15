@@ -86,8 +86,15 @@ class TButtJoint(ButtJoint):
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        self.features = []
-        if self.mill_depth:
+        if self.stepjoint:
+            if self.calc_params_stepjoint():
+                self.main_beam.add_features(BrepSubtraction(self.sj_main_sub_volume0))
+                self.features.append(BrepSubtraction(self.sj_main_sub_volume0))
+                self.main_beam.add_features(BrepSubtraction(self.sj_main_sub_volume1))
+                self.features.append(BrepSubtraction(self.sj_main_sub_volume1))
+                self.cross_beam.add_features(BrepSubtraction(self.brep_sj_cross))
+                self.features.append(BrepSubtraction(self.brep_sj_cross))
+        if self.mill_depth > 0:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
             self.features.append(MillVolume(self.subtraction_volume()))
         do_jack = False
@@ -103,12 +110,3 @@ class TButtJoint(ButtJoint):
         if self.drill_diameter > 0:
             self.cross_beam.add_features(DrillFeature(*self.calc_params_drilling()))
             self.features.append(DrillFeature(*self.calc_params_drilling()))
-        if self.stepjoint:
-            if self.calc_params_stepjoint():
-                self.main_beam.add_features(BrepSubtraction(self.sj_main_sub_volume))#not correct
-                self.features.append(BrepSubtraction(self.sj_main_sub_volume))#not correct
-                # print(self.ph_sj_cross)
-                self.cross_beam.add_features(BrepSubtraction(self.sj_cross_sub_volume))#not correct
-                self.features.append(BrepSubtraction(self.sj_cross_sub_volume))#not correct
-                # self.cross_beam.add_features(MillVolume(self.ph_sj_cross))#not correct
-                # self.features.append(MillVolume(self.ph_sj_cross))#not correct
