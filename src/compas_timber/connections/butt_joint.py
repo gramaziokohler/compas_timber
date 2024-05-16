@@ -256,7 +256,6 @@ class ButtJoint(Joint):
         #     return False
 
         if abs(angle2)%90 <= threshold_angle or abs((abs(angle2)-90)%90) <= threshold_angle:
-            print("smaller than threshold", abs(angle2%90))
             self.birdsmouth = False
             return False
 
