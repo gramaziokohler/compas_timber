@@ -78,7 +78,7 @@ class BTLxLap(object):
                     ("Length", "{:.{prec}f}".format(self.length, prec=BTLx.POINT_PRECISION)),
                     ("Width", "{:.{prec}f}".format(self.width, prec=BTLx.POINT_PRECISION)),
                     ("Depth", "{:.{prec}f}".format(float(self.depth), prec=BTLx.POINT_PRECISION)),
-                    ("LeadAngleParallel", "yes"),
+                    ("LeadAngleParallel", str(self.lead_angle_parallel)),
                     ("LeadAngle", "{:.{prec}f}".format(self.lead_angle, prec=BTLx.ANGLE_PRECISION)),
                     ("LeadInclinationParallel", "yes"),
                     ("LeadInclination", "{:.{prec}f}".format(self.lead_inclination, prec=BTLx.ANGLE_PRECISION)),

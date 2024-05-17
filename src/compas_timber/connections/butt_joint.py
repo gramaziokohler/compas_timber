@@ -6,12 +6,15 @@ from compas.geometry import closest_point_on_line
 from compas.geometry import distance_line_line
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_line_line
 from compas.geometry import Plane
 from compas.geometry import Line
 from compas.geometry import Polyhedron
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Transformation
+from compas.geometry import Polyline
+from compas.geometry import Curve
 from compas.geometry import angle_vectors_signed
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
@@ -64,7 +67,7 @@ class ButtJoint(Joint):
         self.btlx_params_cross = {}
         self.btlx_drilling_params_cross = {}
         self.btlx_stepjoint_params_main = {}
-        self.btlx_params_stepjoint_main = {}
+        self.btlx_params_stepjoint_cross = {}
         self.features = []
         self.test = []
 
@@ -242,9 +245,17 @@ class ButtJoint(Joint):
 
 
         cross_ref_main = cross_vectors(og_frame.zaxis, self.main_beam.centerline.direction)
+        cross_centerlines = cross_vectors(self.main_beam.centerline.direction, self.cross_beam.centerline.direction)
         self.test.append(Line(og_frame.point, og_frame.point + cross_ref_main * 100))
         angle = angle_vectors(cross_ref_main, og_frame.yaxis, deg=True)
-        if angle < 1.0 or angle > 179.0:
+        angle2 = angle_vectors(cross_centerlines, self.main_beam.frame.zaxis, deg=True)
+        angle2 = round(angle2, 1) - 180
+        threshold_angle = 3.0
+        # if angle < 1.0 or angle > 179.0:
+        #     self.birdsmouth = False
+        #     return False
+
+        if abs(angle2)%90 <= threshold_angle or abs((abs(angle2)-90)%90) <= threshold_angle:
             self.birdsmouth = False
             return False
 
@@ -310,8 +321,6 @@ class ButtJoint(Joint):
             dict: A dictionary containing the calculated parameters for the drilling joint
 
         """
-        # ref_frame_id, ref_frame = self.get_face_most_towards_beam(self.main_beam, self.cross_beam, ignore_ends=True)
-        # print ref_frame_id
 
         _cut_plane, cutting_frame = self.get_main_cutting_plane()
         ref_plane = Plane.from_frame(cutting_frame)
@@ -330,7 +339,6 @@ class ButtJoint(Joint):
             ref_frame.point = ref_frame.point - ref_frame.yaxis * self.cross_beam.width * 0.5
             ref_frame.point = ref_frame.point + ref_frame.zaxis * self.cross_beam.height * 0.5
 
-        # ref_plane = Plane.from_frame(ref_frame)
         point_xyz = (intersection_line_plane(self.main_beam.centerline, ref_plane))
         start_point = Point(*point_xyz)
         ref_point = start_point.transformed(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
@@ -387,88 +395,105 @@ class ButtJoint(Joint):
             dict: A dictionary containing the calculated parameters for the step joint (double cut process)
 
         """
+        #check if beams are coplanar
+        cross_product_centerlines = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction).unitized()
+        dot_product_cp_crossbnormal = float(abs(cross_product_centerlines.dot(self.cross_beam.frame.normal)))
+        dot_product_centerline = float(abs(self.main_beam.centerline.direction.dot(self.cross_beam.centerline.direction)))
+        if 0.999 < dot_product_cp_crossbnormal or dot_product_cp_crossbnormal < 0.001:
+            self.mill_depth = 0.0
+        else:
+            self.stepjoint = False
+            return False
 
-        # only valid for Heel Step Joint at 15mm depth
-        StepDepth = 0.0
-        HeelDepth = 15.0
-        StepShape = "heel"
-        Tenon = "no"
-        TenonWidth = 0.0
-        TenonHeight = 0.0
-
-        # finding face facing the cross beam the least
-        ref_face_id, ref_face = self.get_face_most_ortho_to_beam(self.cross_beam, self.main_beam, ignore_ends=True)
+        #######ACTIVATE THIS IF YOU DONT WANT STEPJOINT WHEN PERPENDICULAR
+        # if 0.999 < dot_product_centerline or dot_product_centerline < 0.001:
+        #     self.stepjoint = False
+        #     return False
+        # else:
+        #     self.mill_depth = 0.0
 
 
-        # face_dict = joint._beam_side_incidence(cross_part.beam, main_part.beam, ignore_ends=True)
-        # ref_frame_id = min(face_dict, key=face_dict.get)
-        # ref_frame = main_part.beam.faces[ref_frame_id]
+        face_dict = self._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
+        face_keys = sorted([key for key in face_dict.keys()], key=face_dict.get)
 
-        Inclination1 = 90.0
-        Inclination2 = 90.0
-
+        if self.main_beam.centerline.end.on_line(self.cross_beam.centerline):
+            centerline_vec = self.main_beam.centerline.direction
+        else:
+            centerline_vec = -self.main_beam.centerline.direction
 
         # finding the inclination of the strut based on the two centerlines
-        StrutInclination = math.degrees(self.cross_beam.centerline.direction.angle(self.main_beam.centerline.direction))
+        StrutInclination = math.degrees(self.cross_beam.centerline.direction.angle(centerline_vec))
+
+        inter_centerlines = intersection_line_line(self.cross_beam.centerline, self.main_beam.centerline)
+        inter_param = self.cross_beam.centerline.closest_point(Point(*inter_centerlines[0]), True)[1]
+
+        angles_dict = {}
+        for i, face in enumerate(self.main_beam.faces[0:4]):
+            angles_dict[i] = face.normal.angle_signed(self.main_beam.faces[face_keys[0]].normal, centerline_vec)
+        faces_ordered = sorted(angles_dict.keys(), key=angles_dict.get)
+        if (inter_param > 0.5 and StrutInclination < 90) or (inter_param < 0.5 and StrutInclination > 90):
+            self.ref_face_id = faces_ordered[2]
+        else:
+            self.ref_face_id = faces_ordered[0]
+
+        ref_face = self.main_beam.faces[self.ref_face_id]
+
+        ref_face.point = self.main_beam.blank_frame.point
+        if self.ref_face_id % 2 == 0:
+            ref_face.point = ref_face.point - ref_face.yaxis * self.main_beam.height * 0.5
+            ref_face.point = ref_face.point + ref_face.zaxis * self.main_beam.width * 0.5
+        else:
+            ref_face.point = ref_face.point - ref_face.yaxis * self.main_beam.width * 0.5
+            ref_face.point = ref_face.point + ref_face.zaxis * self.main_beam.height * 0.5
+
         if StrutInclination < 90:
             angle1 = (180 - StrutInclination)/2
-            strutinclination = StrutInclination
+            strut_inclination = StrutInclination
         else:
             angle1 = StrutInclination/2
-            strutinclination = 180 - StrutInclination
+            strut_inclination = 180 - StrutInclination
 
-        # find StartX
-        buried_depth = math.sin(math.radians(90-strutinclination))*self.main_beam.width/2
+        buried_depth = math.sin(math.radians(90-strut_inclination))*self.main_beam.width/2
         blank_vert_depth = self.cross_beam.width/2 - buried_depth
-        blank_edge_depth = abs(blank_vert_depth)/math.sin(math.radians(strutinclination))
-        # print blank_edge_depth
+        blank_edge_depth = abs(blank_vert_depth)/math.sin(math.radians(strut_inclination))
         startx = blank_edge_depth/2
         starty = self.main_beam.width/4
 
-        outside_length = self.main_beam.width/math.tan(math.radians(strutinclination))
+        outside_length = self.main_beam.width/math.tan(math.radians(strut_inclination))
         x_main_cutting_face = outside_length + blank_edge_depth
 
         vec_angle2 = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(x_main_cutting_face, 0))
         vec_xaxis = Vector.from_start_end(Point(startx, self.cross_beam.width - starty), Point(0, self.cross_beam.width - starty))
         angle2 = vec_xaxis.angle(vec_angle2, True)
-        if StrutInclination < 90:
-            if self.ends[str(self.main_beam.key)] == "start":
-                StartX = startx
-                StartY = self.main_beam.width - starty
-                Angle1 = angle2
-                Angle2 = angle1
-            else:
-                StartX = self.main_beam.blank_length - startx
-                StartY = starty
-                Angle1 = 180 - angle1
-                Angle2 = 180 - angle2
+
+        if self.ends[str(self.main_beam.key)] == "start":
+            StartX = startx
+            StartY = starty
+            Angle1 = 180-angle1
+            Angle2 = 180-angle2
         else:
+            StartX = self.main_beam.blank_length - startx
+            StartY = self.main_beam.width - starty
+            Angle1 = angle2
+            Angle2 = angle1
+
+        if StrutInclination == 90.0:
+            startx_90deg = self.main_beam.width/4
+            starty_90deg = self.main_beam.width/2
+            angle_90deg = math.degrees(math.atan(startx_90deg/starty_90deg))
             if self.ends[str(self.main_beam.key)] == "start":
-                StartX = startx
-                StartY = starty
-                Angle1 = 180-angle1
-                Angle2 = 180-angle2
+                StartX = startx_90deg
+                StartY = starty_90deg
+                Angle1 = 90+angle_90deg
+                Angle2 = 90-angle_90deg
             else:
-                StartX = self.main_beam.blank_length - startx
-                StartY = self.main_beam.width - starty
-                Angle1 = angle2
-                Angle2 = angle1
+                StartX = self.main_beam.blank_length - startx_90deg
+                StartY = starty_90deg
+                Angle1 = 90+angle_90deg
+                Angle2 = 90-angle_90deg
 
-        self.bm_sub_volume = Brep.from_box(self.cross_beam.blank)
-
-        self.btlx_stepjoint_params_main = {
-            "Orientation": self.ends[str(self.main_beam.key)],
-            "StartX": StartX,
-            "StrutInclination": StrutInclination,
-            "StepDepth": StepDepth,
-            "HeelDepth": HeelDepth,
-            "StepShape": StepShape,
-            "Tenon": Tenon,
-            "TenonWidth": TenonWidth,
-            "TenonHeight": TenonHeight,
-            "ReferencePlaneID": ref_face_id
-        }
-
+        Inclination1 = 90.0
+        Inclination2 = 90.0
         self.btlx_params_stepjoint_main = {
             "Orientation": self.ends[str(self.main_beam.key)],
             "StartX": float(StartX),
@@ -477,7 +502,129 @@ class ButtJoint(Joint):
             "Inclination1": float(Inclination1),
             "Angle2": Angle2,
             "Inclination2": Inclination2,
-            "ReferencePlaneID": ref_face_id,
+            "ReferencePlaneID": self.ref_face_id,
         }
+
+        #find params lap cross beam
+        angles_dict_cross = {}
+        for i, face in enumerate(self.cross_beam.faces[0:4]):
+            angles_dict_cross[i] = face.normal.dot(ref_face.normal)
+        self.cross_face_id = max(angles_dict_cross.keys(), key=angles_dict_cross.get)
+        cross_face = self.cross_beam.faces[self.cross_face_id]
+
+        cross_face.point = self.cross_beam.blank_frame.point
+        if self.cross_face_id % 2 == 0:
+            cross_face.point = cross_face.point - cross_face.yaxis * self.cross_beam.height * 0.5
+            cross_face.point = cross_face.point + cross_face.zaxis * self.cross_beam.width * 0.5
+        else:
+            cross_face.point = cross_face.point - cross_face.yaxis * self.cross_beam.width * 0.5
+            cross_face.point = cross_face.point + cross_face.zaxis * self.cross_beam.height * 0.5
+
+        main_xypoint = Point(StartX, StartY, 0)
+        worldxy_xypoint = main_xypoint.transformed(Transformation.from_frame_to_frame(Frame.worldXY(), ref_face))
+        cross_xy_point = worldxy_xypoint.transformed(Transformation.from_frame_to_frame(cross_face, Frame.worldXY()))
+
+        StartX_cross = cross_xy_point[0]
+        StartY_cross = cross_xy_point[1]
+
+        if (inter_param > 0.5 and StrutInclination < 90) or (inter_param < 0.5 and StrutInclination > 90):
+            orientation = self.ends[str(self.cross_beam.key)]
+            if self.ends[str(self.cross_beam.key)] == "start":
+                self.cross_face_id = min(angles_dict_cross.keys(), key=angles_dict_cross.get)
+                cross_face = self.cross_beam.faces[self.cross_face_id]
+                StartY_cross = self.cross_beam.width - StartY_cross
+                if self.ends[str(self.main_beam.key)] == "start":
+                    Angle_cross = 180 - Angle1
+                    LeadAngle = 180 - (Angle1 - Angle2)
+                else:
+                    Angle_cross = Angle2
+                    LeadAngle = 180 - (Angle1 - Angle2)
+            else:
+                if self.ends[str(self.main_beam.key)] == "start":
+                    Angle_cross = 180 - Angle1
+                    LeadAngle = 180 - (Angle1 - Angle2)
+                else:
+                    Angle_cross = Angle2
+                    LeadAngle = 180 - (Angle1 - Angle2)
+        elif StrutInclination == 90.0:
+            orientation = self.ends[str(self.cross_beam.key)]
+            Angle_cross = angle_90deg
+            LeadAngle = 180-angle_90deg*2
+            if self.ends[str(self.cross_beam.key)] == "end":
+                self.cross_face_id = min(angles_dict_cross.keys(), key=angles_dict_cross.get)
+                cross_face = self.cross_beam.faces[self.cross_face_id]
+                StartY_cross = self.cross_beam.width - StartY_cross
+        else:
+            if self.ends[str(self.cross_beam.key)] == "start":
+                if self.ends[str(self.main_beam.key)] == "start":
+                    orientation = "end"
+                    Angle_cross = 180 - Angle1
+                    LeadAngle = 180 - (Angle1 - Angle2)
+                else:
+                    orientation = "end"
+                    Angle_cross = Angle2
+                    LeadAngle = 180 - (Angle1 - Angle2)
+            else:
+                self.cross_face_id = min(angles_dict_cross.keys(), key=angles_dict_cross.get)
+                cross_face = self.cross_beam.faces[self.cross_face_id]
+                StartY_cross = self.cross_beam.width - StartY_cross
+                if self.ends[str(self.main_beam.key)] == "start":
+                    orientation = "start"
+                    Angle_cross = 180 - Angle1
+                    LeadAngle = 180 - (Angle1 - Angle2)
+                else:
+                    orientation = "start"
+                    Angle_cross = Angle2
+                    LeadAngle = (180 - Angle1) + Angle2
+
+
+        main_most_towards = self.get_face_most_towards_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
+        cross_most_ortho = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam, ignore_ends=True)[1]
+
+        main_most_ortho = self.get_face_most_ortho_to_beam(self.cross_beam, self.main_beam, ignore_ends=True)[1]
+
+        intersection_pt = Point(*intersection_plane_plane_plane(Plane.from_frame(main_most_towards), Plane.from_frame(cross_most_ortho), Plane.from_frame(ref_face)))
+        intersection_pt2 = Point(*intersection_plane_plane_plane(Plane.from_frame(main_most_ortho), Plane.from_frame(cross_most_ortho), Plane.from_frame(ref_face)))
+
+        self.btlx_params_stepjoint_cross = {
+            "orientation": orientation,
+            "start_x": StartX_cross,
+            "start_y": StartY_cross,
+            "angle": Angle_cross,
+            "depth": 60.0,
+            "lead_angle_parallel": "no",
+            "lead_angle": LeadAngle,
+            "ReferencePlaneID": self.cross_face_id,
+        }
+
+
+        #brep for main beam sub volume
+        if (inter_param > 0.5 and StrutInclination < 90) or (inter_param < 0.5 and StrutInclination > 90):
+            self.sj_main_sub_volume0 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume0.rotate(math.radians(180+Angle_cross+LeadAngle), ref_face.normal, intersection_pt2)
+            self.sj_main_sub_volume1 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume1.rotate(math.radians(Angle_cross), ref_face.normal, intersection_pt)
+        elif StrutInclination == 90.0:
+            self.sj_main_sub_volume0 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume0.rotate(math.radians(angle_90deg), ref_face.normal, intersection_pt2)
+            self.sj_main_sub_volume1 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume1.rotate(math.radians(-angle_90deg), ref_face.normal, intersection_pt)
+        else:
+            self.sj_main_sub_volume0 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume0.rotate(math.radians(Angle_cross), ref_face.normal, intersection_pt2)
+            self.sj_main_sub_volume1 = Brep.from_box(self.cross_beam.blank)
+            self.sj_main_sub_volume1.rotate(math.radians(180+Angle_cross+LeadAngle), ref_face.normal, intersection_pt)
+
+
+        #brep for cross beam sub volume
+        pts_ph = [worldxy_xypoint, intersection_pt, intersection_pt2]
+        vertices_ph_sj_cross = pts_ph
+        vertices_ph_sj_cross.extend([pt.translated(-ref_face.normal*60) for pt in pts_ph])
+        if (inter_param > 0.5 and StrutInclination < 90) or (inter_param < 0.5 and StrutInclination > 90):
+            self.ph_sj_cross = Polyhedron(vertices_ph_sj_cross, [[0, 1, 2], [3, 5, 4], [0, 3, 4, 1], [1, 4, 5, 2], [0, 2, 5, 3]])
+        else:
+            self.ph_sj_cross = Polyhedron(vertices_ph_sj_cross, [[0, 2, 1], [3, 4, 5], [0, 1, 4, 3], [1, 2, 5, 4], [0, 3, 5, 2]])
+        self.brep_sj_cross = Brep.from_mesh(self.ph_sj_cross)
+
 
         return True

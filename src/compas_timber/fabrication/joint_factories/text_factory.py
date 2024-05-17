@@ -41,7 +41,7 @@ class TextFactory(object):
             "AlignmentVertical": "bottom", #default(bottom) in easybeam
             "AlignmentHorizontal": "left", #default(left) in easybeam
             "AlignmentMultiline": "left",   #default(left) in easybeam
-            "TextHeight": 20.0,
+            "TextHeight": 15.0,
             "Text": part.ID
         }
 
