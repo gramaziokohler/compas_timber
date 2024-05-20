@@ -1,5 +1,6 @@
 from compas.data import Data
 from compas.geometry import Brep
+from compas.geometry import BrepTrimmingError
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
@@ -84,13 +85,8 @@ class CutFeature(Feature):
 
         """
         try:
-            results = beam_geometry.trimmed(self.cutting_plane)
-            # TODO: figure out the discrepency between OCCBrep and RhinoBrep here
-            if isinstance(results, list):
-                return results[0]
-            else:
-                return results
-        except IndexError:
+            return beam_geometry.trimmed(self.cutting_plane)
+        except BrepTrimmingError:
             raise FeatureApplicationError(
                 self.cutting_plane,
                 beam_geometry,
