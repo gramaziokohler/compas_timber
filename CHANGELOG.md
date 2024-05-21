@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
 * Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
 * Added `topos` attribute to `CategoryRule` to filter when joints get applied
+* Added new `SurfaceAssembly` class
+* Added GH component `SurfaceAssembly` which directly generates a `TimberAssembly` with standard wall framing from a planar surface. 
+* Added GH component `SurfaceAssemblyOptions`
+* Added GH component `CustomBeamDimensions` for `SurfaceAssembly`
 
 ### Changed
 
