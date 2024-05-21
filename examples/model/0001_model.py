@@ -11,8 +11,17 @@ from compas_timber.connections import THalfLapJoint
 
 
 HERE = os.path.dirname(__file__)
-VIEWER_CONFIG = os.path.join(HERE, 'viewer_config')
 LINES = os.path.join(HERE, 'lines.json')
+
+
+def create_viewer():
+    viewer = Viewer()
+    viewer.renderer.camera.far = 1000000.0
+    viewer.renderer.camera.position = [10000.0, 10000.0, 10000.0]
+    viewer.renderer.camera.pan_delta = 5.0
+    viewer.renderer.rendermode = "ghosted"
+    return viewer
+
 
 # Load centerlines from file
 lines = json_load(LINES)
@@ -42,19 +51,14 @@ TButtJoint.create(model, beams[1], beams[0])
 TButtJoint.create(model, beams[1], beams[3])
 TButtJoint.create(model, beams[2], beams[4])
 
-# draw inflated centerlines
-viewer = Viewer(configpath=VIEWER_CONFIG)
+viewer = create_viewer()
 
-# for beam in model.beams:
-#     viewer.add(beam.shape)
-
-# draw blanks (including joinery extensions)
-# for beam in model.beams:
-#     viewer.add(beam.blank)
+for beam in model.beams:
+    viewer.scene.add(beam.centerline)
 
 # draw geometry (with features)
 for beam in model.beams:
-    viewer.add(beam.geometry)
+    viewer.scene.add(beam.geometry)
 
 
 viewer.show()
