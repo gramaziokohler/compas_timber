@@ -15,13 +15,15 @@ from compas.geometry import translate_points
 from compas.geometry import cross_vectors
 import math
 
+from .joint import BeamJoinningError
+
 
 class TStepJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, cross_beam=None, main_beam=None, cut_depth=0.25, extend_cut=True):  # TODO Why main & cross swapped???
-        super(TStepJoint, self).__init__(main_beam, cross_beam, cut_depth)
+    def __init__(self, cross_beam=None, main_beam=None, cut_depth=0.25, extend_cut=True, **kwargs):
+        super(TStepJoint, self).__init__(beams=(main_beam, cross_beam), **kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_key = None
@@ -33,7 +35,7 @@ class TStepJoint(Joint):
         self.cross_cutting_plane_2 = None
 
     @property
-    def data(self):
+    def __data__(self):
         data_dict = {
             "cross_beam": self.cross_beam_key,
             "main_beam": self.main_beam_key,
@@ -41,15 +43,12 @@ class TStepJoint(Joint):
         data_dict.update(Joint.data.fget(self))
         return data_dict
 
-    # @data.setter
-    # def data(self, value):
-    #     Joint.data.fset(self, value)
-    #     self.cross_beam_key = value["cross_beam"]
-    #     self.main_beam_key = value["main_beam"]
-
-    @property
-    def joint_type(self):
-        return "Step Joint"
+    @classmethod
+    def __from_data__(cls, value):
+        instance = cls(**value)
+        instance.cross_beam_key = value["cross_beam"]
+        instance.main_beam_key = value["main_beam"]
+        return instance
 
     @property
     def beams(self):
@@ -61,33 +60,27 @@ class TStepJoint(Joint):
         intersection = intersection_plane_plane(plane1, plane2)
         rotation_axis = Vector.from_start_end(*intersection)
         origin = intersection[0]
-        R = Rotation.from_axis_and_angle(rotation_axis, math.radians(90))
-        bisector.transform(R)
-        plane = Plane(origin, bisector)
-        return plane
+        rotation = Rotation.from_axis_and_angle(rotation_axis, math.radians(90))
+        bisector.transform(rotation)
+        return Plane(origin, bisector)
 
-    # find the Face on cross_beam where main_beam intersects
-    # TODO simplify with Chen!
     def get_main_intersection_frame(self):
+        """finds the Face on cross_beam where main_beam intersects"""
         diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
         main_frames = self.main_beam.faces[:4]
         cross_centerline = self.cross_beam.centerline
         cross_centerpoint = midpoint_line(self.cross_beam.centerline)
         projectionplane = self.main_beam.faces[5]
         frames, distances = [], []
-        for i in main_frames:
-            int_centerline_frame = intersection_line_plane(cross_centerline, Plane.from_frame(i))
-            if int_centerline_frame is None:
-                pass
-            else:
+        for mainframe in main_frames:
+            int_centerline_frame = intersection_line_plane(cross_centerline, Plane.from_frame(mainframe))
+            if int_centerline_frame is not None:
                 projected_int = project_point_plane(int_centerline_frame, Plane.from_frame(projectionplane))
                 distance = distance_point_point(projected_int, projectionplane.point)
-                if distance > diagonal / 2:
-                    pass
-                else:
+                if distance < diagonal / 2:
                     distance = distance_point_point(cross_centerpoint, int_centerline_frame)
                     distances.append(distance)
-                    frames.append(i)
+                    frames.append(mainframe)
         distances, frames = zip(*sorted(zip(distances, frames)))
         return frames[0]
 
@@ -158,8 +151,13 @@ class TStepJoint(Joint):
 
         assert self.main_beam and self.cross_beam  # should never happen
 
-        cross_cutting_plane1, cross_cutting_plane2 = self.get_cross_cutting_planes()
-        main_cutting_vol = self.get_main_cutting_volume()
+        try:
+            cross_cutting_plane1, cross_cutting_plane2 = self.get_cross_cutting_planes()
+            main_cutting_vol = self.get_main_cutting_volume()
+        except AttributeError as ae:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cross_cutting_plane1, cross_cutting_plane2, main_cutting_vol])
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         trim_feature = CutFeature(cross_cutting_plane1)
         self.cross_beam.add_features(trim_feature)
