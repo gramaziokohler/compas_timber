@@ -66,6 +66,8 @@ class TStepJoint(Joint):
 
     def get_main_intersection_frame(self):
         """finds the Face on cross_beam where main_beam intersects"""
+        # finds the Face on cross_beam where main_beam intersects
+        #TODO take out the wrong message type :)
         diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
         main_frames = self.main_beam.faces[:4]
         cross_centerline = self.cross_beam.centerline
@@ -148,6 +150,7 @@ class TStepJoint(Joint):
         return main_cutting_volume
 
     def add_features(self):
+        """In this Joint, the Cross Beam ist cutted by two Planes, while the Main beam gets a Subtraction by a Cutting Volume!"""
 
         assert self.main_beam and self.cross_beam  # should never happen
 
@@ -158,6 +161,8 @@ class TStepJoint(Joint):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cross_cutting_plane1, cross_cutting_plane2, main_cutting_vol])
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+
+        #TODO Extension of Cross Beam needs to be added!
 
         trim_feature = CutFeature(cross_cutting_plane1)
         self.cross_beam.add_features(trim_feature)
