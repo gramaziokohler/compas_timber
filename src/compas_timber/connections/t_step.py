@@ -11,12 +11,12 @@ from compas.geometry import angle_vectors
 from compas.geometry import distance_point_point
 from compas.geometry import midpoint_line
 from compas.geometry import project_point_plane
+from compas.geometry import closest_point_on_line
 from compas.geometry import translate_points
 from compas.geometry import cross_vectors
 import math
 
 from .joint import BeamJoinningError
-
 
 class TStepJoint(Joint):
 
@@ -56,6 +56,7 @@ class TStepJoint(Joint):
 
     @staticmethod
     def _bisector_plane(plane1, plane2, angle_factor):
+        """creates a bisector plane between two planes for the t-step joint"""
         bisector = plane1.normal + plane2.normal * angle_factor
         intersection = intersection_plane_plane(plane1, plane2)
         rotation_axis = Vector.from_start_end(*intersection)
@@ -65,24 +66,27 @@ class TStepJoint(Joint):
         return Plane(origin, bisector)
 
     def get_main_intersection_frame(self):
-        """finds the Face on cross_beam where main_beam intersects"""
-        # finds the Face on cross_beam where main_beam intersects
-        #TODO take out the wrong message type :)
-        diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
-        main_frames = self.main_beam.faces[:4]
-        cross_centerline = self.cross_beam.centerline
-        cross_centerpoint = midpoint_line(self.cross_beam.centerline)
-        projectionplane = self.main_beam.faces[5]
+        """
+        Finds each intersection Point between Cross_Beam Centerline and Main_Beam Faces.
+        If the Distance from this Point to the Main Beam Centerline is smaller than half the Diagonal...
+        And the Distance to the Cross_Beam Center Point is the Smallest...
+        Then this Main_Beam Side is the official Intersection Side!
+        """
+        mainbeam_faces = self.main_beam.faces[:4]
+        mainbeam_diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
+        crossbeam_centerpoint = midpoint_line(self.cross_beam.centerline)
         frames, distances = [], []
-        for mainframe in main_frames:
-            int_centerline_frame = intersection_line_plane(cross_centerline, Plane.from_frame(mainframe))
-            if int_centerline_frame is not None:
-                projected_int = project_point_plane(int_centerline_frame, Plane.from_frame(projectionplane))
-                distance = distance_point_point(projected_int, projectionplane.point)
-                if distance < diagonal / 2:
-                    distance = distance_point_point(cross_centerpoint, int_centerline_frame)
-                    distances.append(distance)
-                    frames.append(mainframe)
+
+        for frame in mainbeam_faces:
+            int_crossbeam_frame = intersection_line_plane(self.cross_beam.centerline, Plane.from_frame(frame))
+            if int_crossbeam_frame is not None:
+                dist_int_crossbeamcenterpoint = distance_point_point(int_crossbeam_frame, crossbeam_centerpoint)
+                closestpoint_int_mainbeamcenterline = closest_point_on_line(int_crossbeam_frame, self.main_beam.centerline)
+                dist_closestpoint_int = distance_point_point(closestpoint_int_mainbeamcenterline, int_crossbeam_frame)
+                if dist_closestpoint_int < mainbeam_diagonal / 2:
+                    frames.append(frame)
+                    distances.append(dist_int_crossbeamcenterpoint)
+        
         distances, frames = zip(*sorted(zip(distances, frames)))
         return frames[0]
 
