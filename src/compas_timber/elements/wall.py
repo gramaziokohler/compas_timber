@@ -73,4 +73,3 @@ class Wall(Element):
 
     def __repr__(self):
         return "Wall({}, {:.3f}, {:.3f}, {:.3f})".format(self.frame, self.length, self.width, self.height)
-
