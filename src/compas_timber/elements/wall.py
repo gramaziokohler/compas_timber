@@ -1,4 +1,5 @@
 from compas.geometry import Box
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import bounding_box
 from compas.geometry.brep.brep import Brep
@@ -24,7 +25,8 @@ class Wall(Element):
         data["length"] = self.length
         return data
 
-    def __init__(self, frame, length, width, height, **kwargs):
+    def __init__(self, length, width, height, frame=None, **kwargs):
+        frame = frame or Frame.worldXY()
         super(Wall, self).__init__(frame=frame, **kwargs)
         self.length = length
         self.width = width
@@ -73,3 +75,13 @@ class Wall(Element):
 
     def __repr__(self):
         return "Wall({}, {:.3f}, {:.3f}, {:.3f})".format(self.frame, self.length, self.width, self.height)
+
+    @classmethod
+    def from_box(cls, box):
+        # type: (Box) -> Wall
+        boxframe = box.frame.copy()
+        origin = boxframe.point
+        origin -= boxframe.xaxis * box.xsize * 0.5
+        origin -= boxframe.yaxis * box.ysize * 0.5
+        origin -= boxframe.zaxis * box.zsize * 0.5
+        return cls(box.xsize, box.ysize, box.zsize, frame=boxframe)
