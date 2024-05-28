@@ -1,6 +1,9 @@
 from compas.geometry import Point
 from compas_model.models import Model
 
+from compas_timber.elements import Beam
+from compas_timber.elements import Wall
+
 
 class TimberModel(Model):
     """Represents a timber model containing beams and joints etc.
@@ -21,7 +24,10 @@ class TimberModel(Model):
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
         for element in model.elements():
-            model._beams.append(element)
+            if isinstance(element, Beam):
+                model._beams.append(element)
+            elif isinstance(element, Wall):
+                model._walls.append(element)
         for interaction in model.interactions():
             model._joints.append(interaction)
             interaction.restore_beams_from_keys(model)
@@ -31,6 +37,7 @@ class TimberModel(Model):
     def __init__(self, *args, **kwargs):
         super(TimberModel, self).__init__()
         self._beams = []
+        self._walls = []
         self._joints = []
         self._topologies = []  # added to avoid calculating multiple times
 
@@ -55,6 +62,11 @@ class TimberModel(Model):
     def joints(self):
         # type: () -> list[Joint]
         return self._joints
+
+    @property
+    def walls(self):
+        # type: () -> list[Wall]
+        return self._walls
 
     @property
     def topologies(self):
@@ -114,6 +126,18 @@ class TimberModel(Model):
         """
         _ = self.add_element(beam)
         self._beams.append(beam)
+
+    def add_wall(self, wall):
+        """Adds a Wall to this model.
+
+        Parameters
+        ----------
+        wall : :class:`~compas_timber.parts.Wall`
+            The wall to add to the model.
+
+        """
+        _ = self.add_element(wall)
+        self._walls.append(wall)
 
     def add_joint(self, joint, parts):
         """Add a joint object to the model.
