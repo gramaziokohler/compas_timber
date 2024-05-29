@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `CategoryJointRule` and `DirectJointRule` to a dynamic interface where joint type is selected with right click menu
 * Changed `Assembly` GH component to apply category joints if the detected topology is in `CategoryRule.topos`
 * Changed `TopologyJoints` GH component to `DefaultJoints` Component, which applies default joints based on topology. 
+* Changed `Beam.faces` to match position and orientation of BTLx `ReferenceSide`
 
 ### Removed
 
