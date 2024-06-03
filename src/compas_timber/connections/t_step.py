@@ -65,6 +65,14 @@ class TStepJoint(Joint):
         bisector.transform(rotation)
         return Plane(origin, bisector)
 
+    def get_main_cutting_frame(self):
+        assert self.beams
+        beam_a, beam_b = self.beams
+
+        _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
+        cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
+        return cfr
+
     def get_main_intersection_frame(self):
         """
         Finds each intersection Point between Cross_Beam Centerline and Main_Beam Faces.
