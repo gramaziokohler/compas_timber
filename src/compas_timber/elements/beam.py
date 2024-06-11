@@ -14,9 +14,8 @@ from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas_model.elements import Element
 
+from compas_timber.elements import FeatureApplicationError
 from compas_timber.utils.compas_extra import intersection_line_plane
-
-from .features import FeatureApplicationError
 
 ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
