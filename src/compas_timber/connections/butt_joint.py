@@ -20,8 +20,6 @@ class ButtJoint(Joint):
 
     Parameters
     ----------
-    model : :class:`~compas_timber.model.TimberAssembly`
-        The model associated with the beams to be joined.
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`

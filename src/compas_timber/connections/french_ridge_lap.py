@@ -18,8 +18,6 @@ class FrenchRidgeLapJoint(Joint):
 
     Parameters
     ----------
-    model : :class:`~compas_timber.model.TimberAssembly`
-        The model associated with the beams to be joined.
     beam_a : :class:`~compas_timber.parts.Beam`
         The top beam to be joined.
     beam_b : :class:`~compas_timber.parts.Beam`
