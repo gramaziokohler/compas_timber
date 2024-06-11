@@ -33,7 +33,8 @@ class Feature(Data):
     Attributes
     ----------
     is_joinery : bool
-        Indicates whether this feature is a result of joinery.
+        Indicates whether this feature is a result of joinery. This is used when (de)serializing elements with features.
+        Joinery related features should not be serialized with the element as they are re-applied by the joints.
 
     """
 
@@ -75,7 +76,7 @@ class CutFeature(Feature):
 
         Raises
         ------
-        :class:`compas_timber.consumers.FeatureApplicationError`
+        :class:`compas_timber.elements.FeatureApplicationError`
             If the cutting plane does not intersect with the beam geometry.
 
         Returns
@@ -125,7 +126,7 @@ class DrillFeature(Feature):
 
         Raises
         ------
-        :class:`compas_timber.consumers.FeatureApplicationError`
+        :class:`compas_timber.elements.FeatureApplicationError`
             If the drill volume is not contained in the beam geometry.
 
         Returns
@@ -174,7 +175,7 @@ class MillVolume(Feature):
 
         Raises
         ------
-        :class:`compas_timber.consumers.FeatureApplicationError`
+        :class:`compas_timber.elements.FeatureApplicationError`
             If the volume does not intersect with the beam geometry.
 
         Returns
@@ -223,7 +224,7 @@ class BrepSubtraction(Feature):
 
         Raises
         ------
-        :class:`compas_timber.consumers.FeatureApplicationError`
+        :class:`compas_timber.elements.FeatureApplicationError`
             If the volume does not intersect with the beam geometry.
 
         Returns
