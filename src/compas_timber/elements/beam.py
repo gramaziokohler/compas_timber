@@ -22,7 +22,7 @@ ANGLE_TOLERANCE = 1e-3  # [radians]
 DEFAULT_TOLERANCE = 1e-6
 
 
-def invlidate_geometry(func):
+def invalidate_geometry(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         element = args[0]
