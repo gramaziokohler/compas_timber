@@ -43,12 +43,12 @@ class Feature(Data):
         self._is_joiney = is_joinery
 
     @property
-    def is_joinery(self):
-        return self._is_joiney
-
-    @property
     def __data__(self):
         return {"is_joinery": self._is_joiney}
+
+    @property
+    def is_joinery(self):
+        return self._is_joiney
 
 
 class CutFeature(Feature):
@@ -67,8 +67,8 @@ class CutFeature(Feature):
 
     @property
     def __data__(self):
-        data_dict = {"cutting_plane": self.cutting_plane}
-        data_dict.update(super(CutFeature, self).__data__)
+        data_dict = super(CutFeature, self).__data__
+        data_dict["cutting_plane"] = self.cutting_plane
         return data_dict
 
     def apply(self, beam_geometry):
@@ -117,8 +117,10 @@ class DrillFeature(Feature):
 
     @property
     def __data__(self):
-        data_dict = {"line": self.line, "diameter": self.diameter, "length": self.length}
-        data_dict.update(super(DrillFeature, self).__data__)
+        data_dict = super(DrillFeature, self).__data__
+        data_dict["line"] = self.line
+        data_dict["diameter"] = self.diameter
+        data_dict["length"] = self.length
         return data_dict
 
     def apply(self, beam_geometry):
@@ -162,9 +164,9 @@ class MillVolume(Feature):
 
     @property
     def __data__(self):
-        data = super(MillVolume, self).__data__
-        data["volume"] = self.mesh_volume
-        return data
+        data_dict = super(MillVolume, self).__data__
+        data_dict["volume"] = self.mesh_volume
+        return data_dict
 
     def __init__(self, volume, **kwargs):
         super(MillVolume, self).__init__(**kwargs)
@@ -215,8 +217,8 @@ class BrepSubtraction(Feature):
 
     @property
     def __data__(self):
-        data_dict = {"volume": self.volume}
-        data_dict.update(super(BrepSubtraction, self).__data__)
+        data_dict = super(BrepSubtraction, self).__data__
+        data_dict["volume"] = self.volume
         return data_dict
 
     def apply(self, beam_geometry):
