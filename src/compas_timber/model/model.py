@@ -1,22 +1,31 @@
 from compas.geometry import Point
 from compas_model.models import Model
 
+from compas_timber.connections import Joint
 from compas_timber.elements import Beam
 from compas_timber.elements import Wall
 
 
 class TimberModel(Model):
-    """Represents a timber model containing beams and joints etc.
+    """Represents a timber model containing different elements such as walls, beams and joints.
+
+    The timber model allows expressing the hierarchy and interactions between the different elements it contains.
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
+    beams : list(:class:`~compas_timber.elements.Beam`)
         A list of beams assigned to this model.
+    center_of_mass : :class:`~compas.geometry.Point`
+        The calculated center of mass of the model.
     joints : list(:class:`~compas_timber.connections.Joint`)
         A list of joints assigned to this model.
     topologies :  list(dict)
         A list of JointTopology for model. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key}
         See :class:`~compas_timber.connections.JointTopology`.
+    volume : float
+        The calculated total volume of the model.
+    walls : list(:class:~compas_timber.elements.Wall)
+        A list of walls assigned to this model.
 
     """
 
@@ -42,13 +51,6 @@ class TimberModel(Model):
         self._topologies = []  # added to avoid calculating multiple times
 
     def __str__(self):
-        """Returns a formatted string representation of this model.
-
-        Return
-        ------
-        str
-
-        """
         return "Timber Assembly ({}) with {} beam(s) and {} joint(s).".format(
             self.guid, len(self.beams), len(self.joints)
         )
@@ -74,21 +76,14 @@ class TimberModel(Model):
 
     @property
     def center_of_mass(self):
-        """Returns the center of mass of the assembly.
-
-        Returns
-        -------
-        compas.geometry.Point
-            The center of mass of the assembly.
-
-        """
+        # type: () -> Point
         total_vol = 0
         total_position = Point(0, 0, 0)
 
         for beam in self._beams:
             vol = beam.blank.volume
             point = beam.blank_frame.point
-            point += beam.blank_frame.xaxis * (beam.blank_length / 2)
+            point += beam.blank_frame.xaxis * (beam.blank_length / 2.0)
             total_vol += vol
             total_position += point * vol
 
@@ -96,73 +91,73 @@ class TimberModel(Model):
 
     @property
     def volume(self):
-        """Returns the volume of the assembly.
-
-        Returns
-        -------
-        float
-            The sum of the volumes of all beam.blank's in the assembly.
-
-        """
+        # type: () -> float
         return sum([beam.blank.volume for beam in self._beams])
 
     def beam_by_guid(self, guid):
-        # type: (uuid.UUID) -> Beam
+        # type: (str) -> Beam
+        """Get a beam by its unique identifier.
+
+        Parameters
+        ----------
+        guid : str
+            The GUID of the beam to retrieve.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Beam`
+            The beam with the specified GUID.
+
+        """
         return self._guid_element[guid]
 
     def add_beam(self, beam):
+        # type: (Beam) -> None
         """Adds a Beam to this model.
 
         Parameters
         ----------
-        beam : :class:`~compas_timber.parts.Beam`
+        beam : :class:`~compas_timber.elements.Beam`
             The beam to add to the model.
-
-        Returns
-        -------
-        int
-            The graph key identifier of the added beam.
 
         """
         _ = self.add_element(beam)
         self._beams.append(beam)
 
     def add_wall(self, wall):
+        # type: (Wall) -> None
         """Adds a Wall to this model.
 
         Parameters
         ----------
-        wall : :class:`~compas_timber.parts.Wall`
+        wall : :class:`~compas_timber.elements.Wall`
             The wall to add to the model.
 
         """
         _ = self.add_element(wall)
         self._walls.append(wall)
 
-    def add_joint(self, joint, parts):
+    def add_joint(self, joint, beams):
+        # type: (Joint, tuple[Beam]) -> None
         """Add a joint object to the model.
 
         Parameters
         ----------
-        joint : :class:`~compas_timber.parts.joint`
+        joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
 
-        parts : list(:class:`~compas.datastructure.Part`)
-            Beams or other Parts (dowels, steel plates) involved in the joint.
-
-        Returns
-        -------
-        int
-            The identifier of the joint in the current model graph.
+        beams : tuple(:class:`~compas_timber.elements.Beam`)
+            The two beams that should be joined.
 
         """
-        if len(parts) != 2:
-            raise ValueError("Expected 2 parts. Got instead: {}".format(len(parts)))
-        a, b = parts
+        if len(beams) != 2:
+            raise ValueError("Expected 2 parts. Got instead: {}".format(len(beams)))
+        a, b = beams
         _ = self.add_interaction(a, b, interaction=joint)
         self._joints.append(joint)
 
     def remove_joint(self, joint):
+        # type: (Joint) -> None
         """Removes this joint object from the model.
 
         Parameters
@@ -176,4 +171,5 @@ class TimberModel(Model):
         self._joints.remove(joint)
 
     def set_topologies(self, topologies):
+        """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
