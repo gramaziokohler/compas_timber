@@ -14,7 +14,7 @@ from .joint import Joint
 class LapJoint(Joint):
     """Abstract Lap type joint with functions common to L-Lap, T-Lap, and X-Lap Joints.
 
-    Do not instantiate directly. Please use `**LapJoint.create()` to properly create an instance of lap sub-class and associate it with an assembly.
+    Do not instantiate directly. Please use `**LapJoint.create()` to properly create an instance of lap sub-class and associate it with an model.
 
     Parameters
     ----------
@@ -40,39 +40,33 @@ class LapJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(LapJoint, self).__init__(beams=(main_beam, cross_beam), **kwargs)
+    @property
+    def __data__(self):
+        data = super(LapJoint, self).__data__
+        data["main_beam"] = self.main_beam_key
+        data["cross_beam"] = self.cross_beam_key
+        data["flip_lap_side"] = self.flip_lap_side
+        data["cut_plane_bias"] = self.cut_plane_bias
+        return data
+
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5):
+        super(LapJoint, self).__init__()
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.main_beam_key = str(main_beam.guid) if main_beam else None
+        self.cross_beam_key = str(cross_beam.guid) if cross_beam else None
         self.features = []
 
     @property
-    def __data__(self):
-        data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
-            "flip_lap_side": self.flip_lap_side,
-            "cut_plane_bias": self.cut_plane_bias,
-        }
-        data_dict.update(super(LapJoint, self).__data__)
-        return data_dict
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
 
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(**value)
-        instance.main_beam_key = value["main_beam_key"]
-        instance.cross_beam_key = value["cross_beam_key"]
-        return instance
-
-    def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.main_beam = assemly.find_by_key(self.main_beam_key)
-        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
-        self._beams = (self.main_beam, self.cross_beam)
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.main_beam = model.beam_by_guid(self.main_beam_key)
+        self.cross_beam = model.beam_by_guid(self.cross_beam_key)
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):

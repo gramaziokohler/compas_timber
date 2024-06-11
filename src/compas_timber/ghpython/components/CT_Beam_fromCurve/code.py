@@ -1,17 +1,16 @@
 """Creates a Beam from a LineCurve."""
 
+import rhinoscriptsyntax as rs
+from compas.scene import Scene
+from compas_rhino.conversions import line_to_compas
+from compas_rhino.conversions import vector_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.RhinoDoc import ActiveDoc
-import rhinoscriptsyntax as rs
 
-from compas.scene import Scene
-from compas_rhino.conversions import line_to_compas
-from compas_rhino.conversions import vector_to_compas
-
+from compas_timber.elements import Beam as CTBeam
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
-from compas_timber.parts import Beam as CTBeam
 
 
 class Beam_fromCurve(component):

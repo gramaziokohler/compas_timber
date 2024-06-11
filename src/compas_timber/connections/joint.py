@@ -1,8 +1,7 @@
-from compas.data import Data
-from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
+from compas_model.interactions import Interaction
 
 from .solver import JointTopology
 
@@ -34,7 +33,7 @@ class BeamJoinningError(Exception):
         self.debug_geometries = debug_geometries or []
 
 
-class Joint(Data):
+class Joint(Interaction):
     """Base class for a joint connecting two beams.
 
     This is a base class and should not be instantiated directly.
@@ -59,21 +58,12 @@ class Joint(Data):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
 
-    def __init__(self, frame=None, key=None, beams=None, **kwargs):
-        super(Joint, self).__init__()
-        self.frame = frame or Frame.worldXY()
-        self.key = key
-        self._beams = beams
-        self.features = []
-        self.attributes = {}
-
-    @property
-    def __data__(self):
-        return {"frame": self.frame.__data__, "key": self.key}
+    def __init__(self, **kwargs):
+        super(Joint, self).__init__(name=self.__class__.__name__)
 
     @property
     def beams(self):
-        return self._beams
+        raise NotImplementedError
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
@@ -86,14 +76,14 @@ class Joint(Data):
         """
         raise NotImplementedError
 
-    def restore_beams_from_keys(self):
+    def restore_beams_from_keys(self, model):
         """Restores the reference to the beams associate with this joint.
 
         During serialization, :class:`compas_timber.parts.Beam` objects
-        are serialized by :class:`compas_timber.assembly`. To avoid circular references, Joint only stores the keys
+        are serialized by :class:`compas_timber.model`. To avoid circular references, Joint only stores the keys
         of the respective beams.
 
-        This method is called by :class:`compas_timber.assembly` during de-serialization to restore the references.
+        This method is called by :class:`compas_timber.model` during de-serialization to restore the references.
         Since the roles of the beams are joint specific (e.g. main/cross beam) this method should be implemented by
         the concrete implementation.
 
@@ -105,10 +95,10 @@ class Joint(Data):
         raise NotImplementedError
 
     @classmethod
-    def create(cls, assembly, *beams, **kwargs):
-        """Creates an instance of this joint and creates the new connection in `assembly`.
+    def create(cls, model, *beams, **kwargs):
+        """Creates an instance of this joint and creates the new connection in `model`.
 
-        `beams` are expected to have been added to `assembly` before calling this method.
+        `beams` are expected to have been added to `model` before calling this method.
 
         This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
         them. This is the responsibility of the calling code.
@@ -117,8 +107,8 @@ class Joint(Data):
 
         Parameters
         ----------
-        assemebly : :class:`~compas_timber.assembly.Assembly`
-            The assembly to which the beams and this joing belong.
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the beams and this joing belong.
         beams : list(:class:`~compas_timber.parts.Beam`)
             A list containing two beams that whould be joined together
 
@@ -132,7 +122,7 @@ class Joint(Data):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
         joint = cls(*beams, **kwargs)
-        assembly.add_joint(joint, beams)
+        model.add_joint(joint, beams)
         joint.add_features()
         return joint
 

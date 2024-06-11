@@ -1,10 +1,9 @@
+from compas_rhino.conversions import line_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_rhino.conversions import line_to_compas
-
+from compas_timber.elements import DrillFeature
 from compas_timber.ghpython import FeatureDefinition
-from compas_timber.parts import DrillFeature
 
 
 class DrillHoleFeature(component):

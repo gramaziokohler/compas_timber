@@ -1,9 +1,9 @@
 {
-    "name": "Assembly",
-    "nickname": "Assembly",
+    "name": "Model",
+    "nickname": "Model",
     "category": "COMPAS Timber",
-    "subcategory": "Assembly",
-    "description": "Creates an Assembly",
+    "subcategory": "Model",
+    "description": "Creates an Model",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
@@ -43,8 +43,8 @@
         ],
         "outputParameters": [
             {
-                "name": "Assembly",
-                "description": "Assembly object."
+                "name": "Model",
+                "description": "Model object."
             },
             {
                 "name": "Geometry",

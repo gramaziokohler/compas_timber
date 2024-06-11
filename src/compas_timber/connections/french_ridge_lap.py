@@ -14,12 +14,10 @@ class FrenchRidgeLapJoint(Joint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LButtJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `LButtJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.TimberAssembly`
-        The assembly associated with the beams to be joined.
     beam_a : :class:`~compas_timber.parts.Beam`
         The top beam to be joined.
     beam_b : :class:`~compas_timber.parts.Beam`
@@ -75,7 +73,7 @@ class FrenchRidgeLapJoint(Joint):
         return cfr
 
     def restore_beams_from_keys(self, assemly):
-        """After de-serialization, restores references to the top and bottom beams saved in the assembly."""
+        """After de-serialization, restores references to the top and bottom beams saved in the model."""
         self.beam_a = assemly.find_by_key(self.beam_a_key)
         self.beam_b = assemly.find_by_key(self.beam_b_key)
         self._beams = (self.beam_a, self.beam_b)

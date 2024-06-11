@@ -1,7 +1,7 @@
 import math
 
-from compas.datastructures import Part
 from compas.geometry import Box
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -9,24 +9,18 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
+from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
+from compas.tolerance import TOL
+from compas_model.elements import Element
+from compas_model.elements import reset_computed
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 
-ANGLE_TOLERANCE = 1e-3  # [radians]
-DEFAULT_TOLERANCE = 1e-6
+from .features import FeatureApplicationError
 
 
-def _create_box(frame, xsize, ysize, zsize):
-    # mesh reference point is always worldXY, geometry is transformed to actual frame on Beam.geometry
-    # TODO: Alternative: Add frame information to MeshGeometry, otherwise Frame is only implied by the vertex values
-    boxframe = frame.copy()
-    depth_offset = boxframe.xaxis * xsize * 0.5
-    boxframe.point += depth_offset
-    return Box(xsize, ysize, zsize, frame=boxframe)
-
-
-class Beam(Part):
+class Beam(Element):
     """
     A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
 
@@ -82,38 +76,42 @@ class Beam(Part):
 
     """
 
+    @property
+    def __data__(self):
+        data = super(Beam, self).__data__
+        data["width"] = self.width
+        data["height"] = self.height
+        data["length"] = self.length
+        return data
+
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(frame=frame)
+        super(Beam, self).__init__(frame=frame, **kwargs)
         self.width = width
         self.height = height
         self.length = length
         self.features = []
+        self.attributes = {}
+        self.attributes.update(kwargs)
         self._blank_extensions = {}
+        self.debug_info = []
 
-    @property
-    def __data__(self):
-        data = {
-            "frame": self.frame.__data__,
-            "key": self.key,
-            "width": self.width,
-            "height": self.height,
-            "length": self.length,
-        }
-        return data
+    def __repr__(self):
+        # type: () -> str
+        return "Beam(frame={!r}, length={}, width={}, height={})".format(
+            self.frame, self.length, self.width, self.height
+        )
 
-    @classmethod
-    def __from_data__(cls, data):
-        instance = cls(Frame.__from_data__(data["frame"]), data["length"], data["width"], data["height"])
-        instance.key = data["key"]
-        return instance
+    # ==========================================================================
+    # Computed attributes
+    # ==========================================================================
 
     @property
     def shape(self):
-        return _create_box(self.frame, self.length, self.width, self.height)
+        return self._create_shape(self.frame, self.length, self.width, self.height)
 
     @property
     def blank(self):
-        return _create_box(self.blank_frame, self.blank_length, self.width, self.height)
+        return self._create_shape(self.blank_frame, self.blank_length, self.width, self.height)
 
     @property
     def blank_length(self):
@@ -122,6 +120,7 @@ class Beam(Part):
 
     @property
     def blank_frame(self):
+        assert self.frame
         start, _ = self._resolve_blank_extensions()
         frame = self.frame.copy()
         frame.point += -frame.xaxis * start  # "extension" to the start edge
@@ -129,6 +128,7 @@ class Beam(Part):
 
     @property
     def faces(self):
+        assert self.frame
         return [
             Frame(
                 Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
@@ -164,22 +164,17 @@ class Beam(Part):
 
     @property
     def centerline_start(self):
+        assert self.frame
         return self.frame.point
 
     @property
     def centerline_end(self):
+        assert self.frame
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
-    def aabb(self):
-        vertices, _ = self.blank.to_vertices_and_faces()
-        x = [p.x for p in vertices]
-        y = [p.y for p in vertices]
-        z = [p.z for p in vertices]
-        return min(x), min(y), min(z), max(x), max(y), max(z)
-
-    @property
     def long_edges(self):
+        assert self.frame
         y = self.frame.yaxis
         z = self.frame.zaxis
         w = self.width * 0.5
@@ -191,6 +186,7 @@ class Beam(Part):
 
     @property
     def midpoint(self):
+        assert self.frame
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     @property
@@ -205,6 +201,93 @@ class Beam(Part):
             self.length,
             self.frame,
         )
+
+    # ==========================================================================
+    # Implementations of abstract methods
+    # ==========================================================================
+
+    def compute_geometry(self, include_features=True):
+        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
+        """Compute the geometry of the element.
+
+        Parameters
+        ----------
+        include_features : bool, optional
+            If ``True``, include the features in the computed geometry.
+            If ``False``, return only the base geometry.
+
+        Returns
+        -------
+        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
+
+        """
+        blank_geo = Brep.from_box(self.blank)
+        if include_features:
+            for feature in self.features:
+                try:
+                    blank_geo = feature.apply(blank_geo)
+                except FeatureApplicationError as error:
+                    self.debug_info.append(error)
+        return blank_geo
+
+    def compute_aabb(self, inflate=0.0):
+        # type: (float) -> compas.geometry.Box
+        """Computes the Axis Aligned Bounding Box (AABB) of the element.
+
+        Parameters
+        ----------
+        inflate : float, optional
+            Offset of box to avoid floating point errors.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Box`
+            The AABB of the element.
+
+        """
+        vertices, _ = self.blank.to_vertices_and_faces()
+        box = Box.from_bounding_box(bounding_box(vertices))
+        box.xsize += inflate
+        box.ysize += inflate
+        box.zsize += inflate
+        return box
+
+    def compute_obb(self, inflate=0.0):
+        # type: (float | None) -> compas.geometry.Box
+        """Computes the Oriented Bounding Box (OBB) of the element.
+
+        Parameters
+        ----------
+        inflate : float
+            Offset of box to avoid floating point errors.
+
+        Returns
+        -------
+        :class:`compas.geometry.Box`
+            The OBB of the element.
+
+        """
+        obb = self.blank.copy()
+        obb.xsize += inflate
+        obb.ysize += inflate
+        obb.zsize += inflate
+        return obb
+
+    def compute_collision_mesh(self):
+        # type: () -> compas.datastructures.Mesh
+        """Computes the collision geometry of the element.
+
+        Returns
+        -------
+        :class:`compas.datastructures.Mesh`
+            The collision geometry of the element.
+
+        """
+        return self.blank.to_mesh()
+
+    # ==========================================================================
+    # Alternative constructors
+    # ==========================================================================
 
     @classmethod
     def from_centerline(cls, centerline, width, height, z_vector=None):
@@ -232,7 +315,7 @@ class Beam(Part):
         x_vector = centerline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        if y_vector.length < DEFAULT_TOLERANCE:
+        if y_vector.length < TOL.absolute:
             raise ValueError("The given z_vector seems to be parallel to the given centerline.")
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
@@ -265,6 +348,18 @@ class Beam(Part):
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector)
 
+    @staticmethod
+    def _create_shape(frame, xsize, ysize, zsize):
+        boxframe = frame.copy()
+        depth_offset = boxframe.xaxis * xsize * 0.5
+        boxframe.point += depth_offset
+        return Box(xsize, ysize, zsize, frame=boxframe)
+
+    # ==========================================================================
+    # Featrues
+    # ==========================================================================
+
+    @reset_computed
     def add_features(self, features):
         """Adds one or more features to the beam.
 
@@ -278,6 +373,7 @@ class Beam(Part):
             features = [features]
         self.features.extend(features)
 
+    @reset_computed
     def remove_features(self, features=None):
         """Removes a feature from the beam.
 
@@ -312,7 +408,7 @@ class Beam(Part):
             end += e
         self._blank_extensions[joint_key] = (start, end)
 
-    def remove_blank_extension(self, joint_key):
+    def remove_blank_extension(self, joint_key=None):
         """Removes a blank extension from the beam.
 
         Parameters
@@ -321,7 +417,10 @@ class Beam(Part):
             The key of the joint which required this extension.
 
         """
-        del self._blank_extensions[joint_key]
+        if joint_key is None:
+            self._blank_extensions = {}
+        else:
+            del self._blank_extensions[joint_key]
 
     def _resolve_blank_extensions(self):
         """Returns the max amount by which to extend the beam at both ends."""
@@ -364,26 +463,11 @@ class Beam(Part):
             de = (tmax - 1.0) * self.length
         return -ds, de
 
-    def align_z(self, vector):
-        """Align the z_axis of the beam's definition with the given vector.
-
-        TODO: Not used anywhere. Needed?
-
-        Parameters
-        ----------
-        vector : :class:`~compas.geometry.Vector`
-            The vector with which to align the z_axis.
-
-        """
-        y_vector = Vector(*cross_vectors(self.frame.xaxis, vector)) * -1.0
-        frame = Frame(self.frame.point, self.frame.xaxis, y_vector)
-        self.frame = frame
-
     @staticmethod
     def _calculate_z_vector_from_centerline(centerline_vector):
         z = Vector(0, 0, 1)
         angle = angle_vectors(z, centerline_vector)
-        if angle < ANGLE_TOLERANCE or angle > math.pi - ANGLE_TOLERANCE:
+        if angle < TOL.angular or angle > math.pi - TOL.angular:
             z = Vector(1, 0, 0)
         return z
 
