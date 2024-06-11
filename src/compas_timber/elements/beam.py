@@ -12,13 +12,11 @@ from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
+from compas.tolerance import TOL
 from compas_model.elements import Element
 
 from compas_timber.elements import FeatureApplicationError
 from compas_timber.utils.compas_extra import intersection_line_plane
-
-ANGLE_TOLERANCE = 1e-3  # [radians]
-DEFAULT_TOLERANCE = 1e-6
 
 
 def invlidate_geometry(func):
@@ -328,7 +326,7 @@ class Beam(Element):
         x_vector = centerline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
-        if y_vector.length < DEFAULT_TOLERANCE:
+        if y_vector.length < TOL.absolute:
             raise ValueError("The given z_vector seems to be parallel to the given centerline.")
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
@@ -480,7 +478,7 @@ class Beam(Element):
     def _calculate_z_vector_from_centerline(centerline_vector):
         z = Vector(0, 0, 1)
         angle = angle_vectors(z, centerline_vector)
-        if angle < ANGLE_TOLERANCE or angle > math.pi - ANGLE_TOLERANCE:
+        if angle < TOL.angular or angle > math.pi - TOL.angular:
             z = Vector(1, 0, 0)
         return z
 
