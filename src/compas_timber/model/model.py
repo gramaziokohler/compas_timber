@@ -1,7 +1,6 @@
 from compas.geometry import Point
 from compas_model.models import Model
 
-from compas_timber.connections import Joint
 from compas_timber.elements import Beam
 from compas_timber.elements import Wall
 
