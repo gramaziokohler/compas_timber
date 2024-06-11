@@ -11,7 +11,7 @@ class Wall(Element):
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 
     Wall is often a single unit of prefabricated timber wall element.
-    It is often refered to as a Hüllkörper.
+    It is often refered to as an enveloping body.
 
     TODO: complete this docstring
 
