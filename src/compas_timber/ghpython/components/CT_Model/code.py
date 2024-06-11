@@ -125,7 +125,7 @@ class ModelComponent(component):
             # prepare beams for downstream processing
             beam.remove_features()
             beam.remove_blank_extension()
-            beam.debug_infos = []
+            beam.debug_info = []
             Model.add_beam(beam)
         topologies = []
         solver = ConnectionSolver()
@@ -167,8 +167,8 @@ class ModelComponent(component):
         for beam in Model.beams:
             if CreateGeometry:
                 scene.add(beam.geometry)
-                if beam.debug_infos:
-                    debug_info.add_feature_error(beam.debug_infos)
+                if beam.debug_info:
+                    debug_info.add_feature_error(beam.debug_info)
             else:
                 scene.add(beam.blank)
 

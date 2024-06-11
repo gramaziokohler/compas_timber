@@ -93,7 +93,7 @@ class Beam(Element):
         self.attributes = {}
         self.attributes.update(kwargs)
         self._blank_extensions = {}
-        self.debug_infos = []
+        self.debug_info = []
 
     def __repr__(self):
         # type: () -> str
@@ -227,7 +227,7 @@ class Beam(Element):
                 try:
                     blank_geo = feature.apply(blank_geo)
                 except FeatureApplicationError as error:
-                    self.debug_infos.append(error)
+                    self.debug_info.append(error)
         return blank_geo
 
     def compute_aabb(self, inflate=0.0):
