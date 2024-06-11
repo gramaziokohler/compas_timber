@@ -37,13 +37,6 @@ class TButtJoint(ButtJoint):
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
         super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, **kwargs)
 
-    def get_cutting_plane(self):
-        assert self.main_beam and self.cross_beam  # should never happen
-
-        _, cfr = self.get_face_most_ortho_to_beam(self.main_beam, self.cross_beam)
-        cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
-        return cfr
-
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.beam_by_guid(self.main_beam_key)
