@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed argument `gap` from `FrenchRidgeLap` as it was not used anywhere.
 * Removed class `JointOptions` as not used anymore.
 * Removed module `compas_timber.consumers`.
+* Removed unused method `TButtJoint.get_cutting_plane()`.
 
 ## [0.7.0] 2024-02-15
 

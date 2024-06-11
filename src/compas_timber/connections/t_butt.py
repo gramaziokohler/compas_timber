@@ -1,5 +1,3 @@
-from compas.geometry import Frame
-
 from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.elements import CutFeature
 from compas_timber.elements import MillVolume
