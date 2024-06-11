@@ -16,7 +16,7 @@ from compas_timber.consumers import BrepGeometryConsumer
 
 
 class BakeBoxMap(component):
-    def RunScript(self, assembly, map_size, bake):
+    def RunScript(self, model, map_size, bake):
         if map_size and len(map_size) != 3:
             self.AddRuntimeMessage(
                 Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
@@ -31,17 +31,17 @@ class BakeBoxMap(component):
             dimy = 0.2
             dimz = 1.0
 
-        if not assembly:
-            self.AddRuntimeMessage(Warning, "Input parameters Assembly failed to collect any Beam objects.")
+        if not model:
+            self.AddRuntimeMessage(Warning, "Input parameters Model failed to collect any Beam objects.")
             return
 
         if not bake:
             return
 
         try:
-            geometries = BrepGeometryConsumer(assembly).result
+            geometries = BrepGeometryConsumer(model).result
 
-            frames = [frame_to_rhino(b.frame) for b in assembly.beams]
+            frames = [frame_to_rhino(b.frame) for b in model.beams]
             breps = [g.geometry.native_brep for g in geometries]
 
             if frames and breps:

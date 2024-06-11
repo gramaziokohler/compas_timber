@@ -5,13 +5,13 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 class ShowBeamIndex(component):
-    def RunScript(self, assembly):
+    def RunScript(self, model):
         self.pt = []
         self.txt = []
 
-        if not assembly:
+        if not model:
             return None
-        for beam in assembly.beams:
+        for beam in model.beams:
             self.pt.append(point_to_rhino(beam.midpoint))
             self.txt.append(str(beam.key))
 

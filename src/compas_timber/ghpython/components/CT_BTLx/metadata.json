@@ -3,15 +3,15 @@
     "nickname": "WriteBTLx",
     "category": "COMPAS Timber",
     "subcategory": "Fabrication",
-    "description": "Writes a BTLx file for machining of assembly parts.",
+    "description": "Writes a BTLx file for machining of model parts.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Assembly",
-                "description": "Assembly object.",
+                "name": "Model",
+                "description": "Model object.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             },

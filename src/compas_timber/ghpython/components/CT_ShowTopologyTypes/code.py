@@ -8,13 +8,13 @@ from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
 class ShowTopologyTypes(component):
-    def RunScript(self, assembly):
+    def RunScript(self, model):
         self.pt = []
         self.txt = []
 
-        if not assembly:
+        if not model:
             return
-        for topo in assembly.topologies:
+        for topo in model.topologies:
             beam_a = topo["beam_a"]
             beam_b = topo["beam_b"]
             topology = topo.get("detected_topo")
