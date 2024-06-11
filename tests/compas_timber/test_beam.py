@@ -65,3 +65,15 @@ def test_deepcopy():
 def test_extension_to_plane():
     frame = Frame(Point(3.000, 0.000, 0.000), Vector(-1.000, 0.000, 0.000), Vector(0.000, -1.000, 0.000))
     _ = Beam(frame, length=3.00, width=0.12, height=0.06)
+
+
+def test_reset_computed(mocker):
+    mocker.patch("compas_timber.elements.Beam.compute_geometry", return_value=mocker.Mock())
+    b = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2)
+
+    b.geometry
+
+    assert b._geometry is not None
+    b.add_features(mocker.Mock())
+
+    assert b._geometry is None

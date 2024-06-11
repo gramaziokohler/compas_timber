@@ -13,4 +13,5 @@ __all__ = [
     "DrillFeature",
     "MillVolume",
     "BrepSubtraction",
+    "FeatureApplicationError",
 ]

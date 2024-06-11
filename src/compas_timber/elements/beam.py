@@ -1,4 +1,3 @@
-import functools
 import math
 
 from compas.geometry import Box
@@ -14,21 +13,11 @@ from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
 from compas_model.elements import Element
+from compas_model.elements import reset_computed
 
-from compas_timber.elements import FeatureApplicationError
 from compas_timber.utils.compas_extra import intersection_line_plane
 
-
-def invlidate_geometry(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        element = args[0]
-        if not isinstance(element, Element):
-            raise ValueError("`invlidate_geometry` decorator can only be used on Element instance methods!")
-        func(*args, **kwargs)
-        element._geometry = None
-
-    return wrapper
+from .features import FeatureApplicationError
 
 
 class Beam(Element):
@@ -370,7 +359,7 @@ class Beam(Element):
     # Featrues
     # ==========================================================================
 
-    @invlidate_geometry
+    @reset_computed
     def add_features(self, features):
         """Adds one or more features to the beam.
 
@@ -384,7 +373,7 @@ class Beam(Element):
             features = [features]
         self.features.extend(features)
 
-    @invlidate_geometry
+    @reset_computed
     def remove_features(self, features=None):
         """Removes a feature from the beam.
 
