@@ -17,21 +17,18 @@ from compas_timber.connections import find_neighboring_beams
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
-geometry_type = "mesh"
-
 
 @pytest.fixture
-def example_beams():
+def example_model():
     path = os.path.abspath(r"data/lines.json")
     centerlines = json_load(path)
     w = 0.12
     h = 0.06
-    beams = []
-    for index, line in enumerate(centerlines):
+    model = TimberModel()
+    for line in centerlines:
         b = Beam.from_centerline(line, w, h)
-        b.graph_node = index
-        beams.append(b)
-    return beams
+        model.add_beam(b)
+    return model
 
 
 @pytest.fixture
@@ -206,7 +203,7 @@ def test_joint_create_kwargs_passthrough_xhalflap():
 
 if not compas.IPY:
 
-    def test_find_neighbors(example_beams):
+    def test_find_neighbors(example_model):
         expected_result = [
             set([0, 1]),
             set([0, 3]),
@@ -219,12 +216,12 @@ if not compas.IPY:
             set([3, 5]),
             set([5, 6]),
         ]
-        result = find_neighboring_beams(example_beams)
+        result = find_neighboring_beams(example_model.beams)
         # beam objects => sets of keys for easy comparison
         key_sets = []
         for pair in result:
-            pair = tuple(pair)
-            key_sets.append({pair[0].graph_node, pair[1].graph_node})
+            a, b = pair
+            key_sets.append({a.graph_node, b.graph_node})
 
         assert len(expected_result) == len(result)
         for pair in key_sets:
