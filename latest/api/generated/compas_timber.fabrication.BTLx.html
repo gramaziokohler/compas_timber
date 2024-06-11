@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.5ea377869091fd0449014c60fc090103.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
@@ -494,10 +494,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.assembly.html">compas_timber.assembly</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.parts.html">compas_timber.parts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.model.html">compas_timber.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.consumers.html">compas_timber.consumers</a></li>
 <li class="toctree-l2 current active"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
@@ -594,14 +593,14 @@ document.write(`
 <h1>BTLx</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.BTLx">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLx</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/1f222f2/src/compas_timber/fabrication/btlx.py#L14"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLx</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/02805bd/src/compas_timber/fabrication/btlx.py#L14"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Class representing a BTLx object.</p>
 <p>BTLx is a format used for representing timber fabrication data.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>assembly</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Assembly</span></code></span></dt><dd><p>The assembly object.</p>
+<dt><strong>model</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></span></dt><dd><p>The model object.</p>
 </dd>
 </dl>
 </dd>
@@ -611,9 +610,9 @@ document.write(`
 </dd>
 <dt><a class="reference internal" href="compas_timber.fabrication.BTLx.btlx_string.html#compas_timber.fabrication.BTLx.btlx_string" title="compas_timber.fabrication.BTLx.btlx_string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">btlx_string</span></code></a><span class="classifier">str</span></dt><dd><p>Returns a pretty XML string for visualization in GH, Terminal, etc.</p>
 </dd>
-<dt><strong>parts</strong><span class="classifier">dict</span></dt><dd><p>A dictionary of the BTLxParts in the assembly.</p>
+<dt><strong>parts</strong><span class="classifier">dict</span></dt><dd><p>A dictionary of the BTLxParts in the model.</p>
 </dd>
-<dt><strong>joints</strong><span class="classifier">list</span></dt><dd><p>A list of the joints in the assembly.</p>
+<dt><strong>joints</strong><span class="classifier">list</span></dt><dd><p>A list of the joints in the model.</p>
 </dd>
 </dl>
 </dd>
@@ -624,8 +623,8 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLx.btlx_string.html#compas_timber.fabrication.BTLx.btlx_string" title="compas_timber.fabrication.BTLx.btlx_string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">btlx_string</span></code></a></p></td>
 <td><p>Returns a pretty XML string for visualization in GH, Terminal, etc.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLx.process_assembly.html#compas_timber.fabrication.BTLx.process_assembly" title="compas_timber.fabrication.BTLx.process_assembly"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_assembly</span></code></a></p></td>
-<td><p>Processes the assembly and generates BTLx parts.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLx.process_model.html#compas_timber.fabrication.BTLx.process_model" title="compas_timber.fabrication.BTLx.process_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_model</span></code></a></p></td>
+<td><p>Processes the model and generates BTLx parts.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLx.register_joint.html#compas_timber.fabrication.BTLx.register_joint" title="compas_timber.fabrication.BTLx.register_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_joint</span></code></a></p></td>
 <td><p>Registers a joint type and its corresponding factory.</p></td>

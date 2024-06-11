@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.5ea377869091fd0449014c60fc090103.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
@@ -494,10 +494,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.assembly.html">compas_timber.assembly</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.parts.html">compas_timber.parts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.model.html">compas_timber.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2 current active"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.consumers.html">compas_timber.consumers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
@@ -594,17 +593,17 @@ document.write(`
 <h1>Joint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.Joint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">Joint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/1f222f2/src/compas_timber/connections/joint.py#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.data.Data.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Data</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">Joint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/02805bd/src/compas_timber/connections/joint.py#L36"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Interaction</span></code></p>
 <p>Base class for a joint connecting two beams.</p>
 <p>This is a base class and should not be instantiated directly.
 Use the <cite>create()</cite> class method of the respective implementation of <cite>Joint</cite> instead.</p>
 <dl class="field-list">
 <dt class="field-odd">Attributes<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>beams</strong><span class="classifier">tuple(<a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>)</span></dt><dd><p>The beams joined by this joint.</p>
+<dt><strong>beams</strong><span class="classifier">tuple(<code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>)</span></dt><dd><p>The beams joined by this joint.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">ends</span></code><span class="classifier">dict(<a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>, str)</span></dt><dd><p>Returns a map of ehich end of each beam is joined by this joint.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">ends</span></code><span class="classifier">dict(<code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>, str)</span></dt><dd><p>Returns a map of ehich end of each beam is joined by this joint.</p>
 </dd>
 <dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of the joint.</p>
 </dd>
@@ -624,7 +623,7 @@ Use the <cite>create()</cite> class method of the respective implementation of <
 <td><p>Adds the features defined by this joint to affected beam(s).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.Joint.create.html#compas_timber.connections.Joint.create" title="compas_timber.connections.Joint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
-<td><p>Creates an instance of this joint and creates the new connection in <cite>assembly</cite>.</p></td>
+<td><p>Creates an instance of this joint and creates the new connection in <cite>model</cite>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.Joint.get_face_most_ortho_to_beam.html#compas_timber.connections.Joint.get_face_most_ortho_to_beam" title="compas_timber.connections.Joint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal is most orthogonal to <cite>beam_a</cite>.</p></td>

@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.5ea377869091fd0449014c60fc090103.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
@@ -494,10 +494,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.assembly.html">compas_timber.assembly</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.parts.html">compas_timber.parts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.model.html">compas_timber.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2 current active"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.consumers.html">compas_timber.consumers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
@@ -599,18 +598,18 @@ document.write(`
 <h1>LMiterJoint.create</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.LMiterJoint.create">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">LMiterJoint.</span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assembly</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">beams</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/1f222f2/src/compas_timber/connections/joint.py#L107"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Creates an instance of this joint and creates the new connection in <cite>assembly</cite>.</p>
-<p><cite>beams</cite> are expected to have been added to <cite>assembly</cite> before calling this method.</p>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">LMiterJoint.</span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">beams</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/02805bd/src/compas_timber/connections/joint.py#L97"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Creates an instance of this joint and creates the new connection in <cite>model</cite>.</p>
+<p><cite>beams</cite> are expected to have been added to <cite>model</cite> before calling this method.</p>
 <p>This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
 them. This is the responsibility of the calling code.</p>
 <p>A <cite>ValueError</cite> is raised if <cite>beams</cite> contains less than two <cite>Beam</cite> objects.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>assemebly</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Assembly</span></code></span></dt><dd><p>The assembly to which the beams and this joing belong.</p>
+<dt><strong>model</strong><span class="classifier"><a class="reference internal" href="compas_timber.model.TimberModel.html#compas_timber.model.TimberModel" title="compas_timber.model.TimberModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberModel</span></code></a></span></dt><dd><p>The model to which the beams and this joing belong.</p>
 </dd>
-<dt><strong>beams</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>)</span></dt><dd><p>A list containing two beams that whould be joined together</p>
+<dt><strong>beams</strong><span class="classifier">list(<code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>)</span></dt><dd><p>A list containing two beams that whould be joined together</p>
 </dd>
 </dl>
 </dd>

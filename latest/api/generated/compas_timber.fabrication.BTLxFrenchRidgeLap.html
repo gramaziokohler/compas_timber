@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.5ea377869091fd0449014c60fc090103.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
@@ -494,10 +494,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.assembly.html">compas_timber.assembly</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.parts.html">compas_timber.parts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.model.html">compas_timber.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.consumers.html">compas_timber.consumers</a></li>
 <li class="toctree-l2 current active"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
@@ -594,7 +593,7 @@ document.write(`
 <h1>BTLxFrenchRidgeLap</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.BTLxFrenchRidgeLap">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxFrenchRidgeLap</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/1f222f2/src/compas_timber/fabrication/btlx_processes/btlx_french_ridge_lap.py#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxFrenchRidgeLap</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/02805bd/src/compas_timber/fabrication/btlx_processes/btlx_french_ridge_lap.py#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>BTLxFrenchRidgeLap represents a fabrication process for creating a French Ridge Lap joint.</p>
 <dl class="field-list">
@@ -612,9 +611,9 @@ document.write(`
 <dd class="field-even"><dl>
 <dt><strong>PROCESS_TYPE</strong><span class="classifier">str</span></dt><dd><p>The type of the process, which is “FrenchRidgeLap”.</p>
 </dd>
-<dt><strong>beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.beam.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The beam object associated with the part.</p>
+<dt><strong>beam</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The beam object associated with the part.</p>
 </dd>
-<dt><strong>other_beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.parts.Beam.html#compas_timber.parts.Beam" title="compas_timber.parts.beam.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The other beam object associated with the joint.</p>
+<dt><strong>other_beam</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The other beam object associated with the joint.</p>
 </dd>
 <dt><strong>part</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">BTLxPart</span></code></span></dt><dd><p>The BTLxPart object this process is applied to.</p>
 </dd>
