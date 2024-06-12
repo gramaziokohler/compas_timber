@@ -6,6 +6,7 @@ invoke >=0.14
 ruff
 sphinx_compas2_theme
 twine
+build
 wheel
 pytest-mock
 -e .
