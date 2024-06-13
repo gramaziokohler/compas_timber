@@ -41,8 +41,8 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data = super(LMiterJoint, self).__data__
-        data["beam_a"] = self.beam_a_key
-        data["beam_b"] = self.beam_b_key
+        data["beam_a"] = self.beam_a_guid
+        data["beam_b"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
         return data
 
@@ -50,8 +50,8 @@ class LMiterJoint(Joint):
         super(LMiterJoint, self).__init__()
         self.beam_a = beam_a
         self.beam_b = beam_b
-        self.beam_a_key = str(beam_a.guid) if beam_a else None
-        self.beam_b_key = str(beam_b.guid) if beam_b else None
+        self.beam_a_guid = str(beam_a.guid) if beam_a else None
+        self.beam_b_guid = str(beam_b.guid) if beam_b else None
         self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
         self.features = []
 
@@ -131,5 +131,5 @@ class LMiterJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.elementdict[self.beam_a_key]
-        self.beam_b = model.elementdict[self.beam_b_key]
+        self.beam_a = model.elementdict[self.beam_a_guid]
+        self.beam_b = model.elementdict[self.beam_b_guid]

@@ -40,16 +40,16 @@ class FrenchRidgeLapJoint(Joint):
         super(FrenchRidgeLapJoint, self).__init__(beams=(beam_a, beam_b), **kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
+        self.beam_a_guid = str(beam_a.guid) if beam_a else None
+        self.beam_b_guid = str(beam_b.guid) if beam_b else None
         self.reference_face_indices = {}
         self.check_geometry()
 
     @property
     def __data__(self):
         data_dict = {
-            "beam_a_key": self.beam_a_key,
-            "beam_b_key": self.beam_b_key,
+            "beam_a_guid": self.beam_a_guid,
+            "beam_b_guid": self.beam_b_guid,
         }
         data_dict.update(super(FrenchRidgeLapJoint, self).__data__)
         return data_dict
@@ -57,8 +57,8 @@ class FrenchRidgeLapJoint(Joint):
     @classmethod
     def __from_data__(cls, value):
         instance = cls(frame=Frame.__from_data__(value["frame"]), key=value["key"])
-        instance.beam_a_key = value["beam_a_key"]
-        instance.beam_b_key = value["beam_b_key"]
+        instance.beam_a_guid = value["beam_a_guid"]
+        instance.beam_b_guid = value["beam_b_guid"]
         return instance
 
     @property
@@ -74,8 +74,8 @@ class FrenchRidgeLapJoint(Joint):
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, restores references to the top and bottom beams saved in the model."""
-        self.beam_a = assemly.find_by_key(self.beam_a_key)
-        self.beam_b = assemly.find_by_key(self.beam_b_key)
+        self.beam_a = assemly.find_by_key(self.beam_a_guid)
+        self.beam_b = assemly.find_by_key(self.beam_b_guid)
         self._beams = (self.beam_a, self.beam_b)
 
     def check_geometry(self):
