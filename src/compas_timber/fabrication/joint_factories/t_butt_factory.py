@@ -36,12 +36,12 @@ class TButtFactory(object):
         if joint.birdsmouth:
             joint.calc_params_birdsmouth()
             ref_face = main_part.beam.faces[joint.btlx_params_main["ReferencePlaneID"]]
-            joint.btlx_params_main["ReferencePlaneID"] = str(main_part.reference_surface_from_beam_face(ref_face))
+            joint.btlx_params_main["ReferencePlaneID"] = str(main_part.ref_side_from_face(ref_face))
             main_part.processings.append(BTLxDoubleCut.create_process(joint.btlx_params_main, "T-Butt Joint"))
         else:
             main_part.processings.append(BTLxJackCut.create_process(main_part, cut_plane, "T-Butt Joint"))
 
-        joint.btlx_params_cross["reference_plane_id"] = cross_part.reference_surface_from_beam_face(ref_plane)
+        joint.btlx_params_cross["reference_plane_id"] = cross_part.ref_side_from_face(ref_plane)
         if joint.mill_depth > 0:
             joint.btlx_params_cross["machining_limits"] = {"FaceLimitedFront": "no", "FaceLimitedBack": "no"}
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "T-Butt Joint"))

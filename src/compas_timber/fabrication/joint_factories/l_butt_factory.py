@@ -29,8 +29,9 @@ class LButtFactory(object):
 
         """
 
-        main_part = parts[str(joint.main_beam.key)]
-        cross_part = parts[str(joint.cross_beam.key)]
+        main_part = parts[str(joint.main_beam.guid)]
+        cross_part = parts[str(joint.cross_beam.guid)]
+        ref_plane_cross = joint.get_main_cutting_plane()[1]
         main_part.processings.append(
             BTLxJackCut.create_process(main_part, joint.get_main_cutting_plane()[0], "L-Butt Joint")
         )
@@ -38,7 +39,8 @@ class LButtFactory(object):
             BTLxJackCut.create_process(cross_part, joint.get_cross_cutting_plane(), "L-Butt Joint")
         )
         if joint.mill_depth > 0:
-            if joint.ends[1] == "start":
+            if joint.ends[str(cross_part.part_guid)] == "start":
+                # TODO: aren't these two the same?
                 joint.btlx_params_cross["machining_limits"] = {
                     "FaceLimitedStart": "no",
                     "FaceLimitedFront": "no",
@@ -50,6 +52,7 @@ class LButtFactory(object):
                     "FaceLimitedFront": "no",
                     "FaceLimitedBack": "no",
                 }
+            joint.btlx_params_cross["reference_plane_id"] = cross_part.ref_side_from_face(ref_plane_cross)
             cross_part.processings.append(BTLxLap.create_process(joint.btlx_params_cross, "L-Butt Joint"))
 
 
