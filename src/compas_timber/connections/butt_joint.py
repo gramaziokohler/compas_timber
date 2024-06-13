@@ -3,24 +3,17 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
+from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import closest_point_on_line
+from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import subtract_vectors
-from compas.geometry import dot_vectors
-from compas.geometry import closest_point_on_line
-from compas.geometry import distance_line_line
-from compas.geometry import intersection_plane_plane
-from compas.geometry import Plane
-from compas.geometry import Line
-from compas.geometry import Polyhedron
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import Transformation
-from compas.geometry import angle_vectors_signed
-from compas.geometry import angle_vectors
+
 from .joint import Joint
 
 

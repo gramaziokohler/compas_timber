@@ -1,4 +1,5 @@
 from collections import OrderedDict
+
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
 

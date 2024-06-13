@@ -8,8 +8,8 @@ from datetime import datetime
 
 import compas
 from compas.geometry import Frame
-from compas.geometry import angle_vectors
 from compas.geometry import Transformation
+from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
 
