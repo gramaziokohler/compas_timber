@@ -75,7 +75,10 @@ class ModelComponent(component):
                         self.AddRuntimeMessage(
                             Warning,
                             msg.format(
-                                beam_a.key, beam_b.key, JointTopology.get_name(detected_topo), rule.joint_type.__name__
+                                beam_a.guid,
+                                beam_b.guid,
+                                JointTopology.get_name(detected_topo),
+                                rule.joint_type.__name__,
                             ),
                         )
                         continue
@@ -84,8 +87,8 @@ class ModelComponent(component):
                         self.AddRuntimeMessage(
                             Warning,
                             msg.format(
-                                beam_a.key,
-                                beam_b.key,
+                                beam_a.guid,
+                                beam_b.guid,
                                 JointTopology.get_name(detected_topo),
                                 [JointTopology.get_name(topo) for topo in rule.topos],
                             ),
