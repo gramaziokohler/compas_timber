@@ -294,9 +294,10 @@ class BTLxPart(object):
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
             self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
             processings_et = ET.Element("Processings")
-            for process in self.processings:
-                processings_et.append(process.et_element)
-            self._et_element.append(processings_et)
+            if self.processings:  # otherwise there will be an empty <Processings/> tag
+                for process in self.processings:
+                    processings_et.append(process.et_element)
+                self._et_element.append(processings_et)
             self._et_element.append(self.et_shape)
         return self._et_element
 
