@@ -73,7 +73,8 @@ class SurfaceAssemblyComponent(component):
                                 if set(v.category_a, v.category_b) not in sets:
                                     options[key].append(v)
 
-        print(options)
+        if not options:
+            options = {}
 
         assembly = SurfaceAssembly(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, openings = openings, **options)
 

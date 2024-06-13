@@ -1,4 +1,6 @@
 from .assembly import TimberAssembly
+from .assembly_from_surface import SurfaceAssembly
 # from .assembly_from_surface import SurfaceAssembly
 
-__all__ = ["TimberAssembly"]
+__all__ = ["TimberAssembly",
+           "SurfaceAssembly",]

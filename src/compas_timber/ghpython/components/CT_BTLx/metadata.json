@@ -22,6 +22,12 @@
                 "scriptParamAccess": 0
             },
             {
+                "name": "Name",
+                "description": "File Name for new BTLx.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
                 "name": "Write",
                 "description": "Write to file.",
                 "typeHintID": "bool",
