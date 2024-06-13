@@ -50,6 +50,7 @@ class ButtJoint(Joint):
             "main_beam_guid": self.main_beam_guid,
             "cross_beam_guid": self.cross_beam_guid,
             "mill_depth": self.mill_depth,
+            "birds_mouth": self.birdsmouth,
         }
         data_dict.update(super(ButtJoint, self).__data__)
         return data_dict

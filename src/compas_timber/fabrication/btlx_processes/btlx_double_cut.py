@@ -22,6 +22,8 @@ class BTLxDoubleCut(object):
     PROCESS_TYPE = "DoubleCut"
 
     def __init__(self, param_dict, joint_name=None, **kwargs):
+        self._angle1 = None
+        self._angle2 = None
         self.apply_process = True
         self.reference_plane_id = param_dict["ReferencePlaneID"]
         self.orientation = param_dict["Orientation"]
@@ -42,6 +44,32 @@ class BTLxDoubleCut(object):
             self.name = joint_name
         else:
             self.name = "lap"
+
+    @property
+    def angle1(self):
+        return self._angle1
+
+    @angle1.setter
+    def angle1(self, angle):
+        if angle > 179.9:
+            self._angle1 = 179.9
+        elif angle < 0.1:
+            self._angle1 = 0.1
+        else:
+            self._angle1 = angle
+
+    @property
+    def angle2(self):
+        return self._angle2
+
+    @angle2.setter
+    def angle2(self, angle):
+        if angle > 179.9:
+            self._angle2 = 179.9
+        elif angle < 0.1:
+            self._angle2 = 0.1
+        else:
+            self._angle2 = angle
 
     @property
     def header_attributes(self):
