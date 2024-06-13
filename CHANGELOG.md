@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Added `birdsmouth` parameter to `butt_joint` which applies a `btlx_double_cut` process to the part. 
 * Added `BTLxDoubleCut` BTLx Processing class
+* Added BTLx support for `TButtJoint` and `LButtJoint`
+* Added `BTLxLap` process class
 
 ### Changed
 
@@ -74,8 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
 * Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
 * Added `topos` attribute to `CategoryRule` to filter when joints get applied
-* Added BTLx support for `TButtJoint` and `LButtJoint`
-* Added `BTLxLap` process class
 
 ### Changed
 
@@ -90,7 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `CategoryJointRule` and `DirectJointRule` to a dynamic interface where joint type is selected with right click menu
 * Changed `Assembly` GH component to apply category joints if the detected topology is in `CategoryRule.topos`
 * Changed `TopologyJoints` GH component to `DefaultJoints` Component, which applies default joints based on topology. 
-* Changed `Beam.faces` to match position and orientation of BTLx `ReferenceSide`
 
 ### Removed
 
