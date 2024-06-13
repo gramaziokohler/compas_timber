@@ -109,6 +109,7 @@ class ButtJoint(Joint):
         return face_dict.values()[3]
 
     def get_main_cutting_plane(self):
+        # TODO: this should be split into two functions. It's hard to read on the calling side.
         assert self.main_beam and self.cross_beam
         self.reference_side_index_cross, cfr = self.get_face_most_ortho_to_beam(
             self.main_beam, self.cross_beam, ignore_ends=True
@@ -120,7 +121,12 @@ class ButtJoint(Joint):
         return cfr, cross_mating_frame
 
     def subtraction_volume(self):
-        """Returns the volume to be subtracted from the cross beam."""
+        """Returns the volume to be subtracted from the cross beam.
+
+        # TODO: break this function into smaller more readable parts
+        # TODO: BTLx related code here should end up in a LapFeature..
+
+        """
         vertices = []
         front_frame, back_frame = self.front_back_surface_main()
         top_frame, bottom_frame = self.get_main_cutting_plane()
@@ -189,6 +195,11 @@ class ButtJoint(Joint):
     def calc_params_birdsmouth(self):
         """
         Calculate the parameters for a birdsmouth joint.
+
+        # TODO: break this function into smaller more readable parts
+        # TODO: this is BTLx only code, it should move some where else
+        # TODO: eventually, there should be a DoubleCut Feature that holds these parameters
+        # TODO: there's no birds mouth in L-Butt, if there shouldn't be then at least move to T-Butt
 
         Parameters:
         ----------
