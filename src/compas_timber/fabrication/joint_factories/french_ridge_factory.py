@@ -29,11 +29,11 @@ class FrenchRidgeFactory(object):
 
         """
 
-        top_key = joint.beams[0].key
+        top_key = joint.beams[0].guid
         top_part = parts[str(top_key)]
         top_part.processings.append(BTLxFrenchRidgeLap.create_process(top_part, joint, True))
 
-        bottom_key = joint.beams[1].key
+        bottom_key = joint.beams[1].guid
         bottom_part = parts[str(bottom_key)]
         bottom_part.processings.append(BTLxFrenchRidgeLap.create_process(bottom_part, joint, False))
 

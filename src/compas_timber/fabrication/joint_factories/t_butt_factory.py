@@ -29,8 +29,8 @@ class TButtFactory(object):
 
         """
 
-        main_part = parts[str(joint.main_beam.key)]
-        cross_part = parts[str(joint.cross_beam.key)]
+        main_part = parts[str(joint.main_beam.guid)]
+        cross_part = parts[str(joint.cross_beam.guid)]
         cut_plane, ref_plane = joint.get_main_cutting_plane()
 
         if joint.birdsmouth:

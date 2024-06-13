@@ -54,8 +54,8 @@ class ButtJoint(Joint):
     @property
     def __data__(self):
         data_dict = {
-            "main_beam_key": self.main_beam_key,
-            "cross_beam_key": self.cross_beam_key,
+            "main_beam_guid": self.main_beam_guid,
+            "cross_beam_guid": self.cross_beam_guid,
             "mill_depth": self.mill_depth,
         }
         data_dict.update(super(ButtJoint, self).__data__)
@@ -64,16 +64,16 @@ class ButtJoint(Joint):
     @classmethod
     def __from_data__(cls, value):
         instance = cls(**value)
-        instance.main_beam_key = value["main_beam_key"]
-        instance.cross_beam_key = value["cross_beam_key"]
+        instance.main_beam_guid = value["main_beam_guid"]
+        instance.cross_beam_guid = value["cross_beam_guid"]
         return instance
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.main_beam_guid = main_beam.guid if main_beam else None
+        self.cross_beam_guid = cross_beam.guid if cross_beam else None
         self.mill_depth = mill_depth
         self.birdsmouth = birdsmouth
         self.btlx_params_main = {}
@@ -87,8 +87,8 @@ class ButtJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restors references to the main and cross beams saved in the model."""
-        self.main_beam = model.beam_by_guid(self.main_beam_key)
-        self.cross_beam = model.beam_by_guid(self.cross_beam_key)
+        self.main_beam = model.beam_by_guid(self.main_beam_guid)
+        self.cross_beam = model.beam_by_guid(self.cross_beam_guid)
 
     def side_surfaces_cross(self):
         assert self.main_beam and self.cross_beam
@@ -242,7 +242,7 @@ class ButtJoint(Joint):
         intersect_vec1 = Vector.from_start_end(*intersection_plane_plane(plane1, Plane.from_frame(ref_frame)))
         intersect_vec2 = Vector.from_start_end(*intersection_plane_plane(plane2, Plane.from_frame(ref_frame)))
 
-        if self.ends[str(self.main_beam.key)] == "start":
+        if self.ends[str(self.main_beam.guid)] == "start":
             reference_vector = ref_frame.xaxis
         else:
             reference_vector = -ref_frame.xaxis
@@ -259,7 +259,7 @@ class ButtJoint(Joint):
         Inclination2 = angle_vectors(ref_frame.zaxis, plane2.normal, deg=True)
 
         self.btlx_params_main = {
-            "Orientation": self.ends[str(self.main_beam.key)],
+            "Orientation": self.ends[str(self.main_beam.guid)],
             "StartX": StartX,
             "StartY": StartY,
             "Angle1": Angle1,

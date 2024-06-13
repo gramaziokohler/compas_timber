@@ -136,9 +136,9 @@ class Joint(Interaction):
             if distance_point_line(beam.centerline.start, self.beams[index - 1].centerline) < distance_point_line(
                 beam.centerline.end, self.beams[index - 1].centerline
             ):
-                self._ends[str(beam.key)] = "start"
+                self._ends[str(beam.guid)] = "start"
             else:
-                self._ends[str(beam.key)] = "end"
+                self._ends[str(beam.guid)] = "end"
 
         return self._ends
 
