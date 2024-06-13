@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed import errors in GH components.
+* Updated GH example file.
+
 ### Removed
 
 
