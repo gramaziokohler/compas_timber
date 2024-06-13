@@ -11,8 +11,8 @@
         "inputParameters": [
 
             {
-                "name": "Assembly",
-                "description": "Assembly object.",
+                "name": "Model",
+                "description": "Model object.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             }

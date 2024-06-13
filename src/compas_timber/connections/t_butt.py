@@ -1,7 +1,6 @@
 from compas_timber.connections.butt_joint import ButtJoint
-
-from compas_timber.parts import CutFeature
-from compas_timber.parts import MillVolume
+from compas_timber.elements import CutFeature
+from compas_timber.elements import MillVolume
 
 from .joint import BeamJoinningError
 from .solver import JointTopology
@@ -13,7 +12,7 @@ class TButtJoint(ButtJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `TButtJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `TButtJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
@@ -36,6 +35,11 @@ class TButtJoint(ButtJoint):
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
         super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, birdsmouth, **kwargs)
 
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.main_beam = model.beam_by_guid(self.main_beam_key)
+        self.cross_beam = model.beam_by_guid(self.cross_beam_key)
+
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).
 
@@ -56,7 +60,7 @@ class TButtJoint(ButtJoint):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
         trim_feature = CutFeature(cutting_plane)
         if self.mill_depth:

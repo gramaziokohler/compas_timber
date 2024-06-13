@@ -1,8 +1,8 @@
 ********************************************************************************
-compas_timber.parts
+compas_timber.model
 ********************************************************************************
 
-.. currentmodule:: compas_timber.parts
+.. currentmodule:: compas_timber.model
 
 Classes
 =======
@@ -11,4 +11,4 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Beam
+    TimberModel

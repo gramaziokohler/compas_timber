@@ -7,7 +7,7 @@ class NullJoint(Joint):
 
     Can be used to join to beams which shouldn't join.
 
-    Please use `NullJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `NullJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
@@ -27,13 +27,6 @@ class NullJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L  # TODO: this really supports all..
 
-    def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(NullJoint, self).__init__(**kwargs)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
-
     @property
     def __data__(self):
         data_dict = {
@@ -50,11 +43,21 @@ class NullJoint(Joint):
         instance.beam_b_key = value["cross_beam_key"]
         return instance
 
-    def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.beam_a = assemly.find_by_key(self.beam_a_key)
-        self.beam_b = assemly.find_by_key(self.beam_b_key)
-        self._beams = (self.beam_a, self.beam_b)
+    def __init__(self, beam_a=None, beam_b=None, **kwargs):
+        super(NullJoint, self).__init__(**kwargs)
+        self.beam_a = beam_a
+        self.beam_b = beam_b
+        self.beam_a_key = str(beam_a.guid) if beam_a else None
+        self.beam_b_key = str(beam_b.guid) if beam_b else None
+
+    @property
+    def beams(self):
+        return [self.beam_a, self.beam_b]
+
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.beam_a = model.beam_by_guid(self.beam_a_key)
+        self.beam_b = model.beam_by_guid(self.beam_b_key)
 
     def add_features(self):
         """This joint does not add any features to the beams."""

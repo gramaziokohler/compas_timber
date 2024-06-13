@@ -1,4 +1,12 @@
 from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Polyhedron
+from compas.geometry import angle_vectors_signed
+from compas.geometry import closest_point_on_line
+from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import subtract_vectors
 from compas.geometry import dot_vectors
@@ -19,12 +27,10 @@ from .joint import Joint
 class ButtJoint(Joint):
     """Abstract Lap type joint with functions common to L-Butt and T-Butt Joints.
 
-    Do not instantiate directly. Please use `**LapJoint.create()` to properly create an instance of lap sub-class and associate it with an assembly.
+    Do not instantiate directly. Please use `**LapJoint.create()` to properly create an instance of lap sub-class and associate it with an model.
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.TimberAssembly`
-        The assembly associated with the beams to be joined.
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
@@ -45,19 +51,6 @@ class ButtJoint(Joint):
 
     """
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
-        super(ButtJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_key = main_beam.key if main_beam else None
-        self.cross_beam_key = cross_beam.key if cross_beam else None
-        self.mill_depth = mill_depth
-        self.birdsmouth = birdsmouth
-        self.btlx_params_main = {}
-        self.btlx_params_cross = {}
-        self.features = []
-        self.test = []
-
     @property
     def __data__(self):
         data_dict = {
@@ -75,14 +68,27 @@ class ButtJoint(Joint):
         instance.cross_beam_key = value["cross_beam_key"]
         return instance
 
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
+        super(ButtJoint, self).__init__(**kwargs)
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
+        self.main_beam_key = main_beam.key if main_beam else None
+        self.cross_beam_key = cross_beam.key if cross_beam else None
+        self.mill_depth = mill_depth
+        self.birdsmouth = birdsmouth
+        self.btlx_params_main = {}
+        self.btlx_params_cross = {}
+        self.features = []
+        self.test = []
+
     @property
     def beams(self):
         return [self.main_beam, self.cross_beam]
 
-    def restore_beams_from_keys(self, assemly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.main_beam = assemly.find_by_key(self.main_beam_key)
-        self.cross_beam = assemly.find_by_key(self.cross_beam_key)
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restors references to the main and cross beams saved in the model."""
+        self.main_beam = model.beam_by_guid(self.main_beam_key)
+        self.cross_beam = model.beam_by_guid(self.cross_beam_key)
 
     def side_surfaces_cross(self):
         assert self.main_beam and self.cross_beam

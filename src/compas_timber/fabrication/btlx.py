@@ -19,8 +19,8 @@ class BTLx(object):
 
     Parameters
     ----------
-    assembly : :class:`~compas_timber.assembly.Assembly`
-        The assembly object.
+    model : :class:`~compas_timber.model.Model`
+        The model object.
 
     Attributes
     ----------
@@ -29,9 +29,9 @@ class BTLx(object):
     btlx_string : str
         A pretty XML string for visualization.
     parts : dict
-        A dictionary of the BTLxParts in the assembly.
+        A dictionary of the BTLxParts in the model.
     joints : list
-        A list of the joints in the assembly.
+        A list of the joints in the model.
 
     """
 
@@ -51,12 +51,12 @@ class BTLx(object):
         ]
     )
 
-    def __init__(self, assembly):
-        self.assembly = assembly
+    def __init__(self, model):
+        self.model = model
         self.parts = {}
         self._test = []
-        self.joints = assembly.joints
-        self.process_assembly()
+        self.joints = model.joints
+        self.process_model()
 
     @property
     def history(self):
@@ -84,9 +84,9 @@ class BTLx(object):
             self.parts_element.append(part.et_element)
         return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
 
-    def process_assembly(self):
-        """Processes the assembly and generates BTLx parts."""
-        for beam in self.assembly.beams:
+    def process_model(self):
+        """Processes the model and generates BTLx parts."""
+        for beam in self.model.beams:
             self.parts[str(beam.key)] = BTLxPart(beam)
         for joint in self.joints:
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
@@ -123,14 +123,14 @@ class BTLxPart(object):
 
     Parameters
     ----------
-    beam : :class:`~compas_timber.assembly.Beam`
+    beam : :class:`~compas_timber.elements.Beam`
         The beam object.
 
     Attributes
     ----------
     attr : dict
         The attributes of the BTLx part.
-    beam : :class:`~compas_timber.assembly.Beam`
+    beam : :class:`~compas_timber.elements.Beam`
         The beam object.
     key : str
         The key of the beam object.
