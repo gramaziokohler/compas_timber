@@ -32,7 +32,7 @@ class BTLxJackCut(object):
         self.cut_plane = frame
         self.part = part
         self.apply_process = True
-        self.reference_side = self.part.reference_surface_planes(1)
+        self.reference_side = self.part.reference_surfaces[0]
         self.generate_process()
         if joint_name:
             self.name = joint_name

@@ -38,6 +38,7 @@ class BTLxLap(object):
         self.lead_inclination = 90.0
         self.machining_limits = []
 
+        # TODO: assign the params more explicitly, this is easy to miss
         for key, value in param_dict.items():
             setattr(self, key, value)
 
