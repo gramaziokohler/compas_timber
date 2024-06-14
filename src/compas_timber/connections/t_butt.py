@@ -32,13 +32,13 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, **kwargs):
-        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
+        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, birdsmouth, **kwargs)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.beam_by_guid(self.main_beam_key)
-        self.cross_beam = model.beam_by_guid(self.cross_beam_key)
+        self.main_beam = model.beam_by_guid(self.main_beam_guid)
+        self.cross_beam = model.beam_by_guid(self.cross_beam_guid)
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).

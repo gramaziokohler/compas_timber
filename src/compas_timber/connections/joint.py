@@ -1,5 +1,6 @@
 from compas.geometry import Point
 from compas.geometry import angle_vectors
+from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
 from compas_model.interactions import Interaction
 
@@ -128,26 +129,16 @@ class Joint(Interaction):
 
     @property
     def ends(self):
-        """Returns a map of ehich end of each beam is joined by this joint."""
+        """Returns a map of which end of each beam is joined by this joint."""
 
         self._ends = {}
         for index, beam in enumerate(self.beams):
-            start_distance = min(
-                [
-                    beam.centerline.start.distance_to_point(self.beams[index - 1].centerline.start),
-                    beam.centerline.start.distance_to_point(self.beams[index - 1].centerline.end),
-                ]
-            )
-            end_distance = min(
-                [
-                    beam.centerline.end.distance_to_point(self.beams[index - 1].centerline.start),
-                    beam.centerline.end.distance_to_point(self.beams[index - 1].centerline.end),
-                ]
-            )
-            if start_distance < end_distance:
-                self._ends[str(beam.key)] = "start"
+            if distance_point_line(beam.centerline.start, self.beams[index - 1].centerline) < distance_point_line(
+                beam.centerline.end, self.beams[index - 1].centerline
+            ):
+                self._ends[str(beam.guid)] = "start"
             else:
-                self._ends[str(beam.key)] = "end"
+                self._ends[str(beam.guid)] = "end"
 
         return self._ends
 

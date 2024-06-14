@@ -43,8 +43,8 @@ class LapJoint(Joint):
     @property
     def __data__(self):
         data = super(LapJoint, self).__data__
-        data["main_beam"] = self.main_beam_key
-        data["cross_beam"] = self.cross_beam_key
+        data["main_beam"] = self.main_beam_guid
+        data["cross_beam"] = self.cross_beam_guid
         data["flip_lap_side"] = self.flip_lap_side
         data["cut_plane_bias"] = self.cut_plane_bias
         return data
@@ -55,8 +55,8 @@ class LapJoint(Joint):
         self.cross_beam = cross_beam
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.main_beam_key = str(main_beam.guid) if main_beam else None
-        self.cross_beam_key = str(cross_beam.guid) if cross_beam else None
+        self.main_beam_guid = str(main_beam.guid) if main_beam else None
+        self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
         self.features = []
 
     @property
@@ -65,8 +65,8 @@ class LapJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.beam_by_guid(self.main_beam_key)
-        self.cross_beam = model.beam_by_guid(self.cross_beam_key)
+        self.main_beam = model.beam_by_guid(self.main_beam_guid)
+        self.cross_beam = model.beam_by_guid(self.cross_beam_guid)
 
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):

@@ -21,6 +21,7 @@ __all__ = [
     "BeamJoinningError",
     "TButtJoint",
     "LButtJoint",
+    "TButtJoint",
     "LMiterJoint",
     "XHalfLapJoint",
     "THalfLapJoint",

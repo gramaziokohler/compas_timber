@@ -9,6 +9,8 @@ from datetime import datetime
 import compas
 from compas.geometry import Frame
 from compas.geometry import Transformation
+from compas.geometry import angle_vectors
+from compas.tolerance import TOL
 
 
 class BTLx(object):
@@ -85,10 +87,14 @@ class BTLx(object):
 
     def process_model(self):
         """Processes the model and generates BTLx parts."""
-        for beam in self.model.beams:
-            self.parts[str(beam.key)] = BTLxPart(beam)
+        for index, beam in enumerate(self.model.beams):
+            self.parts[str(beam.guid)] = BTLxPart(beam, order_num=index)
+
+        # TODO: it would be fantastic if instead of processing joints we'd process features..
         for joint in self.joints:
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
+            if factory_type is None:
+                raise ValueError("No joint factory found for joint: {}".format(type(joint)))
             factory_type.apply_processings(joint, self.parts)
 
     @classmethod
@@ -154,10 +160,10 @@ class BTLxPart(object):
 
     """
 
-    def __init__(self, beam):
+    def __init__(self, beam, order_num):
         self.beam = beam
-        self.key = beam.key
-        self.length = beam.length
+        self.order_num = order_num
+        self.length = beam.blank_length
         self.width = beam.height
         self.height = beam.width
         self.frame = Frame(
@@ -166,12 +172,45 @@ class BTLxPart(object):
             beam.frame.yaxis,
         )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
         self.blank_length = beam.blank_length
-        self._reference_surfaces = []
         self.processings = []
         self._et_element = None
 
-    def reference_surface_from_beam_face(self, beam_face):
-        """Finds the reference surface with normal that matches the normal of the beam face argument
+    @property
+    def part_guid(self):
+        return str(self.beam.guid)
+
+    @property
+    def reference_surfaces(self):
+        # TODO: align Beam.faces with this so that conversion is not needed
+        return (
+            Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),  #
+            Frame(
+                self.frame.point + self.frame.yaxis * self.width,
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            ),
+            Frame(
+                self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            ),
+            Frame(
+                self.frame.point + self.frame.zaxis * self.height,
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
+            Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
+            Frame(
+                self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
+                self.frame.zaxis,
+                -self.frame.yaxis,
+            ),
+        )
+
+    def ref_side_from_face(self, beam_face):
+        """Finds the one-based index of the reference side with normal that matches the normal of the given beam face.
+
+        This essentially translates between the beam face reference system to the BTLx side reference system.
 
         Parameters
         -----------
@@ -184,57 +223,18 @@ class BTLxPart(object):
             The key(index 1-6) of the reference surface.
 
         """
-        for key, face in self.reference_surfaces.items():
-            if face.normal == beam_face.normal:
-                return key
-
-    def reference_surface_planes(self, index):
-        """Returns the reference surface planes for a given index per BTLx docs.
-
-        Parameters
-        ----------
-        index : int
-            The index of the reference surface.
-
-        Returns
-        -------
-        dict
-            The BTLx reference surface frame.
-
-        """
-        if len(self._reference_surfaces) != 6:
-            self._reference_surfaces = {
-                "1": Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),
-                "2": Frame(
-                    self.frame.point + self.frame.yaxis * self.width,
-                    self.frame.xaxis,
-                    -self.frame.yaxis,
-                ),
-                "3": Frame(
-                    self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
-                    self.frame.xaxis,
-                    -self.frame.zaxis,
-                ),
-                "4": Frame(
-                    self.frame.point + self.frame.zaxis * self.height,
-                    self.frame.xaxis,
-                    self.frame.yaxis,
-                ),
-                "5": Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
-                "6": Frame(
-                    self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
-                    self.frame.zaxis,
-                    -self.frame.yaxis,
-                ),
-            }
-        return self._reference_surfaces[str(index)]
+        for index, ref_face in enumerate(self.reference_surfaces):
+            angle = angle_vectors(ref_face.normal, beam_face.normal, deg=True)
+            if TOL.is_zero(angle):
+                return index + 1  # in BTLx face indices are one-based
+        raise ValueError("Given beam face does not match any of the reference surfaces.")
 
     @property
     def attr(self):
         return {
-            "SingleMemberNumber": str(self.key),
+            "SingleMemberNumber": str(self.order_num),
             "AssemblyNumber": "",
-            "OrderNumber": str(self.key),
+            "OrderNumber": str(self.order_num),
             "Designation": "",
             "Annotation": "",
             "Storey": "",
@@ -294,9 +294,10 @@ class BTLxPart(object):
             self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
             self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
             processings_et = ET.Element("Processings")
-            for process in self.processings:
-                processings_et.append(process.et_element)
-            self._et_element.append(processings_et)
+            if self.processings:  # otherwise there will be an empty <Processings/> tag
+                for process in self.processings:
+                    processings_et.append(process.et_element)
+                self._et_element.append(processings_et)
             self._et_element.append(self.et_shape)
         return self._et_element
 
@@ -402,7 +403,10 @@ class BTLxProcess(object):
     def et_element(self):
         element = ET.Element(self.process_type, self.header_attributes)
         for key, value in self.process_parameters.items():
-            child = ET.Element(key)
-            child.text = value
+            if isinstance(value, dict):
+                child = ET.Element(key, value)
+            else:
+                child = ET.Element(key)
+                child.text = value
             element.append(child)
         return element

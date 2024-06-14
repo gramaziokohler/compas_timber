@@ -18,6 +18,8 @@ class WriteBTLx(component):
             if not path:
                 self.AddRuntimeMessage(Warning, "Input parameter Path failed to collect data")
                 return
+            if path[-5:] != ".btlx":
+                path += ".btlx"
             with open(path, "w") as f:
                 f.write(btlx.btlx_string())
         return btlx.btlx_string()

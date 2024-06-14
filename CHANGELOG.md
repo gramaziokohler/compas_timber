@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `birdsmouth` parameter to `butt_joint` which applies a `btlx_double_cut` process to the part. 
+* Added `BTLxDoubleCut` BTLx Processing class
+* Added BTLx support for `TButtJoint` and `LButtJoint`
+* Added `BTLxLap` process class
+
 ### Changed
 
 ### Removed
