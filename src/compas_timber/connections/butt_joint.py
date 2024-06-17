@@ -115,7 +115,7 @@ class ButtJoint(Joint):
         self.reference_side_index_cross, _ = self.get_face_most_towards_beam(
             self.main_beam, self.cross_beam, ignore_ends=False
         )
-        if self.reject_i and self.reference_side_index in [4, 5]:
+        if self.reject_i and self.reference_side_index_cross in [4, 5]:
             raise BeamJoinningError(
                 beams=self.beams, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
             )

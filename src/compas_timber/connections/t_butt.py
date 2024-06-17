@@ -96,8 +96,8 @@ class TButtJoint(ButtJoint):
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
-        trim_feature = CutFeature(cutting_plane)
+        trim_feature = CutFeature(cutting_plane, owner=self.__class__.__name__)
         if self.mill_depth:
-            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume(), owner=self.__class__.__name__))
         self.main_beam.add_features(trim_feature)
         self.features = [trim_feature]

@@ -121,10 +121,9 @@ class LButtJoint(ButtJoint):
         if self.features:
             self.main_beam.remove_features(self.features)
         start_main, start_cross = None, None
-
+        main_cutting_plane = self.get_main_cutting_plane()[0]
+        cross_cutting_plane = self.get_cross_cutting_plane()
         try:
-            main_cutting_plane = self.get_main_cutting_plane()[0]
-            cross_cutting_plane = self.get_cross_cutting_plane()
             start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
             start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
         except BeamJoinningError as be:
@@ -142,14 +141,14 @@ class LButtJoint(ButtJoint):
             self.cross_beam.add_blank_extension(
                 start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
             )
-            f_cross = CutFeature(cross_cutting_plane)
+            f_cross = CutFeature(cross_cutting_plane, owner=self.__class__.__name__)
             self.cross_beam.add_features(f_cross)
             self.features.append(f_cross)
 
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
 
-        f_main = CutFeature(main_cutting_plane)
+        f_main = CutFeature(main_cutting_plane, owner=self.__class__.__name__)
         if self.mill_depth:
-            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume(), owner=self.__class__.__name__))
         self.main_beam.add_features(f_main)
         self.features.append(f_main)

@@ -69,8 +69,8 @@ class SurfaceAssemblyComponent(component):
                     elif isinstance(value, list):
                         for v in value:
                             if isinstance(v, CategoryRule):
-                                sets = [set(rule.category_a, rule.category_b) for rule in options[key]]
-                                if set(v.category_a, v.category_b) not in sets:
+                                sets = [set([rule.category_a, rule.category_b]) for rule in options[key]]
+                                if set([v.category_a, v.category_b]) not in sets:
                                     options[key].append(v)
 
         if not options:
@@ -86,11 +86,9 @@ class SurfaceAssemblyComponent(component):
             for result in vis_consumer.result:
                 scene.add(result.geometry)
                 if result.debug_info:
-                    debug_info._has_errors = False
                     for error in result.debug_info:
                         if error.message != "The volume does not intersect with beam geometry.":
                             debug_info.add_feature_error(result.debug_info)
-                            debug_info._has_errors = True
         else:
             for beam in assembly.beams:
                 scene.add(beam.blank)

@@ -142,7 +142,7 @@ class LMiterJoint(Joint):
         self.beam_a.add_blank_extension(start_a, end_a, self.key)
         self.beam_b.add_blank_extension(start_b, end_b, self.key)
 
-        f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
+        f1, f2 = CutFeature(plane_a, owner=self.__class__.__name__), CutFeature(plane_b, owner=self.__class__.__name__)
         self.beam_a.add_features(f1)
         self.beam_b.add_features(f2)
         self.features = [f1, f2]

@@ -10,10 +10,11 @@ from scriptcontext import sticky
 class ImportTimberAssembly(component):
 
     def RunScript(self, filepath, import_):
+        KEY = "assembly"
         if not filepath:
+            sticky[KEY] = None
             self.AddRuntimeMessage(Warning, "Input parameter Filepath failed to collect data")
 
-        KEY = "assembly"
         if import_:
             sticky[KEY] = json_load(filepath)
         scene = Scene()
