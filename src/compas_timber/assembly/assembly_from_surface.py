@@ -1,6 +1,5 @@
 import math
 
-from compas_timber.parts import Beam
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
@@ -19,14 +18,15 @@ from compas.geometry import distance_point_point_sqrd
 from compas.geometry import Point
 from compas.geometry import Line
 from compas_timber.ghpython import CategoryRule
+from compas_timber.elements import Beam
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
-from compas_timber.assembly import TimberAssembly
+from compas_timber.model import TimberModel
 
 
-class SurfaceAssembly(object):
+class SurfaceModel(object):
     """Create a timber assembly from a surface.
 
     Parameters
@@ -46,7 +46,7 @@ class SurfaceAssembly(object):
 
     Attributes
     ----------
-    beams : list of :class:`compas_timber.parts.Beam`
+    beams : list of :class:`compas_timber.elements.Beam`
         The beams of the assembly.
     rules : list of :class:`compas_timber.ghpython.CategoryRule`
         The rules for the assembly.
@@ -60,19 +60,19 @@ class SurfaceAssembly(object):
         The height of the panel.
     frame : :class:`compas.geometry.Frame`
         The frame of the assembly.
-    jack_studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+    jack_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
         The jack studs of the assembly.
-    king_studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+    king_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
         The king studs of the assembly.
-    edge_studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+    edge_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
         The edge studs of the assembly.
-    studs : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+    studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
         The studs of the assembly.
-    sills : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+    sills : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
         The sills of the assembly.
-    headers : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+    headers : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
         The headers of the assembly.
-    plates : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+    plates : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
 
     """
 
@@ -133,7 +133,6 @@ class SurfaceAssembly(object):
         cross = cross_vectors(self.normal, self._z_axis)
         return Vector(*cross_vectors(cross, self.normal))
 
-
     @property
     def default_rules(self):
         return [
@@ -156,23 +155,21 @@ class SurfaceAssembly(object):
             CategoryRule(TButtJoint, "sill", "jack_stud"),
         ]
 
-
-
     @property
     def rules(self):
         if not self._rules:
             self._rules = self.default_rules
             if self.joint_overrides:
                 for rule in self.joint_overrides:
-                        rule_set = set([rule.category_a, rule.category_b])
-                        for i, _rule in enumerate(self._rules):
-                            _set = set([_rule.category_a, _rule.category_b])
-                            print(rule_set, _set)
-                            if rule_set == _set:
-                                print(_rule)
-                                self._rules[i] = rule
-                                print(_rule)
-                                break
+                    rule_set = set([rule.category_a, rule.category_b])
+                    for i, _rule in enumerate(self._rules):
+                        _set = set([_rule.category_a, _rule.category_b])
+                        print(rule_set, _set)
+                        if rule_set == _set:
+                            print(_rule)
+                            self._rules[i] = rule
+                            print(_rule)
+                            break
         print(self._rules)
         return self._rules
 
@@ -182,7 +179,7 @@ class SurfaceAssembly(object):
 
     @property
     def assembly(self):
-        assembly = TimberAssembly()
+        assembly = TimberModel()
         for beam in self.beams:
             assembly.add_beam(beam)
         topologies = []
@@ -280,7 +277,7 @@ class SurfaceAssembly(object):
 
     @classmethod
     def beam_category_names(cls):
-        return SurfaceAssembly.BEAM_CATEGORY_NAMES
+        return SurfaceModel.BEAM_CATEGORY_NAMES
 
     def parse_loops(self):
         for loop in self.surface.loops:
@@ -501,7 +498,7 @@ class SurfaceAssembly(object):
             The height of the sill.
         header_height : float, optional
             The height of the header.
-        parent : :class:`compas_timber.assembly.SurfaceAssembly`
+        parent : :class:`compas_timber.model.SurfaceAssembly`
             The parent of the window.
 
         Attributes
@@ -512,7 +509,7 @@ class SurfaceAssembly(object):
             The height of the sill.
         header_height : float
             The height of the header.
-        parent : :class:`compas_timber.assembly.SurfaceAssembly`
+        parent : :class:`compas_timber.model.SurfaceAssembly`
             The parent of the window.
         z_axis : :class:`compas.geometry.Vector`
             The z axis of the parent.
@@ -520,7 +517,7 @@ class SurfaceAssembly(object):
             The normal of the parent.
         beam_dimensions : dict
             The beam dimensions of the parent.
-        elements : list of :class:`compas_timber.assembly.SurfaceAssembly.BeamElement`
+        elements : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
             The elements of the window.
         length : float
             The length of the window.
@@ -585,7 +582,7 @@ class SurfaceAssembly(object):
 
         def process_outlines(self):
             for i, segment in enumerate(self.outline.lines):
-                element = SurfaceAssembly.BeamElement(segment, parent=self)
+                element = SurfaceModel.BeamElement(segment, parent=self)
                 if (
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
@@ -640,7 +637,7 @@ class SurfaceAssembly(object):
             The type of the beam.
         polyline : :class:`compas.geometry.Polyline`, optional
             The polyline of the beam.
-        parent : :class:`compas_timber.assembly.SurfaceAssembly` or :class:`compas_timber.assembly.SurfaceAssembly.Window`
+        parent : :class:`compas_timber.model.SurfaceAssembly` or :class:`compas_timber.model.SurfaceAssembly.Window`
             The parent of the beam.
 
         Attributes
