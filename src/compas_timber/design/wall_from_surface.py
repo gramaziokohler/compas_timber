@@ -17,7 +17,7 @@ from compas.geometry import closest_point_on_segment
 from compas.geometry import distance_point_point_sqrd
 from compas.geometry import Point
 from compas.geometry import Line
-from compas_timber.ghpython import CategoryRule
+from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
@@ -48,7 +48,7 @@ class SurfaceModel(object):
     ----------
     beams : list of :class:`compas_timber.elements.Beam`
         The beams of the assembly.
-    rules : list of :class:`compas_timber.ghpython.CategoryRule`
+    rules : list of :class:`compas_timber.design.CategoryRule`
         The rules for the assembly.
     centerlines : list of :class:`compas.geometry.Line`
         The centerlines of the beams.

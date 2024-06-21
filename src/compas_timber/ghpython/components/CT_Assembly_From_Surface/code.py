@@ -8,7 +8,7 @@ from Rhino.Geometry import Vector3d as RhinoVector
 from compas.scene import Scene
 from compas.geometry import Brep
 from compas_timber.assembly import SurfaceAssembly
-from compas_timber.ghpython import DebugInfomation
+from compas_timber.design import DebugInfomation
 from compas_timber.consumers import BrepGeometryConsumer
 
 

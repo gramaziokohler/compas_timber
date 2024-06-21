@@ -6,7 +6,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import TButtJoint
-from compas_timber.ghpython import TopologyRule
+from compas_timber.design import TopologyRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
