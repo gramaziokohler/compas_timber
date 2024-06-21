@@ -1,8 +1,7 @@
 # flake8: noqa
 from compas.scene import SceneObject
-
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 
 class ShowFeatureErrors(component):

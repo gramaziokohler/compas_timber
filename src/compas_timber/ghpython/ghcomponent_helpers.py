@@ -1,7 +1,7 @@
 try:
+    import Grasshopper
     from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
     from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-    import Grasshopper
 except (ImportError, SyntaxError):
     pass
 

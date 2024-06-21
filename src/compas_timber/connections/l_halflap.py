@@ -1,10 +1,11 @@
 from compas.geometry import Frame
-from compas_timber.parts import CutFeature
-from compas_timber.parts import MillVolume
+
+from compas_timber.elements import CutFeature
+from compas_timber.elements import MillVolume
 
 from .joint import BeamJoinningError
-from .solver import JointTopology
 from .lap_joint import LapJoint
+from .solver import JointTopology
 
 
 class LHalfLapJoint(LapJoint):
@@ -13,7 +14,7 @@ class LHalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
@@ -64,9 +65,9 @@ class LHalfLapJoint(LapJoint):
         start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_frame)
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
         self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance, end_cross + extension_tolerance, self.key
+            start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
         )
 
         main_volume = MillVolume(negative_brep_main_beam)

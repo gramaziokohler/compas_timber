@@ -5,13 +5,13 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 class ShowBeamFaces(component):
-    def RunScript(self, assembly):
+    def RunScript(self, model):
         self.pt = []
         self.txt = []
 
-        if not assembly:
+        if not model:
             return None
-        for beam in assembly.beams:
+        for beam in model.beams:
             for f_index, face in enumerate(beam.faces):
                 self.pt.append(point_to_rhino(face.point))
                 self.txt.append(str(f_index))

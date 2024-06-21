@@ -11,8 +11,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Removed
+
+
+## [0.9.0] 2024-06-14
+
+### Added
+
+* Added `birdsmouth` parameter to `butt_joint` which applies a `btlx_double_cut` process to the part. 
+* Added `BTLxDoubleCut` BTLx Processing class
+* Added BTLx support for `TButtJoint` and `LButtJoint`
+* Added `BTLxLap` process class
+
+### Changed
+
+### Removed
+
+
+## [0.8.1] 2024-06-13
+
+### Added
+
+### Changed
+
+* Fixed import errors in GH components.
+* Updated GH example file.
+
+### Removed
+
+
+## [0.8.0] 2024-06-12
+
+### Added
+
+* Added attribute `geometry` to `Beam`.
+* Added `center_of_mass` property to Assembly class.
+* Added `volume` property to Assembly class.
+* Added new element type `Wall`.
+
+### Changed
+
 * Reduced some boilerplate code in `Joint` subclasses.
 * Added argument `beams` to `Joint.__init__()` which expects tuple containing beams from implementing class instance.
+* Renamed `TimberAssembly` to `TimberModel`.
+* Renamed `compas_timber.assembly` to `compas_timber.model`.
+* Renamed `compas_timber.parts` to `compas_timber.elements`.
+* Based `Beam` on new `compas_model.elements.Element`.
+* Based `TimberModel` on new `compas_model.model.Model`.
+* Based `Joint` on new `compas_model.interactions.Interaction`.
+* Removed support for Python `3.8`.
 
 ### Removed
 
@@ -21,6 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed argument `gap` from `TButtJoint` as it was not used anywhere.
 * Removed argument `gap` from `FrenchRidgeLap` as it was not used anywhere.
 * Removed class `JointOptions` as not used anymore.
+* Removed module `compas_timber.consumers`.
+* Removed unused method `TButtJoint.get_cutting_plane()`.
 
 ## [0.7.0] 2024-02-15
 
