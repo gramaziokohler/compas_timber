@@ -1,8 +1,8 @@
 ********************************************************************************
-compas_timber.assembly
+compas_timber.elements
 ********************************************************************************
 
-.. currentmodule:: compas_timber.assembly
+.. currentmodule:: compas_timber.elements
 
 Classes
 =======
@@ -11,4 +11,4 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    TimberAssembly
+    Beam

@@ -1,8 +1,9 @@
 # flake8: noqa
 # -*- coding: utf-8 -*-
 
-from sphinx.writers import html, html5
 import sphinx_compas2_theme
+from sphinx.writers import html
+from sphinx.writers import html5
 
 # -- General configuration ------------------------------------------------
 

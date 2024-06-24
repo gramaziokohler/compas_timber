@@ -2,11 +2,12 @@ from compas.data import Data
 from compas.data import json_dump
 from compas.data import json_load
 from compas.geometry import Frame
-from compas_timber.assembly import TimberAssembly
+
+from compas_timber.model import TimberModel
 
 
 class Actor(object):
-    """Enum representing the types of actor which could execute an assembly instruction."""
+    """Enum representing the types of actor which could execute an model instruction."""
 
     HUMAN = 0
     ROBOT = 1
@@ -265,12 +266,12 @@ class BuildingPlan(Data):
 
 class SimpleSequenceGenerator(object):
     """Generates a simple sequence of steps, one step per element.
-    Order of steps is the same as order of elements in assembly.
+    Order of steps is the same as order of elements in model.
 
     Parameters
     ----------
-    assembly : :class:'compas.datastructures.Assembly'
-        Assembly to be sequenced.
+    model : :class:'compas_model.Model'
+        Model to be sequenced.
 
     Attributes
     ----------
@@ -279,16 +280,16 @@ class SimpleSequenceGenerator(object):
 
     """
 
-    def __init__(self, assembly):
-        self.assembly = assembly
+    def __init__(self, model):
+        self.model = model
 
     @property
     def result(self):
-        if isinstance(self.assembly, TimberAssembly):
-            parts = self.assembly.beams
+        if isinstance(self.model, TimberModel):
+            elements = self.model.beams
         else:
-            parts = self.assembly.parts()
+            elements = self.model.elements()
         plan = BuildingPlan()
-        for part in parts:
-            plan.add_step(Step(element_ids=[part.key], actor=Actor.HUMAN, location=part.frame))
+        for element in elements:
+            plan.add_step(Step(element_ids=[str(element.guid)], actor=Actor.HUMAN, location=element.frame))
         return plan

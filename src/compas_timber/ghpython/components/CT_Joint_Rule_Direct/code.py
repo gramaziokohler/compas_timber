@@ -1,17 +1,16 @@
+import inspect
+
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-import inspect
 
-
-from compas_timber.connections import Joint
 from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
-
-from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 from compas_timber.ghpython import DirectRule
+from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
+from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 
 class DirectJointRule(component):

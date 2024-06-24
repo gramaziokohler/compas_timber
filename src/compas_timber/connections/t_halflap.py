@@ -1,8 +1,8 @@
 from compas.geometry import Frame
 
 from compas_timber.connections.lap_joint import LapJoint
-from compas_timber.parts import CutFeature
-from compas_timber.parts import MillVolume
+from compas_timber.elements import CutFeature
+from compas_timber.elements import MillVolume
 
 from .joint import BeamJoinningError
 from .solver import JointTopology
@@ -14,7 +14,7 @@ class THalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
@@ -31,8 +31,8 @@ class THalfLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(THalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5):
+        super(THalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias)
 
     def add_features(self):
         assert self.main_beam and self.cross_beam  # should never happen
@@ -50,7 +50,7 @@ class THalfLapJoint(LapJoint):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.key)
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)

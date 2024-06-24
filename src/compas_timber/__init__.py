@@ -1,6 +1,5 @@
 from .__version__ import __version__
 
-
 __all_plugins__ = [
     "compas_timber.ghpython.install",
     "compas_timber.rhino",

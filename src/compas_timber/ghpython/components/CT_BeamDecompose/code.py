@@ -1,11 +1,11 @@
 # flake8: noqa
-from System.Drawing import Color
 from compas.geometry import Line
+from compas_rhino.conversions import frame_to_rhino_plane
 from compas_rhino.conversions import line_to_rhino
 from compas_rhino.conversions import point_to_rhino
-from compas_rhino.conversions import frame_to_rhino_plane
-
+from compas_rhino.conversions import box_to_rhino
 from ghpythonlib.componentbase import executingcomponent as component
+from System.Drawing import Color
 
 
 class BeamDecompose(component):
@@ -27,17 +27,19 @@ class BeamDecompose(component):
         self.width = []
         self.height = []
         self.centerline = []
+        self.shapes = []
 
         for b in beam:
             self.frames.append(b.frame)
             self.rhino_frames.append(frame_to_rhino_plane(b.frame))
             self.scales.append(b.width + b.height)
             self.centerline.append(line_to_rhino(b.centerline))
+            self.shapes.append(box_to_rhino(b.shape))
             self.width.append(b.width)
             self.height.append(b.height)
             self.faces.append(b.faces)
 
-        return self.rhino_frames, self.centerline, self.width, self.height
+        return self.rhino_frames, self.centerline, self.shapes, self.width, self.height
 
     def DrawViewportWires(self, arg):
         if self.Locked:

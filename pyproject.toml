@@ -23,3 +23,37 @@ ensure_newline_before_comments = true
 known_first_party = "compas_timber"
 default_section = "THIRDPARTY"
 forced_separate = "test_compas_timber"
+
+# ============================================================================
+# linting and formatting
+# ============================================================================
+
+[tool.ruff]
+line-length = 179
+indent-width = 4
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["I001"]
+"tests/*" = ["I001"]
+"tasks.py" = ["I001"]
+"src/compas_timber/ghpython/components/*/code.py" = ["F821"]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = [
+    "compas_timber",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 179
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
