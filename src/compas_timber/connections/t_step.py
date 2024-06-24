@@ -1,7 +1,7 @@
 from .joint import Joint
 from .solver import JointTopology
-from compas_timber.parts import CutFeature
-from compas_timber.parts import MillVolume
+from compas_timber.elements import CutFeature
+from compas_timber.elements import MillVolume
 from compas.geometry import Plane, Polyhedron, Vector, Frame
 from compas.geometry import Rotation
 from compas.geometry import intersection_plane_plane
