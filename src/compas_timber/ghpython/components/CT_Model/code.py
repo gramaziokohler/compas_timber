@@ -24,6 +24,9 @@ JOINT_DEFAULTS = {
 
 
 class ModelComponent(component):
+    def __init__(self):
+        self.model = TimberModel()
+
     def get_joints_from_rules(self, beams, rules, topologies):
         if not isinstance(rules, list):
             rules = [rules]
@@ -112,71 +115,73 @@ class ModelComponent(component):
                         )
         return joints
 
-    def RunScript(self, Beams, JointRules, Features, MaxDistance, CreateGeometry):
-        if not Beams:
+    def RunScript(self, beams, joint_rules, features, max_distance, create_geometry):
+        if not beams:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-        if not JointRules:
+        if not joint_rules:
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
-        if not (Beams):  # shows beams even if no joints are found
+        if not (beams):  # shows beams even if no joints are found
             return
-        if MaxDistance is None:
-            MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
+        if max_distance is None:
+            max_distance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
-        Model = TimberModel()
         debug_info = DebugInfomation()
-        for beam in Beams:
-            # prepare beams for downstream processing
-            beam.remove_features()
-            beam.remove_blank_extension()
-            beam.debug_info = []
-            Model.add_beam(beam)
-        topologies = []
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-        Model.set_topologies(topologies)
+        if create_geometry:
+            self.model = TimberModel()
+            for beam in beams:
+                # prepare beams for downstream processing
+                beam.remove_features()
+                beam.remove_blank_extension()
+                beam.debug_info = []
+                self.model.add_beam(beam)
+            topologies = []
+            solver = ConnectionSolver()
+            found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+            for pair in found_pairs:
+                beam_a, beam_b = pair
+                detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
+                if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                    topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
+            self.model.set_topologies(topologies)
 
-        beams = Model.beams
-        joints = self.get_joints_from_rules(beams, JointRules, topologies)
+            beams = self.model.beams
+            joints = self.get_joints_from_rules(beams, joint_rules, topologies)
 
-        if joints:
-            handled_beams = []
-            joints = [j for j in joints if j is not None]
-            # apply reversed. later joints in orginal list override ealier ones
-            for joint in joints[::-1]:
-                beams_to_pair = joint.beams
-                beam_pair_ids = set([id(beam) for beam in beams_to_pair])
-                if beam_pair_ids in handled_beams:
-                    continue
-                try:
-                    joint.joint_type.create(Model, *beams_to_pair, **joint.kwargs)
-                except BeamJoinningError as bje:
-                    debug_info.add_joint_error(bje)
-                else:
-                    handled_beams.append(beam_pair_ids)
+            if joints:
+                handled_beams = []
+                joints = [j for j in joints if j is not None]
+                # apply reversed. later joints in orginal list override ealier ones
+                for joint in joints[::-1]:
+                    beams_to_pair = joint.beams
+                    beam_pair_ids = set([id(beam) for beam in beams_to_pair])
+                    if beam_pair_ids in handled_beams:
+                        continue
+                    try:
+                        joint.joint_type.create(self.model, *beams_to_pair, **joint.kwargs)
+                    except BeamJoinningError as bje:
+                        debug_info.add_joint_error(bje)
+                    else:
+                        handled_beams.append(beam_pair_ids)
 
-        if Features:
-            features = [f for f in Features if f is not None]
-            for f_def in features:
-                for beam in f_def.beams:
-                    beam.add_features(f_def.feature)
+            if features:
+                features = [f for f in features if f is not None]
+                for f_def in features:
+                    for beam in f_def.beams:
+                        beam.add_features(f_def.feature)
 
-        Geometry = None
+        geometry = None
         scene = Scene()
-        for beam in Model.beams:
-            if CreateGeometry:
+        for beam in self.model.beams:
+            try:
                 scene.add(beam.geometry)
                 if beam.debug_info:
                     debug_info.add_feature_error(beam.debug_info)
-            else:
+            except Warning as w:
+                self.AddRuntimeMessage(w, "no features applied, showing beam blanks")
                 scene.add(beam.blank)
 
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
-        Geometry = scene.draw()
-        return Model, Geometry, debug_info
+        geometry = scene.draw()
+        return self.model, geometry, debug_info

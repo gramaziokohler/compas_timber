@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Changed Model GH Component CreateGeometry input parameter to take both continuous input(toggle) or a trigger (button).
+
 ### Removed
 
 
