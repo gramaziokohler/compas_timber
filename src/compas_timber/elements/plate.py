@@ -6,9 +6,11 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Brep
+from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import bounding_box
+from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
@@ -89,18 +91,32 @@ class Plate(Element):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        face = Brep.from_curves([outline])
-        face = face.brep_faces[0]
+        self.frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
+        aggregate_angle = 0.0
+        for i in range(len(outline.points)-1):
+            first_vector = Vector.from_start_end(outline.points[i-1], outline.points[i])
+            second_vector = Vector.from_start_end(outline.points[i], outline.points[i+1])
+            aggregate_angle += angle_vectors_signed(first_vector, second_vector, self.frame.zaxis)
+        
+        self.test = self.frame
+        if aggregate_angle > 0:
+            # self.outline.reverse()
+            self.frame = Frame(self.frame.point, self.frame.xaxis, -self.frame.yaxis)
+            
+
         if vector is not None:
-            if dot_vectors(face.normal, vector) > 0:
-                print("reversing")
-                outline.reverse()
-        self.frame = Frame(outline.points[0], outline.points[1]-outline.points[0], face.normal)
-        self.vector = self.frame.zaxis * self.thickness
+            print( "self.vector", self.vector)
+            print( "vector", vector)
+            print("dots = ", dot_vectors(self.vector, vector))
+            if dot_vectors(self.vector, vector) < 0:
+                print("DOT NEGATIVE")
+                self.outline.reverse         
 
         for point in outline.points:
             if point.distance_to_plane(Plane.from_frame(self.frame)) > 0.001:
                 raise ValueError("The outline points are not coplanar.")
+
+
 
 
     def __repr__(self):
@@ -110,6 +126,10 @@ class Plate(Element):
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
+
+    @property
+    def vector(self):
+        return self.frame.zaxis * self.thickness
 
     @property
     def shape(self):
