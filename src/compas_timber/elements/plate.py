@@ -3,21 +3,16 @@ import math
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import Curve
 from compas.geometry import Brep
 from compas.geometry import add_vectors
-from compas.geometry import angle_vectors
+from compas.geometry import dot_vectors
 from compas.geometry import bounding_box
-from compas.geometry import cross_vectors
 from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
-from compas_timber.utils.compas_extra import intersection_line_plane
 
 from .features import FeatureApplicationError
 
@@ -81,26 +76,33 @@ class Plate(Element):
     @property
     def __data__(self):
         data = super(Plate, self).__data__
-        data["depth"] = self.depth
+        data["thickness"] = self.thickness
         return data
 
-    def __init__(self, outline, depth, **kwargs):
+    def __init__(self, outline, thickness, vector, **kwargs):
         super(Plate, self).__init__(**kwargs)
+        if not outline.is_closed:
+            raise ValueError("The outline points are not coplanar.")
         self.outline = outline
-        self.depth = depth
+        self.thickness = thickness
         self.features = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.frame = Frame.from_points(outline[0], outline[1], outline[-1])
-        for vertex in outline.points:
-            self.frame = self.frame.averaged(vertex)
+        self.frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
+        for point in outline.points:
+            if point.distance_to_plane(Plane.from_frame(self.frame)) > 0.001:
+                raise ValueError("The outline points are not coplanar.")
+        if vector is None:
+            self.vector = self.frame.zaxis * self.thickness
+        elif dot_vectors(self.frame.zaxis, vector) > 0:
+            self.vector = self.frame.zaxis * self.thickness
+        else:
+            self.vector = self.frame.zaxis * self.thickness * -1
 
     def __repr__(self):
         # type: () -> str
-        return "Beam(frame={!r}, length={}, width={}, height={})".format(
-            self.frame, self.length, self.width, self.height
-        )
+        return "Plate(outline={!r}, thickness={}, )".format(self.outline, self.thickness)
 
     # ==========================================================================
     # Computed attributes
@@ -108,39 +110,7 @@ class Plate(Element):
 
     @property
     def shape(self):
-        return self._create_shape(self.frame, self.length, self.width, self.height)
-
-    @property
-    def faces(self):
-        assert self.frame
-        return [
-            Frame(
-                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
-                self.frame.xaxis,
-                -self.frame.zaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
-                self.frame.xaxis,
-                -self.frame.yaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
-                self.frame.xaxis,
-                self.frame.zaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
-                self.frame.xaxis,
-                self.frame.yaxis,
-            ),
-            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
-            Frame(
-                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
-                self.frame.yaxis,
-                self.frame.zaxis,
-            ),  # small face at end point
-        ]
+        return self._create_shape(self.outline, self.vector)
 
     @property
     def has_features(self):
@@ -148,9 +118,9 @@ class Plate(Element):
         return len(self.features) > 0
 
     def __str__(self):
-        return "Plate {:.3f} x {:.3f} x {:.3f} at {}".format(
-            self.curve,
-            self.depth
+        return "Plate {:.3f} x {:.3f} at {}".format(
+            self.outline,
+            self.thickness,
             self.frame,
         )
 
@@ -197,7 +167,9 @@ class Plate(Element):
             The AABB of the element.
 
         """
-        vertices, _ = self.blank.to_vertices_and_faces()
+        vertices = [point for point in self.outline.points]
+        for point in self.outline.points:
+            vertices += point + self.vector
         box = Box.from_bounding_box(bounding_box(vertices))
         box.xsize += inflate
         box.ysize += inflate
@@ -243,11 +215,8 @@ class Plate(Element):
 
 
     @staticmethod
-    def _create_shape(curve, depth, vector = None):
-        if vector is None:
-            vector = [0, 0, 1]
-
-        return Brep.from_extrusion(curve, vector, depth)
+    def _create_shape(outline, vector):
+        return Brep.from_extrusion(outline, vector)
 
     # ==========================================================================
     # Featrues
