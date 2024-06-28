@@ -21,57 +21,28 @@ from .features import FeatureApplicationError
 
 class Plate(Element):
     """
-    A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
+    A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
 
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`
-        A local coordinate system of the beam:
-        Origin is located at the starting point of the centerline.
-        x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
-        y-axis corresponds to the width of the cross-section, usually the smaller dimension.
-        z-axis corresponds to the height of the cross-section, usually the larger dimension.
-    length : float
-        Length of the beam
-    width : float
-        Width of the cross-section
-    height : float
-        Height of the cross-section
+        A local coordinate system of the plate:
+        Origin is located at the starting point of the outline.
+
 
     Attributes
     ----------
     frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this beam.
-    length : float
-        Length of the beam.
-    width : float
-        Width of the cross-section
-    height : float
-        Height of the cross-section
-    shape : :class:`~compas.geometry.Box`
-        A feature-less box representing the parametric geometry of this beam.
-    blank : :class:`~compas.geometry.Box`
-        A feature-less box representing the material stock geometry to produce this beam.
-    faces : list(:class:`~compas.geometry.Frame`)
-        A list of frames representing the 6 faces of this beam.
-        0: +y (side's frame normal is equal to the beam's Y positive direction)
-        1: +z
-        2: -y
-        3: -z
-        4: -x (side at the starting end)
-        5: +x (side at the end of the beam)
-    centerline : :class:`~compas.geometry.Line`
-        A line representing the centerline of this beam.
-    centerline_start : :class:`~compas.geometry.Point`
-        The point at the start of the centerline of this beam.
-    centerline_end : :class:`~compas.geometry.Point`
-        The point at the end of the centerline of this beam.
+        The coordinate system (frame) of this plate.
+    shape : :class:`~compas.geometry.Brep`
+        An extrusion representing the base geometry of this plate.
+    outline : :class:`~compas.geometry.Polyline`
+        A line representing the outline of this plate.
+    thickness : float
+        Thickness of the plate material.
     aabb : tuple(float, float, float, float, float, float)
-        An axis-aligned bounding box of this beam as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
-    long_edges : list(:class:`~compas.geometry.Line`)
-        A list containing the 4 lines along the long axis of this beam.
-    midpoint : :class:`~compas.geometry.Point`
-        The point at the middle of the centerline of this beam.
+        An axis-aligned bounding box of this plate as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
+
 
     """
 
@@ -98,25 +69,15 @@ class Plate(Element):
             second_vector = Vector.from_start_end(outline.points[i], outline.points[i+1])
             aggregate_angle += angle_vectors_signed(first_vector, second_vector, self.frame.zaxis)
         
-        self.test = self.frame
         if aggregate_angle > 0:
-            # self.outline.reverse()
             self.frame = Frame(self.frame.point, self.frame.xaxis, -self.frame.yaxis)
-            
 
-        if vector is not None:
-            print( "self.vector", self.vector)
-            print( "vector", vector)
-            print("dots = ", dot_vectors(self.vector, vector))
-            if dot_vectors(self.vector, vector) < 0:
-                print("DOT NEGATIVE")
+        if vector is not None and dot_vectors(self.vector, vector) < 0:
                 self.outline.reverse         
 
         for point in outline.points:
             if point.distance_to_plane(Plane.from_frame(self.frame)) > 0.001:
                 raise ValueError("The outline points are not coplanar.")
-
-
 
 
     def __repr__(self):
@@ -141,9 +102,10 @@ class Plate(Element):
         return len(self.features) > 0
 
     def __str__(self):
-        return "Plate {:.3f} x {:.3f} at {}".format(
+        return "Plate {:.3f} with thickness {:.3f} with vector {} at {}".format(
             self.outline,
             self.thickness,
+            self.vector
             self.frame,
         )
 
@@ -166,14 +128,14 @@ class Plate(Element):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        blank_geo = self.shape
+        plate_geo = self.shape
         if include_features:
             for feature in self.features:
                 try:
-                    blank_geo = feature.apply(blank_geo)
+                    plate_geo = feature.apply(plate_geo)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return blank_geo
+        return plate_geo
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
@@ -199,26 +161,26 @@ class Plate(Element):
         box.zsize += inflate
         return box
 
-    def compute_obb(self, inflate=0.0):
-        # type: (float | None) -> compas.geometry.Box
-        """Computes the Oriented Bounding Box (OBB) of the element.
+    # def compute_obb(self, inflate=0.0):
+    #     # type: (float | None) -> compas.geometry.Box
+    #     """Computes the Oriented Bounding Box (OBB) of the element.
 
-        Parameters
-        ----------
-        inflate : float
-            Offset of box to avoid floating point errors.
+    #     Parameters
+    #     ----------
+    #     inflate : float
+    #         Offset of box to avoid floating point errors.
 
-        Returns
-        -------
-        :class:`compas.geometry.Box`
-            The OBB of the element.
+    #     Returns
+    #     -------
+    #     :class:`compas.geometry.Box`
+    #         The OBB of the element.
 
-        """
-        obb = self.blank.copy()
-        obb.xsize += inflate
-        obb.ysize += inflate
-        obb.zsize += inflate
-        return obb
+    #     """
+    #     obb = self.shape.copy()
+    #     obb.xsize += inflate
+    #     obb.ysize += inflate
+    #     obb.zsize += inflate
+    #     return obb
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
@@ -230,7 +192,7 @@ class Plate(Element):
             The collision geometry of the element.
 
         """
-        return self.blank.to_mesh()
+        return self.compute_aabb.to_mesh()
 
     # ==========================================================================
     # Alternative constructors
@@ -250,7 +212,7 @@ class Plate(Element):
 
     @reset_computed
     def add_features(self, features):
-        """Adds one or more features to the beam.
+        """Adds one or more features to the plate.
 
         Parameters
         ----------
@@ -264,7 +226,7 @@ class Plate(Element):
 
     @reset_computed
     def remove_features(self, features=None):
-        """Removes a feature from the beam.
+        """Removes a feature from the plate.
 
         Parameters
         ----------
