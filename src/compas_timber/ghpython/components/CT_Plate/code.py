@@ -1,4 +1,4 @@
-"""Creates a Plate from PolylineCurve and Thickness."""
+"""Creates a Beam from a LineCurve."""
 
 from compas.scene import Scene
 from compas_rhino.conversions import curve_to_compas
@@ -14,13 +14,14 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 
 class Plate(component):
-    def RunScript(self, outline, thickness, category, updateRefObj):
+    def RunScript(self, outline, thickness, vector, category, updateRefObj):
         # minimum inputs required
         if not outline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Outline' failed to collect data")
         if not thickness:
             self.AddRuntimeMessage(Warning, "Input parameter 'Thickness' failed to collect data")
-
+        if not vector:
+            vector = [None]
         # reformat unset parameters for consistency
 
         if not category:
@@ -40,19 +41,25 @@ class Plate(component):
                 self.AddRuntimeMessage(
                     Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
                 )
+            if len(vector) not in (0, 1, N):
+                self.AddRuntimeMessage(
+                    Error, " In 'Vector' I need either none, one or the same number of inputs as the Crv parameter."
+                )
 
             # duplicate data if None or single value
             if len(thickness) != N:
                 thickness = [thickness[0] for _ in range(N)]
+            if len(vector) != N:
+                vector = [vector[0] for _ in range(N)]
             if len(category) != N:
                 category = [category[0] for _ in range(N)]
 
-            for line, t, c in zip(outline, thickness, category):
+            for line, t, v, c in zip(outline, thickness, vector, category):
                 guid, geometry = self._get_guid_and_geometry(line)
                 line = curve_to_compas(geometry)
 
 
-                plate = CTPlate(line, t)
+                plate = CTPlate(line, t, v)
                 plate.attributes["rhino_guid"] = str(guid) if guid else None
                 plate.attributes["category"] = c
 

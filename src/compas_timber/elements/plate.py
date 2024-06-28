@@ -89,16 +89,19 @@ class Plate(Element):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
+        face = Brep.from_curves([outline])
+        face = face.brep_faces[0]
+        if vector is not None:
+            if dot_vectors(face.normal, vector) > 0:
+                print("reversing")
+                outline.reverse()
+        self.frame = Frame(outline.points[0], outline.points[1]-outline.points[0], face.normal)
+        self.vector = self.frame.zaxis * self.thickness
+
         for point in outline.points:
             if point.distance_to_plane(Plane.from_frame(self.frame)) > 0.001:
                 raise ValueError("The outline points are not coplanar.")
-        if vector is None:
-            self.vector = self.frame.zaxis * self.thickness
-        elif dot_vectors(self.frame.zaxis, vector) > 0:
-            self.vector = self.frame.zaxis * self.thickness
-        else:
-            self.vector = self.frame.zaxis * self.thickness * -1
+
 
     def __repr__(self):
         # type: () -> str
@@ -143,7 +146,7 @@ class Plate(Element):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        blank_geo = Brep.from_box(self.blank)
+        blank_geo = self.shape
         if include_features:
             for feature in self.features:
                 try:
@@ -216,7 +219,10 @@ class Plate(Element):
 
     @staticmethod
     def _create_shape(outline, vector):
-        return Brep.from_extrusion(outline, vector)
+
+        brep = Brep.from_extrusion(outline, vector)
+
+        return brep
 
     # ==========================================================================
     # Featrues

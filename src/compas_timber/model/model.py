@@ -2,6 +2,7 @@ from compas.geometry import Point
 from compas_model.models import Model
 
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.elements import Wall
 
 
@@ -34,6 +35,8 @@ class TimberModel(Model):
         for element in model.elements():
             if isinstance(element, Beam):
                 model._beams.append(element)
+            elif isinstance(element, Plate):
+                model._plates.append(element)
             elif isinstance(element, Wall):
                 model._walls.append(element)
         for interaction in model.interactions():
@@ -45,6 +48,7 @@ class TimberModel(Model):
     def __init__(self, *args, **kwargs):
         super(TimberModel, self).__init__()
         self._beams = []
+        self._plates = []
         self._walls = []
         self._joints = []
         self._topologies = []  # added to avoid calculating multiple times
@@ -56,6 +60,11 @@ class TimberModel(Model):
     def beams(self):
         # type: () -> list[Beam]
         return self._beams
+
+    @property
+    def plates(self):
+        # type: () -> list[Plate]
+        return self._plates
 
     @property
     def joints(self):
@@ -89,7 +98,7 @@ class TimberModel(Model):
     @property
     def volume(self):
         # type: () -> float
-        return sum([beam.blank.volume for beam in self._beams])
+        return sum([beam.blank.volume for beam in self._beams]) #TODO: add volume for plates
 
     def beam_by_guid(self, guid):
         # type: (str) -> Beam
@@ -120,6 +129,19 @@ class TimberModel(Model):
         """
         _ = self.add_element(beam)
         self._beams.append(beam)
+
+    def add_plate(self, plate):
+        # type: (Beam) -> None
+        """Adds a Beam to this model.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam to add to the model.
+
+        """
+        _ = self.add_element(plate)
+        self._plates.append(plate)
 
     def add_wall(self, wall):
         # type: (Wall) -> None
