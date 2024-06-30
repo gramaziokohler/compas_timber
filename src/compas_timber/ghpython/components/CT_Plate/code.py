@@ -1,13 +1,12 @@
 """Creates a Beam from a LineCurve."""
 
+import rhinoscriptsyntax as rs
 from compas.scene import Scene
 from compas_rhino.conversions import curve_to_compas
-
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.RhinoDoc import ActiveDoc
-
 
 from compas_timber.elements import Plate as CTPlate
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
@@ -56,8 +55,8 @@ class Plate(component):
 
             for line, t, v, c in zip(outline, thickness, vector, category):
                 guid, geometry = self._get_guid_and_geometry(line)
-                line = curve_to_compas(geometry)
-
+                rhino_polyline = rs.coercecurve(geometry)
+                line = curve_to_compas(rhino_polyline)
 
                 plate = CTPlate(line, t, v)
                 plate.attributes["rhino_guid"] = str(guid) if guid else None

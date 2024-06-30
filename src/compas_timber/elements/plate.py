@@ -1,20 +1,13 @@
-import math
-
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import Brep
+from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import add_vectors
-from compas.geometry import dot_vectors
-from compas.geometry import bounding_box
 from compas.geometry import angle_vectors_signed
-from compas.tolerance import TOL
+from compas.geometry import dot_vectors
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
-
 
 from .features import FeatureApplicationError
 
@@ -64,21 +57,20 @@ class Plate(Element):
         self.debug_info = []
         self.frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
         aggregate_angle = 0.0
-        for i in range(len(outline.points)-1):
-            first_vector = Vector.from_start_end(outline.points[i-1], outline.points[i])
-            second_vector = Vector.from_start_end(outline.points[i], outline.points[i+1])
+        for i in range(len(outline.points) - 1):
+            first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
+            second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
             aggregate_angle += angle_vectors_signed(first_vector, second_vector, self.frame.zaxis)
-        
+
         if aggregate_angle > 0:
             self.frame = Frame(self.frame.point, self.frame.xaxis, -self.frame.yaxis)
 
         if vector is not None and dot_vectors(self.vector, vector) < 0:
-                self.outline.reverse         
+            self.outline.reverse
 
         for point in outline.points:
             if point.distance_to_plane(Plane.from_frame(self.frame)) > 0.001:
                 raise ValueError("The outline points are not coplanar.")
-
 
     def __repr__(self):
         # type: () -> str
@@ -105,7 +97,7 @@ class Plate(Element):
         return "Plate {:.3f} with thickness {:.3f} with vector {} at {}".format(
             self.outline,
             self.thickness,
-            self.vector
+            self.vector,
             self.frame,
         )
 
@@ -154,33 +146,41 @@ class Plate(Element):
         """
         vertices = [point for point in self.outline.points]
         for point in self.outline.points:
-            vertices += point + self.vector
-        box = Box.from_bounding_box(bounding_box(vertices))
+            vertices.append(point + self.vector)
+        box = Box.from_points(vertices)
         box.xsize += inflate
         box.ysize += inflate
         box.zsize += inflate
         return box
 
-    # def compute_obb(self, inflate=0.0):
-    #     # type: (float | None) -> compas.geometry.Box
-    #     """Computes the Oriented Bounding Box (OBB) of the element.
+    def compute_obb(self, inflate=0.0):
+        # type: (float | None) -> compas.geometry.Box
+        """Computes the Oriented Bounding Box (OBB) of the element.
 
-    #     Parameters
-    #     ----------
-    #     inflate : float
-    #         Offset of box to avoid floating point errors.
+        Parameters
+        ----------
+        inflate : float
+            Offset of box to avoid floating point errors.
 
-    #     Returns
-    #     -------
-    #     :class:`compas.geometry.Box`
-    #         The OBB of the element.
+        Returns
+        -------
+        :class:`compas.geometry.Box`
+            The OBB of the element.
 
-    #     """
-    #     obb = self.shape.copy()
-    #     obb.xsize += inflate
-    #     obb.ysize += inflate
-    #     obb.zsize += inflate
-    #     return obb
+        """
+        vertices = [point for point in self.outline.points]
+        for point in self.outline.points:
+            vertices.append(point + self.vector)
+        for point in vertices:
+            point.transform(Transformation.from_change_of_basis(Frame.worldXY(), self.frame))
+        obb = Box.from_points(vertices)
+        obb.xsize += inflate
+        obb.ysize += inflate
+        obb.zsize += inflate
+
+        obb.transform(Transformation.from_change_of_basis(self.frame, Frame.worldXY()))
+
+        return obb
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
@@ -198,10 +198,8 @@ class Plate(Element):
     # Alternative constructors
     # ==========================================================================
 
-
     @staticmethod
     def _create_shape(outline, vector):
-
         brep = Brep.from_extrusion(outline, vector)
 
         return brep

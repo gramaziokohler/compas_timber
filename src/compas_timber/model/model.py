@@ -54,7 +54,9 @@ class TimberModel(Model):
         self._topologies = []  # added to avoid calculating multiple times
 
     def __str__(self):
-        return "TimberModel ({}) with {} beam(s), {} plate(s) and {} joint(s).".format(self.guid, len(self.beams),len(self._plates), len(self.joints))
+        return "TimberModel ({}) with {} beam(s), {} plate(s) and {} joint(s).".format(
+            self.guid, len(self.beams), len(self._plates), len(self.joints)
+        )
 
     @property
     def beams(self):
@@ -98,7 +100,7 @@ class TimberModel(Model):
     @property
     def volume(self):
         # type: () -> float
-        return sum([beam.blank.volume for beam in self._beams]) #TODO: add volume for plates
+        return sum([beam.blank.volume for beam in self._beams])  # TODO: add volume for plates
 
     def beam_by_guid(self, guid):
         # type: (str) -> Beam
