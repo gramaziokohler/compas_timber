@@ -161,12 +161,23 @@ class TStepJoint(Joint):
 
         return main_cutting_volume
 
+    def get_cross_extension_plane(self):
+        main_intersection_frame = self.get_main_intersection_frame()
+        intersection_plane_normal = main_intersection_frame.zaxis
+        frames = self.main_beam.faces[:4]
+        planes = [Plane.from_frame(frame) for frame in frames]
+        planes.sort(key=lambda x: angle_vectors(intersection_plane_normal, x.normal))
+        plane = planes[3]
+        plane = Plane(plane.point, plane.normal*-1)
+        return plane
+        
     def add_features(self):
         """In this Joint, the Cross Beam ist cutted by two Planes, while the Main beam gets a Subtraction by a Cutting Volume!"""
 
         assert self.main_beam and self.cross_beam  # should never happen
 
         try:
+            start_main, end_main = self.cross_beam.extension_to_plane(self.get_cross_extension_plane())
             cross_cutting_plane1, cross_cutting_plane2 = self.get_cross_cutting_planes()
             main_cutting_vol = self.get_main_cutting_volume()
         except AttributeError as ae:
@@ -174,8 +185,8 @@ class TStepJoint(Joint):
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
-        #TODO Extension of Cross Beam needs to be added!
-
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+        self.cross_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
         trim_feature = CutFeature(cross_cutting_plane1)
         self.cross_beam.add_features(trim_feature)
         trim_feature = CutFeature(cross_cutting_plane2)
