@@ -24,7 +24,7 @@ NORMAL_REST = Vector(0, 0, 1)
 
 wall_frame = Frame.worldXY()
 model = TimberModel()
-model.add_wall(Wall(wall_frame, 3000, 140, 2000))
+model.add_element(Wall(wall_frame, 3000, 140, 2000))
 
 # setup the viewer
 viewer = create_viewer()

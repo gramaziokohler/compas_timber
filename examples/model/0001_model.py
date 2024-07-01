@@ -32,7 +32,7 @@ model = TimberModel()
 HEIGHT = 120
 WIDTH = 60
 for line in lines:
-    model.add_beam(Beam.from_centerline(centerline=line, height=HEIGHT, width=WIDTH))
+    model.add_element(Beam.from_centerline(centerline=line, height=HEIGHT, width=WIDTH))
 
 beams = model.beams
 

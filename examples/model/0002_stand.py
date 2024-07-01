@@ -46,7 +46,7 @@ for category, lines in lines.items():
         normal = NORMAL_VERTICALS if category == "verticals" else None
         beam = Beam.from_centerline(centerline=line, height=height, width=width, z_vector=normal)
         beam.attributes["category"] = category
-        model.add_beam(beam)
+        model.add_element(beam)
 
 # create topology to joint type mapping
 topo_connection = {JointTopology.TOPO_L: LButtJoint, JointTopology.TOPO_T: TButtJoint}

@@ -123,7 +123,7 @@ class Joint(Interaction):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
         joint = cls(*beams, **kwargs)
-        model.add_joint(joint, beams)
+        model.add_interaction(joint, beams)
         joint.add_features()
         return joint
 
