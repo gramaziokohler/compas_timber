@@ -1,25 +1,30 @@
-from .joint import Joint
-from .solver import JointTopology
-from compas_timber.elements import CutFeature
-from compas_timber.elements import MillVolume
-from compas.geometry import Plane, Polyhedron, Vector, Frame
-from compas.geometry import Rotation
-from compas.geometry import intersection_plane_plane
-from compas.geometry import intersection_plane_plane_plane
-from compas.geometry import intersection_line_plane
-from compas.geometry import angle_vectors
-from compas.geometry import distance_point_point
-from compas.geometry import midpoint_line
-from compas.geometry import project_point_plane
-from compas.geometry import closest_point_on_line
-from compas.geometry import translate_points
-from compas.geometry import cross_vectors
 import math
 
+from compas.geometry import Frame
+from compas.geometry import Plane
+from compas.geometry import Polyhedron
+from compas.geometry import Rotation
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import closest_point_on_line
+from compas.geometry import cross_vectors
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_plane_plane
+from compas.geometry import intersection_plane_plane_plane
+from compas.geometry import midpoint_line
+from compas.geometry import project_point_plane
+from compas.geometry import translate_points
+
+from compas_timber.elements import CutFeature
+from compas_timber.elements import MillVolume
+
 from .joint import BeamJoinningError
+from .joint import Joint
+from .solver import JointTopology
+
 
 class TStepJoint(Joint):
-
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     def __init__(self, cross_beam=None, main_beam=None, cut_depth=0.25, extend_cut=True, **kwargs):
@@ -81,7 +86,7 @@ class TStepJoint(Joint):
         Then this Main_Beam Side is the official Intersection Side!
         """
         mainbeam_faces = self.main_beam.faces[:4]
-        mainbeam_diagonal = math.sqrt(self.main_beam.width ** 2 + self.main_beam.height ** 2)
+        mainbeam_diagonal = math.sqrt(self.main_beam.width**2 + self.main_beam.height**2)
         crossbeam_centerpoint = midpoint_line(self.cross_beam.centerline)
         frames, distances = [], []
 
@@ -89,12 +94,14 @@ class TStepJoint(Joint):
             int_crossbeam_frame = intersection_line_plane(self.cross_beam.centerline, Plane.from_frame(frame))
             if int_crossbeam_frame is not None:
                 dist_int_crossbeamcenterpoint = distance_point_point(int_crossbeam_frame, crossbeam_centerpoint)
-                closestpoint_int_mainbeamcenterline = closest_point_on_line(int_crossbeam_frame, self.main_beam.centerline)
+                closestpoint_int_mainbeamcenterline = closest_point_on_line(
+                    int_crossbeam_frame, self.main_beam.centerline
+                )
                 dist_closestpoint_int = distance_point_point(closestpoint_int_mainbeamcenterline, int_crossbeam_frame)
                 if dist_closestpoint_int < mainbeam_diagonal / 2:
                     frames.append(frame)
                     distances.append(dist_int_crossbeamcenterpoint)
-        
+
         distances, frames = zip(*sorted(zip(distances, frames)))
         return frames[0]
 
@@ -157,7 +164,7 @@ class TStepJoint(Joint):
             points.append(intersection_line_plane(i, plane_side[0]))
             points.append(intersection_line_plane(i, plane_side[1]))
 
-        main_cutting_volume = Polyhedron(points, [[0, 2, 4], [1, 5, 3], [0, 1, 3, 2], [2, 3, 5, 4],  [4, 5, 1, 0]])
+        main_cutting_volume = Polyhedron(points, [[0, 2, 4], [1, 5, 3], [0, 1, 3, 2], [2, 3, 5, 4], [4, 5, 1, 0]])
 
         return main_cutting_volume
 
@@ -168,9 +175,9 @@ class TStepJoint(Joint):
         planes = [Plane.from_frame(frame) for frame in frames]
         planes.sort(key=lambda x: angle_vectors(intersection_plane_normal, x.normal))
         plane = planes[3]
-        plane = Plane(plane.point, plane.normal*-1)
+        plane = Plane(plane.point, plane.normal * -1)
         return plane
-        
+
     def add_features(self):
         """In this Joint, the Cross Beam ist cutted by two Planes, while the Main beam gets a Subtraction by a Cutting Volume!"""
 
@@ -181,7 +188,12 @@ class TStepJoint(Joint):
             cross_cutting_plane1, cross_cutting_plane2 = self.get_cross_cutting_planes()
             main_cutting_vol = self.get_main_cutting_volume()
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cross_cutting_plane1, cross_cutting_plane2, main_cutting_vol])
+            raise BeamJoinningError(
+                beams=self.beams,
+                joint=self,
+                debug_info=str(ae),
+                debug_geometries=[cross_cutting_plane1, cross_cutting_plane2, main_cutting_vol],
+            )
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
