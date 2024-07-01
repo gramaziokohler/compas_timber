@@ -112,35 +112,34 @@ class ModelComponent(component):
                         )
         return joints
 
-    def RunScript(self, Beams, JointRules, Features, MaxDistance, CreateGeometry):
-        if not Beams:
-            self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
+    def RunScript(self, elements, JointRules, Features, MaxDistance, CreateGeometry):
+        if not elements:
+            self.AddRuntimeMessage(Warning, "Input parameter Elements failed to collect data")
         if not JointRules:
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
-        if not (Beams):  # shows beams even if no joints are found
+        if not (elements):  # shows beams even if no joints are found
             return
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
-        Model = TimberModel()
+        model = TimberModel()
         debug_info = DebugInfomation()
-        for beam in Beams:
+        for element in elements:
             # prepare beams for downstream processing
-            beam.remove_features()
-            beam.remove_blank_extension()
-            beam.debug_info = []
-            Model.add_beam(beam)
+            element.remove_features()
+            element.debug_info = []
+            model.add_element(element)
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)
+        found_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=MaxDistance)
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-        Model.set_topologies(topologies)
+        model.set_topologies(topologies)
 
-        beams = Model.beams
+        beams = model.beams
         joints = self.get_joints_from_rules(beams, JointRules, topologies)
 
         if joints:
@@ -153,7 +152,7 @@ class ModelComponent(component):
                 if beam_pair_ids in handled_beams:
                     continue
                 try:
-                    joint.joint_type.create(Model, *beams_to_pair, **joint.kwargs)
+                    joint.joint_type.create(model, *beams_to_pair, **joint.kwargs)
                 except BeamJoinningError as bje:
                     debug_info.add_joint_error(bje)
                 else:
@@ -167,7 +166,7 @@ class ModelComponent(component):
 
         Geometry = None
         scene = Scene()
-        for beam in Model.beams:
+        for beam in model.beams:
             if CreateGeometry:
                 scene.add(beam.geometry)
                 if beam.debug_info:
@@ -179,4 +178,4 @@ class ModelComponent(component):
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
         Geometry = scene.draw()
-        return Model, Geometry, debug_info
+        return model, Geometry, debug_info

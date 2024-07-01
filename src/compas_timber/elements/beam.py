@@ -384,6 +384,7 @@ class Beam(Element):
 
         """
         if features is None:
+            self.remove_blank_extension()
             self.features = []
         else:
             if not isinstance(features, list):
