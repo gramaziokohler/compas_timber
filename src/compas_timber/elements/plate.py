@@ -42,10 +42,12 @@ class Plate(Element):
     @property
     def __data__(self):
         data = super(Plate, self).__data__
+        data["outline"] = self.outline
         data["thickness"] = self.thickness
+        data["vector"] = self.vector if self.vector else None
         return data
 
-    def __init__(self, outline, thickness, vector, **kwargs):
+    def __init__(self, outline, thickness, vector = None, **kwargs):
         super(Plate, self).__init__(**kwargs)
         if not outline.is_closed:
             raise ValueError("The outline points are not coplanar.")
@@ -94,7 +96,7 @@ class Plate(Element):
         return len(self.features) > 0
 
     def __str__(self):
-        return "Plate {:.3f} with thickness {:.3f} with vector {} at {}".format(
+        return "Plate {} with thickness {:.3f} with vector {} at {}".format(
             self.outline,
             self.thickness,
             self.vector,
