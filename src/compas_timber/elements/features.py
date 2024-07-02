@@ -8,22 +8,22 @@ from compas.geometry import Polyhedron
 
 
 class FeatureApplicationError(Exception):
-    """Raised when a feature cannot be applied to a beam geometry.
+    """Raised when a feature cannot be applied to an element geometry.
 
     Attributes
     ----------
     feature_geometry : :class:`~compas.geometry.Geometry`
         The geometry of the feature that could not be applied.
-    beam_geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the beam that could not be modified.
+    element_geometry : :class:`~compas.geometry.Geometry`
+        The geometry of the element that could not be modified.
     message : str
         The error message.
 
     """
 
-    def __init__(self, feature_geometry, beam_geometry, message):
+    def __init__(self, feature_geometry, element_geometry, message):
         self.feature_geometry = feature_geometry
-        self.beam_geometry = beam_geometry
+        self.element_geometry = element_geometry
         self.message = message
 
 
@@ -52,12 +52,12 @@ class Feature(Data):
 
 
 class CutFeature(Feature):
-    """Indicates a cut to be made on a beam.
+    """Indicates a cut to be made on an element.
 
     Parameters
     ----------
     cutting_plane : :class:`compas.geometry.Frame`
-        The plane to cut the beam with.
+        The plane to cut the element with.
 
     """
 
@@ -71,13 +71,13 @@ class CutFeature(Feature):
         data_dict["cutting_plane"] = self.cutting_plane
         return data_dict
 
-    def apply(self, beam_geometry):
-        """Apply the feature to the beam geometry.
+    def apply(self, element_geometry):
+        """Apply the feature to the element geometry.
 
         Raises
         ------
         :class:`compas_timber.elements.FeatureApplicationError`
-            If the cutting plane does not intersect with the beam geometry.
+            If the cutting plane does not intersect with the element geometry.
 
         Returns
         -------
@@ -86,17 +86,17 @@ class CutFeature(Feature):
 
         """
         try:
-            return beam_geometry.trimmed(self.cutting_plane)
+            return element_geometry.trimmed(self.cutting_plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
                 self.cutting_plane,
-                beam_geometry,
-                "The cutting plane does not intersect with beam geometry.",
+                element_geometry,
+                "The cutting plane does not intersect with element geometry.",
             )
 
 
 class DrillFeature(Feature):
-    """Parametric drill hole to be made on a beam.
+    """Parametric drill hole to be made on an element.
 
     Parameters
     ----------
@@ -123,13 +123,13 @@ class DrillFeature(Feature):
         data_dict["length"] = self.length
         return data_dict
 
-    def apply(self, beam_geometry):
-        """Apply the feature to the beam geometry.
+    def apply(self, element_geometry):
+        """Apply the feature to the element geometry.
 
         Raises
         ------
         :class:`compas_timber.elements.FeatureApplicationError`
-            If the drill volume is not contained in the beam geometry.
+            If the drill volume is not contained in the element geometry.
 
         Returns
         -------
@@ -137,28 +137,28 @@ class DrillFeature(Feature):
             The resulting geometry after processing.
 
         """
-        print("applying drill hole feature to beam")
+        print("applying drill hole feature to element")
         plane = Plane(point=self.line.start, normal=self.line.vector)
         plane.point += plane.normal * 0.5 * self.length
         drill_volume = Cylinder(frame=Frame.from_plane(plane), radius=self.diameter / 2.0, height=self.length)
 
         try:
-            return beam_geometry - Brep.from_cylinder(drill_volume)
+            return element_geometry - Brep.from_cylinder(drill_volume)
         except IndexError:
             raise FeatureApplicationError(
                 drill_volume,
-                beam_geometry,
-                "The drill volume is not contained in the beam geometry.",
+                element_geometry,
+                "The drill volume is not contained in the element geometry.",
             )
 
 
 class MillVolume(Feature):
-    """A volume to be milled out of a beam.
+    """A volume to be milled out of an element.
 
     Parameters
     ----------
     volume : :class:`compas.geometry.Polyhedron` | :class:`compas.datastructures.Mesh`
-        The volume to be milled out of the beam.
+        The volume to be milled out of the element.
 
     """
 
@@ -172,13 +172,13 @@ class MillVolume(Feature):
         super(MillVolume, self).__init__(**kwargs)
         self.mesh_volume = volume
 
-    def apply(self, beam_geometry):
-        """Apply the feature to the beam geometry.
+    def apply(self, element_geometry):
+        """Apply the feature to the element geometry.
 
         Raises
         ------
         :class:`compas_timber.elements.FeatureApplicationError`
-            If the volume does not intersect with the beam geometry.
+            If the volume does not intersect with the element geometry.
 
         Returns
         -------
@@ -192,22 +192,22 @@ class MillVolume(Feature):
             mesh = self.mesh_volume.to_mesh()
         volume = Brep.from_mesh(mesh)
         try:
-            return beam_geometry - volume
+            return element_geometry - volume
         except IndexError:
             raise FeatureApplicationError(
                 volume,
-                beam_geometry,
-                "The volume does not intersect with beam geometry.",
+                element_geometry,
+                "The volume does not intersect with element geometry.",
             )
 
 
 class BrepSubtraction(Feature):
-    """Generic volume subtraction from a beam.
+    """Generic volume subtraction from an element.
 
     Parameters
     ----------
     volume : :class:`compas.geometry.Brep`
-        The volume to be subtracted from the beam.
+        The volume to be subtracted from the element.
 
     """
 
@@ -221,13 +221,13 @@ class BrepSubtraction(Feature):
         data_dict["volume"] = self.volume
         return data_dict
 
-    def apply(self, beam_geometry):
-        """Apply the feature to the beam geometry.
+    def apply(self, element_geometry):
+        """Apply the feature to the element geometry.
 
         Raises
         ------
         :class:`compas_timber.elements.FeatureApplicationError`
-            If the volume does not intersect with the beam geometry.
+            If the volume does not intersect with the element geometry.
 
         Returns
         -------
@@ -236,10 +236,10 @@ class BrepSubtraction(Feature):
 
         """
         try:
-            return beam_geometry - self.volume
+            return element_geometry - self.volume
         except IndexError:
             raise FeatureApplicationError(
                 self.volume,
-                beam_geometry,
-                "The volume does not intersect with beam geometry.",
+                element_geometry,
+                "The volume does not intersect with element geometry.",
             )
