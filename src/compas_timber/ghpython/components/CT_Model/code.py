@@ -129,7 +129,7 @@ class ModelComponent(component):
             beam.remove_features()
             beam.remove_blank_extension()
             beam.debug_info = []
-            Model.add_beam(beam)
+            Model.add_element(beam)
         topologies = []
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(Beams, rtree=True, max_distance=MaxDistance)

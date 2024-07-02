@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Changed `TimberModel.add_beam` to `TimberModel.add_element`
+* Changed `TimberModel.add_joint` to `TimberModel.add_interaction`
+* Changed `TimberModel.remove_joint` to `TimberModel.remove_interaction`
+* Changed `TimberModel.beams` to parse from `TimberModel.elements()` instead of having its own internal list.
+* Changed `TimberModel.joints` to parse from `TimberModel.interactions()` instead of having its own internal list.
+
 ### Removed
 
 
