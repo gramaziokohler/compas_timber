@@ -12,8 +12,6 @@ from Rhino.Geometry import Interval
 from Rhino.Geometry import Plane
 from Rhino.RhinoDoc import ActiveDoc
 
-from compas_timber.consumers import BrepGeometryConsumer
-
 
 class BakeBoxMap(component):
     def RunScript(self, model, map_size, bake):
@@ -39,10 +37,8 @@ class BakeBoxMap(component):
             return
 
         try:
-            geometries = BrepGeometryConsumer(model).result
-
             frames = [frame_to_rhino(b.frame) for b in model.beams]
-            breps = [g.geometry.native_brep for g in geometries]
+            breps = [beam.geometry.native_brep for beam in model.beams]
 
             if frames and breps:
                 rs.EnableRedraw(False)
