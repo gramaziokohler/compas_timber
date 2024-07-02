@@ -1,35 +1,17 @@
 from ghpythonlib.componentbase import executingcomponent as component
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import JointTopology
-from compas_timber.ghpython import TopologyRule
-
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
+from compas_timber.ghpython import TopologyRule
 
 
-class TopologyJointRule(component):
-    def RunScript(self, L, T, X):
+class DefaultJointRule(component):
+    def RunScript(self):
         topoRules = []
-
-        if L:
-            if L.type.SUPPORTED_TOPOLOGY != JointTopology.TOPO_L:
-                self.AddRuntimeMessage(Warning, "Joint type does not match topology. Joint may not be generated.")
-            topoRules.append(TopologyRule(JointTopology.TOPO_L, L.type, **L.kwargs))
-        else:
-            topoRules.append(TopologyRule(JointTopology.TOPO_L, LMiterJoint))
-        if T:
-            if T.type.SUPPORTED_TOPOLOGY != JointTopology.TOPO_T:
-                self.AddRuntimeMessage(Warning, "Joint type does not match topology. Joint may not be generated.")
-            topoRules.append(TopologyRule(JointTopology.TOPO_T, T.type, **T.kwargs))
-        else:
-            topoRules.append(TopologyRule(JointTopology.TOPO_T, TButtJoint))
-        if X:
-            if X.type.SUPPORTED_TOPOLOGY != JointTopology.TOPO_X:
-                self.AddRuntimeMessage(Warning, "Joint type does not match topology. Joint may not be generated.")
-            topoRules.append(TopologyRule(JointTopology.TOPO_X, X.type, **X.kwargs))
-        else:
-            topoRules.append(TopologyRule(JointTopology.TOPO_X, XHalfLapJoint))
+        topoRules.append(TopologyRule(JointTopology.TOPO_L, LMiterJoint))
+        topoRules.append(TopologyRule(JointTopology.TOPO_T, TButtJoint))
+        topoRules.append(TopologyRule(JointTopology.TOPO_X, XHalfLapJoint))
 
         return topoRules

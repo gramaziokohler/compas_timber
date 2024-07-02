@@ -4,7 +4,7 @@ from rtree.index import Property
 
 
 @plugin(category="solvers", requires=["rtree"])
-def find_neighboring_beams(beams, inflate_by=None):
+def find_neighboring_beams(beams, inflate_by=0.0):
     """Uses RTree implementation from the CPython `rtree` library: https://pypi.org/project/Rtree/.
 
     Returns a list of sets. Each set contains a pair of neighboring beams.
@@ -29,9 +29,8 @@ def find_neighboring_beams(beams, inflate_by=None):
     r_tree = Index(properties=p, interleaved=True)  # interleaved => x_min, y_min, z_min, x_max, y_max, z_max
     b_boxes = []
     for index, beam in enumerate(beams):
-        bbox = beam.aabb
-        if inflate_by is not None:
-            bbox = _inflate_bbox(bbox, inflate_by)
+        aabb = beam.compute_aabb(inflate_by)
+        bbox = (aabb.xmin, aabb.ymin, aabb.zmin, aabb.xmax, aabb.ymax, aabb.zmax)
         b_boxes.append(bbox)
         r_tree.insert(index, bbox)
 
@@ -43,8 +42,3 @@ def find_neighboring_beams(beams, inflate_by=None):
                 neighbors.append(pair)
 
     return neighbors
-
-
-def _inflate_bbox(bbox, d):
-    x1, y1, z1, x2, y2, z2 = bbox
-    return (x1 - d, y1 - d, z1 - d, x2 + d, y2 + d, z2 + d)

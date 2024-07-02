@@ -2,47 +2,43 @@
 import math
 import random
 
-from Rhino import Render
-from Rhino.Geometry import Plane
-from Rhino.Geometry import Interval
-from Rhino.RhinoDoc import ActiveDoc
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
-from ghpythonlib.componentbase import executingcomponent as component
 import rhinoscriptsyntax as rs
-
 from compas_rhino.conversions import frame_to_rhino
-from compas_timber.consumers import BrepGeometryConsumer
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Rhino import Render
+from Rhino.Geometry import Interval
+from Rhino.Geometry import Plane
+from Rhino.RhinoDoc import ActiveDoc
 
 
 class BakeBoxMap(component):
-    def RunScript(self, Assembly, MapSize, Bake):
-        if MapSize and len(MapSize) != 3:
+    def RunScript(self, model, map_size, bake):
+        if map_size and len(map_size) != 3:
             self.AddRuntimeMessage(
                 Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
             )
             return
 
-        if MapSize:
-            dimx, dimy, dimz = MapSize
+        if map_size:
+            dimx, dimy, dimz = map_size
         else:
             # for the pine 251 material bitmap, rotated
             dimx = 0.2
             dimy = 0.2
             dimz = 1.0
 
-        if not Assembly:
-            self.AddRuntimeMessage(Warning, "Input parameters Assembly failed to collect any Beam objects.")
+        if not model:
+            self.AddRuntimeMessage(Warning, "Input parameters Model failed to collect any Beam objects.")
             return
 
-        if not Bake:
+        if not bake:
             return
 
         try:
-            geometries = BrepGeometryConsumer(Assembly).result
-
-            frames = [frame_to_rhino(b.frame) for b in Assembly.beams]
-            breps = [g.geometry.native_brep for g in geometries]
+            frames = [frame_to_rhino(b.frame) for b in model.beams]
+            breps = [beam.geometry.native_brep for beam in model.beams]
 
             if frames and breps:
                 rs.EnableRedraw(False)

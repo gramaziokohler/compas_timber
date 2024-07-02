@@ -1,0 +1,20 @@
+{
+    "name": "X Topological Joint Rules",
+    "nickname": "X_Topo_Joint",
+    "category": "COMPAS Timber",
+    "subcategory": "Joint Rules",
+    "description": "makes rule to apply joint type to X topology. Defualts to XHalfLapJoint",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+        ],
+        "outputParameters": [
+            {
+                "name": "Rule",
+                "description": "List of JointDefinitions."
+            }
+        ]
+    }
+}

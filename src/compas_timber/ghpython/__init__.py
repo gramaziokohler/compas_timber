@@ -1,10 +1,12 @@
+from .ghcomponent_helpers import add_gh_param
+from .ghcomponent_helpers import clear_gh_params
+from .ghcomponent_helpers import manage_dynamic_params
 from .workflow import CategoryRule
-from .workflow import TopologyRule
+from .workflow import DebugInfomation
 from .workflow import DirectRule
 from .workflow import FeatureDefinition
-from .workflow import JointOptions
 from .workflow import JointDefinition
-from .workflow import DebugInfomation
+from .workflow import TopologyRule
 
 __all__ = [
     "JointDefinition",
@@ -12,6 +14,8 @@ __all__ = [
     "TopologyRule",
     "DirectRule",
     "FeatureDefinition",
-    "JointOptions",
     "DebugInfomation",
+    "clear_gh_params",
+    "add_gh_param",
+    "manage_dynamic_params",
 ]

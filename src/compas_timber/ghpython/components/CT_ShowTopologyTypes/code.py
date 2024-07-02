@@ -2,18 +2,19 @@
 import System
 from compas_rhino.conversions import point_to_rhino
 from ghpythonlib.componentbase import executingcomponent as component
+
 from compas_timber.connections import JointTopology
 from compas_timber.utils.compas_extra import intersection_line_line_3D
 
 
 class ShowTopologyTypes(component):
-    def RunScript(self, Assembly):
+    def RunScript(self, model):
         self.pt = []
         self.txt = []
 
-        if not Assembly:
+        if not model:
             return
-        for topo in Assembly.topologies:
+        for topo in model.topologies:
             beam_a = topo["beam_a"]
             beam_b = topo["beam_b"]
             topology = topo.get("detected_topo")

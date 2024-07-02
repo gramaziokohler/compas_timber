@@ -4,7 +4,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.parts.features import CutFeature
+from compas_timber.elements.features import CutFeature
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import BeamJoinningError
@@ -18,7 +18,7 @@ class LMiterJoint(Joint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with an assembly.
+    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
@@ -38,28 +38,26 @@ class LMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(LMiterJoint, self).__init__(**kwargs)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_key = beam_a.key if beam_a else None
-        self.beam_b_key = beam_b.key if beam_b else None
-
     @property
     def __data__(self):
-        data_dict = {
-            "beam_a_key": self.beam_a_key,
-            "beam_b_key": self.beam_b_key,
-        }
-        data_dict.update(super(LMiterJoint, self).__data__)
-        return data_dict
+        data = super(LMiterJoint, self).__data__
+        data["beam_a"] = self.beam_a_guid
+        data["beam_b"] = self.beam_b_guid
+        data["cutoff"] = self.cutoff
+        return data
 
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(**value)
-        instance.beam_a_key = value["beam_a_key"]
-        instance.beam_b_key = value["beam_b_key"]
-        return instance
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None):
+        super(LMiterJoint, self).__init__()
+        self.beam_a = beam_a
+        self.beam_b = beam_b
+        self.beam_a_guid = str(beam_a.guid) if beam_a else None
+        self.beam_b_guid = str(beam_b.guid) if beam_b else None
+        self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
+        self.features = []
+
+    @property
+    def beams(self):
+        return [self.beam_a, self.beam_b]
 
     def get_cutting_planes(self):
         assert self.beam_a and self.beam_b
@@ -124,16 +122,14 @@ class LMiterJoint(Joint):
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
 
-        self.beam_a.add_blank_extension(start_a, end_a, self.key)
-        self.beam_b.add_blank_extension(start_b, end_b, self.key)
-
+        self.beam_a.add_blank_extension(start_a, end_a, self.guid)
+        self.beam_b.add_blank_extension(start_b, end_b, self.guid)
         f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
         self.beam_a.add_features(f1)
         self.beam_b.add_features(f2)
         self.features = [f1, f2]
 
-    def restore_beams_from_keys(self, assembly):
-        """After de-serialization, resotres references to the main and cross beams saved in the assembly."""
-        self.beam_a = assembly.find_by_key(self.beam_a_key)
-        self.beam_b = assembly.find_by_key(self.beam_b_key)
-        self._beams = [self.beam_a, self.beam_b]
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.beam_a = model.elementdict[self.beam_a_guid]
+        self.beam_b = model.elementdict[self.beam_b_guid]
