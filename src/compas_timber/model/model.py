@@ -50,25 +50,31 @@ class TimberModel(Model):
 
     @property
     def beams(self):
-        # type: () -> list[Beam]
-        return [element if isinstance(element, Beam) else None for element in self.elements()]
+        # type: () -> Generator[Beam]
+        for element in self.elements():
+            if isinstance(element, Beam):
+                yield element
 
     # @property
     # def plates(self):
-    #     # type: () -> list[Beam]
-    #     return [element if isinstance(element, Plate) else None for element in self.elements()]
+        # # type: () -> Generator[Plate]
+        # for element in self.elements():
+        #     if isinstance(element, Plate):
+        #         yield element
 
     @property
     def joints(self):
-        # type: () -> list[Joint]
-        return [
-            interaction if isinstance(interaction, Joint) else None for interaction in self.interactions()
-        ]  # TODO: consider if there are other interaction types...
+        # type: () -> Generator[Joint]
+        for interaction in self.interactions():
+            if isinstance(interaction, Joint):
+                yield interaction  # TODO: consider if there are other interaction types...
 
     @property
     def walls(self):
-        # type: () -> list[Wall]
-        return [element if isinstance(element, Wall) else None for element in self.elements()]
+        # type: () -> Generator[Wall]
+        for element in self.elements():
+            if isinstance(element, Wall):
+                yield element
 
     @property
     def topologies(self):
@@ -81,9 +87,7 @@ class TimberModel(Model):
         total_position = Point(0, 0, 0)
 
         for element in self.elements():
-            vol = (
-                element.obb.volume
-            )  # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
+            vol = element.obb.volume        # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
             point = element.obb.frame.point
             total_vol += vol
             total_position += point * vol
@@ -106,44 +110,32 @@ class TimberModel(Model):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Element`
+        :class:`~compas_model.elements.Element`
             The element with the specified GUID.
 
         """
         return self._guid_element[guid]
 
-    def add_element(self, element):
-        # type: (Beam) -> None
-        """Adds a Beam to this model.
 
-        Parameters
-        ----------
-        element : :class:`~compas_timber.elements.Element`
-            The element to add to the model.
-
-        """
-        _ = super(TimberModel, self).add_element(element)
-
-    def add_interaction(self, interaction, elements):
-        # type: (Joint, tuple[Interaction]) -> None
+    def add_joint(self, joint, elements):
+        # type: (Joint, tuple[Element]) -> None
         """Add a joint object to the model.
 
         Parameters
         ----------
-        interaction : :class:`~compas_timber.connections.joint`
-            An instance of a Joint class.
+        interaction : :class:`~compas_timber.connections.Interaction`
+            An instance of Interaction class.
 
-        beams : tuple(:class:`~compas_timber.elements.Element`)
+        elements : tuple(:class:`~compas_timber.elements.Element`)
             The two elements that should be joined.
 
         """
         if len(elements) != 2:
             raise ValueError("Expected 2 parts. Got instead: {}".format(len(elements)))
         a, b = elements
-        print(a, b)
-        _ = super(TimberModel, self).add_interaction(a, b, interaction=interaction)
+        _ = super(TimberModel, self).add_interaction(a, b, interaction=joint)
 
-    def remove_interaction(self, joint):
+    def remove_joint(self, joint):
         # type: (Joint) -> None
         """Removes this joint object from the model.
 
