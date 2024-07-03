@@ -7,12 +7,11 @@ from Rhino.Geometry import Brep as RhinoBrep
 from Rhino.Geometry import Vector3d as RhinoVector
 from compas.scene import Scene
 from compas.geometry import Brep
-from compas_timber.assembly import SurfaceAssembly
+from compas_timber.design import SurfaceModel
 from compas_timber.design import DebugInfomation
-from compas_timber.consumers import BrepGeometryConsumer
 
 
-class SurfaceAssemblyComponent(component):
+class SurfaceModelComponent(component):
     def RunScript(self, surface, stud_spacing, beam_width, frame_depth, z_axis, options, CreateGeometry=False):
         # minimum inputs required
         if not surface:
@@ -32,24 +31,26 @@ class SurfaceAssemblyComponent(component):
         if not options:
             options = {}
 
-        assembly = SurfaceAssembly(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, **options)
+        surface_model = SurfaceModel(
+            Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, **options
+        )
 
         debug_info = DebugInfomation()
         Geometry = None
         scene = Scene()
+        model = surface_model.create_model()
         if CreateGeometry:
-            vis_consumer = BrepGeometryConsumer(assembly.assembly)
-            for result in vis_consumer.result:
-                scene.add(result.geometry)
-                if result.debug_info:
-                    debug_info.add_feature_error(result.debug_info)
+            for element in model.beams:
+                scene.add(element.geometry)
+                if element.debug_info:
+                    debug_info.add_feature_error(element.debug_info)
         else:
-            for beam in assembly.beams:
-                scene.add(beam.blank)
+            for element in model.beams:
+                scene.add(element.blank)
 
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
 
-        Geometry = scene.draw()
+        geometry = scene.draw()
 
-        return assembly.assembly, Geometry, debug_info
+        return model, geometry, debug_info

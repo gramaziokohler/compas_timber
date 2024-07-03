@@ -1,9 +1,9 @@
 {
-    "name": "SurfaceAssemblyOptions",
-    "nickname": "SurfaceAssemblyOptions",
+    "name": "SurfaceModelOptions",
+    "nickname": "SurfaceModelOptions",
     "category": "COMPAS Timber",
-    "subcategory": "Assembly",
-    "description": "Defines options for the SurfaceAssembly component.",
+    "subcategory": "Design",
+    "description": "Defines options for the SurfaceModel component.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
@@ -33,7 +33,6 @@
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             },
-
             {
                 "name": "custom_dimensions",
                 "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
@@ -44,7 +43,7 @@
         "outputParameters": [
             {
                 "name": "Options",
-                "description": "Assembly from Surface options."
+                "description": "Model from Surface options."
             }
         ]
     }

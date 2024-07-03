@@ -1,8 +1,8 @@
 {
-    "name": "SurfaceAssembly",
-    "nickname": "SurfaceAssembly",
+    "name": "SurfaceModel",
+    "nickname": "SurfaceModel",
     "category": "COMPAS Timber",
-    "subcategory": "Assembly",
+    "subcategory": "Design",
     "description": "Creates Beams and joint rules from a planar brep surface.",
     "exposure": 2,
     "ghpython": {
@@ -29,19 +29,19 @@
             },
             {
                 "name": "frame_depth",
-                "description": "thickness of the frame section of the resulting assembly. used to set Beam.height",
+                "description": "thickness of the frame section of the resulting model. used to set Beam.height",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             },
             {
                 "name": "stud_direction",
-                "description": "(optional) Vector defining the direction of stud in the assembly. Default is world-Z",
+                "description": "(optional) Vector defining the direction of stud in the model. Default is world-Z",
                 "typeHintID": "vector",
                 "scriptParamAccess": 0
             },
             {
                 "name": "options",
-                "description": "(optional) SurfaceAssembly options.",
+                "description": "(optional) SurfaceModel options.",
                 "typeHintID": "none",
                 "scriptParamAccess": 0
             },
@@ -54,15 +54,15 @@
         ],
         "outputParameters": [
             {
-                "name": "Assembly",
-                "description": "compas_timber TimberAssembly object."
+                "name": "Model",
+                "description": "compas_timber TimberModel object."
             },
             {
                 "name": "Geometry",
-                "description": "Assembly geometry."
+                "description": "Model geometry."
             },
             {
-                "name": "debug",
+                "name": "Debug",
                 "description": "debug_info."
             }
         ]

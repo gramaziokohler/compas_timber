@@ -1,9 +1,11 @@
 from ghpythonlib.componentbase import executingcomponent as component
 
 
-class SurfaceAssemblyOptions(component):
+class SurfaceModelOptions(component):
 
-    def RunScript(self, sheeting_outside, sheeting_inside, lintel_posts, edge_stud_offset, custom_dimensions, joint_overrides):
+    def RunScript(
+        self, sheeting_outside, sheeting_inside, lintel_posts, edge_stud_offset, custom_dimensions, joint_overrides
+    ):
 
         if sheeting_outside is not None and not isinstance(sheeting_outside, float):
             raise TypeError("sheeting_outside expected a float, got: {}".format(type(sheeting_outside)))
@@ -23,7 +25,7 @@ class SurfaceAssemblyOptions(component):
             "lintel_posts": lintel_posts,
             "edge_stud_offset": edge_stud_offset,
             "custom_dimensions": dims,
-            "joint_overrides": joint_overrides
+            "joint_overrides": joint_overrides,
         }
 
         return (dict,)
