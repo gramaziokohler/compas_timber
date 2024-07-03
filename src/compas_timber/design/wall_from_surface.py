@@ -164,11 +164,8 @@ class SurfaceModel(object):
                     rule_set = set([rule.category_a, rule.category_b])
                     for i, _rule in enumerate(self._rules):
                         _set = set([_rule.category_a, _rule.category_b])
-                        print(rule_set, _set)
                         if rule_set == _set:
-                            print(_rule)
                             self._rules[i] = rule
-                            print(_rule)
                             break
         print(self._rules)
         return self._rules
@@ -177,14 +174,13 @@ class SurfaceModel(object):
     def centerlines(self):
         return [element.centerline for element in self.elements]
 
-    @property
-    def assembly(self):
-        assembly = TimberModel()
+    def create_model(self):
+        model = TimberModel()
         for beam in self.beams:
-            assembly.add_beam(beam)
+            model.add_beam(beam)
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(assembly.beams, rtree=True, max_distance=0.1)
+        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=0.1)
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=0.1)
@@ -193,17 +189,14 @@ class SurfaceModel(object):
                 for rule in self.rules:
                     if not rule.comply(pair):
                         continue
-                    if beam_a.key == 4 and beam_b.key == 5:
-                        print(rule)
                     if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
                         continue
                     else:
                         if rule.joint_type == LButtJoint:
                             beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                        rule.joint_type.create(assembly, beam_a, beam_b, **rule.kwargs)
-        assembly.set_topologies(topologies)
-
-        return assembly
+                        rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
+        model.set_topologies(topologies)
+        return model
 
     @property
     def beams(self):
