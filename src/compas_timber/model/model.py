@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+from compas_model.models.groupnode import GroupNode
 from compas.geometry import Point
 from compas_model.models import Model
 
@@ -46,6 +49,7 @@ class TimberModel(Model):
         super(TimberModel, self).__init__()
         self._beams = []
         self._walls = []
+        self._groups = {}  # Type: dict[str, GroupNode]
         self._joints = []
         self._topologies = []  # added to avoid calculating multiple times
 
@@ -108,8 +112,8 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
-    def add_beam(self, beam):
-        # type: (Beam) -> None
+    def add_beam(self, beam, group_name=None):
+        # type: (Beam, str|None) -> None
         """Adds a Beam to this model.
 
         Parameters
@@ -118,8 +122,18 @@ class TimberModel(Model):
             The beam to add to the model.
 
         """
-        _ = self.add_element(beam)
+        if group_name:
+            group_node = self._groups.get(group_name) or self.add_group(group_name)
+            _ = self.add_element(beam, parent=group_node)
+        else:
+            _ = self.add_element(beam)
         self._beams.append(beam)
+
+    def add_group(self, name, parent=None, **kwargs):
+        # type: (str, GroupNode|None, dict) -> GroupNode
+        group = super(TimberModel, self).add_group(name, parent, **kwargs)
+        self._groups[name] = group
+        return group
 
     def add_wall(self, wall):
         # type: (Wall) -> None
@@ -131,8 +145,17 @@ class TimberModel(Model):
             The wall to add to the model.
 
         """
-        _ = self.add_element(wall)
+        if wall.name:
+            self._add_wall_as_group(wall)
+        else:
+            _ = self.add_element(wall)
         self._walls.append(wall)
+
+    def _add_wall_as_group(self, wall):
+        if wall.name in self._groups:
+            raise ValueError("Wall has name {} but such group already exists in model.".format(wall.name))
+        group = self.add_group(wall.name, element=wall)
+        _ = self.add_element(wall, parent=group)
 
     def add_joint(self, joint, beams):
         # type: (Joint, tuple[Beam]) -> None

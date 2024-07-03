@@ -11,14 +11,14 @@ from compas_timber.connections import THalfLapJoint
 
 
 HERE = os.path.dirname(__file__)
-LINES = os.path.join(HERE, 'lines.json')
+LINES = os.path.join(HERE, "lines.json")
 
 
 def create_viewer():
     viewer = Viewer()
     viewer.renderer.camera.far = 1000000.0
     viewer.renderer.camera.position = [10000.0, 10000.0, 10000.0]
-    viewer.renderer.camera.pan_delta = 5.0
+    viewer.renderer.camera.pandelta = 5.0
     viewer.renderer.rendermode = "ghosted"
     return viewer
 
