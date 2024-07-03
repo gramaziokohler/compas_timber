@@ -1,28 +1,29 @@
 import math
 
-from compas.geometry import Vector
-from compas.geometry import cross_vectors
-from compas.geometry import dot_vectors
 from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import offset_line
-from compas.geometry import offset_polyline
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import bounding_box_xy
-from compas.geometry import matrix_from_frame_to_frame
-from compas.geometry import intersection_line_segment
-from compas.geometry import intersection_line_line
 from compas.geometry import closest_point_on_segment
+from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point_sqrd
-from compas.geometry import Point
-from compas.geometry import Line
-from compas_timber.design import CategoryRule
-from compas_timber.elements import Beam
-from compas_timber.connections import LButtJoint
-from compas_timber.connections import TButtJoint
+from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_line_segment
+from compas.geometry import matrix_from_frame_to_frame
+from compas.geometry import offset_line
+from compas.geometry import offset_polyline
+
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
+from compas_timber.connections import LButtJoint
+from compas_timber.connections import TButtJoint
+from compas_timber.design import CategoryRule
+from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
 

@@ -2,8 +2,8 @@ from compas.geometry import Brep
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.elements import BrepSubtraction
 from compas_timber.design import FeatureDefinition
+from compas_timber.elements import BrepSubtraction
 
 
 class BrepSubtractionFeature(component):

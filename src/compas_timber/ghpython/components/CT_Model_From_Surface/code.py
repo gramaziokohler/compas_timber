@@ -1,14 +1,14 @@
 """Creates a Beam from a LineCurve."""
 
+from compas.geometry import Brep
+from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-
 from Rhino.Geometry import Brep as RhinoBrep
 from Rhino.Geometry import Vector3d as RhinoVector
-from compas.scene import Scene
-from compas.geometry import Brep
-from compas_timber.design import SurfaceModel
+
 from compas_timber.design import DebugInfomation
+from compas_timber.design import SurfaceModel
 
 
 class SurfaceModelComponent(component):
@@ -36,7 +36,6 @@ class SurfaceModelComponent(component):
         )
 
         debug_info = DebugInfomation()
-        Geometry = None
         scene = Scene()
         model = surface_model.create_model()
         if CreateGeometry:

@@ -1,13 +1,11 @@
-import clr
 from ghpythonlib.componentbase import executingcomponent as component
-import System
+
 from compas_timber.design import SurfaceModel
 
 beam_category_names = SurfaceModel.beam_category_names()
 
 
 def on_item_click(sender, event_info):
-    item = clr.Convert(sender, System.Windows.Forms.ToolStripItem)
     ghenv.Component.Params.Output[0].NickName = str(sender)
     ghenv.Component.Params.OnParametersChanged()
     ghenv.Component.ExpireSolution(True)
