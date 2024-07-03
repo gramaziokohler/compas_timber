@@ -19,11 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `birdsmouth` parameter to `butt_joint` which applies a `btlx_double_cut` process to the part. 
-* Added `BTLxDoubleCut` BTLx Processing class
+* Added `BTLxDoubleCut` BTLx Processing class.
 * Added BTLx support for `TButtJoint` and `LButtJoint`
-* Added `BTLxLap` process class
+* Added `BTLxLap` process class.
 
 ### Changed
+
+* Moved module `workflow` from package `ghpython` to new package `design`.
+* Moved `compas_timber.ghpython.CategoryRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.DirectRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.JointRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.TopologyRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.JointDefinition` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.FeatureDefinition` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.DebugInfomation` to `compas_timber.design`.
 
 ### Removed
 
