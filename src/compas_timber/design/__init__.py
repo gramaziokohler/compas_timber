@@ -6,6 +6,8 @@ from .workflow import JointDefinition
 from .workflow import FeatureDefinition
 from .workflow import DebugInfomation
 
+from .wall_from_surface import SurfaceModel
+
 __all__ = [
     "CategoryRule",
     "DirectRule",
@@ -14,4 +16,5 @@ __all__ = [
     "JointDefinition",
     "FeatureDefinition",
     "DebugInfomation",
+    "SurfaceModel",
 ]
