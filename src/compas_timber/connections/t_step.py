@@ -70,6 +70,14 @@ class TStepJoint(Joint):
         bisector.transform(rotation)
         return Plane(origin, bisector)
 
+    def check_stepjoint_boolean(self): #TODO only for btlx
+        cross_product_centerlines = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction).unitized()
+        dot_product_cp_crossbnormal = float(abs(cross_product_centerlines.dot(self.main_beam.frame.normal)))
+        if 0.999 < dot_product_cp_crossbnormal or dot_product_cp_crossbnormal < 0.001:
+            return True
+        else:
+            return False
+
     def get_main_cutting_frame(self):
         assert self.beams
         beam_a, beam_b = self.beams
@@ -77,6 +85,18 @@ class TStepJoint(Joint):
         _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
+    
+    def get_main_cutting_plane(self): #TODO clean up, duplication from function above!
+        assert self.main_beam and self.cross_beam
+        self.reference_side_index_cross, cfr = self.get_face_most_ortho_to_beam(
+            self.main_beam, self.cross_beam, ignore_ends=True
+        )
+
+        cross_mating_frame = cfr.copy()
+        cfr = Frame(cfr.point, cfr.xaxis, cfr.yaxis * -1.0)  # flip normal
+        cfr.point = cfr.point + cfr.zaxis# * self.mill_depth
+
+        return cfr, cross_mating_frame
 
     def get_main_intersection_frame(self):
         """
