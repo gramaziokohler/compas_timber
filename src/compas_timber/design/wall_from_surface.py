@@ -168,7 +168,6 @@ class SurfaceModel(object):
                         if rule_set == _set:
                             self._rules[i] = rule
                             break
-        print(self._rules)
         return self._rules
 
     @property
