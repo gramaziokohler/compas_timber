@@ -94,7 +94,6 @@ class Beam(Element):
         self.attributes.update(kwargs)
         self._blank_extensions = {}
         self.debug_info = []
-        self.ref_frame = self._calculate_ref_frame()
 
     def __repr__(self):
         # type: () -> str
@@ -121,11 +120,19 @@ class Beam(Element):
 
     @property
     def blank_frame(self):
+        # TODO: could be replaced by `ref_frame`?
         assert self.frame
         start, _ = self._resolve_blank_extensions()
         frame = self.frame.copy()
         frame.point += -frame.xaxis * start  # "extension" to the start edge
         return frame
+
+    @property
+    def ref_frame(self):
+        ref_point = self.blank_frame.point.copy()
+        ref_point += self.blank_frame.yaxis * self.width * 0.5
+        ref_point -= self.blank_frame.zaxis * self.height * 0.5
+        return Frame(ref_point, self.blank_frame.xaxis, self.blank_frame.zaxis)
 
     @property
     def faces(self):
@@ -158,6 +165,25 @@ class Beam(Element):
                 self.frame.zaxis,
             ),  # small face at end point
         ]
+
+    @property
+    def ref_sides(self):
+        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
+        # TODO: cache these
+        rs1_point = self.ref_frame.point
+        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
+        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
+        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
+        rs5_point = rs1_point
+        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
+        return (
+            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis),
+            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis),
+            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis),
+            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis),
+            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis),
+            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis),
+        )
 
     @property
     def centerline(self):
@@ -355,20 +381,6 @@ class Beam(Element):
         depth_offset = boxframe.xaxis * xsize * 0.5
         boxframe.point += depth_offset
         return Box(xsize, ysize, zsize, frame=boxframe)
-
-    def _calculate_ref_frame(self):
-        """Calculate the reference frame of the beam.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Frame`
-
-        """
-        assert self.frame
-        ref_point = self.frame.point.copy()
-        ref_point += self.frame.yaxis * self.width * 0.5
-        ref_point -= self.frame.zaxis * self.height * 0.5
-        return Frame(ref_point, self.frame.xaxis, self.frame.zaxis)
 
     # ==========================================================================
     # Featrues
