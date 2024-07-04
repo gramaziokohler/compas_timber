@@ -94,6 +94,7 @@ class Beam(Element):
         self.attributes.update(kwargs)
         self._blank_extensions = {}
         self.debug_info = []
+        self.ref_frame = self._calculate_ref_frame()
 
     def __repr__(self):
         # type: () -> str
@@ -354,6 +355,20 @@ class Beam(Element):
         depth_offset = boxframe.xaxis * xsize * 0.5
         boxframe.point += depth_offset
         return Box(xsize, ysize, zsize, frame=boxframe)
+
+    def _calculate_ref_frame(self):
+        """Calculate the reference frame of the beam.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+
+        """
+        assert self.frame
+        ref_point = self.frame.point.copy()
+        ref_point += self.frame.yaxis * self.width * 0.5
+        ref_point -= self.frame.zaxis * self.height * 0.5
+        return Frame(ref_point, self.frame.xaxis, self.frame.zaxis)
 
     # ==========================================================================
     # Featrues
