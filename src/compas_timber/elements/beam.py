@@ -53,6 +53,10 @@ class Beam(Element):
         A feature-less box representing the parametric geometry of this beam.
     blank : :class:`~compas.geometry.Box`
         A feature-less box representing the material stock geometry to produce this beam.
+    ref_frame : :class:`~compas.geometry.Frame`
+        Reference frame for machining processes according to BTLx standard.
+    ref_sides : tuple(:class:`~compas.geometry.Frame`)
+        A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.
     faces : list(:class:`~compas.geometry.Frame`)
         A list of frames representing the 6 faces of this beam.
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -169,6 +173,7 @@ class Beam(Element):
     @property
     def ref_sides(self):
         # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
         # TODO: cache these
         rs1_point = self.ref_frame.point
         rs2_point = rs1_point + self.ref_frame.yaxis * self.height
