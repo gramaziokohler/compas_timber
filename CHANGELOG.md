@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `ref_frame` attribute to `Beam`.
+* Added `ref_sides` attribute to `Beam`.
+
 ### Changed
 
 * Fixed error in BakeWithBoxMap component.
