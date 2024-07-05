@@ -177,12 +177,12 @@ class Beam(Element):
         rs5_point = rs1_point
         rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
         return (
-            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis),
-            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis),
-            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis),
-            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis),
-            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis),
-            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis),
+            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
+            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
+            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
+            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
+            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
+            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
         )
 
     @property
