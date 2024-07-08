@@ -45,7 +45,7 @@ If you found an issue or have a suggestion for a dandy new feature, please file 
 
 We love contributions!
 
-Check the [Contributor's Guide](https://github.com/compas-dev/compas_timber/blob/main/CONTRIBUTING.md)
+Check the [Contributor's Guide](https://github.com/gramaziokohler/compas_timber/blob/main/CONTRIBUTING.md)
 for more details.
 
 ## Credits
