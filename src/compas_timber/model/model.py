@@ -57,10 +57,10 @@ class TimberModel(Model):
 
     # @property
     # def plates(self):
-        # # type: () -> Generator[Plate]
-        # for element in self.elements():
-        #     if isinstance(element, Plate):
-        #         yield element
+    # # type: () -> Generator[Plate]
+    # for element in self.elements():
+    #     if isinstance(element, Plate):
+    #         yield element
 
     @property
     def joints(self):
@@ -87,7 +87,9 @@ class TimberModel(Model):
         total_position = Point(0, 0, 0)
 
         for element in self.elements():
-            vol = element.obb.volume        # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
+            vol = (
+                element.obb.volume
+            )  # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
             point = element.obb.frame.point
             total_vol += vol
             total_position += point * vol
@@ -116,6 +118,29 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
+    def add_beam(self, beam):
+        # type: (Beam) -> None
+        """Adds a Beam to this model.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam to add to the model.
+
+        """
+        _ = self.add_element(beam)
+
+    def add_wall(self, wall):
+        # type: (Wall) -> None
+        """Adds a Wall to this model.
+
+        Parameters
+        ----------
+        wall : :class:`~compas_timber.elements.Wall`
+            The wall to add to the model.
+
+        """
+        _ = self.add_element(wall)
 
     def add_joint(self, joint, elements):
         # type: (Joint, tuple[Element]) -> None
@@ -126,7 +151,7 @@ class TimberModel(Model):
         interaction : :class:`~compas_timber.connections.Interaction`
             An instance of Interaction class.
 
-        elements : tuple(:class:`~compas_timber.elements.Element`)
+        elements : tuple(:class:`~compas_model.elements.Element`)
             The two elements that should be joined.
 
         """
@@ -145,8 +170,8 @@ class TimberModel(Model):
             The joint to remove.
 
         """
-        a, b = joint.beams
-        super(TimberModel, self).remove_interaction(a, b)
+        a, b = joint.beams  # TODO: make this generic elements not beams
+        super(TimberModel, self).remove_interaction(a, b)  # TODO: Can two elements share more than one interaction?
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
