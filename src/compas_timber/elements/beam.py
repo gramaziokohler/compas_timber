@@ -53,6 +53,12 @@ class Beam(Element):
         A feature-less box representing the parametric geometry of this beam.
     blank : :class:`~compas.geometry.Box`
         A feature-less box representing the material stock geometry to produce this beam.
+    ref_frame : :class:`~compas.geometry.Frame`
+        Reference frame for machining processes according to BTLx standard.
+    ref_sides : tuple(:class:`~compas.geometry.Frame`)
+        A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.
+    ref_edges : tuple(:class:`~compas.geometry.Line`)
+        A tuple containing the 4 lines representing the long edges of the beam according to BTLx standard.
     faces : list(:class:`~compas.geometry.Frame`)
         A list of frames representing the 6 faces of this beam.
         0: +y (side's frame normal is equal to the beam's Y positive direction)
@@ -169,6 +175,7 @@ class Beam(Element):
     @property
     def ref_sides(self):
         # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
         # TODO: cache these
         rs1_point = self.ref_frame.point
         rs2_point = rs1_point + self.ref_frame.yaxis * self.height
@@ -177,12 +184,23 @@ class Beam(Element):
         rs5_point = rs1_point
         rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
         return (
-            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis),
-            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis),
-            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis),
-            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis),
-            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis),
-            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis),
+            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
+            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
+            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
+            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
+            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
+            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
+        )
+
+    @property
+    def ref_edges(self):
+        # so tuple is not created every time
+        ref_sides = self.ref_sides
+        return (
+            Line(ref_sides[0].point, ref_sides[0].point + ref_sides[0].xaxis * self.blank_length, name="RE_1"),
+            Line(ref_sides[1].point, ref_sides[1].point + ref_sides[1].xaxis * self.blank_length, name="RE_2"),
+            Line(ref_sides[2].point, ref_sides[2].point + ref_sides[2].xaxis * self.blank_length, name="RE_3"),
+            Line(ref_sides[3].point, ref_sides[3].point + ref_sides[3].xaxis * self.blank_length, name="RE_4"),
         )
 
     @property
