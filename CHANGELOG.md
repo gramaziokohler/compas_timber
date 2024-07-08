@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## [0.9.1] 2024-07-05
+
+### Added
+
+### Changed
+
+* Fixed error in BakeWithBoxMap component.
+
+### Removed
+
+
 ## [0.9.0] 2024-06-14
 
 ### Added
