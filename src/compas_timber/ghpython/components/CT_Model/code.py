@@ -1,5 +1,6 @@
 from compas.scene import Scene
 from compas.tolerance import TOL
+from compas_timber.elements.features import FeatureApplicationError
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
@@ -172,13 +173,9 @@ class ModelComponent(component):
         geometry = None
         scene = Scene()
         for beam in self.model.beams:
-            try:
                 scene.add(beam.geometry)
                 if beam.debug_info:
                     debug_info.add_feature_error(beam.debug_info)
-            except Warning as w:
-                self.AddRuntimeMessage(w, "no features applied, showing beam blanks")
-                scene.add(beam.blank)
 
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
