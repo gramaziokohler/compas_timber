@@ -65,3 +65,31 @@ def test_beam_ref_faces_attribute(mock_beam):
         ref_side = mock_beam.ref_sides[index]
         assert ref_side_frames_expected[index] == ref_side
         assert ref_side.name == "RS_{}".format(index + 1)
+
+
+def test_beam_ref_edges(mock_beam):
+
+    ref_edges_expected = (
+        Line(
+            Point(x=-48.67193560518159, y=20.35704602012424, z=0.0005429194857271558),
+            Point(x=-38.61153715338159, y=24.06100004952424, z=0.5005429194857273),
+        ),
+        Line(
+            Point(x=-48.7156552451492, y=20.340949685829152, z=0.9994570805142728),
+            Point(x=-38.6552567933492, y=24.04490371522915, z=1.499457080514273),
+        ),
+        Line(
+            Point(x=-48.37015592401841, y=19.402530686075757, z=0.9994570805142728),
+            Point(x=-38.309757472218415, y=23.106484715475755, z=1.499457080514273),
+        ),
+        Line(
+            Point(x=-48.3264362840508, y=19.41862702037084, z=0.000542919485727154),
+            Point(x=-38.2660378322508, y=23.12258104977084, z=0.5005429194857273),
+        ),
+    )
+    assert len(mock_beam.ref_edges) == 4
+
+    for index in range(4):
+        ref_edge = mock_beam.ref_edges[index]
+        assert ref_edges_expected[index] == ref_edge
+        assert ref_edge.name == "RE_{}".format(index + 1)
