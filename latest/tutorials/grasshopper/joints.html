@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 
 
@@ -7,7 +6,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="../../_static/compas.ico" type="image/x-icon">
     <title>Joints &#8212; COMPAS Timber</title>
   
@@ -29,28 +28,29 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.5ea377869091fd0449014c60fc090103.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css?v=617b33e2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=4c969af8" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=87e54e7c" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/clipboard.min.js"></script>
-    <script src="../../_static/copybutton.js"></script>
-    <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/documentation_options.js?v=bb99e320"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/tabs.js?v=3ee01567"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js"></script>
-    <script src="../../_static/design-tabs.js"></script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/grasshopper/joints';</script>
     <script>
@@ -597,7 +597,8 @@ document.write(`
 <li><p><strong>T</strong> - one beam connects with one of its ends along the length of the other.</p></li>
 <li><p><strong>X</strong> - the beams cross each other.</p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/joint_topologies_diagramm.png"><img alt="../../_images/joint_topologies_diagramm.png" src="../../_images/joint_topologies_diagramm.png" style="width: 30%;" /></a>
+<a class="reference internal image-reference" href="../../_images/joint_topologies_diagramm.png"><img alt="../../_images/joint_topologies_diagramm.png" src="../../_images/joint_topologies_diagramm.png" style="width: 30%;" />
+</a>
 </section>
 <section id="joint-types">
 <h2>Joint Types</h2>
@@ -609,8 +610,10 @@ document.write(`
 </div>
 <p><strong>L-Butt</strong> joint</p>
 <p>The L-Butt extends one beam and shortens the other beam with a planar cut, to create a clean corner joint.</p>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_L-Butt.png"><img alt="../../_images/gh_Joint_L-Butt.png" src="../../_images/gh_Joint_L-Butt.png" style="width: 20%;" /></a>
-<a class="reference internal image-reference" href="../../_images/Joint_L-Butt.png"><img alt="../../_images/Joint_L-Butt.png" src="../../_images/Joint_L-Butt.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-Butt.png"><img alt="../../_images/gh_Joint_L-Butt.png" src="../../_images/gh_Joint_L-Butt.png" style="width: 20%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-Butt.png"><img alt="../../_images/Joint_L-Butt.png" src="../../_images/Joint_L-Butt.png" style="width: 100%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">L-Butt</span> <span class="pre">Options</span></code> component</p>
 <p>Inputs:</p>
 <ul class="simple">
@@ -624,8 +627,10 @@ document.write(`
 <p><strong>L-Half Lap</strong> joint</p>
 <p>The <em>L-Half Lap</em> topology is when two beams meet at their ends at an angle.
 An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.</p>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_L-HalfLap.png"><img alt="../../_images/gh_Joint_L-HalfLap.png" src="../../_images/gh_Joint_L-HalfLap.png" style="width: 20%;" /></a>
-<a class="reference internal image-reference" href="../../_images/Joint_L-HalfLap.png"><img alt="../../_images/Joint_L-HalfLap.png" src="../../_images/Joint_L-HalfLap.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-HalfLap.png"><img alt="../../_images/gh_Joint_L-HalfLap.png" src="../../_images/gh_Joint_L-HalfLap.png" style="width: 20%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-HalfLap.png"><img alt="../../_images/Joint_L-HalfLap.png" src="../../_images/Joint_L-HalfLap.png" style="width: 100%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">L-Half</span> <span class="pre">Lap</span> <span class="pre">Options</span></code> component</p>
 <p>Inputs:</p>
 <ul class="simple">
@@ -637,8 +642,10 @@ An L-Half Lap joint extends the two beams while removing the upper half of the o
 </div>
 <p><strong>L-Miter</strong> joint</p>
 <p>The L-Miter joint extends and connects the two beams with a planar cut at a bisector of the angle between them.</p>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_L-Miter.png"><img alt="../../_images/gh_Joint_L-Miter.png" src="../../_images/gh_Joint_L-Miter.png" style="width: 20%;" /></a>
-<a class="reference internal image-reference" href="../../_images/Joint_L-Miter.png"><img alt="../../_images/Joint_L-Miter.png" src="../../_images/Joint_L-Miter.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-Miter.png"><img alt="../../_images/gh_Joint_L-Miter.png" src="../../_images/gh_Joint_L-Miter.png" style="width: 20%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-Miter.png"><img alt="../../_images/Joint_L-Miter.png" src="../../_images/Joint_L-Miter.png" style="width: 100%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">L-Miter</span> <span class="pre">joint</span> <span class="pre">Options</span></code> component</p>
 <div class="line-block">
 <div class="line"><br /></div>
@@ -653,8 +660,10 @@ Unlike the L-Half Lap (presented above) joint, where the cut is made parallel in
 <li><p>a point at the middle of the outer vertical edge of the overlap;</p></li>
 <li><p>a point at the top third of the outer vertical edge of the overlap along the upper beam.</p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_L-FrenchRidge.png"><img alt="../../_images/gh_Joint_L-FrenchRidge.png" src="../../_images/gh_Joint_L-FrenchRidge.png" style="width: 20%;" /></a>
-<a class="reference internal image-reference" href="../../_images/Joint_L-FrenchRidge.png"><img alt="../../_images/Joint_L-FrenchRidge.png" src="../../_images/Joint_L-FrenchRidge.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_L-FrenchRidge.png"><img alt="../../_images/gh_Joint_L-FrenchRidge.png" src="../../_images/gh_Joint_L-FrenchRidge.png" style="width: 20%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/Joint_L-FrenchRidge.png"><img alt="../../_images/Joint_L-FrenchRidge.png" src="../../_images/Joint_L-FrenchRidge.png" style="width: 100%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">French</span> <span class="pre">Ridge</span> <span class="pre">Lap</span> <span class="pre">Options</span></code> component</p>
 <div class="line-block">
 <div class="line"><br /></div>
@@ -673,8 +682,10 @@ For a <em>T</em> topology, several types of joint can be applied. Two of these a
 </div>
 <p><strong>T-Butt</strong> joint</p>
 <p>The T-Butt joint shortens the <em>cross beam</em> with a planar cut, to match the side of the <em>main beam</em>. The <em>main beam</em> remains unchanged.</p>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_T-Butt.png"><img alt="../../_images/gh_Joint_T-Butt.png" src="../../_images/gh_Joint_T-Butt.png" style="width: 20%;" /></a>
-<a class="reference internal image-reference" href="../../_images/Joint_T-Butt.png"><img alt="../../_images/Joint_T-Butt.png" src="../../_images/Joint_T-Butt.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_T-Butt.png"><img alt="../../_images/gh_Joint_T-Butt.png" src="../../_images/gh_Joint_T-Butt.png" style="width: 20%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/Joint_T-Butt.png"><img alt="../../_images/Joint_T-Butt.png" src="../../_images/Joint_T-Butt.png" style="width: 100%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">T-Butt</span> <span class="pre">Options</span></code> component</p>
 <p>Inputs:</p>
 <ul class="simple">
@@ -686,8 +697,10 @@ For a <em>T</em> topology, several types of joint can be applied. Two of these a
 <p><strong>T-Half Lap</strong> joint</p>
 <p>A T-Half Lap joint crates an overlap between the <em>main beam</em> and the <em>cross beam</em>. The <em>cross beam</em> is extended to the opposite face of the <em>main beam</em> and cut flush with it to create a planar surface.
 It is similar to a L-Half Lap joint: the upper half of the overlap of the cross beam is removed from the main beam and the lower half of the overlap of the main beam is removed from the cross beam.</p>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_T-HalfLap.png"><img alt="../../_images/gh_Joint_T-HalfLap.png" src="../../_images/gh_Joint_T-HalfLap.png" style="width: 20%;" /></a>
-<a class="reference internal image-reference" href="../../_images/Joint_T-HalfLap.png"><img alt="../../_images/Joint_T-HalfLap.png" src="../../_images/Joint_T-HalfLap.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_T-HalfLap.png"><img alt="../../_images/gh_Joint_T-HalfLap.png" src="../../_images/gh_Joint_T-HalfLap.png" style="width: 20%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/Joint_T-HalfLap.png"><img alt="../../_images/Joint_T-HalfLap.png" src="../../_images/Joint_T-HalfLap.png" style="width: 100%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">T-Half</span> <span class="pre">Lap</span></code> component</p>
 <p>Inputs:</p>
 <ul class="simple">
@@ -707,8 +720,10 @@ For a <em>X</em> topology, several types of joint can be applied. One of these a
 </div>
 <p><strong>X-Half Lap</strong> joint</p>
 <p>The X-Half Lap joint removes the upper half of the overlap from one beam and the lower half from the other.</p>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_X-HalfLap.png"><img alt="../../_images/gh_Joint_X-HalfLap.png" src="../../_images/gh_Joint_X-HalfLap.png" style="width: 20%;" /></a>
-<a class="reference internal image-reference" href="../../_images/Joint_X-HalfLap.png"><img alt="../../_images/Joint_X-HalfLap.png" src="../../_images/Joint_X-HalfLap.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_X-HalfLap.png"><img alt="../../_images/gh_Joint_X-HalfLap.png" src="../../_images/gh_Joint_X-HalfLap.png" style="width: 20%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/Joint_X-HalfLap.png"><img alt="../../_images/Joint_X-HalfLap.png" src="../../_images/Joint_X-HalfLap.png" style="width: 100%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">X-HalfLap</span> <span class="pre">Options</span></code> component</p>
 <p>Inputs:</p>
 <ul class="simple">
@@ -722,7 +737,8 @@ For a <em>X</em> topology, several types of joint can be applied. One of these a
 <p><strong>Null Joint</strong> joint</p>
 <p>The NullJoint is to be used in situations where no joint is to be applied. This function can also help to create and control complex joints with more than 3 beams, or with specific categories
 (in combination with a <a class="reference internal" href="rules.html"><span class="doc">Joint Rules</span></a> component).</p>
-<a class="reference internal image-reference" href="../../_images/gh_Joint_NullJoints.png"><img alt="../../_images/gh_Joint_NullJoints.png" src="../../_images/gh_Joint_NullJoints.png" style="width: 20%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_Joint_NullJoints.png"><img alt="../../_images/gh_Joint_NullJoints.png" src="../../_images/gh_Joint_NullJoints.png" style="width: 20%;" />
+</a>
 <p><code class="code docutils literal notranslate"><span class="pre">Null</span> <span class="pre">Joint</span></code> component</p>
 <div class="line-block">
 <div class="line"><br /></div>
@@ -845,7 +861,7 @@ For a <em>X</em> topology, several types of joint can be applied. One of these a
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
     <br/>
   </p>
 </div>

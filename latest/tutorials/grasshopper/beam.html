@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 
 
@@ -7,7 +6,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="../../_static/compas.ico" type="image/x-icon">
     <title>Beam &#8212; COMPAS Timber</title>
   
@@ -29,28 +28,29 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.5ea377869091fd0449014c60fc090103.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css?v=617b33e2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=4c969af8" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=87e54e7c" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/clipboard.min.js"></script>
-    <script src="../../_static/copybutton.js"></script>
-    <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/documentation_options.js?v=bb99e320"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/tabs.js?v=3ee01567"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js"></script>
-    <script src="../../_static/design-tabs.js"></script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/grasshopper/beam';</script>
     <script>
@@ -588,7 +588,8 @@ document.write(`
 It has a local coordinate system, where the X-axis corresponds with the <em>centerline</em>,
 Y-axis with the <em>width</em> of the cross-section and Z-axis with the <em>height</em> of the cross-section.
 The <em>origin</em> is located at the start of the centerline.</p>
-<a class="reference internal image-reference" href="../../_images/beam_01png.png"><img alt="../../_images/beam_01png.png" src="../../_images/beam_01png.png" style="width: 40%;" /></a>
+<a class="reference internal image-reference" href="../../_images/beam_01png.png"><img alt="../../_images/beam_01png.png" src="../../_images/beam_01png.png" style="width: 40%;" />
+</a>
 <p>Beams are created with the component <code class="code docutils literal notranslate"><span class="pre">Beam</span></code> - to create a beam from a Grasshopper <cite>Line</cite> or <cite>LineCurve</cite>, or from a <cite>Guid</cite> of a <cite>Line</cite> object referenced from an active Rhino document.
 The latter is intended for a design workflow, where the input geometry (centerlines, etc.) is drawn or stored in a Rhino document instead of generated within the Grasshopper environment.</p>
 <p>Inputs:</p>
@@ -613,14 +614,17 @@ If <code class="code docutils literal notranslate"><span class="pre">None</span>
 <li><p><cite>Beam</cite> : the resulting beam(s).</p></li>
 <li><p><cite>Blank</cite>: the corresponding blank beam. The blank represents the raw material from which the beam is cut and without <a class="reference internal" href="features.html"><span class="doc">Features</span></a>. It is used to define the stock size for the beam.</p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/gh_beam.png"><img alt="../../_images/gh_beam.png" src="../../_images/gh_beam.png" style="width: 40%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_beam.png"><img alt="../../_images/gh_beam.png" src="../../_images/gh_beam.png" style="width: 40%;" />
+</a>
 <p>Once a <code class="code docutils literal notranslate"><span class="pre">Beam</span></code> is created, it can be used as an input for the <a class="reference internal" href="assembly.html"><span class="doc">Assembly</span></a> component or the following components:</p>
 <ul class="simple">
 <li><p><strong>DecomposeBeam</strong> : extracts the frame, centreline, box, width and height from a beam.</p></li>
 <li><p><strong>FindBeamByRhinoGeometry</strong> : finds the beam corresponding to a referenced Rhino curve or line.</p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/gh_beamDecompose.png"><img alt="../../_images/gh_beamDecompose.png" src="../../_images/gh_beamDecompose.png" style="width: 40%;" /></a>
-<a class="reference internal image-reference" href="../../_images/gh_beamGUID.png"><img alt="../../_images/gh_beamGUID.png" src="../../_images/gh_beamGUID.png" style="width: 40%;" /></a>
+<a class="reference internal image-reference" href="../../_images/gh_beamDecompose.png"><img alt="../../_images/gh_beamDecompose.png" src="../../_images/gh_beamDecompose.png" style="width: 40%;" />
+</a>
+<a class="reference internal image-reference" href="../../_images/gh_beamGUID.png"><img alt="../../_images/gh_beamGUID.png" src="../../_images/gh_beamGUID.png" style="width: 40%;" />
+</a>
 </section>
 
 
@@ -666,7 +670,7 @@ If <code class="code docutils literal notranslate"><span class="pre">None</span>
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
     <br/>
   </p>
 </div>
