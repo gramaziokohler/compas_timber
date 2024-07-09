@@ -4,7 +4,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
-from compas_timber.ghpython import TopologyRule
+from compas_timber.design import TopologyRule
 
 
 class DefaultJointRule(component):
