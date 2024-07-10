@@ -1,7 +1,10 @@
 from compas.geometry import Point
 from compas_model.models import Model
 
+from compas_timber.connections import Joint
 from compas_timber.elements import Beam
+
+# from compas_timber.elements import Plate
 from compas_timber.elements import Wall
 
 
@@ -31,41 +34,47 @@ class TimberModel(Model):
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
-        for element in model.elements():
-            if isinstance(element, Beam):
-                model._beams.append(element)
-            elif isinstance(element, Wall):
-                model._walls.append(element)
         for interaction in model.interactions():
-            model._joints.append(interaction)
             interaction.restore_beams_from_keys(model)
             interaction.add_features()
         return model
 
     def __init__(self, *args, **kwargs):
         super(TimberModel, self).__init__()
-        self._beams = []
-        self._walls = []
-        self._joints = []
         self._topologies = []  # added to avoid calculating multiple times
 
     def __str__(self):
-        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(self.guid, len(self.beams), len(self.joints))
+        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(
+            self.guid, len(self.elements()), len(self.joints)
+        )
 
     @property
     def beams(self):
-        # type: () -> list[Beam]
-        return self._beams
+        # type: () -> Generator[Beam]
+        for element in self.elements():
+            if isinstance(element, Beam):
+                yield element
+
+    # @property
+    # def plates(self):
+    # # type: () -> Generator[Plate]
+    # for element in self.elements():
+    #     if isinstance(element, Plate):
+    #         yield element
 
     @property
     def joints(self):
-        # type: () -> list[Joint]
-        return self._joints
+        # type: () -> Generator[Joint]
+        for interaction in self.interactions():
+            if isinstance(interaction, Joint):
+                yield interaction  # TODO: consider if there are other interaction types...
 
     @property
     def walls(self):
-        # type: () -> list[Wall]
-        return self._walls
+        # type: () -> Generator[Wall]
+        for element in self.elements():
+            if isinstance(element, Wall):
+                yield element
 
     @property
     def topologies(self):
@@ -77,10 +86,11 @@ class TimberModel(Model):
         total_vol = 0
         total_position = Point(0, 0, 0)
 
-        for beam in self._beams:
-            vol = beam.blank.volume
-            point = beam.blank_frame.point
-            point += beam.blank_frame.xaxis * (beam.blank_length / 2.0)
+        for element in self.elements():
+            vol = (
+                element.obb.volume
+            )  # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
+            point = element.obb.frame.point
             total_vol += vol
             total_position += point * vol
 
@@ -89,9 +99,9 @@ class TimberModel(Model):
     @property
     def volume(self):
         # type: () -> float
-        return sum([beam.blank.volume for beam in self._beams])
+        return sum([element.obb.volume for element in self.elements()])
 
-    def beam_by_guid(self, guid):
+    def element_by_guid(self, guid):
         # type: (str) -> Beam
         """Get a beam by its unique identifier.
 
@@ -102,8 +112,8 @@ class TimberModel(Model):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Beam`
-            The beam with the specified GUID.
+        :class:`~compas_model.elements.Element`
+            The element with the specified GUID.
 
         """
         return self._guid_element[guid]
@@ -119,7 +129,6 @@ class TimberModel(Model):
 
         """
         _ = self.add_element(beam)
-        self._beams.append(beam)
 
     def add_wall(self, wall):
         # type: (Wall) -> None
@@ -132,26 +141,24 @@ class TimberModel(Model):
 
         """
         _ = self.add_element(wall)
-        self._walls.append(wall)
 
-    def add_joint(self, joint, beams):
-        # type: (Joint, tuple[Beam]) -> None
+    def add_joint(self, joint, elements):
+        # type: (Joint, tuple[Element]) -> None
         """Add a joint object to the model.
 
         Parameters
         ----------
-        joint : :class:`~compas_timber.connections.joint`
-            An instance of a Joint class.
+        interaction : :class:`~compas_timber.connections.Interaction`
+            An instance of Interaction class.
 
-        beams : tuple(:class:`~compas_timber.elements.Beam`)
-            The two beams that should be joined.
+        elements : tuple(:class:`~compas_model.elements.Element`)
+            The two elements that should be joined.
 
         """
-        if len(beams) != 2:
-            raise ValueError("Expected 2 parts. Got instead: {}".format(len(beams)))
-        a, b = beams
-        _ = self.add_interaction(a, b, interaction=joint)
-        self._joints.append(joint)
+        if len(elements) != 2:
+            raise ValueError("Expected 2 parts. Got instead: {}".format(len(elements)))
+        a, b = elements
+        _ = super(TimberModel, self).add_interaction(a, b, interaction=joint)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -163,9 +170,8 @@ class TimberModel(Model):
             The joint to remove.
 
         """
-        a, b = joint.beams
-        self.remove_interaction(a, b)
-        self._joints.remove(joint)
+        a, b = joint.beams  # TODO: make this generic elements not beams
+        super(TimberModel, self).remove_interaction(a, b)  # TODO: Can two elements share more than one interaction?
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
