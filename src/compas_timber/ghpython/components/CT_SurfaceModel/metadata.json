@@ -46,6 +46,12 @@
                 "scriptParamAccess": 0
             },
             {
+                "name": "category",
+                "description": "(optional) SurfaceModel category.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
                 "name": "CreateGeometry",
                 "description": "generate joint and feature geometry",
                 "typeHintID": "bool",

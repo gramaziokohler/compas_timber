@@ -38,6 +38,12 @@
                 "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "joint_overrides",
+                "description": "(optional) From joint override component. overrides default joint types between beam categories.",
+                "typeHintID": "none",
+                "scriptParamAccess": 2
             }
         ],
         "outputParameters": [

@@ -114,6 +114,7 @@ class SurfaceModel(object):
         self.windows = []
         self.beam_dimensions = {}
         self.joint_overrides = joint_overrides
+        self.dist_tolerance = 0.01
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
@@ -180,10 +181,10 @@ class SurfaceModel(object):
             model.add_beam(beam)
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=0.1)
+        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance)
         for pair in found_pairs:
             beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=0.1)
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
                 for rule in self.rules:
@@ -275,6 +276,7 @@ class SurfaceModel(object):
     def parse_loops(self):
         for loop in self.surface.loops:
             polyline_points = []
+            length = 0.0
             for i, edge in enumerate(loop.edges):
                 if not edge.is_line:
                     raise ValueError("function only supprorts polyline edges")
@@ -285,17 +287,20 @@ class SurfaceModel(object):
                     polyline_points.append(edge.start_vertex.point)
                 else:
                     polyline_points.append(edge.end_vertex.point)
+                length += edge.length
             polyline_points.append(polyline_points[0])
+            offset_dist = length * 0.001
             if loop.is_outer:
-                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), 10, self.normal))
+                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), offset_dist, self.normal))
                 if offset_loop.length > Polyline(polyline_points).length:
                     polyline_points.reverse()
                 self.outer_polyline = Polyline(polyline_points)
             else:
-                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), 10, self.normal))
+                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), offset_dist, self.normal))
                 if offset_loop.length < Polyline(polyline_points).length:
                     polyline_points.reverse()
                 self.inner_polylines.append(Polyline(polyline_points))
+        self.dist_tolerance = self.outer_polyline.length * 0.00001
 
     def generate_perimeter_elements(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
@@ -359,20 +364,21 @@ class SurfaceModel(object):
                 element.offset(self.edge_stud_offset)
             offset_loop.append(element)
             # self.edges.append(Line(element.centerline[0], element.centerline[1]))
+
         for i, element in enumerate(offset_loop):
             if self.edge_stud_offset > 0:
                 if element.type != "plate":
                     element_before = offset_loop[i - 1]
                     element_after = offset_loop[(i + 1) % len(offset_loop)]
-                    start_point = intersection_line_line(element.centerline, element_before.centerline, 0.01)[0]
-                    end_point = intersection_line_line(element.centerline, element_after.centerline, 0.01)[0]
+                    start_point = intersection_line_line(element.centerline, element_before.centerline, self.dist_tolerance)[0]
+                    end_point = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)[0]
                     if start_point and end_point:
                         element.centerline = Line(start_point, end_point)
             else:
                 element_before = offset_loop[i - 1]
                 element_after = offset_loop[(i + 1) % len(offset_loop)]
-                start_point = intersection_line_line(element.centerline, element_before.centerline, 0.01)[0]
-                end_point = intersection_line_line(element.centerline, element_after.centerline, 0.01)[0]
+                start_point = intersection_line_line(element.centerline, element_before.centerline, self.dist_tolerance)[0]
+                end_point = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)[0]
                 if start_point and end_point:
                     element.centerline = Line(start_point, end_point)
         return offset_loop
