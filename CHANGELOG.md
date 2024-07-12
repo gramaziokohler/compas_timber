@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed error in BakeWithBoxMap component.
+* Fixed error with tolerances for `SurfaceModel`s modeled in meters.
 
 ### Removed
 

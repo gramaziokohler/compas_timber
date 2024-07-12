@@ -311,7 +311,6 @@ class SurfaceModel(object):
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
-
                     if self.lintel_posts:
                         element.type = "jack_stud"
                     else:
@@ -370,14 +369,20 @@ class SurfaceModel(object):
                 if element.type != "plate":
                     element_before = offset_loop[i - 1]
                     element_after = offset_loop[(i + 1) % len(offset_loop)]
-                    start_point = intersection_line_line(element.centerline, element_before.centerline, self.dist_tolerance)[0]
-                    end_point = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)[0]
+                    start_point = intersection_line_line(
+                        element.centerline, element_before.centerline, self.dist_tolerance
+                    )[0]
+                    end_point = intersection_line_line(
+                        element.centerline, element_after.centerline, self.dist_tolerance
+                    )[0]
                     if start_point and end_point:
                         element.centerline = Line(start_point, end_point)
             else:
                 element_before = offset_loop[i - 1]
                 element_after = offset_loop[(i + 1) % len(offset_loop)]
-                start_point = intersection_line_line(element.centerline, element_before.centerline, self.dist_tolerance)[0]
+                start_point = intersection_line_line(
+                    element.centerline, element_before.centerline, self.dist_tolerance
+                )[0]
                 end_point = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)[0]
                 if start_point and end_point:
                     element.centerline = Line(start_point, end_point)
