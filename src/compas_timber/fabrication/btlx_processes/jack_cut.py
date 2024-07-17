@@ -123,8 +123,8 @@ class JackRafterCut(BTLxProcess):
             raise ValueError("Plane does not intersect with beam.")
 
         start_x = distance_point_point(ref_edge.point, point_start_x)
-        angle = cls._calculate_angle(ref_side, plane)
-        inclination = cls._calculate_inclination(ref_side, plane)
+        angle = cls._calculate_angle(ref_side, plane, orientation)
+        inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
 
     def apply(self, beam, geometry):
@@ -148,18 +148,24 @@ class JackRafterCut(BTLxProcess):
             return OrientationType.START
 
     @staticmethod
-    def _calculate_angle(ref_side, plane):
+    def _calculate_angle(ref_side, plane, orientation):
         # vector rotation direction of the plane's normal in the vertical direction
         angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
         angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-        return 180 - abs(angle)  # get the other side of the angle
+        if orientation == OrientationType.START:
+            return 180 - abs(angle)  # get the other side of the angle
+        else:
+            return abs(angle)
 
     @staticmethod
-    def _calculate_inclination(ref_side, plane):
+    def _calculate_inclination(ref_side, plane, orientation):
         # vector rotation direction of the plane's normal in the horizontal direction
         inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
         inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
-        return 180 - abs(inclination)  # get the other side of the angle
+        if orientation == OrientationType.START:
+            return 180 - abs(inclination)  # get the other side of the angle
+        else:
+            return abs(inclination)
 
     def plane_from_params(self, beam):
         # type: (Beam) -> Plane
@@ -182,6 +188,8 @@ class JackRafterCut(BTLxProcess):
         rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
 
         cutting_plane.transform(rot_a * rot_b)
+        # for simplicity, we always start with normal pointing towards xaxis.
+        # if start is cut, we need to flip the normal
         if self.orientation == OrientationType.END:
             plane_normal = cutting_plane.xaxis
         else:
