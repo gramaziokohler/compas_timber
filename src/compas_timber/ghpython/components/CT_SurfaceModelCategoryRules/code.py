@@ -2,6 +2,7 @@
 
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from scriptcontext import sticky
 
 from Rhino.Geometry import Vector3d as RhinoVector
@@ -28,26 +29,28 @@ class SurfaceAssemblyDefaultsComponent(component):
         if not options:
             options = {}
 
-        category_dict = {
+        if not category:
+            category = "default"
+
+        guid_dict = {
             "stud_spacing": stud_spacing,
             "beam_width": beam_width,
             "frame_depth": frame_depth,
             "z_axis": z_axis,
             "options": options,
-            "component_guid": self.ComponentGuid
+            "category": category
         }
 
-        if not category:
-            category = "default"
+        for key, value in sticky["surface_assembly_defaults"].items():
+            if key != str(self.InstanceGuid) and value.get("category", None) == category:
+                self.AddRuntimeMessage(Error, "category attributes already defined")
 
-        sticky_dict = sticky.get("surface_assembly_defaults", None)
-        if sticky_dict:
-            if sticky_dict.get(category, None) and sticky_dict[category]["component_guid"] == self.ComponentGuid:
-                raise ValueError("Category already defined in another component. Please use a different category name.")
-            else:
-                sticky_dict[category] = category_dict
+        sticky["surface_assembly_defaults"][str(self.InstanceGuid)] = guid_dict
 
-        else:
-            sticky.Add("surface_assembly_defaults", sticky_dict)
+    def __enter__(self):
+        if not sticky.get("surface_assembly_defaults", None):
+            sticky.Add("surface_assembly_defaults", {})
+        sticky["surface_assembly_defaults"][str(self.InstanceGuid)] = {}
 
-        return
+    def __exit__(self):
+        sticky["surface_assembly_defaults"].pop(str(self.InstanceGuid))

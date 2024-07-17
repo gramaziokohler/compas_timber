@@ -21,13 +21,15 @@ class SurfaceModelComponent(component):
             raise TypeError("Expected a compas.geometry.Surface, got: {}".format(type(surface)))
         if not category:
             category = "default"
-        vals = sticky.get("surface_assembly_defaults", None)
-        if vals:
-            vals = vals.get(category, None)
+        defaults = sticky.get("surface_assembly_defaults", None)
+        guid = None
+        if defaults:
+            for key, value in defaults.items():
+                if value.get("category", None) == category:
+                    guid = key
+                    break
 
-        guid = vals["component_guid"]
-
-
+        vals = defaults.get(guid, None)
         if not stud_spacing:
             if vals:
                 stud_spacing = vals.get("stud_spacing", None)
@@ -56,8 +58,7 @@ class SurfaceModelComponent(component):
         if not z_axis:
             z_axis = None
 
-        category_options = vals.get("options", None)
-
+        category_options = vals.get("options", None) if vals else None
 
         if category_options:
             if not options:
