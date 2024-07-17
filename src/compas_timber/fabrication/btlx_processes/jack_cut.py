@@ -1,17 +1,18 @@
-from __future__ import annotations
-
 import math
 
 import compas
 from compas.geometry import Plane
-from compas.geometry import Vector
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
 from compas.geometry import intersection_line_plane
 from compas.geometry import distance_point_point
-from compas.geometry import cross_vectors
 from compas.geometry import angle_vectors_signed
+from compas.geometry import is_point_behind_plane
+from compas.geometry import Vector
+from compas.geometry import Rotation
+
 from compas.tolerance import TOL
 
 if not compas.IPY:
@@ -115,24 +116,20 @@ class JackRafterCut(BTLxProcess):
         start_depth = 0.0
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
+        orientation = cls._calculate_orientation(ref_side, plane)
 
         point_start_x = intersection_line_plane(ref_edge, plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
 
         start_x = distance_point_point(ref_edge.point, point_start_x)
-        orientation = OrientationType.START if start_x < beam.length * 0.5 else OrientationType.END
-        angle_direction = cross_vectors(ref_side.normal, plane.normal)
-        angle = angle_vectors_signed(ref_side.xaxis, angle_direction, ref_side.zaxis) * 180 / math.pi
-        angle = 90 - (abs(angle) - 90)  # TODO: why?
-
-        inclination = angle_vectors_signed(ref_side.zaxis, plane.normal, angle_direction) * 180 / math.pi
-        inclination = 90 - (abs(inclination) - 90)  # TODO: why?
+        angle = cls._calculate_angle(ref_side, plane)
+        inclination = cls._calculate_inclination(ref_side, plane)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
 
     def apply(self, beam, geometry):
         # type: (Beam, Brep) -> Brep
-        cutting_plane = self._plane_from_params(beam)
+        cutting_plane = self.plane_from_params(beam)
         try:
             return geometry.trimmed(cutting_plane, TOL.absolute)
         except BrepTrimmingError:
@@ -141,7 +138,52 @@ class JackRafterCut(BTLxProcess):
                 "The cutting plane does not intersect with beam geometry.",
             )
 
-    def _plane_from_params(self, beam):
+    @staticmethod
+    def _calculate_orientation(ref_side, cutting_plane):
+        # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
+        # essentially if the start is being cut or the end
+        if is_point_behind_plane(ref_side.point, cutting_plane):
+            return OrientationType.END
+        else:
+            return OrientationType.START
+
+    @staticmethod
+    def _calculate_angle(ref_side, plane):
+        # vector rotation direction of the plane's normal in the vertical direction
+        angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
+        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
+        return 180 - abs(angle)  # get the other side of the angle
+
+    @staticmethod
+    def _calculate_inclination(ref_side, plane):
+        # vector rotation direction of the plane's normal in the horizontal direction
+        inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
+        inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
+        return 180 - abs(inclination)  # get the other side of the angle
+
+    def plane_from_params(self, beam):
         # type: (Beam) -> Plane
         # calculates the cutting plane from the machining parameters and the beam
-        ref_side = beam.ref_sides[self.ref_side_index]
+        # plane origin is ref
+        assert self.angle is not None
+        assert self.inclination is not None
+
+        # start with a plane aligned with the ref side but shifted to the start_x of the cut
+        ref_side = beam.side_as_surface(self.ref_side_index)
+        p_origin = ref_side.point_at(self.start_x, 0.0)
+        cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+
+        # normal pointing towards xaxis so just need the delta
+        horizontal_angle = math.radians(self.angle - 90)
+        rot_a = Rotation.from_axis_and_angle(cutting_plane.zaxis, horizontal_angle, point=p_origin)
+
+        # normal pointing towards xaxis so just need the delta
+        vertical_angle = math.radians(self.inclination - 90)
+        rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
+
+        cutting_plane.transform(rot_a * rot_b)
+        if self.orientation == OrientationType.END:
+            plane_normal = cutting_plane.xaxis
+        else:
+            plane_normal = -cutting_plane.xaxis
+        return Plane(cutting_plane.point, plane_normal)

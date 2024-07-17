@@ -2,17 +2,26 @@ import pytest
 
 from compas.geometry import Line
 from compas.geometry import Point
+from compas.geometry import Plane
 from compas.geometry import Frame
 from compas.geometry import Vector
+from compas.geometry import is_point_on_plane
+from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import BTLxPart
+from compas_timber.fabrication import JackRafterCut
 
 
 @pytest.fixture
 def mock_beam():
     centerline = Line(Point(x=-48.5210457646, y=19.8797883531, z=0.5), Point(x=-38.4606473128, y=23.5837423825, z=1.0))
     return Beam.from_centerline(centerline, width=1.0, height=1.0)
+
+
+@pytest.fixture
+def tol():
+    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
 
 def test_beam_ref_faces(mock_beam):
@@ -93,3 +102,26 @@ def test_beam_ref_edges(mock_beam):
         ref_edge = mock_beam.ref_edges[index]
         assert ref_edges_expected[index] == ref_edge
         assert ref_edge.name == "RE_{}".format(index + 1)
+
+
+def test_jack_rafter_cut_from_plane(tol):
+    centerline = Line(Point(x=270.0, y=270.0, z=590.0), Point(x=1220.0, y=680.0, z=590.0))
+    cross_section = (60, 120)
+    beam = Beam.from_centerline(centerline, cross_section[0], cross_section[1])
+    plane = Plane(
+        point=Point(x=460.346635340, y=445.167151490, z=473.942755901),
+        normal=Vector(x=-0.996194698092, y=-0.0, z=-0.0871557427477),
+    )
+    instance = JackRafterCut.from_plane_and_beam(plane, beam)
+
+    assert tol.is_close(instance.start_x, 214.922)
+    assert tol.is_close(instance.start_y, 0.0)
+    assert tol.is_close(instance.angle, 113.344)
+    assert tol.is_close(instance.inclination, 95.443)
+    assert tol.is_close(instance.ref_side_index, 0)
+
+    cut_plane = instance.plane_from_params(beam)
+
+    # should be the same plane, but point might be different
+    assert cut_plane.is_parallel(plane, tol=tol.absolute)
+    assert is_point_on_plane(cut_plane.point, plane, tol=tol.absolute)
