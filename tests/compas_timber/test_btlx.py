@@ -10,7 +10,7 @@ from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import BTLxPart
-from compas_timber.fabrication import JackRafterCut
+from compas_timber._fabrication import JackRafterCut
 
 
 @pytest.fixture

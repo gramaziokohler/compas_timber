@@ -12,8 +12,7 @@ from compas.geometry import is_point_behind_plane
 from compas.geometry import Vector
 from compas.geometry import Rotation
 
-from compas.tolerance import TOL
-
+from compas_timber.elements import FeatureApplicationError
 
 if not compas.IPY:
     from typing import TYPE_CHECKING
@@ -206,10 +205,11 @@ class JackRafterCut(BTLxProcess):
         # type: (Brep, Beam) -> Brep
         cutting_plane = self.plane_from_params_and_beam(beam)
         try:
-            return geometry.trimmed(cutting_plane, TOL.absolute)
+            return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:
-            raise Exception(
-                # TODO: use FeatureApplicationError
+            raise FeatureApplicationError(
+                cutting_plane,
+                geometry,
                 "The cutting plane does not intersect with beam geometry.",
             )
 
