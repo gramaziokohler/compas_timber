@@ -68,7 +68,6 @@ def test_beam_ref_faces_attribute(mock_beam):
 
 
 def test_beam_ref_edges(mock_beam):
-
     ref_edges_expected = (
         Line(
             Point(x=-48.67193560518159, y=20.35704602012424, z=0.0005429194857271558),
