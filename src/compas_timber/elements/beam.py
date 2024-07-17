@@ -1,16 +1,13 @@
 import math
 
-import compas
-import compas.geometry
-import compas.datastructures
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import PlanarSurface
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
@@ -21,7 +18,6 @@ from compas_model.elements import reset_computed
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 
-from .features import Feature
 from .features import FeatureApplicationError
 
 

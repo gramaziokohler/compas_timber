@@ -1,24 +1,17 @@
 import math
 
-import compas
-from compas.geometry import Plane
+from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import BrepTrimmingError
-from compas.geometry import intersection_line_plane
-from compas.geometry import distance_point_point
-from compas.geometry import angle_vectors_signed
-from compas.geometry import is_point_behind_plane
-from compas.geometry import Vector
+from compas.geometry import Plane
 from compas.geometry import Rotation
+from compas.geometry import Vector
+from compas.geometry import angle_vectors_signed
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_plane
+from compas.geometry import is_point_behind_plane
 
 from compas_timber.elements import FeatureApplicationError
-
-if not compas.IPY:
-    from typing import TYPE_CHECKING
-
-    if TYPE_CHECKING:
-        from compas_timber.elements import Beam
 
 
 class BTLxProcess(object):
