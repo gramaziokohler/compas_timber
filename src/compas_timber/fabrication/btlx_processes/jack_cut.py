@@ -4,7 +4,6 @@ import compas
 from compas.geometry import Plane
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
 from compas.geometry import intersection_line_plane
 from compas.geometry import distance_point_point
@@ -15,6 +14,7 @@ from compas.geometry import Rotation
 
 from compas.tolerance import TOL
 
+
 if not compas.IPY:
     from typing import TYPE_CHECKING
 
@@ -23,16 +23,53 @@ if not compas.IPY:
 
 
 class BTLxProcess(object):
+    """Base class for BTLx processes.
+
+    Attributes
+    ----------
+    ref_side_index : int
+        The reference side, zero-based, index of the beam to be cut. 0-5 correspond to RS1-RS6.
+    """
+
     def __init__(self, ref_side_index):
         self.ref_side_index = ref_side_index
 
 
 class OrientationType(object):
+    """Enum for the orientation of the cut.
+
+    Attributes
+    ----------
+    START : int
+        The start of the beam is cut away.
+    END : int
+        The end of the beam is cut away.
+    """
+
     START = 0
     END = 1
 
 
 class JackRafterCut(BTLxProcess):
+    """Represents a Jack Rafter Cut feature to be made on a beam.
+
+    Parameters
+    ----------
+    orientation : int
+        The orientation of the cut. Must be either OrientationType.START or OrientationType.END.
+    start_x : float
+        The start x-coordinate of the cut in parametric space of the reference side. -100000.0 < start_x < 100000.0.
+    start_y : float
+        The start y-coordinate of the cut in parametric space of the reference side. 0.0 < start_y < 50000.0.
+    start_depth : float
+        The start depth of the cut. 0.0 < start_depth < 50000.0.
+    angle : float
+        The horizontal angle of the cut. 0.1 < angle < 179.9.
+    inclination : float
+        The vertical angle of the cut. 0.1 < inclination < 179.9.
+
+    """
+
     def __init__(self, orientation, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
         self._orientation = None
@@ -65,8 +102,8 @@ class JackRafterCut(BTLxProcess):
 
     @start_x.setter
     def start_x(self, start_x):
-        if start_x > 100000.0:
-            raise ValueError("Start X must be less than 50000.0.")
+        if start_x > 100000.0 or start_x < -100000.0:
+            raise ValueError("Start X must be between -100000.0 and 100000.")
         self._start_x = start_x
 
     @property
@@ -111,7 +148,25 @@ class JackRafterCut(BTLxProcess):
 
     @classmethod
     def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
-        # type: (Plane, Beam, int) -> JackRafterCut
+        """Create a JackRafterCut instance from a cutting plane and the beam it should cut.
+
+        Parameters
+        ----------
+        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+            The cutting plane.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        ref_side_index : int, optional
+            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCut`
+
+        """
+        # type: (Plane | Frame, Beam, int) -> JackRafterCut
+        if isinstance(plane, Frame):
+            plane = Plane.from_frame(plane)
         start_y = 0.0
         start_depth = 0.0
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
@@ -127,9 +182,29 @@ class JackRafterCut(BTLxProcess):
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
 
-    def apply(self, beam, geometry):
-        # type: (Beam, Brep) -> Brep
-        cutting_plane = self.plane_from_params(beam)
+    def apply(self, geometry, beam):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to be cut.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.elements.FeatureApplicationError`
+            If the cutting plane does not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Beam) -> Brep
+        cutting_plane = self.plane_from_params_and_beam(beam)
         try:
             return geometry.trimmed(cutting_plane, TOL.absolute)
         except BrepTrimmingError:
@@ -167,10 +242,21 @@ class JackRafterCut(BTLxProcess):
         else:
             return abs(inclination)
 
-    def plane_from_params(self, beam):
+    def plane_from_params_and_beam(self, beam):
+        """Calculates the cutting plane from the machining parameters in this instance and the given beam
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`compas.geometry.Plane`
+            The cutting plane.
+
+        """
         # type: (Beam) -> Plane
-        # calculates the cutting plane from the machining parameters and the beam
-        # plane origin is ref
         assert self.angle is not None
         assert self.inclination is not None
 

@@ -120,7 +120,7 @@ def test_jack_rafter_cut_from_plane_start(tol):
     assert tol.is_close(instance.inclination, 95.443)
     assert tol.is_close(instance.ref_side_index, 0)
 
-    cut_plane = instance.plane_from_params(beam)
+    cut_plane = instance.plane_from_params_and_beam(beam)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
@@ -143,7 +143,30 @@ def test_jack_rafter_cut_from_plane_end(tol):
     assert tol.is_close(instance.inclination, 95.443)
     assert tol.is_close(instance.ref_side_index, 0)
 
-    cut_plane = instance.plane_from_params(beam)
+    cut_plane = instance.plane_from_params_and_beam(beam)
+
+    # should be the same plane, but point might be different
+    assert cut_plane.is_parallel(plane, tol=tol.absolute)
+    assert is_point_on_plane(cut_plane.point, plane, tol=tol.absolute)
+
+
+def test_jack_rafter_cut_from_frame(tol):
+    centerline = Line(Point(x=270.0, y=270.0, z=590.0), Point(x=1220.0, y=680.0, z=590.0))
+    cross_section = (60, 120)
+    beam = Beam.from_centerline(centerline, cross_section[0], cross_section[1])
+
+    # cut the start of the beam
+    normal = Vector(x=-0.996194698092, y=-0.0, z=-0.0871557427477)
+    plane = Plane(Point(x=460.346635340, y=445.167151490, z=473.942755901), normal)
+    instance = JackRafterCut.from_plane_and_beam(Frame.from_plane(plane), beam)
+
+    assert tol.is_close(instance.start_x, 214.922)
+    assert tol.is_close(instance.start_y, 0.0)
+    assert tol.is_close(instance.angle, 113.344)
+    assert tol.is_close(instance.inclination, 95.443)
+    assert tol.is_close(instance.ref_side_index, 0)
+
+    cut_plane = instance.plane_from_params_and_beam(beam)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
