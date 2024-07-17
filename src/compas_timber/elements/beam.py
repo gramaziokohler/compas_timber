@@ -287,7 +287,7 @@ class Beam(Element):
         if include_features:
             for feature in self.features:
                 try:
-                    blank_geo = feature.apply(blank_geo)
+                    blank_geo = feature.apply(blank_geo, beam=self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return blank_geo  # type: ignore

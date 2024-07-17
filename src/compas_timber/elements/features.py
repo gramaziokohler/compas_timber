@@ -71,7 +71,7 @@ class CutFeature(Feature):
         data_dict["cutting_plane"] = self.cutting_plane
         return data_dict
 
-    def apply(self, beam_geometry):
+    def apply(self, beam_geometry, *args, **kwargs):
         """Apply the feature to the beam geometry.
 
         Raises
@@ -123,7 +123,7 @@ class DrillFeature(Feature):
         data_dict["length"] = self.length
         return data_dict
 
-    def apply(self, beam_geometry):
+    def apply(self, beam_geometry, *args, **kwargs):
         """Apply the feature to the beam geometry.
 
         Raises
@@ -172,7 +172,7 @@ class MillVolume(Feature):
         super(MillVolume, self).__init__(**kwargs)
         self.mesh_volume = volume
 
-    def apply(self, beam_geometry):
+    def apply(self, beam_geometry, *args, **kwargs):
         """Apply the feature to the beam geometry.
 
         Raises
@@ -221,7 +221,7 @@ class BrepSubtraction(Feature):
         data_dict["volume"] = self.volume
         return data_dict
 
-    def apply(self, beam_geometry):
+    def apply(self, beam_geometry, *args, **kwargs):
         """Apply the feature to the beam geometry.
 
         Raises
