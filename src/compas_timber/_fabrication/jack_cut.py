@@ -37,6 +37,17 @@ class JackRafterCut(BTLxProcess):
 
     """
 
+    @property
+    def __data__(self):
+        data = super(JackRafterCut, self).__data__
+        data["orientation"] = self.orientation
+        data["start_x"] = self.start_x
+        data["start_y"] = self.start_y
+        data["start_depth"] = self.start_depth
+        data["angle"] = self.angle
+        data["inclination"] = self.inclination
+        return data
+
     def __init__(self, orientation, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
         self._orientation = None
@@ -52,6 +63,10 @@ class JackRafterCut(BTLxProcess):
         self.start_depth = start_depth
         self.angle = angle
         self.inclination = inclination
+
+    ########################################################################
+    # Properties
+    ########################################################################
 
     @property
     def orientation(self):
@@ -113,6 +128,10 @@ class JackRafterCut(BTLxProcess):
             raise ValueError("Inclination must be between 0.1 and 179.9.")
         self._inclination = inclination
 
+    ########################################################################
+    # Alternative constructors
+    ########################################################################
+
     @classmethod
     def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
         """Create a JackRafterCut instance from a cutting plane and the beam it should cut.
@@ -149,6 +168,39 @@ class JackRafterCut(BTLxProcess):
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
 
+    @staticmethod
+    def _calculate_orientation(ref_side, cutting_plane):
+        # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
+        # essentially if the start is being cut or the end
+        if is_point_behind_plane(ref_side.point, cutting_plane):
+            return OrientationType.END
+        else:
+            return OrientationType.START
+
+    @staticmethod
+    def _calculate_angle(ref_side, plane, orientation):
+        # vector rotation direction of the plane's normal in the vertical direction
+        angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
+        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
+        if orientation == OrientationType.START:
+            return 180 - abs(angle)  # get the other side of the angle
+        else:
+            return abs(angle)
+
+    @staticmethod
+    def _calculate_inclination(ref_side, plane, orientation):
+        # vector rotation direction of the plane's normal in the horizontal direction
+        inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
+        inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
+        if orientation == OrientationType.START:
+            return 180 - abs(inclination)  # get the other side of the angle
+        else:
+            return abs(inclination)
+
+    ########################################################################
+    # Methods
+    ########################################################################
+
     def apply(self, geometry, beam):
         """Apply the feature to the beam geometry.
 
@@ -180,35 +232,6 @@ class JackRafterCut(BTLxProcess):
                 geometry,
                 "The cutting plane does not intersect with beam geometry.",
             )
-
-    @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
-        # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
-        # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
-            return OrientationType.END
-        else:
-            return OrientationType.START
-
-    @staticmethod
-    def _calculate_angle(ref_side, plane, orientation):
-        # vector rotation direction of the plane's normal in the vertical direction
-        angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
-        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-        if orientation == OrientationType.START:
-            return 180 - abs(angle)  # get the other side of the angle
-        else:
-            return abs(angle)
-
-    @staticmethod
-    def _calculate_inclination(ref_side, plane, orientation):
-        # vector rotation direction of the plane's normal in the horizontal direction
-        inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
-        inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
-        if orientation == OrientationType.START:
-            return 180 - abs(inclination)  # get the other side of the angle
-        else:
-            return abs(inclination)
 
     def plane_from_params_and_beam(self, beam):
         """Calculates the cutting plane from the machining parameters in this instance and the given beam

@@ -1,5 +1,7 @@
 import pytest
 
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Plane
@@ -11,6 +13,7 @@ from compas.tolerance import Tolerance
 from compas_timber.elements import Beam
 from compas_timber.fabrication import BTLxPart
 from compas_timber._fabrication import JackRafterCut
+from compas_timber._fabrication import OrientationType
 
 
 @pytest.fixture
@@ -171,3 +174,16 @@ def test_jack_rafter_cut_from_frame(tol):
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
     assert is_point_on_plane(cut_plane.point, plane, tol=tol.absolute)
+
+
+def test_jack_rafter_cut_data(tol):
+    instance = JackRafterCut(OrientationType.START, 14.23, 0.22, 42, 123.555, 95.2, ref_side_index=3)
+
+    copied_instance = json_loads(json_dumps(instance))
+
+    assert copied_instance.orientation == instance.orientation
+    assert copied_instance.start_x == instance.start_x
+    assert copied_instance.start_y == instance.start_y
+    assert copied_instance.angle == instance.angle
+    assert copied_instance.inclination == instance.inclination
+    assert copied_instance.ref_side_index == instance.ref_side_index
