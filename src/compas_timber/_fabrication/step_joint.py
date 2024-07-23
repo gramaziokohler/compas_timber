@@ -241,7 +241,7 @@ class StepJointNotch(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_surface_and_beam(cls, surface, beam, notch_limited=False, step_depth=0.0, heel_depth=0.0, tapered_heel=False, mortise_height=0.0, ref_side_index=0):
+    def from_surface_and_beam(cls, surface, beam, notch_limited=False, step_depth=0.0, heel_depth=0.0, tapered_heel=False, ref_side_index=0):
         """Create a StepJointNotch instance from a cutting surface and the beam it should cut.
 
         Parameters
@@ -291,12 +291,26 @@ class StepJointNotch(BTLxProcess):
         heel_depth = beam.height/2 if heel_depth > beam.height/2 else heel_depth # TODO: should it be constrained?
         # define step_shape
         step_shape = cls._define_step_shape(step_depth, heel_depth, tapered_heel)
-        # define mortise
-        mortise, mortise_width, mortise_height = cls._calculate_mortise(beam, mortise_height)
         # define strut_height
         strut_height = surface.ysize #TODO: Wrong! should have been defined by the main beam height instead
 
-        return cls(orientation, start_x, start_y, strut_inclination, notch_limited, notch_width, step_depth, heel_depth, step_shape, mortise, mortise_width, mortise_width, strut_height)
+        return cls(orientation, start_x, start_y, strut_inclination, notch_limited, notch_width, step_depth, heel_depth, step_shape, strut_height)
+
+    def add_mortise(self, mortise_width, mortise_height):
+        """Add a mortise to the existing StepJointNotch instance.
+
+        Parameters
+        ----------
+        mortise_width : float
+            The width of the mortise. mortise_width < 1000.0.
+        mortise_height : float
+            The height of the mortise. mortise_height < 1000.0.
+        """
+        self.mortise = "yes"
+        self.mortise_width = mortise_width
+        self.mortise_height = mortise_height
+        # self.mortise_width = beam.width / 4  # TODO: should this be related to a beam? 1/3 or 1/4 of beam.width?
+        # self.mortise_height = beam.height if mortise_height > beam.height else mortise_height #TODO: should this be constrained?
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):
@@ -332,19 +346,6 @@ class StepJointNotch(BTLxProcess):
         else:
             raise ValueError("at least one of step_depth or heel_depth must be greater than 0.0.")
         return step_shape
-
-    @staticmethod
-    def _calculate_mortise(beam, mortise_height):
-        # mortise based on mortise_height variable and beam dimensions
-        if mortise_height > 0.0:
-            mortise = "yes"
-            mortise_width = beam.width/4 #TODO: should this be predefined? Also 1/3 or 1/4?
-            mortise_height = beam.height if mortise_height > beam.height else mortise_height
-        else:
-            mortise = "no"
-            mortise_width = 0.0
-        return mortise, mortise_width, mortise_height
-
 
     ########################################################################
     # Methods
