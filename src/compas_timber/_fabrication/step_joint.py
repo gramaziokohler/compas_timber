@@ -241,7 +241,7 @@ class StepJointNotch(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_surface_and_beam(cls, surface, beam, notch_limited=False, step_depth=0.0, heel_depth=0.0, tapered_heel=False, ref_side_index=0):
+    def from_surface_and_beam(cls, surface, beam, notch_limited=False, step_depth=20.0, heel_depth=0.0, strut_height=20.0, tapered_heel=False, ref_side_index=0):
         """Create a StepJointNotch instance from a cutting surface and the beam it should cut.
 
         Parameters
@@ -258,43 +258,47 @@ class StepJointNotch(BTLxProcess):
         :class:`~compas_timber.fabrication.StepJointNotch`
 
         """
-        # type: (PlanarSurface | Surface, Beam, bool, float, float, bool, float, int) -> StepJointNotch
-
+        # type: (PlanarSurface|Surface, Beam, bool, float, float, float, bool, int) -> StepJointNotch
+        #TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
+        #TODO: I am using a PlanarSurface instead of a Plane because otherwise there is no way to define the start_y of the Notch
+        #TODO: The alternative in order to use a Plane instead would be to have start_y and notch_width as parameters of the class
         # define ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-        plane = Plane.from_frame(surface.frame_at())
+        plane = surface.to_plane()
+        intersection_line = Line(*ref_side.intersections_with_surface(surface)) #TODO NotImplementedError: Plane|Surface // COMPAS core issue
 
         # calculate orientation
         orientation = cls._calculate_orientation(ref_side, plane)
+
         # calculate start_x
         point_start_x = intersection_line_plane(ref_edge, plane)
         if point_start_x is None:
-            raise ValueError("Plane does not intersect with beam.")
-        start_x = distance_point_point(ref_side.point, point_start_x)
-        # calculate start_y
-        point_start_y = ref_side.intersections_with_surface(surface)[0]
-        if point_start_y is None:
             raise ValueError("Surface does not intersect with beam.")
-        start_y = distance_point_point(point_start_x, point_start_y)
+        start_x = distance_point_point(ref_side.point, point_start_x)
+
+        # calculate start_y
+        start_y = cls._calculate_start_y(orientation, intersection_line, point_start_x, ref_side)
+
         # calculate strut_inclination
         strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
+
         # calculate notch_width
         if notch_limited == True:
-            notch_width = surface.ysize
+            notch_width = intersection_line.length
             notch_limited = "yes"
         else:
             notch_width = beam.width
             notch_limited = "no"
-        # restrain step_depth & heel_depth #TODO: should those be defined automatically based on the angle?
-        step_depth = beam.height/2 if step_depth > beam.height/2 else step_depth # TODO: should it be constrained?
-        heel_depth = beam.height/2 if heel_depth > beam.height/2 else heel_depth # TODO: should it be constrained?
+
+        # restrain step_depth & heel_depth to beam's height # TODO: should it be restrained?
+        step_depth = beam.height if step_depth > beam.height else step_depth
+        heel_depth = beam.height if heel_depth > beam.height else heel_depth
+
         # define step_shape
         step_shape = cls._define_step_shape(step_depth, heel_depth, tapered_heel)
-        # define strut_height
-        strut_height = surface.ysize #TODO: Wrong! should have been defined by the main beam height instead
 
-        return cls(orientation, start_x, start_y, strut_inclination, notch_limited, notch_width, step_depth, heel_depth, step_shape, strut_height)
+        return cls(orientation, start_x, start_y, strut_inclination, notch_limited, notch_width, step_depth, heel_depth, step_shape, strut_height, ref_side_index=ref_side_index)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):
@@ -306,18 +310,31 @@ class StepJointNotch(BTLxProcess):
             return OrientationType.START
 
     @staticmethod
+    def _calculate_start_y(orientation, intersection_line, point_start_x, ref_side):
+        # checks if the start of the intersection line is out of the beam's ref_side
+        # if out then start_y = 0.0, otherwise it calculates the displacement
+        if orientation == OrientationType.START:
+            point_start_y = intersection_line.start
+        else:
+            point_start_y = intersection_line.end
+        startxy_vect = Vector.from_start_end(point_start_x, point_start_y)
+        dot_product = startxy_vect.dot(ref_side.yaxis)
+        start_y = abs(dot_product) if dot_product > 0 else 0.0
+        return start_y
+
+    @staticmethod
     def _calculate_strut_inclination(ref_side, plane, orientation):
         # vector rotation direction of the plane's normal in the vertical direction
         strut_inclination_vector = Vector.cross(ref_side.zaxis, plane.normal)
         strut_inclination = angle_vectors_signed(ref_side.zaxis, plane.normal, strut_inclination_vector, deg=True)
         if orientation == OrientationType.START:
-            return 180 - abs(strut_inclination)  # get the other side of the angle
-        else:
             return abs(strut_inclination)
+        else:
+            return 180 - abs(strut_inclination) # get the other side of the angle
 
     @staticmethod
     def _define_step_shape(step_depth, heel_depth, tapered_heel):
-        # step_shape based on step_depth and heel_depth variables
+        # step_shape based on step_depth and heel_depth and tapered_heel variables
         if step_depth > 0.0 and heel_depth == 0.0:
             step_shape = "step"
         elif step_depth == 0.0 and heel_depth > 0.0:
