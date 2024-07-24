@@ -12,11 +12,13 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas.tolerance import TOL
 
 
 from compas_timber.elements import FeatureApplicationError
 
 from .btlx_process import BTLxProcess
+from .btlx_process import BTLxProcessParams
 from .btlx_process import OrientationType
 
 
@@ -53,6 +55,8 @@ class StepJointNotch(BTLxProcess):
         The height of the mortise. mortise_height < 1000.0.
 
     """
+
+    PROCESS_NAME = "StepJointNotch"  # type: ignore
 
     @property
     def __data__(self):
@@ -105,6 +109,10 @@ class StepJointNotch(BTLxProcess):
     ########################################################################
     # Properties
     ########################################################################
+
+    @property
+    def params_dict(self):
+        return StepJointNotchParams(self).as_dict()
 
     @property
     def orientation(self):
@@ -474,3 +482,41 @@ class StepJointNotch(BTLxProcess):
         else:
             plane_normal = -cutting_plane.xaxis
         return Plane(cutting_plane.point, plane_normal)
+
+class StepJointNotchParams(BTLxProcessParams):
+    """A class to store the parameters of a Jack Rafter Cut feature.
+
+    Parameters
+    ----------
+    instance : :class:`~compas_timber._fabrication.JackRafterCut`
+        The instance of the Jack Rafter Cut feature.
+    """
+
+    def __init__(self, instance):
+        # type: (StepJointNotch) -> None
+        super(StepJointNotchParams, self).__init__(instance)
+
+    def as_dict(self):
+        """Returns the parameters of the Step Joint Notch feature as a dictionary.
+
+        Returns
+        -------
+        dict
+            The parameters of the Step Joint Notch as a dictionary.
+        """
+        # type: () -> OrderedDict
+        result = super(StepJointNotchParams, self).as_dict()
+        result["Orientation"] = self._instance.orientation
+        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
+        result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
+        result["NotchLimited"] = self._instance.notch_limited
+        result["NotchWidth"] = "{:.{prec}f}".format(self._instance.notch_width, prec=TOL.precision)
+        result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
+        result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
+        result["StrutHeight"] = "{:.{prec}f}".format(self._instance.strut_height, prec=TOL.precision)
+        result["StepShape"] = self._instance.step_shape
+        result["Mortise"] = self._instance.mortise
+        result["MortiseWidth"] = "{:.{prec}f}".format(self._instance.mortise_width, prec=TOL.precision)
+        result["MortiseHeight"] = "{:.{prec}f}".format(self._instance.mortise_height, prec=TOL.precision)
+        return result
