@@ -10,10 +10,12 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas.tolerance import TOL
 
 from compas_timber.elements import FeatureApplicationError
 
 from .btlx_process import BTLxProcess
+from .btlx_process import BTLxProcessParams
 from .btlx_process import OrientationType
 
 
@@ -36,6 +38,8 @@ class JackRafterCut(BTLxProcess):
         The vertical angle of the cut. 0.1 < inclination < 179.9.
 
     """
+
+    PROCESS_NAME = "JackRafterCut"  # type: ignore
 
     @property
     def __data__(self):
@@ -67,6 +71,10 @@ class JackRafterCut(BTLxProcess):
     ########################################################################
     # Properties
     ########################################################################
+
+    @property
+    def params_dict(self):
+        return JackRafterCutParams(self).as_dict()
 
     @property
     def orientation(self):
@@ -272,3 +280,35 @@ class JackRafterCut(BTLxProcess):
         else:
             plane_normal = -cutting_plane.xaxis
         return Plane(cutting_plane.point, plane_normal)
+
+
+class JackRafterCutParams(BTLxProcessParams):
+    """A class to store the parameters of a Jack Rafter Cut feature.
+
+    Parameters
+    ----------
+    instance : :class:`~compas_timber._fabrication.JackRafterCut`
+        The instance of the Jack Rafter Cut feature.
+    """
+
+    def __init__(self, instance):
+        # type: (JackRafterCut) -> None
+        super(JackRafterCutParams, self).__init__(instance)
+
+    def as_dict(self):
+        """Returns the parameters of the Jack Rafter Cut feature as a dictionary.
+
+        Returns
+        -------
+        dict
+            The parameters of the Jack Rafter Cut feature as a dictionary.
+        """
+        # type: () -> OrderedDict
+        result = super(JackRafterCutParams, self).as_dict()
+        result["Orientation"] = self._instance.orientation
+        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
+        result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
+        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        return result

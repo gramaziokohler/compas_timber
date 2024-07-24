@@ -187,3 +187,22 @@ def test_jack_rafter_cut_data(tol):
     assert copied_instance.angle == instance.angle
     assert copied_instance.inclination == instance.inclination
     assert copied_instance.ref_side_index == instance.ref_side_index
+
+
+def test_jack_rafter_params_obj():
+    instance = JackRafterCut(OrientationType.START, 14.23, 0.22, 42, 123.555, 95.2, ref_side_index=3)
+
+    params = instance.params_dict
+
+    assert params["Name"] == "JackRafterCut"
+    assert params["Process"] == "yes"
+    assert params["Priority"] == "0"
+    assert params["ProcessID"] == "0"
+    assert params["ReferencePlaneID"] == "4"
+
+    assert params["Orientation"] == "start"
+    assert params["StartX"] == "14.230"
+    assert params["StartY"] == "0.220"
+    assert params["StartDepth"] == "42.000"
+    assert params["Angle"] == "123.555"
+    assert params["Inclination"] == "95.200"
