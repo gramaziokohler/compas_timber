@@ -3,6 +3,7 @@
 from .btlx_process import BTLxProcess
 from .btlx_process import OrientationType
 from .jack_cut import JackRafterCut
+from .jack_cut import JackRafterCutParams
 
 
-__all__ = ["JackRafterCut", "BTLxProcess", "OrientationType"]
+__all__ = ["JackRafterCut", "BTLxProcess", "OrientationType", "JackRafterCutParams"]
