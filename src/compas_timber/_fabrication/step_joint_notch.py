@@ -6,14 +6,13 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
-from compas.geometry import Surface
-from compas.geometry import PlanarSurface
+from compas.geometry import Polyhedron
+from compas.geometry import Brep
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-
 
 from compas_timber.elements import FeatureApplicationError
 
@@ -269,7 +268,7 @@ class StepJointNotch(BTLxProcess):
         # type: (PlanarSurface|Surface, Beam, bool, float, float, float, bool, int) -> StepJointNotch
         #TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
         #TODO: I am using a PlanarSurface instead of a Plane because otherwise there is no way to define the start_y of the Notch
-        #TODO: The alternative in order to use a Plane instead would be to have start_y and notch_width as parameters of the class
+        #TODO: The alternative solutionin order to use a Plane instead would be to have start_y and notch_width as parameters of the class
         # define ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
@@ -320,7 +319,7 @@ class StepJointNotch(BTLxProcess):
     @staticmethod
     def _calculate_start_y(orientation, intersection_line, point_start_x, ref_side):
         # checks if the start of the intersection line is out of the beam's ref_side
-        # if out then start_y = 0.0, otherwise it calculates the displacement
+        # if it's out then start_y = 0.0, otherwise it calculates the displacement
         if orientation == OrientationType.START:
             point_start_y = intersection_line.start
         else:
@@ -356,31 +355,6 @@ class StepJointNotch(BTLxProcess):
             raise ValueError("at least one of step_depth or heel_depth must be greater than 0.0.")
         return step_shape
 
-    @classmethod
-    def from_two_planes_and_beam(cls, plane_a, plane_b, beam, ref_side_index=0):
-        """Create a StepJointNotch instance from two planes and the beam it should cut.
-
-        Parameters
-        ----------
-        plane_a : :class:`~compas.geometry.Plane`
-            The first cutting plane.
-        plane_b : :class:`~compas.geometry.Plane`
-            The second cutting plane.
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam that is cut by this instance.
-        ref_side_index : int, optional
-            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.StepJointNotch`
-
-        """
-        # type: (Plane, Plane, Beam, int) -> StepJointNotch
-        # define ref_side & ref_edge
-        ref_side = beam.ref_sides[ref_side_index]
-        pass
-
     ########################################################################
     # Methods
     ########################################################################
@@ -391,14 +365,14 @@ class StepJointNotch(BTLxProcess):
         Parameters
         ----------
         geometry : :class:`~compas.geometry.Brep`
-            The beam geometry to be cut.
+            The beam geometry to be milled.
         beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
+            The beam that is milled by this instance.
 
         Raises
         ------
         :class:`~compas_timber.elements.FeatureApplicationError`
-            If the cutting plane does not intersect with beam geometry.
+            If the cutting planes do not create a volume that itersects with beam geometry or any step fails.
 
         Returns
         -------
@@ -407,17 +381,67 @@ class StepJointNotch(BTLxProcess):
 
         """
         # type: (Brep, Beam) -> Brep
-        cutting_planes = self.planes_from_params_and_beam(beam)
+        # get cutting planes from params
         try:
-            return geometry.trimmed(cutting_plane)
-        except BrepTrimmingError:
+            cutting_planes = self.planes_from_params_and_beam(beam)
+        except ValueError as e:
             raise FeatureApplicationError(
-                cutting_plane,
+                None,
                 geometry,
-                "The cutting plane does not intersect with beam geometry.",
+                f"Failed to generate cutting planes from parameters and beam: {str(e)}"
+            )
+        # create notch polyedron from planes
+        cutting_planes.append(Plane.from_frame(beam.ref_sides[self.ref_side_index])) #add ref_side plane to create a polyhedron
+        try:
+            notch_polyhedron = Polyhedron.from_planes(cutting_planes)
+        except Exception as e:
+            raise FeatureApplicationError(
+                cutting_planes,
+                geometry,
+                f"Failed to create polyhedron from cutting planes: {str(e)}"
+            )
+        # convert polyhedron to mesh
+        try:
+            notch_mesh = notch_polyhedron.to_mesh()
+        except Exception as e:
+            raise FeatureApplicationError(
+                notch_polyhedron,
+                geometry,
+                f"Failed to convert polyhedron to mesh: {str(e)}"
+            )
+        # convert mesh to brep
+        try:
+            notch_brep = Brep.from_mesh(notch_mesh)
+        except Exception as e:
+            raise FeatureApplicationError(
+                notch_mesh,
+                geometry,
+                f"Failed to convert mesh to Brep: {str(e)}"
+            )
+        # apply boolean difference
+        try:
+            brep_with_notch = Brep.from_boolean_difference(geometry, notch_brep)
+        except Exception as e:
+            raise FeatureApplicationError(
+                notch_brep,
+                geometry,
+                f"Boolean difference operation failed: {str(e)}"
+            )
+        # check if the notch is empty
+        if not brep_with_notch:
+            raise FeatureApplicationError(
+                notch_brep,
+                geometry,
+                "The cutting planes do not create a volume that intersects with beam geometry."
             )
 
-    def add_mortise(self, mortise_width, mortise_height):
+        if self.mortise == "yes": #TODO: implement mortise
+            # create mortise volume and subtract from brep_with_notch
+            pass
+
+        return brep_with_notch
+
+    def add_mortise(self, mortise_width, mortise_height, beam):
         """Add a mortise to the existing StepJointNotch instance.
 
         Parameters
@@ -428,10 +452,9 @@ class StepJointNotch(BTLxProcess):
             The height of the mortise. mortise_height < 1000.0.
         """
         self.mortise = "yes"
+        # self.mortise_width = beam.width / 4  # TODO: should this relate to the beam? typically 1/3 or 1/4 of beam.width
         self.mortise_width = mortise_width
-        self.mortise_height = mortise_height
-        # self.mortise_width = beam.width / 4  # TODO: should this be related to a beam? 1/3 or 1/4 of beam.width?
-        # self.mortise_height = beam.height if mortise_height > beam.height else mortise_height #TODO: should this be constrained?
+        self.mortise_height = beam.height if mortise_height > beam.height else mortise_height #TODO: should this be constrained?
 
     def planes_from_params_and_beam(self, beam):
         """Calculates the cutting planes from the machining parameters in this instance and the given beam
@@ -454,7 +477,6 @@ class StepJointNotch(BTLxProcess):
 
         # start with a plane aligned with the ref side but shifted to the start of the first cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-
 
         if self.step_type == "step":
             start_displacement = self.strut_height / math.sin(math.radians(self.strut_inclination))
@@ -487,7 +509,7 @@ class StepJointNotch(BTLxProcess):
                 angle_long_side = 180 - math.atan(self.step_depth / (start_displacement - self.step_depth/math.tan(math.radians(90-self.strut_inclination/2))))
                 rot_long_side = Rotation.from_axis_and_angle(rot_axis, angle_long_side, point=p_displaced)
                 cutting_plane_displaced.transform(rot_long_side)
-            cutting_planes = [cutting_plane_origin, cutting_plane_displaced]
+            cutting_planes = [Plane.from_frame(cutting_plane_origin), Plane.from_frame(cutting_plane_displaced)]
 
         elif self.step_type == "heel":
             if self.strut_inclination>90:
@@ -531,7 +553,7 @@ class StepJointNotch(BTLxProcess):
                 angle_short_side = math.radians(180+self.strut_inclination)
                 rot_short_side = Rotation.from_axis_and_angle(rot_axis, angle_short_side, point=p_displaced)
                 cutting_plane_displaced.transform(rot_short_side)
-            cutting_planes = [cutting_plane_origin, cutting_plane_displaced]
+            cutting_planes = [Plane.from_frame(cutting_plane_origin), Plane.from_frame(cutting_plane_displaced)]
 
         elif self.step_type == "heel_tapered":
             start_displacement = self.strut_height / math.sin(math.radians(self.strut_inclination))
@@ -563,22 +585,11 @@ class StepJointNotch(BTLxProcess):
                 angle_short_side = math.radians(180-self.strut_inclination)
                 rot_short_side = Rotation.from_axis_and_angle(rot_axis, angle_short_side, point=p_displaced)
                 cutting_plane_displaced.transform(rot_short_side)
-            cutting_planes = [cutting_plane_origin, cutting_plane_displaced]
+            cutting_planes = [Plane.from_frame(cutting_plane_origin), Plane.from_frame(cutting_plane_displaced)]
 
-        elif self.step_type == "double":
+        elif self.step_type == "double": #TODO: implement double step
             pass
 
-
-
-
-
-        # # for simplicity, we always start with normal pointing towards xaxis.
-        # # if start is cut, we need to flip the normal
-        # if self.orientation == OrientationType.END:
-        #     plane_normal = cutting_plane.xaxis
-        # else:
-        #     plane_normal = -cutting_plane.xaxis
-        # return Plane(cutting_plane.point, plane_normal)
         return cutting_planes
 
 class StepJointNotchParams(BTLxProcessParams):
