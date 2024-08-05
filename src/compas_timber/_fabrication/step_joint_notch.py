@@ -1,6 +1,5 @@
 import math
 
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -208,7 +207,7 @@ class StepJointNotch(BTLxProcess):
     def step_shape(self):
         return self._step_shape
 
-    @step_shape.setter #TODO: should this be defined automatically depending on the other parameters? (ie. if heel_depth > 0 and step_depth > 0, then step_shape = "double")
+    @step_shape.setter  # TODO: should this be defined automatically depending on the other parameters? (ie. if heel_depth > 0 and step_depth > 0, then step_shape = "double")
     def step_shape(self, step_shape):
         if step_shape not in ["double", "step", "heel", "taperedheel"]:
             raise ValueError("StepShape must be either 'double', 'step', 'heel', or 'taperedheel'.")
@@ -244,11 +243,11 @@ class StepJointNotch(BTLxProcess):
             raise ValueError("MortiseHeight must be less than 1000.0.")
         self._mortise_height = mortise_height
 
-    @property #TODO: how should these be better implemented?
+    @property  # TODO: how should these be better implemented?
     def displacement_end(self):
         return self._calculate_displacement_end(self.strut_height, self.strut_inclination, self.orientation)
 
-    @property #TODO: how should these be better implemented?
+    @property  # TODO: how should these be better implemented?
     def displacement_heel(self):
         return self._calculate_displacement_heel(self.heel_depth, self.strut_inclination, self.orientation)
 
@@ -275,14 +274,14 @@ class StepJointNotch(BTLxProcess):
 
         """
         # type: (PlanarSurface|Surface, Beam, bool, float, float, float, bool, int) -> StepJointNotch
-        #TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
-        #TODO: I am using a PlanarSurface instead of a Plane because otherwise there is no way to define the start_y of the Notch. This makes a case for the default ref_side to be a PlanarSurface
-        #TODO: The alternative solution in order to use a Plane instead would be to have start_y and notch_width as parameters of the class
+        # TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
+        # TODO: I am using a PlanarSurface instead of a Plane because otherwise there is no way to define the start_y of the Notch. This makes a case for the default ref_side to be a PlanarSurface
+        # TODO: The alternative solution in order to use a Plane instead would be to have start_y and notch_width as parameters of the class
         # define ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
         plane = surface.to_plane()
-        intersection_line = Line(*ref_side.intersections_with_surface(surface)) #TODO NotImplementedError: Plane|Surface // COMPAS core issue
+        intersection_line = Line(*ref_side.intersections_with_surface(surface))  # TODO NotImplementedError: Plane|Surface // COMPAS core issue
 
         # calculate orientation
         orientation = cls._calculate_orientation(ref_side, plane)
@@ -300,7 +299,7 @@ class StepJointNotch(BTLxProcess):
         strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
 
         # calculate notch_width
-        if notch_limited == True:
+        if notch_limited is True:
             notch_width = intersection_line.length
             notch_limited = "yes"
         else:
@@ -346,7 +345,7 @@ class StepJointNotch(BTLxProcess):
         if orientation == OrientationType.START:
             return abs(strut_inclination)
         else:
-            return 180 - abs(strut_inclination) # get the other side of the angle
+            return 180 - abs(strut_inclination)  # get the other side of the angle
 
     @staticmethod
     def _define_step_shape(step_depth, heel_depth, tapered_heel):
@@ -366,17 +365,17 @@ class StepJointNotch(BTLxProcess):
 
     @staticmethod
     def _calculate_displacement_end(strut_height, strut_inclination, orientation):
-        #Calculates the linear displacement from the origin point to the end of the notch based on the strut_height and strut_inclination.
+        # Calculates the linear displacement from the origin point to the end of the notch based on the strut_height and strut_inclination.
         displacement_end = strut_height / math.sin(math.radians(strut_inclination))
-        if orientation==OrientationType.END:
-            displacement_end = -displacement_end # negative displacement for the end cut
+        if orientation == OrientationType.END:
+            displacement_end = -displacement_end  # negative displacement for the end cut
         return displacement_end
 
     @staticmethod
     def _calculate_displacement_heel(heel_depth, strut_inclination, orientation):
-        #Calculates the linear displacement from the origin point to the heel of the notch based on the heel_depth and strut_inclination.
+        # Calculates the linear displacement from the origin point to the heel of the notch based on the heel_depth and strut_inclination.
         displacement_heel = abs(heel_depth / (math.sin(math.radians(strut_inclination))*math.cos(math.radians(strut_inclination))))
-        if orientation==OrientationType.END:
+        if orientation == OrientationType.END:
             displacement_heel = -displacement_heel
         return displacement_heel
 
@@ -417,7 +416,7 @@ class StepJointNotch(BTLxProcess):
             )
         # create notch polyedron from planes
         # add ref_side plane to create a polyhedron
-        cutting_planes.append(Plane.from_frame(beam.ref_sides[self.ref_side_index]))  #TODO: the beam's ref_side Plane might need to be offsetted to create a valid polyhedron when step_type is "double"
+        cutting_planes.append(Plane.from_frame(beam.ref_sides[self.ref_side_index]))  # TODO: the beam's ref_side Plane might need to be offsetted to create a valid polyhedron when step_type is "double"
         try:
             notch_polyhedron = Polyhedron.from_planes(cutting_planes)
         except Exception as e:
@@ -461,7 +460,7 @@ class StepJointNotch(BTLxProcess):
                 "The cutting planes do not create a volume that intersects with beam geometry."
             )
 
-        if self.mortise == "yes": #TODO: implement mortise
+        if self.mortise == "yes":  # TODO: implement mortise
             # create mortise volume and subtract from brep_with_notch
             pass
 
@@ -480,7 +479,7 @@ class StepJointNotch(BTLxProcess):
         self.mortise = "yes"
         # self.mortise_width = beam.width / 4  # TODO: should this relate to the beam? typically 1/3 or 1/4 of beam.width
         self.mortise_width = mortise_width
-        self.mortise_height = beam.height if mortise_height > beam.height else mortise_height #TODO: should this be constrained?
+        self.mortise_height = beam.height if mortise_height > beam.height else mortise_height  # TODO: should this be constrained?
 
     def planes_from_params_and_beam(self, beam):
         """Calculates the cutting planes from the machining parameters in this instance and the given beam
@@ -690,7 +689,6 @@ class StepJointNotch(BTLxProcess):
             Plane.from_frame(cutting_plane_end)
         ]
 
-
     def mortise_volume_from_params_and_beam(self, beam):
         """Calculates the mortise volume from the machining parameters in this instance and the given beam
 
@@ -725,37 +723,38 @@ class StepJointNotch(BTLxProcess):
         displacement_y = self.mortise_width
 
         step_cutting_planes = self._calculate_step_planes(ref_side, rot_axis)
-        step_cutting_plane = step_cutting_planes[1] # the second cutting plane is the one at the end of the step
+        step_cutting_plane = step_cutting_planes[1]  # the second cutting plane is the one at the end of the step
 
-        if self.orientation==OrientationType.END:
-            displacement_x = -displacement_x # negative displacement for the end cut
-            rot_axis = -rot_axis # negative rotation axis for the end cut
-            step_cutting_plane = step_cutting_planes[0] # the first cutting plane is the one at the start of the step
+        if self.orientation == OrientationType.END:
+            displacement_x = -displacement_x  # negative displacement for the end cut
+            rot_axis = -rot_axis  # negative rotation axis for the end cut
+            step_cutting_plane = step_cutting_planes[0]  # the first cutting plane is the one at the start of the step
 
-        #find the points that create the top face of the mortise
+        # find the points that create the top face of the mortise
         p_1 = ref_side.point_at(start_x, start_y)
         p_2 = ref_side.point_at(start_x + displacement_x, start_y)
         p_3 = ref_side.point_at(start_x + displacement_x, start_y + displacement_y)
         p_4 = ref_side.point_at(start_x, start_y + displacement_y)
 
-        #construct polyline for the top face of the mortise
+        # construct polyline for the top face of the mortise
         mortise_polyline = Polyline([p_1, p_2, p_3, p_4, p_1])
-        #calcutate the plane for the extrusion of the polyline
+        # calcutate the plane for the extrusion of the polyline
         extr_plane = Plane(p_1, ref_side.frame.xaxis)
         extr_vector_length = self.mortise_height/math.sin(math.radians(self.strut_inclination))
         extr_vector = extr_plane.normal * extr_vector_length
-        if self.strut_inclination>90:
+        if self.strut_inclination > 90:
             vector_angle = math.radians(180-self.strut_inclination)
         else:
             vector_angle = math.radians(self.strut_inclination)
         rot_vect = Rotation.from_axis_and_angle(rot_axis, vector_angle)
         extr_vector.transform(rot_vect)
-        #extrude the polyline to create the mortise volume as a Brep
+        # extrude the polyline to create the mortise volume as a Brep
         mortise_volume = Brep.from_extrusion(mortise_polyline, extr_vector, cap_ends=True)
-        #trim brep with step cutting planes
-        mortise_volume.trim(step_cutting_plane) #TODO: check if the trimming works correctly // add checks
+        # trim brep with step cutting planes
+        mortise_volume.trim(step_cutting_plane)  # TODO: check if the trimming works correctly // add checks
 
         return mortise_volume
+
 
 class StepJointNotchParams(BTLxProcessParams):
     """A class to store the parameters of a Jack Rafter Cut feature.
