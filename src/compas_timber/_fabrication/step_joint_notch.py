@@ -310,7 +310,7 @@ class StepJointNotch(BTLxProcess):
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
         plane = surface.to_plane()
-        intersection_line = Line(*ref_side.intersections_with_surface(surface))
+        # intersection_line = Line(*Plane.from_frame(ref_side).intersections_with_surface(surface))
 
         # calculate orientation
         orientation = cls._calculate_orientation(ref_side, plane)
@@ -322,14 +322,16 @@ class StepJointNotch(BTLxProcess):
         start_x = distance_point_point(ref_side.point, point_start_x)
 
         # calculate start_y
-        start_y = cls._calculate_start_y(orientation, intersection_line, point_start_x, ref_side)
+        # start_y = cls._calculate_start_y(orientation, intersection_line, point_start_x, ref_side)
+        start_y = 0.0
 
         # calculate strut_inclination
         strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
 
         # calculate notch_width
         if notch_limited:
-            notch_width = intersection_line.length
+            pass
+            # notch_width = intersection_line.length
         else:
             notch_width = beam.width
 
@@ -349,8 +351,8 @@ class StepJointNotch(BTLxProcess):
             notch_width,
             step_depth,
             heel_depth,
-            step_shape,
             strut_height,
+            step_shape,
             ref_side_index=ref_side_index,
         )
 
