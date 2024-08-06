@@ -1,13 +1,13 @@
 import math
 
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
+from compas.geometry import Polyhedron
+from compas.geometry import Polyline
 from compas.geometry import Rotation
 from compas.geometry import Vector
-from compas.geometry import Polyhedron
-from compas.geometry import Brep
-from compas.geometry import Polyline
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
@@ -224,7 +224,7 @@ class StepJointNotch(BTLxProcess):
     def step_shape(self):
         return self._step_shape
 
-    @step_shape.setter  # TODO: should this be defined automatically depending on the other parameters? (ie. if heel_depth > 0 and step_depth > 0, then step_shape = "double")
+    @step_shape.setter
     def step_shape(self, step_shape):
         if step_shape not in [StepShape.DOUBLE, StepShape.STEP, StepShape.HEEL, StepShape.TAPERED_HEEL]:
             raise ValueError(
@@ -304,7 +304,7 @@ class StepJointNotch(BTLxProcess):
         """
         # type: (PlanarSurface|Surface, Beam, bool, float, float, float, bool, int) -> StepJointNotch
         # TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
-        # TODO: I am using a PlanarSurface instead of a Plane because otherwise there is no way to define the start_y of the Notch. This makes a case for the default ref_side to be a PlanarSurface
+        # TODO: I am using a PlanarSurface instead of a Plane because otherwise there is no way to define the start_y of the Notch.
         # TODO: The alternative solution in order to use a Plane instead would be to have start_y and notch_width as parameters of the class
         # define ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
@@ -454,9 +454,8 @@ class StepJointNotch(BTLxProcess):
             )
         # create notch polyedron from planes
         # add ref_side plane to create a polyhedron
-        cutting_planes.append(
-            Plane.from_frame(beam.ref_sides[self.ref_side_index])
-        )  # !: the beam's ref_side Plane might need to be offsetted to create a valid polyhedron when step_type is "double"
+        # !: the beam's ref_side Plane might need to be offsetted to create a valid polyhedron when step_type is "double"
+        cutting_planes.append(Plane.from_frame(beam.ref_sides[self.ref_side_index]))
         try:
             notch_polyhedron = Polyhedron.from_planes(cutting_planes)
         except Exception as e:
@@ -503,9 +502,7 @@ class StepJointNotch(BTLxProcess):
         self.mortise = True
         # self.mortise_width = beam.width / 4  # TODO: should this relate to the beam? typically 1/3 or 1/4 of beam.width
         self.mortise_width = mortise_width
-        self.mortise_height = (
-            beam.height if mortise_height > beam.height else mortise_height
-        )  # TODO: should this be constrained?
+        self.mortise_height = beam.height if mortise_height > beam.height else mortise_height
 
     def planes_from_params_and_beam(self, beam):
         """Calculates the cutting planes from the machining parameters in this instance and the given beam
@@ -761,7 +758,7 @@ class StepJointNotch(BTLxProcess):
         assert self.step_shape is not None
         assert self.strut_height is not None
         assert self.notch_width is not None
-        assert self.mortise == True
+        assert self.mortise
         assert self.mortise_width is not None
         assert self.mortise_height is not None
 
