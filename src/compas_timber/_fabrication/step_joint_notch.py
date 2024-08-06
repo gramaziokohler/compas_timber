@@ -91,7 +91,7 @@ class StepJointNotch(BTLxProcess):
         mortise=False,
         mortise_width=40.0,
         mortise_height=40.0,
-        **kwargs,
+        **kwargs
     ):
         super(StepJointNotch, self).__init__(**kwargs)
         self._orientation = None
@@ -450,7 +450,7 @@ class StepJointNotch(BTLxProcess):
             cutting_planes = self.planes_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, f"Failed to generate cutting planes from parameters and beam: {str(e)}"
+                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
         # create notch polyedron from planes
         # add ref_side plane to create a polyhedron
@@ -460,23 +460,23 @@ class StepJointNotch(BTLxProcess):
             notch_polyhedron = Polyhedron.from_planes(cutting_planes)
         except Exception as e:
             raise FeatureApplicationError(
-                cutting_planes, geometry, f"Failed to create valid polyhedron from cutting planes: {str(e)}"
+                cutting_planes, geometry, "Failed to create valid polyhedron from cutting planes: {}".format(str(e))
             )
         # convert polyhedron to mesh
         try:
             notch_mesh = notch_polyhedron.to_mesh()
         except Exception as e:
-            raise FeatureApplicationError(notch_polyhedron, geometry, f"Failed to convert polyhedron to mesh: {str(e)}")
+            raise FeatureApplicationError(notch_polyhedron, geometry, "Failed to convert polyhedron to mesh: {}".format(str(e)))
         # convert mesh to brep
         try:
             notch_brep = Brep.from_mesh(notch_mesh)
         except Exception as e:
-            raise FeatureApplicationError(notch_mesh, geometry, f"Failed to convert mesh to Brep: {str(e)}")
+            raise FeatureApplicationError(notch_mesh, geometry, "Failed to convert mesh to Brep: {}".format(str(e)))
         # apply boolean difference
         try:
             brep_with_notch = Brep.from_boolean_difference(geometry, notch_brep)
         except Exception as e:
-            raise FeatureApplicationError(notch_brep, geometry, f"Boolean difference operation failed: {str(e)}")
+            raise FeatureApplicationError(notch_brep, geometry, "Boolean difference operation failed: {}".format(str(e)))
         # check if the notch is empty
         if not brep_with_notch:
             raise FeatureApplicationError(
