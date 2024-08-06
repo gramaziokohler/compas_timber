@@ -468,7 +468,9 @@ class StepJointNotch(BTLxProcess):
         try:
             notch_mesh = notch_polyhedron.to_mesh()
         except Exception as e:
-            raise FeatureApplicationError(notch_polyhedron, geometry, "Failed to convert polyhedron to mesh: {}".format(str(e)))
+            raise FeatureApplicationError(
+                notch_polyhedron, geometry, "Failed to convert polyhedron to mesh: {}".format(str(e))
+            )
         # convert mesh to brep
         try:
             notch_brep = Brep.from_mesh(notch_mesh)
@@ -478,7 +480,9 @@ class StepJointNotch(BTLxProcess):
         try:
             brep_with_notch = Brep.from_boolean_difference(geometry, notch_brep)
         except Exception as e:
-            raise FeatureApplicationError(notch_brep, geometry, "Boolean difference operation failed: {}".format(str(e)))
+            raise FeatureApplicationError(
+                notch_brep, geometry, "Boolean difference operation failed: {}".format(str(e))
+            )
         # check if the notch is empty
         if not brep_with_notch:
             raise FeatureApplicationError(
