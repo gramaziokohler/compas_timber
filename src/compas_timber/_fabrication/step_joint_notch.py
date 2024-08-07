@@ -817,14 +817,19 @@ class StepJointNotch(BTLxProcess):
             vector_angle = math.radians(180 - self.strut_inclination)
         else:
             vector_angle = math.radians(self.strut_inclination)
+            extr_vector = extr_vector * -1
         rot_vect = Rotation.from_axis_and_angle(rot_axis, vector_angle)
         extr_vector.transform(rot_vect)
-        # extrude the polyline to create the mortise volume as a Brep
-        mortise_volume = Brep.from_extrusion(mortise_polyline, extr_vector, cap_ends=True)
-        # trim brep with step cutting planes
-        mortise_volume.trim(step_cutting_plane)  # !: check if the trimming works correctly // add checks
 
-        return mortise_volume
+
+        mortise_polyline_extrusion = mortise_polyline.translated(extr_vector)
+        # extrude the polyline to create the mortise volume as a Brep
+        # mortise_volume = Brep.from_extrusion(mortise_polyline, extr_vector, cap_ends=True)
+        # trim brep with step cutting planes
+        # mortise_volume.trim(step_cutting_plane)  # !: check if the trimming works correctly // add checks
+
+        # return mortise_volume
+        return mortise_polyline, mortise_polyline_extrusion
 
 
 class StepJointNotchParams(BTLxProcessParams):
