@@ -104,7 +104,7 @@ class StepJoint(BTLxProcess):
 
     @property
     def params_dict(self):
-        return StepJointNotchParams(self).as_dict()
+        return StepJointParams(self).as_dict()
 
     @property
     def orientation(self):
@@ -198,11 +198,11 @@ class StepJoint(BTLxProcess):
             raise ValueError("tenonHeight must be less than 1000.0.")
         self._tenon_height = tenon_height
 
-    @property  # TODO: how should these be better implemented?
+    @property
     def displacement_end(self):
         return self._calculate_displacement_end(self.strut_height, self.strut_inclination, self.orientation)
 
-    @property  # TODO: how should these be better implemented?
+    @property
     def displacement_heel(self):
         return self._calculate_displacement_heel(self.heel_depth, self.strut_inclination, self.orientation)
 
