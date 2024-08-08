@@ -20,10 +20,10 @@ class Beam_fromCurve(component):
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")
         if not width:
             length = self._get_centerline_length(centerline)
-            width = [length/20]
+            width = [length / 20]
         if not height:
             length = self._get_centerline_length(centerline)
-            height = [length/10]
+            height = [length / 10]
 
         # reformat unset parameters for consistency
         if not z_vector:
