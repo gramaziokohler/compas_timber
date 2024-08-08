@@ -29,12 +29,14 @@ Then, the following sections explain in detail the concepts and tools:
     :titlesonly:
 
     tutorials/grasshopper/workflow
-    tutorials/grasshopper/beam
     tutorials/grasshopper/attributes
-    tutorials/grasshopper/joints
-    tutorials/grasshopper/rules
+    tutorials/grasshopper/beams
+    tutorials/grasshopper/design
+    tutorials/grasshopper/fabrication
     tutorials/grasshopper/features
-    tutorials/grasshopper/assembly
+    tutorials/grasshopper/joint_rules
+    tutorials/grasshopper/joints
+    tutorials/grasshopper/model
     tutorials/grasshopper/show
     tutorials/grasshopper/utils
     tutorials/grasshopper/examples

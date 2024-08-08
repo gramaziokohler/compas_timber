@@ -1,6 +1,6 @@
-********
-Assembly
-********
+*****
+Model
+*****
 
 **Assembly** component creates a structure composed of joined :code:`Beam` objects. It connects the beams with joints and adds
 features based on the :doc:`joints` and :doc:`features` inputs provided.
