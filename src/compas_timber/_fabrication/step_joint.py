@@ -5,6 +5,7 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
+from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Polyline
 from compas.geometry import angle_vectors_signed
@@ -358,7 +359,6 @@ class StepJoint(BTLxProcess):
                     raise FeatureApplicationError(
                         cutting_plane, geometry, "Failed to trim geometry with cutting planes: {}".format(str(e))
                     )
-            return geometry
 
         elif self.step_shape == StepShape.HEEL:
             trimmed_geometies = []
@@ -371,14 +371,13 @@ class StepJoint(BTLxProcess):
                         cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
                     )
             try:
-                heel_geometry = Brep.from_boolean_union(
-                    *trimmed_geometies
-                )  #! (gh) Error: Runtime error (Exception): PluginNotInstalledError
+                geometry = (
+                    trimmed_geometies[0] + trimmed_geometies[1]
+                )  # TODO: should be swed (.sew()) for a cleaner Brep
             except Exception as e:
                 raise FeatureApplicationError(
                     trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
                 )
-            return heel_geometry
 
         elif self.step_shape == StepShape.TAPERED_HEEL:
             try:
@@ -389,7 +388,6 @@ class StepJoint(BTLxProcess):
                 raise FeatureApplicationError(
                     cutting_planes, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
                 )
-            return geometry
 
         elif self.step_shape == StepShape.DOUBLE:
             # trim geometry with last cutting plane
@@ -411,18 +409,32 @@ class StepJoint(BTLxProcess):
                         cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
                     )
             try:
-                double_geometry = Brep.from_boolean_union(
-                    *trimmed_geometies
-                )  #! (gh) Error: Runtime error (Exception): PluginNotInstalledError
+                geometry = (
+                    trimmed_geometies[0] + trimmed_geometies[1]
+                )  # TODO: should be swed (.sew()) for a cleaner Brep
             except Exception as e:
                 raise FeatureApplicationError(
                     trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
                 )
-            return double_geometry
 
-        if self.tenon:
+        if self.tenon and self.step_shape == StepShape.STEP:  # TODO: check if tenon applies only to step in BTLx
             # create tenon volume and subtract from brep
-            pass
+            tenon_volume = self.tenon_volume_from_params_and_beam(beam)
+            cutting_planes[0].normal = cutting_planes[0].normal * -1
+            # trim tenon volume with cutting plane
+            try:
+                tenon_volume.trim(cutting_planes[0])
+            except Exception as e:
+                raise FeatureApplicationError(
+                    cutting_planes[0], tenon_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
+                )
+            # add tenon volume to geometry
+            try:
+                geometry += tenon_volume
+            except Exception as e:
+                raise FeatureApplicationError(
+                    tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+                )
 
         return geometry
 
@@ -628,14 +640,15 @@ class StepJoint(BTLxProcess):
         # translate the polyline to create the tenon volume
         tenon_polyline_extrusion = tenon_polyline.translated(extr_vector)
 
-        return tenon_polyline, tenon_polyline_extrusion
+        # create Box from tenon points  # TODO: should create Brep directly by extruding the polyline
+        tenon_points = tenon_polyline.points + tenon_polyline_extrusion.points
+        tenon_box = Box.from_points(tenon_points)
 
-        ## extrude the polyline to create the tenon volume as a Brep
-        # tenon_volume = Brep.from_extrusion(tenon_polyline, extr_vector, cap_ends=True)
-        # trim brep with step cutting planes
-        # tenon_volume.trim(step_cutting_plane)  # !: check if the trimming works correctly // add checks
-
-        # return tenon_volume
+        # convert to Brep and trim with ref_side and opp_side
+        tenon_brep = Brep.from_box(tenon_box)
+        tenon_brep.trim(ref_side.to_plane())
+        tenon_brep.trim(opp_side.to_plane())
+        return tenon_brep
 
 
 class StepJointParams(BTLxProcessParams):
