@@ -538,10 +538,9 @@ class StepJointNotch(BTLxProcess):
                     raise FeatureApplicationError(
                         sub_vol, geometry, "Failed to subtract volume from geometry: {}".format(str(e))
                     )
+            return geometry
         else:
-            geometry - subtraction_volume
-
-        return geometry
+            return geometry - subtraction_volume
 
     def add_mortise(self, mortise_width, mortise_height, beam):
         """Add a mortise to the existing StepJointNotch instance.
@@ -583,7 +582,6 @@ class StepJointNotch(BTLxProcess):
 
         # Start with a plane aligned with the ref side but shifted to the start of the first cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        rot_axis = ref_side.frame.yaxis
 
         if self.step_shape == StepShape.STEP:
             return self._calculate_step_planes(ref_side)
@@ -780,13 +778,9 @@ class StepJointNotch(BTLxProcess):
         start_y = self.start_y + (self.notch_width - self.mortise_width) / 2
         displacement_y = self.mortise_width
 
-        step_cutting_planes = self._calculate_step_planes(ref_side)
-        step_cutting_plane = step_cutting_planes[1]  # the second cutting plane is the one at the end of the step
-
         if self.orientation == OrientationType.END:
             displacement_x = -displacement_x  # negative displacement for the end cut
             rot_axis = -rot_axis  # negative rotation axis for the end cut
-            step_cutting_plane = step_cutting_planes[0]  # the first cutting plane is the one at the start of the step
 
         # find the points that create the top face of the mortise
         p_1 = ref_side.point_at(start_x, start_y)
