@@ -468,7 +468,9 @@ class StepJoint(BTLxProcess):
         # Calculate the displacements for the cutting planes along the y-axis and x-axis
         y_displacement_end = self._calculate_y_displacement_end(beam.height, self.strut_inclination)
         x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination)
-        x_displacement_heel = self._calculate_x_displacement_heel(self.heel_depth, self.strut_inclination, self.orientation)
+        x_displacement_heel = self._calculate_x_displacement_heel(
+            self.heel_depth, self.strut_inclination, self.orientation
+        )
 
         # Get the points at the start of the step, at the end and at the heel
         p_ref = ref_side.point_at(self.start_x, 0)
@@ -487,18 +489,22 @@ class StepJoint(BTLxProcess):
             rot_axis = -cutting_plane_ref.yaxis
 
         if self.step_shape == StepShape.STEP:
-            return self._calculate_step_planes(cutting_plane_ref, cutting_plane_opp, y_displacement_end, incl_angle, rot_axis)
+            return self._calculate_step_planes(
+                cutting_plane_ref, cutting_plane_opp, y_displacement_end, incl_angle, rot_axis
+            )
         elif self.step_shape == StepShape.HEEL:
             return self._calculate_heel_planes(cutting_plane_heel, cutting_plane_opp, incl_angle, rot_axis)
         elif self.step_shape == StepShape.TAPERED_HEEL:
             return self._calculate_heel_tapered_planes(cutting_plane_opp, y_displacement_end, incl_angle, rot_axis)
         elif self.step_shape == StepShape.DOUBLE:
-            return self._calculate_double_planes(cutting_plane_heel, cutting_plane_opp, y_displacement_end, x_displacement_heel, incl_angle, rot_axis)
+            return self._calculate_double_planes(
+                cutting_plane_heel, cutting_plane_opp, y_displacement_end, x_displacement_heel, incl_angle, rot_axis
+            )
 
     def _calculate_step_planes(self, cutting_plane_ref, cutting_plane_opp, displacement_end, incl_angle, rot_axis):
         """Calculate cutting planes for a step."""
         # Rotate cutting plane at opp_side
-        angle_opp = incl_angle/2
+        angle_opp = incl_angle / 2
         rot_opp = Rotation.from_axis_and_angle(rot_axis, angle_opp, point=cutting_plane_opp.point)
         cutting_plane_opp.transform(rot_opp)
 
@@ -525,20 +531,25 @@ class StepJoint(BTLxProcess):
     def _calculate_heel_tapered_planes(self, cutting_plane_opp, displacement_end, incl_angle, rot_axis):
         """Calculate cutting planes for a tapered heel."""
         # Rotate cutting plane at opp_side
-        angle_opp = incl_angle - math.atan(self.heel_depth / (displacement_end-(self.heel_depth / abs(math.tan(math.radians(self.strut_inclination))))))
+        angle_opp = incl_angle - math.atan(
+            self.heel_depth
+            / (displacement_end - (self.heel_depth / abs(math.tan(math.radians(self.strut_inclination)))))
+        )
         rot_opp = Rotation.from_axis_and_angle(rot_axis, angle_opp, point=cutting_plane_opp.point)
         cutting_plane_opp.transform(rot_opp)
 
         return [Plane.from_frame(cutting_plane_opp)]
 
-    def _calculate_double_planes(self, cutting_plane_heel, cutting_plane_opp, displacement_end, displacement_heel, incl_angle, rot_axis):
+    def _calculate_double_planes(
+        self, cutting_plane_heel, cutting_plane_opp, displacement_end, displacement_heel, incl_angle, rot_axis
+    ):
         """Calculate cutting planes for a double step."""
         # Rotate first cutting plane at displaced origin
         rot_origin = Rotation.from_axis_and_angle(rot_axis, math.radians(90), point=cutting_plane_heel.point)
         cutting_plane_heel.transform(rot_origin)
 
         # Rotate last cutting plane at opp_side
-        rot_opp = Rotation.from_axis_and_angle(rot_axis, incl_angle/2, point=cutting_plane_opp.point)
+        rot_opp = Rotation.from_axis_and_angle(rot_axis, incl_angle / 2, point=cutting_plane_opp.point)
         cutting_plane_opp.transform(rot_opp)
 
         # Translate first cutting plane at heel
@@ -547,13 +558,23 @@ class StepJoint(BTLxProcess):
         cutting_plane_heel_mid = cutting_plane_heel.translated(trans_vect * trans_len)
         # Calculate rotation angle for middle cutting plane
         heel_hypotenus = math.sqrt(math.pow(trans_len, 2) + math.pow(displacement_heel, 2))
-        angle_heel = incl_angle - math.radians(90) + math.atan(self.step_depth / (displacement_end - heel_hypotenus - self.step_depth / math.tan(incl_angle/2)))
+        angle_heel = (
+            incl_angle
+            - math.radians(90)
+            + math.atan(
+                self.step_depth / (displacement_end - heel_hypotenus - self.step_depth / math.tan(incl_angle / 2))
+            )
+        )
 
         # Rotate middle cutting plane at heel
         rot_heel = Rotation.from_axis_and_angle(rot_axis, angle_heel, point=cutting_plane_heel_mid.point)
         cutting_plane_heel_mid.transform(rot_heel)
 
-        return [Plane.from_frame(cutting_plane_heel), Plane.from_frame(cutting_plane_heel_mid), Plane.from_frame(cutting_plane_opp)]
+        return [
+            Plane.from_frame(cutting_plane_heel),
+            Plane.from_frame(cutting_plane_heel_mid),
+            Plane.from_frame(cutting_plane_opp),
+        ]
 
     def tenon_volume_from_params_and_beam(self, beam):
         """Calculates the tenon volume from the machining parameters in this instance and the given beam

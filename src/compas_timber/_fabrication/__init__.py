@@ -7,6 +7,7 @@ from .jack_cut import JackRafterCutParams
 from .step_joint_notch import StepJointNotch
 from .step_joint_notch import StepJointNotchParams
 from .step_joint import StepJoint
+from .step_joint import StepJointParams
 
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "StepJointNotch",
     "StepJointNotchParams",
     "StepJoint",
+    "StepJointParams",
 ]
