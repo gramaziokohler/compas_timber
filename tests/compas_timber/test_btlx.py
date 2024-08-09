@@ -206,3 +206,42 @@ def test_jack_rafter_params_obj():
     assert params["StartDepth"] == "42.000"
     assert params["Angle"] == "123.555"
     assert params["Inclination"] == "95.200"
+
+
+def test_are_these_faces_correct(tol):
+    centerline = Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1000.0, y=0.0, z=0.0))
+    width = 60
+    height = 120
+
+    beam = Beam.from_centerline(centerline, width, height)
+
+    rs_1 = beam.ref_sides[0]
+    rs_2 = beam.ref_sides[1]
+    rs_3 = beam.ref_sides[2]
+    rs_4 = beam.ref_sides[3]
+    rs_5 = beam.ref_sides[4]
+    rs_6 = beam.ref_sides[5]
+
+    assert tol.is_allclose(rs_1.xaxis, Vector.Xaxis())
+    assert tol.is_allclose(rs_1.yaxis, -Vector.Yaxis())
+    assert tol.is_allclose(rs_1.zaxis, -Vector.Zaxis())
+
+    assert tol.is_allclose(rs_2.xaxis, Vector.Xaxis())
+    assert tol.is_allclose(rs_2.yaxis, -Vector.Zaxis())
+    assert tol.is_allclose(rs_2.zaxis, Vector.Yaxis())
+
+    assert tol.is_allclose(rs_3.xaxis, Vector.Xaxis())
+    assert tol.is_allclose(rs_3.yaxis, Vector.Yaxis())
+    assert tol.is_allclose(rs_3.zaxis, Vector.Zaxis())
+
+    assert tol.is_allclose(rs_4.xaxis, Vector.Xaxis())
+    assert tol.is_allclose(rs_4.yaxis, Vector.Zaxis())
+    assert tol.is_allclose(rs_4.zaxis, -Vector.Yaxis())
+
+    assert tol.is_allclose(rs_5.xaxis, -Vector.Yaxis())
+    assert tol.is_allclose(rs_5.yaxis, Vector.Zaxis())
+    assert tol.is_allclose(rs_5.zaxis, -Vector.Xaxis())
+
+    assert tol.is_allclose(rs_6.xaxis, -Vector.Yaxis())
+    assert tol.is_allclose(rs_6.yaxis, -Vector.Zaxis())
+    assert tol.is_allclose(rs_6.zaxis, Vector.Xaxis())
