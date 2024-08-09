@@ -5,7 +5,6 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
-from compas.geometry import Polyhedron
 from compas.geometry import Brep
 from compas.geometry import Polyline
 from compas.geometry import angle_vectors_signed
@@ -248,7 +247,7 @@ class StepJoint(BTLxProcess):
         # calculate strut_inclination
         strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
 
-        # restrain step_depth & heel_depth to beam's height and the maximum possible heel depth for the beam  # TODO: should it be restrained? should they be proportional to the beam's dimensions?
+        # restrain step_depth & heel_depth to beam's height and the maximum possible heel depth for the beam
         step_depth = beam.height if step_depth > beam.height else step_depth
         max_heel_depth = abs(beam.height / math.tan(math.radians(strut_inclination)))
         heel_depth = max_heel_depth if heel_depth > max_heel_depth else heel_depth
@@ -318,71 +317,114 @@ class StepJoint(BTLxProcess):
     # Methods
     ########################################################################
 
-    # def apply(self, geometry, beam):
-    #     """Apply the feature to the beam geometry.
+    def apply(self, beam):
+        """Apply the feature to the beam geometry.
 
-    #     Parameters
-    #     ----------
-    #     geometry : :class:`~compas.geometry.Brep`
-    #         The beam geometry to be milled.
-    #     beam : :class:`compas_timber.elements.Beam`
-    #         The beam that is milled by this instance.
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is milled by this instance.
 
-    #     Raises
-    #     ------
-    #     :class:`~compas_timber.elements.FeatureApplicationError`
-    #         If the cutting planes do not create a volume that itersects with beam geometry or any step fails.
+        Raises
+        ------
+        :class:`~compas_timber.elements.FeatureApplicationError`
+            If the cutting planes do not create a volume that itersects with beam geometry or any step fails.
 
-    #     Returns
-    #     -------
-    #     :class:`~compas.geometry.Brep`
-    #         The resulting geometry after processing
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
 
-    #     """
-    #     # type: (Brep, Beam) -> Brep
-    #     # get cutting planes from params
-    #     try:
-    #         cutting_planes = self.planes_from_params_and_beam(beam)
-    #     except ValueError as e:
-    #         raise FeatureApplicationError(
-    #             None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
-    #         )
-    #     # create notch polyedron from planes
-    #     # add ref_side plane to create a polyhedron
-    #     # !: the beam's ref_side Plane might need to be offsetted to create a valid polyhedron when step_type is "double"
-    #     cutting_planes.append(Plane.from_frame(beam.ref_sides[self.ref_side_index]))
-    #     try:
-    #         notch_polyhedron = Polyhedron.from_planes(cutting_planes)
-    #     except Exception as e:
-    #         raise FeatureApplicationError(
-    #             cutting_planes, geometry, "Failed to create valid polyhedron from cutting planes: {}".format(str(e))
-    #         )
-    #     # convert polyhedron to mesh
-    #     try:
-    #         notch_mesh = notch_polyhedron.to_mesh()
-    #     except Exception as e:
-    #         raise FeatureApplicationError(notch_polyhedron, geometry, "Failed to convert polyhedron to mesh: {}".format(str(e)))
-    #     # convert mesh to brep
-    #     try:
-    #         notch_brep = Brep.from_mesh(notch_mesh)
-    #     except Exception as e:
-    #         raise FeatureApplicationError(notch_mesh, geometry, "Failed to convert mesh to Brep: {}".format(str(e)))
-    #     # apply boolean difference
-    #     try:
-    #         brep_with_notch = Brep.from_boolean_difference(geometry, notch_brep)
-    #     except Exception as e:
-    #         raise FeatureApplicationError(notch_brep, geometry, "Boolean difference operation failed: {}".format(str(e)))
-    #     # check if the notch is empty
-    #     if not brep_with_notch:
-    #         raise FeatureApplicationError(
-    #             notch_brep, geometry, "The cutting planes do not create a volume that intersects with beam geometry."
-    #         )
+        """
+        # type: (Beam) -> Brep
 
-    #     if self.tenon:  # !: implement tenon
-    #         # create tenon volume and subtract from brep
-    #         pass
+        # compute the geometry of the beam as a Brep
+        geometry = beam.compute_geometry()
 
-    #     return brep_with_notch
+        # get cutting planes from params and beam
+        try:
+            cutting_planes = self.planes_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
+            )
+
+        if self.step_shape == StepShape.STEP:
+            for cutting_plane in cutting_planes:
+                cutting_plane.normal = cutting_plane.normal * -1
+                try:
+                    geometry.trim(cutting_plane)
+                except Exception as e:
+                    raise FeatureApplicationError(
+                        cutting_plane, geometry, "Failed to trim geometry with cutting planes: {}".format(str(e))
+                    )
+            return geometry
+
+        elif self.step_shape == StepShape.HEEL:
+            trimmed_geometies = []
+            for cutting_plane in cutting_planes:
+                cutting_plane.normal = cutting_plane.normal * -1
+                try:
+                    trimmed_geometies.append(geometry.trimmed(cutting_plane))
+                except Exception as e:
+                    raise FeatureApplicationError(
+                        cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                    )
+            try:
+                heel_geometry = Brep.from_boolean_union(
+                    *trimmed_geometies
+                )  #! (gh) Error: Runtime error (Exception): PluginNotInstalledError
+            except Exception as e:
+                raise FeatureApplicationError(
+                    trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
+                )
+            return heel_geometry
+
+        elif self.step_shape == StepShape.TAPERED_HEEL:
+            try:
+                cutting_plane = cutting_planes[0]
+                cutting_plane.normal = cutting_plane.normal * -1
+                geometry.trim(cutting_plane)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    cutting_planes, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                )
+            return geometry
+
+        elif self.step_shape == StepShape.DOUBLE:
+            # trim geometry with last cutting plane
+            cutting_planes[-1].normal = cutting_planes[-1].normal * -1
+            try:
+                geometry.trim(cutting_planes[-1])
+            except Exception as e:
+                raise FeatureApplicationError(
+                    cutting_planes[-1], geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                )
+            # trim geometry with first two cutting planes
+            trimmed_geometies = []
+            for cutting_plane in cutting_planes[:2]:
+                cutting_plane.normal = cutting_plane.normal * -1
+                try:
+                    trimmed_geometies.append(geometry.trimmed(cutting_plane))
+                except Exception as e:
+                    raise FeatureApplicationError(
+                        cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                    )
+            try:
+                double_geometry = Brep.from_boolean_union(
+                    *trimmed_geometies
+                )  #! (gh) Error: Runtime error (Exception): PluginNotInstalledError
+            except Exception as e:
+                raise FeatureApplicationError(
+                    trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
+                )
+            return double_geometry
+
+        if self.tenon:
+            # create tenon volume and subtract from brep
+            pass
+
+        return geometry
 
     def add_tenon(self, tenon_width, tenon_height):
         """Add a tenon to the existing StepJointNotch instance.
@@ -529,53 +571,51 @@ class StepJoint(BTLxProcess):
         """
         # type: (Beam) -> Mesh
 
-        assert self.strut_inclination is not None
-        assert self.step_shape is not None
-        assert self.tenon == True
+        assert self.tenon
         assert self.tenon_width is not None
         assert self.tenon_height is not None
 
         # start with a plane aligned with the ref side but shifted to the start of the first cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        rot_axis = ref_side.frame.yaxis
+        opp_side = beam.side_as_surface((self.ref_side_index + 2) % 4)
 
-        start_x = self.start_x
-        displacement_x = self.strut_height / math.sin(math.radians(self.strut_inclination))
-        start_y = self.start_y + (self.notch_width - self.tenon_width) / 2
-        displacement_y = self.tenon_width
+        x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination)
 
-        step_cutting_planes = self._calculate_step_planes(ref_side, rot_axis)
-        step_cutting_plane = step_cutting_planes[1]  # the second cutting plane is the one at the end of the step
+        # Get the points of the top face of the tenon on the ref_side and opp_side
+        # x-displcement
+        start_x_ref = self.start_x
+        start_x_opp = self.start_x + x_displacement_end
+        # y-displacement
+        start_y = (beam.width - self.tenon_width) / 2
+        end_y = start_y + self.tenon_width
+        # points at ref_side
+        p_ref_start = ref_side.point_at(start_x_ref, start_y)
+        p_ref_end = ref_side.point_at(start_x_ref, end_y)
+        # points at opp_side
+        p_opp_start = opp_side.point_at(start_x_opp, start_y)
+        p_opp_end = opp_side.point_at(start_x_opp, end_y)
 
-        if self.orientation == OrientationType.END:
-            displacement_x = -displacement_x  # negative displacement for the end cut
-            rot_axis = -rot_axis  # negative rotation axis for the end cut
-            step_cutting_plane = step_cutting_planes[0]  # the first cutting plane is the one at the start of the step
+        # construct the polyline for the top face of the tenon
+        tenon_polyline = Polyline([p_ref_start, p_ref_end, p_opp_start, p_opp_end, p_ref_start])
 
-        # find the points that create the top face of the tenon
-        p_1 = ref_side.point_at(start_x, start_y)
-        p_2 = ref_side.point_at(start_x + displacement_x, start_y)
-        p_3 = ref_side.point_at(start_x + displacement_x, start_y + displacement_y)
-        p_4 = ref_side.point_at(start_x, start_y + displacement_y)
-
-        # construct polyline for the top face of the tenon
-        tenon_polyline = Polyline([p_1, p_2, p_3, p_4, p_1])
-        # calcutate the plane for the extrusion of the polyline
-        extr_plane = Plane(p_1, ref_side.frame.xaxis)
+        # calcutate the extrusion vector of the tenon
         extr_vector_length = self.tenon_height / math.sin(math.radians(self.strut_inclination))
-        extr_vector = extr_plane.normal * extr_vector_length
-        if self.strut_inclination > 90:
-            vector_angle = math.radians(180 - self.strut_inclination)
-        else:
-            vector_angle = math.radians(self.strut_inclination)
-        rot_vect = Rotation.from_axis_and_angle(rot_axis, vector_angle)
-        extr_vector.transform(rot_vect)
-        # extrude the polyline to create the tenon volume as a Brep
-        tenon_volume = Brep.from_extrusion(tenon_polyline, extr_vector, cap_ends=True)
-        # trim brep with step cutting planes
-        tenon_volume.trim(step_cutting_plane)  # !: check if the trimming works correctly // add checks
+        extr_vector = ref_side.frame.xaxis * extr_vector_length
+        if self.orientation == OrientationType.END:
+            extr_vector = -extr_vector
 
-        return tenon_volume
+        # translate the polyline to create the tenon volume
+        tenon_polyline_extrusion = tenon_polyline.translated(extr_vector)
+
+        return tenon_polyline, tenon_polyline_extrusion
+
+        ## extrude the polyline to create the tenon volume as a Brep
+        # tenon_volume = Brep.from_extrusion(tenon_polyline, extr_vector, cap_ends=True)
+        # trim brep with step cutting planes
+        # tenon_volume.trim(step_cutting_plane)  # !: check if the trimming works correctly // add checks
+
+        # return tenon_volume
+
 
 class StepJointParams(BTLxProcessParams):
     """A class to store the parameters of a Step Joint feature.
@@ -606,7 +646,7 @@ class StepJointParams(BTLxProcessParams):
         result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
         result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
         result["StepShape"] = self._instance.step_shape
-        result["tenon"] = "yes" if self._instance.tenon else "no"
-        result["tenonWidth"] = "{:.{prec}f}".format(self._instance.tenon_width, prec=TOL.precision)
-        result["tenonHeight"] = "{:.{prec}f}".format(self._instance.tenon_height, prec=TOL.precision)
+        result["Tenon"] = "yes" if self._instance.tenon else "no"
+        result["TenonWidth"] = "{:.{prec}f}".format(self._instance.tenon_width, prec=TOL.precision)
+        result["TenonHeight"] = "{:.{prec}f}".format(self._instance.tenon_height, prec=TOL.precision)
         return result
