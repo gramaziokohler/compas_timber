@@ -1,13 +1,13 @@
 import math
 
+from compas.geometry import Box
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
+from compas.geometry import Polyline
 from compas.geometry import Rotation
 from compas.geometry import Vector
-from compas.geometry import Box
-from compas.geometry import Brep
-from compas.geometry import Polyline
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
@@ -428,6 +428,16 @@ class StepJoint(BTLxProcess):
                 raise FeatureApplicationError(
                     cutting_planes[0], tenon_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
                 )
+            # trim tenon volume with second cutting plane if tenon height is greater than step depth
+            if self.tenon_height > self.step_depth:
+                try:
+                    tenon_volume.trim(cutting_planes[1])
+                except Exception as e:
+                    raise FeatureApplicationError(
+                        cutting_planes[1],
+                        tenon_volume,
+                        "Failed to trim tenon volume with second cutting plane: {}".format(str(e)),
+                    )
             # add tenon volume to geometry
             try:
                 geometry += tenon_volume
@@ -646,8 +656,13 @@ class StepJoint(BTLxProcess):
 
         # convert to Brep and trim with ref_side and opp_side
         tenon_brep = Brep.from_box(tenon_box)
-        tenon_brep.trim(ref_side.to_plane())
-        tenon_brep.trim(opp_side.to_plane())
+        try:
+            tenon_brep.trim(ref_side.to_plane())
+            tenon_brep.trim(opp_side.to_plane())
+        except Exception as e:
+            raise FeatureApplicationError(
+                None, tenon_brep, "Failed to trim tenon volume with cutting planes: {}".format(str(e))
+            )
         return tenon_brep
 
 
