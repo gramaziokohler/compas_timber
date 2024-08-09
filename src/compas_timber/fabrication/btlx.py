@@ -192,13 +192,9 @@ class BTLxPart(object):
         self.beam = beam
         self.order_num = order_num
         self.length = beam.blank_length
-        self.width = beam.height
-        self.height = beam.width
-        self.frame = Frame(
-            self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
-            beam.frame.xaxis,
-            beam.frame.yaxis,
-        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        self.width = beam.width
+        self.height = beam.height
+        self.frame = beam.ref_frame
         self.blank_length = beam.blank_length
         self.processings = []
         self._et_element = None
