@@ -275,11 +275,13 @@ class StepJointNotch(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_surface_and_beam(
+    def from_plane_and_beam(
         cls,
         plane,
         beam,
+        start_y=0.0,
         notch_limited=False,
+        notch_width=20.0,
         step_depth=20.0,
         heel_depth=0.0,
         strut_height=20.0,
@@ -290,8 +292,8 @@ class StepJointNotch(BTLxProcess):
 
         Parameters
         ----------
-        surface : :class:`~compas.geometry.PlanarSurface` or :class:`~compas.geometry.Surface`
-            The cutting surface.
+        plane: :class:`~compas.geometry.Planae` or :class:`~compas.geometry.Frame`
+            The cutting plane.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
         ref_side_index : int, optional
@@ -302,17 +304,15 @@ class StepJointNotch(BTLxProcess):
         :class:`~compas_timber.fabrication.StepJointNotch`
 
         """
-        # type: (PlanarSurface|Surface, Beam, bool, float, float, float, bool, int) -> StepJointNotch
+        # type: (Plane|Frame, Beam, float, bool, float, float, float, float, bool, int) -> StepJointNotch
         # TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
-        # TODO: I am using a PlanarSurface instead of a Plane because otherwise there is no way to define the start_y of the Notch.
-        # TODO: The alternative solution in order to use a Plane instead would be to have start_y and notch_width as parameters of the class
+
         # define ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-        # plane = surface.to_plane()
+
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
-        # intersection_line = Line(*Plane.from_frame(ref_side).intersections_with_surface(surface))
 
         # calculate orientation
         orientation = cls._calculate_orientation(ref_side, plane)
@@ -323,17 +323,12 @@ class StepJointNotch(BTLxProcess):
             raise ValueError("Surface does not intersect with beam.")
         start_x = distance_point_point(ref_side.point, point_start_x)
 
-        # calculate start_y
-        # start_y = cls._calculate_start_y(orientation, intersection_line, point_start_x, ref_side)
-        start_y = 0.0
-
         # calculate strut_inclination
         strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
 
         # calculate notch_width
         if notch_limited:
-            pass
-            # notch_width = intersection_line.length
+            notch_width = notch_width if notch_width < beam.width else beam.width
         else:
             notch_width = beam.width
 
@@ -616,7 +611,7 @@ class StepJointNotch(BTLxProcess):
             cutting_plane_origin.transform(rot_long_side)
 
             # Rotate second cutting plane at the end of the notch (short side of the step)
-            angle_short_side = math.radians(180 - self.strut_inclination / 2)
+            angle_short_side = math.radians(360 - self.strut_inclination / 2)
             rot_short_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_short_side, point=p_end)
             cutting_plane_end.transform(rot_short_side)
         else:
