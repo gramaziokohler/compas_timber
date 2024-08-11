@@ -147,6 +147,7 @@ class TStepJoint(Joint):
             main_feature.add_tenon(self.tenon_mortise_height, self.tenon_mortise_width)
 
         # add features to beams
+        print(cross_feature)
         self.main_beam.add_features(main_feature)
         self.cross_beam.add_features(cross_feature)
         # add features to joint
