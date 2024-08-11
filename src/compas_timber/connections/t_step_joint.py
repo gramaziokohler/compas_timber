@@ -96,12 +96,14 @@ class TStepJoint(Joint):
     def cross_beam_ref_face_index(self):
         face_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         face_index = min(face_dict, key=face_dict.get)
+        # print("cross_beam_ref_face_index", face_index)
         return face_index
 
     @property
     def main_beam_ref_face_index(self):
         face_dict = self._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
-        face_index = max(face_dict, key=face_dict.get)
+        face_index = min(face_dict, key=face_dict.get)
+        # print("main_beam_ref_face_index", face_index)
         return face_index
 
     def add_features(self):
@@ -112,13 +114,13 @@ class TStepJoint(Joint):
         """
         assert self.main_beam and self.cross_beam  # should never happen
 
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
+        if self.main_beam.features:
+            self.main_beam.remove_features(self.main_beam.features)
+        if self.cross_beam.features:
+            self.cross_beam.remove_features(self.cross_beam.features)
 
-        main_beam_ref_face = self.main_beam.faces(self.main_beam_ref_face_index)
-        cross_beam_ref_face = self.cross_beam.faces(self.cross_beam_ref_face_index)
-
+        main_beam_ref_face = self.main_beam.faces[self.main_beam_ref_face_index]
+        cross_beam_ref_face = self.cross_beam.faces[self.cross_beam_ref_face_index]
         # generate step joint notch features
         cross_feature = StepJointNotch.from_plane_and_beam(
             main_beam_ref_face,
@@ -128,10 +130,11 @@ class TStepJoint(Joint):
             self.notch_width,
             self.step_depth,
             self.heel_depth,
-            self.tapered_heel,
             self.strut_height,
-            self.cross_beam_ref_face_index,
+            self.tapered_heel,
+            self.cross_beam_ref_face_index - 1,
         )
+
         # generate step joint features
         main_feature = StepJoint.from_plane_and_beam(
             cross_beam_ref_face,
@@ -139,15 +142,13 @@ class TStepJoint(Joint):
             self.step_depth,
             self.heel_depth,
             self.tapered_heel,
-            self.main_beam_ref_face_index,
+            self.main_beam_ref_face_index - 1,
         )
         # generate tenon and mortise features
         if self.tenon_mortise_height:
             cross_feature.add_mortise(self.tenon_mortise_height, self.tenon_mortise_width, self.cross_beam)
             main_feature.add_tenon(self.tenon_mortise_height, self.tenon_mortise_width)
-
         # add features to beams
-        print(cross_feature)
         self.main_beam.add_features(main_feature)
         self.cross_beam.add_features(cross_feature)
         # add features to joint
