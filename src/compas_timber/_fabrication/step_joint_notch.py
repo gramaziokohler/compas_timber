@@ -422,13 +422,13 @@ class StepJointNotch(BTLxProcess):
     # Methods
     ########################################################################
 
-    def apply(self, beam):
+    def apply(self, geometry, beam):
         """Apply the feature to the beam geometry.
 
         Parameters
         ----------
         geometry : :class:`~compas.geometry.Brep`
-            The beam geometry to be milled.
+            The beam geometry to be processed.
         beam : :class:`compas_timber.elements.Beam`
             The beam that is milled by this instance.
 
@@ -445,8 +445,7 @@ class StepJointNotch(BTLxProcess):
         """
         # type: (Brep, Beam) -> Brep
 
-        # compute the geometry of the beam as a Brep and get the reference side
-        geometry = beam.compute_geometry()
+        # Get the reference side
         ref_side = beam.side_as_surface(self.ref_side_index)
 
         # get cutting planes from params

@@ -318,11 +318,14 @@ class StepJoint(BTLxProcess):
     # Methods
     ########################################################################
 
-    def apply(self, beam):
+    def apply(self, geometry, beam):
         """Apply the feature to the beam geometry.
 
         Parameters
         ----------
+        geometry : :class:`compas.geometry.Brep`
+            The geometry to be processed.
+            
         beam : :class:`compas_timber.elements.Beam`
             The beam that is milled by this instance.
 
@@ -337,10 +340,7 @@ class StepJoint(BTLxProcess):
             The resulting geometry after processing
 
         """
-        # type: (Beam) -> Brep
-
-        # compute the geometry of the beam as a Brep
-        geometry = beam.compute_geometry()
+        # type: (Brep, Beam) -> Brep
 
         # get cutting planes from params and beam
         try:
