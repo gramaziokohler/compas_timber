@@ -97,7 +97,7 @@ class BTLx(object):
             factory_type.apply_processings(joint, self.parts)
 
         # TODO: to slowly integrate the new system, iterate here once more, this time on beams and their features
-        # add processings from features that are part of the new system AKA have the attribute `PROCESSING_NAME`
+        # add processings from features that are part of the new system AKA have the attribute `PROCESS_NAME`
         # joints that are already part of the new system should be skipped above (e.g. L-Miter)
         for beam in self.model.beams:
             features = list(filter(lambda feature: hasattr(feature, "PROCESS_NAME"), beam.features))
@@ -114,15 +114,23 @@ class BTLx(object):
 
     def _split_params_dict(self, feature):
         whole_dict = feature.params_dict
-        header_keys = {
+        header_keys = [
             "Name",
             "Process",
             "Priority",
             "ProcessID",
             "ReferencePlaneID",
-        }
-        header_only = {k: v for k, v in whole_dict.items() if k in header_keys}
-        process_only = {k: v for k, v in whole_dict.items() if k not in header_keys}
+        ]
+
+        header_only = OrderedDict()
+        process_only = OrderedDict()
+
+        for k, v in whole_dict.items():
+            if k in header_keys:
+                header_only[k] = v
+            else:
+                process_only[k] = v
+
         return header_only, process_only
 
     @classmethod
