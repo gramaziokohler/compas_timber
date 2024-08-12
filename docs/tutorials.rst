@@ -35,7 +35,6 @@ Then, the following sections explain in detail the concepts and tools:
     tutorials/grasshopper/fabrication
     tutorials/grasshopper/features
     tutorials/grasshopper/joint_rules
-    tutorials/grasshopper/joints
     tutorials/grasshopper/model
     tutorials/grasshopper/show
     tutorials/grasshopper/utils

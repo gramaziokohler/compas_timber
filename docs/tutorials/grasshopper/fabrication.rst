@@ -9,7 +9,7 @@ Write BTLx
 Writes a BTLx File from a Compas Timber Model.
 
 .. image:: ../images/gh_fabrication_WriteBtlx.png
-    :width: 70%
+    :width: 60%
 
 Inputs:
 
@@ -19,4 +19,4 @@ Inputs:
 
 Outputs:
 
-*	`BTLx` : the BTLx Content.
+*	`BTLx` : the BTLx Content as xml text.

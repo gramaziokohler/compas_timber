@@ -4,6 +4,9 @@ Design
 
 Design Components help to generate standard Wall structures from Surfaces, using different Options.
 
+.. image:: ../images/gh_design_workflow.png
+    :width: 60%
+|
 Surface Model
 -------------
 Creates a Model from a Surface
