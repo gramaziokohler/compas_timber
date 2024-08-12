@@ -37,7 +37,7 @@ Outputs:
 .. image:: ../images/gh_beam.png
     :width: 40%
 
-Once a :code:`Beam` is created, it can be used as an input for the :doc:`assembly` component or the following components:
+Once a :code:`Beam` is created, it can be used as an input for the :doc:`model` component or the following components:
 
 *   **DecomposeBeam** : extracts the frame, centreline, box, width and height from a beam.
 *   **FindBeamByRhinoGeometry** : finds the beam corresponding to a referenced Rhino curve or line.
