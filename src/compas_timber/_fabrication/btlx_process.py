@@ -87,7 +87,7 @@ class OrientationType(object):
     END = "end"
 
 
-class StepShape(object):
+class StepShapeType(object):
     """Enum for the step shape of the cut.
 
     Attributes

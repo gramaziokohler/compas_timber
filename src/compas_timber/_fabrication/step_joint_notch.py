@@ -19,7 +19,7 @@ from compas_timber.elements import FeatureApplicationError
 from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
 from .btlx_process import OrientationType
-from .btlx_process import StepShape
+from .btlx_process import StepShapeType
 
 
 class StepJointNotch(BTLxProcess):
@@ -46,7 +46,7 @@ class StepJointNotch(BTLxProcess):
     strut_height : float
         The height of the strut. It is the cross beam's height. strut_height < 50000.0.
     step_shape : str
-        The shape of the step. Must be either StepShape.DOUBLE, StepShape.STEP, StepShape.HEEL or StepShape.TAPERED_HEEL.
+        The shape of the step. Must be either StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL or StepShapeType.TAPERED_HEEL.
     mortise : str
         The presence of a mortise. Must be either 'no' or 'yes'.
     mortise_width : float
@@ -87,7 +87,7 @@ class StepJointNotch(BTLxProcess):
         step_depth=20.0,
         heel_depth=20.0,
         strut_height=20.0,
-        step_shape=StepShape.DOUBLE,
+        step_shape=StepShapeType.DOUBLE,
         mortise=False,
         mortise_width=40.0,
         mortise_height=40.0,
@@ -226,9 +226,9 @@ class StepJointNotch(BTLxProcess):
 
     @step_shape.setter
     def step_shape(self, step_shape):
-        if step_shape not in [StepShape.DOUBLE, StepShape.STEP, StepShape.HEEL, StepShape.TAPERED_HEEL]:
+        if step_shape not in [StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL, StepShapeType.TAPERED_HEEL]:
             raise ValueError(
-                "StepShape must be either StepShape.DOUBLE, StepShape.STEP, StepShape.HEEL or StepShape.TAPERED_HEEL."
+                "StepShapeType must be either StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL or StepShapeType.TAPERED_HEEL."
             )
         self._step_shape = step_shape
 
@@ -389,14 +389,14 @@ class StepJointNotch(BTLxProcess):
     def _define_step_shape(step_depth, heel_depth, tapered_heel):
         # step_shape based on step_depth and heel_depth and tapered_heel variables
         if step_depth > 0.0 and heel_depth == 0.0:
-            return StepShape.STEP
+            return StepShapeType.STEP
         elif step_depth == 0.0 and heel_depth > 0.0:
             if tapered_heel:
-                return StepShape.TAPERED_HEEL
+                return StepShapeType.TAPERED_HEEL
             else:
-                return StepShape.HEEL
+                return StepShapeType.HEEL
         elif step_depth > 0.0 and heel_depth > 0.0:
-            return StepShape.DOUBLE
+            return StepShapeType.DOUBLE
         else:
             raise ValueError("At least one of step_depth or heel_depth must be greater than 0.0.")
 
@@ -463,7 +463,7 @@ class StepJointNotch(BTLxProcess):
         subtraction_box.translate(-ref_side.frame.zaxis * max(self.step_depth, self.heel_depth))
         subtraction_volume = Brep.from_box(subtraction_box)
 
-        if self.step_shape == StepShape.DOUBLE:
+        if self.step_shape == StepShapeType.DOUBLE:
             # trim geometry with first and last cutting plane
             try:
                 for cutting_plane in [cutting_planes[-1], cutting_planes[0]]:
@@ -501,7 +501,7 @@ class StepJointNotch(BTLxProcess):
                         "Failed to trim geometry with cutting planes: {}".format(str(e)),
                     )
 
-        if self.mortise and self.step_shape == StepShape.STEP:  # TODO: check if mortise applies only to step in BTLx
+        if self.mortise and self.step_shape == StepShapeType.STEP:  # TODO: check if mortise applies only to step in BTLx
             # create mortise volume and subtract from brep
             mortise_volume = self.mortise_volume_from_params_and_beam(beam)
             # trim mortise volume with cutting plane
@@ -577,13 +577,13 @@ class StepJointNotch(BTLxProcess):
         # Start with a plane aligned with the ref side but shifted to the start of the first cut
         ref_side = beam.side_as_surface(self.ref_side_index)
 
-        if self.step_shape == StepShape.STEP:
+        if self.step_shape == StepShapeType.STEP:
             return self._calculate_step_planes(ref_side)
-        elif self.step_shape == StepShape.HEEL:
+        elif self.step_shape == StepShapeType.HEEL:
             return self._calculate_heel_planes(ref_side)
-        elif self.step_shape == StepShape.TAPERED_HEEL:
+        elif self.step_shape == StepShapeType.TAPERED_HEEL:
             return self._calculate_tapered_heel_planes(ref_side)
-        elif self.step_shape == StepShape.DOUBLE:
+        elif self.step_shape == StepShapeType.DOUBLE:
             return self._calculate_double_planes(ref_side)
 
     def _calculate_step_planes(self, ref_side):
@@ -867,7 +867,7 @@ class StepJointNotchParams(BTLxProcessParams):
         result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
         result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
         result["StrutHeight"] = "{:.{prec}f}".format(self._instance.strut_height, prec=TOL.precision)
-        result["StepShape"] = self._instance.step_shape
+        result["StepShapeType"] = self._instance.step_shape
         result["Mortise"] = "yes" if self._instance.mortise else "no"
         result["MortiseWidth"] = "{:.{prec}f}".format(self._instance.mortise_width, prec=TOL.precision)
         result["MortiseHeight"] = "{:.{prec}f}".format(self._instance.mortise_height, prec=TOL.precision)

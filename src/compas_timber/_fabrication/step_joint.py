@@ -19,7 +19,7 @@ from compas_timber.elements import FeatureApplicationError
 from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
 from .btlx_process import OrientationType
-from .btlx_process import StepShape
+from .btlx_process import StepShapeType
 
 
 class StepJoint(BTLxProcess):
@@ -71,7 +71,7 @@ class StepJoint(BTLxProcess):
         strut_inclination=90.0,
         step_depth=20.0,
         heel_depth=20.0,
-        step_shape=StepShape.DOUBLE,
+        step_shape=StepShapeType.DOUBLE,
         tenon=False,
         tenon_width=40.0,
         tenon_height=40.0,
@@ -162,9 +162,9 @@ class StepJoint(BTLxProcess):
 
     @step_shape.setter  # TODO: should this be defined automatically depending on the other parameters? (ie. if heel_depth > 0 and step_depth > 0, then step_shape = "double")
     def step_shape(self, step_shape):
-        if step_shape not in [StepShape.DOUBLE, StepShape.STEP, StepShape.HEEL, StepShape.TAPERED_HEEL]:
+        if step_shape not in [StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL, StepShapeType.TAPERED_HEEL]:
             raise ValueError(
-                "StepShape must be either StepShape.DOUBLE, StepShape.STEP, StepShape.HEEL, or StepShape.TAPERED_HEEL."
+                "StepShapeType must be either StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL, or StepShapeType.TAPERED_HEEL."
             )
         self._step_shape = step_shape
 
@@ -283,14 +283,14 @@ class StepJoint(BTLxProcess):
     def _define_step_shape(step_depth, heel_depth, tapered_heel):
         # step_shape based on step_depth and heel_depth and tapered_heel variables
         if step_depth > 0.0 and heel_depth == 0.0:
-            return StepShape.STEP
+            return StepShapeType.STEP
         elif step_depth == 0.0 and heel_depth > 0.0:
             if tapered_heel:
-                return StepShape.TAPERED_HEEL
+                return StepShapeType.TAPERED_HEEL
             else:
-                return StepShape.HEEL
+                return StepShapeType.HEEL
         elif step_depth > 0.0 and heel_depth > 0.0:
-            return StepShape.DOUBLE
+            return StepShapeType.DOUBLE
         else:
             raise ValueError("At least one of step_depth or heel_depth must be greater than 0.0.")
 
@@ -352,7 +352,7 @@ class StepJoint(BTLxProcess):
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
 
-        if self.step_shape == StepShape.STEP:
+        if self.step_shape == StepShapeType.STEP:
             for cutting_plane in cutting_planes:
                 cutting_plane.normal = cutting_plane.normal * -1
                 try:
@@ -362,7 +362,7 @@ class StepJoint(BTLxProcess):
                         cutting_plane, geometry, "Failed to trim geometry with cutting planes: {}".format(str(e))
                     )
 
-        elif self.step_shape == StepShape.HEEL:
+        elif self.step_shape == StepShapeType.HEEL:
             trimmed_geometies = []
             for cutting_plane in cutting_planes:
                 cutting_plane.normal = cutting_plane.normal * -1
@@ -381,7 +381,7 @@ class StepJoint(BTLxProcess):
                     trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
                 )
 
-        elif self.step_shape == StepShape.TAPERED_HEEL:
+        elif self.step_shape == StepShapeType.TAPERED_HEEL:
             try:
                 cutting_plane = cutting_planes[0]
                 cutting_plane.normal = cutting_plane.normal * -1
@@ -391,7 +391,7 @@ class StepJoint(BTLxProcess):
                     cutting_planes, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
                 )
 
-        elif self.step_shape == StepShape.DOUBLE:
+        elif self.step_shape == StepShapeType.DOUBLE:
             # trim geometry with last cutting plane
             cutting_planes[-1].normal = cutting_planes[-1].normal * -1
             try:
@@ -419,7 +419,7 @@ class StepJoint(BTLxProcess):
                     trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
                 )
 
-        if self.tenon and self.step_shape == StepShape.STEP:  # TODO: check if tenon applies only to step in BTLx
+        if self.tenon and self.step_shape == StepShapeType.STEP:  # TODO: check if tenon applies only to step in BTLx
             # create tenon volume and subtract from brep
             tenon_volume = self.tenon_volume_from_params_and_beam(beam)
             cutting_planes[0].normal = cutting_planes[0].normal * -1
@@ -510,13 +510,13 @@ class StepJoint(BTLxProcess):
         else:
             rot_axis = -cutting_plane_ref.yaxis
 
-        if self.step_shape == StepShape.STEP:
+        if self.step_shape == StepShapeType.STEP:
             return self._calculate_step_planes(cutting_plane_ref, cutting_plane_opp, y_displacement_end, rot_axis)
-        elif self.step_shape == StepShape.HEEL:
+        elif self.step_shape == StepShapeType.HEEL:
             return self._calculate_heel_planes(cutting_plane_heel, cutting_plane_opp, rot_axis)
-        elif self.step_shape == StepShape.TAPERED_HEEL:
+        elif self.step_shape == StepShapeType.TAPERED_HEEL:
             return self._calculate_heel_tapered_planes(cutting_plane_opp, y_displacement_end, rot_axis)
-        elif self.step_shape == StepShape.DOUBLE:
+        elif self.step_shape == StepShapeType.DOUBLE:
             return self._calculate_double_planes(
                 cutting_plane_heel, cutting_plane_opp, y_displacement_end, x_displacement_heel, rot_axis
             )
@@ -702,7 +702,7 @@ class StepJointParams(BTLxProcessParams):
         result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
         result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
         result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
-        result["StepShape"] = self._instance.step_shape
+        result["StepShapeType"] = self._instance.step_shape
         result["Tenon"] = "yes" if self._instance.tenon else "no"
         result["TenonWidth"] = "{:.{prec}f}".format(self._instance.tenon_width, prec=TOL.precision)
         result["TenonHeight"] = "{:.{prec}f}".format(self._instance.tenon_height, prec=TOL.precision)
