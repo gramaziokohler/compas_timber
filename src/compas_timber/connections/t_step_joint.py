@@ -85,6 +85,7 @@ class TStepJoint(Joint):
         self.notch_width = self.main_beam.width
         self.strut_height = self.main_beam.height
         self.tenon_mortise_width = self.main_beam.width / 4
+        print(self.tenon_mortise_width)
 
         self.features = []
 
@@ -144,8 +145,8 @@ class TStepJoint(Joint):
         )
         # generate tenon and mortise features
         if self.tenon_mortise_height:
-            cross_feature.add_mortise(self.tenon_mortise_height, self.tenon_mortise_width, self.cross_beam)
-            main_feature.add_tenon(self.tenon_mortise_height, self.tenon_mortise_width)
+            cross_feature.add_mortise(self.tenon_mortise_width, self.tenon_mortise_height, self.cross_beam)
+            main_feature.add_tenon(self.tenon_mortise_width, self.tenon_mortise_height)
         # add features to beams
         self.main_beam.add_features(main_feature)
         self.cross_beam.add_features(cross_feature)

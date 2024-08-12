@@ -607,12 +607,12 @@ class StepJointNotch(BTLxProcess):
                 / (abs(self.displacement_end) - self.step_depth / math.tan(math.radians((self.strut_inclination) / 2)))
             )
             rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, -angle_long_side, point=p_origin)
-            cutting_plane_origin.transform(rot_long_side)
+            cutting_plane_end.transform(rot_long_side)
 
             # Rotate second cutting plane at the end of the notch (short side of the step)
             angle_short_side = math.radians(self.strut_inclination / 2)
             rot_short_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_short_side, point=p_end)
-            cutting_plane_end.transform(rot_short_side)
+            cutting_plane_origin.transform(rot_short_side)
         else:
             # Rotate first cutting plane at the start of the notch (short side of the step)
             angle_short_side = math.radians((180 - self.strut_inclination) / 2)
@@ -803,9 +803,9 @@ class StepJointNotch(BTLxProcess):
         extr_vector = ref_side.frame.xaxis * extr_vector_length
         if self.strut_inclination > 90:
             vector_angle = math.radians(180 - self.strut_inclination)
+            extr_vector = extr_vector * -1
         else:
             vector_angle = math.radians(self.strut_inclination)
-            extr_vector = extr_vector * -1
         rot_vect = Rotation.from_axis_and_angle(rot_axis, vector_angle)
         extr_vector.transform(rot_vect)
 
@@ -818,8 +818,12 @@ class StepJointNotch(BTLxProcess):
 
         # convert to Brep and trim with cutting_planes
         mortise_brep = Brep.from_box(mortise_box)
-        trimming_plane_start = Plane.from_point_and_two_vectors(p_1, extr_vector, ref_side.frame.yaxis)
-        trimming_plane_end = Plane.from_point_and_two_vectors(p_2, -extr_vector, ref_side.frame.yaxis)
+        if self.strut_inclination > 90:
+            trimming_plane_start = Plane.from_point_and_two_vectors(p_1, extr_vector, ref_side.frame.yaxis)
+            trimming_plane_end = Plane.from_point_and_two_vectors(p_2, -extr_vector, ref_side.frame.yaxis)
+        else:
+            trimming_plane_start = Plane.from_point_and_two_vectors(p_1, -extr_vector, ref_side.frame.yaxis)
+            trimming_plane_end = Plane.from_point_and_two_vectors(p_2, extr_vector, ref_side.frame.yaxis)
         try:
             mortise_brep.trim(trimming_plane_start)
             mortise_brep.trim(trimming_plane_end)

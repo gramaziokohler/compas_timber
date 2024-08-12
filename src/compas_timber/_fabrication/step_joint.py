@@ -630,7 +630,7 @@ class StepJoint(BTLxProcess):
         ref_side = beam.side_as_surface(self.ref_side_index)
         opp_side = beam.side_as_surface((self.ref_side_index + 2) % 4)
 
-        x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination)
+        x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination, self.orientation)
 
         # Get the points of the top face of the tenon on the ref_side and opp_side
         # x-displcement
@@ -652,7 +652,7 @@ class StepJoint(BTLxProcess):
         # calcutate the extrusion vector of the tenon
         extr_vector_length = self.tenon_height / math.sin(math.radians(self.strut_inclination))
         extr_vector = ref_side.frame.xaxis * extr_vector_length
-        if self.orientation == OrientationType.END:
+        if self.orientation == OrientationType.START:
             extr_vector = -extr_vector
 
         # translate the polyline to create the tenon volume
