@@ -96,14 +96,12 @@ class TStepJoint(Joint):
     def cross_beam_ref_face_index(self):
         face_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         face_index = min(face_dict, key=face_dict.get)
-        # print("cross_beam_ref_face_index", face_index)
         return face_index
 
     @property
     def main_beam_ref_face_index(self):
         face_dict = self._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         face_index = min(face_dict, key=face_dict.get)
-        # print("main_beam_ref_face_index", face_index)
         return face_index
 
     def add_features(self):

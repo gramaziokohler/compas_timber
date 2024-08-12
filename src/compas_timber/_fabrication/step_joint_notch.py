@@ -604,9 +604,9 @@ class StepJointNotch(BTLxProcess):
             # Rotate first cutting plane at the start of the notch (large side of the step)
             angle_long_side = math.atan(
                 self.step_depth
-                / (self.displacement_end - self.step_depth / math.tan(math.radians(self.strut_inclination / 2)))
+                / (abs(self.displacement_end) - self.step_depth / math.tan(math.radians((self.strut_inclination) / 2)))
             )
-            rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_long_side, point=p_origin)
+            rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, -angle_long_side, point=p_origin)
             cutting_plane_origin.transform(rot_long_side)
 
             # Rotate second cutting plane at the end of the notch (short side of the step)
@@ -622,8 +622,8 @@ class StepJointNotch(BTLxProcess):
             angle_long_side = math.atan(
                 self.step_depth
                 / (
-                    self.displacement_end
-                    + (self.step_depth / math.tan(math.radians((180 - self.strut_inclination) / 2)))
+                    abs(self.displacement_end)
+                    - (self.step_depth / math.tan(math.radians((180 - self.strut_inclination) / 2)))
                 )
             )
             rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_long_side, point=p_end)
