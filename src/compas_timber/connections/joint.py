@@ -196,7 +196,7 @@ class Joint(Interaction):
 
     @staticmethod
     def _beam_side_incidence(beam_a, beam_b, ignore_ends=True):
-        """Returns a map of face indices of beam_b and the angle of their normal with beam_a's centerline.
+        """Returns a map of ref_side indices of beam_b and the angle of their normal with beam_a's centerline.
 
         This is used to find a cutting plane when joining the two beams.
 
@@ -207,18 +207,18 @@ class Joint(Interaction):
         beam_b : :class:`~compas_timber.parts.Beam`
             The other beam.
         ignore_ends : bool, optional
-            If True, only the first four faces of `beam_b` are considered. Otherwise all faces are considered.
+            If True, only the first four ref_sides of `beam_b` are considered. Otherwise all ref_sides are considered.
 
         Examples
         --------
-        >>> face_angles = Joint.beam_side_incidence(beam_a, beam_b)
-        >>> closest_face_index = min(face_angles, key=face_angles.get)
-        >>> cutting_plane = beam_b.faces[closest_face_index]
+        >>> ref_side_angles = Joint.beam_side_incidence(beam_a, beam_b)
+        >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
+        >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index]
 
         Returns
         -------
         dict(int, float)
-            A map of face indices of beam_b and their respective angle with beam_a's centerline.
+            A map of ref_side indices of beam_b and their respective angle with beam_a's centerline.
 
         """
         # find the orientation of beam_a's centerline so that it's pointing outward of the joint
@@ -235,12 +235,12 @@ class Joint(Interaction):
             centerline_vec = beam_a.centerline.vector * -1
 
         if ignore_ends:
-            beam_b_faces = beam_b.faces[:4]
+            beam_b_ref_sides = beam_b.ref_sides[:4]
         else:
-            beam_b_faces = beam_b.faces
+            beam_b_ref_sides = beam_b.ref_sides
 
-        face_angles = {}
-        for face_index, face in enumerate(beam_b_faces):
-            face_angles[face_index] = angle_vectors(face.normal, centerline_vec)
+        ref_side_angles = {}
+        for ref_side_index, ref_side in enumerate(beam_b_ref_sides):
+            ref_side_angles[ref_side_index] = angle_vectors(ref_side.normal, centerline_vec)
 
-        return face_angles
+        return ref_side_angles
