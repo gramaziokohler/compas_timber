@@ -501,7 +501,9 @@ class StepJointNotch(BTLxProcess):
                         "Failed to trim geometry with cutting planes: {}".format(str(e)),
                     )
 
-        if self.mortise and self.step_shape == StepShapeType.STEP:  # TODO: check if mortise applies only to step in BTLx
+        if (
+            self.mortise and self.step_shape == StepShapeType.STEP
+        ):  # TODO: check if mortise applies only to step in BTLx
             # create mortise volume and subtract from brep
             mortise_volume = self.mortise_volume_from_params_and_beam(beam)
             # trim mortise volume with cutting plane
