@@ -4,9 +4,6 @@ Joint Rules
 
 The Joints between :doc:`beams` are defined by Joint Rules. There are four kinds of rules, where each of them overrides any lower-priority rule. The rules are listed hereafter from lowest to highest level of priority:
 
-.. image:: ../images/gh_joint_rules_components.png
-    :width: 100%
-
 .. note::
 
     **Joint Topologies**
@@ -23,30 +20,35 @@ Joint Rules Components
 
     **Dynamic Components**
 
-    The Joint Rules Components are dynamic: 
-    First place them on the Grasshopper Canvas. 
-    Now you can define the Joint they should apply by Right-Click & Selection from the Drop-Down List.
+    The Joint Rules Components are dynamic: First place them on the Grasshopper Canvas. Now you can define the Joint they should apply by Right-Click & Selection from the Drop-Down List.
 |
 
-1. **Default Joint Rules** - This Component applies a L-Miter to all L-Topologies, a T-Butt to all T-Topologies 
-   and a X-HalfLap to all X-Topologies. 
+1. **Default Joint Rules** - This Component applies a L-Miter to all L-Topologies, a T-Butt to all T-Topologies and a X-HalfLap to all X-Topologies. 
+
+.. image:: ../images/gh_joint_rules_default.png
+    :width: 20%
 |
-2. **Topological Joint Rules** - These Joint Rules are more specific and will overwrite the Default Joint Rules.
-   The inputs are variable and depend on the joint type.
+2. **Topological Joint Rules** - These Joint Rules are more specific and will overwrite the Default Joint Rules. The inputs are variable and depend on the joint type.
 
    *   **L Topological Joint Rules:** This Component applies the L-Joint you select to all L-Topologies.
    *   **T Topological Joint Rules:** This Component applies the T-Joint you select to all T-Topologies.
    *   **X Topological Joint Rules:** This Component applies the X-Joint you select to all X-Topologies.
 |
-3. **Category Joint Rules** - This Joint Rule will overwrite all Topological Joint Rules. 
-   The Component defines a Joint type for all Joints between two beam Categories. 
-   The Categories are assigned through the string-input `Category` in the component :code:`Beam`. 
-   The inputs are variable and depend on the joint type. 
+.. image:: ../images/gh_joint_rules_topological.png
+    :width: 100%
+
 |
-4. **Direct Joint Rules** - This Joint Rule is highly specific and will overwrite every other Joint Rule.
-   The Component assigns a Joint type directly to specific beams. 
-   The Beams can be selected using the component :code:`Find Beam By Rhino GUID` See also :doc:`beam`.
-   The inputs are variable and depend on the joint type. 
+3. **Category Joint Rules** - This Joint Rule will overwrite all Topological Joint Rules. The Component defines a Joint type for all Joints between two beam Categories. The Categories are assigned through the string-input `Category` in the component :code:`Beam`. The inputs are variable and depend on the joint type. 
+
+.. image:: ../images/gh_joint_rules_category.png
+    :width: 40%
+
+|
+4. **Direct Joint Rules** - This Joint Rule is highly specific and will overwrite every other Joint Rule. The Component assigns a Joint type directly to specific beams. The Beams can be selected using the component :code:`Find Beam By Rhino GUID` See also :doc:`beams`. The inputs are variable and depend on the joint type.
+
+.. image:: ../images/gh_joint_rules_direct.png
+    :width: 35%
+
 |
 
 Joint Types
@@ -71,8 +73,7 @@ Inputs:
 L-HalfLap
 ^^^^^^^^^
 
-The *L-Half Lap* topology is when two beams meet at their ends at an angle.
-An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.
+The *L-Half Lap* topology is when two beams meet at their ends at an angle. An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.
 
 .. image:: ../images/gh_joint_L-HalfLap.png
     :width: 40%
@@ -96,11 +97,11 @@ Inputs:
 
 * `cutoff` : #TODO
 
-French Ridge Lap (not fully implemented)
+French Ridge Lap
 ^^^^^^^^^^^^^^^^
 
-The French ridge lap joint extends two beams and removes the upper half of the overlap on one beam and the lower half on the other.
-Unlike the L-Half Lap (presented above) joint, where the cut is made parallel in the centre of the beams, the cut of the French ridge lap joint is angled to keep the beams securely in place, preventing them from shifting.
+.. important::
+    The French Ridge Lap is not yet fully implemented. It doesn't create the Beam Geometry in Grssshopper. The French ridge lap joint extends two beams and removes the upper half of the overlap on one beam and the lower half on the other. Unlike the L-Half Lap (presented above) joint, where the cut is made parallel in the centre of the beams, the cut of the French ridge lap joint is angled to keep the beams securely in place, preventing them from shifting.
 
 The tilted cut plane is generated by sequentially connecting the following points:
 

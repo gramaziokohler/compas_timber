@@ -3,7 +3,7 @@ Model
 *****
 
 **Assembly** component creates a structure composed of joined :code:`Beam` objects. It connects the beams with joints and adds
-features based on the :doc:`joints` and :doc:`features` inputs provided.
+features based on the :doc:`joint_rules` and :doc:`features` inputs provided.
 
 Geometric operations like cutting, trimming and solid boolean subtractions, which are implied by joints and features,
 may be computationally expensive, and are disabled by default.
