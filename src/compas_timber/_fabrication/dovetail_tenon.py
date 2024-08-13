@@ -30,17 +30,17 @@ class DovetailTenon(BTLxProcess):
     orientation : int
         The orientation of the cut. Must be either OrientationType.START or OrientationType.END.
     start_x : float
-        The start x-coordinate of the cut in parametric space of the reference side. -100000.0 < start_x < 100000.0.
+        The start x-coordinate of the cut in parametric space of the reference side. Distance from the beam start to the reference point. -100000.0 < start_x < 100000.0.
     start_y : float
-        The start y-coordinate of the cut in parametric space of the reference side. -5000.0 < start_y < 5000.0.
+        The start y-coordinate of the cut in parametric space of the reference side. Distance from the reference edge to the reference point. -5000.0 < start_y < 5000.0.
     start_depth : float
-        The start depth of the cut in parametric space of the reference side. -5000.0 < start_depth < 5000.0.
+        The start depth of the cut in parametric space of the reference side. Margin on the reference side. -5000.0 < start_depth < 5000.0.
     angle : float
-        The angle of the cut. 0.1 < angle < 179.9.
+        The angle of the cut. Angle between edge and reference edge. 0.1 < angle < 179.9.
     inclination : float
-        The inclination of the cut. 0.1 < inclination < 179.9.
+        The inclination of the cut. Inclination between face and reference side. 0.1 < inclination < 179.9.
     rotation : float
-        The rotation of the cut. 0.1 < rotation < 179.9.
+        The rotation of the cut. Angle between axis of the tenon and rederence side. 0.1 < rotation < 179.9.
     length_limited_top : bool
         Whether the top length of the cut is limited. True or False.
     length_limited_bottom : bool
@@ -50,13 +50,13 @@ class DovetailTenon(BTLxProcess):
     width : float
         The width of the cut. 0.0 < width < 1000.0.
     height : float
-        The height of the cut. 0.0 < height < 1000.0.
+        The height of the tenon. 0.0 < height < 1000.0.
     cone_angle : float
         The cone angle of the cut. 0.0 < cone_angle < 30.0.
     use_flank_angle : bool
         Whether the flank angle is used. True or False.
     flank_angle : float
-        The flank angle of the cut. 5.0 < flank_angle < 35.0.
+        The flank angle of the cut. Angle of the tool. 5.0 < flank_angle < 35.0.
     shape : str
         The shape of the cut. Must be either 'automatic', 'square', 'round', 'rounded', or 'radius'.
     shape_radius : float
