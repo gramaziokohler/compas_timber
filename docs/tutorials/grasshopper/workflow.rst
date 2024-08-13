@@ -6,7 +6,7 @@ To build a timber frame **Model** in Grasshopper, you need to:
 
 *   create :doc:`beams`.
 *   define :doc:`joint_rules` for the interactions between the Beams. 
-*   define other :doc:`features` (optional).
+*   optional: define other :doc:`features`.
 
 Based on this, the :doc:`model` component takes care of generating the final geometry of the structure.
 
