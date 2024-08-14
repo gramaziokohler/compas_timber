@@ -325,6 +325,11 @@ class DovetailTenon(BTLxProcess):
             raise ValueError("ShapeRadius must be between 0.0 and 1000.")
         self._shape_radius = shape_radius
 
+    @property
+    def flange_displacement(self):
+        # calculate the flange displacement based on the flange angle and the tenon height
+        return self.height / math.tan(math.radians(self.flank_angle))
+
     ########################################################################
     # Alternative constructors
     ########################################################################
@@ -348,7 +353,6 @@ class DovetailTenon(BTLxProcess):
 
         """
         # type: (Plane|Frame, Beam, float, float, bool, int) -> StepJoint
-        # TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
         plane.normal = plane.normal * -1  # flip the plane normal to point towards the beam
@@ -390,13 +394,16 @@ class DovetailTenon(BTLxProcess):
             return OrientationType.START
 
     @staticmethod
-    def _calculate_strut_inclination(ref_side, plane, orientation):
-        # vector rotation direction of the plane's normal in the vertical direction
-        strut_inclination_vector = Vector.cross(ref_side.zaxis, plane.normal)
-        strut_inclination = 180 - abs(
-            angle_vectors_signed(ref_side.zaxis, plane.normal, strut_inclination_vector, deg=True)
-        )
-        return strut_inclination
+    def _bound_length(beam_height, start_depth, length, flange_displacement):
+        # bound the inserted lenhgth value to the maximum possible length for the beam
+        max_lenght = beam_height - start_depth - flange_displacement
+        return length if length < max_lenght else max_lenght
+
+    @staticmethod
+    def _bound_width(beam_width, length, width, cone_angle, flange_displacement):
+        # bound the inserted width value to the maximum possible width for the beam
+        max_width = beam_width - 2*(flange_displacement - length/math.tan(math.radians(cone_angle)))
+        return width if width < max_width else max_width
 
     @staticmethod
     def _define_step_shape(step_depth, heel_depth, tapered_heel):
