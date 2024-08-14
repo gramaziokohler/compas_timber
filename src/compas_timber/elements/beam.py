@@ -16,8 +16,6 @@ from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
-from compas_timber.utils.compas_extra import intersection_line_plane
-
 from .features import FeatureApplicationError
 
 
@@ -497,10 +495,13 @@ class Beam(Element):
         """
         # TODO: maybe this should be the default representation of the ref sides?
         ref_side = self.ref_sides[side_index]
-        if side_index in (0, 1, 2, 3):  # long faces
+        if side_index in (0, 2):  # top + bottom
             xsize = self.blank_length
             ysize = self.width
-        elif side_index in (4, 5):  # end faces
+        elif side_index in (1, 3):  # sides
+            xsize = self.blank_length
+            ysize = self.height
+        elif side_index in (4, 5):  # ends
             xsize = self.width
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
