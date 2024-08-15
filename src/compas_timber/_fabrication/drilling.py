@@ -1,17 +1,17 @@
-from compas.geometry import intersection_segment_plane
-from compas.geometry import is_point_in_polyhedron
-from compas.geometry import distance_point_plane
-from compas.geometry import angle_vectors_signed
-from compas.geometry import project_point_plane
+import math
+
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
-from compas.geometry import PlanarSurface
 from compas.geometry import Point
-from compas.geometry import Line
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import angle_vectors_signed
+from compas.geometry import distance_point_plane
+from compas.geometry import intersection_segment_plane
+from compas.geometry import is_point_in_polyhedron
+from compas.geometry import project_point_plane
 from compas.tolerance import TOL
 
 from compas_timber.elements import FeatureApplicationError
@@ -200,7 +200,7 @@ class Drilling(BTLxProcess):
         depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
         x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_surface)
         angle = cls._calculate_angle(ref_surface, line, xy_point)
-        inclination = cls._calculate_inclination(ref_surface.frame, line)
+        inclination = cls._calculate_inclination(ref_surface.frame, line, angle, xy_point)
         return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index)
 
     @staticmethod
@@ -262,11 +262,13 @@ class Drilling(BTLxProcess):
         return angle
 
     @staticmethod
-    def _calculate_inclination(ref_side, line):
-        # type: (Frame, Line) -> float
+    def _calculate_inclination(ref_side, line, angle, xy_point):
+        # type: (Frame, Line, float, Point) -> float
         # inclination is the rotation around `ref_side.yaxis` between the `ref_side.xaxis` and the line vector
-        angle = angle_vectors_signed(ref_side.xaxis, line.vector, ref_side.yaxis, deg=True)
-        return 180 - abs(angle)
+        # we need a reference frame because the rotation axis is not the standard y-axis, but the one rotated by the angle
+        ref_frame = Frame(xy_point, -ref_side.xaxis, -ref_side.yaxis)
+        ref_frame.rotate(math.radians(angle), -ref_side.zaxis, point=xy_point)
+        return angle_vectors_signed(ref_frame.xaxis, line.vector, ref_frame.yaxis, deg=True)
 
     @staticmethod
     def _calculate_depth(line, ref_surface):
@@ -290,6 +292,7 @@ class Drilling(BTLxProcess):
             The resulting geometry after processing.
 
         """
+        print("applying drill feature geometry")
         drill_geometry = Brep.from_cylinder(self.cylinder_from_params_and_beam(beam))
         try:
             return geometry - drill_geometry
@@ -320,13 +323,16 @@ class Drilling(BTLxProcess):
         # rotate the frame around the y-axis by the inclination
         # create the cylinder using the frame and the diameter and depth
         assert self.diameter is not None
+        assert self.angle is not None
+        assert self.inclination is not None
 
         ref_surface = beam.side_as_surface(self.ref_side_index)
         xy_world = ref_surface.point_at(self.start_x, self.start_y)
-        frame = Frame(xy_world, ref_surface.frame.xaxis, ref_surface.frame.yaxis)
-        frame.rotate(self.angle, frame.zaxis)
-        frame.rotate(self.inclination, frame.yaxis)
-        return Cylinder(frame=frame, radius=self.diameter / 2.0, height=self.depth)
+        # x and y flipped because we want z pointting down into the beam, that'll be the cylinder direction
+        cylinder_frame = Frame(xy_world, ref_surface.zaxis, -ref_surface.yaxis)
+        cylinder_frame.rotate(math.radians(self.angle), -ref_surface.zaxis, point=xy_world)
+        cylinder_frame.rotate(math.radians(self.inclination), cylinder_frame.yaxis, point=xy_world)
+        return Cylinder(frame=cylinder_frame, radius=self.diameter / 2.0, height=self.depth)
 
 
 class DrillingParams(BTLxProcessParams):
