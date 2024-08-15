@@ -2,7 +2,7 @@ from compas_rhino.conversions import line_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.elements import DrillFeature
+from compas_timber._fabrication import Drilling
 from compas_timber.ghpython import FeatureDefinition
 
 
@@ -22,5 +22,8 @@ class DrillHoleFeature(component):
         diameter = diameter or beam[0].width * beam[0].height * 0.5
 
         line = line_to_compas(line)
-        f = DrillFeature(line, diameter, line.length)
-        return FeatureDefinition(f, beam)
+        features = []
+        for beam in beam:
+            drilling = Drilling.from_line_and_beam(line, diameter, beam)
+            features.append(FeatureDefinition(drilling, beam))
+        return features
