@@ -20,7 +20,11 @@ Joint Rules Components
 
     **Dynamic Components**
 
-    The Joint Rules Components are dynamic: First place them on the Grasshopper Canvas. Now you can define the Joint they should apply by Right-Click & Selection from the Drop-Down List.
+    Joint Rules Components are dynamic: First place them on the Grasshopper Canvas. Now you can define the Joint they should apply by Right-Click & Selection from the Drop-Down List. The Inputs might change because every Joint has its own specific settings.
+    
+    .. image:: ../images/joint_rules_dynamic.gif
+      :width: 35%
+
 |
 
 1. **Default Joint Rules** - This Component applies a L-Miter to all L-Topologies, a T-Butt to all T-Topologies and a X-HalfLap to all X-Topologies. 
