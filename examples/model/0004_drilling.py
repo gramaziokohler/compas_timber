@@ -36,7 +36,7 @@ model.add_beam(beam)
 
 # tilted other way
 drill_line = Line(
-    Point(x=126.955522077, y=665.725349607, z=180.0), Point(x=156.909094738, y=664.891259740, z=247.788467167)
+    Point(x=156.909094738, y=664.891259740, z=247.788467167), Point(x=126.955522077, y=665.725349607, z=180.0)
 )
 
 diameter = 10
@@ -45,19 +45,25 @@ drilling = Drilling.from_line_and_beam(drill_line, diameter, beam)
 
 print(f"start_x: {drilling.start_x}, start_y: {drilling.start_y}")
 print(f"angle: {drilling.angle}, inclination: {drilling.inclination}")
+print(f"depth: {drilling.depth}")
 
 beam.add_features([drilling])
 
 btlx = BTLx(model)
 PATH = r"C:\Users\ckasirer\Documents\Projects\COMPAS Timber\beam_btlx\drilling.btlx"
 btlx_gen = BTLx(model)
-btlx_gen.process_model()
-with open(PATH, "w") as file:
-    file.write(btlx_gen.btlx_string())
+# btlx_gen.process_model()
+# with open(PATH, "w") as file:
+#     file.write(btlx_gen.btlx_string())
 
+print(beam.debug_info)
+
+drill_geometry = drilling.cylinder_from_params_and_beam(beam)
 viewer = create_viewer()
 viewer.scene.add(beam.geometry)
 viewer.scene.add(drill_line)
+viewer.scene.add(drill_line.start)
+viewer.scene.add(drill_geometry)
 # viewer.scene.add(beam.side_as_surface(2))
 # viewer.scene.add(Point(x=142.667, y=638.428, z=265.985))
 # viewer.scene.add(Point(132.7399768948962, 654.6876592080393, 240.0))
