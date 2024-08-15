@@ -54,7 +54,7 @@ class Drilling(BTLxProcess):
         depth_limited=False,
         depth=50.0,
         diameter=20.0,
-        **kwargs,
+        **kwargs
     ):
         super(Drilling, self).__init__(**kwargs)
         self._start_x = None
@@ -87,7 +87,7 @@ class Drilling(BTLxProcess):
 
     @start_x.setter
     def start_x(self, value):
-        if -100_000 <= value <= 100_000:
+        if -100000 <= value <= 100000:
             self._start_x = value
         else:
             raise ValueError("Start x-coordinate should be between -100000 and 100000. Got: {}".format(value))
@@ -98,7 +98,7 @@ class Drilling(BTLxProcess):
 
     @start_y.setter
     def start_y(self, value):
-        if -50_000 <= value <= 50_000:
+        if -50000 <= value <= 50000:
             self._start_y = value
         else:
             raise ValueError("Start y-coordinate should be between -50000 and 50000. Got: {}".format(value))
@@ -139,7 +139,7 @@ class Drilling(BTLxProcess):
 
     @depth.setter
     def depth(self, value):
-        if 0.0 <= value <= 50_000.0:
+        if 0.0 <= value <= 50000.0:
             self._depth = value
         else:
             raise ValueError("Depth should be between 0 and 50000. Got: {}".format(value))
@@ -150,7 +150,7 @@ class Drilling(BTLxProcess):
 
     @diameter.setter
     def diameter(self, value):
-        if 0.0 <= value <= 50_000.0:
+        if 0.0 <= value <= 50000.0:
             self._diameter = value
         else:
             raise ValueError("Diameter should be between 0 and 50000. Got: {}".format(value))
@@ -194,7 +194,6 @@ class Drilling(BTLxProcess):
         # calculate the angle and inclination of the drilling using the frame and line
         # create the drilling process using the calculated parameters
         ref_side_index, xy_point = cls._calculate_ref_side_index(line, beam)
-        print(f"ref_side_index: {ref_side_index}, xy_point: {xy_point}")
         depth_limited = cls._is_depth_limited(line, beam)
         ref_surface = beam.side_as_surface(ref_side_index)
         depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
@@ -218,7 +217,6 @@ class Drilling(BTLxProcess):
         for index, side in enumerate(beam.ref_sides):
             intersection = intersection_segment_plane(line, Plane.from_frame(side))
             if intersection is not None and is_point_on_surface(intersection, beam.side_as_surface(index)):
-                print(f"intersection found: {intersection}")
                 intersections[index] = Point(*intersection)
 
         if not intersections:
@@ -292,7 +290,6 @@ class Drilling(BTLxProcess):
             The resulting geometry after processing.
 
         """
-        print("applying drill feature geometry")
         drill_geometry = Brep.from_cylinder(self.cylinder_from_params_and_beam(beam))
         try:
             return geometry - drill_geometry
@@ -317,22 +314,29 @@ class Drilling(BTLxProcess):
             The constructed cylinder.
 
         """
-        # convert xy to global space
-        # create frame using the start point and the reference side axes
-        # rotate the frame around the z-axis by the angle
-        # rotate the frame around the y-axis by the inclination
-        # create the cylinder using the frame and the diameter and depth
         assert self.diameter is not None
         assert self.angle is not None
         assert self.inclination is not None
+        assert self.depth is not None
 
         ref_surface = beam.side_as_surface(self.ref_side_index)
         xy_world = ref_surface.point_at(self.start_x, self.start_y)
-        # x and y flipped because we want z pointting down into the beam, that'll be the cylinder direction
+
+        # x and y flipped because we want z pointting down into the beam, that'll be the cylinder long direction
         cylinder_frame = Frame(xy_world, ref_surface.zaxis, -ref_surface.yaxis)
         cylinder_frame.rotate(math.radians(self.angle), -ref_surface.zaxis, point=xy_world)
         cylinder_frame.rotate(math.radians(self.inclination), cylinder_frame.yaxis, point=xy_world)
-        return Cylinder(frame=cylinder_frame, radius=self.diameter / 2.0, height=self.depth)
+
+        depth = self.depth
+        if not self.depth_limited:
+            depth = max(beam.width, beam.height)  # make sure it goes through the beam
+        # move the cylinder by half the depth because frame is the center
+        # add a little notch in the start to make sure it does not drown in the surface
+        # compensate for the notch by adding a little bit to the depth. in any case this is just a vizualisation trick
+        tolerance = self.diameter
+        translation_vector = -cylinder_frame.zaxis * (depth * 0.5 - tolerance)
+        cylinder_frame.translate(translation_vector)
+        return Cylinder(frame=cylinder_frame, radius=self.diameter * 0.5, height=depth + tolerance)
 
 
 class DrillingParams(BTLxProcessParams):
