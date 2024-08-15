@@ -4,14 +4,16 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Point
 from compas.geometry import Plane
-from compas.geometry import Polyline
+from compas.geometry import PlanarSurface
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas.geometry import offset_polyline
 from compas.tolerance import TOL
 
 from compas_timber.elements import FeatureApplicationError
@@ -64,8 +66,10 @@ class DovetailTenon(BTLxProcess):
 
     """
 
-
     PROCESS_NAME = "DovetailTenon"  # type: ignore
+
+    # Class-level attribute
+    _dovetail_tool_params = {}
 
     @property
     def __data__(self):
@@ -103,7 +107,7 @@ class DovetailTenon(BTLxProcess):
         length=80.0,
         width=40.0,
         height=28.0,
-        cone_angle,
+        cone_angle=15.0,
         use_flank_angle=False,
         flank_angle=15.0,
         shape=TenonShapeType.AUTOMATIC,
@@ -153,7 +157,7 @@ class DovetailTenon(BTLxProcess):
 
     @property
     def params_dict(self):
-        return StepJointParams(self).as_dict()
+        return DovetailTenonParams(self).as_dict()
 
     @property
     def orientation(self):
@@ -325,17 +329,26 @@ class DovetailTenon(BTLxProcess):
             raise ValueError("ShapeRadius must be between 0.0 and 1000.")
         self._shape_radius = shape_radius
 
-    @property
-    def flange_displacement(self):
-        # calculate the flange displacement based on the flange angle and the tenon height
-        return self.height / math.tan(math.radians(self.flank_angle))
-
     ########################################################################
     # Alternative constructors
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, step_depth=20.0, heel_depth=0.0, tapered_heel=False, ref_side_index=0):
+    def from_plane_and_beam(
+        cls,
+        plane,
+        beam,
+        start_depth=50.0,
+        rotation=90.0,
+        length=80.0,
+        width=40.0,
+        height=28.0,
+        cone_angle=15.0,
+        flank_angle=15.0,
+        shape=TenonShapeType.AUTOMATIC,
+        shape_radius=20.0,
+        ref_side_index=0,
+    ):
         """Create a StepJoint instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the main beam.
 
         Parameters
@@ -353,11 +366,26 @@ class DovetailTenon(BTLxProcess):
 
         """
         # type: (Plane|Frame, Beam, float, float, bool, int) -> StepJoint
+
+        if cls._dovetail_tool_params:
+            # get the tool parameters
+            tool_angle = cls._dovetail_tool_params["tool_angle"]
+            tool_diameter = cls._dovetail_tool_params["tool_diameter"]
+            tool_height = cls._dovetail_tool_params["tool_height"]
+            tool_top_radius = tool_diameter / 2 - tool_height * (math.tan(math.radians(tool_angle)))
+            # update parameters related to the tool if a tool is defined
+            height = min(height, tool_height)
+            flank_angle = tool_angle
+            shape_radius = tool_top_radius
+
+        frustum_difference = height * math.tan(
+            math.radians(flank_angle)
+        )  # the difference of the bottom and top radius of the frustum cone
+
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
-        plane.normal = plane.normal * -1  # flip the plane normal to point towards the beam
         # define ref_side & ref_edge
-        ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
+        ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
         # calculate orientation
@@ -369,19 +397,63 @@ class DovetailTenon(BTLxProcess):
             raise ValueError("Plane does not intersect with beam.")
         start_x = distance_point_point(ref_side.point, point_start_x)
 
-        # calculate strut_inclination
-        strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
+        # calculate start_y
+        start_y = beam.width / 2  # TODO: is there a case where the tenon should not be in the middle of the beam?
 
-        # restrain step_depth & heel_depth to beam's height and the maximum possible heel depth for the beam
-        step_depth = beam.height if step_depth > beam.height else step_depth
-        max_heel_depth = abs(beam.height / math.tan(math.radians(strut_inclination)))
-        heel_depth = max_heel_depth if heel_depth > max_heel_depth else heel_depth
+        # calculate angle
+        angle = cls._calculate_angle(ref_side, plane, orientation)
 
-        # define step_shape
-        step_shape = cls._define_step_shape(step_depth, heel_depth, tapered_heel)
+        # calculate inclination
+        inclination = cls._calculate_inclination(ref_side, plane, orientation)
+
+        # determine if the top and bottom length of the cut is limited based on inclination
+        length_limited_top = start_depth > 0.0
+        length_limited_bottom = (
+            length * math.sin(math.radians(inclination)) + start_depth + frustum_difference
+        ) < beam.height
+
+        # override the length limited values depending on the inclination
+        # if unlimitted then the dovetail tenon would exceed the beam blank
+        if inclination > 90:
+            length_limited_bottom = True
+        elif inclination < 90:
+            length_limited_top = True
+
+        # calculate rotation
+        rotation = 90.0  # TODO: for now i'm overriding unit a logic for applying rotation is implemented
+
+        # bound start_depth, length and width
+        start_depth = cls._bound_start_depth(orientation, start_depth, inclination, height)
+        length = cls._bound_length(beam.height, start_depth, inclination, length, height, frustum_difference)
+        width = cls._bound_width(beam.width, length, width, cone_angle, shape_radius, frustum_difference)
+
+        # determine if the top and bottom length of the cut is limited
+        length_limited_top = start_depth > 0.0
+        length_limited_bottom = (
+            length * math.sin(math.radians(inclination)) + start_depth + frustum_difference < beam.height
+        )
+
+        use_flank_angle = True if flank_angle != 15.0 else False  # TODO: does this change anything?
 
         return cls(
-            orientation, start_x, strut_inclination, step_depth, heel_depth, step_shape, ref_side_index=ref_side_index
+            orientation,
+            start_x,
+            start_y,
+            start_depth,
+            angle,
+            inclination,
+            rotation,
+            length_limited_top,
+            length_limited_bottom,
+            length,
+            width,
+            height,
+            cone_angle,
+            use_flank_angle,
+            flank_angle,
+            shape,
+            shape_radius,
+            ref_side_index=ref_side_index,
         )
 
     @staticmethod
@@ -394,53 +466,97 @@ class DovetailTenon(BTLxProcess):
             return OrientationType.START
 
     @staticmethod
-    def _bound_length(beam_height, start_depth, length, flange_displacement):
-        # bound the inserted lenhgth value to the maximum possible length for the beam
-        max_lenght = beam_height - start_depth - flange_displacement
-        return length if length < max_lenght else max_lenght
-
-    @staticmethod
-    def _bound_width(beam_width, length, width, cone_angle, flange_displacement):
-        # bound the inserted width value to the maximum possible width for the beam
-        max_width = beam_width - 2*(flange_displacement - length/math.tan(math.radians(cone_angle)))
-        return width if width < max_width else max_width
-
-    @staticmethod
-    def _define_step_shape(step_depth, heel_depth, tapered_heel):
-        # step_shape based on step_depth and heel_depth and tapered_heel variables
-        if step_depth > 0.0 and heel_depth == 0.0:
-            return StepShape.STEP
-        elif step_depth == 0.0 and heel_depth > 0.0:
-            if tapered_heel:
-                return StepShape.TAPERED_HEEL
-            else:
-                return StepShape.HEEL
-        elif step_depth > 0.0 and heel_depth > 0.0:
-            return StepShape.DOUBLE
-        else:
-            raise ValueError("At least one of step_depth or heel_depth must be greater than 0.0.")
-
-    @staticmethod
-    def _calculate_y_displacement_end(beam_height, strut_inclination):
-        # Calculates the linear displacement along the y-axis of the ref_side from the origin point to the opposite end of the step.
-        displacement_end = beam_height / math.sin(math.radians(strut_inclination))
-        return displacement_end
-
-    @staticmethod
-    def _calculate_x_displacement_end(beam_height, strut_inclination, orientation):
-        # Calculates the linear displacement along the x-axis of the ref_side from the origin point to the opposite end of the step.
-        displacement_end = beam_height / math.tan(math.radians(strut_inclination))
-        if orientation == OrientationType.END:
-            displacement_end = -displacement_end
-        return displacement_end
-
-    @staticmethod
-    def _calculate_x_displacement_heel(heel_depth, strut_inclination, orientation):
-        # Calculates the linear displacement alond the x-axis of the ref_side from the origin point to the heel.
-        displacement_heel = heel_depth / (math.sin(math.radians(strut_inclination)))
+    def _calculate_angle(ref_side, plane, orientation):
+        # vector rotation direction of the plane's normal in the vertical direction
+        angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
+        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
         if orientation == OrientationType.START:
-            displacement_heel = -displacement_heel
-        return displacement_heel
+            return 180 - abs(angle)  # get the other side of the angle
+        else:
+            return abs(angle)
+
+    @staticmethod
+    def _calculate_inclination(ref_side, plane, orientation):
+        # vector rotation direction of the plane's normal in the horizontal direction
+        inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
+        inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
+        if orientation == OrientationType.START:
+            return 180 - abs(inclination)  # get the other side of the angle
+        else:
+            return abs(inclination)
+
+    @staticmethod
+    # bound the start_depth value to the minimum possible start_depth if the incliantion is larger than 90
+    def _bound_start_depth(orientation, start_depth, inclination, height):
+        if orientation == OrientationType.START:
+            min_start_depth = height / (math.tan(math.radians(inclination)))
+        else:
+            min_start_depth = height / (math.tan(math.radians(180 - inclination)))
+        return max(start_depth, min_start_depth)
+
+    @staticmethod
+    def _bound_length(beam_height, start_depth, inclination, length, height, frustum_difference):
+        # bound the inserted lenhgth value to the maximum possible length for the beam based on the inclination
+        max_length = (beam_height) / math.sin(math.radians(inclination)) - start_depth
+        if inclination > 90.0:
+            max_length = max_length - frustum_difference + height / math.tan(math.radians(inclination))
+        return min(max_length, length)
+
+    @staticmethod
+    def _bound_width(beam_width, length, width, cone_angle, shape_radius, frustum_difference):
+        # bound the inserted width value to the minumum and maximum possible width for the beam
+        max_width = beam_width - 2 * (frustum_difference - length / math.tan(math.radians(cone_angle)))
+        min_width = 2 * shape_radius
+        return min(max(width, min_width), max_width)
+
+    @staticmethod
+    def _create_trimming_planes_for_box(bottom_points, top_points, length_limited_top, length_limited_bottom):
+        # Create the trimming planes to trim a box into a frustum trapezoid.
+        if len(bottom_points) != len(top_points):
+            raise ValueError("The number of bottom points must match the number of top points.")
+
+        planes = []
+        num_points = len(bottom_points)
+        for i in range(num_points):
+            # Get the bottom and top points for the current edge
+            bottom1 = bottom_points[i]
+            top1 = top_points[i]
+            bottom2 = bottom_points[(i + 1) % num_points]
+            # Define vectors for the plane
+            x_axis = top1 - bottom1
+            y_axis = bottom2 - bottom1
+            # Compute the normal vector to the plane using the cross product
+            normal = x_axis.cross(y_axis)
+            # Create the plane
+            plane = Plane(bottom1, -normal)
+            planes.append(plane)
+
+        return planes
+
+    ########################################################################
+    # Class Methods
+    ########################################################################
+
+    @classmethod
+    def define_dovetail_tool(self, tool_angle, tool_diameter, tool_height):
+        """Define the parameters for the dovetail feature based on a defined dovetail cutting tool.
+
+        Parameters
+        ----------
+        tool_angle : float
+            The angle of the dovetail cutter tool.
+        tool_diameter : float
+            The diameter of the dovetail cutter tool.
+        tool_height : float
+            The height of the dovetail cutter tool.
+
+        """
+        # type: (float, float, float) -> None
+        self._dovetail_tool_params = {
+            "tool_angle": tool_angle,
+            "tool_diameter": tool_diameter,
+            "tool_height": tool_height,
+        }
 
     ########################################################################
     # Methods
@@ -472,129 +588,57 @@ class DovetailTenon(BTLxProcess):
 
         # get cutting planes from params and beam
         try:
-            cutting_planes = self.planes_from_params_and_beam(beam)
+            cutting_plane = self.plane_from_params_and_beam(beam)
+            cutting_plane.normal = -cutting_plane.normal
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
+                None, geometry, "Failed to generate cutting plane from parameters and beam: {}".format(str(e))
             )
 
-        if self.step_shape == StepShape.STEP:
-            for cutting_plane in cutting_planes:
-                cutting_plane.normal = cutting_plane.normal * -1
-                try:
-                    geometry.trim(cutting_plane)
-                except Exception as e:
-                    raise FeatureApplicationError(
-                        cutting_plane, geometry, "Failed to trim geometry with cutting planes: {}".format(str(e))
-                    )
+        # get dovetail volume from params and beam
+        try:
+            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
+            )
 
-        elif self.step_shape == StepShape.HEEL:
-            trimmed_geometies = []
-            for cutting_plane in cutting_planes:
-                cutting_plane.normal = cutting_plane.normal * -1
-                try:
-                    trimmed_geometies.append(geometry.trimmed(cutting_plane))
-                except Exception as e:
-                    raise FeatureApplicationError(
-                        cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
-                    )
+        # fillet the edges of the dovetail volume based on the shape
+        if (
+            self.shape not in [TenonShapeType.SQUARE, TenonShapeType.AUTOMATIC] and not self.length_limited_bottom
+        ):  # TODO: Remove AUTOMATIC once Brep Fillet is implemented
+            edge_ideces = [4, 7] if self.length_limited_top else [5, 8]
             try:
-                geometry = (
-                    trimmed_geometies[0] + trimmed_geometies[1]
-                )  # TODO: should be swed (.sew()) for a cleaner Brep
+                dovetail_volume.fillet(
+                    self.shape_radius, [dovetail_volume.edges[edge_ideces[0]], dovetail_volume.edges[edge_ideces[1]]]
+                )  # TODO: NotImplementedError
             except Exception as e:
                 raise FeatureApplicationError(
-                    trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
+                    dovetail_volume,
+                    geometry,
+                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
                 )
 
-        elif self.step_shape == StepShape.TAPERED_HEEL:
-            try:
-                cutting_plane = cutting_planes[0]
-                cutting_plane.normal = cutting_plane.normal * -1
-                geometry.trim(cutting_plane)
-            except Exception as e:
-                raise FeatureApplicationError(
-                    cutting_planes, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
-                )
+        # trim geometry with cutting planes
+        try:
+            geometry.trim(cutting_plane)
+        except Exception as e:
+            raise FeatureApplicationError(
+                cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+            )
 
-        elif self.step_shape == StepShape.DOUBLE:
-            # trim geometry with last cutting plane
-            cutting_planes[-1].normal = cutting_planes[-1].normal * -1
-            try:
-                geometry.trim(cutting_planes[-1])
-            except Exception as e:
-                raise FeatureApplicationError(
-                    cutting_planes[-1], geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
-                )
-            # trim geometry with first two cutting planes
-            trimmed_geometies = []
-            for cutting_plane in cutting_planes[:2]:
-                cutting_plane.normal = cutting_plane.normal * -1
-                try:
-                    trimmed_geometies.append(geometry.trimmed(cutting_plane))
-                except Exception as e:
-                    raise FeatureApplicationError(
-                        cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
-                    )
-            try:
-                geometry = (
-                    trimmed_geometies[0] + trimmed_geometies[1]
-                )  # TODO: should be swed (.sew()) for a cleaner Brep
-            except Exception as e:
-                raise FeatureApplicationError(
-                    trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
-                )
-
-        if self.tenon and self.step_shape == StepShape.STEP:  # TODO: check if tenon applies only to step in BTLx
-            # create tenon volume and subtract from brep
-            tenon_volume = self.tenon_volume_from_params_and_beam(beam)
-            cutting_planes[0].normal = cutting_planes[0].normal * -1
-            # trim tenon volume with cutting plane
-            try:
-                tenon_volume.trim(cutting_planes[0])
-            except Exception as e:
-                raise FeatureApplicationError(
-                    cutting_planes[0], tenon_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
-                )
-            # trim tenon volume with second cutting plane if tenon height is greater than step depth
-            if self.tenon_height > self.step_depth:
-                try:
-                    tenon_volume.trim(cutting_planes[1])
-                except Exception as e:
-                    raise FeatureApplicationError(
-                        cutting_planes[1],
-                        tenon_volume,
-                        "Failed to trim tenon volume with second cutting plane: {}".format(str(e)),
-                    )
-            # add tenon volume to geometry
-            try:
-                geometry += tenon_volume
-            except Exception as e:
-                raise FeatureApplicationError(
-                    tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
-                )
+        # add tenon volume to geometry
+        try:
+            geometry += dovetail_volume
+        except Exception as e:
+            raise FeatureApplicationError(
+                dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+            )
 
         return geometry
 
-    def add_tenon(self, tenon_width, tenon_height):
-        """Add a tenon to the existing StepJointNotch instance.
-
-        Parameters
-        ----------
-        tenon_width : float
-            The width of the tenon. tenon_width < 1000.0.
-        tenon_height : float
-            The height of the tenon. tenon_height < 1000.0.
-        """
-        self.tenon = True
-        # self.tenon_width = beam.width / 4  # TODO: should this relate to the beam? typically 1/3 or 1/4 of beam.width
-        self.tenon_width = tenon_width
-        self.tenon_height = (
-            self.step_depth if tenon_height < self.step_depth else tenon_height
-        )  # TODO: should this be constrained?
-
-    def planes_from_params_and_beam(self, beam):
-        """Calculates the cutting planes from the machining parameters in this instance and the given beam
+    def plane_from_params_and_beam(self, beam):
+        """Calculates the cutting plane from the machining parameters in this instance and the given beam
 
         Parameters
         ----------
@@ -604,136 +648,37 @@ class DovetailTenon(BTLxProcess):
         Returns
         -------
         :class:`compas.geometry.Plane`
-            The cutting planes.
+            The cutting plane.
+
         """
-        assert self.orientation is not None
-        assert self.strut_inclination is not None
-        assert self.step_shape is not None
+        # type: (Beam) -> Plane
+        assert self.angle is not None
+        assert self.inclination is not None
 
-        # Get the reference side as a PlanarSurface for the first cut
+        # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        # Get the opposite side as a PlanarSurface for the second cut and calculate the additional displacement along the xaxis
-        opp_side = beam.side_as_surface((self.ref_side_index + 2) % 4)
+        p_origin = ref_side.point_at(self.start_x, 0.0)
+        cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
-        # Calculate the displacements for the cutting planes along the y-axis and x-axis
-        y_displacement_end = self._calculate_y_displacement_end(beam.height, self.strut_inclination)
-        x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination, self.orientation)
-        x_displacement_heel = self._calculate_x_displacement_heel(
-            self.heel_depth, self.strut_inclination, self.orientation
-        )
+        # normal pointing towards xaxis so just need the delta
+        horizontal_angle = math.radians(self.angle - 90)
+        rot_a = Rotation.from_axis_and_angle(cutting_plane.zaxis, horizontal_angle, point=p_origin)
 
-        # Get the points at the start of the step, at the end and at the heel
-        p_ref = ref_side.point_at(self.start_x, 0)
-        p_opp = opp_side.point_at(self.start_x + x_displacement_end, beam.width)
-        p_heel = ref_side.point_at(self.start_x + x_displacement_heel, 0)
-        # Create cutting planes at the start of the step, at the end and at the heel
-        cutting_plane_ref = Frame(p_ref, ref_side.frame.xaxis, ref_side.frame.yaxis)
-        cutting_plane_opp = Frame(p_opp, ref_side.frame.xaxis, ref_side.frame.yaxis)
-        cutting_plane_heel = Frame(p_heel, ref_side.frame.xaxis, ref_side.frame.yaxis)
+        # normal pointing towards xaxis so just need the delta
+        vertical_angle = math.radians(self.inclination - 90)
+        rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
 
-        if self.orientation == OrientationType.START:
-            rot_axis = cutting_plane_ref.yaxis
+        cutting_plane.transform(rot_a * rot_b)
+        # for simplicity, we always start with normal pointing towards xaxis.
+        # if start is cut, we need to flip the normal
+        if self.orientation == OrientationType.END:
+            plane_normal = cutting_plane.xaxis
         else:
-            rot_axis = -cutting_plane_ref.yaxis
+            plane_normal = -cutting_plane.xaxis
+        return Plane(cutting_plane.point, plane_normal)
 
-        if self.step_shape == StepShape.STEP:
-            return self._calculate_step_planes(cutting_plane_ref, cutting_plane_opp, y_displacement_end, rot_axis)
-        elif self.step_shape == StepShape.HEEL:
-            return self._calculate_heel_planes(cutting_plane_heel, cutting_plane_opp, rot_axis)
-        elif self.step_shape == StepShape.TAPERED_HEEL:
-            return self._calculate_heel_tapered_planes(cutting_plane_opp, y_displacement_end, rot_axis)
-        elif self.step_shape == StepShape.DOUBLE:
-            return self._calculate_double_planes(
-                cutting_plane_heel, cutting_plane_opp, y_displacement_end, x_displacement_heel, rot_axis
-            )
-
-    def _calculate_step_planes(self, cutting_plane_ref, cutting_plane_opp, displacement_end, rot_axis):
-        """Calculate cutting planes for a step."""
-        # Rotate cutting plane at opp_side
-        angle_opp = math.radians(self.strut_inclination / 2)
-        rot_opp = Rotation.from_axis_and_angle(rot_axis, angle_opp, point=cutting_plane_opp.point)
-        cutting_plane_opp.transform(rot_opp)
-
-        # Rotate cutting plane at ref_side
-        angle_ref = math.radians(self.strut_inclination) + math.atan(
-            self.step_depth / (displacement_end - self.step_depth / math.tan(angle_opp))
-        )
-        rot_ref = Rotation.from_axis_and_angle(rot_axis, angle_ref, point=cutting_plane_ref.point)
-        cutting_plane_ref.transform(rot_ref)
-
-        return [Plane.from_frame(cutting_plane_ref), Plane.from_frame(cutting_plane_opp)]
-
-    def _calculate_heel_planes(self, cutting_plane_heel, cutting_plane_opp, rot_axis):
-        """Calculate cutting planes for a heel."""
-        # Rotate cutting plane at displaced origin
-        angle_heel = math.radians(90)
-        rot_heel = Rotation.from_axis_and_angle(rot_axis, angle_heel, point=cutting_plane_heel.point)
-        cutting_plane_heel.transform(rot_heel)
-
-        # Rotate cutting plane at opp_side
-        angle_opp = math.radians(self.strut_inclination)
-        rot_opp = Rotation.from_axis_and_angle(rot_axis, angle_opp, point=cutting_plane_opp.point)
-        cutting_plane_opp.transform(rot_opp)
-
-        return [Plane.from_frame(cutting_plane_heel), Plane.from_frame(cutting_plane_opp)]
-
-    def _calculate_heel_tapered_planes(self, cutting_plane_opp, displacement_end, rot_axis):
-        """Calculate cutting planes for a tapered heel."""
-        # Rotate cutting plane at opp_side
-        angle_opp = math.radians(self.strut_inclination) - math.atan(
-            self.heel_depth
-            / (displacement_end - (self.heel_depth / abs(math.tan(math.radians(self.strut_inclination)))))
-        )
-        rot_opp = Rotation.from_axis_and_angle(rot_axis, angle_opp, point=cutting_plane_opp.point)
-        cutting_plane_opp.transform(rot_opp)
-
-        return [Plane.from_frame(cutting_plane_opp)]
-
-    def _calculate_double_planes(
-        self, cutting_plane_heel, cutting_plane_opp, displacement_end, displacement_heel, rot_axis
-    ):
-        """Calculate cutting planes for a double step."""
-        # Rotate first cutting plane at displaced origin
-        rot_origin = Rotation.from_axis_and_angle(rot_axis, math.radians(90), point=cutting_plane_heel.point)
-        cutting_plane_heel.transform(rot_origin)
-
-        # Rotate last cutting plane at opp_side
-        rot_opp = Rotation.from_axis_and_angle(
-            rot_axis, math.radians(self.strut_inclination / 2), point=cutting_plane_opp.point
-        )
-        cutting_plane_opp.transform(rot_opp)
-
-        # Translate first cutting plane at heel
-        trans_len = math.tan(math.radians(self.strut_inclination)) * displacement_heel
-        trans_vect = cutting_plane_heel.xaxis
-        cutting_plane_heel_mid = cutting_plane_heel.translated(trans_vect * trans_len)
-        # Calculate rotation angle for middle cutting plane
-        heel_hypotenus = math.sqrt(math.pow(trans_len, 2) + math.pow(displacement_heel, 2))
-        angle_heel = (
-            math.radians(self.strut_inclination)
-            - math.radians(90)
-            + math.atan(
-                self.step_depth
-                / (
-                    displacement_end
-                    - heel_hypotenus
-                    - self.step_depth / math.tan(math.radians(self.strut_inclination / 2))
-                )
-            )
-        )
-
-        # Rotate middle cutting plane at heel
-        rot_heel = Rotation.from_axis_and_angle(rot_axis, angle_heel, point=cutting_plane_heel_mid.point)
-        cutting_plane_heel_mid.transform(rot_heel)
-
-        return [
-            Plane.from_frame(cutting_plane_heel),
-            Plane.from_frame(cutting_plane_heel_mid),
-            Plane.from_frame(cutting_plane_opp),
-        ]
-
-    def tenon_volume_from_params_and_beam(self, beam):
-        """Calculates the tenon volume from the machining parameters in this instance and the given beam
+    def dovetail_volume_from_params_and_beam(self, beam):
+        """Calculates the dovetail tenon volume from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -742,62 +687,79 @@ class DovetailTenon(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Polyhedron`
+        :class:`compas.geometry.Brep`
             The tenon volume.
 
         """
-        # type: (Beam) -> Mesh
+        # type: (Beam) -> Brep
 
-        assert self.tenon
-        assert self.tenon_width is not None
-        assert self.tenon_height is not None
+        assert self.inclination is not None
+        assert self.height is not None
+        assert self.flank_angle is not None
+        assert self.shape is not None
+        assert self.shape_radius is not None
+        assert self.length_limited_top is not None
+        assert self.length_limited_bottom is not None
 
-        # start with a plane aligned with the ref side but shifted to the start of the first cut
-        ref_side = beam.side_as_surface(self.ref_side_index)
-        opp_side = beam.side_as_surface((self.ref_side_index + 2) % 4)
-
-        x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination, self.orientation)
-
-        # Get the points of the top face of the tenon on the ref_side and opp_side
-        # x-displcement
-        start_x_ref = self.start_x
-        start_x_opp = self.start_x + x_displacement_end
-        # y-displacement
-        start_y = (beam.width - self.tenon_width) / 2
-        end_y = start_y + self.tenon_width
-        # points at ref_side
-        p_ref_start = ref_side.point_at(start_x_ref, start_y)
-        p_ref_end = ref_side.point_at(start_x_ref, end_y)
-        # points at opp_side
-        p_opp_start = opp_side.point_at(start_x_opp, start_y)
-        p_opp_end = opp_side.point_at(start_x_opp, end_y)
-
-        # construct the polyline for the top face of the tenon
-        tenon_polyline = Polyline([p_ref_start, p_ref_end, p_opp_start, p_opp_end, p_ref_start])
-
-        # calcutate the extrusion vector of the tenon
-        extr_vector_length = self.tenon_height / math.sin(math.radians(self.strut_inclination))
-        extr_vector = ref_side.frame.xaxis * extr_vector_length
+        cutting_frame = Frame.from_plane(self.plane_from_params_and_beam(beam))
         if self.orientation == OrientationType.START:
-            extr_vector = -extr_vector
+            cutting_frame.xaxis = -cutting_frame.xaxis
+        cutting_surface = PlanarSurface(
+            beam.height / math.sin(math.radians(self.inclination)), beam.width, cutting_frame
+        )
 
-        # translate the polyline to create the tenon volume
-        tenon_polyline_extrusion = tenon_polyline.translated(extr_vector)
+        dx_top = self.length * math.tan(math.radians(self.cone_angle))
+        dx_bottom = (beam.width - self.width) / 2
 
-        # create Box from tenon points  # TODO: should create Brep directly by extruding the polyline
-        tenon_points = tenon_polyline.points + tenon_polyline_extrusion.points
-        tenon_box = Box.from_points(tenon_points)
+        bottom_dovetail_points = [
+            cutting_surface.point_at(self.start_y - dx_top, -self.start_depth),
+            cutting_surface.point_at(self.start_y + dx_top, -self.start_depth),
+            cutting_surface.point_at(dx_bottom + self.width, -self.start_depth - self.length),
+            cutting_surface.point_at(dx_bottom, -self.start_depth - self.length),
+            cutting_surface.point_at(self.start_y - dx_top, -self.start_depth),
+        ]
 
-        # convert to Brep and trim with ref_side and opp_side
-        tenon_brep = Brep.from_box(tenon_box)
-        try:
-            tenon_brep.trim(ref_side.to_plane())
-            tenon_brep.trim(opp_side.to_plane())
-        except Exception as e:
-            raise FeatureApplicationError(
-                None, tenon_brep, "Failed to trim tenon volume with cutting planes: {}".format(str(e))
-            )
-        return tenon_brep
+        # Calculate the offset length
+        offset_length = self.height * math.tan(math.radians(self.flank_angle))
+        # offset the polyline to create the top face of the tenon
+        top_dovetail_points = offset_polyline(bottom_dovetail_points, offset_length, cutting_frame.normal)
+        # make the top face flat
+        top_dovetail_points[0][2] = bottom_dovetail_points[0][2]
+        top_dovetail_points[1][2] = bottom_dovetail_points[1][2]
+        # remove the last point to avoid duplication
+        top_dovetail_points = [Point(pt[0], pt[1] + self.height, pt[2]) for pt in top_dovetail_points[:-1]]
+        bottom_dovetail_points.pop(-1)
+
+        # create the dovetail volume by trimming a box  # TODO: PluginNotInstalledError for Brep.from_loft
+        # get the box as a brep
+        frame_for_box = cutting_frame.copy()
+        frame_for_box.point = cutting_surface.point_at(
+            beam.width / 2, -(beam.height / 2) / math.sin(math.radians(self.inclination))
+        )
+        dovetail_volume = Brep.from_box(
+            Box(beam.width, beam.height / math.sin(math.radians(self.inclination)) * 1.5, self.height, frame_for_box)
+        )
+
+        translation_vector = cutting_frame.normal * (self.height / 2)
+        dovetail_volume.translate(translation_vector)
+
+        # get trimming planes for creating the dovetail volume
+        trimming_planes = self._create_trimming_planes_for_box(
+            bottom_dovetail_points, top_dovetail_points, self.length_limited_top, self.length_limited_bottom
+        )
+
+        # trim the box to create the dovetail volume
+        for plane in trimming_planes:
+            try:
+                if self.orientation == OrientationType.START:
+                    plane.normal = -plane.normal
+                dovetail_volume.trim(plane)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    plane, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
+                )
+
+        return dovetail_volume
 
 
 class DovetailTenonParams(BTLxProcessParams):
@@ -840,3 +802,4 @@ class DovetailTenonParams(BTLxProcessParams):
         result["FlankAngle"] = "{:.{prec}f}".format(self._instance.flank_angle, prec=TOL.precision)
         result["Shape"] = self._instance.shape
         result["ShapeRadius"] = "{:.{prec}f}".format(self._instance.shape_radius, prec=TOL.precision)
+        return result
