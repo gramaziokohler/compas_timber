@@ -2,10 +2,12 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import distance_point_plane
 from compas.geometry import angle_vectors_signed
+from compas.geometry import project_point_plane
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import PlanarSurface
 from compas.geometry import Point
 from compas.geometry import Line
 from compas.geometry import Transformation
@@ -38,6 +40,8 @@ class Drilling(BTLxProcess):
     diameter : float, default 20.0
         The diameter of the drilling. In mm.
     """
+
+    # TODO: add __data__
 
     PROCESS_NAME = "Drilling"  # type: ignore
 
@@ -159,6 +163,9 @@ class Drilling(BTLxProcess):
     def from_line_and_beam(cls, line, diameter, beam):
         """Construct a drilling process from a line and diameter.
 
+        # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
+        # TODO: make a from point alt. constructor that takes a point and a reference side and makes a straight drilling through.
+
         Parameters
         ----------
         line : :class:`compas.geometry.Line`
@@ -192,7 +199,7 @@ class Drilling(BTLxProcess):
         ref_surface = beam.side_as_surface(ref_side_index)
         depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
         x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_surface)
-        angle = cls._calculate_angle(ref_surface.frame, line)
+        angle = cls._calculate_angle(ref_surface, line, xy_point)
         inclination = cls._calculate_inclination(ref_surface.frame, line)
         return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index)
 
@@ -239,11 +246,19 @@ class Drilling(BTLxProcess):
         return vec_to_intersection.x, vec_to_intersection.y
 
     @staticmethod
-    def _calculate_angle(ref_side, line):
-        # type: (Frame, Line) -> float
-        angle_vector = Vector.cross(-ref_side.xaxis, line.vector)
-        angle = angle_vectors_signed(ref_side.yaxis, angle_vector, ref_side.zaxis, deg=True)
-        return abs(angle)
+    def _calculate_angle(ref_surface, line, intersection):
+        # type: (PlanarSurface, Line, Point) -> float
+        # this the angle between the direction projected by the drill line onto the reference plane and the reference side x-axis
+        vector_end_point = project_point_plane(line.end, ref_surface.to_plane())
+        drill_horizontal_vector = Vector.from_start_end(intersection, vector_end_point)
+        reference_vector = -ref_surface.xaxis
+        angle = angle_vectors_signed(reference_vector, drill_horizontal_vector, ref_surface.zaxis, deg=True)
+
+        # angle goes between -180 and 180 but we need it between 0 and 360
+        if angle < 0:
+            angle += 360
+
+        return angle
 
     @staticmethod
     def _calculate_inclination(ref_side, line):
