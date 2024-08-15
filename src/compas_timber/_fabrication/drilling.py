@@ -251,8 +251,9 @@ class Drilling(BTLxProcess):
         # this the angle between the direction projected by the drill line onto the reference plane and the reference side x-axis
         vector_end_point = project_point_plane(line.end, ref_surface.to_plane())
         drill_horizontal_vector = Vector.from_start_end(intersection, vector_end_point)
-        reference_vector = -ref_surface.xaxis
-        angle = angle_vectors_signed(reference_vector, drill_horizontal_vector, ref_surface.zaxis, deg=True)
+        reference_vector = -ref_surface.xaxis  # angle = 0 when the drill is parallel to -x axis
+        measurement_axis = -ref_surface.zaxis  # measure clockwise around the z-axis (sign flips the direction)
+        angle = angle_vectors_signed(reference_vector, drill_horizontal_vector, measurement_axis, deg=True)
 
         # angle goes between -180 and 180 but we need it between 0 and 360
         if angle < 0:
@@ -264,7 +265,7 @@ class Drilling(BTLxProcess):
     def _calculate_inclination(ref_side, line):
         # type: (Frame, Line) -> float
         # inclination is the rotation around `ref_side.yaxis` between the `ref_side.xaxis` and the line vector
-        angle = angle_vectors_signed(-ref_side.xaxis, line.vector, ref_side.yaxis, deg=True)
+        angle = angle_vectors_signed(ref_side.xaxis, line.vector, ref_side.yaxis, deg=True)
         return 180 - abs(angle)
 
     @staticmethod
