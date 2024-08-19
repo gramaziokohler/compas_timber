@@ -6,6 +6,9 @@ from .btlx_process import OrientationType
 
 
 class Slot(BTLxProcess):
+
+    PROCESS_NAME = "Slot"  # type: ignore
+
     def __init__(
         self,
         orientation,
@@ -106,8 +109,8 @@ class Slot(BTLxProcess):
 
     @angle.setter
     def angle(self, angle):
-        if angle >= -90.0 or angle <= 90.0:
-            raise ValueError("Angle must be between 0.1 and 179.9.")
+        if angle < -90.0 or angle > 90.0:
+            raise ValueError("Angle must be between -90.0 and 90.0.")
         self._angle = angle
 
     @property
@@ -189,6 +192,58 @@ class Slot(BTLxProcess):
         # TODO: figure this one out, a generic class?
         self._machining_limits = machining_limits
 
+    ########################################################################
+    # Alternative constructors
+    ########################################################################
+
+    @classmethod
+    def from_box_and_beam(cls, box, beam, ref_side_index=0):
+        """Construct a Slot feature from a box and a beam.
+
+        Parameters
+        ----------
+        box : :class:`~compas.geometry.Box`
+            The box to be cut.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`~compas_timber._fabrication.Slot`
+            The constructed Slot feature.
+
+        """
+        # type: (Box, Beam) -> Slot
+        pass
+
+    ########################################################################
+    # Methods
+    ########################################################################
+
+    def apply(self, geometry, beam):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to be cut.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.elements.FeatureApplicationError`
+            If the cutting plane does not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Beam) -> Brep
+        return geometry.copy()
+
 
 class SlotParams(BTLxProcessParams):
     """A class to store the parameters of a Jack Rafter Cut feature.
@@ -226,5 +281,5 @@ class SlotParams(BTLxProcessParams):
         result["AngleRefPoint"] = "{:.{prec}f}".format(self._instance.angle_ref_point, prec=TOL.precision)
         result["AngleOppPoint"] = "{:.{prec}f}".format(self._instance.angle_opp_point, prec=TOL.precision)
         result["AddAngleOppPoint"] = "{:.{prec}f}".format(self._instance.add_angle_opp_point, prec=TOL.precision)
-
+        result["MachiningLimits"] = {"FaceLimitedStart": "no", "FaceLimitedEnd": "no"}
         return result

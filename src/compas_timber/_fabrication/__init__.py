@@ -6,6 +6,17 @@ from .jack_cut import JackRafterCut
 from .jack_cut import JackRafterCutParams
 from .drilling import Drilling
 from .drilling import DrillingParams
+from .slot import Slot
+from .slot import SlotParams
 
 
-__all__ = ["JackRafterCut", "BTLxProcess", "OrientationType", "JackRafterCutParams", "Drilling", "DrillingParams"]
+__all__ = [
+    "JackRafterCut",
+    "BTLxProcess",
+    "OrientationType",
+    "JackRafterCutParams",
+    "Drilling",
+    "DrillingParams",
+    "Slot",
+    "SlotParams",
+]
