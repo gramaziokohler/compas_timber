@@ -26,4 +26,4 @@ Features are additional geometric operations on beams:
 The output `Feature` is to be used as input for the **Model** component. See :doc:`model`.
 
 .. image:: ../images/gh_features.png
-  :width: 51%
+  :width: 70%
