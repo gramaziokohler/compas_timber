@@ -6,26 +6,30 @@ Design Components help to generate standard Wall structures from Surfaces, using
 
 .. image:: ../images/gh_design_workflow.png
     :width: 60%
+
 |
+
 Surface Model
 ^^^^^^^^^^^^^
+
 Creates a Model from a Surface
 
 Inputs:
 
-* `surface` - :code:`Surface` that represents the Wall Dimensions
-* `stud_spacing` - :code:`Number`: Spacing between the Studs
-* `beam_width` - :code:`Number`: Width of the Beams
-* `frame_depth` - :code:`Number`: Depth of the Frame = Height of the Beams
-* `stud_direction` - :code:`Vector` or :code:`Line`: Optional, control Stud Direction
-* `options` - Surface Model Options Component
-* `CreateGeometry` - :code:`Boolean`: Set to True if Joint Geometry should be generated
+* `surface` - Referenced planar :code:`Surface` from which to generate beams and joint rules.
+* `stud_spacing` - :code:`Number`: Spacing between the Studs.
+* `beam_width` - :code:`Number`: Width of the cross-section.
+* `frame_depth` - :code:`Number`: Thickness of the frame section of the resulting model. Used to set Beam height.
+* `stud_direction` - :code:`Vector` or :code:`Line`: Optional, Vector defining the direction of stud in the model. Default is World-Z.
+* `options` - Optional, **Surface Model Options** Component
+* `CreateGeometry` - :code:`Boolean`: Set to True to generate Joint and Feature geometry.
+
 |
 
 Outputs:
 
-*	`Model` : the resulting Model.
-*	`Geometry` : Geometry of the beams and joints.
+*	`Model` : the resulting COMPAS Timber Model.
+*	`Geometry` : Model geometry.
 *   `DebugInfo` : Debug information object in the case of feature or joining errors.
 
 Surface Model Options
@@ -34,12 +38,12 @@ Creates the Options for the Surface Model
 
 Inputs:
 
-* `sheeting_outside` - :code:`Boolean`: True if Sheeting on the outside should be generated
-* `sheeting_inside` - :code:`Boolean`: True if Sheeting on the inside should be generated
-* `lintel_posts` - :code:`Boolean`: #TODO
-* `edge_stud_offset` - :code:`Number`: #TODO
-* `custom_dimensions` - Custom Dimensions Component
-* `joint_overrides` - #TODO
+* `sheeting_outside` - :code:`Number`: Optional, thickness of sheeting on the side of assembly closest to input surface. If zero, no sheeting will be added.
+* `sheeting_inside` - :code:`Number`: Optional, thickness of sheeting on the side of assembly furthest from input surface. If zero, no sheeting will be added.
+* `lintel_posts` - :code:`Boolean`: Optional, if False, jack studs will not be generated and headers will butt directly onto king studs.
+* `edge_stud_offset` - :code:`Number`: Optional, distance to offset the studs at the edge of the assembly. If zero, the studs will be flush with the edge of the assembly.
+* `custom_dimensions` - Optional, from **Custom Dimensions** Component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.
+* `joint_overrides` - Optional, from **Joint Overrides** Component. Allows user to specify joints between specific beam types in surface model.
 
 Outputs:
 
