@@ -14,8 +14,10 @@ The Joints between :doc:`beams` are defined by Joint Rules. There are four kinds
       :width: 20%
 
 |
+
 Joint Rules Components
 ----------------------
+
 .. important::
 
     **Dynamic Components**
@@ -31,23 +33,29 @@ Joint Rules Components
 
 .. image:: ../images/gh_joint_rules_default.png
     :width: 20%
+    
 |
+
 2. **Topological Joint Rules** - These Joint Rules are more specific and will overwrite the Default Joint Rules. The inputs are variable and depend on the joint type.
 
    *   **L Topological Joint Rules:** This Component applies the L-Joint you select to all L-Topologies.
    *   **T Topological Joint Rules:** This Component applies the T-Joint you select to all T-Topologies.
    *   **X Topological Joint Rules:** This Component applies the X-Joint you select to all X-Topologies.
+
 |
+
 .. image:: ../images/gh_joint_rules_topological.png
     :width: 100%
 
 |
+
 3. **Category Joint Rules** - This Joint Rule will overwrite all Topological Joint Rules. The Component defines a Joint type for all Joints between two beam Categories. The Categories are assigned through the string-input `Category` in the component :code:`Beam`. The inputs are variable and depend on the joint type. 
 
 .. image:: ../images/gh_joint_rules_category.png
     :width: 40%
 
 |
+
 4. **Direct Joint Rules** - This Joint Rule is highly specific and will overwrite every other Joint Rule. The Component assigns a Joint type directly to specific beams. The Beams can be selected using the component :code:`Find Beam By Rhino GUID` See also :doc:`beams`. The inputs are variable and depend on the joint type.
 
 .. image:: ../images/gh_joint_rules_direct.png
