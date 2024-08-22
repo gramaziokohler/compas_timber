@@ -217,23 +217,23 @@ class BTLxPart(object):
         return (
             Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),  #
             Frame(
-                self.frame.point + self.frame.yaxis * self.width,
+                self.frame.point + self.frame.yaxis * self.height,
                 self.frame.xaxis,
                 -self.frame.yaxis,
             ),
             Frame(
-                self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
+                self.frame.point + self.frame.yaxis * self.height + self.frame.zaxis * self.width,
                 self.frame.xaxis,
                 -self.frame.zaxis,
             ),
             Frame(
-                self.frame.point + self.frame.zaxis * self.height,
+                self.frame.point + self.frame.zaxis * self.width,
                 self.frame.xaxis,
                 self.frame.yaxis,
             ),
             Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
             Frame(
-                self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
+                self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.height,
                 self.frame.zaxis,
                 -self.frame.yaxis,
             ),

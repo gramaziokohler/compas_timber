@@ -196,6 +196,58 @@ class Joint(Interaction):
 
     @staticmethod
     def _beam_side_incidence(beam_a, beam_b, ignore_ends=True):
+        """Returns a map of face indices of beam_b and the angle of their normal with beam_a's centerline.
+
+        This is used to find a cutting plane when joining the two beams.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.parts.Beam`
+            The beam that attaches with one of its ends to the side of beam_b.
+        beam_b : :class:`~compas_timber.parts.Beam`
+            The other beam.
+        ignore_ends : bool, optional
+            If True, only the first four faces of `beam_b` are considered. Otherwise all faces are considered.
+
+        Examples
+        --------
+        >>> face_angles = Joint.beam_side_incidence(beam_a, beam_b)
+        >>> closest_face_index = min(face_angles, key=face_angles.get)
+        >>> cutting_plane = beam_b.faces[closest_face_index]
+
+        Returns
+        -------
+        dict(int, float)
+            A map of face indices of beam_b and their respective angle with beam_a's centerline.
+
+        """
+        # find the orientation of beam_a's centerline so that it's pointing outward of the joint
+        # find the closest end
+        p1x, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
+        if p1x is None:
+            raise AssertionError("No intersection found")
+
+        end, _ = beam_a.endpoint_closest_to_point(Point(*p1x))
+
+        if end == "start":
+            centerline_vec = beam_a.centerline.vector
+        else:
+            centerline_vec = beam_a.centerline.vector * -1
+
+        if ignore_ends:
+            beam_b_faces = beam_b.faces[:4]
+        else:
+            beam_b_faces = beam_b.faces
+
+        face_angles = {}
+        for face_index, face in enumerate(beam_b_faces):
+            face_angles[face_index] = angle_vectors(face.normal, centerline_vec)
+
+        return face_angles
+
+    @staticmethod
+    def _beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
+        # compared to beam_side_incidence, this function considers the ref_sides and not faces and forms part of the transition to the new system
         """Returns a map of ref_side indices of beam_b and the angle of their normal with beam_a's centerline.
 
         This is used to find a cutting plane when joining the two beams.

@@ -94,13 +94,13 @@ class TStepJoint(Joint):
 
     @property
     def cross_beam_ref_side_index(self):
-        ref_side_dict = self._beam_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_dict = self._beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     @property
     def main_beam_ref_side_index(self):
-        ref_side_dict = self._beam_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
+        ref_side_dict = self._beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 

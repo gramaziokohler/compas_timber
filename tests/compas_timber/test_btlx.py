@@ -31,9 +31,9 @@ def test_beam_ref_faces(mock_beam):
     # https://www.design2machine.com/btlx/btlx_20.pdf page 5
     btlx_part = BTLxPart(mock_beam, 0)
 
-    assert btlx_part.ref_side_from_face(mock_beam.faces[0]) == 3
+    assert btlx_part.ref_side_from_face(mock_beam.faces[0]) == 1
     assert btlx_part.ref_side_from_face(mock_beam.faces[1]) == 2
-    assert btlx_part.ref_side_from_face(mock_beam.faces[2]) == 1
+    assert btlx_part.ref_side_from_face(mock_beam.faces[2]) == 3
     assert btlx_part.ref_side_from_face(mock_beam.faces[3]) == 4
     assert btlx_part.ref_side_from_face(mock_beam.faces[4]) == 5
     assert btlx_part.ref_side_from_face(mock_beam.faces[5]) == 6
