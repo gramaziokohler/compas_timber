@@ -247,6 +247,7 @@ class Slot(BTLxProcess):
 
         ref_side = beam.side_as_surface(ref_side_index)
         # find 2 points of intersection
+        # TODO: shove this into some function. what are we? savages?
         small_edge_bottom = Line(ref_side.point_at(0, 0), ref_side.point_at(beam.width, 0))
         small_edge_top = Line(ref_side.point_at(0, beam.height), ref_side.point_at(beam.width, beam.height))
         small_edge_left = Line(ref_side.point_at(0, 0), ref_side.point_at(0, beam.height))
