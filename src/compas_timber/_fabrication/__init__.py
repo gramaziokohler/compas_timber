@@ -8,6 +8,8 @@ from .step_joint_notch import StepJointNotch
 from .step_joint_notch import StepJointNotchParams
 from .step_joint import StepJoint
 from .step_joint import StepJointParams
+from .dovetail_tenon import DovetailTenon
+from .dovetail_tenon import DovetailTenonParams
 
 
 __all__ = [
@@ -19,4 +21,6 @@ __all__ = [
     "StepJointNotchParams",
     "StepJoint",
     "StepJointParams",
+    "DovetailTenon",
+    "DovetailTenonParams",
 ]
