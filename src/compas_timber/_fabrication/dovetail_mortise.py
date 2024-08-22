@@ -22,37 +22,36 @@ from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
 from .btlx_process import OrientationType
 from .btlx_process import TenonShapeType
+from .btlx_process import LimitationTopType
 
 
-class DovetailTenon(BTLxProcess):
-    """Represents a Dovetail Tenon feature to be made on a beam.
+class DovetailMortise(BTLxProcess):
+    """Represents a Dovetail Mortise feature to be made on a beam.
 
     Parameters
     ----------
-    orientation : int
-        The orientation of the cut. Must be either OrientationType.START or OrientationType.END.
     start_x : float
         The start x-coordinate of the cut in parametric space of the reference side. Distance from the beam start to the reference point. -100000.0 < start_x < 100000.0.
     start_y : float
         The start y-coordinate of the cut in parametric space of the reference side. Distance from the reference edge to the reference point. -5000.0 < start_y < 5000.0.
     start_depth : float
-        The start depth of the cut in parametric space of the reference side. Margin on the reference side. -5000.0 < start_depth < 5000.0.
+        The start depth of the cut in parametric space of the reference side. Margin on the reference side. 0.0 < start_depth < 5000.0.
     angle : float
-        The angle of the cut. Angle between edge and reference edge. 0.1 < angle < 179.9.
+        The angle of the cut. Angle between edge and reference edge. -180.0 < angle < 180.0.
+    slope : float
+        The slope of the cut. Angle between axis along the length of the mortise and rederence side. 0.1 < slope < 179.9.
     inclination : float
-        The inclination of the cut. Inclination between face and reference side. 0.1 < inclination < 179.9.
-    rotation : float
-        The rotation of the cut. Angle between axis of the tenon and rederence side. 0.1 < rotation < 179.9.
-    length_limited_top : bool
-        Whether the top length of the cut is limited. True or False.
+        The inclination of the cut. Angle between axis along the width of the mortise and rederence side. 0.1 < inclination < 179.9.
+    limitation_top : str
+        The limitation type of the top length of the cut. Should be either 'limited', 'unlimited', or 'pocket'.
     length_limited_bottom : bool
         Whether the bottom length of the cut is limited. True or False.
     length : float
         The length of the cut. 0.0 < length < 5000.0.
     width : float
         The width of the cut. 0.0 < width < 1000.0.
-    height : float
-        The height of the tenon. 0.0 < height < 1000.0.
+    depth : float
+        The depth of the mortise. 0.0 < depth < 1000.0.
     cone_angle : float
         The cone angle of the cut. 0.0 < cone_angle < 30.0.
     use_flank_angle : bool
@@ -66,26 +65,25 @@ class DovetailTenon(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "DovetailTenon"  # type: ignore
+    PROCESS_NAME = "DovetailMortise"  # type: ignore
 
     # Class-level attribute
     _dovetail_tool_params = {}
 
     @property
     def __data__(self):
-        data = super(DovetailTenon, self).__data__
-        data["orientation"] = self.orientation
+        data = super(DovetailMortise, self).__data__
         data["start_x"] = self.start_x
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["angle"] = self.angle
+        data["slope"] = self.slope
         data["inclination"] = self.inclination
-        data["rotation"] = self.rotation
-        data["length_limited_top"] = self.length_limited_top
+        data["limitation_top"] = self.limitation_top
         data["length_limited_bottom"] = self.length_limited_bottom
         data["length"] = self.length
         data["width"] = self.width
-        data["height"] = self.height
+        data["depth"] = self.depth
         data["cone_angle"] = self.cone_angle
         data["use_flank_angle"] = self.use_flank_angle
         data["flank_angle"] = self.flank_angle
@@ -95,18 +93,17 @@ class DovetailTenon(BTLxProcess):
 
     def __init__(
         self,
-        orientation,
         start_x=0.0,
         start_y=50.0,
-        start_depth=50.0,
-        angle=90.0,
+        start_depth=0.0,
+        angle=0.0,
+        slope=90.0,
         inclination=90.0,
-        rotation=90.0,
-        length_limited_top=True,
+        limitation_top=LimitationTopType.LIMITED,
         length_limited_bottom=True,
         length=80.0,
         width=40.0,
-        height=28.0,
+        depth=28.0,
         cone_angle=15.0,
         use_flank_angle=False,
         flank_angle=15.0,
@@ -114,37 +111,35 @@ class DovetailTenon(BTLxProcess):
         shape_radius=20.0,
         **kwargs
     ):
-        super(DovetailTenon, self).__init__(**kwargs)
-        self._orientation = None
+        super(DovetailMortise, self).__init__(**kwargs)
         self._start_x = None
         self._start_y = None
         self._start_depth = None
         self._angle = None
+        self._slope = None
         self._inclination = None
-        self._rotation = None
-        self._length_limited_top = None
+        self._limitation_top = None
         self._length_limited_bottom = None
         self._length = None
         self._width = None
-        self._height = None
+        self._depth = None
         self._cone_angle = None
         self._use_flank_angle = None
         self._flank_angle = None
         self._shape = None
         self._shape_radius = None
 
-        self.orientation = orientation
         self.start_x = start_x
         self.start_y = start_y
         self.start_depth = start_depth
         self.angle = angle
+        self.slope = slope
         self.inclination = inclination
-        self.rotation = rotation
-        self.length_limited_top = length_limited_top
+        self.limitation_top = limitation_top
         self.length_limited_bottom = length_limited_bottom
         self.length = length
         self.width = width
-        self.height = height
+        self.depth = depth
         self.cone_angle = cone_angle
         self.use_flank_angle = use_flank_angle
         self.flank_angle = flank_angle
@@ -157,17 +152,7 @@ class DovetailTenon(BTLxProcess):
 
     @property
     def params_dict(self):
-        return DovetailTenonParams(self).as_dict()
-
-    @property
-    def orientation(self):
-        return self._orientation
-
-    @orientation.setter
-    def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END]:
-            raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
-        self._orientation = orientation
+        return DovetailMortiseParams(self).as_dict()
 
     @property
     def start_x(self):
@@ -176,7 +161,7 @@ class DovetailTenon(BTLxProcess):
     @start_x.setter
     def start_x(self, start_x):
         if start_x > 100000.0 or start_x < -100000.0:
-            raise ValueError("StartX must be between -100000.0 and 100000.0.")
+            raise ValueError("StartX must be between -100000.0 and 100000.0")
         self._start_x = start_x
 
     @property
@@ -186,7 +171,7 @@ class DovetailTenon(BTLxProcess):
     @start_y.setter
     def start_y(self, start_y):
         if start_y > 5000.0 or start_y < -5000.0:
-            raise ValueError("StartY must be between -5000.0 and 5000.0.")
+            raise ValueError("StartY must be between -5000.0 and 5000.0")
         self._start_y = start_y
 
     @property
@@ -195,8 +180,8 @@ class DovetailTenon(BTLxProcess):
 
     @start_depth.setter
     def start_depth(self, start_depth):
-        if start_depth > 5000.0 or start_depth < -5000.0:
-            raise ValueError("StartDepth must be between -5000.0 and 5000.0.")
+        if start_depth > 5000.0 or start_depth < 0.0:
+            raise ValueError("StartDepth must be between 0.0 and 5000.0")
         self._start_depth = start_depth
 
     @property
@@ -210,6 +195,16 @@ class DovetailTenon(BTLxProcess):
         self._angle = angle
 
     @property
+    def slope(self):
+        return self._slope
+
+    @slope.setter
+    def slope(self, slope):
+        if slope > 179.9 or slope < 0.1:
+            raise ValueError("Slope must be between 0.1 and 179.9.")
+        self._slope = slope
+
+    @property
     def inclination(self):
         return self._inclination
 
@@ -220,24 +215,14 @@ class DovetailTenon(BTLxProcess):
         self._inclination = inclination
 
     @property
-    def rotation(self):
-        return self._rotation
+    def limitation_top(self):
+        return self._limitation_top
 
-    @rotation.setter
-    def rotation(self, rotation):
-        if rotation > 179.9 or rotation < 0.1:
-            raise ValueError("Rotation must be between 0.1 and 179.9.")
-        self._rotation = rotation
-
-    @property
-    def length_limited_top(self):
-        return self._length_limited_top
-
-    @length_limited_top.setter
-    def length_limited_top(self, length_limited_top):
-        if not isinstance(length_limited_top, bool):
-            raise ValueError("LengthLimitedTop must be either True or False.")
-        self._length_limited_top = length_limited_top
+    @limitation_top.setter
+    def limitation_top(self, limitation_top):
+        if limitation_top not in [LimitationTopType.LIMITED, LimitationTopType.UNLIMITED, LimitationTopType.POCKET]:
+            raise ValueError("LimitationTop must be either limited, unlimited or pocket.")
+        self._limitation_top = limitation_top
 
     @property
     def length_limited_bottom(self):
@@ -256,7 +241,7 @@ class DovetailTenon(BTLxProcess):
     @length.setter
     def length(self, length):
         if length > 5000.0 or length < 0.0:
-            raise ValueError("Length must be between 0.0 and 5000.0.")
+            raise ValueError("Length must be between 0.0 and 5000.0")
         self._length = length
 
     @property
@@ -266,7 +251,7 @@ class DovetailTenon(BTLxProcess):
     @width.setter
     def width(self, width):
         if width > 1000.0 or width < 0.0:
-            raise ValueError("Width must be between 0.0 and 1000.0.")
+            raise ValueError("Width must be between 0.0 and 1000.0")
         self._width = width
 
     @property
@@ -276,7 +261,7 @@ class DovetailTenon(BTLxProcess):
     @height.setter
     def height(self, height):
         if height > 1000.0 or height < 0.0:
-            raise ValueError("Height must be between 0.0 and 1000.0.")
+            raise ValueError("Height must be between 0.0 and 1000.0")
         self._height = height
 
     @property
@@ -315,7 +300,13 @@ class DovetailTenon(BTLxProcess):
 
     @shape.setter
     def shape(self, shape):
-        if shape not in [TenonShapeType.AUTOMATIC, TenonShapeType.SQUARE, TenonShapeType.ROUND, TenonShapeType.ROUNDED, TenonShapeType.RADIUS]:
+        if shape not in [
+            TenonShapeType.AUTOMATIC,
+            TenonShapeType.SQUARE,
+            TenonShapeType.ROUND,
+            TenonShapeType.ROUNDED,
+            TenonShapeType.RADIUS,
+        ]:
             raise ValueError("Shape must be either 'automatic', 'square', 'round', 'rounded', or 'radius'.")
         self._shape = shape
 
@@ -326,7 +317,7 @@ class DovetailTenon(BTLxProcess):
     @shape_radius.setter
     def shape_radius(self, shape_radius):
         if shape_radius > 1000.0 or shape_radius < 0.0:
-            raise ValueError("ShapeRadius must be between 0.0 and 1000.")
+            raise ValueError("ShapeRadius must be between 0.0 and 1000.0")
         self._shape_radius = shape_radius
 
     ########################################################################
@@ -349,7 +340,7 @@ class DovetailTenon(BTLxProcess):
         shape_radius=20.0,
         ref_side_index=0,
     ):
-        """Create a DovetailTenon instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the main beam.
+        """Create a DovetailMortise instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the main beam.
 
         Parameters
         ----------
@@ -362,10 +353,10 @@ class DovetailTenon(BTLxProcess):
 
         Returns
         -------
-        :class:`~compas_timber.fabrication.DovetailTenon`
+        :class:`~compas_timber.fabrication.DovetailMortise`
 
         """
-        # type: (Plane|Frame, Beam, float, float, bool, int) -> DovetailTenon
+        # type: (Plane|Frame, Beam, float, float, bool, int) -> DovetailMortise
 
         if cls._dovetail_tool_params:
             # get the tool parameters
@@ -402,7 +393,7 @@ class DovetailTenon(BTLxProcess):
         # calculate start_y
         start_y = (
             beam.width / math.sin(math.radians(angle))
-        ) / 2  # TODO: is there a case where the tenon should not be in the middle of the beam?
+        ) / 2  # TODO: is there a case where the mortise should not be in the middle of the beam?
 
         # calculate inclination
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
@@ -700,7 +691,7 @@ class DovetailTenon(BTLxProcess):
         return cutting_plane
 
     def dovetail_volume_from_params_and_beam(self, beam):
-        """Calculates the dovetail tenon volume from the machining parameters in this instance and the given beam.
+        """Calculates the dovetail mortise volume from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -710,7 +701,7 @@ class DovetailTenon(BTLxProcess):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The tenon volume.
+            The mortise volume.
 
         """
         # type: (Beam) -> Brep
@@ -748,7 +739,7 @@ class DovetailTenon(BTLxProcess):
 
         # Calculate the offset length
         offset_length = self.height * math.tan(math.radians(self.flank_angle))
-        # offset the polyline to create the top face of the tenon
+        # offset the polyline to create the top face of the mortise
         top_dovetail_points = offset_polyline(bottom_dovetail_points, offset_length, cutting_frame.normal)
         # make the top face flat
         top_dovetail_points[0][2] = bottom_dovetail_points[0][2]
@@ -791,7 +782,7 @@ class DovetailTenon(BTLxProcess):
                 dovetail_volume.trim(plane)
             except Exception as e:
                 raise FeatureApplicationError(
-                    plane, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
+                    plane, dovetail_volume, "Failed to trim mortise volume with cutting plane: {}".format(str(e))
                 )
 
         # rotate the dovetail volume based on the rotation value
@@ -809,41 +800,40 @@ class DovetailTenon(BTLxProcess):
         return dovetail_volume
 
 
-class DovetailTenonParams(BTLxProcessParams):
-    """A class to store the parameters of a Dovetail Tenon feature.
+class DovetailMortiseParams(BTLxProcessParams):
+    """A class to store the parameters of a Dovetail Mortise feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DovetailTenon`
-        The instance of the Dovetail Tenon feature.
+    instance : :class:`~compas_timber._fabrication.DovetailMortise`
+        The instance of the Dovetail Mortise feature.
     """
 
     def __init__(self, instance):
-        # type: (DovetailTenon) -> None
-        super(DovetailTenonParams, self).__init__(instance)
+        # type: (DovetailMortise) -> None
+        super(DovetailMortiseParams, self).__init__(instance)
 
     def as_dict(self):
-        """Returns the parameters of the Dovetail Tenon feature as a dictionary.
+        """Returns the parameters of the Dovetail Mortise feature as a dictionary.
 
         Returns
         -------
         dict
-            The parameters of the Dovetail Tenon as a dictionary.
+            The parameters of the Dovetail Mortise as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(DovetailTenonParams, self).as_dict()
-        result["Orientation"] = self._instance.orientation
+        result = super(DovetailMortiseParams, self).as_dict()
         result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
         result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
+        result["Slope"] = "{:.{prec}f}".format(self._instance.slope, prec=TOL.precision)
         result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
-        result["Rotation"] = "{:.{prec}f}".format(self._instance.rotation, prec=TOL.precision)
-        result["LengthLimitedTop"] = "yes" if self._instance.length_limited_top else "no"
+        result["LimitationTop"] = self._instance.limitation_top
         result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
         result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)
         result["Width"] = "{:.{prec}f}".format(self._instance.width, prec=TOL.precision)
-        result["Height"] = "{:.{prec}f}".format(self._instance.height, prec=TOL.precision)
+        result["Depth"] = "{:.{prec}f}".format(self._instance.depth, prec=TOL.precision)
         result["ConeAngle"] = "{:.{prec}f}".format(self._instance.cone_angle, prec=TOL.precision)
         result["UseFlankAngle"] = "yes" if self._instance.use_flank_angle else "no"
         result["FlankAngle"] = "{:.{prec}f}".format(self._instance.flank_angle, prec=TOL.precision)

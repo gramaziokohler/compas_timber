@@ -128,3 +128,21 @@ class TenonShapeType(object):
     ROUND = "round"
     ROUNDED = "rounded"
     RADIUS = "radius"
+
+
+class LimitationTopType(object):
+    """Enum for the top limitation of the cut.
+
+    Attributes
+    ----------
+    LIMITED : literal("limited")
+        Limitation to the cut.
+    UNLIMITED : literal("unlimited")
+        No limit to the cut.
+    POCKET : literal("pocket")
+        Pocket like limitation to the cut.
+    """
+
+    LIMITED = "limited"
+    UNLIMITED = "unlimited"
+    POCKET = "pocket"
