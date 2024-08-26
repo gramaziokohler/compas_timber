@@ -550,6 +550,8 @@ class SurfaceModel(object):
             self._length = None
             self._height = None
             self._frame = None
+
+            self.dist_tolerance = parent.dist_tolerance
             self.process_outlines()
 
         @property
