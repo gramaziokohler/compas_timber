@@ -3,7 +3,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber._fabrication import Drilling
-from compas_timber.ghpython import FeatureDefinition
+from compas_timber.design import FeatureDefinition
 
 
 class DrillHoleFeature(component):
