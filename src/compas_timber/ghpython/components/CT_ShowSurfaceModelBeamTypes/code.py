@@ -1,10 +1,8 @@
-import inspect
-
+from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from System.Windows.Forms import ToolStripSeparator
 
-from compas.scene import Scene
 from compas_timber.design import SurfaceModel
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
@@ -17,7 +15,6 @@ class SurfaceModelJointRule(component):
             self.joint_type = None
         else:
             self.beam_type = ghenv.Component.Params.Output[0].NickName
-
 
     def RunScript(self, model):
         if not self.beam_type:
@@ -39,7 +36,6 @@ class SurfaceModelJointRule(component):
             item = menu.Items.Add(name, None, self.on_item_click)
             if self.beam_type and name == self.beam_type:
                 item.Checked = True
-
 
     def on_item_click(self, sender, event_info):
         self.beam_type = str(sender)
