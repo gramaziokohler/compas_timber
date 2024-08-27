@@ -10,6 +10,8 @@ from .step_joint import StepJoint
 from .step_joint import StepJointParams
 from .dovetail_tenon import DovetailTenon
 from .dovetail_tenon import DovetailTenonParams
+from .dovetail_mortise import DovetailMortise
+from .dovetail_mortise import DovetailMortiseParams
 
 
 __all__ = [
@@ -23,4 +25,6 @@ __all__ = [
     "StepJointParams",
     "DovetailTenon",
     "DovetailTenonParams",
+    "DovetailMortise",
+    "DovetailMortiseParams",
 ]
