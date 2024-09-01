@@ -456,12 +456,7 @@ class StepJointNotch(BTLxProcess):
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
 
-        # get box volume for subtracting from geometry
-        corner_1 = ref_side.point_at(self.start_x, self.start_y)
-        corner_2 = ref_side.point_at(self.start_x + self.displacement_end, self.start_y + self.notch_width)
-        subtraction_box = Box.from_corner_corner_height(corner_1, corner_2, max(self.step_depth, self.heel_depth))
-        subtraction_box.translate(-ref_side.frame.zaxis * max(self.step_depth, self.heel_depth))
-        subtraction_volume = Brep.from_box(subtraction_box)
+        subtraction_volume = geometry.copy()
 
         if self.step_shape == StepShapeType.DOUBLE:
             # trim geometry with first and last cutting plane
