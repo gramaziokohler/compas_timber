@@ -1,18 +1,23 @@
 from compas.geometry import Box
-from compas.geometry import Brep
+from compas.geometry import Polygon
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
-from compas_model.elements import Element
+from compas.datastructures import Mesh
+from compas_model.elements import PlateElement
 from compas_model.elements import reset_computed
+from compas.tolerance import Tolerance
+from compas.itertools import pairwise
+
 
 from .features import FeatureApplicationError
 
 
-class Plate(Element):
+class Plate(PlateElement):
+
     """
     A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
 
@@ -39,40 +44,71 @@ class Plate(Element):
 
     """
 
-    @property
-    def __data__(self):
-        data = super(Plate, self).__data__
-        data["outline"] = self.outline
-        data["thickness"] = self.thickness
-        data["vector"] = self.vector if self.vector else None
-        return data
 
-    def __init__(self, outline, thickness, vector = None, **kwargs):
-        super(Plate, self).__init__(**kwargs)
-        if not outline.is_closed:
-            raise ValueError("The outline points are not coplanar.")
-        self.outline = outline
-        self.thickness = thickness
-        self.features = []
-        self.attributes = {}
+    def __init__(self, bottom, top, features=None, frame=None, name=None, **kwargs):
+        # type: (compas.geometry.Polygon, compas.geometry.Polygon, list[PlateFeature] | None, compas.geometry.Frame | None, str | None) -> None
+        super(Plate, self).__init__(bottom, top)
+
+        if not Polygon(bottom).is_planar:
+            raise ValueError("The bottom outline points are not coplanar.")
+
+        self._bottom = bottom
+        self._top = top
+        self._shape = None
+
+        self._thickness = None
+        self._frame = None
+        self.features = features or []  # type: list[PlateFeature]
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
-        aggregate_angle = 0.0
+
+
+    @property
+    def shape(self):
+        if self._shape is None:
+            offset = len(self._bottom)
+
+            vertices = self._bottom + self._top  # type: ignore
+            bottom = list(range(offset))
+            top = [i + offset for i in bottom]
+            faces = [bottom[::-1], top]
+            for (a, b), (c, d) in zip(pairwise(bottom + bottom[:1]), pairwise(top + top[:1])):
+                faces.append([a, b, d, c])
+            mesh = Mesh.from_vertices_and_faces(vertices, faces)
+            self._shape = mesh
+        return self._shape
+
+    @property
+    def frame(self):
+        if self._frame is None:
+            self._frame = Plate.get_frame_from_outline(self.outline)
+        return self._frame
+
+    @property
+    def thickness(self):
+        if self._thickness is None:
+            bottom_frame = Frame.from_points(self.bottom.points[0], self.bottom.points[1], self.bottom.points[-2])
+            top_frame = Frame.from_points(self.top.points[0], self.top.points[1], self.top.points[-2])
+            self._thickness = bottom_frame.origin.distance_to_plane(Plane.from_frame(top_frame))
+        return self._thickness
+
+
+    @staticmethod
+    def get_frame_from_outline(outline, vector = None):
+        frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
+        aggregate_angle = 0.0   #this is used to determine if the outline is clockwise or counterclockwise
         for i in range(len(outline.points) - 1):
             first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
             second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
-            aggregate_angle += angle_vectors_signed(first_vector, second_vector, self.frame.zaxis)
+            aggregate_angle += angle_vectors_signed(first_vector, second_vector, frame.zaxis)
+        if vector is not None and dot_vectors(frame.zaxis, vector) < 0:     # if the vector is pointing in the opposite direction from self.frame.normal
+            if aggregate_angle > 0:
+                frame = Frame(frame.point, frame.xaxis, -frame.yaxis)       # flips the frame if the frame.point is at an interior corner
+            else:
+                frame = Frame(frame.point, frame.xaxis, -frame.yaxis)       # flips the frame if the frame.point is at an exterior corner
+        return frame
 
-        if aggregate_angle > 0:
-            self.frame = Frame(self.frame.point, self.frame.xaxis, -self.frame.yaxis)
 
-        if vector is not None and dot_vectors(self.vector, vector) < 0:
-            self.outline.reverse
-
-        for point in outline.points:
-            if point.distance_to_plane(Plane.from_frame(self.frame)) > 0.001:
-                raise ValueError("The outline points are not coplanar.")
 
     def __repr__(self):
         # type: () -> str
@@ -96,7 +132,7 @@ class Plate(Element):
         return len(self.features) > 0
 
     def __str__(self):
-        return "Plate {} with thickness {:.3f} with vector {} at {}".format(
+        return "Plate {} with thickness {:.3f} at {}".format(
             self.outline,
             self.thickness,
             self.vector,
@@ -106,54 +142,6 @@ class Plate(Element):
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
-
-    def compute_geometry(self, include_features=True):
-        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
-        """Compute the geometry of the element.
-
-        Parameters
-        ----------
-        include_features : bool, optional
-            If ``True``, include the features in the computed geometry.
-            If ``False``, return only the base geometry.
-
-        Returns
-        -------
-        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
-
-        """
-        plate_geo = self.shape
-        if include_features:
-            for feature in self.features:
-                try:
-                    plate_geo = feature.apply(plate_geo)
-                except FeatureApplicationError as error:
-                    self.debug_info.append(error)
-        return plate_geo
-
-    def compute_aabb(self, inflate=0.0):
-        # type: (float) -> compas.geometry.Box
-        """Computes the Axis Aligned Bounding Box (AABB) of the element.
-
-        Parameters
-        ----------
-        inflate : float, optional
-            Offset of box to avoid floating point errors.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Box`
-            The AABB of the element.
-
-        """
-        vertices = [point for point in self.outline.points]
-        for point in self.outline.points:
-            vertices.append(point + self.vector)
-        box = Box.from_points(vertices)
-        box.xsize += inflate
-        box.ysize += inflate
-        box.zsize += inflate
-        return box
 
     def compute_obb(self, inflate=0.0):
         # type: (float | None) -> compas.geometry.Box
@@ -184,30 +172,45 @@ class Plate(Element):
 
         return obb
 
-    def compute_collision_mesh(self):
-        # type: () -> compas.datastructures.Mesh
-        """Computes the collision geometry of the element.
-
-        Returns
-        -------
-        :class:`compas.datastructures.Mesh`
-            The collision geometry of the element.
-
-        """
-        return self.compute_aabb.to_mesh()
 
     # ==========================================================================
     # Alternative constructors
     # ==========================================================================
 
-    @staticmethod
-    def _create_shape(outline, vector):
-        brep = Brep.from_extrusion(outline, vector)
 
-        return brep
+    @classmethod
+    def from_outline_and_thickness(cls, outline, thickness, vector = None, **kwargs):
+        # type: ( compas.geometry.Polyline, compas.geometry.Vector, dict) -> Plate
+        """Create a plate element from an outline and vector. direction of extrusion is determined by the normal of the outline.
+
+        Parameters
+        ----------
+        outline : :class:`compas.geometry.Polyline`
+            The outline of the plate.
+        thickness: float
+            The thickness of the plate.
+        vector : :class:`compas.geometry.Vector`
+            The vector that determines direction of extrusion.
+
+        Returns
+        -------
+        :class:`Plate`
+
+        """
+
+        bottom = Polygon(outline.points[0:-2])
+        top = bottom.copy()
+        frame = cls.get_frame_from_outline(outline, vector)
+        top.translate(frame.normal * thickness)
+        plate = Plate(bottom.points, top.points)
+
+        plate.thickness = thickness
+        plate.frame = frame
+        return plate
+
 
     # ==========================================================================
-    # Featrues
+    # Features
     # ==========================================================================
 
     @reset_computed

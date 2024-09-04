@@ -58,7 +58,7 @@ class Plate(component):
                 rhino_polyline = rs.coercecurve(geometry)
                 line = curve_to_compas(rhino_polyline)
 
-                plate = CTPlate(line, t, v)
+                plate = CTPlate.from_outline_and_thickness(line, t, v)
                 plate.attributes["rhino_guid"] = str(guid) if guid else None
                 plate.attributes["category"] = c
 
