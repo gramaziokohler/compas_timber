@@ -18,16 +18,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## [0.9.1] 2024-07-05
+
+### Added
+
+* Added `ref_frame` attribute to `Beam`.
+* Added `ref_sides` attribute to `Beam`.
+* Added `ref_edges` attribute to `Beam`.
+
+### Changed
+
+* Fixed error in BakeWithBoxMap component.
+
+### Removed
+
+
 ## [0.9.0] 2024-06-14
 
 ### Added
 
 * Added `birdsmouth` parameter to `butt_joint` which applies a `btlx_double_cut` process to the part. 
-* Added `BTLxDoubleCut` BTLx Processing class
+* Added `BTLxDoubleCut` BTLx Processing class.
 * Added BTLx support for `TButtJoint` and `LButtJoint`
-* Added `BTLxLap` process class
+* Added `BTLxLap` process class.
 
 ### Changed
+
+* Moved module `workflow` from package `ghpython` to new package `design`.
+* Moved `compas_timber.ghpython.CategoryRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.DirectRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.JointRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.TopologyRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.JointDefinition` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.FeatureDefinition` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.DebugInfomation` to `compas_timber.design`.
 
 ### Removed
 
@@ -89,6 +113,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
 * Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
 * Added `topos` attribute to `CategoryRule` to filter when joints get applied
+* Added new `SurfaceAssembly` class
+* Added GH component `SurfaceAssembly` which directly generates a `TimberAssembly` with standard wall framing from a planar surface. 
+* Added GH component `SurfaceAssemblyOptions`
+* Added GH component `CustomBeamDimensions` for `SurfaceAssembly`
 
 ### Changed
 

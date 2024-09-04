@@ -9,11 +9,11 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
-from compas_timber.ghpython import CategoryRule
-from compas_timber.ghpython import DebugInfomation
-from compas_timber.ghpython import DirectRule
-from compas_timber.ghpython import JointDefinition
-from compas_timber.ghpython import TopologyRule
+from compas_timber.design import CategoryRule
+from compas_timber.design import DebugInfomation
+from compas_timber.design import DirectRule
+from compas_timber.design import JointDefinition
+from compas_timber.design import TopologyRule
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
