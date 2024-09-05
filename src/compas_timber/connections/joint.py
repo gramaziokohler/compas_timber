@@ -451,3 +451,34 @@ class Joint(Interaction):
             ref_side_angles[ref_side_index] = angle_vectors(ref_side.normal, cross_vect)
 
         return ref_side_angles
+
+    def _are_beams_coplanar(beam_a, beam_b, tolerance=1e-3):
+        """
+        Checks if two beams are coplanar based on the cross product of their centerline directions.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.parts.Beam`
+            The first beam.
+        beam_b : :class:`~compas_timber.parts.Beam`
+            The second beam.
+        tolerance : float, optional
+            The tolerance for the dot product comparison, default is 1e-3.
+
+        Returns
+        -------
+        bool
+            True if the beams are coplanar, False otherwise.
+        """
+        # Compute the cross product of the centerline directions of the two beams
+        print(beam_a, beam_b)
+        cross_product = beam_a.centerline.direction.cross(beam_b.centerline.direction)
+
+        # Check dot products of the cross product with the normals of both beams' frames
+        dot_with_beam_b_normal = abs(cross_product.dot(beam_b.frame.normal))
+        dot_with_beam_a_normal = abs(cross_product.dot(beam_a.frame.normal))
+
+        # Check if both dot products are close to 0 or 1 (indicating coplanarity)
+        return (
+            1 - tolerance <= dot_with_beam_b_normal <= 1 + tolerance or 0 <= dot_with_beam_b_normal <= tolerance
+        ) and (1 - tolerance <= dot_with_beam_a_normal <= 1 + tolerance or 0 <= dot_with_beam_a_normal <= tolerance)
