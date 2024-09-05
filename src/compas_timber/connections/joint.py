@@ -1,4 +1,7 @@
+from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
@@ -141,6 +144,65 @@ class Joint(Interaction):
                 self._ends[str(beam.guid)] = "end"
 
         return self._ends
+
+    @property
+    def int_forces(self):
+        """Returns the internal forces acting on this joint as vectors. A vector pointing towards the joint represents compression and away from the joint represents tension.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Vector`
+            The internal forces acting on this joint.
+
+        """
+        force_vectors = []
+        for beam in self.beams:
+            if self.ends[str(beam.guid)] == "start":
+                force_vector = beam.centerline.direction * beam.int_force
+            else:
+                force_vector = beam.centerline.direction * -beam.int_force
+            force_vectors.append(force_vector)
+
+        return force_vectors
+
+    @property
+    def shear_force(self):
+        """Returns the shear force acting on this joint as a vector.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Vector`
+            The shear force acting on this joint.
+
+        """
+        return Vector.sum_vectors(self.int_forces)
+
+    @property
+    def frame(self):
+        """Returns the frame of the joint.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+            The frame of the joint.
+
+        """
+        centerlines = [beam.centerline for beam in self.beams]
+        intersection_points = intersection_line_line(*centerlines)
+        if intersection_points is None:
+            raise BeamJoinningError(self.beams, self, debug_info="No intersection found")
+        if intersection_points[0] == intersection_points[1]:
+            int_point = intersection_points[0]
+        else:
+            int_point = Point(
+                (intersection_points[0][0] + intersection_points[1][0]) / 2,
+                (intersection_points[0][1] + intersection_points[1][1]) / 2,
+                (intersection_points[0][2] + intersection_points[1][2]) / 2,
+            )
+
+        plane = Plane(int_point, self.beams[0].centerline.direction.cross(self.beams[1].centerline.direction))
+
+        return Frame.from_plane(plane)
 
     @staticmethod
     def get_face_most_towards_beam(beam_a, beam_b, ignore_ends=True):
@@ -296,7 +358,47 @@ class Joint(Interaction):
             ref_side_angles[ref_side_index] = angle_vectors(ref_side.normal, centerline_vec)
 
         return ref_side_angles
-    
+
+    @staticmethod
+    def _beam_ref_side_incidence_with_vector(beam_b, vector, ignore_ends=True):
+        """
+        Returns a map of ref_side indices of beam_b and the angle of their normal with a given vector.
+
+        This is used to find a cutting plane when joining two beams where one beam is represented the normal of one of it's reference sides.
+
+        Parameters
+        ----------
+        beam_b : :class:`~compas_timber.parts.Beam`
+            The beam for which ref_side angles will be calculated.
+        vector : :class:`~compas.geometry.Vector`
+            The vector to compare against the ref_sides' normals.
+        ignore_ends : bool, optional
+            If True, only the first four ref_sides of `beam_b` are considered. Otherwise all ref_sides are considered.
+
+        Examples
+        --------
+        >>> vector = Vector(1, 0, 0)
+        >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_b, vector)
+        >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
+        >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index]
+
+        Returns
+        -------
+        dict(int, float)
+            A map of ref_side indices of beam_b and their respective angle with the given vector.
+
+        """
+        if ignore_ends:
+            beam_b_ref_sides = beam_b.ref_sides[:4]
+        else:
+            beam_b_ref_sides = beam_b.ref_sides
+
+        ref_side_angles = {}
+        for ref_side_index, ref_side in enumerate(beam_b_ref_sides):
+            ref_side_angles[ref_side_index] = angle_vectors(vector, ref_side.normal)
+
+        return ref_side_angles
+
     @staticmethod
     def _get_ref_side_most_ortho_to_cross_vector(beam_a, beam_b, ignore_ends=True):
         # compared to beam_side_incidence, this function considers the ref_sides and not faces and forms part of the transition to the new system
@@ -342,7 +444,7 @@ class Joint(Interaction):
             beam_b_ref_sides = beam_b.ref_sides[:4]
         else:
             beam_b_ref_sides = beam_b.ref_sides
-        
+
         cross_vect = centerline_vec.cross(beam_a.centerline.vector)
         ref_side_angles = {}
         for ref_side_index, ref_side in enumerate(beam_b_ref_sides):
