@@ -563,30 +563,6 @@ class DovetailTenon(BTLxProcess):
         min_width = 2 * shape_radius
         return min(max(width, min_width), max_width)
 
-    @staticmethod
-    def _create_trimming_planes_for_box(bottom_points, top_points, length_limited_top, length_limited_bottom):
-        # Create the trimming planes to trim a box into a frustum trapezoid.
-        if len(bottom_points) != len(top_points):
-            raise ValueError("The number of bottom points must match the number of top points.")
-
-        planes = []
-        num_points = len(bottom_points)
-        for i in range(num_points):
-            # Get the bottom and top points for the current edge
-            bottom1 = bottom_points[i]
-            top1 = top_points[i]
-            bottom2 = bottom_points[(i + 1) % num_points]
-            # Define vectors for the plane
-            x_axis = top1 - bottom1
-            y_axis = bottom2 - bottom1
-            # Compute the normal vector to the plane using the cross product
-            normal = x_axis.cross(y_axis)
-            # Create the plane
-            plane = Plane(bottom1, -normal)
-            planes.append(plane)
-
-        return planes
-
     ########################################################################
     # Class Methods
     ########################################################################
@@ -741,7 +717,60 @@ class DovetailTenon(BTLxProcess):
             cutting_plane = Frame(cutting_plane.point, -cutting_plane.yaxis, -cutting_plane.xaxis)
         else:
             cutting_plane = Frame(cutting_plane.point, cutting_plane.yaxis, -cutting_plane.xaxis)
+
         return cutting_plane
+
+    def dovetail_cutting_planes_from_params_and_beam(self, beam):
+        """Calculates the cutting planes for the dovetail tenon from the machining parameters in this instance and the given beam."""
+
+        cutting_frame = self.frame_from_params_and_beam(beam)
+        offseted_cutting_frame = Frame(cutting_frame.point, -cutting_frame.xaxis, cutting_frame.yaxis)
+        offseted_cutting_frame.point += cutting_frame.normal * self.height
+
+        cutting_surface = PlanarSurface(
+            xsize=beam.height / math.sin(math.radians(self.inclination)),
+            ysize=beam.width / math.sin(math.radians(self.angle)),
+            frame=cutting_frame,
+        )
+        # move the cutting surface to the center
+        cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
+
+        start_depth = self.start_depth / math.sin(math.radians(self.inclination))
+        # start_y = self.start_y / abs(math.cos(math.radians(self.angle)))
+        start_y = self.start_y
+
+        dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
+        dx_bottom = (beam.width / math.sin(math.radians(self.angle)) - self.width) / 2
+
+        bottom_dovetail_points = [
+            cutting_surface.point_at(start_y - dx_top, -start_depth),
+            cutting_surface.point_at(start_y + dx_top, -start_depth),
+            cutting_surface.point_at(start_y + dx_bottom / 2, -start_depth - self.length),
+            cutting_surface.point_at(start_y - dx_bottom / 2, -start_depth - self.length),
+        ]
+
+        dovetail_edges = [
+            Line(bottom_dovetail_points[0], bottom_dovetail_points[1]),  # Top line
+            Line(bottom_dovetail_points[1], bottom_dovetail_points[2]),  # Right line
+            Line(bottom_dovetail_points[2], bottom_dovetail_points[3]),  # Bottom line
+            Line(bottom_dovetail_points[3], bottom_dovetail_points[0]),  # Left line
+        ]
+
+        trimming_frames = []
+        for i, edge in enumerate(dovetail_edges):
+            # Create the initial frame using the line's direction and the cutting frame's normal
+            frame = Frame(edge.midpoint, edge.direction, cutting_frame.normal)
+
+            if i != 0:
+                # Determine the rotation direction: right and bottom are positive, top and left are negative
+                # Apply the rotation based on the flank angle
+                rotation = Rotation.from_axis_and_angle(-edge.direction, math.radians(self.flank_angle), frame.point)
+                frame.transform(rotation)
+
+            trimming_frames.append(frame)
+
+        trimming_frames.extend([cutting_frame, offseted_cutting_frame])
+        return trimming_frames
 
     def dovetail_volume_from_params_and_beam(self, beam):
         """Calculates the dovetail tenon volume from the machining parameters in this instance and the given beam.
@@ -770,40 +799,6 @@ class DovetailTenon(BTLxProcess):
 
         cutting_frame = self.frame_from_params_and_beam(beam)
 
-        cutting_surface = PlanarSurface(
-            xsize=beam.height / math.sin(math.radians(self.inclination)),
-            ysize=beam.width / math.sin(math.radians(self.angle)),
-            frame=cutting_frame,
-        )
-        # move the cutting surface to the center
-        cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
-
-        start_depth = self.start_depth / math.sin(math.radians(self.inclination))
-        # start_y = self.start_y / abs(math.cos(math.radians(self.angle)))
-        start_y = self.start_y
-
-        dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
-        dx_bottom = (beam.width / math.sin(math.radians(self.angle)) - self.width) / 2
-
-        bottom_dovetail_points = [
-            cutting_surface.point_at(start_y - dx_top, -start_depth),
-            cutting_surface.point_at(start_y + dx_top, -start_depth),
-            cutting_surface.point_at(dx_bottom, -start_depth - self.length),
-            cutting_surface.point_at(-dx_bottom, -start_depth - self.length),
-            cutting_surface.point_at(start_y - dx_top, -start_depth),
-        ]
-
-        # Calculate the offset length
-        offset_length = self.height * math.tan(math.radians(self.flank_angle))
-        # offset the polyline to create the top face of the tenon
-        top_dovetail_points = offset_polyline(bottom_dovetail_points, offset_length, cutting_frame.normal)
-        # make the top face flat
-        top_dovetail_points[0][2] = bottom_dovetail_points[0][2]
-        top_dovetail_points[1][2] = bottom_dovetail_points[1][2]
-        # remove the last point to avoid duplication
-        top_dovetail_points = [Point(pt[0], pt[1] + self.height, pt[2]) for pt in top_dovetail_points[:-1]]
-        bottom_dovetail_points.pop(-1)
-
         # create the dovetail volume by trimming a box  # TODO: PluginNotInstalledError for Brep.from_loft
         # get the box as a brep
         dovetail_volume = Brep.from_box(
@@ -811,24 +806,22 @@ class DovetailTenon(BTLxProcess):
                 (beam.width + (beam.width * math.sin(math.radians(self.rotation)))) * 2,
                 (beam.height / math.sin(math.radians(self.inclination))) * 2,
                 self.height * 2,
-                cutting_surface.frame,
+                cutting_frame,
             )
         )
 
-        # get trimming planes for creating the dovetail volume
-        trimming_planes = self._create_trimming_planes_for_box(
-            bottom_dovetail_points, top_dovetail_points, self.length_limited_top, self.length_limited_bottom
-        )
-        trimming_planes.append(Plane.from_frame(cutting_surface.frame))
+        # get the cutting planes for the dovetail tenon
+        trimming_frames = self.dovetail_cutting_planes_from_params_and_beam(beam)
+
         # trim the box to create the dovetail volume
-        for plane in trimming_planes:
+        for frame in trimming_frames:
             try:
                 if self.orientation == OrientationType.START:
-                    plane.normal = -plane.normal
-                dovetail_volume.trim(plane)
+                    frame.xaxis = -frame.xaxis
+                dovetail_volume.trim(frame)
             except Exception as e:
                 raise FeatureApplicationError(
-                    plane, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
+                    frame, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
                 )
 
         # rotate the dovetail volume based on the rotation value

@@ -654,8 +654,60 @@ class DovetailMortise(BTLxProcess):
 
         return cutting_plane
 
+    def dovetail_cutting_planes_from_params_and_beam(self, beam):
+        """Calculates the cutting planes for the dovetail tenon from the machining parameters in this instance and the given beam."""
+
+        cutting_frame = beam.ref_side_frame(self.ref_side_index)
+        offseted_cutting_frame = Frame(cutting_frame.point, -cutting_frame.xaxis, cutting_frame.yaxis)
+        offseted_cutting_frame.point += cutting_frame.normal * self.height
+
+        cutting_surface = PlanarSurface(
+            xsize=beam.height / math.sin(math.radians(self.inclination)),
+            ysize=beam.width / math.sin(math.radians(self.angle)),
+            frame=cutting_frame,
+        )
+        # move the cutting surface to the center
+        cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
+
+        start_depth = self.start_depth / math.sin(math.radians(self.inclination))
+        # start_y = self.start_y / abs(math.cos(math.radians(self.angle)))
+        start_y = self.start_y
+
+        dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
+        dx_bottom = (beam.width / math.sin(math.radians(self.angle)) - self.width) / 2
+
+        bottom_dovetail_points = [
+            cutting_surface.point_at(start_y - dx_top, -start_depth),
+            cutting_surface.point_at(start_y + dx_top, -start_depth),
+            cutting_surface.point_at(start_y + dx_bottom / 2, -start_depth - self.length),
+            cutting_surface.point_at(start_y - dx_bottom / 2, -start_depth - self.length),
+        ]
+
+        dovetail_edges = [
+            Line(bottom_dovetail_points[0], bottom_dovetail_points[1]),  # Top line
+            Line(bottom_dovetail_points[1], bottom_dovetail_points[2]),  # Right line
+            Line(bottom_dovetail_points[2], bottom_dovetail_points[3]),  # Bottom line
+            Line(bottom_dovetail_points[3], bottom_dovetail_points[0]),  # Left line
+        ]
+
+        trimming_frames = []
+        for i, edge in enumerate(dovetail_edges):
+            # Create the initial frame using the line's direction and the cutting frame's normal
+            frame = Frame(edge.midpoint, edge.direction, cutting_frame.normal)
+
+            if i != 0:
+                # Determine the rotation direction: right and bottom are positive, top and left are negative
+                # Apply the rotation based on the flank angle
+                rotation = Rotation.from_axis_and_angle(-edge.direction, math.radians(self.flank_angle), frame.point)
+                frame.transform(rotation)
+
+            trimming_frames.append(frame)
+
+        trimming_frames.extend([cutting_frame, offseted_cutting_frame])
+        return trimming_frames
+
     def dovetail_volume_from_params_and_beam(self, beam):
-        """Calculates the dovetail mortise volume from the machining parameters in this instance and the given beam.
+        """Calculates the dovetail tenon volume from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -665,94 +717,53 @@ class DovetailMortise(BTLxProcess):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The mortise volume.
+            The tenon volume.
 
         """
         # type: (Beam) -> Brep
 
         assert self.inclination is not None
-        # assert self.rotation is not None
-        # assert self.height is not None
+        assert self.height is not None
         assert self.flank_angle is not None
         assert self.shape is not None
         assert self.shape_radius is not None
-        # assert self.length_limited_top is not None
         assert self.length_limited_bottom is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
 
-        # if self.orientation == OrientationType.END:
-        #     cutting_frame.xaxis = -cutting_frame.xaxis
-
-        cutting_surface = PlanarSurface(
-            xsize=beam.height / math.sin(math.radians(self.inclination)),
-            ysize=beam.width / math.sin(math.radians(self.angle)),
-            frame=cutting_frame,
-        )
-        cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
-
-        # dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
-        # dx_bottom = (beam.width / math.sin(math.radians(self.angle)) - self.width) / 2
-
-        # bottom_dovetail_points = [
-        #     cutting_surface.point_at(self.start_y - dx_top, -self.start_depth),
-        #     cutting_surface.point_at(self.start_y + dx_top, -self.start_depth),
-        #     cutting_surface.point_at(dx_bottom + self.width, -self.start_depth - self.length),
-        #     cutting_surface.point_at(dx_bottom, -self.start_depth - self.length),
-        #     cutting_surface.point_at(self.start_y - dx_top, -self.start_depth),
-        # ]
-
-        # # Calculate the offset length
-        # offset_length = self.height * math.tan(math.radians(self.flank_angle))
-        # # offset the polyline to create the top face of the mortise
-        # top_dovetail_points = offset_polyline(bottom_dovetail_points, offset_length, cutting_frame.normal)
-        # # make the top face flat
-        # top_dovetail_points[0][2] = bottom_dovetail_points[0][2]
-        # top_dovetail_points[1][2] = bottom_dovetail_points[1][2]
-        # # remove the last point to avoid duplication
-        # top_dovetail_points = [Point(pt[0], pt[1] + self.height, pt[2]) for pt in top_dovetail_points[:-1]]
-        # bottom_dovetail_points.pop(-1)
-
         # create the dovetail volume by trimming a box  # TODO: PluginNotInstalledError for Brep.from_loft
         # get the box as a brep
-        # box_frame = Frame(
-        #     intersection_line_plane(beam.centerline, Plane.from_frame(cutting_frame)),
-        #     cutting_frame.xaxis,
-        #     cutting_frame.yaxis,
-        # )
-        # dovetail_volume = Brep.from_box(
-        #     Box(
-        #         (beam.width + (beam.width * math.sin(math.radians(self.rotation)))) * 2,
-        #         (beam.height / math.sin(math.radians(self.inclination))) * 2,
-        #         self.height,
-        #         box_frame,
-        #     )
-        # )
+        dovetail_volume = Brep.from_box(
+            Box(
+                (beam.width + (beam.width * math.sin(math.radians(self.rotation)))) * 2,
+                (beam.height / math.sin(math.radians(self.inclination))) * 2,
+                self.height * 2,
+                cutting_frame,
+            )
+        )
 
-        # # get trimming planes for creating the dovetail volume
-        # trimming_planes = self._create_trimming_planes_for_box(
-        #     bottom_dovetail_points, top_dovetail_points, self.length_limited_top, self.length_limited_bottom
-        # )
+        # get the cutting planes for the dovetail tenon
+        trimming_frames = self.dovetail_cutting_planes_from_params_and_beam(beam)
 
-        # # trim the box to create the dovetail volume
-        # for plane in trimming_planes:
-        #     try:
-        #         # if self.orientation == OrientationType.START:
-        #         #     plane.normal = -plane.normal
-        #         dovetail_volume.trim(plane)
-        #     except Exception as e:
-        #         raise FeatureApplicationError(
-        #             plane, dovetail_volume, "Failed to trim mortise volume with cutting plane: {}".format(str(e))
-        #         )
+        # trim the box to create the dovetail volume
+        for frame in trimming_frames:
+            try:
+                if self.orientation == OrientationType.START:
+                    frame.xaxis = -frame.xaxis
+                dovetail_volume.trim(frame)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    frame, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
+                )
 
-        # # rotate the dovetail volume based on the rotation value
+        # rotate the dovetail volume based on the rotation value
         # if self.orientation == OrientationType.START:
         #     rot_axis = -cutting_frame.normal
         #     rot_angle = math.radians((90 - self.rotation) % 90)
         # else:
         #     rot_axis = cutting_frame.normal
         #     rot_angle = math.radians(self.rotation % 90)
-        # rot_point = cutting_surface.point_at(self.start_y, self.start_depth)
+        # rot_point = cutting_surface.point_at(self.start_y, start_depth)
 
         # rotation = Rotation.from_axis_and_angle(rot_axis, rot_angle, rot_point)
         # dovetail_volume.transform(rotation)

@@ -156,6 +156,9 @@ class TDovetailJoint(Joint):
         main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
         cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
 
+        print("main_beam_ref_side", self.main_beam_ref_side_index)
+        print("cross_beam_ref_side", self.cross_beam_ref_side_index)
+
         # generate dovetail tenon features
         main_feature = DovetailTenon.from_plane_and_beam(
             cross_beam_ref_side,
