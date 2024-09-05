@@ -11,7 +11,7 @@ To build a timber frame **Model** in Grasshopper, you need to:
 Based on this, the :doc:`model` component takes care of generating the final geometry of the structure.
 
 .. image:: ../images/gh_workflow_diagram.png
-    :width: 35%
+    :width: 45%
 
 |
 

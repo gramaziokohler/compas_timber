@@ -10,7 +10,7 @@ and an underscore (:code:`\_`)
 to separate entries (for example: *attr1name:attr1value_attr2name:attr2value*)
 
 
-There are four *standard* attributes, corresponding to the inputs in the **Beam** components: `Width`, `Height`, `Category` or `ZVector`. 
+There are four *standard* attributes, corresponding to the inputs in the :doc:`beams` components: `Width`, `Height`, `Category` or `ZVector`. 
 
 *   **SetStandardAttributes** - sets the standard attributes' values, e.g.  writes them to the source object.
 *   **ReadStandardAttributes** - reads the standard attributes from the source object. *Group* attribute refers to indices of groups if source objects were grouped.
