@@ -337,6 +337,7 @@ class Joint(Interaction):
 
         return ref_side_angles
 
+    @staticmethod
     def _are_beams_coplanar(beam_a, beam_b, tolerance=1e-3):
         """
         Checks if two beams are coplanar based on the cross product of their centerline directions.
@@ -356,7 +357,6 @@ class Joint(Interaction):
             True if the beams are coplanar, False otherwise.
         """
         # Compute the cross product of the centerline directions of the two beams
-        print(beam_a, beam_b)
         cross_product = beam_a.centerline.direction.cross(beam_b.centerline.direction)
 
         # Check dot products of the cross product with the normals of both beams' frames
