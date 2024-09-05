@@ -296,3 +296,74 @@ class Joint(Interaction):
             ref_side_angles[ref_side_index] = angle_vectors(ref_side.normal, centerline_vec)
 
         return ref_side_angles
+
+    @staticmethod
+    def _beam_ref_side_incidence_with_vector(beam_b, vector, ignore_ends=True):
+        """
+        Returns a map of ref_side indices of beam_b and the angle of their normal with a given vector.
+
+        This is used to find a cutting plane when joining two beams where one beam is represented the normal of one of it's reference sides.
+
+        Parameters
+        ----------
+        beam_b : :class:`~compas_timber.parts.Beam`
+            The beam for which ref_side angles will be calculated.
+        vector : :class:`~compas.geometry.Vector`
+            The vector to compare against the ref_sides' normals.
+        ignore_ends : bool, optional
+            If True, only the first four ref_sides of `beam_b` are considered. Otherwise all ref_sides are considered.
+
+        Examples
+        --------
+        >>> vector = Vector(1, 0, 0)
+        >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_b, vector)
+        >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
+        >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index]
+
+        Returns
+        -------
+        dict(int, float)
+            A map of ref_side indices of beam_b and their respective angle with the given vector.
+
+        """
+        if ignore_ends:
+            beam_b_ref_sides = beam_b.ref_sides[:4]
+        else:
+            beam_b_ref_sides = beam_b.ref_sides
+
+        ref_side_angles = {}
+        for ref_side_index, ref_side in enumerate(beam_b_ref_sides):
+            ref_side_angles[ref_side_index] = angle_vectors(vector, ref_side.normal)
+
+        return ref_side_angles
+
+    def _are_beams_coplanar(beam_a, beam_b, tolerance=1e-3):
+        """
+        Checks if two beams are coplanar based on the cross product of their centerline directions.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.parts.Beam`
+            The first beam.
+        beam_b : :class:`~compas_timber.parts.Beam`
+            The second beam.
+        tolerance : float, optional
+            The tolerance for the dot product comparison, default is 1e-3.
+
+        Returns
+        -------
+        bool
+            True if the beams are coplanar, False otherwise.
+        """
+        # Compute the cross product of the centerline directions of the two beams
+        print(beam_a, beam_b)
+        cross_product = beam_a.centerline.direction.cross(beam_b.centerline.direction)
+
+        # Check dot products of the cross product with the normals of both beams' frames
+        dot_with_beam_b_normal = abs(cross_product.dot(beam_b.frame.normal))
+        dot_with_beam_a_normal = abs(cross_product.dot(beam_a.frame.normal))
+
+        # Check if both dot products are close to 0 or 1 (indicating coplanarity)
+        return (
+            1 - tolerance <= dot_with_beam_b_normal <= 1 + tolerance or 0 <= dot_with_beam_b_normal <= tolerance
+        ) and (1 - tolerance <= dot_with_beam_a_normal <= 1 + tolerance or 0 <= dot_with_beam_a_normal <= tolerance)
