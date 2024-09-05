@@ -100,8 +100,11 @@ class TStepJoint(Joint):
 
     @property
     def main_beam_ref_side_index(self):
-        ref_side_dict = self._beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        ref_side_dict = self._beam_ref_side_incidence_with_vector(
+            self.main_beam, cross_beam_ref_side.normal, ignore_ends=True
+        )
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     def add_features(self):
@@ -110,6 +113,9 @@ class TStepJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
+        # TODO: In the future the step, heel and tenon mortise depths should be proportional to the cross beam section wheareas the proportions are defined by the national norms.
+        # TODO: As well the step shape should maybe be defined automatically by the shear reqirements of the joint.
+
         assert self.main_beam and self.cross_beam  # should never happen
 
         if self.features:
@@ -118,6 +124,7 @@ class TStepJoint(Joint):
 
         main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
         cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+
         # generate step joint notch features
         cross_feature = StepJointNotch.from_plane_and_beam(
             main_beam_ref_side,

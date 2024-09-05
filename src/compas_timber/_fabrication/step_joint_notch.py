@@ -333,8 +333,19 @@ class StepJointNotch(BTLxProcess):
             notch_width = beam.width
 
         # restrain step_depth & heel_depth to beam's height # TODO: should it be restrained? should they be proportional to the beam's dimensions?
-        step_depth = beam.height if step_depth > beam.height else step_depth
-        heel_depth = beam.height if heel_depth > beam.height else heel_depth
+        if step_depth > beam.height:
+            step_depth = beam.height
+            print("Step depth is too large for the beam's height. It has been adjusted to the beam's height.")
+
+        max_heel_depth = abs(beam.height / math.tan(math.radians(strut_inclination)))
+        if heel_depth > max_heel_depth and not tapered_heel:
+            heel_depth = max_heel_depth
+            print(
+                "Heel depth is too large for the given strut inclination. It has been adjusted to the maximum possible value."
+            )
+
+        if not tapered_heel:
+            heel_depth = max_heel_depth if heel_depth > max_heel_depth else heel_depth
 
         # define step_shape
         step_shape = cls._define_step_shape(step_depth, heel_depth, tapered_heel)
@@ -456,8 +467,8 @@ class StepJointNotch(BTLxProcess):
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
 
+        # get notch volume
         subtraction_volume = geometry.copy()
-
         if self.step_shape == StepShapeType.DOUBLE:
             # trim geometry with first and last cutting plane
             try:
@@ -495,32 +506,7 @@ class StepJointNotch(BTLxProcess):
                         subtraction_volume,
                         "Failed to trim geometry with cutting planes: {}".format(str(e)),
                     )
-
-        if (
-            self.mortise and self.step_shape == StepShapeType.STEP
-        ):  # TODO: check if mortise applies only to step in BTLx
-            # create mortise volume and subtract from brep
-            mortise_volume = self.mortise_volume_from_params_and_beam(beam)
-            # trim mortise volume with cutting plane
-            try:
-                mortise_volume.trim(cutting_planes[0])
-            except Exception as e:
-                raise FeatureApplicationError(
-                    cutting_planes[0],
-                    mortise_volume,
-                    "Failed to trim mortise volume with cutting plane: {}".format(str(e)),
-                )
-            # subtract mortise volume from geometry
-            try:
-                geometry -= mortise_volume
-            except Exception as e:
-                raise FeatureApplicationError(
-                    mortise_volume,
-                    subtraction_volume,
-                    "Failed to subtract mortise volume from geometry: {}".format(str(e)),
-                )
-
-        # subtract volume from geometry
+        ## subtract volume from geometry
         if isinstance(subtraction_volume, list):
             for sub_vol in subtraction_volume:
                 try:
@@ -529,9 +515,33 @@ class StepJointNotch(BTLxProcess):
                     raise FeatureApplicationError(
                         sub_vol, geometry, "Failed to subtract volume from geometry: {}".format(str(e))
                     )
-            return geometry
         else:
-            return geometry - subtraction_volume
+            geometry -= subtraction_volume
+
+        ## add mortise
+        if self.mortise and self.step_shape != StepShapeType.DOUBLE:
+            # TODO: check if mortise applies only to step in BTLx
+            # create mortise volume and subtract from brep
+            mortise_volume = self.mortise_volume_from_params_and_beam(beam)
+            # trim mortise volume with cutting plane
+            if self.step_shape == StepShapeType.STEP:
+                try:
+                    mortise_volume.trim(cutting_planes[0])
+                except Exception as e:
+                    raise FeatureApplicationError(
+                        cutting_planes[0],
+                        mortise_volume,
+                        "Failed to trim mortise volume with cutting plane: {}".format(str(e)),
+                    )
+            try:
+                geometry -= mortise_volume
+            except Exception as e:
+                raise FeatureApplicationError(
+                    mortise_volume,
+                    subtraction_volume,
+                    "Failed to subtract mortise volume from geometry: {}".format(str(e)),
+                )
+        return geometry
 
     def add_mortise(self, mortise_width, mortise_height, beam):
         """Add a mortise to the existing StepJointNotch instance.
@@ -864,7 +874,7 @@ class StepJointNotchParams(BTLxProcessParams):
         result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
         result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
         result["StrutHeight"] = "{:.{prec}f}".format(self._instance.strut_height, prec=TOL.precision)
-        result["StepShapeType"] = self._instance.step_shape
+        result["StepShape"] = self._instance.step_shape
         result["Mortise"] = "yes" if self._instance.mortise else "no"
         result["MortiseWidth"] = "{:.{prec}f}".format(self._instance.mortise_width, prec=TOL.precision)
         result["MortiseHeight"] = "{:.{prec}f}".format(self._instance.mortise_height, prec=TOL.precision)

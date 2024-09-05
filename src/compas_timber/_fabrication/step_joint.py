@@ -250,9 +250,16 @@ class StepJoint(BTLxProcess):
         strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
 
         # restrain step_depth & heel_depth to beam's height and the maximum possible heel depth for the beam
-        step_depth = beam.height if step_depth > beam.height else step_depth
+        if step_depth > beam.height:
+            step_depth = beam.height
+            print("Step depth is too large for the beam's height. It has been adjusted to the beam's height.")
+
         max_heel_depth = abs(beam.height / math.tan(math.radians(strut_inclination)))
-        heel_depth = max_heel_depth if heel_depth > max_heel_depth else heel_depth
+        if heel_depth > max_heel_depth and not tapered_heel:
+            heel_depth = max_heel_depth
+            print(
+                "Heel depth is too large for the given strut inclination. It has been adjusted to the maximum possible value."
+            )
 
         # define step_shape
         step_shape = cls._define_step_shape(step_depth, heel_depth, tapered_heel)
@@ -419,27 +426,30 @@ class StepJoint(BTLxProcess):
                     trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
                 )
 
-        if self.tenon and self.step_shape == StepShapeType.STEP:  # TODO: check if tenon applies only to step in BTLx
+        if self.tenon and self.step_shape != StepShapeType.DOUBLE:  # TODO: check if tenon applies only to step in BTLx
             # create tenon volume and subtract from brep
             tenon_volume = self.tenon_volume_from_params_and_beam(beam)
             cutting_planes[0].normal = cutting_planes[0].normal * -1
-            # trim tenon volume with cutting plane
-            try:
-                tenon_volume.trim(cutting_planes[0])
-            except Exception as e:
-                raise FeatureApplicationError(
-                    cutting_planes[0], tenon_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
-                )
-            # trim tenon volume with second cutting plane if tenon height is greater than step depth
-            if self.tenon_height > self.step_depth:
+            if self.step_shape == StepShapeType.STEP:
+                # trim tenon volume with cutting plane
                 try:
-                    tenon_volume.trim(cutting_planes[1])
+                    tenon_volume.trim(cutting_planes[0])
                 except Exception as e:
                     raise FeatureApplicationError(
-                        cutting_planes[1],
+                        cutting_planes[0],
                         tenon_volume,
-                        "Failed to trim tenon volume with second cutting plane: {}".format(str(e)),
+                        "Failed to trim tenon volume with cutting plane: {}".format(str(e)),
                     )
+                # trim tenon volume with second cutting plane if tenon height is greater than step depth
+                if self.tenon_height > self.step_depth:
+                    try:
+                        tenon_volume.trim(cutting_planes[1])
+                    except Exception as e:
+                        raise FeatureApplicationError(
+                            cutting_planes[1],
+                            tenon_volume,
+                            "Failed to trim tenon volume with second cutting plane: {}".format(str(e)),
+                        )
             # add tenon volume to geometry
             try:
                 geometry += tenon_volume
@@ -702,7 +712,7 @@ class StepJointParams(BTLxProcessParams):
         result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
         result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
         result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
-        result["StepShapeType"] = self._instance.step_shape
+        result["StepShape"] = self._instance.step_shape
         result["Tenon"] = "yes" if self._instance.tenon else "no"
         result["TenonWidth"] = "{:.{prec}f}".format(self._instance.tenon_width, prec=TOL.precision)
         result["TenonHeight"] = "{:.{prec}f}".format(self._instance.tenon_height, prec=TOL.precision)
