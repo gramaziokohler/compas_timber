@@ -869,7 +869,7 @@ class StepJointNotchParams(BTLxProcessParams):
         result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
         result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
         result["StrutHeight"] = "{:.{prec}f}".format(self._instance.strut_height, prec=TOL.precision)
-        result["StepShapeType"] = self._instance.step_shape
+        result["StepShape"] = self._instance.step_shape
         result["Mortise"] = "yes" if self._instance.mortise else "no"
         result["MortiseWidth"] = "{:.{prec}f}".format(self._instance.mortise_width, prec=TOL.precision)
         result["MortiseHeight"] = "{:.{prec}f}".format(self._instance.mortise_height, prec=TOL.precision)

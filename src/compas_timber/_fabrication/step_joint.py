@@ -702,7 +702,7 @@ class StepJointParams(BTLxProcessParams):
         result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
         result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
         result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
-        result["StepShapeType"] = self._instance.step_shape
+        result["StepShape"] = self._instance.step_shape
         result["Tenon"] = "yes" if self._instance.tenon else "no"
         result["TenonWidth"] = "{:.{prec}f}".format(self._instance.tenon_width, prec=TOL.precision)
         result["TenonHeight"] = "{:.{prec}f}".format(self._instance.tenon_height, prec=TOL.precision)
