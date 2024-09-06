@@ -79,6 +79,7 @@ class Joint(Interaction):
 
     def add_extensions(self):
         """Adds the extensions defined by this joint to affected beam(s).
+        This is optional and should only be implemented by joints that require it.
 
         Note
         ----
@@ -90,7 +91,7 @@ class Joint(Interaction):
             Should be raised whenever the joint was not able to calculate the extensions to be applied to the beams.
 
         """
-        raise NotImplementedError
+        pass
 
     def restore_beams_from_keys(self, model):
         """Restores the reference to the beams associate with this joint.
