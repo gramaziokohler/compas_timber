@@ -10,13 +10,20 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.datastructures import Mesh
 from compas_model.elements import PlateElement
+from compas.datastructures import Mesh
+from compas_model.elements import PlateElement
 from compas_model.elements import reset_computed
+from compas.tolerance import Tolerance
+from compas.itertools import pairwise
+
 from compas.tolerance import Tolerance
 from compas.itertools import pairwise
 
 
 from .features import FeatureApplicationError
 
+
+class Plate(PlateElement):
 
 class Plate(PlateElement):
 
@@ -122,6 +129,7 @@ class Plate(PlateElement):
 
     def __str__(self):
         return "Plate {} with thickness {:.3f} at {}".format(
+        return "Plate {} with thickness {:.3f} at {}".format(
             self.outline,
             self.thickness,
             self.vector,
@@ -199,6 +207,7 @@ class Plate(PlateElement):
 
 
     # ==========================================================================
+    # Features
     # Features
     # ==========================================================================
 
