@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added new temporary package `_fabrication`.
+* Added new `compas_timber._fabrication.JackRafterCut`.
+* Added `side_as_surface` to `compas_timber.elements.Beam`.
+
 ### Changed
 
 ### Removed

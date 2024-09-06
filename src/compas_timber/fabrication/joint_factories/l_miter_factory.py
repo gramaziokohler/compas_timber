@@ -1,5 +1,3 @@
-from compas_timber.connections import LMiterJoint
-from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxJackCut
 
 
@@ -37,4 +35,4 @@ class LMiterFactory(object):
         )
 
 
-BTLx.register_joint(LMiterJoint, LMiterFactory)
+# BTLx.register_joint(LMiterJoint, LMiterFactory)
