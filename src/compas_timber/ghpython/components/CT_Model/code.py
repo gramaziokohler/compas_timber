@@ -125,19 +125,14 @@ class ModelComponent(component):
         Model = TimberModel()
         debug_info = DebugInfomation()
         beams = []
-        plates = []
         for element in Elements:
             if element is None:
                 continue
             element.remove_features()
             element.debug_info = []
             Model.add_element(element)
-            if element.__class__.__name__ == "Plate":
-                plates.append(element)
-            elif element.__class__.__name__ == "Beam":
-                beams.append(element)
 
-        for beam in beams:
+        for beam in Model.beams:
             # prepare elements for downstream processing
             beam.remove_blank_extension()
         topologies = []
@@ -150,8 +145,7 @@ class ModelComponent(component):
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
         Model.set_topologies(topologies)
 
-        beams = Model.beams
-        joints = self.get_joints_from_rules(beams, JointRules, topologies)
+        joints = self.get_joints_from_rules(Model.beams, JointRules, topologies)
 
         if joints:
             handled_beams = []

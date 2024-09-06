@@ -119,6 +119,19 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
+    def add_element(self, element, **kwargs):
+        node = super(TimberModel, self).add_element(element, **kwargs)
+
+        if isinstance(element, Beam):
+            self._beams.append(element)
+        elif isinstance(element, Wall):
+            self._walls.append(element)
+        elif isinstance(element, Plate):
+            self._plates.append(element)
+        else:
+            raise NotImplementedError("Element type not supported: {}".format(type(element)))
+        return node
+
     def add_beam(self, beam):
         # type: (Beam) -> None
         """Adds a Beam to this model.
