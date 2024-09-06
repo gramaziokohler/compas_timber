@@ -25,6 +25,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
+from compas.tolerance import Tolerance
 
 
 class SurfaceModel(object):
@@ -86,7 +87,7 @@ class SurfaceModel(object):
         beam_width=None,
         frame_depth=None,
         z_axis=None,
-        tolerance=0.01,
+        tolerance=Tolerance(unit="MM", absolute=1e-3, relative=1e-3),
         sheeting_outside=None,
         sheeting_inside=None,
         lintel_posts=True,
@@ -405,7 +406,7 @@ class SurfaceModel(object):
 
     def generate_stud_lines(self):
         x_position = self.stud_spacing
-        while x_position < self.panel_length:
+        while x_position < self.panel_length - self.beam_width:
             start_point = Point(x_position, 0, 0)
             start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
             line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
