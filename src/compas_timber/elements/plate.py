@@ -77,6 +77,10 @@ class Plate(Element):
     # ==========================================================================
 
     @property
+    def blank(self):
+        return self.obb
+
+    @property
     def vector(self):
         return self.frame.zaxis * self.thickness
 
