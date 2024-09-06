@@ -1,7 +1,6 @@
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
@@ -44,39 +43,31 @@ class Plate(Element):
         data = super(Plate, self).__data__
         data["outline"] = self.outline
         data["thickness"] = self.thickness
-        data["vector"] = self.vector if self.vector else None
+        data["vector"] = self.vector
         return data
 
-    def __init__(self, outline, thickness, vector = None, **kwargs):
+    def __init__(self, outline, thickness, vector=None, **kwargs):
         super(Plate, self).__init__(**kwargs)
         if not outline.is_closed:
             raise ValueError("The outline points are not coplanar.")
         self.outline = outline
         self.thickness = thickness
-        self.features = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
-        aggregate_angle = 0.0
-        for i in range(len(outline.points) - 1):
-            first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
-            second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
-            aggregate_angle += angle_vectors_signed(first_vector, second_vector, self.frame.zaxis)
-
-        if aggregate_angle > 0:
-            self.frame = Frame(self.frame.point, self.frame.xaxis, -self.frame.yaxis)
-
-        if vector is not None and dot_vectors(self.vector, vector) < 0:
-            self.outline.reverse
-
-        for point in outline.points:
-            if point.distance_to_plane(Plane.from_frame(self.frame)) > 0.001:
-                raise ValueError("The outline points are not coplanar.")
+        self.frame = Plate.get_frame_from_outline(outline, vector)
 
     def __repr__(self):
         # type: () -> str
-        return "Plate(outline={!r}, thickness={}, )".format(self.outline, self.thickness)
+        return "Plate(outline={!r}, thickness={})".format(self.outline, self.thickness)
+
+    def __str__(self):
+        return "Plate {} with thickness {:.3f} with vector {} at {}".format(
+            self.outline,
+            self.thickness,
+            self.vector,
+            self.frame,
+        )
 
     # ==========================================================================
     # Computed attributes
@@ -88,24 +79,37 @@ class Plate(Element):
 
     @property
     def shape(self):
-        return self._create_shape(self.outline, self.vector)
+        return Brep.from_extrusion(self.outline, self.vector)
 
     @property
     def has_features(self):
         # TODO: move to compas_future... Part
         return len(self.features) > 0
 
-    def __str__(self):
-        return "Plate {} with thickness {:.3f} with vector {} at {}".format(
-            self.outline,
-            self.thickness,
-            self.vector,
-            self.frame,
-        )
-
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
+
+    @staticmethod
+    def get_frame_from_outline(outline, vector=None):
+        frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
+        aggregate_angle = 0.0  # this is used to determine if the outline is clockwise or counterclockwise
+        for i in range(len(outline.points) - 1):
+            first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
+            second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
+            aggregate_angle += angle_vectors_signed(first_vector, second_vector, frame.zaxis)
+        if (
+            vector is not None and dot_vectors(frame.zaxis, vector) < 0
+        ):  # if the vector is pointing in the opposite direction from self.frame.normal
+            if aggregate_angle > 0:
+                frame = Frame(
+                    frame.point, frame.xaxis, -frame.yaxis
+                )  # flips the frame if the frame.point is at an interior corner
+            else:
+                frame = Frame(
+                    frame.point, frame.yaxis, frame.xaxis
+                )  # flips the frame if the frame.point is at an exterior corner
+        return frame
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -194,20 +198,10 @@ class Plate(Element):
             The collision geometry of the element.
 
         """
-        return self.compute_aabb.to_mesh()
+        return self.obb.to_mesh()
 
     # ==========================================================================
-    # Alternative constructors
-    # ==========================================================================
-
-    @staticmethod
-    def _create_shape(outline, vector):
-        brep = Brep.from_extrusion(outline, vector)
-
-        return brep
-
-    # ==========================================================================
-    # Featrues
+    # Features
     # ==========================================================================
 
     @reset_computed

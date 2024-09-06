@@ -74,7 +74,7 @@ class Plate(component):
 
         return plates, geo
 
-    def _get_guid_and_geometry(self, line):
+    def _get_guid_and_geometry(self, line):  # TODO: move to ghpython_helpers
         # internalized curves and GH geometry will not have persistent GUIDs, referenced Rhino objects will
         # type hint on the input has to be 'ghdoc' for this to work
         guid = None
