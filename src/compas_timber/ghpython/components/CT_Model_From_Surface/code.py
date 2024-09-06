@@ -1,8 +1,9 @@
 """Creates a Beam from a LineCurve."""
+
 import Rhino
-from compas.tolerance import Tolerance
 from compas.geometry import Brep
 from compas.scene import Scene
+from compas.tolerance import Tolerance
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.Geometry import Brep as RhinoBrep

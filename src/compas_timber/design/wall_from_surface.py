@@ -17,6 +17,7 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.geometry import offset_polyline
+from compas.tolerance import Tolerance
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -25,7 +26,6 @@ from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
-from compas.tolerance import Tolerance
 
 
 class SurfaceModel(object):
@@ -94,7 +94,6 @@ class SurfaceModel(object):
         edge_stud_offset=0.0,
         custom_dimensions=None,
         joint_overrides=None,
-
     ):
         self.surface = surface
         self.beam_width = beam_width
