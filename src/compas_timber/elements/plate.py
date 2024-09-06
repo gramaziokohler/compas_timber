@@ -56,7 +56,6 @@ class Plate(Element):
         self.outline = outline
         self.thickness = thickness
         self.set_frame_and_outline(outline, vector)
-        self.outline.reverse()
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -102,7 +101,7 @@ class Plate(Element):
             first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
             second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
             aggregate_angle += angle_vectors_signed(first_vector, second_vector, frame.zaxis)
-        if aggregate_angle < 0:
+        if aggregate_angle > 0:
             frame = Frame(frame.point, frame.xaxis, -frame.yaxis)
             # flips the frame if the frame.point is at an interior corner
 
