@@ -84,6 +84,27 @@ class LButtJoint(ButtJoint):
             )
         return super(LButtJoint, self).get_main_cutting_plane()
 
+    def add_extensions(self):
+        assert self.main_beam and self.cross_beam  # should never happen
+
+        try:
+            main_cutting_plane = self.get_main_cutting_plane()[0]
+            start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
+            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+            self.main_beam.add_blank_extension(
+                start_main + extension_tolerance, end_main + extension_tolerance, self.guid
+            )
+
+            if self.modify_cross:
+                cross_cutting_plane = self.get_cross_cutting_plane()
+                start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
+                self.cross_beam.add_blank_extension(
+                    start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
+                )
+        except Exception as ex:
+            debug_info = getattr(ex, "debug_info", str(ex))
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=debug_info)
+
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
@@ -93,33 +114,19 @@ class LButtJoint(ButtJoint):
         assert self.main_beam and self.cross_beam  # should never happen
         if self.features:
             self.main_beam.remove_features(self.features)
-        start_main, start_cross = None, None
 
         try:
             main_cutting_plane = self.get_main_cutting_plane()[0]
             cross_cutting_plane = self.get_cross_cutting_plane()
-            start_main, end_main = self.main_beam.extension_to_plane(main_cutting_plane)
-            start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_plane)
-        except BeamJoinningError as be:
-            raise be
-        except AttributeError as ae:
-            # I want here just the plane that caused the error
-            geometries = [cross_cutting_plane] if start_main is not None else [main_cutting_plane]
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-
-        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+            debug_info = getattr(ex, "debug_info", str(ex))
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=debug_info)
 
         if self.modify_cross:
-            self.cross_beam.add_blank_extension(
-                start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
-            )
             f_cross = CutFeature(cross_cutting_plane)
             self.cross_beam.add_features(f_cross)
             self.features.append(f_cross)
 
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
         f_main = CutFeature(main_cutting_plane)
         if self.mill_depth:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
