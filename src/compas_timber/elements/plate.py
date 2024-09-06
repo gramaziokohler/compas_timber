@@ -25,8 +25,6 @@ from .features import FeatureApplicationError
 
 class Plate(PlateElement):
 
-class Plate(PlateElement):
-
     """
     A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
 
@@ -65,9 +63,6 @@ class Plate(PlateElement):
         self._top = top
         self._shape = None
         self.attributes = {}
-        self._thickness = None
-        self._frame = None
-        self.features = features or []  # type: list[PlateFeature]
         self.attributes.update(kwargs)
         self.debug_info = []
         self.test = []
