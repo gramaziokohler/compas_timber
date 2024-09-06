@@ -39,7 +39,6 @@ class TimberModel(Model):
         for interaction in model.interactions():
             model._joints.append(interaction)
             interaction.restore_beams_from_keys(model)
-            interaction.add_features()
         return model
 
     def __init__(self, *args, **kwargs):
@@ -170,3 +169,16 @@ class TimberModel(Model):
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
+
+    def process_joinery(self):
+        """Process the joinery of the model. This methods instructs all joints to add their extensions and features.
+
+        The sequence is important here since the feature parameters must be calculated based on the extended blanks.
+        For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
+
+        """
+        for joint in self.joints:
+            joint.add_extensions()
+
+        for joint in self.joints:
+            joint.add_features()
