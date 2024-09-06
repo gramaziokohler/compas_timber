@@ -61,35 +61,32 @@ class Plate(PlateElement):
 
         self._bottom = bottom
         self._top = top
-        self._shape = None
+        self.thickness = self.get_thickness()
+        self._shape = Brep.from_mesh(self.compute_shape())
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.test = []
-        self.test.append(Polygon(self._bottom))
+
 
     @property
     def frame(self):
         if self._frame is None:
-            self._frame = Plate.get_frame_from_outline(self.outline)
+            self._frame = Plate.get_frame_from_outline(self._bottom)
         return self._frame
 
-    @property
-    def thickness(self):
-        if self._thickness is None:
-            bottom_frame = Frame.from_points(self.bottom.points[0], self.bottom.points[1], self.bottom.points[-2])
-            top_frame = Frame.from_points(self.top.points[0], self.top.points[1], self.top.points[-2])
-            self._thickness = bottom_frame.origin.distance_to_plane(Plane.from_frame(top_frame))
-        return self._thickness
+    def get_thickness(self):
+        bottom_frame = Frame.from_points(self._bottom.points[0], self._bottom.points[1], self._bottom.points[-2])
+        top_frame = Frame.from_points(self._top.points[0], self._top.points[1], self._top.points[-2])
+        return bottom_frame.origin.distance_to_plane(Plane.from_frame(top_frame))
 
 
     @staticmethod
     def get_frame_from_outline(outline, vector = None):
-        frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
+        frame = Frame.from_points(outline[0], outline[1], outline[-2])
         aggregate_angle = 0.0   #this is used to determine if the outline is clockwise or counterclockwise
-        for i in range(len(outline.points) - 1):
-            first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
-            second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
+        for i in range(len(outline) - 1):
+            first_vector = Vector.from_start_end(outline[i - 1], outline[i])
+            second_vector = Vector.from_start_end(outline[i], outline[i + 1])
             aggregate_angle += angle_vectors_signed(first_vector, second_vector, frame.zaxis)
         if vector is not None and dot_vectors(frame.zaxis, vector) < 0:     # if the vector is pointing in the opposite direction from self.frame.normal
             if aggregate_angle > 0:
@@ -98,16 +95,10 @@ class Plate(PlateElement):
                 frame = Frame(frame.point, frame.yaxis, frame.xaxis)       # flips the frame if the frame.point is at an exterior corner
         return frame
 
-    # @property
-    # def shape(self):
-    #     if not self._shape:
-    #         self._shape = self.compute_shape()
-    #     return self._shape
-
 
     def __repr__(self):
         # type: () -> str
-        return "Plate(outline={!r}, thickness={}, )".format(self.outline, self.thickness)
+        return "Plate(outline={!r}, thickness={})".format(self.outline, self.thickness)
 
     # ==========================================================================
     # Computed attributes
@@ -124,7 +115,6 @@ class Plate(PlateElement):
 
     def __str__(self):
         return "Plate {} with thickness {:.3f} at {}".format(
-        return "Plate {} with thickness {:.3f} at {}".format(
             self.outline,
             self.thickness,
             self.vector,
@@ -134,6 +124,20 @@ class Plate(PlateElement):
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
+
+    def compute_shape(self):
+        # type: () -> compas.datastructures.Mesh
+        """Compute the shape of the plate from the given polygons and features.
+        This shape is relative to the frame of the element.
+
+        Returns
+        -------
+        :class:`compas.datastructures.Mesh`
+
+        """
+
+        brep = Brep.from_extrusion(self._bottom, self.vector)
+        return brep
 
     def compute_obb(self, inflate=0.0):
         # type: (float | None) -> compas.geometry.Box
@@ -202,7 +206,6 @@ class Plate(PlateElement):
 
 
     # ==========================================================================
-    # Features
     # Features
     # ==========================================================================
 
