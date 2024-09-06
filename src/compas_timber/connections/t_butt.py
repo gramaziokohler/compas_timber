@@ -41,6 +41,16 @@ class TButtJoint(ButtJoint):
         self.cross_beam = model.beam_by_guid(self.cross_beam_guid)
 
     def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
         assert self.main_beam and self.cross_beam
         try:
             cutting_plane = self.get_main_cutting_plane()[0]

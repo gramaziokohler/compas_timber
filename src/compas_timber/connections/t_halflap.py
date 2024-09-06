@@ -35,7 +35,16 @@ class THalfLapJoint(LapJoint):
         super(THalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias)
 
     def add_extensions(self):
-        """Adds the extensions to the beams."""
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
         assert self.main_beam and self.cross_beam  # should never happen
 
         main_cutting_frame = None

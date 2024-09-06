@@ -85,6 +85,16 @@ class LButtJoint(ButtJoint):
         return super(LButtJoint, self).get_main_cutting_plane()
 
     def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
         assert self.main_beam and self.cross_beam  # should never happen
 
         try:

@@ -52,7 +52,16 @@ class LHalfLapJoint(LapJoint):
         super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
     def add_extensions(self):
-        """Adds the extensions to the beams."""
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
         assert self.main_beam and self.cross_beam
         try:
             main_cutting_frame = self.get_main_cutting_frame()

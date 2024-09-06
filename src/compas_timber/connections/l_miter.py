@@ -99,9 +99,14 @@ class LMiterJoint(Joint):
         return plnA, plnB
 
     def add_extensions(self):
-        """Adds the required extension to both beams.
+        """Calculates and adds the necessary extensions to the beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
 
         """
         assert self.beam_a and self.beam_b
