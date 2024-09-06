@@ -17,9 +17,12 @@ class Plate(Element):
 
     Parameters
     ----------
-    frame : :class:`compas.geometry.Frame`
-        A local coordinate system of the plate:
-        Origin is located at the starting point of the outline.
+    outline : :class:`~compas.geometry.RhinoCurve`
+        A line representing the outline of this plate.
+    thickness : float
+        Thickness of the plate material.
+    vector : :class:`~compas.geometry.Vector`, optional
+        The vector of the plate. Default is None.
 
 
     Attributes
@@ -46,16 +49,17 @@ class Plate(Element):
         data["vector"] = self.vector
         return data
 
-    def __init__(self, outline, thickness, vector=None, **kwargs):
+    def __init__(self, outline, thickness, vector=None, frame=None, **kwargs):
         super(Plate, self).__init__(**kwargs)
         if not outline.is_closed:
             raise ValueError("The outline points are not coplanar.")
         self.outline = outline
         self.thickness = thickness
+        self.set_frame_and_outline(outline, vector)
+        self.outline.reverse()
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.frame = Plate.get_frame_from_outline(outline, vector)
 
     def __repr__(self):
         # type: () -> str
@@ -79,7 +83,8 @@ class Plate(Element):
 
     @property
     def shape(self):
-        return Brep.from_extrusion(self.outline, self.vector)
+        brep = Brep.from_extrusion(self.outline, self.vector)
+        return brep
 
     @property
     def has_features(self):
@@ -90,26 +95,24 @@ class Plate(Element):
     # Implementations of abstract methods
     # ==========================================================================
 
-    @staticmethod
-    def get_frame_from_outline(outline, vector=None):
+    def set_frame_and_outline(self, outline, vector=None):
         frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
         aggregate_angle = 0.0  # this is used to determine if the outline is clockwise or counterclockwise
         for i in range(len(outline.points) - 1):
             first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
             second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
             aggregate_angle += angle_vectors_signed(first_vector, second_vector, frame.zaxis)
-        if (
-            vector is not None and dot_vectors(frame.zaxis, vector) < 0
-        ):  # if the vector is pointing in the opposite direction from self.frame.normal
-            if aggregate_angle > 0:
-                frame = Frame(
-                    frame.point, frame.xaxis, -frame.yaxis
-                )  # flips the frame if the frame.point is at an interior corner
-            else:
-                frame = Frame(
-                    frame.point, frame.yaxis, frame.xaxis
-                )  # flips the frame if the frame.point is at an exterior corner
-        return frame
+        if aggregate_angle < 0:
+            frame = Frame(frame.point, frame.xaxis, -frame.yaxis)
+            # flips the frame if the frame.point is at an interior corner
+
+        if vector is not None and dot_vectors(frame.zaxis, vector) < 0:
+            # if the vector is pointing in the opposite direction from self.frame.normal
+            frame = Frame(frame.point, frame.yaxis, frame.xaxis)
+            self.outline.reverse()
+            # flips the frame if the frame.point is at an exterior corner
+
+        self.frame = frame
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
