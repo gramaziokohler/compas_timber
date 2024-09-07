@@ -117,6 +117,9 @@ class TStepJoint(Joint):
         # TODO: As well the step shape should maybe be defined automatically by the shear reqirements of the joint.
 
         assert self.main_beam and self.cross_beam  # should never happen
+        assert self._are_beams_coplanar(
+            self.main_beam, self.cross_beam
+        ), "The beams are not coplanar, the joint cannot be created."
 
         if self.features:
             self.main_beam.remove_features(self.features)
@@ -124,12 +127,6 @@ class TStepJoint(Joint):
 
         main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
         cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-
-        print(self.main_beam)
-        # check if the beams are coplanar
-        # print(self._are_beams_coplanar(self.main_beam, self.cross_beam))
-        # if not self._are_beams_coplanar(self.main_beam, self.cross_beam):
-        #     raise ValueError("The beams are not coplanar, the joint cannot be created.")
 
         # generate step joint notch features
         cross_feature = StepJointNotch.from_plane_and_beam(

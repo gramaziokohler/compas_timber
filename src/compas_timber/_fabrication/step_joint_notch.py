@@ -456,9 +456,6 @@ class StepJointNotch(BTLxProcess):
         """
         # type: (Brep, Beam) -> Brep
 
-        # Get the reference side
-        ref_side = beam.side_as_surface(self.ref_side_index)
-
         # get cutting planes from params
         try:
             cutting_planes = self.planes_from_params_and_beam(beam)
