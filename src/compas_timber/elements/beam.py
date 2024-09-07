@@ -252,28 +252,22 @@ class Beam(Element):
         # TODO: move to compas_future... Part
         return len(self.features) > 0
 
-    @property
-    def int_force(self):
-        # the internal force of the beam computed from a strut-and-tie model analysis
-        # TODO: this is a temporary solution to store the internal force of the beam since the analysis is happening as a parallel process
-        return self._int_force
+    # @property
+    # def int_force(self):
+    #     # the internal force of the beam computed from a strut-and-tie model analysis
+    #     # TODO: this is a temporary solution to store the internal force of the beam since the analysis is happening as a parallel process
+    #     return self._int_force
 
-    @int_force.setter
-    def int_force(self, value):
-        self._int_force = value
+    # @int_force.setter
+    # def int_force(self, value):
+    #     self._int_force = value
 
     def __str__(self):
-        if self.int_force > 0:
-            force = "Tension"
-        else:
-            force = "Compression"
-
-        return "Beam {:.3f} x {:.3f} x {:.3f} at {} in {}".format(
+        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
             self.width,
             self.height,
             self.length,
             self.frame,
-            force,
         )
 
     # ==========================================================================

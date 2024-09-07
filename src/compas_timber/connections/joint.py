@@ -145,37 +145,37 @@ class Joint(Interaction):
 
         return self._ends
 
-    @property
-    def int_forces(self):
-        """Returns the internal forces acting on this joint as vectors. A vector pointing towards the joint represents compression and away from the joint represents tension.
+    # @property
+    # def int_forces(self):
+    #     """Returns the internal forces acting on this joint as vectors. A vector pointing towards the joint represents compression and away from the joint represents tension.
 
-        Returns
-        -------
-        :class:`~compas.geometry.Vector`
-            The internal forces acting on this joint.
+    #     Returns
+    #     -------
+    #     :class:`~compas.geometry.Vector`
+    #         The internal forces acting on this joint.
 
-        """
-        force_vectors = []
-        for beam in self.beams:
-            if self.ends[str(beam.guid)] == "start":
-                force_vector = beam.centerline.direction * beam.int_force
-            else:
-                force_vector = beam.centerline.direction * -beam.int_force
-            force_vectors.append(force_vector)
+    #     """
+    #     force_vectors = []
+    #     for beam in self.beams:
+    #         if self.ends[str(beam.guid)] == "start":
+    #             force_vector = beam.centerline.direction * beam.int_force
+    #         else:
+    #             force_vector = beam.centerline.direction * -beam.int_force
+    #         force_vectors.append(force_vector)
 
-        return force_vectors
+    #     return force_vectors
 
-    @property
-    def shear_force(self):
-        """Returns the shear force acting on this joint as a vector.
+    # @property
+    # def shear_force(self):
+    #     """Returns the shear force acting on this joint as a vector.
 
-        Returns
-        -------
-        :class:`~compas.geometry.Vector`
-            The shear force acting on this joint.
+    #     Returns
+    #     -------
+    #     :class:`~compas.geometry.Vector`
+    #         The shear force acting on this joint.
 
-        """
-        return Vector.sum_vectors(self.int_forces)
+    #     """
+    #     return Vector.sum_vectors(self.int_forces)
 
     @property
     def frame(self):
