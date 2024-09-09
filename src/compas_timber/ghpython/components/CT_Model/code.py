@@ -124,20 +124,19 @@ class ModelComponent(component):
 
         Model = TimberModel()
         debug_info = DebugInfomation()
-        beams = []
         for element in Elements:
+            # prepare elements for downstream processing
             if element is None:
                 continue
             element.remove_features()
+            if hasattr(element, "remove_blank_extension"):
+                element.remove_blank_extension()
             element.debug_info = []
             Model.add_element(element)
 
-        for beam in Model.beams:
-            # prepare elements for downstream processing
-            beam.remove_blank_extension()
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=MaxDistance)
+        found_pairs = solver.find_intersecting_pairs(Model.beams, rtree=True, max_distance=MaxDistance)
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)
