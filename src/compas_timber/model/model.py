@@ -120,6 +120,8 @@ class TimberModel(Model):
         return self._guid_element[guid]
 
     def add_element(self, element, **kwargs):
+        # TODO: make the distincion in the properties rather than here
+        # then get rid of this overrloading altogether.
         node = super(TimberModel, self).add_element(element, **kwargs)
 
         if isinstance(element, Beam):
@@ -131,45 +133,6 @@ class TimberModel(Model):
         else:
             raise NotImplementedError("Element type not supported: {}".format(type(element)))
         return node
-
-    def add_beam(self, beam):
-        # type: (Beam) -> None
-        """Adds a Beam to this model.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam to add to the model.
-
-        """
-        _ = self.add_element(beam)
-        self._beams.append(beam)
-
-    def add_plate(self, plate):
-        # type: (Beam) -> None
-        """Adds a Beam to this model.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam to add to the model.
-
-        """
-        _ = self.add_element(plate)
-        self._plates.append(plate)
-
-    def add_wall(self, wall):
-        # type: (Wall) -> None
-        """Adds a Wall to this model.
-
-        Parameters
-        ----------
-        wall : :class:`~compas_timber.elements.Wall`
-            The wall to add to the model.
-
-        """
-        _ = self.add_element(wall)
-        self._walls.append(wall)
 
     def add_joint(self, joint, beams):
         # type: (Joint, tuple[Beam]) -> None
