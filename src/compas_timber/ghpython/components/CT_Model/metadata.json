@@ -10,7 +10,7 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Beams",
+                "name": "Elements",
                 "description": "Collection of Beams",
                 "typeHintID": "none",
                 "scriptParamAccess": 1,

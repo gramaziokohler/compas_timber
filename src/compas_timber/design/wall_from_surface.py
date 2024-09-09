@@ -306,7 +306,6 @@ class SurfaceModel(object):
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
-
                     if self.lintel_posts:
                         element.type = "jack_stud"
                     else:
