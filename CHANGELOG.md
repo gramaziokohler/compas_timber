@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed error in BakeWithBoxMap component.
+* Added `add_extensions` to `Joint` interface.
+* Added `process_joinery` to `TimberModel`.
+* Features are not automatically added when creating a joint using `Joint.create()`.
+* Features are not automatically added when de-serializing.
 
 ### Removed
 

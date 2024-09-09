@@ -159,6 +159,9 @@ class ModelComponent(component):
                 else:
                     handled_beams.append(beam_pair_ids)
 
+        # applies extensions and features resulting from joints
+        Model.process_joinery()
+
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
