@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="TButtJoint.add_features" href="compas_timber.connections.TButtJoint.add_features.html" />
+    <link rel="next" title="TButtJoint.add_extensions" href="compas_timber.connections.TButtJoint.add_extensions.html" />
     <link rel="prev" title="LMiterJoint.validate_data" href="compas_timber.connections.LMiterJoint.validate_data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -593,7 +593,7 @@ document.write(`
 <h1>TButtJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.TButtJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/90a1b27/src/compas_timber/connections/t_butt.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/cde3ab7/src/compas_timber/connections/t_butt.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ButtJoint</span></code></p>
 <p>Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
 trimming the main beam.</p>
@@ -620,10 +620,13 @@ trimming the main beam.</p>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.add_features.html#compas_timber.connections.TButtJoint.add_features" title="compas_timber.connections.TButtJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.add_extensions.html#compas_timber.connections.TButtJoint.add_extensions" title="compas_timber.connections.TButtJoint.add_extensions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_extensions</span></code></a></p></td>
+<td><p>Calculates and adds the necessary extensions to the beams.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.add_features.html#compas_timber.connections.TButtJoint.add_features" title="compas_timber.connections.TButtJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds the trimming plane to the main beam (no features for the cross beam).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.restore_beams_from_keys.html#compas_timber.connections.TButtJoint.restore_beams_from_keys" title="compas_timber.connections.TButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TButtJoint.restore_beams_from_keys.html#compas_timber.connections.TButtJoint.restore_beams_from_keys" title="compas_timber.connections.TButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
 </tr>
 </tbody>
