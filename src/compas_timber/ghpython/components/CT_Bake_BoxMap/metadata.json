@@ -22,13 +22,12 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "Bake",
+                "name": "bake",
                 "description": "Set to True to Bake. Nothing happens if None or False.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
         ],
-        "outputParameters": [
-        ]
+        "outputParameters": []
     }
 }
