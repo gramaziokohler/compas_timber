@@ -17,7 +17,7 @@ def mock_model():
     b4 = Beam(Frame.worldXY(), length=2.0, width=0.1, height=0.1)
     b5 = Beam(Frame.worldXY(), length=2.0, width=0.1, height=0.1)
     for b in [b1, b2, b3, b4, b5]:
-        model.add_beam(b)
+        model.add_element(b)
     return model
 
 
