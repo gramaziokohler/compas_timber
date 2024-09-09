@@ -9,15 +9,13 @@
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
-
             {
-                "name": "Model",
-                "description": "Model object.",
+                "name": "Beam",
+                "description": "One or more Beam(s).",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             }
         ],
-        "outputParameters": [
-        ]
+        "outputParameters": []
     }
 }
