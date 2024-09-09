@@ -9,13 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `side_as_surface` to `compas_timber.elements.Beam`.
+* Added `Plate` element.
+* Added attribute `plates` to `TimberModel`.
 * Added new temporary package `_fabrication`.
 * Added new `compas_timber._fabrication.JackRafterCut`.
-* Added `side_as_surface` to `compas_timber.elements.Beam`.
 
 ### Changed
 
+* Renamed `beam` to `element` in different locations to make it more generic.
+
 ### Removed
+
+* Removed `add_beam` from `TimberModel`, use `add_element` instead.
+* Removed `add_plate` from `TimberModel`, use `add_element` instead.
+* Removed `add_wall` from `TimberModel`, use `add_element` instead.
 
 
 ## [0.9.1] 2024-07-05
@@ -29,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed error in BakeWithBoxMap component.
+* Added `add_extensions` to `Joint` interface.
+* Added `process_joinery` to `TimberModel`.
+* Features are not automatically added when creating a joint using `Joint.create()`.
+* Features are not automatically added when de-serializing.
 
 ### Removed
 
