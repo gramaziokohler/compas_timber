@@ -203,34 +203,6 @@ class BTLxPart(object):
     def part_guid(self):
         return str(self.beam.guid)
 
-    @property
-    def reference_surfaces(self):
-        # TODO: align Beam.faces with this so that conversion is not needed
-        return (
-            Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),  #
-            Frame(
-                self.frame.point + self.frame.yaxis * self.width,
-                self.frame.xaxis,
-                -self.frame.yaxis,
-            ),
-            Frame(
-                self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
-                self.frame.xaxis,
-                -self.frame.zaxis,
-            ),
-            Frame(
-                self.frame.point + self.frame.zaxis * self.height,
-                self.frame.xaxis,
-                self.frame.yaxis,
-            ),
-            Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
-            Frame(
-                self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
-                self.frame.zaxis,
-                -self.frame.yaxis,
-            ),
-        )
-
     def ref_side_from_face(self, beam_face):
         """Finds the one-based index of the reference side with normal that matches the normal of the given beam face.
 
@@ -247,8 +219,8 @@ class BTLxPart(object):
             The key(index 1-6) of the reference surface.
 
         """
-        for index, ref_face in enumerate(self.reference_surfaces):
-            angle = angle_vectors(ref_face.normal, beam_face.normal, deg=True)
+        for index, ref_side in enumerate(self.beam.ref_sides):
+            angle = angle_vectors(ref_side.normal, beam_face.normal, deg=True)
             if TOL.is_zero(angle):
                 return index + 1  # in BTLx face indices are one-based
         raise ValueError("Given beam face does not match any of the reference surfaces.")
