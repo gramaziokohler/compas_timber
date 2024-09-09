@@ -1,7 +1,9 @@
 """Creates a Beam from a LineCurve."""
 
+import Rhino
 from compas.geometry import Brep
 from compas.scene import Scene
+from compas.tolerance import Tolerance
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.Geometry import Brep as RhinoBrep
@@ -31,8 +33,17 @@ class SurfaceModelComponent(component):
         if not options:
             options = {}
 
+        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
+        tol = None
+        if units == "m":
+            tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
+        elif units == "cm":
+            tol = Tolerance(unit="CM", absolute=1e-4, relative=1e-4)
+        elif units == "mm":
+            tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+
         surface_model = SurfaceModel(
-            Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, **options
+            Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, tol, **options
         )
 
         debug_info = DebugInfomation()

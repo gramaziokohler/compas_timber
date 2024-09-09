@@ -38,6 +38,12 @@
                 "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "joint_overrides",
+                "description": "(optional) From joint overrides component. Allows user to specify joints between specific beam types in surface model.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
