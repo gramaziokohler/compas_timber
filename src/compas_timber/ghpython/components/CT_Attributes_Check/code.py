@@ -10,13 +10,13 @@ from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attribut
 
 
 class Attributes_Check(component):
-    def RunScript(self, ref_obj):
+    def RunScript(self, RefObj):
         self.data = []
 
-        list_input_valid(self, ref_obj, "RefObj")
+        list_input_valid(self, RefObj, "RefObj")
 
-        for obj in ref_obj:
-            d = {"refobj": ref_obj, "crv": None, "msg": [], "ok": None, "pln": None, "pt": None}
+        for obj in RefObj:
+            d = {"refobj": RefObj, "crv": None, "msg": [], "ok": None, "pln": None, "pt": None}
 
             crv = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(obj).Geometry
             if not crv:

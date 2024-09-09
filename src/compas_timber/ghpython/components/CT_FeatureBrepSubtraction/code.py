@@ -7,16 +7,17 @@ from compas_timber.elements import BrepSubtraction
 
 
 class BrepSubtractionFeature(component):
-    def RunScript(self, beam, geometry):
-        if not beam:
+    def RunScript(self, Beam, Geometry):
+        if not Beam:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
-        if not geometry:
+        if not Geometry:
             self.AddRuntimeMessage(Warning, "Input parameter Geometry failed to collect data")
-        if not (beam and geometry):
+        if not (Beam and Geometry):
             return
 
-        if not isinstance(beam, list):
-            beam = [beam]
+        if not isinstance(Beam, list):
+            Beam = [Beam]
 
-        feature = BrepSubtraction(Brep.from_native(geometry))
-        return FeatureDefinition(feature, beam)
+        f = BrepSubtraction(Brep.from_native(Geometry))
+        Feature = FeatureDefinition(f, Beam)
+        return Feature

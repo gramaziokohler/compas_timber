@@ -1,3 +1,4 @@
+# TODO: is this component really used?
 # flake8: noqa
 from compas_timber.ghpython.ghcomponent_helpers import item_input_valid
 from compas_timber.ghpython.workflow import Attribute

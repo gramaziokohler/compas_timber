@@ -14,58 +14,58 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 
 class Beam_fromCurve(component):
-    def RunScript(self, centerline, z_vector, width, height, category, updateRefObj):
+    def RunScript(self, Centerline, ZVector, Width, Height, Category, updateRefObj):
         # minimum inputs required
-        if not centerline:
+        if not Centerline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")
-        if not width:
-            length = self._get_centerline_length(centerline)
-            width = [length / 20]
-        if not height:
-            length = self._get_centerline_length(centerline)
-            height = [length / 10]
+        if not Width:
+            length = self._get_centerline_length(Centerline)
+            Width = [length / 20]
+        if not Height:
+            length = self._get_centerline_length(Centerline)
+            Height = [length / 10]
 
         # reformat unset parameters for consistency
-        if not z_vector:
-            z_vector = [None]
-        if not category:
-            category = [None]
+        if not ZVector:
+            ZVector = [None]
+        if not Category:
+            Category = [None]
 
         beams = []
         blanks = []
         scene = Scene()
 
-        if centerline and height and width:
+        if Centerline and Height and Width:
             # check list lengths for consistency
-            N = len(centerline)
-            if len(z_vector) not in (0, 1, N):
+            N = len(Centerline)
+            if len(ZVector) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter."
                 )
-            if len(width) not in (1, N):
+            if len(Width) not in (1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'W' I need either one or the same number of inputs as the Crv parameter."
                 )
-            if len(height) not in (1, N):
+            if len(Height) not in (1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'H' I need either one or the same number of inputs as the Crv parameter."
                 )
-            if len(category) not in (0, 1, N):
+            if len(Category) not in (0, 1, N):
                 self.AddRuntimeMessage(
                     Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
                 )
 
             # duplicate data if None or single value
-            if len(z_vector) != N:
-                z_vector = [z_vector[0] for _ in range(N)]
-            if len(width) != N:
-                width = [width[0] for _ in range(N)]
-            if len(height) != N:
-                height = [height[0] for _ in range(N)]
-            if len(category) != N:
-                category = [category[0] for _ in range(N)]
+            if len(ZVector) != N:
+                ZVector = [ZVector[0] for _ in range(N)]
+            if len(Width) != N:
+                Width = [Width[0] for _ in range(N)]
+            if len(Height) != N:
+                Height = [Height[0] for _ in range(N)]
+            if len(Category) != N:
+                Category = [Category[0] for _ in range(N)]
 
-            for line, z, w, h, c in zip(centerline, z_vector, width, height, category):
+            for line, z, w, h, c in zip(Centerline, ZVector, Width, Height, Category):
                 guid, geometry = self._get_guid_and_geometry(line)
                 rhino_line = rs.coerceline(geometry)
                 line = line_to_compas(rhino_line)

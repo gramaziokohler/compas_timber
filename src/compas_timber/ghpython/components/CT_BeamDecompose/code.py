@@ -17,9 +17,9 @@ class BeamDecompose(component):
     SCREEN_SIZE = 10
     RELATIVE_SIZE = 0
 
-    def RunScript(self, beam, show_frame, show_faces):
-        self.show_faces = show_faces if show_faces is not None else False
-        self.show_frame = show_frame if show_frame is not None else False
+    def RunScript(self, Beam, ShowFrame, ShowFaces):
+        self.show_faces = ShowFaces if ShowFaces is not None else False
+        self.show_frame = ShowFrame if ShowFrame is not None else False
         self.frames = []
         self.rhino_frames = []
         self.scales = []
@@ -29,7 +29,7 @@ class BeamDecompose(component):
         self.centerline = []
         self.shapes = []
 
-        for b in beam:
+        for b in Beam:
             self.frames.append(b.frame)
             self.rhino_frames.append(frame_to_rhino_plane(b.frame))
             self.scales.append(b.width + b.height)
@@ -39,7 +39,12 @@ class BeamDecompose(component):
             self.height.append(b.height)
             self.faces.append(b.faces)
 
-        return self.rhino_frames, self.centerline, self.shapes, self.width, self.height
+        Frame = self.rhino_frames
+        Centerline = self.centerline
+        Shapes = self.shapes
+        Width = self.width
+        Height = self.height
+        return Frame, Centerline, Shapes, Width, Height
 
     def DrawViewportWires(self, arg):
         if self.Locked:

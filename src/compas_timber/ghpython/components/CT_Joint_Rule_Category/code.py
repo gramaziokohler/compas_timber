@@ -61,7 +61,8 @@ class CategoryJointRule(component):
                 if bool:
                     topos.append(i)
 
-            return CategoryRule(self.joint_type, cat_a, cat_b, topos, **kwargs)
+            Rule = CategoryRule(self.joint_type, cat_a, cat_b, topos, **kwargs)
+            return Rule
 
     def arg_names(self):
         names = inspect.getargspec(self.joint_type.__init__)[0][1:]

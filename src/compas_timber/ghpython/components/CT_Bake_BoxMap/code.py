@@ -14,22 +14,22 @@ from Rhino.RhinoDoc import ActiveDoc
 
 
 class BakeBoxMap(component):
-    def RunScript(self, model, map_size, bake):
-        if map_size and len(map_size) != 3:
+    def RunScript(self, Model, MapSize, bake):
+        if MapSize and len(MapSize) != 3:
             self.AddRuntimeMessage(
                 Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
             )
             return
 
-        if map_size:
-            dimx, dimy, dimz = map_size
+        if MapSize:
+            dimx, dimy, dimz = MapSize
         else:
             # for the pine 251 material bitmap, rotated
             dimx = 0.2
             dimy = 0.2
             dimz = 1.0
 
-        if not model:
+        if not Model:
             self.AddRuntimeMessage(Warning, "Input parameters Model failed to collect any Beam objects.")
             return
 
@@ -37,8 +37,8 @@ class BakeBoxMap(component):
             return
 
         try:
-            frames = [frame_to_rhino(b.frame) for b in model.beams]
-            breps = [beam.geometry.native_brep for beam in model.beams]
+            frames = [frame_to_rhino(b.frame) for b in Model.beams]
+            breps = [beam.geometry.native_brep for beam in Model.beams]
 
             if frames and breps:
                 rs.EnableRedraw(False)

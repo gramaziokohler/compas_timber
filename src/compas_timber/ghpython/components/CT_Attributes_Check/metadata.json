@@ -10,13 +10,12 @@
         "iconDisplay": 2,
         "inputParameters": [
             {
-                "name": "RefCrv",
+                "name": "RefObj",
                 "description": "Referenced curve or line, Guid of curve or line in the active Rhino document.",
                 "typeHintID": "guid",
                 "scriptParamAccess": 1
             }
         ],
-        "outputParameters": [
-        ]
+        "outputParameters": []
     }
 }

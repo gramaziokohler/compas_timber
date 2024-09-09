@@ -3,15 +3,15 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 
 class FindBeamByRhinoGuid(component):
-    def RunScript(self, beams, Guid):
-        if not (beams and Guid):
+    def RunScript(self, Beams, Guid):
+        if not (Beams and Guid):
             return
 
         if not isinstance(Guid, list):
             Guid = [Guid]
         Guid = [str(g) for g in Guid]
         FoundBeam = []
-        for beam in beams:
+        for beam in Beams:
             if beam.attributes.get("rhino_guid", None) in Guid:
                 FoundBeam.append(beam)
 

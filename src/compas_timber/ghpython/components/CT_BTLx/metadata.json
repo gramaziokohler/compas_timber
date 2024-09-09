@@ -22,12 +22,11 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "Write",
+                "name": "write",
                 "description": "Write to file.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
-
         ],
         "outputParameters": [
             {
