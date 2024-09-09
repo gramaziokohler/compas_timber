@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `add_plate` from `TimberModel`, use `add_element` instead.
 * Removed `add_wall` from `TimberModel`, use `add_element` instead.
 
-
 ## [0.9.1] 2024-07-05
 
 ### Added
