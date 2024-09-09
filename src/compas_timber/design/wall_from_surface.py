@@ -384,10 +384,10 @@ class SurfaceModel(object):
             else:
                 element_before = offset_loop[i - 1]
                 element_after = offset_loop[(i + 1) % len(offset_loop)]
-                start_point = intersection_line_line(
+                start_point, _ = intersection_line_line(
                     element.centerline, element_before.centerline, self.dist_tolerance
-                )[0]
-                end_point = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)[0]
+                )
+                end_point, _ = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)
                 if start_point and end_point:
                     element.centerline = Line(start_point, end_point)
         return offset_loop
