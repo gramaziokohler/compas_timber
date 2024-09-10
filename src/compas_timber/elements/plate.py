@@ -5,6 +5,7 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
+from compas.geometry import NurbsCurve
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -86,7 +87,8 @@ class Plate(Element):
 
     @property
     def shape(self):
-        brep = Brep.from_extrusion(self.outline, self.vector)
+        print('self.outline.points', len(self.outline.points))
+        brep = Brep.from_extrusion(NurbsCurve.from_points(self.outline.points, degree = 1), self.vector)
         return brep
 
     @property

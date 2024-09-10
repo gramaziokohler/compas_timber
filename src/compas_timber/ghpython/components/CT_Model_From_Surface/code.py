@@ -55,9 +55,15 @@ class SurfaceModelComponent(component):
                 scene.add(element.geometry)
                 if element.debug_info:
                     debug_info.add_feature_error(element.debug_info)
+            for plate in model.plate_elements:
+                for window in model.windows:
+                    print("subtracting window from:", plate)
+                    window.boolean_feature.apply(plate.geometry)
         else:
             for element in model.beams:
                 scene.add(element.blank)
+
+
 
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
