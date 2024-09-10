@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed missing input parameter in `SurfaceModelOptions` GH Component.
 * Fixed error with tolerances for `SurfaceModel`s modeled in meters.
 * Renamed `beam` to `element` in different locations to make it more generic.
+* Fixed `AttributeError` in `SurfaceModel`.
+* Updated example scripts.
+* Calling `process_joinery` in `SurfaceModel`.
 
 ### Removed
 
