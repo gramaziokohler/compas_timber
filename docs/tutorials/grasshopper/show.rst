@@ -10,7 +10,7 @@ Show Beam Face Index
 .. image:: ../images/gh_show_beam_face_index.png
     :width: 20%
 
-Displays the index of the beams. Based on a global list of the beams in the assembly.
+Displays the indexes of the Beams. Based on a global list of the Beams in the assembly.
 
 
 Show Beam Index
@@ -18,13 +18,13 @@ Show Beam Index
 .. image:: ../images/gh_show_beam_index.png
     :width: 20%
 
-Displays the faces of the beams.
+Displays the indexes of the Beam faces.
 
 
 Show Surface Model Beam Types
 *****************************
 
-Displays Beam types in the surface model.
+Displays all Beams of one selected type from the surface model.
 
 
 Show Feature Errors
@@ -40,7 +40,7 @@ Show Joining Errors
 .. image:: ../images/gh_show_joining_errors.png
     :width: 25%
 
-Shows information useful for debugging errors occured while attempting to join beams.
+Shows information useful for debugging errors occured while attempting to join Beams.
 
 
 Show Joint Types
@@ -56,5 +56,5 @@ Show Topology Types
 .. image:: ../images/gh_show_topology_types.png
     :width: 20%
 
-Displays the type names of each joints in the assembly.
+Displays the topologies (L, T or X) that Compas Timber recognizes at each Joint
 

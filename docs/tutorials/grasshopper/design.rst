@@ -9,6 +9,12 @@ Design Components help to generate standard Wall structures from Surfaces, using
 
 |
 
+A bit of timber construction vocabulary will help you work with these components:
+
+.. image:: ../images/gh_design_modeldiagram.png
+    :width: 90%
+
+
 Surface Model
 ^^^^^^^^^^^^^
 
@@ -56,9 +62,9 @@ This is a dynamic component. Sets Beam Dimensions for a selected Beam Type in th
 
 Inputs:
 
-* `width` - :code:`Number`: Width of all studs, king_studs, jack_studs, edge_studs, headers or sills.
-* `height` - :code:`Number`: Height of all studs, king_studs, jack_studs, edge_studs, headers or sills.
+* `width` - :code:`Number`: Width of all studs, king_studs, jack_studs, edge_studs, plates, headers or sills.
+* `height` - :code:`Number`: Height of all studs, king_studs, jack_studs, edge_studs, plates, headers or sills.
 
 Outputs:
 
-*	`Beam Type` : stud, king_stud, jack_stud, edge_stud, header or sill.
+*	`Beam Type` : stud, king_stud, jack_stud, edge_stud, plate, header or sill.

@@ -10,7 +10,7 @@ Features are additional geometric operations on beams:
 |
 
 .. image:: ../images/gh_features.png
-  :width: 90%
+  :width: 100%
 
 |
 
