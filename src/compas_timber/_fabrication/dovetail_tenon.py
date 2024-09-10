@@ -410,8 +410,9 @@ class DovetailTenon(BTLxProcess):
         inclination = cls._calculate_inclination(ref_side, plane, orientation, angle)
 
         # calculate rotation
-        rotation = cls._calculate_rotation(ref_side, plane)
-        rotation = 90.0  #! TODO: for now i'm overriding unit a logic for applying rotation is implemented
+        # rotation = cls._calculate_rotation(ref_side, plane)
+        # rotation = 90.0  #! TODO: for now i'm overriding unit a logic for applying rotation is implemented
+        rotation = (rotation + 90) % 180
 
         # calculate start_y
         # TODO: if there is a case where the tenon should not be in the middle of the beam then start_y should be a parameter of the alternative constructor
@@ -429,7 +430,8 @@ class DovetailTenon(BTLxProcess):
         length = cls._bound_length(
             ref_side, plane, beam.height, start_depth, inclination, length, height, frustum_difference
         )
-        width = cls._bound_width(beam.width, angle, length, width, cone_angle, shape_radius, frustum_difference)
+        # width = cls._bound_width(beam.width, angle, length, width, cone_angle, shape_radius, frustum_difference)
+        width = width
 
         # determine if the top and bottom length of the cut is limited
         # TODO: this should instead come first and override the start_depth and length
@@ -832,9 +834,13 @@ class DovetailTenon(BTLxProcess):
         #     rot_axis = cutting_frame.normal
         #     rot_angle = math.radians(self.rotation % 90)
         # rot_point = cutting_surface.point_at(self.start_y, start_depth)
+        if self.rotation != 90:
+            rot_axis = beam.centerline.direction
+            rot_angle = math.radians(self.rotation % 90)
+            rot_point = beam.centerline.start
 
-        # rotation = Rotation.from_axis_and_angle(rot_axis, rot_angle, rot_point)
-        # dovetail_volume.transform(rotation)
+            rotation = Rotation.from_axis_and_angle(rot_axis, rot_angle, rot_point)
+            dovetail_volume.transform(rotation)
 
         return dovetail_volume
 

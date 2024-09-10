@@ -84,7 +84,7 @@ class TStepJoint(Joint):
         self.notch_limited = False if self.main_beam.width >= self.cross_beam.width else True
         self.notch_width = self.main_beam.width
         self.strut_height = self.main_beam.height
-        self.tenon_mortise_width = self.main_beam.width / 4
+        self.tenon_mortise_width = self.main_beam.width / 3.2
 
         self.features = []
 
@@ -117,9 +117,9 @@ class TStepJoint(Joint):
         # TODO: As well the step shape should maybe be defined automatically by the shear reqirements of the joint.
 
         assert self.main_beam and self.cross_beam  # should never happen
-        assert self._are_beams_coplanar(
-            self.main_beam, self.cross_beam
-        ), "The beams are not coplanar, the joint cannot be created."
+        # assert self._are_beams_coplanar(
+        #     self.main_beam, self.cross_beam
+        # ), "The beams are not coplanar, the joint cannot be created."
 
         if self.features:
             self.main_beam.remove_features(self.features)
