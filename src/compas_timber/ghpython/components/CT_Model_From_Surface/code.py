@@ -49,6 +49,7 @@ class SurfaceModelComponent(component):
         debug_info = DebugInfomation()
         scene = Scene()
         model = surface_model.create_model()
+        model.process_joinery()
         if CreateGeometry:
             for element in model.beams:
                 scene.add(element.geometry)
