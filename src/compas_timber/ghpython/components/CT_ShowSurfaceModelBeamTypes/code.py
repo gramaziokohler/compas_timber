@@ -3,7 +3,6 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from System.Windows.Forms import ToolStripSeparator
 
-from compas_timber.design import SurfaceModel
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 
@@ -34,7 +33,7 @@ class SurfaceModelJointRule(component):
     def AppendAdditionalMenuItems(self, menu):
         if not self.RuntimeMessages(Warning):
             menu.Items.Add(ToolStripSeparator())
-        for name in SurfaceModel.beam_category_names():
+        for name in self.names:
             item = menu.Items.Add(name, None, self.on_item_click)
             if self.beam_type and name == self.beam_type:
                 item.Checked = True
