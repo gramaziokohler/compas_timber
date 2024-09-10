@@ -9,14 +9,14 @@ Geometric operations like cutting, trimming and solid boolean subtractions, whic
 may be computationally expensive, and are disabled by default.
 To activate it, set `CreateGeometry` to :code:`True`.
 
-.. image:: ../images/gh_assembly.png
-    :width: 25%
+.. image:: ../images/gh_model.png
+    :width: 30%
 
 
 Inputs:
 
-*	`Beams` : collection of beams.
-*	`JointsRules` : collection of joint rules.
+*	`Elements` : collection of Beams or Plates.
+*	`JointRules` : collection of Joint Rules.
 *	`Features` : collection of features definitions.
 *	`MaxDistance` : Max Distance Tolerance for topology detection.
 *	`CreateGeometry` : If True, Beam and joint geometry is created for visualisation. Default is False.

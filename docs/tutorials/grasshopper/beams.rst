@@ -7,7 +7,7 @@ It has a local coordinate system, where the X-axis corresponds with the *centerl
 Y-axis with the *width* of the cross-section and Z-axis with the *height* of the cross-section.
 The *origin* is located at the start of the centerline.
 
-.. image:: ../images/beam_01png.png
+.. image:: ../images/gh_beam.png
     :width: 50%
 
 Beams are created with the component :code:`Beam` - to create a beam from a Grasshopper `Line` or `LineCurve`, or from a `Guid` of a `Line` object referenced from an active Rhino document.
@@ -34,17 +34,26 @@ Outputs:
 *	`Beam` : the resulting beam(s).
 * 	`Blank`: the corresponding blank beam. The blank represents the raw material from which the beam is cut and without :doc:`features`. It is used to define the stock size for the beam.
 
-.. image:: ../images/gh_beam.png
+.. image:: ../images/gh_beam_beam.png
     :width: 40%
 
 Once a :code:`Beam` is created, it can be used as an input for the :doc:`model` component or the following components:
 
-*   **DecomposeBeam** : extracts the frame, centreline, box, width and height from a beam.
-*   **FindBeamByRhinoGeometry** : finds the beam corresponding to a referenced Rhino curve or line.
+DecomposeBeam
+^^^^^^^^^^^^^
 
-.. image:: ../images/gh_beamDecompose.png
+Extracts the frame, centreline, box, width and height from a Beam.
+
+.. image:: ../images/gh_beam_decompose.png
     :width: 40%
 
-.. image:: ../images/gh_beamGUID.png
+|
+
+FindBeamByRhinoGuid
+^^^^^^^^^^^^^^^^^^^
+
+Finds a specific Beam corresponding to a referenced Rhino curve or line.
+
+.. image:: ../images/gh_beam_guid.png
     :width: 40%
 

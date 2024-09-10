@@ -10,7 +10,7 @@ and some more.
 
 The plugin is built on top of the COMPAS Timber python library and provides additional functionalities that might be useful for design in Grasshopper.
 
-.. image:: tutorials/images/gh_ct_toolbar.png
+.. image:: tutorials/images/gh_toolbar.png
     :width: 100%
 
 

@@ -25,7 +25,7 @@ Joint Rules Components
     Joint Rules Components are dynamic: First place them on the Grasshopper Canvas. Now you can define the Joint they should apply by Right-Click & Selection from the Drop-Down List. The Inputs might change because every Joint has its own specific settings.
     
     .. image:: ../images/joint_rules_dynamic.gif
-      :width: 45%
+      :width: 55%
 
 |
 
@@ -73,6 +73,17 @@ This Joint Rule is highly specific and will overwrite every other Joint Rule. Th
     :width: 35%
 
 |
+
+Surface Model Joint Override
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This Joint Rule is used for the Surface Model to overwrite Joints between studs, king_studs, jack_studs, edge_studs, headers or sills.
+
+.. image:: ../images/gh_joint_rules_surface_override.png
+    :width: 35%
+
+|
+
 
 Joint Types
 ----------------

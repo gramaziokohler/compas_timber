@@ -20,7 +20,6 @@ Based on this, the :doc:`model` component takes care of generating the final geo
 .. image:: ../images/gh_workflow_example.png
     :width: 75%
 
-
 |
 
 .. note::
