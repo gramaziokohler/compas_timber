@@ -11,14 +11,14 @@ from compas_timber.connections import THalfLapJoint
 
 
 HERE = os.path.dirname(__file__)
-LINES = os.path.join(HERE, 'lines.json')
+LINES = os.path.join(HERE, "lines.json")
 
 
 def create_viewer():
     viewer = Viewer()
     viewer.renderer.camera.far = 1000000.0
     viewer.renderer.camera.position = [10000.0, 10000.0, 10000.0]
-    viewer.renderer.camera.pan_delta = 5.0
+    viewer.renderer.camera.pandelta = 5.0
     viewer.renderer.rendermode = "ghosted"
     return viewer
 
@@ -32,7 +32,7 @@ model = TimberModel()
 HEIGHT = 120
 WIDTH = 60
 for line in lines:
-    model.add_beam(Beam.from_centerline(centerline=line, height=HEIGHT, width=WIDTH))
+    model.add_element(Beam.from_centerline(centerline=line, height=HEIGHT, width=WIDTH))
 
 beams = model.beams
 
@@ -50,6 +50,8 @@ THalfLapJoint.create(model, beams[2], beams[1])
 TButtJoint.create(model, beams[1], beams[0])
 TButtJoint.create(model, beams[1], beams[3])
 TButtJoint.create(model, beams[2], beams[4])
+
+model.process_joinery()
 
 viewer = create_viewer()
 

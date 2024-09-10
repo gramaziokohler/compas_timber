@@ -17,6 +17,7 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.geometry import offset_polyline
+from compas.tolerance import Tolerance
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -86,6 +87,7 @@ class SurfaceModel(object):
         beam_width=None,
         frame_depth=None,
         z_axis=None,
+        tolerance=Tolerance(unit="MM", absolute=1e-3, relative=1e-3),
         sheeting_outside=None,
         sheeting_inside=None,
         lintel_posts=True,
@@ -114,7 +116,7 @@ class SurfaceModel(object):
         self.windows = []
         self.beam_dimensions = {}
         self.joint_overrides = joint_overrides
-        self.dist_tolerance = 0.01
+        self.dist_tolerance = tolerance.relative
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
@@ -178,7 +180,7 @@ class SurfaceModel(object):
     def create_model(self):
         model = TimberModel()
         for beam in self.beams:
-            model.add_beam(beam)
+            model.add_element(beam)
         topologies = []
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance)
@@ -276,7 +278,7 @@ class SurfaceModel(object):
     def parse_loops(self):
         for loop in self.surface.loops:
             polyline_points = []
-            length = 0.0
+            polyline_length = 0.0
             for i, edge in enumerate(loop.edges):
                 if not edge.is_line:
                     raise ValueError("function only supprorts polyline edges")
@@ -287,20 +289,20 @@ class SurfaceModel(object):
                     polyline_points.append(edge.start_vertex.point)
                 else:
                     polyline_points.append(edge.end_vertex.point)
-                length += edge.length
+                polyline_length += edge.length
             polyline_points.append(polyline_points[0])
-            offset_dist = length * 0.001
+            loop_polyline = Polyline(polyline_points)
+            offset_dist = self.dist_tolerance * 1000
             if loop.is_outer:
-                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), offset_dist, self.normal))
-                if offset_loop.length > Polyline(polyline_points).length:
+                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
+                if offset_loop.length > loop_polyline.length:
                     polyline_points.reverse()
                 self.outer_polyline = Polyline(polyline_points)
             else:
-                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), offset_dist, self.normal))
-                if offset_loop.length < Polyline(polyline_points).length:
+                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
+                if offset_loop.length < loop_polyline.length:
                     polyline_points.reverse()
                 self.inner_polylines.append(Polyline(polyline_points))
-        self.dist_tolerance = self.outer_polyline.length * 0.00001
 
     def generate_perimeter_elements(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
@@ -308,8 +310,8 @@ class SurfaceModel(object):
             element = self.BeamElement(segment, parent=self)
             if i in interior_indices:
                 if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 45
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
                 ):
                     if self.lintel_posts:
                         element.type = "jack_stud"
@@ -319,8 +321,8 @@ class SurfaceModel(object):
                     element.type = "header"
             else:
                 if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 45
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
                 ):
                     element.type = "edge_stud"
                 else:
@@ -377,13 +379,15 @@ class SurfaceModel(object):
                     )[0]
                     if start_point and end_point:
                         element.centerline = Line(start_point, end_point)
+                    else:
+                        raise ValueError("edges are parallel, no intersection found")
             else:
                 element_before = offset_loop[i - 1]
                 element_after = offset_loop[(i + 1) % len(offset_loop)]
-                start_point = intersection_line_line(
+                start_point, _ = intersection_line_line(
                     element.centerline, element_before.centerline, self.dist_tolerance
-                )[0]
-                end_point = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)[0]
+                )
+                end_point, _ = intersection_line_line(element.centerline, element_after.centerline, self.dist_tolerance)
                 if start_point and end_point:
                     element.centerline = Line(start_point, end_point)
         return offset_loop
@@ -401,7 +405,7 @@ class SurfaceModel(object):
 
     def generate_stud_lines(self):
         x_position = self.stud_spacing
-        while x_position < self.panel_length:
+        while x_position < self.panel_length - self.beam_width:
             start_point = Point(x_position, 0, 0)
             start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
             line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
@@ -550,7 +554,6 @@ class SurfaceModel(object):
             self._length = None
             self._height = None
             self._frame = None
-
             self.dist_tolerance = parent.dist_tolerance
             self.process_outlines()
 
