@@ -24,6 +24,7 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 
@@ -478,6 +479,12 @@ class SurfaceModel(object):
             cp = closest_point_on_segment(pt, element_one.centerline)
             distances.append(distance_point_point_sqrd(pt, cp))
         return math.sqrt(min(distances))
+
+    def add_plates(self):
+        if self.sheeting_inside:
+            self._elements.append(
+
+
 
     class Window(object):
         """
