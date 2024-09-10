@@ -98,6 +98,32 @@ class LMiterJoint(Joint):
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
 
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
+        assert self.beam_a and self.beam_b
+        start_a, start_b = None, None
+        try:
+            plane_a, plane_b = self.get_cutting_planes()
+            start_a, end_a = self.beam_a.extension_to_plane(plane_a)
+            start_b, end_b = self.beam_b.extension_to_plane(plane_b)
+        except AttributeError as ae:
+            # I want here just the plane that caused the error
+            geometries = [plane_b] if start_a is not None else [plane_a]
+            raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
+        except Exception as ex:
+            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+        self.beam_a.add_blank_extension(start_a, end_a, self.guid)
+        self.beam_b.add_blank_extension(start_b, end_b, self.guid)
+
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
@@ -110,20 +136,11 @@ class LMiterJoint(Joint):
             self.beam_a.remove_features(self.features)
             self.beam_b.remove_features(self.features)
 
-        start_a, start_b = None, None
         try:
             plane_a, plane_b = self.get_cutting_planes()
-            start_a, end_a = self.beam_a.extension_to_plane(plane_a)
-            start_b, end_b = self.beam_b.extension_to_plane(plane_b)
-        except AttributeError as ae:
-            # I want here just the plane that caused the error
-            geometries = [plane_b] if start_a is not None else [plane_a]
-            raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
 
-        self.beam_a.add_blank_extension(start_a, end_a, self.guid)
-        self.beam_b.add_blank_extension(start_b, end_b, self.guid)
         f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
         self.beam_a.add_features(f1)
         self.beam_b.add_features(f2)

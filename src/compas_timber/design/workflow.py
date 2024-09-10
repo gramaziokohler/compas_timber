@@ -181,12 +181,12 @@ class FeatureDefinition(object):
 
     """
 
-    def __init__(self, feature, beams):
+    def __init__(self, feature, elements):
         self.feature = feature
-        self.beams = beams
+        self.elements = elements
 
     def __repr__(self):
-        return "{}({}, {})".format(FeatureDefinition.__name__, repr(self.feature), self.beams)
+        return "{}({}, {})".format(FeatureDefinition.__name__, repr(self.feature), self.elements)
 
     def ToString(self):
         return repr(self)
