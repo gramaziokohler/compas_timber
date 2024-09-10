@@ -10,9 +10,10 @@ def create_viewer():
     viewer = Viewer()
     viewer.renderer.camera.far = 1000000.0
     viewer.renderer.camera.position = [10000.0, 10000.0, 10000.0]
-    viewer.renderer.camera.pan_delta = 5.0
+    viewer.renderer.camera.pandelta = 5.0
     viewer.renderer.rendermode = "ghosted"
     return viewer
+
 
 model = TimberModel()
 
@@ -24,7 +25,7 @@ NORMAL_REST = Vector(0, 0, 1)
 
 wall_frame = Frame.worldXY()
 model = TimberModel()
-model.add_wall(Wall(wall_frame, 3000, 140, 2000))
+model.add_element(Wall(wall_frame, 3000, 140, 2000))
 
 # setup the viewer
 viewer = create_viewer()

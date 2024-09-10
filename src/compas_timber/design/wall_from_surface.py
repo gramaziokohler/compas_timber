@@ -180,7 +180,7 @@ class SurfaceModel(object):
     def create_model(self):
         model = TimberModel()
         for beam in self.beams:
-            model.add_beam(beam)
+            model.add_element(beam)
         topologies = []
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance)
