@@ -2,6 +2,7 @@ from compas.geometry import Point
 from compas_model.models import Model
 
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.elements import Wall
 
 
@@ -34,28 +35,37 @@ class TimberModel(Model):
         for element in model.elements():
             if isinstance(element, Beam):
                 model._beams.append(element)
+            elif isinstance(element, Plate):
+                model._plates.append(element)
             elif isinstance(element, Wall):
                 model._walls.append(element)
         for interaction in model.interactions():
             model._joints.append(interaction)
             interaction.restore_beams_from_keys(model)
-            interaction.add_features()
         return model
 
     def __init__(self, *args, **kwargs):
         super(TimberModel, self).__init__()
         self._beams = []
+        self._plates = []
         self._walls = []
         self._joints = []
         self._topologies = []  # added to avoid calculating multiple times
 
     def __str__(self):
-        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(self.guid, len(self.beams), len(self.joints))
+        return "TimberModel ({}) with {} beam(s), {} plate(s) and {} joint(s).".format(
+            self.guid, len(self.beams), len(self._plates), len(self.joints)
+        )
 
     @property
     def beams(self):
         # type: () -> list[Beam]
         return self._beams
+
+    @property
+    def plates(self):
+        # type: () -> list[Plate]
+        return self._plates
 
     @property
     def joints(self):
@@ -89,7 +99,7 @@ class TimberModel(Model):
     @property
     def volume(self):
         # type: () -> float
-        return sum([beam.blank.volume for beam in self._beams])
+        return sum([beam.blank.volume for beam in self._beams])  # TODO: add volume for plates
 
     def beam_by_guid(self, guid):
         # type: (str) -> Beam
@@ -108,31 +118,20 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
-    def add_beam(self, beam):
-        # type: (Beam) -> None
-        """Adds a Beam to this model.
+    def add_element(self, element, **kwargs):
+        # TODO: make the distincion in the properties rather than here
+        # then get rid of this overrloading altogether.
+        node = super(TimberModel, self).add_element(element, **kwargs)
 
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam to add to the model.
-
-        """
-        _ = self.add_element(beam)
-        self._beams.append(beam)
-
-    def add_wall(self, wall):
-        # type: (Wall) -> None
-        """Adds a Wall to this model.
-
-        Parameters
-        ----------
-        wall : :class:`~compas_timber.elements.Wall`
-            The wall to add to the model.
-
-        """
-        _ = self.add_element(wall)
-        self._walls.append(wall)
+        if isinstance(element, Beam):
+            self._beams.append(element)
+        elif isinstance(element, Wall):
+            self._walls.append(element)
+        elif isinstance(element, Plate):
+            self._plates.append(element)
+        else:
+            raise NotImplementedError("Element type not supported: {}".format(type(element)))
+        return node
 
     def add_joint(self, joint, beams):
         # type: (Joint, tuple[Beam]) -> None
@@ -170,3 +169,16 @@ class TimberModel(Model):
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
+
+    def process_joinery(self):
+        """Process the joinery of the model. This methods instructs all joints to add their extensions and features.
+
+        The sequence is important here since the feature parameters must be calculated based on the extended blanks.
+        For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
+
+        """
+        for joint in self.joints:
+            joint.add_extensions()
+
+        for joint in self.joints:
+            joint.add_features()

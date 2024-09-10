@@ -9,10 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `SurfaceModelJointOverride` GH Component.
+* Added `Plate` element.
+* Added attribute `plates` to `TimberModel`.
+
 ### Changed
+
+* Fixed missing input parameter in `SurfaceModelOptions` GH Component.
+* Fixed error with tolerances for `SurfaceModel`s modeled in meters.
+* Renamed `beam` to `element` in different locations to make it more generic.
+* Fixed `AttributeError` in `SurfaceModel`.
+* Updated example scripts.
+* Calling `process_joinery` in `SurfaceModel`.
 
 ### Removed
 
+* Removed `add_beam` from `TimberModel`, use `add_element` instead.
+* Removed `add_plate` from `TimberModel`, use `add_element` instead.
+* Removed `add_wall` from `TimberModel`, use `add_element` instead.
 
 ## [0.9.1] 2024-07-05
 
@@ -25,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed error in BakeWithBoxMap component.
+* Added `add_extensions` to `Joint` interface.
+* Added `process_joinery` to `TimberModel`.
+* Features are not automatically added when creating a joint using `Joint.create()`.
+* Features are not automatically added when de-serializing.
 
 ### Removed
 
