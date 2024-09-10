@@ -17,6 +17,8 @@ class SurfaceModelJointRule(component):
             self.beam_type = ghenv.Component.Params.Output[0].NickName
 
     def RunScript(self, model):
+        self.names = set(element.attributes.get("category") for element in model.elements())
+        self.names.remove(None)
         if not self.beam_type:
             ghenv.Component.Message = "Select beam type from context menu (right click)"
             self.AddRuntimeMessage(Warning, "Select beam type from context menu (right click)")
