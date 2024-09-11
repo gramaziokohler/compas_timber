@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `SurfaceModelJointOverride` GH Component
 * Added `ShowSurfaceModelBeamType` GH Component
 * Re-introduced attribute `key` in `Beam`.
+* Added attribute `key` to `Plate`.
 
 ### Changed
 
