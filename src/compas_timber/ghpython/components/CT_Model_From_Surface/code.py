@@ -50,18 +50,18 @@ class SurfaceModelComponent(component):
         scene = Scene()
         model = surface_model.create_model()
         model.process_joinery()
+        for plate in surface_model.plate_elements:
+            for win in surface_model.windows:
+                plate.add_features(win.boolean_feature)
         if CreateGeometry:
-            for element in model.beams:
+            for element in model.elements():
                 scene.add(element.geometry)
                 if element.debug_info:
-                    debug_info.add_feature_error(element.debug_info)
-            for plate in model.plate_elements:
-                for window in model.windows:
-                    print("subtracting window from:", plate)
-                    window.boolean_feature.apply(plate.geometry)
+                    debug_info.add_feature_error(element.debug_info)            
         else:
-            for element in model.beams:
+            for element in model.elements():
                 scene.add(element.blank)
+
 
 
 
