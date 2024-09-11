@@ -594,7 +594,7 @@ document.write(`
 <h1>Beam</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Beam">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/67b8149/src/compas_timber/elements/beam.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/f426c7d/src/compas_timber/elements/beam.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
 <p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
 <dl class="field-list">
@@ -653,6 +653,8 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <dt><strong>long_edges</strong><span class="classifier">list(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>)</span></dt><dd><p>A list containing the 4 lines along the long axis of this beam.</p>
 </dd>
 <dt><strong>midpoint</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a></span></dt><dd><p>The point at the middle of the centerline of this beam.</p>
+</dd>
+<dt><strong>key</strong><span class="classifier">int, optional</span></dt><dd><p>Once beam is added to a model, it will have this model-wide-unique integer key.</p>
 </dd>
 </dl>
 </dd>
