@@ -1,7 +1,6 @@
 from .beam import Beam
 from .plate import Plate
 from .wall import Wall
-from .plate import Plate
 from .features import BrepSubtraction
 from .features import CutFeature
 from .features import DrillFeature

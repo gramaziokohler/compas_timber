@@ -1,7 +1,9 @@
 import math
 
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import NurbsCurve
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
@@ -17,8 +19,6 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.geometry import offset_polyline
-from compas.geometry import Brep
-from compas.geometry import NurbsCurve
 from compas.tolerance import Tolerance
 
 from compas_timber.connections import ConnectionSolver
@@ -26,11 +26,11 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
+from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.model import TimberModel
 from compas_timber.elements.features import BrepSubtraction
-from compas_timber.design import FeatureDefinition
+from compas_timber.model import TimberModel
 
 
 class SurfaceModel(object):
@@ -138,8 +138,6 @@ class SurfaceModel(object):
         self.generate_frame()
         self.generate_plates()
 
-
-
     @property
     def z_axis(self):
         cross = cross_vectors(self.normal, self._z_axis)
@@ -185,8 +183,6 @@ class SurfaceModel(object):
     def centerlines(self):
         return [beam_def.centerline for beam_def in self.beam_definitions]
 
-
-
     @property
     def elements(self):
         elements = []
@@ -206,7 +202,6 @@ class SurfaceModel(object):
         for plate in self._elements:
             if isinstance(plate, Plate):
                 yield plate
-
 
     @property
     def points(self):
@@ -263,11 +258,11 @@ class SurfaceModel(object):
     @property
     def plates(self):
         return [beam_def for beam_def in self._beam_definitions if beam_def.type == "plate"]
-   
+
     @classmethod
     def beam_category_names(cls):
         return SurfaceModel.BEAM_CATEGORY_NAMES
-    
+
     def generate_frame(self):
         self.generate_perimeter_beams()
         self.generate_windows()
@@ -296,7 +291,7 @@ class SurfaceModel(object):
                         rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
         model.set_topologies(topologies)
         return model
-    
+
     def parse_loops(self):
         for loop in self.surface.loops:
             polyline_points = []
@@ -365,13 +360,9 @@ class SurfaceModel(object):
         out = []
         for index in range(len(points)):
             if index == 0:
-                angle = angle_vectors_signed(
-                    points[-1] - points[0], points[1] - points[0], self.normal, deg=True
-                )
+                angle = angle_vectors_signed(points[-1] - points[0], points[1] - points[0], self.normal, deg=True)
             elif index == len(points) - 1:
-                angle = angle_vectors_signed(
-                    points[-2] - points[-1], points[0] - points[-1], self.normal, deg=True
-                )
+                angle = angle_vectors_signed(points[-2] - points[-1], points[0] - points[-1], self.normal, deg=True)
             else:
                 angle = angle_vectors_signed(
                     points[index - 1] - points[index], points[index + 1] - points[index], self.normal, deg=True
@@ -379,7 +370,7 @@ class SurfaceModel(object):
             print(index, angle)
             if angle > 0:
                 print(index)
-                out.append(index-1)
+                out.append(index - 1)
                 out.append(index)
         if len(out) > 0:
             out.insert(1, out[0] - 1)
@@ -414,7 +405,9 @@ class SurfaceModel(object):
                 start_point, _ = intersection_line_line(
                     beam_def.centerline, element_before.centerline, self.dist_tolerance
                 )
-                end_point, _ = intersection_line_line(beam_def.centerline, element_after.centerline, self.dist_tolerance)
+                end_point, _ = intersection_line_line(
+                    beam_def.centerline, element_after.centerline, self.dist_tolerance
+                )
                 if start_point and end_point:
                     beam_def.centerline = Line(start_point, end_point)
         return offset_loop
@@ -532,7 +525,6 @@ class SurfaceModel(object):
         for window in self.windows:
             self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
 
-
     class Window(object):
         """
         A window object for the SurfaceAssembly.
@@ -635,9 +627,9 @@ class SurfaceModel(object):
             thickness = offset + so + self.parent.frame_depth
 
             crv = self.outline.copy()
-            crv.translate(self.normal * -offset)      
+            crv.translate(self.normal * -offset)
 
-            vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree = 1), self.normal * thickness)
+            vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
             return BrepSubtraction(vol)
 
         def process_outlines(self):
