@@ -37,7 +37,8 @@ class Plate(Element):
         Thickness of the plate material.
     aabb : tuple(float, float, float, float, float, float)
         An axis-aligned bounding box of this plate as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
-
+    key : int, optional
+        Once plate is added to a model, it will have this model-wide-unique integer key.
 
     """
 
@@ -91,8 +92,13 @@ class Plate(Element):
 
     @property
     def has_features(self):
-        # TODO: move to compas_future... Part
+        # TODO: consider removing, this is not used anywhere
         return len(self.features) > 0
+
+    @property
+    def key(self):
+        # type: () -> int | None
+        return self.graph_node
 
     # ==========================================================================
     # Implementations of abstract methods
