@@ -9,13 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.10.0] 2024-09-11
+
+### Added
+
 * Added `SurfaceModelJointOverride` GH Component.
 * Added `Plate` element.
 * Added attribute `plates` to `TimberModel`.
+* Added `SurfaceModelJointOverride` GH Component
+* Added `ShowSurfaceModelBeamType` GH Component
+* Re-introduced attribute `key` in `Beam`.
+* Added attribute `key` to `Plate`.
 * Added generation of `plate` elements to the `SurfaceModel`
 
 ### Changed
 
+* Updated documentation for Grasshopper components.
 * Fixed missing input parameter in `SurfaceModelOptions` GH Component.
 * Fixed error with tolerances for `SurfaceModel`s modeled in meters.
 * Renamed `beam` to `element` in different locations to make it more generic.

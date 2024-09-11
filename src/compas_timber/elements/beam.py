@@ -79,6 +79,8 @@ class Beam(Element):
         A list containing the 4 lines along the long axis of this beam.
     midpoint : :class:`~compas.geometry.Point`
         The point at the middle of the centerline of this beam.
+    key : int, optional
+        Once beam is added to a model, it will have this model-wide-unique integer key.
 
     """
 
@@ -236,8 +238,13 @@ class Beam(Element):
 
     @property
     def has_features(self):
-        # TODO: move to compas_future... Part
+        # TODO: consider removing, this is not used anywhere
         return len(self.features) > 0
+
+    @property
+    def key(self):
+        # type: () -> int | None
+        return self.graph_node
 
     def __str__(self):
         return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(

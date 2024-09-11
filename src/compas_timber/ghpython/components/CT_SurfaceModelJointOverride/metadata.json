@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Joint Rules",
     "description": "overrides the standard joint rules for Surface Assembly",
-    "exposure": 2,
+    "exposure": 16,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
