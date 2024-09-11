@@ -185,35 +185,7 @@ class SurfaceModel(object):
     def centerlines(self):
         return [beam_def.centerline for beam_def in self.beam_definitions]
 
-    def generate_frame(self):
-        self.generate_perimeter_beams()
-        self.generate_windows()
-        self.generate_studs()
 
-    def create_model(self):
-        model = TimberModel()
-        for element in self.elements:
-            model.add_element(element)
-        topologies = []
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance)
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-                for rule in self.rules:
-                    if not rule.comply(pair):
-                        continue
-                    if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
-                        continue
-                    else:
-                        if rule.joint_type == LButtJoint:
-                            beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                        rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
-        model.set_topologies(topologies)
-
-        return model
 
     @property
     def elements(self):
@@ -291,11 +263,40 @@ class SurfaceModel(object):
     @property
     def plates(self):
         return [beam_def for beam_def in self._beam_definitions if beam_def.type == "plate"]
-
+   
     @classmethod
     def beam_category_names(cls):
         return SurfaceModel.BEAM_CATEGORY_NAMES
+    
+    def generate_frame(self):
+        self.generate_perimeter_beams()
+        self.generate_windows()
+        self.generate_studs()
 
+    def create_model(self):
+        model = TimberModel()
+        for element in self.elements:
+            model.add_element(element)
+        topologies = []
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance)
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
+                for rule in self.rules:
+                    if not rule.comply(pair):
+                        continue
+                    if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
+                        continue
+                    else:
+                        if rule.joint_type == LButtJoint:
+                            beam_a, beam_b = rule.reorder([beam_a, beam_b])
+                        rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
+        model.set_topologies(topologies)
+        return model
+    
     def parse_loops(self):
         for loop in self.surface.loops:
             polyline_points = []
@@ -327,6 +328,7 @@ class SurfaceModel(object):
 
     def generate_perimeter_beams(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
+        print(interior_indices)
         for i, segment in enumerate(self.outer_polyline.lines):
             beam_def = self.BeamDefinition(segment, parent=self)
             if i in interior_indices:
@@ -358,25 +360,30 @@ class SurfaceModel(object):
                     self._beam_definitions.append(self.BeamDefinition(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
+        print(polyline.points)
+        points = polyline.points[0:-1]
         out = []
-        for index in range(len(polyline)):
+        for index in range(len(points)):
             if index == 0:
                 angle = angle_vectors_signed(
-                    polyline[-1] - polyline[0], polyline[1] - polyline[0], self.normal, deg=True
+                    points[-1] - points[0], points[1] - points[0], self.normal, deg=True
                 )
-            elif index == len(polyline) - 1:
+            elif index == len(points) - 1:
                 angle = angle_vectors_signed(
-                    polyline[-2] - polyline[-1], polyline[0] - polyline[-1], self.normal, deg=True
+                    points[-2] - points[-1], points[0] - points[-1], self.normal, deg=True
                 )
             else:
                 angle = angle_vectors_signed(
-                    polyline[index - 1] - polyline[index], polyline[index + 1] - polyline[index], self.normal, deg=True
+                    points[index - 1] - points[index], points[index + 1] - points[index], self.normal, deg=True
                 )
+            print(index, angle)
             if angle > 0:
+                print(index)
+                out.append(index-1)
                 out.append(index)
         if len(out) > 0:
             out.insert(1, out[0] - 1)
-        return out
+        return set(out)
 
     def offset_elements(self, element_loop):
         offset_loop = []
@@ -415,7 +422,6 @@ class SurfaceModel(object):
     def generate_windows(self):
         for polyline in self.inner_polylines:
             self.windows.append(self.Window(polyline, parent=self))
-            self._features.append(FeatureDefinition(self.windows[-1].boolean_feature, [plate for plate in self.plate_elements]))
             self._beam_definitions.extend(self.windows[-1]._beam_definitions)
 
     def generate_studs(self):
@@ -498,7 +504,7 @@ class SurfaceModel(object):
 
     def cull_overlaps(self):
         for beam_def in self.studs:
-            for other_element in self.king_studs + self.jack_studs:
+            for other_element in self.king_studs + self.jack_studs + self.edge_studs:
                 if (
                     self.distance_between_elements(beam_def, other_element)
                     < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2
@@ -523,7 +529,8 @@ class SurfaceModel(object):
             pline = self.outer_polyline.copy()
             pline.translate(self.frame.zaxis * (self.frame_depth + self.sheeting_outside))
             self._elements.append(Plate(pline, self.sheeting_outside))
-
+        for window in self.windows:
+            self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
 
 
     class Window(object):

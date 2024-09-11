@@ -50,9 +50,9 @@ class SurfaceModelComponent(component):
         scene = Scene()
         model = surface_model.create_model()
         model.process_joinery()
-        for plate in surface_model.plate_elements:
-            for win in surface_model.windows:
-                plate.add_features(win.boolean_feature)
+        for f_def in surface_model.features:
+            for element in f_def.elements:
+                element.add_features(f_def.feature)
         if CreateGeometry:
             for element in model.elements():
                 scene.add(element.geometry)
