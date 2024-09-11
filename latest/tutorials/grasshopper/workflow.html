@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Beam" href="beam.html" />
+    <link rel="next" title="Attributes" href="attributes.html" />
     <link rel="prev" title="Grasshopper plugin" href="../../tutorials.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -505,12 +505,13 @@ document.write(`
 </li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beams.html">Beams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html">Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fabrication.html">Fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="joint_rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -584,21 +585,20 @@ document.write(`
                   
   <section id="workflow">
 <h1>Workflow</h1>
-<p>To build a timber frame <strong>Assembly</strong>, you need to:</p>
+<p>To build a timber frame <strong>Model</strong> in Grasshopper, you need to:</p>
 <ul class="simple">
-<li><p>create <strong>Beams</strong></p></li>
-<li><p>define <strong>Joints</strong> between these beams and <strong>Rules</strong> how the joints are applied.</p></li>
-<li><p>define other <strong>Features</strong> (optional)</p></li>
+<li><p>create <a class="reference internal" href="beams.html"><span class="doc">Beams</span></a>.</p></li>
+<li><p>define <a class="reference internal" href="joint_rules.html"><span class="doc">Joint Rules</span></a> for the interactions between the Beams.</p></li>
+<li><p>optional: define other <a class="reference internal" href="features.html"><span class="doc">Features</span></a>.</p></li>
 </ul>
-<p>Based on this, <strong>Assembly</strong> takes care of generating the final geometry of the structure.</p>
-<a class="reference internal image-reference" href="../../_images/workflow_diagramm.png"><img alt="../../_images/workflow_diagramm.png" src="../../_images/workflow_diagramm.png" style="width: 50%;" />
+<p>Based on this, the <a class="reference internal" href="model.html"><span class="doc">Model</span></a> component takes care of generating the final geometry of the structure.</p>
+<a class="reference internal image-reference" href="../../_images/gh_workflow_diagram.png"><img alt="../../_images/gh_workflow_diagram.png" src="../../_images/gh_workflow_diagram.png" style="width: 45%;" />
 </a>
 <div class="line-block">
 <div class="line"><br /></div>
-<div class="line"><br /></div>
 </div>
 <p><strong>Example:</strong></p>
-<a class="reference internal image-reference" href="../../_images/gh_WorkflowDef.png"><img alt="../../_images/gh_WorkflowDef.png" src="../../_images/gh_WorkflowDef.png" style="width: 75%;" />
+<a class="reference internal image-reference" href="../../_images/gh_workflow_example.png"><img alt="../../_images/gh_workflow_example.png" src="../../_images/gh_workflow_example.png" style="width: 75%;" />
 </a>
 <div class="line-block">
 <div class="line"><br /></div>
@@ -607,7 +607,8 @@ document.write(`
 <p class="admonition-title">Note</p>
 <p><strong>Important!</strong></p>
 <ul class="simple">
-<li><p>There are three Types of <strong>Joint Rules</strong> 1. By <strong>Topology</strong>, 2. by <strong>Category</strong> and 3. <strong>Direct</strong> Joints. In this order, they will be applied to the Assembly. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules. See <a class="reference internal" href="rules.html"><span class="doc">Joint Rules</span></a>.</p></li>
+<li><p>You can add any number of <a class="reference internal" href="joint_rules.html"><span class="doc">Joint Rules</span></a>, but there is a hierarchy of how they are applied:</p></li>
+<li><p>There are three Types of <strong>Joint Rules</strong> 1. By <strong>Topology</strong>, 2. by <strong>Category</strong> and 3. <strong>Direct</strong> Joints. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules.</p></li>
 <li><p>The <strong>Joints</strong> are processed first, then <strong>Features</strong>.</p></li>
 </ul>
 </div>

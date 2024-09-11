@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Joints" href="joints.html" />
-    <link rel="prev" title="Beam" href="beam.html" />
+    <link rel="next" title="Beams" href="beams.html" />
+    <link rel="prev" title="Workflow" href="workflow.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -316,6 +316,10 @@ document.write(`
   
 
   
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
 </div>
 
     </nav>
@@ -505,12 +509,13 @@ document.write(`
 </li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Attributes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beams.html">Beams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html">Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fabrication.html">Fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="joint_rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -590,24 +595,47 @@ and parameters of the beams are stored in a Rhino document. The attributes are e
 This string entails concatenated key-value pairs, using a colon (<code class="code docutils literal notranslate"><span class="pre">:</span></code>) as a separator between a key and a value of each entry,
 and an underscore (<code class="code docutils literal notranslate"><span class="pre">_</span></code>)
 to separate entries (for example: <em>attr1name:attr1value_attr2name:attr2value</em>)</p>
-<p>There are four <em>standard</em> attributes, corresponding to the inputs in the <strong>Beam</strong> components: <cite>Width</cite>, <cite>Height</cite>, <cite>Category</cite> or <cite>ZVector</cite>.</p>
-<ul class="simple">
-<li><p><strong>SetStandardAttributes</strong> - sets the standard attributes’ values, e.g.  writes them to the source object.</p></li>
-<li><p><strong>ReadStandardAttributes</strong> - reads the standard attributes from the source object. <em>Group</em> attribute refers to indices of groups if source objects were grouped.</p></li>
-<li><p><strong>CheckStandardAttributes</strong> - checks if the standard attributes are set and/or correctly formatted, and displays errors or missing values.</p></li>
-</ul>
-<p>It is also possible to set and retrieve custom, user-defined attributes. This may be useful if later the source objects need to be filtered according to additional criteria.
-These attributes are only set to source objects, not the beams created from them.</p>
-<ul class="simple">
-<li><p><strong>DeleteAttributes</strong> - removes the given attribute and its value from the source object.</p></li>
-<li><p><strong>SetCustomAttributes</strong> - sets a custom attribute and its value to the source object.</p></li>
-<li><p><strong>ReadAllAttributes</strong> - reads all attributes from the source object.</p></li>
-</ul>
+<p>There are four <em>standard</em> attributes, corresponding to the inputs in the <a class="reference internal" href="beams.html"><span class="doc">Beams</span></a> components: <cite>Width</cite>, <cite>Height</cite>, <cite>Category</cite> or <cite>ZVector</cite>.</p>
+<section id="standard-attributes">
+<h2>Standard Attributes</h2>
+<p><strong>SetStandardAttributes</strong> - sets the standard attributes’ values, e.g.  writes them to the source object.
+<strong>GetStandardAttributes</strong> - gets the standard attributes from the source object. <em>Group</em> attribute refers to indices of groups if source objects were grouped.</p>
+<a class="reference internal image-reference" href="../../_images/gh_attributes_standard.png"><img alt="../../_images/gh_attributes_standard.png" src="../../_images/gh_attributes_standard.png" style="width: 100%;" />
+</a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<a class="reference internal image-reference" href="../../_images/Attributes_components.png"><img alt="../../_images/Attributes_components.png" src="../../_images/Attributes_components.png" style="width: 80%;" />
+</section>
+<section id="custom-attributes">
+<h2>Custom Attributes</h2>
+<p>It is also possible to set and retrieve custom, user-defined attributes. This may be useful if later the source objects need to be filtered according to additional criteria.
+These attributes are only set to source objects, not the beams created from them.</p>
+<p><strong>SetCustomAttributes</strong> - sets a custom attribute and its value to the source object.
+<strong>GetCustomAttributes</strong> - gets all attributes from the source object.</p>
+<a class="reference internal image-reference" href="../../_images/gh_attributes_custom.png"><img alt="../../_images/gh_attributes_custom.png" src="../../_images/gh_attributes_custom.png" style="width: 100%;" />
 </a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="check-attributes">
+<h2>Check Attributes</h2>
+<p><strong>CheckStandardAttributes</strong> - checks if the standard attributes are set and/or correctly formatted, and displays errors or missing values.</p>
+<a class="reference internal image-reference" href="../../_images/gh_attributes_check.png"><img alt="../../_images/gh_attributes_check.png" src="../../_images/gh_attributes_check.png" style="width: 100%;" />
+</a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="delete-attributes">
+<h2>Delete Attributes</h2>
+<p><strong>DeleteAttributes</strong> - removes the given attribute and its value from the source object.</p>
+<a class="reference internal image-reference" href="../../_images/gh_attributes_delete.png"><img alt="../../_images/gh_attributes_delete.png" src="../../_images/gh_attributes_delete.png" style="width: 100%;" />
+</a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
 </section>
 
 
@@ -622,6 +650,23 @@ These attributes are only set to source objects, not the beams created from them
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#standard-attributes">Standard Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-attributes">Custom Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#check-attributes">Check Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#delete-attributes">Delete Attributes</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Assembly" href="assembly.html" />
-    <link rel="prev" title="Joint Rules" href="rules.html" />
+    <link rel="next" title="Joint Rules" href="joint_rules.html" />
+    <link rel="prev" title="Fabrication" href="fabrication.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -316,6 +316,10 @@ document.write(`
   
 
   
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
 </div>
 
     </nav>
@@ -505,12 +509,13 @@ document.write(`
 </li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beams.html">Beams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html">Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fabrication.html">Fabrication</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="joint_rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -587,25 +592,40 @@ document.write(`
 <p>Features are additional geometric operations on beams:</p>
 <a class="reference internal image-reference" href="../../_images/diagram_features.png"><img alt="../../_images/diagram_features.png" src="../../_images/diagram_features.png" style="width: 75%;" />
 </a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/gh_features.png"><img alt="../../_images/gh_features.png" src="../../_images/gh_features.png" style="width: 100%;" />
+</a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<section id="brep-subtraction-feature">
+<h2>Brep Subtraction Feature</h2>
 <p><strong>BrepSubtractionFeature</strong> is a boolean operation to subtract any <em>Brep</em> geometry from a beam.</p>
 <ul class="simple">
 <li><p><cite>Beam</cite> : the beam to be subtracted from</p></li>
 <li><p><cite>Brep</cite> : the Brep geometry to subtract as a Brep</p></li>
 </ul>
+</section>
+<section id="brep-drill-hole-feature">
+<h2>Brep Drill Hole Feature</h2>
 <p><strong>BrepDrillHoleFeature</strong> is a boolean operation to subtract a hole from a beam.</p>
 <ul class="simple">
 <li><p><cite>Beam</cite> : the beam to be drilled</p></li>
 <li><p><cite>Line</cite> : the axis of the hole as a Line</p></li>
 <li><p><cite>Diameter</cite> : the diameter of the hole</p></li>
 </ul>
+</section>
+<section id="trim-feature">
+<h2>Trim Feature</h2>
 <p><strong>TrimFeature</strong> cuts a beam with a <em>Plane</em>. The part of the beam lying on the <em>z-positive</em> side of the plane will be removed.</p>
 <ul class="simple">
 <li><p><cite>Beam</cite> : the beam to be trimmed</p></li>
 <li><p><cite>Plane</cite> : the plane to trim the beam as a surface</p></li>
 </ul>
-<p>The output <cite>Feature</cite> is to be used as input for the <strong>Assembly</strong> component. See <a class="reference internal" href="assembly.html"><span class="doc">Assembly</span></a>.</p>
-<a class="reference internal image-reference" href="../../_images/gh_features.png"><img alt="../../_images/gh_features.png" src="../../_images/gh_features.png" style="width: 51%;" />
-</a>
+<p>The output <cite>Feature</cite> is to be used as input for the <strong>Model</strong> component. See <a class="reference internal" href="model.html"><span class="doc">Model</span></a>.</p>
+</section>
 </section>
 
 
@@ -620,6 +640,22 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brep-subtraction-feature">Brep Subtraction Feature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brep-drill-hole-feature">Brep Drill Hole Feature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#trim-feature">Trim Feature</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Utils" href="utils.html" />
-    <link rel="prev" title="Assembly" href="assembly.html" />
+    <link rel="prev" title="Model" href="model.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -509,12 +509,13 @@ document.write(`
 </li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="beam.html">Beam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="joints.html">Joints</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beams.html">Beams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html">Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fabrication.html">Fabrication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="assembly.html">Assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="joint_rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Show</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -589,29 +590,45 @@ document.write(`
   <section id="show">
 <h1>Show</h1>
 <p>Tools for previewing, inspecting and extracting geometry and data from the assembly.</p>
-<section id="visualisation">
-<h2>Visualisation</h2>
-<section id="geometries">
-<h3>Geometries</h3>
-<ul class="simple">
-<li><p><strong>ShowBeamFaces</strong> : display the faces of the beams.</p></li>
-<li><p><strong>ShowBeamIndex</strong> : display the index of the beams. Based on a global list of the beams in the assembly.</p></li>
-</ul>
+<section id="show-beam-face-index">
+<h2>Show Beam Face Index</h2>
+<a class="reference internal image-reference" href="../../_images/gh_show_beam_face_index.png"><img alt="../../_images/gh_show_beam_face_index.png" src="../../_images/gh_show_beam_face_index.png" style="width: 20%;" />
+</a>
+<p>Displays the indexes of the Beams. Based on a global list of the Beams in the assembly.</p>
 </section>
-<section id="errors">
-<h3>Errors</h3>
-<ul class="simple">
-<li><p><strong>ShowFeatureErrors</strong> :</p></li>
-<li><p><strong>ShowJoiningErrors</strong> :</p></li>
-</ul>
+<section id="show-beam-index">
+<h2>Show Beam Index</h2>
+<a class="reference internal image-reference" href="../../_images/gh_show_beam_index.png"><img alt="../../_images/gh_show_beam_index.png" src="../../_images/gh_show_beam_index.png" style="width: 20%;" />
+</a>
+<p>Displays the indexes of the Beam faces.</p>
 </section>
-<section id="types">
-<h3>Types</h3>
-<ul class="simple">
-<li><p><strong>ShowJointTypes</strong> : display the type names of each joints in the assembly.</p></li>
-<li><p><strong>ShowTopologyTypes</strong> : display the type names of each joints in the assembly.</p></li>
-</ul>
+<section id="show-surface-model-beam-types">
+<h2>Show Surface Model Beam Types</h2>
+<p>Displays all Beams of one selected type from the surface model.</p>
 </section>
+<section id="show-feature-errors">
+<h2>Show Feature Errors</h2>
+<a class="reference internal image-reference" href="../../_images/gh_show_feature_errors.png"><img alt="../../_images/gh_show_feature_errors.png" src="../../_images/gh_show_feature_errors.png" style="width: 25%;" />
+</a>
+<p>Shows information useful for debugging feature application errors.</p>
+</section>
+<section id="show-joining-errors">
+<h2>Show Joining Errors</h2>
+<a class="reference internal image-reference" href="../../_images/gh_show_joining_errors.png"><img alt="../../_images/gh_show_joining_errors.png" src="../../_images/gh_show_joining_errors.png" style="width: 25%;" />
+</a>
+<p>Shows information useful for debugging errors occured while attempting to join Beams.</p>
+</section>
+<section id="show-joint-types">
+<h2>Show Joint Types</h2>
+<a class="reference internal image-reference" href="../../_images/gh_show_joint_types.png"><img alt="../../_images/gh_show_joint_types.png" src="../../_images/gh_show_joint_types.png" style="width: 20%;" />
+</a>
+<p>Displays the type names of each joints in the assembly.</p>
+</section>
+<section id="show-topology-types">
+<h2>Show Topology Types</h2>
+<a class="reference internal image-reference" href="../../_images/gh_show_topology_types.png"><img alt="../../_images/gh_show_topology_types.png" src="../../_images/gh_show_topology_types.png" style="width: 20%;" />
+</a>
+<p>Displays the topologies (L, T or X) that Compas Timber recognizes at each Joint</p>
 </section>
 </section>
 
@@ -636,12 +653,13 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualisation">Visualisation</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#geometries">Geometries</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#errors">Errors</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types">Types</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#show-beam-face-index">Show Beam Face Index</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#show-beam-index">Show Beam Index</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#show-surface-model-beam-types">Show Surface Model Beam Types</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#show-feature-errors">Show Feature Errors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#show-joining-errors">Show Joining Errors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#show-joint-types">Show Joint Types</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#show-topology-types">Show Topology Types</a></li>
 </ul>
   </nav></div>
 
