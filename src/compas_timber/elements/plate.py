@@ -87,7 +87,6 @@ class Plate(Element):
 
     @property
     def shape(self):
-        print('self.outline.points', len(self.outline.points))
         brep = Brep.from_extrusion(NurbsCurve.from_points(self.outline.points, degree = 1), self.vector)
         return brep
 

@@ -30,6 +30,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 from compas_timber.elements.features import BrepSubtraction
+from compas_timber.design import FeatureDefinition
 
 
 class SurfaceModel(object):
@@ -136,7 +137,6 @@ class SurfaceModel(object):
         self.parse_loops()
         self.generate_frame()
         self.generate_plates()
-        print(self._elements)
 
 
 
@@ -212,18 +212,17 @@ class SurfaceModel(object):
                             beam_a, beam_b = rule.reorder([beam_a, beam_b])
                         rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
         model.set_topologies(topologies)
+
         return model
 
     @property
     def elements(self):
-        print("_elements", self._elements)
         elements = []
         for window in self.windows:
             self._beam_definitions.extend(window._beam_definitions)
         for beam_def in self._beam_definitions:
             elements.append(beam_def.to_beam())
         elements.extend(self._elements)
-        print("elements", elements)
         return elements
 
     @property
@@ -233,7 +232,6 @@ class SurfaceModel(object):
     @property
     def plate_elements(self):
         for plate in self._elements:
-            print("plate", plate)
             if isinstance(plate, Plate):
                 yield plate
 
@@ -417,7 +415,8 @@ class SurfaceModel(object):
     def generate_windows(self):
         for polyline in self.inner_polylines:
             self.windows.append(self.Window(polyline, parent=self))
-            self._features.append(self.windows[-1].boolean_feature)
+            self._features.append(FeatureDefinition(self.windows[-1].boolean_feature, [plate for plate in self.plate_elements]))
+            self._beam_definitions.extend(self.windows[-1]._beam_definitions)
 
     def generate_studs(self):
         self.generate_stud_lines()
@@ -522,8 +521,8 @@ class SurfaceModel(object):
             self._elements.append(Plate(self.outer_polyline, self.sheeting_inside))
         if self.sheeting_outside:
             pline = self.outer_polyline.copy()
-            pline.translate(self.frame.zaxis * self.frame_depth)
-            self._elements.append(Plate(pline, -self.sheeting_outside))
+            pline.translate(self.frame.zaxis * (self.frame_depth + self.sheeting_outside))
+            self._elements.append(Plate(pline, self.sheeting_outside))
 
 
 
@@ -624,9 +623,14 @@ class SurfaceModel(object):
 
         @property
         def boolean_feature(self):
+            offset = self.parent.sheeting_inside if self.parent.sheeting_inside else 0
+            so = self.parent.sheeting_outside if self.parent.sheeting_outside else 0
+            thickness = offset + so + self.parent.frame_depth
+
             crv = self.outline.copy()
-            crv.translate(self.normal * -self.parent.sheeting_inside)
-            vol = Brep.from_extrusion(NurbsCurve.from_points(self.outline.points, degree = 1), self.normal * (self.parent.sheeting_inside + self.parent.sheeting_outside+ self.parent.frame_depth))
+            crv.translate(self.normal * -offset)      
+
+            vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree = 1), self.normal * thickness)
             return BrepSubtraction(vol)
 
         def process_outlines(self):
