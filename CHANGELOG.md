@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `AttributeError` in `SurfaceModel`.
 * Updated example scripts.
 * Calling `process_joinery` in `SurfaceModel`.
+* Renamed `ShowSurfaceModelBeamType` to `ShowBeamsByCategory`.
+* Changed `SurfaceModel` component input handling to give warnings instead of errors.
 
 ### Removed
 
