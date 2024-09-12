@@ -18,19 +18,19 @@
             {
                 "name": "stud_spacing",
                 "description": "spacing between studs.",
-                "typeHintID": "float",
+                "typeHintID": "none",
                 "scriptParamAccess": 0
             },
             {
                 "name": "beam_width",
                 "description": "Width of the cross-section.",
-                "typeHintID": "float",
+                "typeHintID": "none",
                 "scriptParamAccess": 0
             },
             {
                 "name": "frame_depth",
                 "description": "thickness of the frame section of the resulting model. used to set Beam.height",
-                "typeHintID": "float",
+                "typeHintID": "none",
                 "scriptParamAccess": 0
             },
             {

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added bake component for `Plate` eleents.
+* Added bake component for `Plate` elements.
 
 ### Changed
 

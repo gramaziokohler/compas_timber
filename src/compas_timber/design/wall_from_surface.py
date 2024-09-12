@@ -96,37 +96,9 @@ class SurfaceModel(object):
         joint_overrides=None,
     ):
         self.surface = surface
-
-        if stud_spacing is not None:
-            self.stud_spacing = stud_spacing
-        else:
-            if tolerance.unit == "M":
-                self.stud_spacing = 0.625
-            elif tolerance.unit == "MM":
-                self.stud_spacing = 625.0
-            elif tolerance.unit == "CM":
-                self.stud_spacing = 62.5
-
-        if beam_width is not None:
-            self.beam_width = beam_width
-        else:
-            if tolerance.unit == "M":
-                self.beam_width = 0.06
-            elif tolerance.unit == "MM":
-                self.beam_width = 60.0
-            elif tolerance.unit == "CM":
-                self.beam_width = 6.0
-
-        if frame_depth is not None:
-            self.frame_depth = frame_depth
-        else:
-            if tolerance.unit == "M":
-                self.frame_depth = 0.14
-            elif tolerance.unit == "MM":
-                self.frame_depth = 140.0
-            elif tolerance.unit == "CM":
-                self.frame_depth = 14.0
-
+        self.stud_spacing = stud_spacing
+        self.beam_width = beam_width
+        self.frame_depth = frame_depth
         self._z_axis = z_axis or Vector.Zaxis()
         self.sheeting_outside = sheeting_outside
         self.sheeting_inside = sheeting_inside

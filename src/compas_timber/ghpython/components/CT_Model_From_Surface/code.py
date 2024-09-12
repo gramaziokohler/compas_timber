@@ -20,33 +20,6 @@ class SurfaceModelComponent(component):
             return
         if not isinstance(surface, RhinoBrep):
             raise TypeError("Expected a compas.geometry.Surface, got: {}".format(type(surface)))
-        if not stud_spacing:
-            self.AddRuntimeMessage(
-                Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm"
-            )
-        if stud_spacing is not None and not isinstance(stud_spacing, float):
-            raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
-        if not beam_width:
-            self.AddRuntimeMessage(
-                Warning, "Input parameter 'beam_width' failed to collect data, using default value of 60mm"
-            )
-        if beam_width is not None and not isinstance(beam_width, float):
-            raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
-        if not frame_depth:
-            self.AddRuntimeMessage(
-                Warning, "Input parameter 'frame_depth' failed to collect data, using default value of 140mm"
-            )
-        if frame_depth is not None and not isinstance(frame_depth, float):
-            raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
-        if z_axis is not None and not isinstance(z_axis, RhinoVector):
-            raise TypeError("Expected a compas.geometry.Vector, got: {}".format(type(z_axis)))
-
-        # reformat unset parameters for consistency
-        if not z_axis:
-            z_axis = None
-        if not options:
-            options = {}
-
         units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
         tol = None
         if units == "m":
@@ -55,6 +28,56 @@ class SurfaceModelComponent(component):
             tol = Tolerance(unit="CM", absolute=1e-4, relative=1e-4)
         elif units == "mm":
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+
+
+
+        if not stud_spacing:
+            self.AddRuntimeMessage(
+                Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm"
+            )
+            if tol.unit == "M":
+                stud_spacing = 0.625
+            elif tol.unit == "MM":
+                stud_spacing = 625.0
+            elif tol.unit == "CM":
+                stud_spacing = 62.5
+        elif not isinstance(stud_spacing, float):
+            raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
+
+        if not beam_width:
+            self.AddRuntimeMessage(
+                Warning, "Input parameter 'beam_width' failed to collect data, using default value of 60mm"
+            )
+            if tol.unit == "M":
+                beam_width = 0.06
+            elif tol.unit == "MM":
+                beam_width = 60.0
+            elif tol.unit == "CM":
+                beam_width = 6.0
+        elif not isinstance(beam_width, float):
+            raise TypeError("beam_width expected a float, got: {}".format(type(beam_width)))
+
+        if not frame_depth:
+            self.AddRuntimeMessage(
+                Warning, "Input parameter 'frame_depth' failed to collect data, using default value of 140mm"
+            )
+            if tol.unit == "M":
+                frame_depth = 0.14
+            elif tol.unit == "MM":
+                frame_depth = 140.0
+            elif tol.unit == "CM":
+                frame_depth = 14.0
+        elif not isinstance(frame_depth, float):
+            raise TypeError("frame_depth expected a float, got: {}".format(type(frame_depth)))
+
+        if z_axis is not None and not isinstance(z_axis, RhinoVector):
+            raise TypeError("Expected a compas.geometry.Vector, got: {}".format(type(z_axis)))
+
+        # reformat unset parameters for consistency
+        if not z_axis:
+            z_axis = None
+        if not options:
+            options = {}
 
         surface_model = SurfaceModel(
             Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, tol, **options
