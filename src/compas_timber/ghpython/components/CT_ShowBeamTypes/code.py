@@ -8,7 +8,7 @@ from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 class ShowBeamsByCategory(component):
     def __init__(self):
-        super(SurfaceModelJointRule, self).__init__()
+        super(ShowBeamsByCategory, self).__init__()
         self.beam_type = None
         if ghenv.Component.Params.Output[0].NickName == "type":
             self.joint_type = None
