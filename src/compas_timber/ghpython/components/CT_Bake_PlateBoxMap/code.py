@@ -14,7 +14,7 @@ from Rhino.RhinoDoc import ActiveDoc
 
 
 class BakePlateMap(component):
-    def RunScript(self, model, map_size, bake):
+    def RunScript(self, model, map_size, swap_uv, bake):
         if map_size and len(map_size) != 3:
             self.AddRuntimeMessage(
                 Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
@@ -45,13 +45,13 @@ class BakePlateMap(component):
 
                 for brep, frame in zip(breps, frames):
                     guid = ActiveDoc.Objects.Add(brep)
-                    boxmap = self.create_box_map(frame, dimx, dimy, dimz)
+                    boxmap = self.create_box_map(frame, dimx, dimy, dimz, swap_uv)
                     ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
         finally:
             rs.EnableRedraw(True)
 
     @staticmethod
-    def create_box_map(pln, sx, sy, sz):
+    def create_box_map(pln, sx, sy, sz, swap_uv):
         """
         pln: frame of beam box, where x=main axis, y=width, z=height
         sx,sy,sz: box map size in x,y,z direction
@@ -78,7 +78,8 @@ class BakePlateMap(component):
         dx = Interval(-sx * 0.5, sx * 0.5)
         dy = Interval(-sy * 0.5, sy * 0.5)
         dz = Interval(-sz * 0.5, sz * 0.5)
-
+        if swap_uv:
+            mappingPln.Rotate(math.radians(90), mappingPln.XAxis)
         BoxMap = Render.TextureMapping.CreateBoxMapping(mappingPln, dx, dy, dz, False)
 
         return BoxMap

@@ -22,6 +22,12 @@
                 "scriptParamAccess": 1
             },
             {
+                "name": "SwapUV",
+                "description": "Rotates the BoxMap 90 degrees (optional).",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
                 "name": "Bake",
                 "description": "Set to True to Bake. Nothing happens if None or False.",
                 "typeHintID": "bool",
