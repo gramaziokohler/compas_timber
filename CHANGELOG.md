@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added bake component for `Plate` eleents.
+
 ### Changed
+
+* Fixed wrong image file paths in the Documentation.
+
+### Removed
+
+
+## [0.10.1] 2024-09-11
+
+### Added
+
+### Changed
+
+* Implemented a workaround for https://github.com/gramaziokohler/compas_timber/issues/280.
 
 ### Removed
 
@@ -38,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Calling `process_joinery` in `SurfaceModel`.
 * Changed how `BeamDefinition` and `Plate` types are handled in `SurfaceModel`
 * Changed the `get_interior_segment_indices` function to work when there are multiple openings.
+* Renamed `ShowSurfaceModelBeamType` to `ShowBeamsByCategory`.
+* Changed `SurfaceModel` component input handling to give warnings instead of errors.
 
 ### Removed
 

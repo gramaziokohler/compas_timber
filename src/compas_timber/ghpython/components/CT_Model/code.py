@@ -23,6 +23,10 @@ JOINT_DEFAULTS = {
 }
 
 
+# workaround for https://github.com/gramaziokohler/compas_timber/issues/280
+TOL.absolute = 1e-6
+
+
 class ModelComponent(component):
     def get_joints_from_rules(self, beams, rules, topologies):
         if not isinstance(rules, list):

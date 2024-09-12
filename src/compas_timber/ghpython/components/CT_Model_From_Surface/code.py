@@ -12,7 +12,6 @@ from Rhino.Geometry import Vector3d as RhinoVector
 from compas_timber.design import DebugInfomation
 from compas_timber.design import SurfaceModel
 
-
 class SurfaceModelComponent(component):
     def RunScript(self, surface, stud_spacing, beam_width, frame_depth, z_axis, options, CreateGeometry=False):
         # minimum inputs required
@@ -22,7 +21,18 @@ class SurfaceModelComponent(component):
             raise TypeError("Expected a compas.geometry.Surface, got: {}".format(type(surface)))
         if not stud_spacing:
             self.AddRuntimeMessage(Warning, "Input parameter 'spacing' failed to collect data")
-        if not isinstance(stud_spacing, float):
+            return
+        if stud_spacing is not None and not isinstance(stud_spacing, float):
+            raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
+        if not beam_width:
+            self.AddRuntimeMessage(Warning, "Input parameter 'beam_width' failed to collect data")
+            return
+        if beam_width is not None and not isinstance(beam_width, float):
+            raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
+        if not frame_depth:
+            self.AddRuntimeMessage(Warning, "Input parameter 'frame_depth' failed to collect data")
+            return
+        if frame_depth is not None and not isinstance(frame_depth, float):
             raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
         if z_axis is not None and not isinstance(z_axis, RhinoVector):
             raise TypeError("Expected a compas.geometry.Vector, got: {}".format(type(z_axis)))
