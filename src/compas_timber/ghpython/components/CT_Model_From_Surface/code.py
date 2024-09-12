@@ -20,18 +20,15 @@ class SurfaceModelComponent(component):
         if not isinstance(surface, RhinoBrep):
             raise TypeError("Expected a compas.geometry.Surface, got: {}".format(type(surface)))
         if not stud_spacing:
-            self.AddRuntimeMessage(Warning, "Input parameter 'spacing' failed to collect data")
-            return
+            self.AddRuntimeMessage(Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm")
         if stud_spacing is not None and not isinstance(stud_spacing, float):
             raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
         if not beam_width:
-            self.AddRuntimeMessage(Warning, "Input parameter 'beam_width' failed to collect data")
-            return
+            self.AddRuntimeMessage(Warning, "Input parameter 'beam_width' failed to collect data, using default value of 60mm")
         if beam_width is not None and not isinstance(beam_width, float):
             raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
         if not frame_depth:
-            self.AddRuntimeMessage(Warning, "Input parameter 'frame_depth' failed to collect data")
-            return
+            self.AddRuntimeMessage(Warning, "Input parameter 'frame_depth' failed to collect data, using default value of 140mm")
         if frame_depth is not None and not isinstance(frame_depth, float):
             raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
         if z_axis is not None and not isinstance(z_axis, RhinoVector):

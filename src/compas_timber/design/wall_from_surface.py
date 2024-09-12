@@ -626,7 +626,7 @@ class SurfaceModel(object):
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
-                    if self.parent.lintel_posts:
+                    if self.parent.use_jack_studs:
                         element.type = "jack_stud"
                     else:
                         element.type = "king_stud"
@@ -648,7 +648,7 @@ class SurfaceModel(object):
                             element.type = "sill"
                 self.elements.append(element)
             self.elements = self.parent.offset_elements(self.elements)
-            if self.parent.lintel_posts:
+            if self.parent.use_jack_studs:
                 for element in self.jack_studs:
                     offset = (
                         self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]
