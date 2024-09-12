@@ -24,7 +24,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.elements import Beam, beam
+from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
 
@@ -145,8 +145,6 @@ class SurfaceModel(object):
         self.beam_dimensions = {}
         self.joint_overrides = joint_overrides
         self.dist_tolerance = tolerance.relative
-
-
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
