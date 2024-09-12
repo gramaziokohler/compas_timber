@@ -29,8 +29,6 @@ class SurfaceModelComponent(component):
         elif units == "mm":
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
-
-
         if not stud_spacing:
             self.AddRuntimeMessage(
                 Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm"
