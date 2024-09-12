@@ -3,14 +3,14 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 class SurfaceModelOptions(component):
     def RunScript(
-        self, sheeting_outside, sheeting_inside, lintel_posts, edge_stud_offset, custom_dimensions, joint_overrides
+        self, sheeting_outside, sheeting_inside, use_jack_studs, edge_stud_offset, custom_dimensions, joint_overrides
     ):
         if sheeting_outside is not None and not isinstance(sheeting_outside, float):
             raise TypeError("sheeting_outside expected a float, got: {}".format(type(sheeting_outside)))
         if sheeting_inside is not None and not isinstance(sheeting_inside, float):
             raise TypeError("sheeting_inside expected a float, got: {}".format(type(sheeting_inside)))
-        if lintel_posts is not None and not isinstance(lintel_posts, bool):
-            raise TypeError("lintel_posts expected a bool, got: {}".format(type(lintel_posts)))
+        if use_jack_studs is not None and not isinstance(use_jack_studs, bool):
+            raise TypeError("lintel_posts expected a bool, got: {}".format(type(use_jack_studs)))
 
         dims = {}
         for item in custom_dimensions:
@@ -20,7 +20,7 @@ class SurfaceModelOptions(component):
         dict = {
             "sheeting_outside": sheeting_outside,
             "sheeting_inside": sheeting_inside,
-            "lintel_posts": lintel_posts,
+            "use_jack_studs": use_jack_studs,
             "edge_stud_offset": edge_stud_offset,
             "custom_dimensions": dims,
             "joint_overrides": joint_overrides,

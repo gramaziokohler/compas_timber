@@ -22,7 +22,7 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "lintel_posts",
+                "name": "use_jack_studs",
                 "description": "(optional) If False, jack studs will not be generated and headers will butt directly onto king studs.",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0

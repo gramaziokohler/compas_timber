@@ -24,7 +24,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.elements import Beam
+from compas_timber.elements import Beam, beam
 from compas_timber.model import TimberModel
 
 
@@ -90,20 +90,48 @@ class SurfaceModel(object):
         tolerance=Tolerance(unit="MM", absolute=1e-3, relative=1e-3),
         sheeting_outside=None,
         sheeting_inside=None,
-        lintel_posts=True,
+        use_jack_studs=True,
         edge_stud_offset=0.0,
         custom_dimensions=None,
         joint_overrides=None,
     ):
         self.surface = surface
-        self.beam_width = beam_width
-        self.frame_depth = frame_depth
-        self.stud_spacing = stud_spacing
+
+        if stud_spacing is not None:
+            self.stud_spacing = stud_spacing
+        else:
+            if tolerance.unit == "M":
+                self.stud_spacing = 0.625
+            elif tolerance.unit == "MM":
+                self.stud_spacing = 625.0
+            elif tolerance.unit == "CM":
+                self.stud_spacing = 62.5
+
+        if beam_width is not None:
+            self.beam_width = beam_width
+        else:
+            if tolerance.unit == "M":
+                self.beam_width = 0.06
+            elif tolerance.unit == "MM":
+                self.beam_width = 60.0
+            elif tolerance.unit == "CM":
+                self.beam_width = 6.0
+
+        if frame_depth is not None:
+            self.frame_depth = frame_depth
+        else:
+            if tolerance.unit == "M":
+                self.frame_depth = 0.14
+            elif tolerance.unit == "MM":
+                self.frame_depth = 140.0
+            elif tolerance.unit == "CM":
+                self.frame_depth = 14.0
+
         self._z_axis = z_axis or Vector.Zaxis()
         self.sheeting_outside = sheeting_outside
         self.sheeting_inside = sheeting_inside
         self.edge_stud_offset = edge_stud_offset or 0.0
-        self.lintel_posts = lintel_posts
+        self.use_jack_studs = use_jack_studs
         self._normal = None
         self.outer_polyline = None
         self.inner_polylines = []
@@ -117,6 +145,8 @@ class SurfaceModel(object):
         self.beam_dimensions = {}
         self.joint_overrides = joint_overrides
         self.dist_tolerance = tolerance.relative
+
+
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
@@ -313,7 +343,7 @@ class SurfaceModel(object):
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 45
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
                 ):
-                    if self.lintel_posts:
+                    if self.use_jack_studs:
                         element.type = "jack_stud"
                     else:
                         element.type = "king_stud"
@@ -329,7 +359,7 @@ class SurfaceModel(object):
                     element.type = "plate"
             self._elements.append(element)
         self._elements = self.offset_elements(self._elements)
-        if self.lintel_posts:
+        if self.use_jack_studs:
             for element in self._elements:
                 if element.type == "jack_stud":
                     offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
