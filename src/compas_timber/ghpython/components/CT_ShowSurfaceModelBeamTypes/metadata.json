@@ -3,7 +3,7 @@
     "nickname": "ShowBeamType",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "allows user to visualize beam types in surface model.",
+    "description": "allows user to visualize beam categories in timber model.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,

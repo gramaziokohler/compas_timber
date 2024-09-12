@@ -6,7 +6,7 @@ from System.Windows.Forms import ToolStripSeparator
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 
-class SurfaceModelJointRule(component):
+class ShowBeamsByCategory(component):
     def __init__(self):
         super(SurfaceModelJointRule, self).__init__()
         self.beam_type = None
