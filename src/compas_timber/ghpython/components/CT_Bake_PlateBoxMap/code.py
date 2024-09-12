@@ -25,8 +25,8 @@ class BakePlateMap(component):
             dimx, dimy, dimz = map_size
         else:
             # for the pine 251 material bitmap, rotated
-            dimx = 0.2
-            dimy = 0.2
+            dimx = 1.0
+            dimy = 1.0
             dimz = 1.0
 
         if not model:
