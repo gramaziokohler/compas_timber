@@ -3,10 +3,13 @@ from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Polyline
 
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
+from compas_timber.elements import Wall
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 
@@ -114,3 +117,30 @@ def test_serialization_with_t_butt_joints(mocker):
 
     assert len(list(a.joints)) == 1
     assert type(list(a.joints)[0]) is TButtJoint
+
+
+def test_generator_properties():
+    model = TimberModel()
+
+    polyline = Polyline(
+        [
+            Point(x=0.0, y=184.318671947, z=4252.92700512),
+            Point(x=0.0, y=2816.40294074, z=4252.92700512),
+            Point(x=0.0, y=2816.40294074, z=2720.97170805),
+            Point(x=0.0, y=184.318671947, z=2720.97170805),
+            Point(x=0.0, y=184.318671947, z=4252.92700512),
+        ]
+    )
+
+    plate = Plate(polyline, 10.0, Vector(1, 0, 0))
+    model.add_element(plate)
+
+    beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
+    model.add_element(beam)
+
+    wall = Wall(10.0, 10.0, 10.0, Frame.worldXY())
+    model.add_element(wall)
+
+    assert len(list(model.plates)) == 1
+    assert len(list(model.beams)) == 1
+    assert len(list(model.walls)) == 1
