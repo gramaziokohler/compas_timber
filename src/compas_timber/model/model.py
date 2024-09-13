@@ -139,7 +139,6 @@ class TimberModel(Model):
             raise ValueError("Expected 2 parts. Got instead: {}".format(len(beams)))
         a, b = beams
         _ = self.add_interaction(a, b, interaction=joint)
-        self._joints.append(joint)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
