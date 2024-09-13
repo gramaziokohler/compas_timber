@@ -72,8 +72,8 @@ def test_create(mocker):
     model.add_element(b2)
     _ = TButtJoint.create(model, b1, b2)
 
-    assert len(model.beams) == 2
-    assert len(model.joints) == 1
+    assert len(list(model.beams)) == 2
+    assert len(list(model.joints)) == 1
 
 
 def test_deepcopy(mocker, t_topo_beams):
@@ -89,7 +89,7 @@ def test_deepcopy(mocker, t_topo_beams):
     assert model_copy.beams
     assert model_copy.joints
 
-    t_butt_copy = model_copy.joints[0]
+    t_butt_copy = list(model_copy.joints)[0]
     assert t_butt_copy is not t_butt
     assert t_butt_copy.beams
 
@@ -167,21 +167,21 @@ def test_joint_create_kwargs_passthrough_lbutt():
     assert joint_a.main_beam is small
     assert joint_a.cross_beam is large
 
-    model.remove_interaction(joint_a)
+    model.remove_joint(joint_a)
 
     joint_b = LButtJoint.create(model, small, large, small_beam_butts=False)
 
     assert joint_b.main_beam is small
     assert joint_b.cross_beam is large
 
-    model.remove_interaction(joint_b)
+    model.remove_joint(joint_b)
 
     joint_c = LButtJoint.create(model, large, small, small_beam_butts=True)
 
     assert joint_c.main_beam is small
     assert joint_c.cross_beam is large
 
-    model.remove_interaction(joint_c)
+    model.remove_joint(joint_c)
 
     joint_d = LButtJoint.create(model, large, small, small_beam_butts=False)
 
@@ -216,7 +216,7 @@ if not compas.IPY:
             set([3, 5]),
             set([5, 6]),
         ]
-        result = find_neighboring_beams(example_model.beams)
+        result = find_neighboring_beams(list(example_model.beams))
         # beam objects => sets of keys for easy comparison
         key_sets = []
         for pair in result:

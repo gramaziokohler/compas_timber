@@ -25,7 +25,7 @@ def test_simple_sequence_generator(mock_model):
     generator = SimpleSequenceGenerator(mock_model)
     plan = generator.result
 
-    assert len(plan) == len(mock_model.beams)
+    assert len(plan) == len(list(mock_model.beams))
     for step, beam in zip(plan, mock_model.beams):
         assert str(beam.guid) == step.element_ids[0]
 
@@ -34,7 +34,7 @@ def test_simple_sequence_generator_get_beam(mock_model):
     generator = SimpleSequenceGenerator(mock_model)
     plan = generator.result
 
-    assert len(plan) == len(mock_model.beams)
+    assert len(plan) == len(list(mock_model.beams))
     for step, beam in zip(plan, mock_model.beams):
         beam_guid = step.element_ids[0]
         assert beam is mock_model.element_by_guid(beam_guid)
@@ -47,6 +47,6 @@ def test_serialize_plan(mock_model):
     plan = json_loads(json_dumps(plan))
     model = json_loads(json_dumps(mock_model))
 
-    assert len(plan) == len(model.beams)
+    assert len(plan) == len(list(model.beams))
     for step, beam in zip(plan, model.beams):
         assert str(beam.guid) == step.element_ids[0]

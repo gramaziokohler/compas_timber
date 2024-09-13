@@ -23,8 +23,8 @@ def test_add_element():
     assert B in A.beams
     assert len(list(A.graph.nodes())) == 1
     assert len(list(A.graph.edges())) == 0
-    assert A.beams[0] is B
-    assert len(A.beams) == 1
+    assert list(A.beams)[0] is B
+    assert len(list(A.beams)) == 1
 
 
 def test_add_joint():
@@ -36,8 +36,8 @@ def test_add_joint():
     model.add_element(b2)
     _ = LButtJoint.create(model, b1, b2)
 
-    assert len(model.beams) == 2
-    assert len(model.joints) == 1
+    assert len(list(model.beams)) == 2
+    assert len(list(model.joints)) == 1
 
 
 def test_copy(mocker):
@@ -53,7 +53,7 @@ def test_copy(mocker):
 
     A_copy = A.copy()
     assert A_copy is not A
-    assert A_copy.beams[0] is not A.beams[0]
+    assert list(A_copy.beams)[0] is not list(A.beams)[0]
 
 
 def test_deepcopy(mocker):
@@ -69,7 +69,7 @@ def test_deepcopy(mocker):
 
     A_copy = A.copy()
     assert A_copy is not A
-    assert A_copy.beams[0] is not A.beams[0]
+    assert list(A_copy.beams)[0] is not list(A.beams)[0]
 
 
 def test_beams_have_keys_after_serialization():
@@ -112,5 +112,5 @@ def test_serialization_with_t_butt_joints(mocker):
 
     a = json_loads(json_dumps(a))
 
-    assert len(a.joints) == 1
-    assert type(a.joints[0]) is TButtJoint
+    assert len(list(a.joints)) == 1
+    assert type(list(a.joints)[0]) is TButtJoint
