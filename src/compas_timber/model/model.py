@@ -1,7 +1,7 @@
 import compas
 
 if not compas.IPY:
-    from typing import Generator
+    from typing import Generator  # noqa: F401
 
 from compas.geometry import Point
 from compas_model.models import Model
