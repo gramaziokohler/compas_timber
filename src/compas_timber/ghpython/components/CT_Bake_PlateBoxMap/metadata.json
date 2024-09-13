@@ -1,0 +1,39 @@
+{
+    "name": "BakePlatesWithBoxMap",
+    "nickname": "BakeWPlatesithBoxMap",
+    "category": "COMPAS Timber",
+    "subcategory": "Utils",
+    "description": "Bakes Plate objects with a BoxMapping (by default the material is applied 'by layer' and has to be defined in the layer the objects are baked to).",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Model",
+                "description": "Model object (optional).",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "MapSize",
+                "description": "Scaling of the BoxMap in x,y,z directions (list of three positive values) (optional).",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "SwapUV",
+                "description": "Rotates the BoxMap 90 degrees (optional).",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Bake",
+                "description": "Set to True to Bake. Nothing happens if None or False.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": []
+    }
+}

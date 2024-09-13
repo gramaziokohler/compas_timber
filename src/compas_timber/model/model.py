@@ -1,10 +1,14 @@
+import compas
+
+if not compas.IPY:
+    from typing import Generator
+
 from compas.geometry import Point
 from compas_model.models import Model
 
 from compas_timber.connections import Joint
 from compas_timber.elements import Beam
-
-# from compas_timber.elements import Plate
+from compas_timber.elements import Plate
 from compas_timber.elements import Wall
 
 
@@ -35,8 +39,7 @@ class TimberModel(Model):
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
         for interaction in model.interactions():
-            interaction.restore_beams_from_keys(model)
-            interaction.add_features()
+            interaction.restore_beams_from_keys(model)  # type: ignore
         return model
 
     def __init__(self, *args, **kwargs):
@@ -44,8 +47,9 @@ class TimberModel(Model):
         self._topologies = []  # added to avoid calculating multiple times
 
     def __str__(self):
+        # type: () -> str
         return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(
-            self.guid, len(self.elements()), len(self.joints)
+            str(self.guid), len(list(self.elements())), len(list(self.joints))
         )
 
     @property
@@ -55,23 +59,23 @@ class TimberModel(Model):
             if isinstance(element, Beam):
                 yield element
 
-    # @property
-    # def plates(self):
-    # # type: () -> Generator[Plate]
-    # for element in self.elements():
-    #     if isinstance(element, Plate):
-    #         yield element
+    @property
+    def plates(self):
+        # type: () -> Generator[Plate, None, None]
+        for element in self.elements():
+            if isinstance(element, Plate):
+                yield element
 
     @property
     def joints(self):
-        # type: () -> Generator[Joint]
+        # type: () -> Generator[Joint, None, None]
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
                 yield interaction  # TODO: consider if there are other interaction types...
 
     @property
     def walls(self):
-        # type: () -> Generator[Wall]
+        # type: () -> Generator[Wall, None, None]
         for element in self.elements():
             if isinstance(element, Wall):
                 yield element
@@ -118,48 +122,6 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
-    def add_beam(self, beam):
-        # type: (Beam) -> None
-        """Adds a Beam to this model.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam to add to the model.
-
-        """
-        _ = self.add_element(beam)
-
-    def add_wall(self, wall):
-        # type: (Wall) -> None
-        """Adds a Wall to this model.
-
-        Parameters
-        ----------
-        wall : :class:`~compas_timber.elements.Wall`
-            The wall to add to the model.
-
-        """
-        _ = self.add_element(wall)
-
-    def add_joint(self, joint, elements):
-        # type: (Joint, tuple[Element]) -> None
-        """Add a joint object to the model.
-
-        Parameters
-        ----------
-        interaction : :class:`~compas_timber.connections.Interaction`
-            An instance of Interaction class.
-
-        elements : tuple(:class:`~compas_model.elements.Element`)
-            The two elements that should be joined.
-
-        """
-        if len(elements) != 2:
-            raise ValueError("Expected 2 parts. Got instead: {}".format(len(elements)))
-        a, b = elements
-        _ = super(TimberModel, self).add_interaction(a, b, interaction=joint)
-
     def remove_joint(self, joint):
         # type: (Joint) -> None
         """Removes this joint object from the model.
@@ -176,3 +138,16 @@ class TimberModel(Model):
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
+
+    def process_joinery(self):
+        """Process the joinery of the model. This methods instructs all joints to add their extensions and features.
+
+        The sequence is important here since the feature parameters must be calculated based on the extended blanks.
+        For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
+
+        """
+        for joint in self.joints:
+            joint.add_extensions()
+
+        for joint in self.joints:
+            joint.add_features()

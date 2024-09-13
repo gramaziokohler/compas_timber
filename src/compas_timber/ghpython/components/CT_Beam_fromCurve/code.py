@@ -19,9 +19,11 @@ class Beam_fromCurve(component):
         if not centerline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")
         if not width:
-            self.AddRuntimeMessage(Warning, "Input parameter 'Width' failed to collect data")
+            length = self._get_centerline_length(centerline)
+            width = [length / 20]
         if not height:
-            self.AddRuntimeMessage(Warning, "Input parameter 'Height' failed to collect data")
+            length = self._get_centerline_length(centerline)
+            height = [length / 10]
 
         # reformat unset parameters for consistency
         if not z_vector:
@@ -96,3 +98,13 @@ class Beam_fromCurve(component):
             guid = line
             geometry = rhino_obj.Geometry
         return guid, geometry
+
+    def _get_centerline_length(self, centerline):
+        centerline_length = []
+        for i in centerline:
+            centerline_length.append(rs.CurveLength(i))
+        if centerline_length:
+            length_average = sum(centerline_length) / len(centerline_length)
+        else:
+            length_average = 1
+        return length_average

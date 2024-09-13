@@ -9,24 +9,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added bake component for `Plate` eleents.
+
 ### Changed
 
-* Changed `TimberModel.add_beam` to `TimberModel.add_element`
-* Changed `TimberModel.add_joint` to `TimberModel.add_interaction`
-* Changed `TimberModel.remove_joint` to `TimberModel.remove_interaction`
-* Changed `TimberModel.beams` to parse from `TimberModel.elements()` instead of having its own internal list.
-* Changed `TimberModel.joints` to parse from `TimberModel.interactions()` instead of having its own internal list.
+* Fixed wrong image file paths in the Documentation.
+* Changed `TimberModel.beams` to return generator of `Beam` elements.
+* Changed `TimberModel.walls` to return generator of `Wall` elements.
+* Changed `TimberModel.plates` to return generator of `Plate` elements.
+* Changed `TimberModel.joints` to return generator of `Plate` elements.
 
 ### Removed
 
 
-## [0.9.1] 2024-07-05
+## [0.10.1] 2024-09-11
 
 ### Added
 
 ### Changed
 
+* Implemented a workaround for https://github.com/gramaziokohler/compas_timber/issues/280.
+
+### Removed
+
+
+## [0.10.0] 2024-09-11
+
+### Added
+
+* Added `SurfaceModelJointOverride` GH Component.
+* Added `Plate` element.
+* Added attribute `plates` to `TimberModel`.
+* Added `SurfaceModelJointOverride` GH Component
+* Added `ShowSurfaceModelBeamType` GH Component
+* Re-introduced attribute `key` in `Beam`.
+* Added attribute `key` to `Plate`.
+
+### Changed
+
+* Updated documentation for Grasshopper components.
+* Fixed missing input parameter in `SurfaceModelOptions` GH Component.
+* Fixed error with tolerances for `SurfaceModel`s modeled in meters.
+* Renamed `beam` to `element` in different locations to make it more generic.
+* Fixed `AttributeError` in `SurfaceModel`.
+* Updated example scripts.
+* Calling `process_joinery` in `SurfaceModel`.
+* Renamed `ShowSurfaceModelBeamType` to `ShowBeamsByCategory`.
+* Changed `SurfaceModel` component input handling to give warnings instead of errors.
+
+### Removed
+
+* Removed `add_beam` from `TimberModel`, use `add_element` instead.
+* Removed `add_plate` from `TimberModel`, use `add_element` instead.
+* Removed `add_wall` from `TimberModel`, use `add_element` instead.
+
+## [0.9.1] 2024-07-05
+
+### Added
+
+* Added `ref_frame` attribute to `Beam`.
+* Added `ref_sides` attribute to `Beam`.
+* Added `ref_edges` attribute to `Beam`.
+
+### Changed
+
 * Fixed error in BakeWithBoxMap component.
+* Added `add_extensions` to `Joint` interface.
+* Added `process_joinery` to `TimberModel`.
+* Features are not automatically added when creating a joint using `Joint.create()`.
+* Features are not automatically added when de-serializing.
 
 ### Removed
 
@@ -36,11 +87,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `birdsmouth` parameter to `butt_joint` which applies a `btlx_double_cut` process to the part. 
-* Added `BTLxDoubleCut` BTLx Processing class
+* Added `BTLxDoubleCut` BTLx Processing class.
 * Added BTLx support for `TButtJoint` and `LButtJoint`
-* Added `BTLxLap` process class
+* Added `BTLxLap` process class.
 
 ### Changed
+
+* Moved module `workflow` from package `ghpython` to new package `design`.
+* Moved `compas_timber.ghpython.CategoryRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.DirectRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.JointRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.TopologyRule` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.JointDefinition` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.FeatureDefinition` to `compas_timber.design`.
+* Moved `compas_timber.ghpython.DebugInfomation` to `compas_timber.design`.
 
 ### Removed
 
@@ -102,6 +162,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `L_TopologyJointRule`, `T_TopologyJointRule`, `X_TopologyJointRule` GH components
 * Added GH component param support functions in `compas_timber.ghpython.ghcomponent_helpers.py`
 * Added `topos` attribute to `CategoryRule` to filter when joints get applied
+* Added new `SurfaceAssembly` class
+* Added GH component `SurfaceAssembly` which directly generates a `TimberAssembly` with standard wall framing from a planar surface. 
+* Added GH component `SurfaceAssemblyOptions`
+* Added GH component `CustomBeamDimensions` for `SurfaceAssembly`
 
 ### Changed
 

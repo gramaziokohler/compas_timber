@@ -12,7 +12,7 @@ from compas_timber.connections import JointTopology
 
 
 HERE = os.path.dirname(__file__)
-LINES = os.path.join(HERE, 'stand.json')
+LINES = os.path.join(HERE, "stand.json")
 
 
 def create_viewer():
@@ -20,9 +20,10 @@ def create_viewer():
     viewer = Viewer()
     viewer.renderer.camera.far = 1000000.0
     viewer.renderer.camera.position = [10000.0, 10000.0, 10000.0]
-    viewer.renderer.camera.pan_delta = 5.0
+    viewer.renderer.camera.pandelta = 5.0
     viewer.renderer.rendermode = "ghosted"
     return viewer
+
 
 # Load centerlines from file
 lines = json_load(LINES)
@@ -65,6 +66,8 @@ for pair in beam_pairs:
     joint_cls = topo_connection.get(topo, None)
     if joint_cls is not None:
         joint_cls.create(model, beam_a, beam_b)
+
+model.process_joinery()
 
 # setup the viewer
 viewer = create_viewer()

@@ -77,6 +77,22 @@ class Joint(Interaction):
         """
         raise NotImplementedError
 
+    def add_extensions(self):
+        """Adds the extensions defined by this joint to affected beam(s).
+        This is optional and should only be implemented by joints that require it.
+
+        Note
+        ----
+        Extensions are added to all beams before the features are added.
+
+        Raises
+        ------
+        :class:`~compas_timber.connections.BeamJoinningError`
+            Should be raised whenever the joint was not able to calculate the extensions to be applied to the beams.
+
+        """
+        pass
+
     def restore_beams_from_keys(self, model):
         """Restores the reference to the beams associate with this joint.
 
@@ -123,8 +139,7 @@ class Joint(Interaction):
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
         joint = cls(*beams, **kwargs)
-        model.add_interaction(joint, beams)
-        joint.add_features()
+        model.add_joint(joint, beams)
         return joint
 
     @property

@@ -1,0 +1,54 @@
+{
+    "name": "Plate",
+    "nickname": "Plate",
+    "category": "COMPAS Timber",
+    "subcategory": "Plates",
+    "description": "Creates a Plate from a Polyline.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Outline",
+                "description": "Referenced polyline, Guid of polyline in the active Rhino document.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Thickness",
+                "description": "Thickness of the plate material.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Vector",
+                "description": "Determines direction of the plate extrusion",
+                "typeHintID": "vector",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Category",
+                "description": "Category of a beam.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "updateRefObj",
+                "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Plate",
+                "description": "Plate object(s)."
+            },
+            {
+                "name": "Geometry",
+                "description": "Shape of the plate."
+            }
+        ]
+    }
+}

@@ -15,7 +15,7 @@ def test_create():
     assert model
 
 
-def test_add_beam():
+def test_add_element():
     A = TimberModel()
     B = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
     A.add_element(B)

@@ -3,7 +3,7 @@
     "nickname": "JoiningErrors",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Shows infomation helpful for debugging errors occured while attempting to join beams.",
+    "description": "Shows information useful for debugging errors that occurred while attempting to join beams.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
