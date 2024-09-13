@@ -19,19 +19,21 @@ class TimberModel(Model):
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.elements.Beam`)
-        A list of beams assigned to this model.
+    beams : Generator[:class:`~compas_timber.elements.Beam`]
+        A Generator object of all beams assigned to this model.
+    plates : Generator[:class:`~compas_timber.elements.Plate`]
+        A Generator object of all plates assigned to this model.
+    joints : Generator[:class:`~compas_timber.connections.Joint`]
+        A Generator object of all joints assigned to this model.
+    walls : Generator[:class:`~compas_timber.elements.Wall`]
+        A Generator object of all walls assigned to this model.
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
-    joints : list(:class:`~compas_timber.connections.Joint`)
-        A list of joints assigned to this model.
     topologies :  list(dict)
         A list of JointTopology for model. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key}
         See :class:`~compas_timber.connections.JointTopology`.
     volume : float
         The calculated total volume of the model.
-    walls : list(:class:~compas_timber.elements.Wall)
-        A list of walls assigned to this model.
 
     """
 
