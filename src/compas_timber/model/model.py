@@ -122,6 +122,25 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
+    def add_joint(self, joint, beams):
+        # type: (Joint, tuple[Beam]) -> None
+        """Add a joint object to the model.
+
+        Parameters
+        ----------
+        joint : :class:`~compas_timber.connections.joint`
+            An instance of a Joint class.
+
+        beams : tuple(:class:`~compas_timber.elements.Beam`)
+            The two beams that should be joined.
+
+        """
+        if len(beams) != 2:
+            raise ValueError("Expected 2 parts. Got instead: {}".format(len(beams)))
+        a, b = beams
+        _ = self.add_interaction(a, b, interaction=joint)
+        self._joints.append(joint)
+
     def remove_joint(self, joint):
         # type: (Joint) -> None
         """Removes this joint object from the model.
