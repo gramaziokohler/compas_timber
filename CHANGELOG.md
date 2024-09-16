@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `TimberModel.plates` to return generator of `Plate` elements.
 * Changed `TimberModel.joints` to return generator of `Joint` elements.
 * Fixed polyline analysis for generating `SurfaceModel`
+* Fixed errors in debug info components.
 
 ### Removed
 
