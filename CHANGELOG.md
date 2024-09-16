@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `ShowSurfaceModelBeamType` GH Component
 * Re-introduced attribute `key` in `Beam`.
 * Added attribute `key` to `Plate`.
+* Added generation of `plate` elements to the `SurfaceModel`
 
 ### Changed
 
@@ -51,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `AttributeError` in `SurfaceModel`.
 * Updated example scripts.
 * Calling `process_joinery` in `SurfaceModel`.
+* Changed how `BeamDefinition` and `Plate` types are handled in `SurfaceModel`
+* Changed the `get_interior_segment_indices` function to work when there are multiple openings.
 * Renamed `ShowSurfaceModelBeamType` to `ShowBeamsByCategory`.
 * Changed `SurfaceModel` component input handling to give warnings instead of errors.
 
