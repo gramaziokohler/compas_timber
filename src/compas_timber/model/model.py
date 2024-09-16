@@ -56,7 +56,9 @@ class TimberModel(Model):
 
     @property
     def beams(self):
-        # type: () -> Generator[Beam]
+        # type: () -> Generator[Beam, None, None]
+        # TODO: think about using `filter` instead of all these
+        # TODO: add `is_beam`, `is_plate` etc. to avoid using `isinstance`
         for element in self.elements():
             if isinstance(element, Beam):
                 yield element
