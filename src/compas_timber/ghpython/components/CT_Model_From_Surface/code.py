@@ -61,13 +61,16 @@ class SurfaceModelComponent(component):
         scene = Scene()
         model = surface_model.create_model()
         model.process_joinery()
+        for f_def in surface_model.features:
+            for element in f_def.elements:
+                element.add_features(f_def.feature)
         if CreateGeometry:
-            for element in model.beams:
+            for element in model.elements():
                 scene.add(element.geometry)
                 if element.debug_info:
                     debug_info.add_feature_error(element.debug_info)
         else:
-            for element in model.beams:
+            for element in model.elements():
                 scene.add(element.blank)
 
         if debug_info.has_errors:
