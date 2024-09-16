@@ -274,7 +274,7 @@ class SurfaceModel(object):
             model.add_element(element)
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance)
+        found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True, max_distance=self.dist_tolerance)
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
