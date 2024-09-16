@@ -12,6 +12,7 @@ from Rhino.Geometry import Vector3d as RhinoVector
 from compas_timber.design import DebugInfomation
 from compas_timber.design import SurfaceModel
 
+
 class SurfaceModelComponent(component):
     def RunScript(self, surface, stud_spacing, beam_width, frame_depth, z_axis, options, CreateGeometry=False):
         # minimum inputs required

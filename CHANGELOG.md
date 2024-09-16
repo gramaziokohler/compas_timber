@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added bake component for `Plate` eleents.
+* Added bake component for `Plate` elements.
+* Added default paramteters for `Surface Model` in the GH Component
 
 ### Changed
 
 * Fixed wrong image file paths in the Documentation.
+* Fixed polyline analysis for generating `SurfaceModel`
 
 ### Removed
 

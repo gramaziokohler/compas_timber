@@ -274,10 +274,10 @@ class SurfaceModel(object):
             model.add_element(element)
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance*100)
+        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance * 100)
         for pair in found_pairs:
             beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance*100)
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance * 100)
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
                 for rule in self.rules:
