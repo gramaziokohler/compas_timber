@@ -274,10 +274,10 @@ class SurfaceModel(object):
             model.add_element(element)
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance)
+        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=self.dist_tolerance*100)
         for pair in found_pairs:
             beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance*100)
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
                 for rule in self.rules:
@@ -323,7 +323,6 @@ class SurfaceModel(object):
 
     def generate_perimeter_beams(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
-        print(interior_indices)
         for i, segment in enumerate(self.outer_polyline.lines):
             beam_def = self.BeamDefinition(segment, parent=self)
             if i in interior_indices:
@@ -355,7 +354,6 @@ class SurfaceModel(object):
                     self._beam_definitions.append(self.BeamDefinition(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
-        print(polyline.points)
         points = polyline.points[0:-1]
         out = []
         for index in range(len(points)):
@@ -367,13 +365,10 @@ class SurfaceModel(object):
                 angle = angle_vectors_signed(
                     points[index - 1] - points[index], points[index + 1] - points[index], self.normal, deg=True
                 )
-            print(index, angle)
             if angle > 0:
-                print(index)
-                out.append(index - 1)
                 out.append(index)
         if len(out) > 0:
-            out.insert(1, out[0] - 1)
+            out.insert(0, out[0] - 1)
         return set(out)
 
     def offset_elements(self, element_loop):
