@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="TimberModel.add_element" href="compas_timber.model.TimberModel.add_element.html" />
+    <link rel="next" title="TimberModel.add_joint" href="compas_timber.model.TimberModel.add_joint.html" />
     <link rel="prev" title="compas_timber.model" href="../compas_timber.model.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -594,25 +594,27 @@ document.write(`
 <h1>TimberModel</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/f665c80/src/compas_timber/model/model.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/75769e4/src/compas_timber/model/model.py#L15"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Represents a timber model containing different elements such as walls, beams and joints.</p>
 <p>The timber model allows expressing the hierarchy and interactions between the different elements it contains.</p>
 <dl class="field-list">
 <dt class="field-odd">Attributes<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>beams</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>)</span></dt><dd><p>A list of beams assigned to this model.</p>
+<dt><strong>beams</strong><span class="classifier">Generator[<a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>]</span></dt><dd><p>A Generator object of all beams assigned to this model.</p>
+</dd>
+<dt><strong>plates</strong><span class="classifier">Generator[<code class="xref py py-class docutils literal notranslate"><span class="pre">Plate</span></code>]</span></dt><dd><p>A Generator object of all plates assigned to this model.</p>
+</dd>
+<dt><strong>joints</strong><span class="classifier">Generator[<a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a>]</span></dt><dd><p>A Generator object of all joints assigned to this model.</p>
+</dd>
+<dt><strong>walls</strong><span class="classifier">Generator[<code class="xref py py-class docutils literal notranslate"><span class="pre">Wall</span></code>]</span></dt><dd><p>A Generator object of all walls assigned to this model.</p>
 </dd>
 <dt><strong>center_of_mass</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a></span></dt><dd><p>The calculated center of mass of the model.</p>
-</dd>
-<dt><strong>joints</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a>)</span></dt><dd><p>A list of joints assigned to this model.</p>
 </dd>
 <dt><strong>topologies</strong><span class="classifier">list(dict)</span></dt><dd><p>A list of JointTopology for model. dict is: {“detected_topo”: detected_topo, “beam_a_key”: beam_a_key, “beam_b_key”:beam_b_key}
 See <a class="reference internal" href="compas_timber.connections.JointTopology.html#compas_timber.connections.JointTopology" title="compas_timber.connections.JointTopology"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointTopology</span></code></a>.</p>
 </dd>
 <dt><strong>volume</strong><span class="classifier">float</span></dt><dd><p>The calculated total volume of the model.</p>
-</dd>
-<dt><strong>walls</strong><span class="classifier">list(:class:~compas_timber.elements.Wall)</span></dt><dd><p>A list of walls assigned to this model.</p>
 </dd>
 </dl>
 </dd>
@@ -620,22 +622,19 @@ See <a class="reference internal" href="compas_timber.connections.JointTopology.
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_element.html#compas_timber.model.TimberModel.add_element" title="compas_timber.model.TimberModel.add_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_element</span></code></a></p></td>
-<td><p>Add an element to the model.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_joint.html#compas_timber.model.TimberModel.add_joint" title="compas_timber.model.TimberModel.add_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_joint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_joint.html#compas_timber.model.TimberModel.add_joint" title="compas_timber.model.TimberModel.add_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_joint</span></code></a></p></td>
 <td><p>Add a joint object to the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.beam_by_guid.html#compas_timber.model.TimberModel.beam_by_guid" title="compas_timber.model.TimberModel.beam_by_guid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">beam_by_guid</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.element_by_guid.html#compas_timber.model.TimberModel.element_by_guid" title="compas_timber.model.TimberModel.element_by_guid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_by_guid</span></code></a></p></td>
 <td><p>Get a beam by its unique identifier.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.process_joinery.html#compas_timber.model.TimberModel.process_joinery" title="compas_timber.model.TimberModel.process_joinery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_joinery</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.process_joinery.html#compas_timber.model.TimberModel.process_joinery" title="compas_timber.model.TimberModel.process_joinery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_joinery</span></code></a></p></td>
 <td><p>Process the joinery of the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_joint.html#compas_timber.model.TimberModel.remove_joint" title="compas_timber.model.TimberModel.remove_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_joint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_joint.html#compas_timber.model.TimberModel.remove_joint" title="compas_timber.model.TimberModel.remove_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_joint</span></code></a></p></td>
 <td><p>Removes this joint object from the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.set_topologies.html#compas_timber.model.TimberModel.set_topologies" title="compas_timber.model.TimberModel.set_topologies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_topologies</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.set_topologies.html#compas_timber.model.TimberModel.set_topologies" title="compas_timber.model.TimberModel.set_topologies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_topologies</span></code></a></p></td>
 <td><p>TODO: calculate the topologies inside the model using the ConnectionSolver.</p></td>
 </tr>
 </tbody>
@@ -646,103 +645,106 @@ See <a class="reference internal" href="compas_timber.connections.JointTopology.
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.ToString.html#compas_timber.model.TimberModel.ToString" title="compas_timber.model.TimberModel.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
 <td><p>Converts the instance to a string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_elements.html#compas_timber.model.TimberModel.add_elements" title="compas_timber.model.TimberModel.add_elements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_elements</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_element.html#compas_timber.model.TimberModel.add_element" title="compas_timber.model.TimberModel.add_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_element</span></code></a></p></td>
+<td><p>Add an element to the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_elements.html#compas_timber.model.TimberModel.add_elements" title="compas_timber.model.TimberModel.add_elements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_elements</span></code></a></p></td>
 <td><p>Add multiple elements to the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_group.html#compas_timber.model.TimberModel.add_group" title="compas_timber.model.TimberModel.add_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_group</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_group.html#compas_timber.model.TimberModel.add_group" title="compas_timber.model.TimberModel.add_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_group</span></code></a></p></td>
 <td><p>Add a group to the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_interaction.html#compas_timber.model.TimberModel.add_interaction" title="compas_timber.model.TimberModel.add_interaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_interaction</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_interaction.html#compas_timber.model.TimberModel.add_interaction" title="compas_timber.model.TimberModel.add_interaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_interaction</span></code></a></p></td>
 <td><p>Add an interaction between two elements of the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_material.html#compas_timber.model.TimberModel.add_material" title="compas_timber.model.TimberModel.add_material"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_material</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_material.html#compas_timber.model.TimberModel.add_material" title="compas_timber.model.TimberModel.add_material"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_material</span></code></a></p></td>
 <td><p>Add a material to the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.assign_material.html#compas_timber.model.TimberModel.assign_material" title="compas_timber.model.TimberModel.assign_material"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assign_material</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.assign_material.html#compas_timber.model.TimberModel.assign_material" title="compas_timber.model.TimberModel.assign_material"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assign_material</span></code></a></p></td>
 <td><p>Assign a material to an element or a list of elements.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.compute_aabb.html#compas_timber.model.TimberModel.compute_aabb" title="compas_timber.model.TimberModel.compute_aabb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_aabb</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.compute_aabb.html#compas_timber.model.TimberModel.compute_aabb" title="compas_timber.model.TimberModel.compute_aabb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_aabb</span></code></a></p></td>
 <td><p>Compute the axis-aligned bounding box of the datastructure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.compute_obb.html#compas_timber.model.TimberModel.compute_obb" title="compas_timber.model.TimberModel.compute_obb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_obb</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.compute_obb.html#compas_timber.model.TimberModel.compute_obb" title="compas_timber.model.TimberModel.compute_obb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_obb</span></code></a></p></td>
 <td><p>Compute the oriented bounding box of the datastructure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.copy.html#compas_timber.model.TimberModel.copy" title="compas_timber.model.TimberModel.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.copy.html#compas_timber.model.TimberModel.copy" title="compas_timber.model.TimberModel.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.elements.html#compas_timber.model.TimberModel.elements" title="compas_timber.model.TimberModel.elements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elements</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.elements.html#compas_timber.model.TimberModel.elements" title="compas_timber.model.TimberModel.elements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elements</span></code></a></p></td>
 <td><p>Yield all the elements contained in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.elements_connected_by.html#compas_timber.model.TimberModel.elements_connected_by" title="compas_timber.model.TimberModel.elements_connected_by"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elements_connected_by</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.elements_connected_by.html#compas_timber.model.TimberModel.elements_connected_by" title="compas_timber.model.TimberModel.elements_connected_by"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elements_connected_by</span></code></a></p></td>
 <td><p>Find groups of elements connected by a specific type of interaction.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.from_json.html#compas_timber.model.TimberModel.from_json" title="compas_timber.model.TimberModel.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.from_json.html#compas_timber.model.TimberModel.from_json" title="compas_timber.model.TimberModel.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.from_jsonstring.html#compas_timber.model.TimberModel.from_jsonstring" title="compas_timber.model.TimberModel.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.from_jsonstring.html#compas_timber.model.TimberModel.from_jsonstring" title="compas_timber.model.TimberModel.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_element.html#compas_timber.model.TimberModel.has_element" title="compas_timber.model.TimberModel.has_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_element</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_element.html#compas_timber.model.TimberModel.has_element" title="compas_timber.model.TimberModel.has_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_element</span></code></a></p></td>
 <td><p>Returns True if the model contains the given element.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_interaction.html#compas_timber.model.TimberModel.has_interaction" title="compas_timber.model.TimberModel.has_interaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_interaction</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_interaction.html#compas_timber.model.TimberModel.has_interaction" title="compas_timber.model.TimberModel.has_interaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_interaction</span></code></a></p></td>
 <td><p>Returns True if two elements have an interaction set between them.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_material.html#compas_timber.model.TimberModel.has_material" title="compas_timber.model.TimberModel.has_material"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_material</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_material.html#compas_timber.model.TimberModel.has_material" title="compas_timber.model.TimberModel.has_material"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_material</span></code></a></p></td>
 <td><p>Verify that the model contains a specific material.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.interactions.html#compas_timber.model.TimberModel.interactions" title="compas_timber.model.TimberModel.interactions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interactions</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.interactions.html#compas_timber.model.TimberModel.interactions" title="compas_timber.model.TimberModel.interactions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interactions</span></code></a></p></td>
 <td><p>Yield all interactions between all elements in the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.materials.html#compas_timber.model.TimberModel.materials" title="compas_timber.model.TimberModel.materials"><code class="xref py py-obj docutils literal notranslate"><span class="pre">materials</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.materials.html#compas_timber.model.TimberModel.materials" title="compas_timber.model.TimberModel.materials"><code class="xref py py-obj docutils literal notranslate"><span class="pre">materials</span></code></a></p></td>
 <td><p>Yield all the materials contained in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_element.html#compas_timber.model.TimberModel.remove_element" title="compas_timber.model.TimberModel.remove_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_element</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_element.html#compas_timber.model.TimberModel.remove_element" title="compas_timber.model.TimberModel.remove_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_element</span></code></a></p></td>
 <td><p>Remove an element from the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_interaction.html#compas_timber.model.TimberModel.remove_interaction" title="compas_timber.model.TimberModel.remove_interaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_interaction</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_interaction.html#compas_timber.model.TimberModel.remove_interaction" title="compas_timber.model.TimberModel.remove_interaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_interaction</span></code></a></p></td>
 <td><p>Remove the interaction between two elements.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.rotate.html#compas_timber.model.TimberModel.rotate" title="compas_timber.model.TimberModel.rotate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotate</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.rotate.html#compas_timber.model.TimberModel.rotate" title="compas_timber.model.TimberModel.rotate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotate</span></code></a></p></td>
 <td><p>Rotate the datastructure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.rotated.html#compas_timber.model.TimberModel.rotated" title="compas_timber.model.TimberModel.rotated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotated</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.rotated.html#compas_timber.model.TimberModel.rotated" title="compas_timber.model.TimberModel.rotated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotated</span></code></a></p></td>
 <td><p>Returns a rotated copy of this geometry.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.scale.html#compas_timber.model.TimberModel.scale" title="compas_timber.model.TimberModel.scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scale</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.scale.html#compas_timber.model.TimberModel.scale" title="compas_timber.model.TimberModel.scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scale</span></code></a></p></td>
 <td><p>Scale the datastructure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.scaled.html#compas_timber.model.TimberModel.scaled" title="compas_timber.model.TimberModel.scaled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaled</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.scaled.html#compas_timber.model.TimberModel.scaled" title="compas_timber.model.TimberModel.scaled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaled</span></code></a></p></td>
 <td><p>Returns a scaled copy of this geometry.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.sha256.html#compas_timber.model.TimberModel.sha256" title="compas_timber.model.TimberModel.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.sha256.html#compas_timber.model.TimberModel.sha256" title="compas_timber.model.TimberModel.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.to_json.html#compas_timber.model.TimberModel.to_json" title="compas_timber.model.TimberModel.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.to_json.html#compas_timber.model.TimberModel.to_json" title="compas_timber.model.TimberModel.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.to_jsonstring.html#compas_timber.model.TimberModel.to_jsonstring" title="compas_timber.model.TimberModel.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.to_jsonstring.html#compas_timber.model.TimberModel.to_jsonstring" title="compas_timber.model.TimberModel.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transform.html#compas_timber.model.TimberModel.transform" title="compas_timber.model.TimberModel.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transform.html#compas_timber.model.TimberModel.transform" title="compas_timber.model.TimberModel.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
 <td><p>Transform the model and all that it contains.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transform_numpy.html#compas_timber.model.TimberModel.transform_numpy" title="compas_timber.model.TimberModel.transform_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_numpy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transform_numpy.html#compas_timber.model.TimberModel.transform_numpy" title="compas_timber.model.TimberModel.transform_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_numpy</span></code></a></p></td>
 <td><p>Transforms the data structure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transformed.html#compas_timber.model.TimberModel.transformed" title="compas_timber.model.TimberModel.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transformed.html#compas_timber.model.TimberModel.transformed" title="compas_timber.model.TimberModel.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
 <td><p>Returns a transformed copy of this data structure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transformed_numpy.html#compas_timber.model.TimberModel.transformed_numpy" title="compas_timber.model.TimberModel.transformed_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed_numpy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transformed_numpy.html#compas_timber.model.TimberModel.transformed_numpy" title="compas_timber.model.TimberModel.transformed_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed_numpy</span></code></a></p></td>
 <td><p>Returns a transformed copy of this data structure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.translate.html#compas_timber.model.TimberModel.translate" title="compas_timber.model.TimberModel.translate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translate</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.translate.html#compas_timber.model.TimberModel.translate" title="compas_timber.model.TimberModel.translate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translate</span></code></a></p></td>
 <td><p>Translate the datastructure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.translated.html#compas_timber.model.TimberModel.translated" title="compas_timber.model.TimberModel.translated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translated</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.translated.html#compas_timber.model.TimberModel.translated" title="compas_timber.model.TimberModel.translated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translated</span></code></a></p></td>
 <td><p>Returns a translated copy of this geometry.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.validate_data.html#compas_timber.model.TimberModel.validate_data" title="compas_timber.model.TimberModel.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.validate_data.html#compas_timber.model.TimberModel.validate_data" title="compas_timber.model.TimberModel.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
