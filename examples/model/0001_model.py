@@ -34,7 +34,7 @@ WIDTH = 60
 for line in lines:
     model.add_element(Beam.from_centerline(centerline=line, height=HEIGHT, width=WIDTH))
 
-beams = model.beams
+beams = list(model.beams)
 
 # Assign joints - Frame - Frame
 LMiterJoint.create(model, beams[5], beams[3])

@@ -54,7 +54,7 @@ topo_connection = {JointTopology.TOPO_L: LButtJoint, JointTopology.TOPO_T: TButt
 
 # find neighboring beams
 solver = ConnectionSolver()
-beam_pairs = solver.find_intersecting_pairs(model.beams, rtree=True)
+beam_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
 
 for pair in beam_pairs:
     beam_a, beam_b = pair

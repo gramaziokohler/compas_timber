@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed wrong image file paths in the Documentation.
+* Changed `TimberModel.beams` to return generator of `Beam` elements.
+* Changed `TimberModel.walls` to return generator of `Wall` elements.
+* Changed `TimberModel.plates` to return generator of `Plate` elements.
+* Changed `TimberModel.joints` to return generator of `Joint` elements.
 * Fixed polyline analysis for generating `SurfaceModel`
 
 ### Removed

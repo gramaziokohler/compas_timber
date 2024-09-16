@@ -81,8 +81,8 @@ class ButtJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restors references to the main and cross beams saved in the model."""
-        self.main_beam = model.beam_by_guid(self.main_beam_guid)
-        self.cross_beam = model.beam_by_guid(self.cross_beam_guid)
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
 
     def side_surfaces_cross(self):
         assert self.main_beam and self.cross_beam
