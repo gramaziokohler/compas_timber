@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added bake component for `Plate` eleents.
+* Added bake component for `Plate` elements.
+* Added default paramteters for `Surface Model` in the GH Component
 
 ### Changed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `TimberModel.walls` to return generator of `Wall` elements.
 * Changed `TimberModel.plates` to return generator of `Plate` elements.
 * Changed `TimberModel.joints` to return generator of `Joint` elements.
+* Fixed polyline analysis for generating `SurfaceModel`
 
 ### Removed
 
