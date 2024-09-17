@@ -21,7 +21,7 @@ class ShowJoiningErrors(component):
 
         geometries = [beam.blank for beam in error.beams]
         geometries.extend(error.debug_geometries)
-        geo_objs = [SceneObject(geo) for geo in geometries]
+        geo_objs = [SceneObject(item=geo) for geo in geometries]
         output = []
         for obj in geo_objs:
             output.extend(obj.draw())
