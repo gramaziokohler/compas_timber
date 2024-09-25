@@ -12,15 +12,15 @@ from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
-from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from compas_timber.utils.compas_extra import intersection_line_plane
 
 from .features import FeatureApplicationError
+from .timber import TimberElement
 
 
-class Beam(Element):
+class Beam(TimberElement):
     """
     A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
 
@@ -112,6 +112,10 @@ class Beam(Element):
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
+
+    @property
+    def is_beam(self):
+        return True
 
     @property
     def shape(self):
