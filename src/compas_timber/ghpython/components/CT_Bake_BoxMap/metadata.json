@@ -16,10 +16,34 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "MapSize",
-                "description": "Scaling of the BoxMap in x,y,z directions (list of three positive values) (optional).",
+                "name": "BeamMapSize",
+                "description": "Scaling of the BoxMap for Beams in x,y,z directions (list of three positive values) (optional).",
                 "typeHintID": "float",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "PlateMapSize",
+                "description": "Scaling of the BoxMap for Plates in x,y,z directions (list of three positive values) (optional).",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "BeamLayerName",
+                "description": "Layer onto which the Beams are to be baked (optional).",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "PlateLayerName",
+                "description": "Layer onto which the Plates are to be baked (optional).",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "SwapUV",
+                "description": "Rotates the BoxMap 90 degrees (optional).",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
             },
             {
                 "name": "Bake",
