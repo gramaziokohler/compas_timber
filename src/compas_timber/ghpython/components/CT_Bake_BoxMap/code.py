@@ -17,10 +17,9 @@ from Rhino.RhinoDoc import ActiveDoc
 
 class BakeBoxMap(component):
     def RunScript(self, model, beam_map_size, plate_map_size, beam_layer_name, plate_layer_name, swap_uv, bake):
-        
         def get_dimensions(map_size, default):
             return map_size if map_size else default
-    
+
         # Check if model exists and baking is enabled
         if not model:
             self.AddRuntimeMessage(Warning, "Input parameters Model failed to collect any Beam objects.")
@@ -28,7 +27,7 @@ class BakeBoxMap(component):
 
         if not bake:  # Exit early if bake is False
             return
-        
+
         # Save current Grasshopper document context
         ghdoc = sc.doc
 
@@ -38,7 +37,7 @@ class BakeBoxMap(component):
         # Define dimensions
         b_dimx, b_dimy, b_dimz = get_dimensions(beam_map_size, [0.2, 0.2, 1.0])
         p_dimx, p_dimy, p_dimz = get_dimensions(plate_map_size, [1.0, 1.0, 1.0])
-        
+
         try:
             # Bake beams
             beam_frames = [frame_to_rhino(b.frame) for b in model.beams]
@@ -85,7 +84,7 @@ class BakeBoxMap(component):
         BoxMap = Render.TextureMapping.CreateBoxMapping(mappingPln, dx, dy, dz, False)
 
         return BoxMap
-    
+
     @staticmethod
     def add_brep_to_document(breps, frames, layer_name, b_dimx, b_dimy, b_dimz, swap_uv):
         if frames and breps:
@@ -98,7 +97,7 @@ class BakeBoxMap(component):
                     rs.ObjectLayer(guid, layer_name)
                 boxmap = BakeBoxMap.create_box_map(frame, b_dimx, b_dimy, b_dimz, swap_uv)
                 sc.doc.Objects.ModifyTextureMapping(guid, 1, boxmap)
-    
+
     @staticmethod
     def ensure_layer_exists(layer_name):
         if not rs.IsLayer(layer_name):

@@ -3,7 +3,7 @@
     "nickname": "BakeWithBoxMap",
     "category": "COMPAS Timber",
     "subcategory": "Utils",
-    "description": "Bakes Beam objects with a BoxMapping (by default the material is applied 'by layer' and has to be defined in the layer the objects are baked to).",
+    "description": "Bakes the Model with a Box Mapping on Beams and Plates.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
