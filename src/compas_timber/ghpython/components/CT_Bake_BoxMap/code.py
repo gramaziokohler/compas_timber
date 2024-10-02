@@ -28,9 +28,6 @@ class BakeBoxMap(component):
         if not bake:  # Exit early if bake is False
             return
 
-        # Save current Grasshopper document context
-        ghdoc = sc.doc
-
         try:
             # Switch document context to Rhino's active document for baking
             sc.doc = Rhino.RhinoDoc.ActiveDoc
@@ -53,6 +50,7 @@ class BakeBoxMap(component):
             # Restore document context back to Grasshopper
             sc.doc = ghdoc
 
+            # Enabling redraw after baking
             rs.EnableRedraw(True)
 
 
