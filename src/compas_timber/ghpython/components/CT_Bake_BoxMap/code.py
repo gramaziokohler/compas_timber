@@ -31,14 +31,14 @@ class BakeBoxMap(component):
         # Save current Grasshopper document context
         ghdoc = sc.doc
 
-        # Switch document context to Rhino's active document for baking
-        sc.doc = Rhino.RhinoDoc.ActiveDoc
-
-        # Define dimensions
-        b_dimx, b_dimy, b_dimz = get_dimensions(beam_map_size, [0.2, 0.2, 1.0])
-        p_dimx, p_dimy, p_dimz = get_dimensions(plate_map_size, [1.0, 1.0, 1.0])
-
         try:
+            # Switch document context to Rhino's active document for baking
+            sc.doc = Rhino.RhinoDoc.ActiveDoc
+
+            # Define dimensions
+            b_dimx, b_dimy, b_dimz = get_dimensions(beam_map_size, [0.2, 0.2, 1.0])
+            p_dimx, p_dimy, p_dimz = get_dimensions(plate_map_size, [1.0, 1.0, 1.0])
+
             # Bake beams
             beam_frames = [frame_to_rhino(b.frame) for b in model.beams]
             beam_breps = [beam.geometry.native_brep for beam in model.beams]
@@ -50,10 +50,11 @@ class BakeBoxMap(component):
             self.add_brep_to_document(plate_breps, plate_frames, plate_layer_name, p_dimx, p_dimy, p_dimz, swap_uv)
 
         finally:
-            rs.EnableRedraw(True)
-
             # Restore document context back to Grasshopper
             sc.doc = ghdoc
+
+            rs.EnableRedraw(True)
+
 
     @staticmethod
     def create_box_map(pln, sx, sy, sz, swap_uv):
