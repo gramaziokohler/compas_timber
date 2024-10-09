@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added new base class for timber elements `TimberElement`.
+* Added property `is_beam` to `Beam` class.
+* Added property `is_plate` to `Plate` class.
+* Added property `is_wall` to `Wall` class.
+
 ### Changed
 
 ### Removed
