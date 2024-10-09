@@ -1,17 +1,18 @@
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
-from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from .features import FeatureApplicationError
+from .timber import TimberElement
 
 
-class Plate(Element):
+class Plate(TimberElement):
     """
     A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
 
@@ -37,7 +38,8 @@ class Plate(Element):
         Thickness of the plate material.
     aabb : tuple(float, float, float, float, float, float)
         An axis-aligned bounding box of this plate as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
-
+    key : int, optional
+        Once plate is added to a model, it will have this model-wide-unique integer key.
 
     """
 
@@ -77,6 +79,10 @@ class Plate(Element):
     # ==========================================================================
 
     @property
+    def is_plate(self):
+        return True
+
+    @property
     def blank(self):
         return self.obb
 
@@ -86,13 +92,18 @@ class Plate(Element):
 
     @property
     def shape(self):
-        brep = Brep.from_extrusion(self.outline, self.vector)
+        brep = Brep.from_extrusion(NurbsCurve.from_points(self.outline.points, degree=1), self.vector)
         return brep
 
     @property
     def has_features(self):
-        # TODO: move to compas_future... Part
+        # TODO: consider removing, this is not used anywhere
         return len(self.features) > 0
+
+    @property
+    def key(self):
+        # type: () -> int | None
+        return self.graph_node
 
     # ==========================================================================
     # Implementations of abstract methods

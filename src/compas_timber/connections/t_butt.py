@@ -37,8 +37,8 @@ class TButtJoint(ButtJoint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.beam_by_guid(self.main_beam_guid)
-        self.cross_beam = model.beam_by_guid(self.cross_beam_guid)
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.

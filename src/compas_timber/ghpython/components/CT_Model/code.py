@@ -23,6 +23,10 @@ JOINT_DEFAULTS = {
 }
 
 
+# workaround for https://github.com/gramaziokohler/compas_timber/issues/280
+TOL.absolute = 1e-6
+
+
 class ModelComponent(component):
     def get_joints_from_rules(self, beams, rules, topologies):
         if not isinstance(rules, list):
@@ -136,7 +140,7 @@ class ModelComponent(component):
 
         topologies = []
         solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(Model.beams, rtree=True, max_distance=MaxDistance)
+        found_pairs = solver.find_intersecting_pairs(list(Model.beams), rtree=True, max_distance=MaxDistance)
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=MaxDistance)

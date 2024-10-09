@@ -1,7 +1,9 @@
 import math
 
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import NurbsCurve
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
@@ -17,13 +19,17 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.geometry import offset_polyline
+from compas.tolerance import Tolerance
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
+from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
+from compas_timber.elements.features import BrepSubtraction
 from compas_timber.model import TimberModel
 
 
@@ -61,19 +67,19 @@ class SurfaceModel(object):
         The height of the panel.
     frame : :class:`compas.geometry.Frame`
         The frame of the assembly.
-    jack_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
+    jack_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
         The jack studs of the assembly.
-    king_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
+    king_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
         The king studs of the assembly.
-    edge_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
+    edge_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
         The edge studs of the assembly.
-    studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
+    studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
         The studs of the assembly.
-    sills : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
+    sills : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
         The sills of the assembly.
-    headers : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
+    headers : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
         The headers of the assembly.
-    plates : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
+    plates : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
 
     """
 
@@ -86,6 +92,7 @@ class SurfaceModel(object):
         beam_width=None,
         frame_depth=None,
         z_axis=None,
+        tolerance=Tolerance(unit="MM", absolute=1e-3, relative=1e-3),
         sheeting_outside=None,
         sheeting_inside=None,
         lintel_posts=True,
@@ -110,10 +117,13 @@ class SurfaceModel(object):
         self._panel_length = None
         self._panel_height = None
         self._elements = []
+        self._beam_definitions = []
         self._rules = []
         self.windows = []
+        self._features = []
         self.beam_dimensions = {}
         self.joint_overrides = joint_overrides
+        self.dist_tolerance = tolerance.relative
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
@@ -125,9 +135,8 @@ class SurfaceModel(object):
                     if value[1] != 0:
                         self.beam_dimensions[key][1] = value[1]
         self.parse_loops()
-        self.generate_perimeter_elements()
-        self.generate_windows()
-        self.generate_studs()
+        self.generate_frame()
+        self.generate_plates()
 
     @property
     def z_axis(self):
@@ -172,38 +181,27 @@ class SurfaceModel(object):
 
     @property
     def centerlines(self):
-        return [element.centerline for element in self.elements]
-
-    def create_model(self):
-        model = TimberModel()
-        for beam in self.beams:
-            model.add_beam(beam)
-        topologies = []
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(model.beams, rtree=True, max_distance=0.1)
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=0.1)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-                for rule in self.rules:
-                    if not rule.comply(pair):
-                        continue
-                    if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
-                        continue
-                    else:
-                        if rule.joint_type == LButtJoint:
-                            beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                        rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
-        model.set_topologies(topologies)
-        return model
+        return [beam_def.centerline for beam_def in self.beam_definitions]
 
     @property
-    def beams(self):
-        beams = []
-        for element in self.elements:
-            beams.append(element.to_beam())
-        return beams
+    def elements(self):
+        elements = []
+        for window in self.windows:
+            self._beam_definitions.extend(window._beam_definitions)
+        for beam_def in self._beam_definitions:
+            elements.append(beam_def.to_beam())
+        elements.extend(self._elements)
+        return elements
+
+    @property
+    def features(self):
+        return self._features
+
+    @property
+    def plate_elements(self):
+        for plate in self._elements:
+            if isinstance(plate, Plate):
+                yield plate
 
     @property
     def points(self):
@@ -235,46 +233,69 @@ class SurfaceModel(object):
 
     @property
     def jack_studs(self):
-        return [element for element in self.elements if element.type == "jack_stud"]
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "jack_stud"]
 
     @property
     def king_studs(self):
-        return [element for element in self.elements if element.type == "king_stud"]
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "king_stud"]
 
     @property
     def edge_studs(self):
-        return [element for element in self.elements if element.type == "edge_stud"]
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "edge_stud"]
 
     @property
     def studs(self):
-        return [element for element in self.elements if element.type == "stud"]
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "stud"]
 
     @property
     def sills(self):
-        return [element for element in self.elements if element.type == "sill"]
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "sill"]
 
     @property
     def headers(self):
-        return [element for element in self.elements if element.type == "header"]
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "header"]
 
     @property
     def plates(self):
-        return [element for element in self.elements if element.type == "plate"]
-
-    @property
-    def elements(self):
-        elements = [element for element in self._elements]
-        for window in self.windows:
-            elements.extend(window.elements)
-        return elements
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "plate"]
 
     @classmethod
     def beam_category_names(cls):
         return SurfaceModel.BEAM_CATEGORY_NAMES
 
+    def generate_frame(self):
+        self.generate_perimeter_beams()
+        self.generate_windows()
+        self.generate_studs()
+
+    def create_model(self):
+        model = TimberModel()
+        for element in self.elements:
+            model.add_element(element)
+        topologies = []
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True, max_distance=self.dist_tolerance)
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
+                for rule in self.rules:
+                    if not rule.comply(pair):
+                        continue
+                    if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
+                        continue
+                    else:
+                        if rule.joint_type == LButtJoint:
+                            beam_a, beam_b = rule.reorder([beam_a, beam_b])
+                        rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
+        model.set_topologies(topologies)
+        return model
+
     def parse_loops(self):
         for loop in self.surface.loops:
             polyline_points = []
+            polyline_length = 0.0
             for i, edge in enumerate(loop.edges):
                 if not edge.is_line:
                     raise ValueError("function only supprorts polyline edges")
@@ -285,100 +306,111 @@ class SurfaceModel(object):
                     polyline_points.append(edge.start_vertex.point)
                 else:
                     polyline_points.append(edge.end_vertex.point)
+                polyline_length += edge.length
             polyline_points.append(polyline_points[0])
+            loop_polyline = Polyline(polyline_points)
+            offset_dist = self.dist_tolerance * 1000
             if loop.is_outer:
-                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), 10, self.normal))
-                if offset_loop.length > Polyline(polyline_points).length:
+                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
+                if offset_loop.length > loop_polyline.length:
                     polyline_points.reverse()
                 self.outer_polyline = Polyline(polyline_points)
             else:
-                offset_loop = Polyline(offset_polyline(Polyline(polyline_points), 10, self.normal))
-                if offset_loop.length < Polyline(polyline_points).length:
+                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
+                if offset_loop.length < loop_polyline.length:
                     polyline_points.reverse()
                 self.inner_polylines.append(Polyline(polyline_points))
 
-    def generate_perimeter_elements(self):
+    def generate_perimeter_beams(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
         for i, segment in enumerate(self.outer_polyline.lines):
-            element = self.BeamElement(segment, parent=self)
+            beam_def = self.BeamDefinition(segment, parent=self)
             if i in interior_indices:
                 if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 45
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
                 ):
                     if self.lintel_posts:
-                        element.type = "jack_stud"
+                        beam_def.type = "jack_stud"
                     else:
-                        element.type = "king_stud"
+                        beam_def.type = "king_stud"
                 else:
-                    element.type = "header"
+                    beam_def.type = "header"
             else:
                 if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+                    angle_vectors(segment.direction, self.z_axis, deg=True) < 45
+                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
                 ):
-                    element.type = "edge_stud"
+                    beam_def.type = "edge_stud"
                 else:
-                    element.type = "plate"
-            self._elements.append(element)
-        self._elements = self.offset_elements(self._elements)
+                    beam_def.type = "plate"
+            self._beam_definitions.append(beam_def)
+        self._beam_definitions = self.offset_elements(self._beam_definitions)
         if self.lintel_posts:
-            for element in self._elements:
-                if element.type == "jack_stud":
+            for beam_def in self._beam_definitions:
+                if beam_def.type == "jack_stud":
                     offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-                    king_line = offset_line(element.centerline, offset, self.normal)
-                    self._elements.append(self.BeamElement(king_line, type="king_stud", parent=self))
+                    king_line = offset_line(beam_def.centerline, offset, self.normal)
+                    self._beam_definitions.append(self.BeamDefinition(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
+        points = polyline.points[0:-1]
         out = []
-        for index in range(len(polyline)):
+        for index in range(len(points)):
             if index == 0:
-                angle = angle_vectors_signed(
-                    polyline[-1] - polyline[0], polyline[1] - polyline[0], self.normal, deg=True
-                )
-            elif index == len(polyline) - 1:
-                angle = angle_vectors_signed(
-                    polyline[-2] - polyline[-1], polyline[0] - polyline[-1], self.normal, deg=True
-                )
+                angle = angle_vectors_signed(points[-1] - points[0], points[1] - points[0], self.normal, deg=True)
+            elif index == len(points) - 1:
+                angle = angle_vectors_signed(points[-2] - points[-1], points[0] - points[-1], self.normal, deg=True)
             else:
                 angle = angle_vectors_signed(
-                    polyline[index - 1] - polyline[index], polyline[index + 1] - polyline[index], self.normal, deg=True
+                    points[index - 1] - points[index], points[index + 1] - points[index], self.normal, deg=True
                 )
             if angle > 0:
                 out.append(index)
         if len(out) > 0:
-            out.insert(1, out[0] - 1)
-        return out
+            out.insert(0, out[0] - 1)
+        return set(out)
 
     def offset_elements(self, element_loop):
         offset_loop = []
-        for element in element_loop:
-            element.offset(self.beam_dimensions[element.type][0] / 2)
-            if element.type == "edge_stud":
-                element.offset(self.edge_stud_offset)
-            offset_loop.append(element)
-            # self.edges.append(Line(element.centerline[0], element.centerline[1]))
-        for i, element in enumerate(offset_loop):
+        for beam_def in element_loop:
+            beam_def.offset(self.beam_dimensions[beam_def.type][0] / 2)
+            if beam_def.type == "edge_stud":
+                beam_def.offset(self.edge_stud_offset)
+            offset_loop.append(beam_def)
+
+        for i, beam_def in enumerate(offset_loop):
             if self.edge_stud_offset > 0:
-                if element.type != "plate":
+                if beam_def.type != "plate":
                     element_before = offset_loop[i - 1]
                     element_after = offset_loop[(i + 1) % len(offset_loop)]
-                    start_point = intersection_line_line(element.centerline, element_before.centerline, 0.01)[0]
-                    end_point = intersection_line_line(element.centerline, element_after.centerline, 0.01)[0]
+                    start_point = intersection_line_line(
+                        beam_def.centerline, element_before.centerline, self.dist_tolerance
+                    )[0]
+                    end_point = intersection_line_line(
+                        beam_def.centerline, element_after.centerline, self.dist_tolerance
+                    )[0]
                     if start_point and end_point:
-                        element.centerline = Line(start_point, end_point)
+                        beam_def.centerline = Line(start_point, end_point)
+                    else:
+                        raise ValueError("edges are parallel, no intersection found")
             else:
                 element_before = offset_loop[i - 1]
                 element_after = offset_loop[(i + 1) % len(offset_loop)]
-                start_point = intersection_line_line(element.centerline, element_before.centerline, 0.01)[0]
-                end_point = intersection_line_line(element.centerline, element_after.centerline, 0.01)[0]
+                start_point, _ = intersection_line_line(
+                    beam_def.centerline, element_before.centerline, self.dist_tolerance
+                )
+                end_point, _ = intersection_line_line(
+                    beam_def.centerline, element_after.centerline, self.dist_tolerance
+                )
                 if start_point and end_point:
-                    element.centerline = Line(start_point, end_point)
+                    beam_def.centerline = Line(start_point, end_point)
         return offset_loop
 
     def generate_windows(self):
         for polyline in self.inner_polylines:
             self.windows.append(self.Window(polyline, parent=self))
+            self._beam_definitions.extend(self.windows[-1]._beam_definitions)
 
     def generate_studs(self):
         self.generate_stud_lines()
@@ -389,19 +421,19 @@ class SurfaceModel(object):
 
     def generate_stud_lines(self):
         x_position = self.stud_spacing
-        while x_position < self.panel_length:
+        while x_position < self.panel_length - self.beam_width:
             start_point = Point(x_position, 0, 0)
             start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
             line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
-            self._elements.append(self.BeamElement(line, type="stud", parent=self))
+            self._beam_definitions.append(self.BeamDefinition(line, type="stud", parent=self))
             x_position += self.stud_spacing
 
-    def get_element_intersections(self, element, *element_lists_to_intersect):
+    def get_beam_intersections(self, beam_def, *element_lists_to_intersect):
         intersections = []
         dots = []
         for element_list in element_lists_to_intersect:
             for element_to_intersect in element_list:
-                point = intersection_line_segment(element.z_aligned_centerline, element_to_intersect.centerline, 0.01)[
+                point = intersection_line_segment(beam_def.z_aligned_centerline, element_to_intersect.centerline, 0.01)[
                     0
                 ]
                 if point:
@@ -409,28 +441,28 @@ class SurfaceModel(object):
         if len(intersections) > 1:
             intersections.sort(key=lambda x: dot_vectors(x, self.z_axis))
             dots = [
-                dot_vectors(Vector.from_start_end(element.z_aligned_centerline.start, x), self.z_axis)
-                / element.centerline.length
+                dot_vectors(Vector.from_start_end(beam_def.z_aligned_centerline.start, x), self.z_axis)
+                / beam_def.centerline.length
                 for x in intersections
             ]
         return intersections, dots
 
     def trim_jack_studs(self):
-        for element in self.jack_studs:
-            intersections, dots = self.get_element_intersections(element, self.plates, self.headers)
+        for beam_def in self.jack_studs:
+            intersections, dots = self.get_beam_intersections(beam_def, self.plates, self.headers)
             if len(intersections) > 1:
                 bottom = None
                 for i, dot in enumerate(dots):
                     if dot < 0:
                         bottom = intersections[i]
-                top = element.z_aligned_centerline.end
+                top = beam_def.z_aligned_centerline.end
                 if not bottom:
-                    bottom = element.z_aligned_centerline.start
-            element.set_centerline(Line(bottom, top))
+                    bottom = beam_def.z_aligned_centerline.start
+            beam_def.set_centerline(Line(bottom, top))
 
     def trim_king_studs(self):
-        for element in self.king_studs:
-            intersections, dots = self.get_element_intersections(element, self.plates, self.headers, self.sills)
+        for beam_def in self.king_studs:
+            intersections, dots = self.get_beam_intersections(beam_def, self.plates, self.headers, self.sills)
             if len(intersections) > 1:
                 bottom, top = None, None
                 for i, dot in enumerate(dots):
@@ -440,32 +472,32 @@ class SurfaceModel(object):
                         top = intersections[i]  # first intersection above header
                         break
                 if not bottom:
-                    bottom = element.z_aligned_centerline.start
+                    bottom = beam_def.z_aligned_centerline.start
                 if not top:
-                    top = element.z_aligned_centerline.end
-                element.set_centerline(Line(bottom, top))
+                    top = beam_def.z_aligned_centerline.end
+                beam_def.set_centerline(Line(bottom, top))
 
     def trim_studs(self):
         stud_elements = []
         while len(self.studs) > 0:
-            for element in self.elements:
-                if element.type == "stud":
-                    intersections, _ = self.get_element_intersections(element, self.plates, self.headers, self.sills)
+            for beam_def in self._beam_definitions:
+                if beam_def.type == "stud":
+                    intersections, _ = self.get_beam_intersections(beam_def, self.plates, self.headers, self.sills)
                     while len(intersections) > 1:
                         top = intersections.pop()
                         bottom = intersections.pop()
-                        stud_elements.append(self.BeamElement(Line(bottom, top), type="stud", parent=self))
-                    self._elements.remove(element)
-        self._elements.extend(stud_elements)
+                        stud_elements.append(self.BeamDefinition(Line(bottom, top), type="stud", parent=self))
+                    self._beam_definitions.remove(beam_def)
+        self._beam_definitions.extend(stud_elements)
 
     def cull_overlaps(self):
-        for element in self.studs:
-            for other_element in self.king_studs + self.jack_studs:
+        for beam_def in self.studs:
+            for other_element in self.king_studs + self.jack_studs + self.edge_studs:
                 if (
-                    self.distance_between_elements(element, other_element)
-                    < (self.beam_dimensions[element.type][0] + self.beam_dimensions[other_element.type][0]) / 2
+                    self.distance_between_elements(beam_def, other_element)
+                    < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2
                 ):
-                    self._elements.remove(element)
+                    self._beam_definitions.remove(beam_def)
                     break
 
     def distance_between_elements(self, element_one, element_two):
@@ -477,6 +509,16 @@ class SurfaceModel(object):
             cp = closest_point_on_segment(pt, element_one.centerline)
             distances.append(distance_point_point_sqrd(pt, cp))
         return math.sqrt(min(distances))
+
+    def generate_plates(self):
+        if self.sheeting_inside:
+            self._elements.append(Plate(self.outer_polyline, self.sheeting_inside))
+        if self.sheeting_outside:
+            pline = self.outer_polyline.copy()
+            pline.translate(self.frame.zaxis * (self.frame_depth + self.sheeting_outside))
+            self._elements.append(Plate(pline, self.sheeting_outside))
+        for window in self.windows:
+            self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
 
     class Window(object):
         """
@@ -509,8 +551,8 @@ class SurfaceModel(object):
             The normal of the parent.
         beam_dimensions : dict
             The beam dimensions of the parent.
-        elements : list of :class:`compas_timber.model.SurfaceAssembly.BeamElement`
-            The elements of the window.
+        beam_definions : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+            The beam_definions of the window.
         length : float
             The length of the window.
         height : float
@@ -534,23 +576,24 @@ class SurfaceModel(object):
             self.z_axis = parent.frame.yaxis
             self.normal = parent.frame.zaxis
             self.beam_dimensions = parent.beam_dimensions
-            self.elements = []
+            self._beam_definitions = []
             self._length = None
             self._height = None
             self._frame = None
+            self.dist_tolerance = parent.dist_tolerance
             self.process_outlines()
 
         @property
         def jack_studs(self):
-            return [element for element in self.elements if element.type == "jack_stud"]
+            return [beam_def for beam_def in self._beam_definitions if beam_def.type == "jack_stud"]
 
         @property
         def sills(self):
-            return [element for element in self.elements if element.type == "sill"]
+            return [beam_def for beam_def in self._beam_definitions if beam_def.type == "sill"]
 
         @property
         def headers(self):
-            return [element for element in self.elements if element.type == "header"]
+            return [beam_def for beam_def in self._beam_definitions if beam_def.type == "header"]
 
         @property
         def length(self):
@@ -572,23 +615,35 @@ class SurfaceModel(object):
                 )
             return self._frame
 
+        @property
+        def boolean_feature(self):
+            offset = self.parent.sheeting_inside if self.parent.sheeting_inside else 0
+            so = self.parent.sheeting_outside if self.parent.sheeting_outside else 0
+            thickness = offset + so + self.parent.frame_depth
+
+            crv = self.outline.copy()
+            crv.translate(self.normal * -offset)
+
+            vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
+            return BrepSubtraction(vol)
+
         def process_outlines(self):
             for i, segment in enumerate(self.outline.lines):
-                element = SurfaceModel.BeamElement(segment, parent=self)
+                beam_def = SurfaceModel.BeamDefinition(segment, parent=self)
                 if (
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
                 ):
                     if self.parent.lintel_posts:
-                        element.type = "jack_stud"
+                        beam_def.type = "jack_stud"
                     else:
-                        element.type = "king_stud"
+                        beam_def.type = "king_stud"
                 else:
                     ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
                     pts = []
                     for seg in self.outline.lines:
                         if seg != segment:
-                            pt = intersection_line_segment(ray, seg, 0.01)[0]
+                            pt = intersection_line_segment(ray, seg, self.dist_tolerance)[0]
                             if pt:
                                 pts.append(Point(*pt))
                     if len(pts) > 1:
@@ -596,20 +651,20 @@ class SurfaceModel(object):
                     elif len(pts) == 1:
                         vector = Vector.from_start_end(ray.start, pts[0])
                         if dot_vectors(vector, self.z_axis) < 0:
-                            element.type = "header"
+                            beam_def.type = "header"
                         else:
-                            element.type = "sill"
-                self.elements.append(element)
-            self.elements = self.parent.offset_elements(self.elements)
+                            beam_def.type = "sill"
+                self._beam_definitions.append(beam_def)
+            self._beam_definitions = self.parent.offset_elements(self._beam_definitions)
             if self.parent.lintel_posts:
-                for element in self.jack_studs:
+                for beam_def in self.jack_studs:
                     offset = (
                         self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]
                     ) / 2
-                    king_line = offset_line(element.centerline, offset, self.normal)
-                    self.elements.append(self.parent.BeamElement(king_line, type="king_stud", parent=self))
+                    king_line = offset_line(beam_def.centerline, offset, self.normal)
+                    self._beam_definitions.append(self.parent.BeamDefinition(king_line, type="king_stud", parent=self))
 
-    class BeamElement(object):
+    class BeamDefinition(object):
         """
         Container for Beam attributes before beam is instantiated.
 

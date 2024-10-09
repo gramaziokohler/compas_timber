@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added new base class for timber elements `TimberElement`.
+* Added property `is_beam` to `Beam` class.
+* Added property `is_plate` to `Plate` class.
+* Added property `is_wall` to `Wall` class.
 * Added `side_as_surface` to `compas_timber.elements.Beam`.
 * Added `Plate` element.
 * Added attribute `plates` to `TimberModel`.
@@ -17,14 +21,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Removed
+
+
+## [0.11.0] 2024-09-17
+
+### Added
+
+* Added bake component for `Plate` elements.
+* Added default paramteters for `Surface Model` in the GH Component
+
+### Changed
+
+* Fixed wrong image file paths in the Documentation.
+* Changed `TimberModel.beams` to return generator of `Beam` elements.
+* Changed `TimberModel.walls` to return generator of `Wall` elements.
+* Changed `TimberModel.plates` to return generator of `Plate` elements.
+* Changed `TimberModel.joints` to return generator of `Joint` elements.
+* Fixed polyline analysis for generating `SurfaceModel`
+* Fixed errors in debug info components.
+
+### Removed
+
+
+## [0.10.1] 2024-09-11
+
+### Added
+
+### Changed
+
+* Implemented a workaround for https://github.com/gramaziokohler/compas_timber/issues/280.
+
+### Removed
+
+
+## [0.10.0] 2024-09-11
+
+### Added
+
+* Added `SurfaceModelJointOverride` GH Component.
+* Added `Plate` element.
+* Added attribute `plates` to `TimberModel`.
+* Added `SurfaceModelJointOverride` GH Component
+* Added `ShowSurfaceModelBeamType` GH Component
+* Re-introduced attribute `key` in `Beam`.
+* Added attribute `key` to `Plate`.
+* Added generation of `plate` elements to the `SurfaceModel`
+
+### Changed
+
+* Updated documentation for Grasshopper components.
+* Fixed missing input parameter in `SurfaceModelOptions` GH Component.
+* Fixed error with tolerances for `SurfaceModel`s modeled in meters.
 * Renamed `beam` to `element` in different locations to make it more generic.
+* Fixed `AttributeError` in `SurfaceModel`.
+* Updated example scripts.
+* Calling `process_joinery` in `SurfaceModel`.
+* Changed how `BeamDefinition` and `Plate` types are handled in `SurfaceModel`
+* Changed the `get_interior_segment_indices` function to work when there are multiple openings.
+* Renamed `ShowSurfaceModelBeamType` to `ShowBeamsByCategory`.
+* Changed `SurfaceModel` component input handling to give warnings instead of errors.
 
 ### Removed
 
 * Removed `add_beam` from `TimberModel`, use `add_element` instead.
 * Removed `add_plate` from `TimberModel`, use `add_element` instead.
 * Removed `add_wall` from `TimberModel`, use `add_element` instead.
-
 
 ## [0.9.1] 2024-07-05
 

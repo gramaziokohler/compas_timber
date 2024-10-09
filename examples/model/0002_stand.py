@@ -47,14 +47,14 @@ for category, lines in lines.items():
         normal = NORMAL_VERTICALS if category == "verticals" else None
         beam = Beam.from_centerline(centerline=line, height=height, width=width, z_vector=normal)
         beam.attributes["category"] = category
-        model.add_beam(beam)
+        model.add_element(beam)
 
 # create topology to joint type mapping
 topo_connection = {JointTopology.TOPO_L: LButtJoint, JointTopology.TOPO_T: TButtJoint}
 
 # find neighboring beams
 solver = ConnectionSolver()
-beam_pairs = solver.find_intersecting_pairs(model.beams, rtree=True)
+beam_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
 
 for pair in beam_pairs:
     beam_a, beam_b = pair
@@ -66,6 +66,8 @@ for pair in beam_pairs:
     joint_cls = topo_connection.get(topo, None)
     if joint_cls is not None:
         joint_cls.create(model, beam_a, beam_b)
+
+model.process_joinery()
 
 # setup the viewer
 viewer = create_viewer()

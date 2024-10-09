@@ -19,8 +19,8 @@ class ShowFeatureErrors(component):
         index = int(index) % len(feature_errors)
         error = feature_errors[index]
 
-        geometries = [error.feature_geometry, error.beam_geometry]
-        geo_objs = [SceneObject(geo) for geo in geometries]
+        geometries = [error.feature_geometry, error.element_geometry]
+        geo_objs = [SceneObject(item=geo) for geo in geometries]
         output = []
         for obj in geo_objs:
             output.extend(obj.draw())

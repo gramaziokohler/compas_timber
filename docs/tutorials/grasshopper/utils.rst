@@ -24,4 +24,4 @@ For documentation on BoxMapping in Rhino see `here <https://developer.rhino3d.co
 
 
 .. image:: ../images/gh_Bake.png
-    :width: 60%
+    :width: 80%
