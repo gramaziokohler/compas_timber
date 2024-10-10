@@ -22,6 +22,18 @@
                 "scriptParamAccess": 1
             },
             {
+                "name": "LayerName",
+                "description": "Name of the Layer to bake Beams on (optional).",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "ClearLayer",
+                "description": "Clear Layer before baking (optional).",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
                 "name": "Bake",
                 "description": "Set to True to Bake. Nothing happens if None or False.",
                 "typeHintID": "bool",
