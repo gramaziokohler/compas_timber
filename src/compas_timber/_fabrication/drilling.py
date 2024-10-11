@@ -11,6 +11,7 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.geometry import intersection_segment_plane
+from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
@@ -221,7 +222,7 @@ class Drilling(BTLxProcess):
     def _flip_line_if_start_inside(line, beam, ref_side_index):
         side_plane = beam.side_as_surface(ref_side_index).to_plane()
         if is_point_behind_plane(line.start, side_plane):
-            return Line(line.end, line.start)
+            return Line(line.end, line.start)  # TODO: use line.flip() instead
         return line
 
     @staticmethod
@@ -353,16 +354,39 @@ class Drilling(BTLxProcess):
         cylinder_frame.rotate(math.radians(self.angle), -ref_surface.zaxis, point=xy_world)
         cylinder_frame.rotate(math.radians(self.inclination), cylinder_frame.yaxis, point=xy_world)
 
-        depth = self.depth
-        if not self.depth_limited:
-            depth = max(beam.width, beam.height)  # make sure it goes through the beam
+        drill_line = self._calculate_drill_line(beam, xy_world, cylinder_frame)
         # move the cylinder by half the depth because frame is the center
         # add a little notch in the start to make sure it does not drown in the surface
         # compensate for the notch by adding a little bit to the depth. in any case this is just a vizualisation trick
-        tolerance = self.diameter
-        translation_vector = -cylinder_frame.zaxis * (depth * 0.5 - tolerance)
-        cylinder_frame.translate(translation_vector)
-        return Cylinder(frame=cylinder_frame, radius=self.diameter * 0.5, height=depth + tolerance)
+        drill_line = self._scaled_line_by_factor(drill_line, 1.2)  # so is protrudes nicely from the surface
+        return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5)
+
+    def _scaled_line_by_factor(self, line, factor):
+        direction = line.vector.unitized()
+        scale_factor = line.length * 0.5 * factor
+        start = line.midpoint - direction * scale_factor
+        end = line.midpoint + direction * scale_factor
+        return Line(start, end)
+
+    def _calculate_drill_line(self, beam, xy_world, cylinder_frame):
+        drill_line_direction = Line.from_point_and_vector(xy_world, cylinder_frame.zaxis)
+        if self.depth_limited:
+            # case #1: the drill is depth limited:
+            # make plane parallel to ref_surface and at xy_world
+            # shift the plane by depth in direction ref_surface.zaxis
+            # find intersection between the line with start xy_world and direction cylinder_frame.zaxis and the plane
+            # the intersection point is the end point of the drill line
+            drill_bottom_plane = beam.side_as_surface(self.ref_side_index).to_plane()
+            drill_bottom_plane.point -= drill_bottom_plane.normal * self.depth
+        else:
+            # case #2: the drill is not depth limited:
+            # make line from xy_world and cylinder.zaxis and find intersection with opposite side of ref_surface
+            # length of line between xy_world and intersection point, plus some tolerance, is the depth
+            drill_bottom_plane = beam.side_as_surface(beam.opposing_side_index(self.ref_side_index)).to_plane()
+
+        intersection_point = intersection_line_plane(drill_line_direction, drill_bottom_plane)
+        assert intersection_point  # if this fails, it means space and time as we know it has collapsed
+        return Line(xy_world, intersection_point)
 
 
 class DrillingParams(BTLxProcessParams):
