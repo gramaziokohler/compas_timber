@@ -3,16 +3,16 @@ import math
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import Line
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.geometry import intersection_segment_plane
-from compas.geometry import is_point_in_polyhedron
 from compas.geometry import is_point_behind_plane
+from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
 from compas.tolerance import TOL
 
