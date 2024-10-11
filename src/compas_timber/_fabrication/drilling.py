@@ -7,10 +7,12 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import Line
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_in_polyhedron
+from compas.geometry import is_point_behind_plane
 from compas.geometry import project_point_plane
 from compas.tolerance import TOL
 
@@ -193,14 +195,34 @@ class Drilling(BTLxProcess):
         # create frame using the intersection point and the reference side axes
         # calculate the angle and inclination of the drilling using the frame and line
         # create the drilling process using the calculated parameters
+        # TODO: check if any of the line's end points are within the beam, not just the end point
+        # if both are within the beam, raise an error
+        # if start is within the beam, flip the line so that the start is outside the beam
         ref_side_index, xy_point = cls._calculate_ref_side_index(line, beam)
+        line = cls._flip_line_if_start_inside(line, beam, ref_side_index)
         depth_limited = cls._is_depth_limited(line, beam)
         ref_surface = beam.side_as_surface(ref_side_index)
         depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
         x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_surface)
         angle = cls._calculate_angle(ref_surface, line, xy_point)
         inclination = cls._calculate_inclination(ref_surface.frame, line, angle, xy_point)
-        return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index)
+        try:
+            return cls(
+                x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index
+            )
+        except ValueError as e:
+            raise FeatureApplicationError(
+                message=str(e),
+                feature_geometry=line,
+                element_geometry=beam.blank,
+            )
+
+    @staticmethod
+    def _flip_line_if_start_inside(line, beam, ref_side_index):
+        side_plane = beam.side_as_surface(ref_side_index).to_plane()
+        if is_point_behind_plane(line.start, side_plane):
+            return Line(line.end, line.start)
+        return line
 
     @staticmethod
     def _calculate_ref_side_index(line, beam):
@@ -220,7 +242,11 @@ class Drilling(BTLxProcess):
                 intersections[index] = Point(*intersection)
 
         if not intersections:
-            raise ValueError("The line does not intersect with the beam geometry.")
+            raise FeatureApplicationError(
+                message="The drill line must intersect with at lease one of the beam's reference sides.",
+                feature_geometry=line,
+                element_geometry=beam.blank,
+            )
 
         ref_side_index = min(intersections, key=lambda i: intersections[i].distance_to_point(line.start))
         return ref_side_index, intersections[ref_side_index]
