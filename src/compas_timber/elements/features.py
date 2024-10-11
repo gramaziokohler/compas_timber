@@ -22,6 +22,7 @@ class FeatureApplicationError(Exception):
     """
 
     def __init__(self, feature_geometry, element_geometry, message):
+        super(FeatureApplicationError, self).__init__(message)
         self.feature_geometry = feature_geometry
         self.element_geometry = element_geometry
         self.message = message
