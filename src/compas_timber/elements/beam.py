@@ -84,6 +84,15 @@ class Beam(TimberElement):
 
     """
 
+    OPPOSING_SIDE_MAP = {
+        0: 2,
+        2: 0,
+        1: 3,
+        3: 1,
+        4: 5,
+        5: 4,
+    }
+
     @property
     def __data__(self):
         data = super(Beam, self).__data__
@@ -517,6 +526,23 @@ class Beam(TimberElement):
             xsize = self.width
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
+
+    def opposing_side_index(self, side_index):
+        # type: (int) -> int
+        """Returns the index of reference side opposing the given side index.
+
+        Parameters
+        ----------
+        side_index : int
+            The index of the reference side to be returned. 0 to 5.
+
+        Returns
+        -------
+        int
+            The index of the opposing side.
+
+        """
+        return self.OPPOSING_SIDE_MAP[side_index]
 
     def _resolve_blank_extensions(self):
         # type: () -> tuple[float, float]
