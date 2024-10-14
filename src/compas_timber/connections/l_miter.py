@@ -4,9 +4,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.elements import CutFeature
-
-# from compas_timber._fabrication import JackRafterCut
+from compas_timber._fabrication import JackRafterCut
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import BeamJoinningError
@@ -99,18 +97,18 @@ class LMiterJoint(Joint):
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
 
-    def add_features(self):
-        """Adds the required extension and trimming features to both beams.
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
         """
-        assert self.beam_a and self.beam_b  # should never happen
-
-        if self.features:
-            self.beam_a.remove_features(self.features)
-            self.beam_b.remove_features(self.features)
-
+        assert self.beam_a and self.beam_b
         start_a, start_b = None, None
         try:
             plane_a, plane_b = self.get_cutting_planes()
@@ -122,13 +120,28 @@ class LMiterJoint(Joint):
             raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
-
         self.beam_a.add_blank_extension(start_a, end_a, self.guid)
         self.beam_b.add_blank_extension(start_b, end_b, self.guid)
-        # cut1 = JackRafterCut.from_plane_and_beam(plane_a, self.beam_a)
-        # cut2 = JackRafterCut.from_plane_and_beam(plane_b, self.beam_b)
-        cut1 = CutFeature(plane_a)
-        cut2 = CutFeature(plane_b)
+
+    def add_features(self):
+        """Adds the required extension and trimming features to both beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+        assert self.beam_a and self.beam_b
+
+        if self.features:
+            self.beam_a.remove_features(self.features)
+            self.beam_b.remove_features(self.features)
+
+        try:
+            plane_a, plane_b = self.get_cutting_planes()
+        except Exception as ex:
+            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+
+        cut1 = JackRafterCut.from_plane_and_beam(plane_a, self.beam_a)
+        cut2 = JackRafterCut.from_plane_and_beam(plane_b, self.beam_b)
         self.beam_a.add_features(cut1)
         self.beam_b.add_features(cut2)
         self.features = [cut1, cut2]

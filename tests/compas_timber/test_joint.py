@@ -27,7 +27,7 @@ def example_model():
     model = TimberModel()
     for line in centerlines:
         b = Beam.from_centerline(line, w, h)
-        model.add_beam(b)
+        model.add_element(b)
     return model
 
 
@@ -68,20 +68,20 @@ def test_create(mocker):
     model = TimberModel()
     b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
-    model.add_beam(b1)
-    model.add_beam(b2)
+    model.add_element(b1)
+    model.add_element(b2)
     _ = TButtJoint.create(model, b1, b2)
 
-    assert len(model.beams) == 2
-    assert len(model.joints) == 1
+    assert len(list(model.beams)) == 2
+    assert len(list(model.joints)) == 1
 
 
 def test_deepcopy(mocker, t_topo_beams):
     mocker.patch("compas_timber.connections.Joint.add_features")
     model = TimberModel()
     beam_a, beam_b = t_topo_beams
-    model.add_beam(beam_a)
-    model.add_beam(beam_b)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
     t_butt = TButtJoint.create(model, beam_a, beam_b)
     model_copy = model.copy()
 
@@ -89,7 +89,7 @@ def test_deepcopy(mocker, t_topo_beams):
     assert model_copy.beams
     assert model_copy.joints
 
-    t_butt_copy = model_copy.joints[0]
+    t_butt_copy = list(model_copy.joints)[0]
     assert t_butt_copy is not t_butt
     assert t_butt_copy.beams
 
@@ -97,8 +97,8 @@ def test_deepcopy(mocker, t_topo_beams):
 def test_joint_create_t_butt(t_topo_beams):
     model = TimberModel()
     main_beam, cross_beam = t_topo_beams
-    model.add_beam(main_beam)
-    model.add_beam(cross_beam)
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
     joint = TButtJoint.create(model, main_beam, cross_beam)
 
     assert joint.main_beam is main_beam
@@ -109,8 +109,8 @@ def test_joint_create_t_butt(t_topo_beams):
 def test_joint_create_l_butt(l_topo_beams):
     model = TimberModel()
     beam_a, beam_b = l_topo_beams
-    model.add_beam(beam_a)
-    model.add_beam(beam_b)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
     joint = LButtJoint.create(model, beam_a, beam_b)
 
     assert joint.main_beam is beam_a
@@ -121,8 +121,8 @@ def test_joint_create_l_butt(l_topo_beams):
 def test_joint_create_x_half_lap(x_topo_beams):
     model = TimberModel()
     beam_a, beam_b = x_topo_beams
-    model.add_beam(beam_a)
-    model.add_beam(beam_b)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
     joint = XHalfLapJoint.create(model, beam_a, beam_b)
 
     assert joint.main_beam is beam_a
@@ -133,8 +133,8 @@ def test_joint_create_x_half_lap(x_topo_beams):
 def test_joint_create_t_lap(t_topo_beams):
     model = TimberModel()
     main_beam, cross_beam = t_topo_beams
-    model.add_beam(main_beam)
-    model.add_beam(cross_beam)
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
     joint = THalfLapJoint.create(model, main_beam, cross_beam)
 
     assert joint.main_beam is main_beam
@@ -145,8 +145,8 @@ def test_joint_create_t_lap(t_topo_beams):
 def test_joint_create_l_lap(l_topo_beams):
     model = TimberModel()
     beam_a, beam_b = l_topo_beams
-    model.add_beam(beam_a)
-    model.add_beam(beam_b)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
     joint = LHalfLapJoint.create(model, beam_a, beam_b)
 
     assert joint.main_beam is beam_a
@@ -158,8 +158,8 @@ def test_joint_create_kwargs_passthrough_lbutt():
     model = TimberModel()
     small = Beam.from_endpoints(Point(0, 0, 0), Point(0, 1, 0), 0.1, 0.1, z_vector=Vector(0, 0, 1))
     large = Beam.from_endpoints(Point(0, 0, 0), Point(1, 0, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-    model.add_beam(small)
-    model.add_beam(large)
+    model.add_element(small)
+    model.add_element(large)
 
     # main beam butts by default, first beam is by default main, they are swapped if necessary when small_beam_butts=True
     joint_a = LButtJoint.create(model, small, large, small_beam_butts=True)
@@ -193,8 +193,8 @@ def test_joint_create_kwargs_passthrough_xhalflap():
     model = TimberModel()
     beam_a = Beam.from_endpoints(Point(0.5, 0, 0), Point(0.5, 1, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
     beam_b = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), 0.2, 0.2, z_vector=Vector(0, 0, 1))
-    model.add_beam(beam_a)
-    model.add_beam(beam_b)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
 
     joint = XHalfLapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.4)
 
@@ -216,7 +216,7 @@ if not compas.IPY:
             set([3, 5]),
             set([5, 6]),
         ]
-        result = find_neighboring_beams(example_model.beams)
+        result = find_neighboring_beams(list(example_model.beams))
         # beam objects => sets of keys for easy comparison
         key_sets = []
         for pair in result:

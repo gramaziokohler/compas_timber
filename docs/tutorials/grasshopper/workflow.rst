@@ -2,25 +2,23 @@
 Workflow
 ********
 
-To build a timber frame **Assembly**, you need to:
+To build a timber frame **Model** in Grasshopper, you need to:
 
-*   create **Beams**
-*   define **Joints** between these beams and **Rules** how the joints are applied.
-*   define other **Features** (optional)
+*   create :doc:`beams`.
+*   define :doc:`joint_rules` for the interactions between the Beams. 
+*   optional: define other :doc:`features`.
 
-Based on this, **Assembly** takes care of generating the final geometry of the structure.
+Based on this, the :doc:`model` component takes care of generating the final geometry of the structure.
 
-.. image:: ../images/workflow_diagramm.png
-    :width: 50%
+.. image:: ../images/gh_workflow_diagram.png
+    :width: 45%
 
-|
 |
 
 **Example:**
 
-.. image:: ../images/gh_WorkflowDef.png
+.. image:: ../images/gh_workflow_example.png
     :width: 75%
-
 
 |
 
@@ -28,6 +26,7 @@ Based on this, **Assembly** takes care of generating the final geometry of the s
 
     **Important!**
 
-    * There are three Types of **Joint Rules** 1. By **Topology**, 2. by **Category** and 3. **Direct** Joints. In this order, they will be applied to the Assembly. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules. See :doc:`rules`.
+    * You can add any number of :doc:`joint_rules`, but there is a hierarchy of how they are applied:
+    * There are three Types of **Joint Rules** 1. By **Topology**, 2. by **Category** and 3. **Direct** Joints. Direct Joints will overwrite Category Rules, Category Rules will overwrite Topology Rules.
     * The **Joints** are processed first, then **Features**.
 

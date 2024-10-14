@@ -25,12 +25,12 @@ NORMAL_REST = Vector(0, 0, 1)
 
 wall_frame = Frame.worldXY()
 model = TimberModel()
-model.add_wall(Wall(wall_frame, 3000, 140, 2000))
+model.add_element(Wall(3000, 140, 2000, frame=wall_frame))
 
 # setup the viewer
 viewer = create_viewer()
 
-wall = model.walls[0]
+wall = list(model.walls)[0]
 
 # draw centerline
 viewer.scene.add(wall.origin)

@@ -5,16 +5,20 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 class ShowBeamFaces(component):
-    def RunScript(self, model):
+    def RunScript(self, Beam):
         self.pt = []
         self.txt = []
 
-        if not model:
+        if not Beam:
             return None
-        for beam in model.beams:
-            for f_index, face in enumerate(beam.faces):
-                self.pt.append(point_to_rhino(face.point))
-                self.txt.append(str(f_index))
+        for b in Beam:
+            for side_index in range(len(b.ref_sides)):
+                surface = b.side_as_surface(side_index)
+                midpoint = surface.point_at(surface.xsize * 0.5, surface.ysize * 0.5)
+                side_name = b.ref_sides[side_index].name
+
+                self.pt.append(point_to_rhino(midpoint))
+                self.txt.append(side_name)
 
     def DrawViewportWires(self, arg):
         if self.Locked:

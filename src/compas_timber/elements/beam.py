@@ -14,15 +14,15 @@ from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 
 from compas.tolerance import TOL
-from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from compas_timber.utils import intersection_line_plane
 
 from .features import FeatureApplicationError
+from .timber import TimberElement
 
 
-class Beam(Element):
+class Beam(TimberElement):
     """
     A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.
 
@@ -81,8 +81,19 @@ class Beam(Element):
         A list containing the 4 lines along the long axis of this beam.
     midpoint : :class:`~compas.geometry.Point`
         The point at the middle of the centerline of this beam.
+    key : int, optional
+        Once beam is added to a model, it will have this model-wide-unique integer key.
 
     """
+
+    OPPOSING_SIDE_MAP = {
+        0: 2,
+        2: 0,
+        1: 3,
+        3: 1,
+        4: 5,
+        5: 4,
+    }
 
     @property
     def __data__(self):
@@ -112,6 +123,10 @@ class Beam(Element):
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
+
+    @property
+    def is_beam(self):
+        return True
 
     @property
     def shape(self):
@@ -250,8 +265,13 @@ class Beam(Element):
 
     @property
     def has_features(self):
-        # TODO: move to compas_future... Part
+        # TODO: consider removing, this is not used anywhere
         return len(self.features) > 0
+
+    @property
+    def key(self):
+        # type: () -> int | None
+        return self.graph_node
 
     def __str__(self):
         return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
@@ -508,6 +528,23 @@ class Beam(Element):
             xsize = self.width
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
+
+    def opposing_side_index(self, side_index):
+        # type: (int) -> int
+        """Returns the index of reference side opposing the given side index.
+
+        Parameters
+        ----------
+        side_index : int
+            The index of the reference side to be returned. 0 to 5.
+
+        Returns
+        -------
+        int
+            The index of the opposing side.
+
+        """
+        return self.OPPOSING_SIDE_MAP[side_index]
 
     def _resolve_blank_extensions(self):
         # type: () -> tuple[float, float]

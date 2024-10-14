@@ -37,8 +37,30 @@ class TButtJoint(ButtJoint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.beam_by_guid(self.main_beam_guid)
-        self.cross_beam = model.beam_by_guid(self.cross_beam_guid)
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
+        assert self.main_beam and self.cross_beam
+        try:
+            cutting_plane = self.get_main_cutting_plane()[0]
+            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).
@@ -50,17 +72,14 @@ class TButtJoint(ButtJoint):
 
         if self.features:
             self.main_beam.remove_features(self.features)
+
         cutting_plane = None
         try:
             cutting_plane = self.get_main_cutting_plane()[0]
-            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-
-        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
         trim_feature = CutFeature(cutting_plane)
         if self.mill_depth:

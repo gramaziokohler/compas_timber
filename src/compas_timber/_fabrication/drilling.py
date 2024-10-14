@@ -3,6 +3,7 @@ import math
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Transformation
@@ -10,6 +11,8 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.geometry import intersection_segment_plane
+from compas.geometry import intersection_line_plane
+from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
 from compas.tolerance import TOL
@@ -183,31 +186,35 @@ class Drilling(BTLxProcess):
             The constructed drilling process.
 
         """
-        # find intersection point between line and beam
-        # if there are several, take the closest one to the start point of the line
-        # calculate the reference side index based on the closest intersection point
-        # check if the end point of the line is within the beam
-        # if it is, the drilling is depth limited otherwise it is not
-        # calculate the x and y coordinates of the start point of the drilling
-        # based on the intersection point and the reference side index
-        # create frame using the intersection point and the reference side axes
-        # calculate the angle and inclination of the drilling using the frame and line
-        # create the drilling process using the calculated parameters
         ref_side_index, xy_point = cls._calculate_ref_side_index(line, beam)
+        line = cls._flip_line_if_start_inside(line, beam, ref_side_index)
         depth_limited = cls._is_depth_limited(line, beam)
         ref_surface = beam.side_as_surface(ref_side_index)
         depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
         x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_surface)
         angle = cls._calculate_angle(ref_surface, line, xy_point)
         inclination = cls._calculate_inclination(ref_surface.frame, line, angle, xy_point)
-        return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index)
+        try:
+            return cls(
+                x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index
+            )
+        except ValueError as e:
+            raise FeatureApplicationError(
+                message=str(e),
+                feature_geometry=line,
+                element_geometry=beam.blank,
+            )
+
+    @staticmethod
+    def _flip_line_if_start_inside(line, beam, ref_side_index):
+        side_plane = beam.side_as_surface(ref_side_index).to_plane()
+        if is_point_behind_plane(line.start, side_plane):
+            return Line(line.end, line.start)  # TODO: use line.flip() instead
+        return line
 
     @staticmethod
     def _calculate_ref_side_index(line, beam):
-        # calculate the reference side index based on the closest intersection point between the line and the beam
-        # IDEA: calculate intersection point between line and each of the reference sides of the beam
-        # take the one with the smallest distance to the start point of the line
-        # return the index of the reference side
+        # TODO: upstream this to compas.geometry
         def is_point_on_surface(point, surface):
             point = Point(*point)
             local_point = point.transformed(Transformation.from_change_of_basis(Frame.worldXY(), surface.frame))
@@ -220,7 +227,11 @@ class Drilling(BTLxProcess):
                 intersections[index] = Point(*intersection)
 
         if not intersections:
-            raise ValueError("The line does not intersect with the beam geometry.")
+            raise FeatureApplicationError(
+                message="The drill line must intersect with at lease one of the beam's reference sides.",
+                feature_geometry=line,
+                element_geometry=beam.blank,
+            )
 
         ref_side_index = min(intersections, key=lambda i: intersections[i].distance_to_point(line.start))
         return ref_side_index, intersections[ref_side_index]
@@ -327,16 +338,33 @@ class Drilling(BTLxProcess):
         cylinder_frame.rotate(math.radians(self.angle), -ref_surface.zaxis, point=xy_world)
         cylinder_frame.rotate(math.radians(self.inclination), cylinder_frame.yaxis, point=xy_world)
 
-        depth = self.depth
-        if not self.depth_limited:
-            depth = max(beam.width, beam.height)  # make sure it goes through the beam
-        # move the cylinder by half the depth because frame is the center
-        # add a little notch in the start to make sure it does not drown in the surface
-        # compensate for the notch by adding a little bit to the depth. in any case this is just a vizualisation trick
-        tolerance = self.diameter
-        translation_vector = -cylinder_frame.zaxis * (depth * 0.5 - tolerance)
-        cylinder_frame.translate(translation_vector)
-        return Cylinder(frame=cylinder_frame, radius=self.diameter * 0.5, height=depth + tolerance)
+        drill_line = self._calculate_drill_line(beam, xy_world, cylinder_frame)
+
+        # scale both ends so is protrudes nicely from the surface
+        # TODO: this is a best-effort solution. this can be done more accurately taking the angle into account. consider doing that in the future.
+        drill_line = self._scaled_line_by_factor(drill_line, 1.2)
+        return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5)
+
+    def _scaled_line_by_factor(self, line, factor):
+        direction = line.vector.unitized()
+        scale_factor = line.length * 0.5 * factor
+        start = line.midpoint - direction * scale_factor
+        end = line.midpoint + direction * scale_factor
+        return Line(start, end)
+
+    def _calculate_drill_line(self, beam, xy_world, cylinder_frame):
+        drill_line_direction = Line.from_point_and_vector(xy_world, cylinder_frame.zaxis)
+        if self.depth_limited:
+            drill_bottom_plane = beam.side_as_surface(self.ref_side_index).to_plane()
+            drill_bottom_plane.point -= drill_bottom_plane.normal * self.depth
+        else:
+            # this is not always the correct plane, but it's good enough for now, btlx viewer seems to be using the same method..
+            # TODO: this is a best-effort solution. consider calculating intersection with other sides to always find the right one.
+            drill_bottom_plane = beam.side_as_surface(beam.opposing_side_index(self.ref_side_index)).to_plane()
+
+        intersection_point = intersection_line_plane(drill_line_direction, drill_bottom_plane)
+        assert intersection_point  # if this fails, it means space and time as we know it has collapsed
+        return Line(xy_world, intersection_point)
 
 
 class DrillingParams(BTLxProcessParams):
