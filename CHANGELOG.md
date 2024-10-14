@@ -14,10 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added property `is_plate` to `Plate` class.
 * Added property `is_wall` to `Wall` class.
 * Added `side_as_surface` to `compas_timber.elements.Beam`.
+* Added `opposing_side_index` to `compas_timber.elements.Beam`.
 * Added `Plate` element.
 * Added attribute `plates` to `TimberModel`.
 * Added new temporary package `_fabrication`.
 * Added new `compas_timber._fabrication.JackRafterCut`.
+* Added new `compas_timber._fabrication.JackRafterCutParams`.
+* Added new `compas_timber._fabrication.Drilling`.
+* Added new `compas_timber._fabrication.DrillingParams`.
 
 ### Changed
 
