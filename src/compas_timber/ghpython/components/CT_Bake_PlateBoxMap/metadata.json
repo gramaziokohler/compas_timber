@@ -13,7 +13,8 @@
                 "name": "Model",
                 "description": "Model object (optional).",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1,
+                "flatten": true
             },
             {
                 "name": "MapSize",
@@ -34,8 +35,8 @@
                 "scriptParamAccess": 0
             },
             {
-                "name": "ClearLayer",
-                "description": "Clear Layer before baking (optional).",
+                "name": "ClearLayerContent",
+                "description": "Clear Objects on Layer before baking (optional).",
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             },
