@@ -14,7 +14,7 @@ from Rhino.Geometry import Interval
 from Rhino.Geometry import Plane
 
 
-class BakeBoxMap(component):
+class BakeBeamBoxMap(component):
     def RunScript(self, model, map_size, layer_name, clear_layer, bake):
         if map_size and len(map_size) != 3:
             self.AddRuntimeMessage(

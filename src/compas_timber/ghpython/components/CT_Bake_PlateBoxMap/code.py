@@ -15,7 +15,7 @@ from Rhino.Geometry import Plane
 from Rhino.RhinoDoc import ActiveDoc
 
 
-class BakePlateMap(component):
+class BakePlateBoxMap(component):
     def RunScript(self, model, map_size, swap_uv, layer_name, clear_layer, bake):
         if map_size and len(map_size) != 3:
             self.AddRuntimeMessage(

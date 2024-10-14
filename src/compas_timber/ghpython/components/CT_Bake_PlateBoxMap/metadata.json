@@ -1,6 +1,6 @@
 {
     "name": "BakePlatesWithBoxMap",
-    "nickname": "BakeWPlatesithBoxMap",
+    "nickname": "BakePlatesWithBoxMap",
     "category": "COMPAS Timber",
     "subcategory": "Utils",
     "description": "Bakes Plate objects with a BoxMapping (by default the material is applied 'by layer' and has to be defined in the layer the objects are baked to).",
