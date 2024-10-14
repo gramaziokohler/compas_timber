@@ -214,6 +214,7 @@ class Drilling(BTLxProcess):
 
     @staticmethod
     def _calculate_ref_side_index(line, beam):
+        # TODO: upstream this to compas.geometry
         def is_point_on_surface(point, surface):
             point = Point(*point)
             local_point = point.transformed(Transformation.from_change_of_basis(Frame.worldXY(), surface.frame))
