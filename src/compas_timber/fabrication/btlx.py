@@ -121,8 +121,13 @@ class BTLx(object):
             "ProcessID",
             "ReferencePlaneID",
         }
-        header_only = {k: v for k, v in whole_dict.items() if k in header_keys}
-        process_only = {k: v for k, v in whole_dict.items() if k not in header_keys}
+        header_only = OrderedDict()
+        process_only = OrderedDict()
+        for key, value in whole_dict.items():
+            if key in header_keys:
+                header_only[key] = value
+            else:
+                process_only[key] = value
         return header_only, process_only
 
     @classmethod
