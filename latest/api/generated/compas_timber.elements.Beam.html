@@ -40,7 +40,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script src="../../_static/documentation_options.js?v=bb99e320"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
@@ -594,7 +594,7 @@ document.write(`
 <h1>Beam</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Beam">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/127548b/src/compas_timber/elements/beam.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/f1eb423/src/compas_timber/elements/beam.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></p>
 <p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
 <dl class="field-list">
@@ -692,11 +692,17 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_endpoints.html#compas_timber.elements.Beam.from_endpoints" title="compas_timber.elements.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
 <td><p>Creates a Beam from the given endpoints.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.remove_blank_extension.html#compas_timber.elements.Beam.remove_blank_extension" title="compas_timber.elements.Beam.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.opposing_side_index.html#compas_timber.elements.Beam.opposing_side_index" title="compas_timber.elements.Beam.opposing_side_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">opposing_side_index</span></code></a></p></td>
+<td><p>Returns the index of reference side opposing the given side index.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.remove_blank_extension.html#compas_timber.elements.Beam.remove_blank_extension" title="compas_timber.elements.Beam.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
 <td><p>Removes a blank extension from the beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.remove_features.html#compas_timber.elements.Beam.remove_features" title="compas_timber.elements.Beam.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.remove_features.html#compas_timber.elements.Beam.remove_features" title="compas_timber.elements.Beam.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
 <td><p>Removes a feature from the beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.side_as_surface.html#compas_timber.elements.Beam.side_as_surface" title="compas_timber.elements.Beam.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
+<td><p>Returns the requested side of the beam as a parametric planar surface.</p></td>
 </tr>
 </tbody>
 </table>
@@ -802,7 +808,7 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
     <br/>
   </p>
 </div>
