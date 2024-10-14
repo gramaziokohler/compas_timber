@@ -4,7 +4,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.elements.features import CutFeature
+from compas_timber._fabrication import JackRafterCut
 from compas_timber.utils import intersection_line_line_3D
 
 from .joint import BeamJoinningError
@@ -63,7 +63,6 @@ class LMiterJoint(Joint):
         assert self.beam_a and self.beam_b
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
-
         # intersection point (average) of both centrelines
         [pxA, tA], [pxB, tB] = intersection_line_line_3D(
             self.beam_a.centerline,
@@ -130,7 +129,7 @@ class LMiterJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        assert self.beam_a and self.beam_b  # should never happen
+        assert self.beam_a and self.beam_b
 
         if self.features:
             self.beam_a.remove_features(self.features)
@@ -141,10 +140,11 @@ class LMiterJoint(Joint):
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
 
-        f1, f2 = CutFeature(plane_a), CutFeature(plane_b)
-        self.beam_a.add_features(f1)
-        self.beam_b.add_features(f2)
-        self.features = [f1, f2]
+        cut1 = JackRafterCut.from_plane_and_beam(plane_a, self.beam_a)
+        cut2 = JackRafterCut.from_plane_and_beam(plane_b, self.beam_b)
+        self.beam_a.add_features(cut1)
+        self.beam_b.add_features(cut2)
+        self.features = [cut1, cut2]
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
