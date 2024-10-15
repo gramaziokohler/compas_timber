@@ -167,30 +167,30 @@ class Beam(TimberElement):
         assert self.frame
         return [
             Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
-                self.frame.xaxis,
-                -self.frame.yaxis,
-            ),
-            Frame(
                 Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
                 self.frame.xaxis,
                 -self.frame.zaxis,
             ),
             Frame(
-                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
                 self.frame.xaxis,
-                self.frame.yaxis,
+                -self.frame.yaxis,
             ),
             Frame(
                 Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
                 self.frame.xaxis,
                 self.frame.zaxis,
             ),
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
             Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
             Frame(
                 Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
-                -self.frame.yaxis,
-                -self.frame.zaxis,
+                self.frame.yaxis,
+                self.frame.zaxis,
             ),  # small face at end point
         ]
 
@@ -450,10 +450,7 @@ class Beam(TimberElement):
         """
         if not isinstance(features, list):
             features = [features]
-        for feature in features:
-            if feature not in self.features:
-                self.features.append(feature)
-        # self.features.extend(features)  # type: ignore
+        self.features.extend(features)  # type: ignore
 
     @reset_computed
     def remove_features(self, features=None):
