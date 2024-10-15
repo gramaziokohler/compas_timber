@@ -800,7 +800,7 @@ class DovetailMortiseParams(BTLxProcessParams):
         result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
         result["Slope"] = "{:.{prec}f}".format(self._instance.slope, prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        # result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
         result["LimitationTop"] = self._instance.limitation_top
         result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
         result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)

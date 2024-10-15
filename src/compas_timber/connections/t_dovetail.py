@@ -58,6 +58,9 @@ class TDovetailJoint(Joint):
         data = super(TDovetailJoint, self).__data__
         data["main_beam"] = self.main_beam_guid
         data["cross_beam"] = self.cross_beam_guid
+        data["main_beam_ref_side_index"] = self.main_beam_ref_side_index
+        data["cross_beam_ref_side_index"] = self.cross_beam_ref_side_index
+        data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
         data["length"] = self.length
@@ -73,6 +76,9 @@ class TDovetailJoint(Joint):
         self,
         main_beam=None,
         cross_beam=None,
+        main_beam_ref_side_index=None,
+        cross_beam_ref_side_index=None,
+        start_y=None,
         start_depth=None,
         rotation=None,
         length=None,
@@ -89,6 +95,10 @@ class TDovetailJoint(Joint):
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
 
+        self.main_beam_ref_side_index = main_beam_ref_side_index
+        self.cross_beam_ref_side_index = cross_beam_ref_side_index
+
+        self.start_y = start_y
         self.start_depth = start_depth
         self.rotation = rotation
         self.length = length
@@ -110,19 +120,19 @@ class TDovetailJoint(Joint):
     def beams(self):
         return [self.main_beam, self.cross_beam]
 
-    @property
-    def cross_beam_ref_side_index(self):
-        ref_side_dict = self._beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        # return ref_side_index
-        return 0
+    # @property
+    # def cross_beam_ref_side_index(self):
+    #     ref_side_dict = self._beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+    #     ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+    #     # return ref_side_index
+    #     return 3
 
-    @property
-    def main_beam_ref_side_index(self):
-        ref_side_dict = self._get_ref_side_most_ortho_to_cross_vector(self.cross_beam, self.main_beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        # return ref_side_index
-        return 2
+    # @property
+    # def main_beam_ref_side_index(self):
+    #     ref_side_dict = self._get_ref_side_most_ortho_to_cross_vector(self.cross_beam, self.main_beam, ignore_ends=True)
+    #     ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+    #     # return ref_side_index
+    #     return 3
 
     @property
     def shape(self):
@@ -154,17 +164,17 @@ class TDovetailJoint(Joint):
 
         # define the tool parameters
         self.define_dovetail_tool(self.tool_angle, self.tool_diameter, self.tool_height)
-
-        main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
-        cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-
         print("main_beam_ref_side", self.main_beam_ref_side_index)
         print("cross_beam_ref_side", self.cross_beam_ref_side_index)
+
+        main_beam_ref_side = self.main_beam.ref_sides[int(self.main_beam_ref_side_index)]
+        cross_beam_ref_side = self.cross_beam.ref_sides[int(self.cross_beam_ref_side_index)]
 
         # generate dovetail tenon features
         main_feature = DovetailTenon.from_plane_and_beam(
             cross_beam_ref_side,
             self.main_beam,
+            self.start_y,
             self.start_depth,
             self.rotation,
             self.length,

@@ -351,6 +351,7 @@ class DovetailTenon(BTLxProcess):
         cls,
         plane,
         beam,
+        start_y=0.0,
         start_depth=50.0,
         rotation=90.0,
         length=80.0,
@@ -412,11 +413,11 @@ class DovetailTenon(BTLxProcess):
         # calculate rotation
         # rotation = cls._calculate_rotation(ref_side, plane)
         # rotation = 90.0  #! TODO: for now i'm overriding unit a logic for applying rotation is implemented
-        rotation = (rotation + 90) % 180
+        rotation = rotation + 90.0
 
         # calculate start_y
         # TODO: if there is a case where the tenon should not be in the middle of the beam then start_y should be a parameter of the alternative constructor
-        start_y = beam.width / 2
+        start_y = start_y + beam.width / 2
 
         # calculate start_x
         start_x = cls._calculate_start_x(
@@ -430,8 +431,8 @@ class DovetailTenon(BTLxProcess):
         length = cls._bound_length(
             ref_side, plane, beam.height, start_depth, inclination, length, height, frustum_difference
         )
-        # width = cls._bound_width(beam.width, angle, length, width, cone_angle, shape_radius, frustum_difference)
-        width = width
+        width = cls._bound_width(beam.width, angle, length, width, cone_angle, shape_radius, frustum_difference)
+        # width = width
 
         # determine if the top and bottom length of the cut is limited
         # TODO: this should instead come first and override the start_depth and length
@@ -563,7 +564,9 @@ class DovetailTenon(BTLxProcess):
             frustum_difference + length * math.tan(math.radians(cone_angle))
         )
         min_width = 2 * shape_radius
-        return min(max(width, min_width), max_width)
+        if width < min_width:
+            print("Width set to minimum possible based on the shape radius. Width: ", min_width)
+        return max(width, min_width)
 
     ########################################################################
     # Class Methods
@@ -708,7 +711,10 @@ class DovetailTenon(BTLxProcess):
         cutting_plane.transform(rot_a)
 
         # normal pointing towards xaxis so just need the delta
-        vertical_angle = math.radians(self.inclination)
+        if self.orientation == OrientationType.START:
+            vertical_angle = math.radians(self.inclination)
+        else:
+            vertical_angle = math.radians(180 - self.inclination)
         rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
 
         cutting_plane.transform(rot_b)
@@ -726,7 +732,19 @@ class DovetailTenon(BTLxProcess):
         """Calculates the cutting planes for the dovetail tenon from the machining parameters in this instance and the given beam."""
 
         cutting_frame = self.frame_from_params_and_beam(beam)
-        offseted_cutting_frame = Frame(cutting_frame.point, -cutting_frame.xaxis, cutting_frame.yaxis)
+        if self.rotation != 90:
+            rot_axis = cutting_frame.normal
+            rot_angle = math.radians(self.rotation - 90)
+            rot_point = cutting_frame.point
+            # rot_point.translate(cutting_frame.xaxis * (self.start_depth + self.length / 2))
+
+            rotation = Rotation.from_axis_and_angle(rot_axis, -rot_angle, rot_point)
+            cutting_frame.transform(rotation)
+
+        # if self.orientation == OrientationType.START:
+        #     cutting_frame.xaxis = -cutting_frame.xaxis
+
+        offseted_cutting_frame = Frame(cutting_frame.point, cutting_frame.xaxis, cutting_frame.yaxis)
         offseted_cutting_frame.point += cutting_frame.normal * self.height
 
         cutting_surface = PlanarSurface(
@@ -743,12 +761,11 @@ class DovetailTenon(BTLxProcess):
 
         dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
         dx_bottom = (beam.width / math.sin(math.radians(self.angle)) - self.width) / 2
-
         bottom_dovetail_points = [
             cutting_surface.point_at(start_y - dx_top, -start_depth),
             cutting_surface.point_at(start_y + dx_top, -start_depth),
-            cutting_surface.point_at(start_y + dx_bottom / 2, -start_depth - self.length),
-            cutting_surface.point_at(start_y - dx_bottom / 2, -start_depth - self.length),
+            cutting_surface.point_at(start_y + self.width / 2, -start_depth - self.length),
+            cutting_surface.point_at(start_y - self.width / 2, -start_depth - self.length),
         ]
 
         dovetail_edges = [
@@ -761,7 +778,10 @@ class DovetailTenon(BTLxProcess):
         trimming_frames = []
         for i, edge in enumerate(dovetail_edges):
             # Create the initial frame using the line's direction and the cutting frame's normal
-            frame = Frame(edge.midpoint, edge.direction, cutting_frame.normal)
+            # if self.orientation == OrientationType.START:
+            #     frame = Frame(edge.midpoint, edge.direction, cutting_frame.normal)
+            # else:
+            frame = Frame(edge.midpoint, -edge.direction, cutting_frame.normal)
 
             if i != 0:
                 # Determine the rotation direction: right and bottom are positive, top and left are negative
@@ -771,7 +791,9 @@ class DovetailTenon(BTLxProcess):
 
             trimming_frames.append(frame)
 
+        cutting_frame.xaxis = -cutting_frame.xaxis
         trimming_frames.extend([cutting_frame, offseted_cutting_frame])
+        # trimming_frames.append(cutting_frame)
         return trimming_frames
 
     def dovetail_volume_from_params_and_beam(self, beam):
@@ -834,13 +856,14 @@ class DovetailTenon(BTLxProcess):
         #     rot_axis = cutting_frame.normal
         #     rot_angle = math.radians(self.rotation % 90)
         # rot_point = cutting_surface.point_at(self.start_y, start_depth)
-        if self.rotation != 90:
-            rot_axis = beam.centerline.direction
-            rot_angle = math.radians(self.rotation % 90)
-            rot_point = beam.centerline.start
+        # if self.rotation != 90:
+        #     rot_axis = cutting_frame.normal
+        #     rot_angle = math.radians(self.rotation % 90)
+        #     rot_point = cutting_frame.point
+        #     rot_point.translate(cutting_frame.xaxis * (self.start_depth + self.length / 2))
 
-            rotation = Rotation.from_axis_and_angle(rot_axis, rot_angle, rot_point)
-            dovetail_volume.transform(rotation)
+        #     rotation = Rotation.from_axis_and_angle(rot_axis, -rot_angle, rot_point)
+        #     dovetail_volume.transform(rotation)
 
         return dovetail_volume
 
