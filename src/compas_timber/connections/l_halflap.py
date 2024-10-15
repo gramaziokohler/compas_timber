@@ -51,13 +51,21 @@ class LHalfLapJoint(LapJoint):
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
         super(LHalfLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
-    def add_features(self):
-        assert self.main_beam and self.cross_beam
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
 
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
+        assert self.main_beam and self.cross_beam
         try:
             main_cutting_frame = self.get_main_cutting_frame()
             cross_cutting_frame = self.get_cross_cutting_frame()
-            negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
@@ -69,6 +77,16 @@ class LHalfLapJoint(LapJoint):
         self.cross_beam.add_blank_extension(
             start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
         )
+
+    def add_features(self):
+        assert self.main_beam and self.cross_beam
+
+        try:
+            main_cutting_frame = self.get_main_cutting_frame()
+            cross_cutting_frame = self.get_cross_cutting_frame()
+            negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)

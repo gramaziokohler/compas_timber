@@ -3,7 +3,7 @@
     "nickname": "FeatureErrors",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Shows infomation helpdul for debugging feature application errors.",
+    "description": "Shows information useful for debugging feature application errors.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,

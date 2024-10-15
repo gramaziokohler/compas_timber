@@ -1,0 +1,32 @@
+{
+    "name": "CustomBeamDimensions",
+    "nickname": "CustomDimensions",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Defines custom beam profile dimensions by category for ModelFromSurface component. The Beam category is selected in the Context menu(right click on component).",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "width",
+                "description": "Width dimension of beams of the selected type.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "height",
+                "description": "Height dimension of beams of the selected type. This corresponds to the Frame Depth in the ModelFromSurface component. WARNING: this tends to make the joints fail",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Dimensions",
+                "description": "Beam Dimension dict object for SurfaceModelOptions custom_dimensions."
+            }
+        ]
+    }
+}
