@@ -6,13 +6,13 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
-from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from .features import FeatureApplicationError
+from .timber import TimberElement
 
 
-class Plate(Element):
+class Plate(TimberElement):
     """
     A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
 
@@ -77,6 +77,10 @@ class Plate(Element):
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
+
+    @property
+    def is_plate(self):
+        return True
 
     @property
     def blank(self):

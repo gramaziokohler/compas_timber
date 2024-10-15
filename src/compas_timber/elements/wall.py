@@ -3,10 +3,11 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import bounding_box
 from compas.geometry.brep.brep import Brep
-from compas_model.elements import Element
+
+from .timber import TimberElement
 
 
-class Wall(Element):
+class Wall(TimberElement):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 
@@ -31,6 +32,10 @@ class Wall(Element):
         self.length = length
         self.width = width
         self.height = height
+
+    @property
+    def is_wall(self):
+        return True
 
     @property
     def shape(self):

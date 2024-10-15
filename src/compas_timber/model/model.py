@@ -7,9 +7,6 @@ from compas.geometry import Point
 from compas_model.models import Model
 
 from compas_timber.connections import Joint
-from compas_timber.elements import Beam
-from compas_timber.elements import Plate
-from compas_timber.elements import Wall
 
 
 class TimberModel(Model):
@@ -60,14 +57,14 @@ class TimberModel(Model):
         # TODO: think about using `filter` instead of all these
         # TODO: add `is_beam`, `is_plate` etc. to avoid using `isinstance`
         for element in self.elements():
-            if isinstance(element, Beam):
+            if getattr(element, "is_beam", False):
                 yield element
 
     @property
     def plates(self):
         # type: () -> Generator[Plate, None, None]
         for element in self.elements():
-            if isinstance(element, Plate):
+            if getattr(element, "is_plate", False):
                 yield element
 
     @property
@@ -81,7 +78,7 @@ class TimberModel(Model):
     def walls(self):
         # type: () -> Generator[Wall, None, None]
         for element in self.elements():
-            if isinstance(element, Wall):
+            if getattr(element, "is_wall", False):
                 yield element
 
     @property
