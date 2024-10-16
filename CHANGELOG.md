@@ -9,21 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added new `compas_timber._fabrication.StepJoint`.
-* Aded new `compas_timber._fabrication.StepJointNotch`.
-* Aded new `compas_timber.connections.TStepJoint`.
-* Added `side_as_surface` to `compas_timber.elements.Beam`.
-
-### Changed
-* Fixed the discrepancies between `height` and `width` attributes of `Beam`
-
-### Removed
-
-
-## Unreleased
-
-### Added
-
 * Added new base class for timber elements `TimberElement`.
 * Added property `is_beam` to `Beam` class.
 * Added property `is_plate` to `Plate` class.
@@ -37,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.JackRafterCutParams`.
 * Added new `compas_timber._fabrication.Drilling`.
 * Added new `compas_timber._fabrication.DrillingParams`.
+* Added new `compas_timber._fabrication.StepJoint`.
+* Added new `compas_timber._fabrication.StepJointNotch`.
+* Added new `compas_timber.connections.TStepJoint`.
+* Added new `utilities` module in `connections` package.
 
 ### Changed
 
