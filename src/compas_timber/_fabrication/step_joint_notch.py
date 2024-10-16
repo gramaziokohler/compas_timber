@@ -226,9 +226,20 @@ class StepJointNotch(BTLxProcess):
 
     @step_shape.setter
     def step_shape(self, step_shape):
-        if step_shape not in [StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL, StepShapeType.TAPERED_HEEL]:
+        if step_shape == StepShapeType.DOUBLE:
+            if self.step_depth <= 0 or self.heel_depth <= 0:
+                raise ValueError("For a 'double' step_shape, both step_depth and heel_depth must be greater than 0.")
+        elif step_shape == StepShapeType.STEP:
+            if self.step_depth <= 0 or self.heel_depth != 0:
+                raise ValueError("For a 'step' step_shape, step_depth must be greater than 0 and heel_depth must be 0.")
+        elif step_shape in [StepShapeType.HEEL, StepShapeType.TAPERED_HEEL]:
+            if self.heel_depth <= 0 or self.step_depth != 0:
+                raise ValueError(
+                    "For 'heel' or 'tapered heel' step_shape, heel_depth must be greater than 0 and step_depth must be 0."
+                )
+        else:
             raise ValueError(
-                "StepShapeType must be either StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL or StepShapeType.TAPERED_HEEL."
+                "StepShapeType must be either StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL, or StepShapeType.TAPERED_HEEL."
             )
         self._step_shape = step_shape
 

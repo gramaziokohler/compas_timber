@@ -1,5 +1,9 @@
 from compas_timber._fabrication import StepJoint
 from compas_timber._fabrication import StepJointNotch
+from compas_timber.connections.utilities import are_beams_coplanar
+from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
+from compas_timber.connections.utilities import check_beam_alignment
 
 from .joint import Joint
 from .solver import JointTopology
@@ -19,6 +23,8 @@ class TStepJoint(Joint):
         First beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    step_shape : int
+        Shape of the step feature. 0: step, 1: heel, 2: double.
     step_depth : float
         Depth of the step cut. Combined with a heel cut it generates a double step cut.
     heel_depth : float
@@ -34,6 +40,8 @@ class TStepJoint(Joint):
         First beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    step_shape : int
+        Shape of the step feature. 0: step, 1: heel, 2: double.
     step_depth : float
         Depth of the step cut. Combined with a heel cut it generates a double step cut.
     heel_depth : float
@@ -52,6 +60,7 @@ class TStepJoint(Joint):
         data = super(TStepJoint, self).__data__
         data["main_beam"] = self.main_beam_guid
         data["cross_beam"] = self.cross_beam_guid
+        data["step_shape"] = self.step_shape
         data["step_depth"] = self.step_depth
         data["heel_depth"] = self.heel_depth
         data["tapered_heel"] = self.tapered_heel
@@ -60,8 +69,9 @@ class TStepJoint(Joint):
 
     def __init__(
         self,
-        main_beam=None,
-        cross_beam=None,
+        main_beam,
+        cross_beam,
+        step_shape,
         step_depth=None,
         heel_depth=None,
         tapered_heel=None,
@@ -73,18 +83,23 @@ class TStepJoint(Joint):
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
 
-        self.step_depth = step_depth
-        self.heel_depth = heel_depth
+        self.step_shape = step_shape
+        self.step_depth, self.heel_depth = self.set_step_depths(step_depth, heel_depth)
+
         self.tapered_heel = tapered_heel
         self.tenon_mortise_height = tenon_mortise_height
 
-        self.start_y = (
-            (self.cross_beam.width - self.main_beam.width) / 2 if self.cross_beam.width > self.main_beam.width else 0.0
-        )
-        self.notch_limited = False if self.main_beam.width >= self.cross_beam.width else True
-        self.notch_width = self.main_beam.width
-        self.strut_height = self.main_beam.height
-        self.tenon_mortise_width = self.main_beam.width / 4
+        # Check alignment to determine if the width and height of the main_beam (beam_b) should be swapped
+        swap_dimensions = check_beam_alignment(self.cross_beam, self.main_beam)
+        # For the main beam, use width or height based on the alignment result
+        main_width = self.main_beam.width if swap_dimensions else self.main_beam.height
+        main_height = self.main_beam.height if swap_dimensions else self.main_beam.width
+
+        self.start_y = (self.cross_beam.width - main_width) / 2 if self.cross_beam.width > main_width else 0.0
+        self.notch_limited = main_width < self.cross_beam.width
+        self.notch_width = main_width
+        self.strut_height = main_height
+        self.tenon_mortise_width = main_width / 4
 
         self.features = []
 
@@ -94,18 +109,34 @@ class TStepJoint(Joint):
 
     @property
     def cross_beam_ref_side_index(self):
-        ref_side_dict = self._beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     @property
     def main_beam_ref_side_index(self):
         cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        ref_side_dict = self._beam_ref_side_incidence_with_vector(
+        ref_side_dict = beam_ref_side_incidence_with_vector(
             self.main_beam, cross_beam_ref_side.normal, ignore_ends=True
         )
         ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
+
+    def set_step_depths(self, step_depth=None, heel_depth=None):
+        """Sets the default step and heel depths based on the joint type if they are not provided."""
+        if self.step_shape == 0:  # 'step' shape
+            step_depth = step_depth if step_depth is not None else self.cross_beam.height / 4
+            heel_depth = 0.0
+        elif self.step_shape == 1:  # 'heel' shape
+            step_depth = 0.0
+            heel_depth = heel_depth if heel_depth is not None else self.cross_beam.height / 4
+        elif self.step_shape == 2:  # 'double' shape
+            step_depth = step_depth if step_depth is not None else self.cross_beam.height / 6
+            heel_depth = heel_depth if heel_depth is not None else self.cross_beam.height / 4
+        else:
+            raise ValueError("Step shape must be ether: 0:step, 1:heel, 2:double.")
+
+        return step_depth, heel_depth
 
     def add_features(self):
         """Adds the required trimming features to both beams.
@@ -117,7 +148,7 @@ class TStepJoint(Joint):
         # TODO: As well the step shape should maybe be defined automatically by the shear reqirements of the joint.
 
         assert self.main_beam and self.cross_beam  # should never happen
-        assert self._are_beams_coplanar(
+        assert are_beams_coplanar(
             self.main_beam, self.cross_beam
         ), "The beams are not coplanar, the joint cannot be created."
 
@@ -151,6 +182,7 @@ class TStepJoint(Joint):
             self.tapered_heel,
             self.main_beam_ref_side_index,
         )
+
         # generate tenon and mortise features
         if self.tenon_mortise_height:
             cross_feature.add_mortise(self.tenon_mortise_width, self.tenon_mortise_height, self.cross_beam)

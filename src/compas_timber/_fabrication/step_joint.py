@@ -160,9 +160,20 @@ class StepJoint(BTLxProcess):
     def step_shape(self):
         return self._step_shape
 
-    @step_shape.setter  # TODO: should this be defined automatically depending on the other parameters? (ie. if heel_depth > 0 and step_depth > 0, then step_shape = "double")
+    @step_shape.setter
     def step_shape(self, step_shape):
-        if step_shape not in [StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL, StepShapeType.TAPERED_HEEL]:
+        if step_shape == StepShapeType.DOUBLE:
+            if self.step_depth <= 0 or self.heel_depth <= 0:
+                raise ValueError("For a 'double' step_shape, both step_depth and heel_depth must be greater than 0.")
+        elif step_shape == StepShapeType.STEP:
+            if self.step_depth <= 0 or self.heel_depth != 0:
+                raise ValueError("For a 'step' step_shape, step_depth must be greater than 0 and heel_depth must be 0.")
+        elif step_shape in [StepShapeType.HEEL, StepShapeType.TAPERED_HEEL]:
+            if self.heel_depth <= 0 or self.step_depth != 0:
+                raise ValueError(
+                    "For 'heel' or 'tapered heel' step_shape, heel_depth must be greater than 0 and step_depth must be 0."
+                )
+        else:
             raise ValueError(
                 "StepShapeType must be either StepShapeType.DOUBLE, StepShapeType.STEP, StepShapeType.HEEL, or StepShapeType.TAPERED_HEEL."
             )
@@ -247,7 +258,7 @@ class StepJoint(BTLxProcess):
         start_x = distance_point_point(ref_side.point, point_start_x)
 
         # calculate strut_inclination
-        strut_inclination = cls._calculate_strut_inclination(ref_side, plane, orientation)
+        strut_inclination = cls._calculate_strut_inclination(ref_side, plane)
 
         # restrain step_depth & heel_depth to beam's height and the maximum possible heel depth for the beam
         if step_depth > beam.height:
@@ -278,7 +289,7 @@ class StepJoint(BTLxProcess):
             return OrientationType.START
 
     @staticmethod
-    def _calculate_strut_inclination(ref_side, plane, orientation):
+    def _calculate_strut_inclination(ref_side, plane):
         # vector rotation direction of the plane's normal in the vertical direction
         strut_inclination_vector = Vector.cross(ref_side.zaxis, plane.normal)
         strut_inclination = 180 - abs(
@@ -499,9 +510,15 @@ class StepJoint(BTLxProcess):
         # Get the opposite side as a PlanarSurface for the second cut and calculate the additional displacement along the xaxis
         opp_side = beam.side_as_surface((self.ref_side_index + 2) % 4)
 
+        # Determine whether to use the beam's width or height based on the alignment of the reference side normal.
+        # If the reference side normal and the frame normal are aligned, use the beam's height as the "width" for calculations.
+        if abs(beam.ref_sides[self.ref_side_index].normal.dot(beam.frame.normal)) > 0.0:
+            beam_width = beam.height
+        else:
+            beam_width = beam.width
         # Calculate the displacements for the cutting planes along the y-axis and x-axis
-        y_displacement_end = self._calculate_y_displacement_end(beam.height, self.strut_inclination)
-        x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination, self.orientation)
+        y_displacement_end = self._calculate_y_displacement_end(beam_width, self.strut_inclination)
+        x_displacement_end = self._calculate_x_displacement_end(beam_width, self.strut_inclination, self.orientation)
         x_displacement_heel = self._calculate_x_displacement_heel(
             self.heel_depth, self.strut_inclination, self.orientation
         )
