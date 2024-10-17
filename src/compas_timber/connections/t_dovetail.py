@@ -5,6 +5,9 @@ from compas_timber._fabrication import DovetailTenon
 
 from compas_timber._fabrication.btlx_process import TenonShapeType
 
+from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.connections.utilities import get_ref_side_most_ortho_to_cross_vector
+
 from compas.geometry import Plane, intersection_line_plane, Line, distance_point_point
 
 from .joint import Joint
@@ -112,13 +115,13 @@ class TDovetailJoint(Joint):
 
     @property
     def cross_beam_ref_side_index(self):
-        ref_side_dict = self._beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     @property
     def main_beam_ref_side_index(self):
-        ref_side_dict = self._get_ref_side_most_ortho_to_cross_vector(self.cross_beam, self.main_beam, ignore_ends=True)
+        ref_side_dict = get_ref_side_most_ortho_to_cross_vector(self.cross_beam, self.main_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
