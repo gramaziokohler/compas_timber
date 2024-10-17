@@ -28,6 +28,8 @@ class TDovetailJoint(Joint):
         First beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    start_y : float
+        Start position of the tenon cut along the the y-axis of the main beam.
     step_depth : float
         Depth of the step cut. Combined with a heel cut it generates a double step cut.
     heel_depth : float
@@ -43,6 +45,8 @@ class TDovetailJoint(Joint):
         First beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    start_y : float
+        Start position of the tenon cut along the the y-axis of the main beam.
     step_depth : float
         Depth of the step cut. Combined with a heel cut it generates a double step cut.
     heel_depth : float
