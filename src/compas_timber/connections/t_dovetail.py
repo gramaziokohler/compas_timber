@@ -61,6 +61,7 @@ class TDovetailJoint(Joint):
         data = super(TDovetailJoint, self).__data__
         data["main_beam"] = self.main_beam_guid
         data["cross_beam"] = self.cross_beam_guid
+        data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
         data["length"] = self.length
@@ -76,6 +77,7 @@ class TDovetailJoint(Joint):
         self,
         main_beam=None,
         cross_beam=None,
+        start_y=None,
         start_depth=None,
         rotation=None,
         length=None,
@@ -91,7 +93,7 @@ class TDovetailJoint(Joint):
         self.cross_beam = cross_beam
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
-
+        self.start_y = start_y
         self.start_depth = start_depth
         self.rotation = rotation
         self.length = length
@@ -161,11 +163,11 @@ class TDovetailJoint(Joint):
 
         print("main_beam_ref_side", self.main_beam_ref_side_index)
         print("cross_beam_ref_side", self.cross_beam_ref_side_index)
-
         # generate dovetail tenon features
         main_feature = DovetailTenon.from_plane_and_beam(
             cross_beam_ref_side,
             self.main_beam,
+            self.start_y,
             self.start_depth,
             self.rotation,
             self.length,

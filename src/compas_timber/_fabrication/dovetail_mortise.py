@@ -569,53 +569,53 @@ class DovetailMortise(BTLxProcess):
         """
         # type: (Brep, Beam) -> Brep
 
-        # get cutting plane from params and beam
-        try:
-            cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
-        except ValueError as e:
-            raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting plane from parameters and beam: {}".format(str(e))
-            )
+        # # get cutting plane from params and beam
+        # try:
+        #     cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
+        # except ValueError as e:
+        #     raise FeatureApplicationError(
+        #         None, geometry, "Failed to generate cutting plane from parameters and beam: {}".format(str(e))
+        #     )
 
-        # get dovetail volume from params and beam
-        try:
-            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
-        except ValueError as e:
-            raise FeatureApplicationError(
-                None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
-            )
+        # # get dovetail volume from params and beam
+        # try:
+        #     dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
+        # except ValueError as e:
+        #     raise FeatureApplicationError(
+        #         None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
+        #     )
 
-        # fillet the edges of the dovetail volume based on the shape
-        if (
-            self.shape not in [TenonShapeType.SQUARE, TenonShapeType.AUTOMATIC] and not self.length_limited_bottom
-        ):  # TODO: Remove AUTOMATIC once Brep Fillet is implemented
-            edge_ideces = [4, 7] if self.length_limited_top else [5, 8]
-            try:
-                dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_ideces[0]], dovetail_volume.edges[edge_ideces[1]]]
-                )  # TODO: NotImplementedError
-            except Exception as e:
-                raise FeatureApplicationError(
-                    dovetail_volume,
-                    geometry,
-                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
-                )
+        # # fillet the edges of the dovetail volume based on the shape
+        # if (
+        #     self.shape not in [TenonShapeType.SQUARE, TenonShapeType.AUTOMATIC] and not self.length_limited_bottom
+        # ):  # TODO: Remove AUTOMATIC once Brep Fillet is implemented
+        #     edge_ideces = [4, 7] if self.length_limited_top else [5, 8]
+        #     try:
+        #         dovetail_volume.fillet(
+        #             self.shape_radius, [dovetail_volume.edges[edge_ideces[0]], dovetail_volume.edges[edge_ideces[1]]]
+        #         )  # TODO: NotImplementedError
+        #     except Exception as e:
+        #         raise FeatureApplicationError(
+        #             dovetail_volume,
+        #             geometry,
+        #             "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
+        #         )
 
-        # trim geometry with cutting planes
-        try:
-            geometry.trim(cutting_plane)
-        except Exception as e:
-            raise FeatureApplicationError(
-                cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
-            )
+        # # trim geometry with cutting planes
+        # try:
+        #     geometry.trim(cutting_plane)
+        # except Exception as e:
+        #     raise FeatureApplicationError(
+        #         cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+        #     )
 
-        # add tenon volume to geometry
-        try:
-            geometry += dovetail_volume
-        except Exception as e:
-            raise FeatureApplicationError(
-                dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
-            )
+        # # add tenon volume to geometry
+        # try:
+        #     geometry += dovetail_volume
+        # except Exception as e:
+        #     raise FeatureApplicationError(
+        #         dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+        #     )
 
         return geometry
 
@@ -793,6 +793,7 @@ class DovetailMortiseParams(BTLxProcessParams):
             The parameters of the Dovetail Mortise as a dictionary.
         """
         # type: () -> OrderedDict
+
         result = super(DovetailMortiseParams, self).as_dict()
         result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
