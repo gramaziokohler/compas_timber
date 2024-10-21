@@ -2,25 +2,21 @@ import math
 
 from compas_timber._fabrication import DovetailMortise
 from compas_timber._fabrication import DovetailTenon
-
 from compas_timber._fabrication.btlx_process import TenonShapeType
-
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import get_ref_side_most_ortho_to_cross_vector
-
-from compas.geometry import Plane, intersection_line_plane, Line, distance_point_point
 
 from .joint import Joint
 from .solver import JointTopology
 
-
 class TDovetailJoint(Joint):
-    """Represents an T-Step type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).
-    Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.
+    """
+    Represents a T-Dovetail type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross).
+    A dovetail cut is made on the main beam, and a corresponding notch is made on the cross beam to fit the main beam.
 
     This joint type is compatible with beams in T topology.
 
-    Please use `TStepJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `TDovetailJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -29,15 +25,25 @@ class TDovetailJoint(Joint):
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
     start_y : float
-        Start position of the tenon cut along the the y-axis of the main beam.
-    step_depth : float
-        Depth of the step cut. Combined with a heel cut it generates a double step cut.
-    heel_depth : float
-        Depth of the heel cut. Combined with a step cut it generates a double step cut.
-    tapered_heel : bool
-        If True, the heel cut is tapered.
-    tenon_mortise_height : float
-        Height of the tenon (main beam) mortise (cross beam) of the Step Joint. If None, the tenon and mortise featrue is not created.
+        Start position of the dovetail cut along the y-axis of the main beam.
+    start_depth : float
+        Depth of the dovetail cut from the surface of the main beam.
+    rotation : float
+        Rotation of the dovetail cut around the main beam's axis.
+    length : float
+        Length of the dovetail cut along the main beam.
+    width : float
+        Width of the dovetail cut.
+    cone_angle : float
+        The angle of the dovetail cut, determining the taper of the joint.
+    dovetail_shape : int
+        The shape of the dovetail cut, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    tool_angle : float
+        The angle of the tool used to create the dovetail cut.
+    tool_diameter : float
+        The diameter of the tool used to create the dovetail cut.
+    tool_height : float
+        The height of the tool used to create the dovetail cut.
 
     Attributes
     ----------
@@ -46,16 +52,33 @@ class TDovetailJoint(Joint):
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
     start_y : float
-        Start position of the tenon cut along the the y-axis of the main beam.
-    step_depth : float
-        Depth of the step cut. Combined with a heel cut it generates a double step cut.
-    heel_depth : float
-        Depth of the heel cut. Combined with a step cut it generates a double step cut.
-    tapered_heel : bool
-        If True, the heel cut is tapered.
-    tenon_mortise_height : float
-        Height of the tenon (main beam) mortise (cross beam) of the Step Joint. If None, the tenon and mortise featrue is not created.
-
+        Start position of the dovetail cut along the y-axis of the main beam.
+    start_depth : float
+        Depth of the dovetail cut from the surface of the main beam.
+    rotation : float
+        Rotation of the dovetail cut around the main beam's axis.
+    length : float
+        Length of the dovetail cut along the main beam.
+    width : float
+        Width of the dovetail cut.
+    cone_angle : float
+        The angle of the dovetail cut, determining the taper of the joint.
+    dovetail_shape : int
+        The shape of the dovetail cut, represented by an integer index.
+    tool_angle : float
+        The angle of the tool used to create the dovetail cut.
+    tool_diameter : float
+        The diameter of the tool used to create the dovetail cut.
+    tool_height : float
+        The height of the tool used to create the dovetail cut.
+    height : float, optional
+        The height of the joint. This is not set during initialization but can be defined later.
+    flank_angle : float, optional
+        The angle of the flanks of the dovetail joint, if applicable.
+    shape_radius : float, optional
+        The radius used to define the shape of the joint, if applicable.
+    features : list
+        List of features or machining processes applied to the joint.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
@@ -79,8 +102,8 @@ class TDovetailJoint(Joint):
 
     def __init__(
         self,
-        main_beam=None,
-        cross_beam=None,
+        main_beam,
+        cross_beam,
         start_y=None,
         start_depth=None,
         rotation=None,
@@ -97,17 +120,19 @@ class TDovetailJoint(Joint):
         self.cross_beam = cross_beam
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
-        self.start_y = start_y
-        self.start_depth = start_depth
-        self.rotation = rotation
-        self.length = length
-        self.width = width
-        self.cone_angle = cone_angle
-        self.dovetail_shape = dovetail_shape
 
-        self.tool_angle = tool_angle
-        self.tool_diameter = tool_diameter
-        self.tool_height = tool_height
+        # Default values if not provided
+        self.start_y = start_y if start_y is not None else 0.0
+        self.start_depth = start_depth if start_depth is not None else 0.0
+        self.rotation = rotation if rotation is not None else 0.0
+        self.length = length if length is not None else 60.0
+        self.width = width if width is not None else 25.0
+        self.cone_angle = cone_angle if cone_angle is not None else 10.0
+        self.dovetail_shape = dovetail_shape if dovetail_shape is not None else 4  # RADIUS
+
+        self.tool_angle = tool_angle if tool_angle is not None else 15.0
+        self.tool_diameter = tool_diameter if tool_diameter is not None else 60.0
+        self.tool_height = tool_height if tool_height is not None else 28.0
 
         self.height = None
         self.flank_angle = None
@@ -162,34 +187,37 @@ class TDovetailJoint(Joint):
         # define the tool parameters
         self.define_dovetail_tool(self.tool_angle, self.tool_diameter, self.tool_height)
 
-        main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
-        cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-
-        print("main_beam_ref_side", self.main_beam_ref_side_index)
-        print("cross_beam_ref_side", self.cross_beam_ref_side_index)
         # generate dovetail tenon features
         main_feature = DovetailTenon.from_plane_and_beam(
-            cross_beam_ref_side,
-            self.main_beam,
-            self.start_y,
-            self.start_depth,
-            self.rotation,
-            self.length,
-            self.width,
-            self.height,
-            self.cone_angle,
-            self.flank_angle,
-            self.shape,
-            self.shape_radius,
-            self.main_beam_ref_side_index,
+            plane=self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
+            beam=self.main_beam,
+            start_y=self.start_y,
+            start_depth=self.start_depth,
+            rotation=self.rotation,
+            length=self.length,
+            width=self.width,
+            height=self.height,
+            cone_angle=self.cone_angle,
+            flank_angle=self.flank_angle,
+            shape=self.shape,
+            shape_radius=self.shape_radius,
+            ref_side_index=self.main_beam_ref_side_index,
         )
 
         # generate dovetail mortise features
-        cross_feature = DovetailMortise.from_plane_tenon_and_beam(
-            main_feature.frame_from_params_and_beam(self.main_beam),
-            main_feature,
-            self.cross_beam,
-            self.cross_beam_ref_side_index,
+        cross_feature = DovetailMortise.from_plane_and_beam(
+            plane=main_feature.frame_from_params_and_beam(self.main_beam),
+            beam=self.cross_beam,
+            start_depth=0.0,
+            angle=-main_feature.rotation if main_feature.orientation == "end" else self.rotation - 90.0,
+            length=main_feature.length,
+            width=main_feature.width,
+            depth=main_feature.height,
+            cone_angle=main_feature.cone_angle,
+            flank_angle=main_feature.flank_angle,
+            shape=main_feature.shape,
+            shape_radius=main_feature.shape_radius,
+            ref_side_index=self.cross_beam_ref_side_index,
         )
 
         # add features to beams

@@ -4,25 +4,21 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import Point
-from compas.geometry import Plane
 from compas.geometry import PlanarSurface
+from compas.geometry import Plane
 from compas.geometry import Rotation
-from compas.geometry import Vector
-from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
-from compas.geometry import offset_polyline
 from compas.tolerance import TOL
 
 from compas_timber.elements import FeatureApplicationError
 
 from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
-from .btlx_process import TenonShapeType
-from .btlx_process import OrientationType
 from .btlx_process import LimitationTopType
+from .btlx_process import OrientationType
+from .btlx_process import TenonShapeType
 
 
 class DovetailMortise(BTLxProcess):
@@ -190,8 +186,8 @@ class DovetailMortise(BTLxProcess):
 
     @angle.setter
     def angle(self, angle):
-        if angle > 90.0 or angle < -90.0:
-            raise ValueError("Angle must be between -90.0 and 90.0.")
+        if angle > 180.0 or angle < -180.0:
+            raise ValueError("Angle must be between -180.0 and 180.0.")
         self._angle = angle
 
     @property
@@ -255,14 +251,14 @@ class DovetailMortise(BTLxProcess):
         self._width = width
 
     @property
-    def height(self):
+    def depth(self):
         return self._height
 
-    @height.setter
-    def height(self, height):
-        if height > 1000.0 or height < 0.0:
-            raise ValueError("Height must be between 0.0 and 1000.0")
-        self._height = height
+    @depth.setter
+    def depth(self, depth):
+        if depth > 1000.0 or depth < 0.0:
+            raise ValueError("depth must be between 0.0 and 1000.0")
+        self._height = depth
 
     @property
     def cone_angle(self):
@@ -325,14 +321,22 @@ class DovetailMortise(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_plane_tenon_and_beam(
+    def from_plane_and_beam(
         cls,
         plane,
-        dovetail_tenon,
         beam,
+        start_depth=0.0,
+        angle=0.0,
+        length=80.0,
+        width=40.0,
+        depth=28.0,
+        cone_angle=10.0,
+        flank_angle=15.0,
+        shape=TenonShapeType.AUTOMATIC,
+        shape_radius=20.0,
         ref_side_index=0,
     ):
-        """Create a DovetailMortise instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the main beam.
+        """Create a DovetailMortise instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the cross beam.
 
         Parameters
         ----------
@@ -340,6 +344,24 @@ class DovetailMortise(BTLxProcess):
             The cutting plane.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
+        start_depth : float, optional
+            The start depth of the cut along the y-axis of the beam. This offset is to be used in case of housing. Default is 0.0.
+        angle : float, optional
+            The angle of the cut.
+        length : float, optional
+            The length of the mortise.
+        width : float, optional
+            The width of the mortise.
+        depth : float, optional
+            The depth of the mortise. The equivalent value of the DovetailTenon BTLxProcess is the height.
+        cone_angle : float, optional
+            The cone angle of the dovetail mortise.
+        flank_angle : float, optional
+            The flank angle of the dovetail mortise.
+        shape : str, optional
+            The shape of the dovetail mortise in regards to it's edges. Default is 'automatic'.
+        shape_radius : float, optional
+            The radius of the shape of the dovetail mortise. Default is 20.0.
         ref_side_index : int, optional
             The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
 
@@ -348,50 +370,30 @@ class DovetailMortise(BTLxProcess):
         :class:`~compas_timber.fabrication.DovetailMortise`
 
         """
-        # type: (Plane|Frame, Beam, float, float, bool, int) -> DovetailMortise
+        # type: (Plane|Frame, Beam, float, float, float, float, float, float, float, float, float, float, int) -> DovetailMortise
 
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
+
         # define ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
-        plane = Plane(plane.point, ref_side.xaxis)
-
-        # define orientation
-        orientation = cls._calculate_orientation(ref_side, plane)
-
-        # calclulate start_x
+        # calclulate start_x and start_y
         start_x = cls._calculate_start_x(ref_side, ref_edge, plane)
 
-        # calculate start_y and angle
-        if orientation == OrientationType.END:
-            start_y = beam.width
-            angle = -90.0
-        else:
-            start_y = 0.0
-            angle = 0.0
-
-        # calculate start_depth
-        # TODO: This is not 0 when you have housing. StartDepth -> House height
-        start_depth = 0.0
+        start_y = abs(plane.point[2] - ref_side.point[2])
 
         # define slope and inclination
         # TODO: In which cases do you want indiferent slope and inclination?
         slope = 90.0
         inclination = 90.0
 
-        # define mortise parameters from tenon
-        length, width, depth, cone_angle, use_flank_angle, flank_angle, shape, shape_radius = (
-            dovetail_tenon.tenon_parameters
-        )
-
         # determine if the top and bottom length of the cut is limited
-        # TODO: this should instead come first and override the start_depth and length
-        # length_limited_bottom = length < ((beam.height) / math.sin(math.radians(inclination)) - start_depth)
-        # override because otherwise tenon would go out of the blank
-        limitation_top = LimitationTopType.LIMITED
+        limitation_top = LimitationTopType.UNLIMITED
         length_limited_bottom = True
+
+        use_flank_angle = True if flank_angle != 15.0 else False  # TODO: does this change anything?
 
         return cls(
             start_x,
@@ -414,107 +416,16 @@ class DovetailMortise(BTLxProcess):
         )
 
     @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
-        # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
-        # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
-            return OrientationType.END
-        else:
-            return OrientationType.START
+    def _calculate_start_x(ref_side, ref_edge, cutting_plane):
+        # calculate the start_x of the cut based on the ref_side, ref_edge and plane
+        perp_plane = Plane(cutting_plane.point, ref_side.xaxis)
 
-    @staticmethod
-    def _calculate_start_x(ref_side, ref_edge, plane):
-        # calculate the start_x of the cut based on the ref_side, ref_edge, plane, start_y and angle
-        point_start_x = intersection_line_plane(ref_edge, plane)
+        point_start_x = intersection_line_plane(ref_edge, perp_plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
+
         start_x = distance_point_point(ref_side.point, point_start_x)
         return start_x
-
-    # @staticmethod
-    # def _calculate_angle(ref_side, plane):
-    #     # vector rotation direction of the plane's normal in the vertical direction
-    #     angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
-    #     angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-    #     return angle
-
-    # @staticmethod
-    # def _calculate_inclination(ref_side, plane):
-    #     # vector rotation direction of the plane's normal in the horizontal direction
-    #     inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
-    #     inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
-    #     return abs(inclination)
-
-    # @staticmethod
-    # def _calculate_rotation(ref_side, plane):
-    #     # calculate the rotation of the cut based on the ref_side
-    #     #! TODO: I should find a better way to get the normal of the cross_beam
-    #     plane = Frame.from_plane(plane)
-
-    #     def project_vector_on_plane(v, plane_normal):
-    #         # Projects a vector onto a plane defined by a normal vector.
-    #         plane_normal.unitize()
-    #         dot_product = v.dot(plane_normal)
-    #         projection = [i - dot_product * j for i, j in zip(v, plane_normal)]
-    #         return Vector(*projection)
-
-    #     projection_normal = ref_side.xaxis
-    #     proj_ref_side_normal = project_vector_on_plane(ref_side.normal, projection_normal)
-    #     proj_z_axis = project_vector_on_plane(plane.yaxis, projection_normal)
-    #     rotation = 90 - angle_vectors_signed(proj_ref_side_normal, proj_z_axis, normal=projection_normal, deg=True)
-    #     return rotation
-
-    # @staticmethod
-    # # bound the start_depth value to the minimum possible start_depth if the incliantion is larger than 90
-    # def _bound_start_depth(start_depth, inclination, height):
-    #     min_start_depth = height / (math.tan(math.radians(inclination)))
-    #     return max(start_depth, min_start_depth)
-
-    # @staticmethod
-    # def _bound_length(ref_side, plane, beam_height, start_depth, inclination, length, height, frustum_difference):
-    #     # bound the inserted lenhgth value to the maximum possible length for the beam based on the inclination
-    #     max_length = (beam_height) / (math.sin(math.radians(inclination))) - start_depth
-
-    #     # define the inclination angle regardless of the orientation start or end
-    #     inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
-    #     origin_inclination = math.degrees(ref_side.xaxis.angle(inclination_vector))
-    #     if origin_inclination < 90.0:
-    #         max_length = max_length - (frustum_difference + height / abs(math.tan(math.radians(inclination))))
-
-    #     return min(max_length, length)
-
-    # @staticmethod
-    # def _bound_width(beam_width, angle, length, width, cone_angle, shape_radius, frustum_difference):
-    #     # bound the inserted width value to the minumum and maximum possible width for the beam
-    #     max_width = beam_width / math.sin(math.radians(angle)) - 2 * (
-    #         frustum_difference + length * math.tan(math.radians(cone_angle))
-    #     )
-    #     min_width = 2 * shape_radius
-    #     return min(max(width, min_width), max_width)
-
-    @staticmethod
-    def _create_trimming_planes_for_box(bottom_points, top_points, length_limited_top, length_limited_bottom):
-        # Create the trimming planes to trim a box into a frustum trapezoid.
-        if len(bottom_points) != len(top_points):
-            raise ValueError("The number of bottom points must match the number of top points.")
-
-        planes = []
-        num_points = len(bottom_points)
-        for i in range(num_points):
-            # Get the bottom and top points for the current edge
-            bottom1 = bottom_points[i]
-            top1 = top_points[i]
-            bottom2 = bottom_points[(i + 1) % num_points]
-            # Define vectors for the plane
-            x_axis = top1 - bottom1
-            y_axis = bottom2 - bottom1
-            # Compute the normal vector to the plane using the cross product
-            normal = x_axis.cross(y_axis)
-            # Create the plane
-            plane = Plane(bottom1, -normal)
-            planes.append(plane)
-
-        return planes
 
     ########################################################################
     # Class Methods
@@ -569,53 +480,37 @@ class DovetailMortise(BTLxProcess):
         """
         # type: (Brep, Beam) -> Brep
 
-        # # get cutting plane from params and beam
-        # try:
-        #     cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
-        # except ValueError as e:
-        #     raise FeatureApplicationError(
-        #         None, geometry, "Failed to generate cutting plane from parameters and beam: {}".format(str(e))
-        #     )
+        # get dovetail volume from params and beam
+        try:
+            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate dovetail mortise volume from parameters and beam: {}".format(str(e))
+            )
 
-        # # get dovetail volume from params and beam
-        # try:
-        #     dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
-        # except ValueError as e:
-        #     raise FeatureApplicationError(
-        #         None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
-        #     )
+        # fillet the edges of the dovetail volume based on the shape
+        if (
+            self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
+        ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
+            edge_ideces = [4, 7] if self.length_limited_bottom else [5, 8]
+            try:
+                dovetail_volume.fillet(
+                    self.shape_radius, [dovetail_volume.edges[edge_ideces[0]], dovetail_volume.edges[edge_ideces[1]]]
+                )  # TODO: NotImplementedError
+            except Exception as e:
+                raise FeatureApplicationError(
+                    dovetail_volume,
+                    geometry,
+                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
+                )
 
-        # # fillet the edges of the dovetail volume based on the shape
-        # if (
-        #     self.shape not in [TenonShapeType.SQUARE, TenonShapeType.AUTOMATIC] and not self.length_limited_bottom
-        # ):  # TODO: Remove AUTOMATIC once Brep Fillet is implemented
-        #     edge_ideces = [4, 7] if self.length_limited_top else [5, 8]
-        #     try:
-        #         dovetail_volume.fillet(
-        #             self.shape_radius, [dovetail_volume.edges[edge_ideces[0]], dovetail_volume.edges[edge_ideces[1]]]
-        #         )  # TODO: NotImplementedError
-        #     except Exception as e:
-        #         raise FeatureApplicationError(
-        #             dovetail_volume,
-        #             geometry,
-        #             "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
-        #         )
-
-        # # trim geometry with cutting planes
-        # try:
-        #     geometry.trim(cutting_plane)
-        # except Exception as e:
-        #     raise FeatureApplicationError(
-        #         cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
-        #     )
-
-        # # add tenon volume to geometry
-        # try:
-        #     geometry += dovetail_volume
-        # except Exception as e:
-        #     raise FeatureApplicationError(
-        #         dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
-        #     )
+        # remove tenon volume to geometry
+        try:
+            geometry -= dovetail_volume
+        except Exception as e:
+            raise FeatureApplicationError(
+                dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+            )
 
         return geometry
 
@@ -640,54 +535,75 @@ class DovetailMortise(BTLxProcess):
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
-        cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+        cutting_frame = Frame(p_origin, -ref_side.frame.xaxis, ref_side.frame.yaxis)
 
-        # normal pointing towards xaxis so just need the delta
-        horizontal_angle = math.radians(self.angle - 90)
-        rot_a = Rotation.from_axis_and_angle(cutting_plane.zaxis, horizontal_angle, point=p_origin)
+        # rotate the cutting frame based on the angle
+        if self.angle != 90.0:
+            rotation = Rotation.from_axis_and_angle(
+                cutting_frame.normal, math.radians(self.angle - 90), cutting_frame.point
+            )
+            cutting_frame.transform(rotation)
 
-        # normal pointing towards xaxis so just need the delta
-        vertical_angle = math.radians(self.inclination - 90)
-        rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
-
-        cutting_plane.transform(rot_a * rot_b)
-
-        return cutting_plane
+        return cutting_frame
 
     def dovetail_cutting_planes_from_params_and_beam(self, beam):
-        """Calculates the cutting planes for the dovetail tenon from the machining parameters in this instance and the given beam."""
+        """Calculates the cutting planes for the dovetail mortise from the machining parameters in this instance and the given beam.
 
-        cutting_frame = beam.ref_side_frame(self.ref_side_index)
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        list of :class:`compas.geometry.Frame`
+            The cutting planes for the dovetail mortise.
+        """
+        assert self.angle is not None
+        assert self.depth is not None
+        assert self.start_depth is not None
+
+        # start with a plane aligned with the ref side but shifted to the start_x of the cut
+        ref_side = beam.side_as_surface(self.ref_side_index)
+        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        cutting_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+
+        # rotate the cutting frame based on the angle
+        if abs(self.angle) != 90.0:
+            rotation = Rotation.from_axis_and_angle(
+                cutting_frame.normal, math.radians(self.angle + 90), cutting_frame.point
+            )
+            cutting_frame.transform(rotation)
+
         offseted_cutting_frame = Frame(cutting_frame.point, -cutting_frame.xaxis, cutting_frame.yaxis)
-        offseted_cutting_frame.point += cutting_frame.normal * self.height
+        offseted_cutting_frame.point += cutting_frame.normal * self.depth
 
         cutting_surface = PlanarSurface(
-            xsize=beam.height / math.sin(math.radians(self.inclination)),
-            ysize=beam.width / math.sin(math.radians(self.angle)),
+            xsize=beam.height,
+            ysize=beam.width,
             frame=cutting_frame,
         )
-        # move the cutting surface to the center
-        cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
 
-        start_depth = self.start_depth / math.sin(math.radians(self.inclination))
-        # start_y = self.start_y / abs(math.cos(math.radians(self.angle)))
-        start_y = self.start_y
+        # offset the cutting surface in case of housing
+        cutting_surface.translate(-cutting_frame.zaxis * self.start_depth)
 
+        # calculate the displacement of the edge points of the dovetail from the top-center
         dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
-        dx_bottom = (beam.width / math.sin(math.radians(self.angle)) - self.width) / 2
+        dx_bottom = self.width / 2
+        dy = self.length
 
-        bottom_dovetail_points = [
-            cutting_surface.point_at(start_y - dx_top, -start_depth),
-            cutting_surface.point_at(start_y + dx_top, -start_depth),
-            cutting_surface.point_at(start_y + dx_bottom / 2, -start_depth - self.length),
-            cutting_surface.point_at(start_y - dx_bottom / 2, -start_depth - self.length),
+        dovetail_profile_points = [
+            cutting_surface.point_at(-dx_top, 0),
+            cutting_surface.point_at(dx_top, 0),
+            cutting_surface.point_at(dx_bottom, -dy),
+            cutting_surface.point_at(-dx_bottom, -dy),
         ]
 
         dovetail_edges = [
-            Line(bottom_dovetail_points[0], bottom_dovetail_points[1]),  # Top line
-            Line(bottom_dovetail_points[1], bottom_dovetail_points[2]),  # Right line
-            Line(bottom_dovetail_points[2], bottom_dovetail_points[3]),  # Bottom line
-            Line(bottom_dovetail_points[3], bottom_dovetail_points[0]),  # Left line
+            Line(dovetail_profile_points[0], dovetail_profile_points[1]),  # Top line
+            Line(dovetail_profile_points[1], dovetail_profile_points[2]),  # Right line
+            Line(dovetail_profile_points[2], dovetail_profile_points[3]),  # Bottom line
+            Line(dovetail_profile_points[3], dovetail_profile_points[0]),  # Left line
         ]
 
         trimming_frames = []
@@ -698,16 +614,22 @@ class DovetailMortise(BTLxProcess):
             if i != 0:
                 # Determine the rotation direction: right and bottom are positive, top and left are negative
                 # Apply the rotation based on the flank angle
-                rotation = Rotation.from_axis_and_angle(-edge.direction, math.radians(self.flank_angle), frame.point)
+                rotation = Rotation.from_axis_and_angle(edge.direction, math.radians(self.flank_angle), frame.point)
                 frame.transform(rotation)
 
             trimming_frames.append(frame)
 
-        trimming_frames.extend([cutting_frame, offseted_cutting_frame])
+        # translate the top trimming frame to the top of the beam if the top is unlimited
+        if self.limitation_top == LimitationTopType.UNLIMITED:
+            tolerance = 1e-3
+            trimming_frames[0].translate(cutting_frame.yaxis * (beam.height - tolerance))
+
+        cutting_frame.xaxis = -cutting_frame.xaxis
+        trimming_frames.append(cutting_frame)
         return trimming_frames
 
     def dovetail_volume_from_params_and_beam(self, beam):
-        """Calculates the dovetail tenon volume from the machining parameters in this instance and the given beam.
+        """Calculates the dovetail mortise volume from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -717,17 +639,14 @@ class DovetailMortise(BTLxProcess):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The tenon volume.
+            The mortise volume.
 
         """
         # type: (Beam) -> Brep
 
         assert self.inclination is not None
-        assert self.height is not None
-        assert self.flank_angle is not None
-        assert self.shape is not None
-        assert self.shape_radius is not None
-        assert self.length_limited_bottom is not None
+        assert self.slope is not None
+        assert self.depth is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
 
@@ -735,9 +654,9 @@ class DovetailMortise(BTLxProcess):
         # get the box as a brep
         dovetail_volume = Brep.from_box(
             Box(
-                (beam.width + (beam.width * math.sin(math.radians(self.rotation)))) * 2,
-                (beam.height / math.sin(math.radians(self.inclination))) * 2,
-                self.height * 2,
+                (beam.width + (beam.width * math.sin(math.radians(self.inclination)))) * 2,
+                (beam.height / math.sin(math.radians(self.slope))) * 2,
+                self.depth * 2,
                 cutting_frame,
             )
         )
@@ -748,25 +667,12 @@ class DovetailMortise(BTLxProcess):
         # trim the box to create the dovetail volume
         for frame in trimming_frames:
             try:
-                if self.orientation == OrientationType.START:
-                    frame.xaxis = -frame.xaxis
+                frame.xaxis = -frame.xaxis
                 dovetail_volume.trim(frame)
             except Exception as e:
                 raise FeatureApplicationError(
                     frame, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
                 )
-
-        # rotate the dovetail volume based on the rotation value
-        # if self.orientation == OrientationType.START:
-        #     rot_axis = -cutting_frame.normal
-        #     rot_angle = math.radians((90 - self.rotation) % 90)
-        # else:
-        #     rot_axis = cutting_frame.normal
-        #     rot_angle = math.radians(self.rotation % 90)
-        # rot_point = cutting_surface.point_at(self.start_y, start_depth)
-
-        # rotation = Rotation.from_axis_and_angle(rot_axis, rot_angle, rot_point)
-        # dovetail_volume.transform(rotation)
 
         return dovetail_volume
 
@@ -800,7 +706,7 @@ class DovetailMortiseParams(BTLxProcessParams):
         result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
         result["Slope"] = "{:.{prec}f}".format(self._instance.slope, prec=TOL.precision)
-        # result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        # result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision) #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
         result["LimitationTop"] = self._instance.limitation_top
         result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
         result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)

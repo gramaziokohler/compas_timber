@@ -4,8 +4,8 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import Plane
 from compas.geometry import PlanarSurface
+from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
@@ -313,7 +313,13 @@ class DovetailTenon(BTLxProcess):
 
     @shape.setter
     def shape(self, shape):
-        if shape not in [TenonShapeType.AUTOMATIC, TenonShapeType.SQUARE, TenonShapeType.ROUND, TenonShapeType.ROUNDED, TenonShapeType.RADIUS]:
+        if shape not in [
+            TenonShapeType.AUTOMATIC,
+            TenonShapeType.SQUARE,
+            TenonShapeType.ROUND,
+            TenonShapeType.ROUNDED,
+            TenonShapeType.RADIUS,
+        ]:
             raise ValueError("Shape must be either 'automatic', 'square', 'round', 'rounded', or 'radius'.")
         self._shape = shape
 
@@ -326,19 +332,6 @@ class DovetailTenon(BTLxProcess):
         if shape_radius > 1000.0 or shape_radius < 0.0:
             raise ValueError("ShapeRadius must be between 0.0 and 1000.")
         self._shape_radius = shape_radius
-
-    @property
-    def tenon_parameters(self):
-        return [
-            self.length,
-            self.width,
-            self.height,
-            self.cone_angle,
-            self.use_flank_angle,
-            self.flank_angle,
-            self.shape,
-            self.shape_radius,
-        ]
 
     ########################################################################
     # Alternative constructors
@@ -355,7 +348,7 @@ class DovetailTenon(BTLxProcess):
         length=80.0,
         width=40.0,
         height=28.0,
-        cone_angle=15.0,
+        cone_angle=10.0,
         flank_angle=15.0,
         shape=TenonShapeType.AUTOMATIC,
         shape_radius=20.0,
@@ -417,7 +410,7 @@ class DovetailTenon(BTLxProcess):
 
         # bound start_depth, length and width
         start_depth = start_depth * math.sin(math.radians(inclination))
-        start_depth = cls._bound_start_depth(orientation, start_depth, inclination, height)
+        # start_depth = cls._bound_start_depth(orientation, start_depth, inclination, height)
         length = cls._bound_length(
             ref_side, plane, beam.height, start_depth, inclination, length, height, frustum_difference
         )
@@ -532,6 +525,7 @@ class DovetailTenon(BTLxProcess):
             min_start_depth = height / (math.tan(math.radians(inclination)))
         else:
             min_start_depth = height / (math.tan(math.radians(180 - inclination)))
+            print(start_depth, min_start_depth)
         return max(start_depth, min_start_depth)
 
     @staticmethod
@@ -699,23 +693,22 @@ class DovetailTenon(BTLxProcess):
             inclination_radians += math.pi
 
         # create the initial cutting plane
-        cutting_plane = Frame(p_origin, -ref_side.frame.xaxis, yaxis)
+        cutting_frame = Frame(p_origin, -ref_side.frame.xaxis, yaxis)
 
         # apply rotations to the cutting plane
-        rot_a = Rotation.from_axis_and_angle(cutting_plane.zaxis, angle_radians, point=p_origin)
-        cutting_plane.transform(rot_a)
+        rot_a = Rotation.from_axis_and_angle(cutting_frame.zaxis, angle_radians, point=p_origin)
+        cutting_frame.transform(rot_a)
 
-        rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, inclination_radians, point=p_origin)
-        cutting_plane.transform(rot_b)
+        rot_b = Rotation.from_axis_and_angle(cutting_frame.yaxis, inclination_radians, point=p_origin)
+        cutting_frame.transform(rot_b)
+
+        # translate the cutting plane based on the start_depth
+        cutting_frame.point -= cutting_frame.xaxis * self.start_depth
 
         # for simplicity align normal towards x-axis
-        cutting_plane = Frame(cutting_plane.point, -cutting_plane.yaxis, cutting_plane.xaxis)
-        return cutting_plane
+        cutting_frame = Frame(cutting_frame.point, -cutting_frame.yaxis, cutting_frame.xaxis)
 
-    def dovetail_cutting_planes_from_params_and_beam(self, beam):
-        """Calculates the cutting planes for the dovetail tenon from the machining parameters in this instance and the given beam."""
-
-        cutting_frame = self.frame_from_params_and_beam(beam)
+        # apply rotation based on the rotation angle
         if self.rotation != 90:
             rot_axis = cutting_frame.normal
             rot_angle = math.radians(self.rotation - 90)
@@ -725,6 +718,15 @@ class DovetailTenon(BTLxProcess):
             rotation = Rotation.from_axis_and_angle(rot_axis, rot_angle, rot_point)
             cutting_frame.transform(rotation)
 
+        return cutting_frame
+
+    def dovetail_cutting_planes_from_params_and_beam(self, beam):
+        """Calculates the cutting planes for the dovetail tenon from the machining parameters in this instance and the given beam."""
+
+        # get the cutting frame
+        cutting_frame = self.frame_from_params_and_beam(beam)
+
+        # offset the cutting frame to create the cutting surface based on the height of the tenon. It needs to face in the opposite direction.
         offseted_cutting_frame = Frame(cutting_frame.point, cutting_frame.xaxis, cutting_frame.yaxis)
         offseted_cutting_frame.point += cutting_frame.normal * self.height
 
@@ -736,14 +738,15 @@ class DovetailTenon(BTLxProcess):
         # move the cutting surface to the center
         cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
 
-        start_depth = self.start_depth / math.sin(math.radians(self.inclination))
         dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
+        dx_bottom = self.width / 2
+        dy = -self.length
 
         bottom_dovetail_points = [
-            cutting_surface.point_at(self.start_y - dx_top, -start_depth),
-            cutting_surface.point_at(self.start_y + dx_top, -start_depth),
-            cutting_surface.point_at(self.start_y + self.width / 2, -start_depth - self.length),
-            cutting_surface.point_at(self.start_y - self.width / 2, -start_depth - self.length),
+            cutting_surface.point_at(self.start_y - dx_top, 0),
+            cutting_surface.point_at(self.start_y + dx_top, 0),
+            cutting_surface.point_at(self.start_y + dx_bottom, dy),
+            cutting_surface.point_at(self.start_y - dx_bottom, dy),
         ]
 
         dovetail_edges = [
