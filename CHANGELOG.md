@@ -9,9 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-### Changed
+* Added new base class for timber elements `TimberElement`.
+* Added property `is_beam` to `Beam` class.
+* Added property `is_plate` to `Plate` class.
+* Added property `is_wall` to `Wall` class.
+* Added `side_as_surface` to `compas_timber.elements.Beam`.
+* Added `Plate` element.
+* Added attribute `plates` to `TimberModel`.
+* Added new temporary package `_fabrication`.
+* Added new `compas_timber._fabrication.JackRafterCut`.
 
-* Added LayerName & ClearLayer Input to GH `BakeBoxMap` and `BakePlateBoxMap` Components.
+### Changed
 
 ### Removed
 

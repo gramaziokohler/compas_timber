@@ -144,3 +144,30 @@ def test_generator_properties():
     assert len(list(model.plates)) == 1
     assert len(list(model.beams)) == 1
     assert len(list(model.walls)) == 1
+
+
+def test_type_properties():
+    polyline = Polyline(
+        [
+            Point(x=0.0, y=184.318671947, z=4252.92700512),
+            Point(x=0.0, y=2816.40294074, z=4252.92700512),
+            Point(x=0.0, y=2816.40294074, z=2720.97170805),
+            Point(x=0.0, y=184.318671947, z=2720.97170805),
+            Point(x=0.0, y=184.318671947, z=4252.92700512),
+        ]
+    )
+
+    plate = Plate(polyline, 10.0, Vector(1, 0, 0))
+    beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
+    wall = Wall(10.0, 10.0, 10.0, Frame.worldXY())
+
+    assert plate.is_plate
+    assert beam.is_beam
+    assert wall.is_wall
+
+    assert not plate.is_beam
+    assert not plate.is_wall
+    assert not beam.is_wall
+    assert not beam.is_plate
+    assert not wall.is_plate
+    assert not wall.is_beam

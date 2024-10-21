@@ -22,6 +22,7 @@ class FeatureApplicationError(Exception):
     """
 
     def __init__(self, feature_geometry, element_geometry, message):
+        super(FeatureApplicationError, self).__init__(message)
         self.feature_geometry = feature_geometry
         self.element_geometry = element_geometry
         self.message = message
@@ -71,7 +72,7 @@ class CutFeature(Feature):
         data_dict["cutting_plane"] = self.cutting_plane
         return data_dict
 
-    def apply(self, element_geometry):
+    def apply(self, element_geometry, *args, **kwargs):
         """Apply the feature to the element geometry.
 
         Raises
@@ -123,7 +124,7 @@ class DrillFeature(Feature):
         data_dict["length"] = self.length
         return data_dict
 
-    def apply(self, element_geometry):
+    def apply(self, element_geometry, *args, **kwargs):
         """Apply the feature to the element geometry.
 
         Raises
@@ -172,7 +173,7 @@ class MillVolume(Feature):
         super(MillVolume, self).__init__(**kwargs)
         self.mesh_volume = volume
 
-    def apply(self, element_geometry):
+    def apply(self, element_geometry, *args, **kwargs):
         """Apply the feature to the element geometry.
 
         Raises
@@ -221,7 +222,7 @@ class BrepSubtraction(Feature):
         data_dict["volume"] = self.volume
         return data_dict
 
-    def apply(self, element_geometry):
+    def apply(self, element_geometry, *args, **kwargs):
         """Apply the feature to the element geometry.
 
         Raises

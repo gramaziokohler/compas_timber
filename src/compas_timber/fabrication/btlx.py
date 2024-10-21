@@ -90,12 +90,40 @@ class BTLx(object):
         for index, beam in enumerate(self.model.beams):
             self.parts[str(beam.guid)] = BTLxPart(beam, order_num=index)
 
-        # TODO: it would be fantastic if instead of processing joints we'd process features..
         for joint in self.joints:
             factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
             if factory_type is None:
-                raise ValueError("No joint factory found for joint: {}".format(type(joint)))
+                continue  # that way we can just unregister factories that are replaced by the new features
             factory_type.apply_processings(joint, self.parts)
+
+        # TODO: to slowly integrate the new system, iterate here once more, this time on beams and their features
+        # add processings from features that are part of the new system AKA have the attribute `PROCESSING_NAME`
+        # joints that are already part of the new system should be skipped above (e.g. L-Miter)
+        for beam in self.model.beams:
+            features = list(filter(lambda feature: hasattr(feature, "PROCESS_NAME"), beam.features))
+            beam_part = self.parts[str(beam.guid)]
+            self._apply_process_features(beam_part, features)
+
+    def _apply_process_features(self, beam_part, features):
+        for feature in features:
+            # Create BTLXProcess instance from feature
+            header_dict, process_dict = self._split_params_dict(feature)
+            process = BTLxProcess(feature.PROCESS_NAME, header_dict, process_dict)
+            # append to beam_part.processings
+            beam_part.processings.append(process)
+
+    def _split_params_dict(self, feature):
+        whole_dict = feature.params_dict
+        header_keys = {
+            "Name",
+            "Process",
+            "Priority",
+            "ProcessID",
+            "ReferencePlaneID",
+        }
+        header_only = {k: v for k, v in whole_dict.items() if k in header_keys}
+        process_only = {k: v for k, v in whole_dict.items() if k not in header_keys}
+        return header_only, process_only
 
     @classmethod
     def register_joint(cls, joint_type, joint_factory):
@@ -164,13 +192,9 @@ class BTLxPart(object):
         self.beam = beam
         self.order_num = order_num
         self.length = beam.blank_length
-        self.width = beam.height
-        self.height = beam.width
-        self.frame = Frame(
-            self.beam.long_edges[2].closest_point(self.beam.blank_frame.point),
-            beam.frame.xaxis,
-            beam.frame.yaxis,
-        )  # I used long_edge[2] because it is in Y and Z negative. Using that as reference puts the beam entirely in positive coordinates.
+        self.width = beam.width
+        self.height = beam.height
+        self.frame = beam.ref_frame
         self.blank_length = beam.blank_length
         self.processings = []
         self._et_element = None
@@ -178,34 +202,6 @@ class BTLxPart(object):
     @property
     def part_guid(self):
         return str(self.beam.guid)
-
-    @property
-    def reference_surfaces(self):
-        # TODO: align Beam.faces with this so that conversion is not needed
-        return (
-            Frame(self.frame.point, self.frame.xaxis, self.frame.zaxis),  #
-            Frame(
-                self.frame.point + self.frame.yaxis * self.width,
-                self.frame.xaxis,
-                -self.frame.yaxis,
-            ),
-            Frame(
-                self.frame.point + self.frame.yaxis * self.width + self.frame.zaxis * self.height,
-                self.frame.xaxis,
-                -self.frame.zaxis,
-            ),
-            Frame(
-                self.frame.point + self.frame.zaxis * self.height,
-                self.frame.xaxis,
-                self.frame.yaxis,
-            ),
-            Frame(self.frame.point, self.frame.zaxis, self.frame.yaxis),
-            Frame(
-                self.frame.point + self.frame.xaxis * self.blank_length + self.frame.yaxis * self.width,
-                self.frame.zaxis,
-                -self.frame.yaxis,
-            ),
-        )
 
     def ref_side_from_face(self, beam_face):
         """Finds the one-based index of the reference side with normal that matches the normal of the given beam face.
@@ -223,8 +219,8 @@ class BTLxPart(object):
             The key(index 1-6) of the reference surface.
 
         """
-        for index, ref_face in enumerate(self.reference_surfaces):
-            angle = angle_vectors(ref_face.normal, beam_face.normal, deg=True)
+        for index, ref_side in enumerate(self.beam.ref_sides):
+            angle = angle_vectors(ref_side.normal, beam_face.normal, deg=True)
             if TOL.is_zero(angle):
                 return index + 1  # in BTLx face indices are one-based
         raise ValueError("Given beam face does not match any of the reference surfaces.")
