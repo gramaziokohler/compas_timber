@@ -128,7 +128,7 @@ class TDovetailJoint(Joint):
         self.length = length if length is not None else 60.0
         self.width = width if width is not None else 25.0
         self.cone_angle = cone_angle if cone_angle is not None else 10.0
-        self.dovetail_shape = dovetail_shape if dovetail_shape is not None else 4  # RADIUS
+        self.dovetail_shape = dovetail_shape if dovetail_shape is not None else 4  # shape: RADIUS
 
         self.tool_angle = tool_angle if tool_angle is not None else 15.0
         self.tool_diameter = tool_diameter if tool_diameter is not None else 60.0
@@ -208,7 +208,7 @@ class TDovetailJoint(Joint):
         cross_feature = DovetailMortise.from_plane_and_beam(
             plane=main_feature.frame_from_params_and_beam(self.main_beam),
             beam=self.cross_beam,
-            start_depth=0.0,
+            start_depth=0.0,  # TODO: to be updated once housing is implemented
             angle=-main_feature.rotation if main_feature.orientation == "end" else self.rotation - 90.0,
             length=main_feature.length,
             width=main_feature.width,
@@ -242,7 +242,7 @@ class TDovetailJoint(Joint):
         # type: (float, float, float) -> None
         # get the tool parameters
         tool_top_radius = tool_diameter / 2 - tool_height * (math.tan(math.radians(tool_angle)))
-        # update parameters related to the tool if a tool is defined
+        # define parameters related to the tool if a tool is defined
         self.height = tool_height
         self.flank_angle = tool_angle
         self.shape_radius = tool_top_radius

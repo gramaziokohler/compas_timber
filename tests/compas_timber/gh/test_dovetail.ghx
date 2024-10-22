@@ -49,10 +49,10 @@
             <chunk name="Projection">
               <items count="2">
                 <item name="Target" type_name="gh_drawing_point" type_code="30">
-                  <X>-7</X>
-                  <Y>88</Y>
+                  <X>-1225</X>
+                  <Y>-770</Y>
                 </item>
-                <item name="Zoom" type_name="gh_single" type_code="5">0.289521426</item>
+                <item name="Zoom" type_name="gh_single" type_code="5">1.06250012</item>
               </items>
             </chunk>
             <chunk name="Views">
@@ -96,9 +96,9 @@
         </chunk>
         <chunk name="DefinitionObjects">
           <items count="1">
-            <item name="ObjectCount" type_name="gh_int32" type_code="3">143</item>
+            <item name="ObjectCount" type_name="gh_int32" type_code="3">144</item>
           </items>
-          <chunks count="143">
+          <chunks count="144">
             <chunk name="Object" index="0">
               <items count="2">
                 <item name="GUID" type_name="gh_guid" type_code="9">c552a431-af5b-46a9-a8a4-0fcbc27ef596</item>
@@ -4151,40 +4151,47 @@ from compas_rhino.conversions import frame_to_rhino, plane_to_rhino, vector_to_r
 import Rhino.Geometry as rg
 unload_modules("compas_timber")
 
-#define beam and cutting plane
-beam = main_beam
+geo_tenon = main_beam.compute_geometry(False)
+geo_mortise = cross_beam.compute_geometry(False)
 
-geo = beam.compute_geometry(False)
-geo_m = cross_beam.compute_geometry(False)
-
+#define ref_sides
 cross_ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
 cross_ref_side_index = min(cross_ref_side_dict, key=cross_ref_side_dict.get)
-
-main_ref_side_dict = get_ref_side_most_ortho_to_cross_vector(cross_beam, main_beam, ignore_ends=True)
-main_ref_side_index = min(main_ref_side_dict, key=main_ref_side_dict.get)
-print(main_ref_side_index, "main")
 print(cross_ref_side_index, "cross")
-plane = cross_beam.ref_sides[cross_ref_side_index]
+main_ref_side_dict = get_ref_side_most_ortho_to_cross_vector(cross_beam, main_beam, ignore_ends=True)
+main_ref_side_index = min(main_ref_side_dict, key=main_ref_side_dict.get) -2
+print(main_ref_side_index, "main")
+
+ref_side_main = frame_to_rhino(main_beam.ref_sides[main_ref_side_index])
+ref_side_cross = frame_to_rhino(cross_beam.ref_sides[cross_ref_side_index])
 
 #create dovetail_tenon
 DovetailTenon.define_dovetail_tool(15.0, 60.034, 28.0)
-dovetail_tenon = DovetailTenon.from_plane_and_beam(plane, beam, start_y=start_y, rotation=rotation, start_depth=start_depth, width=width, length=length, cone_angle=cone_angle, ref_side_index=main_ref_side_index)
-cutting_plane= dovetail_tenon.frame_from_params_and_beam(beam)
-dovetail_planes = dovetail_tenon.dovetail_cutting_planes_from_params_and_beam(beam)
+dovetail_tenon = DovetailTenon.from_plane_and_beam(
+            cross_beam.ref_sides[cross_ref_side_index], 
+            main_beam, 
+            start_y=start_y, 
+            rotation=rotation, 
+            start_depth=start_depth, 
+            width=width, 
+            length=length, 
+            cone_angle=cone_angle, 
+            ref_side_index=main_ref_side_index,
+        )
+        
+#cutting_frame
+cutting_plane_tenon= dovetail_tenon.frame_from_params_and_beam(main_beam)
+#tenon cutting planes
+dovetail_tenon_planes = dovetail_tenon.dovetail_cutting_planes_from_params_and_beam(main_beam)
+#tenon volume
+tenon_volume = dovetail_tenon.dovetail_volume_from_params_and_beam(main_beam)
 
-tenon_volume = dovetail_tenon.dovetail_volume_from_params_and_beam(beam)
-geometry = dovetail_tenon.apply(geo, beam)
-
-#print("Orientation: ", dovetail_tenon.orientation)
-#print("StrutInclination: ", dovetail_tenon.inclination)
-#print("Angle: ", dovetail_tenon.angle)
-#print("Rotation: ", dovetail_tenon.rotation)
 
 dovetail_mortise = DovetailMortise.from_plane_and_beam(
-            plane=cutting_plane,
+            plane=cutting_plane_tenon,
             beam=cross_beam,
             start_depth=0.0,
-            angle=0.0,
+            angle=dovetail_tenon.rotation if dovetail_tenon.orientation == "end" else rotation - 90.0,
             length=dovetail_tenon.length,
             width=dovetail_tenon.width,
             depth=dovetail_tenon.height,
@@ -4194,11 +4201,12 @@ dovetail_mortise = DovetailMortise.from_plane_and_beam(
             shape_radius=dovetail_tenon.shape_radius,
             ref_side_index=cross_ref_side_index,
         )
-
+#cutting frame
 cutting_plane_mortise = dovetail_mortise.frame_from_params_and_beam(cross_beam)
+#mortise cutting planes
 dovetail_mortise_planes = dovetail_mortise.dovetail_cutting_planes_from_params_and_beam(cross_beam)
+#mortise volue
 mortise_volume = dovetail_mortise.dovetail_volume_from_params_and_beam(cross_beam)
-#geometry_m = dovetail_mortise.apply(geo_m, cross_beam)
 
 #get btlx params
 dovetail_mortise_params = DovetailMortiseParams(dovetail_mortise).as_dict()
@@ -4212,19 +4220,22 @@ tenon_btlx_params = []
 for key, value in dovetail_tenon_params.items():
     tenon_btlx_params.append("{0}: {1}".format(key, value))
 
+
 #vizualize in rhino
-rg_ref_side = frame_to_rhino(beam.ref_sides[main_ref_side_index])
-rg_ref_side_m = frame_to_rhino(cross_beam.ref_sides[cross_ref_side_index])
-rg_cutting_plane = frame_to_rhino(cutting_plane)
-rg_cutting_plane_m = frame_to_rhino(cutting_plane_mortise)
-rg_geometry = brep_to_rhino(geometry)
-rg_tenon = brep_to_rhino(mortise_volume)
-rg_dovetail_planes = [frame_to_rhino(plane) for plane in dovetail_planes]
-rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]</item>
+
+cutting_plane_tenon = frame_to_rhino(cutting_plane_tenon)
+cutting_plane_mortise = frame_to_rhino(cutting_plane_mortise)
+
+tenon_planes = [frame_to_rhino(plane) for plane in dovetail_tenon_planes]
+mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
+
+geo_tenon = brep_to_rhino(dovetail_tenon.apply(geo_tenon, main_beam))
+geo_mortise = brep_to_rhino(dovetail_mortise.apply(geo_mortise, cross_beam))
+</item>
                     <item name="Description" type_name="gh_string" type_code="10">GhPython provides a Python script component</item>
                     <item name="EditorLocation" type_name="gh_drawing_point" type_code="30">
-                      <X>224</X>
-                      <Y>134</Y>
+                      <X>178</X>
+                      <Y>222</Y>
                     </item>
                     <item name="EditorSize" type_name="gh_drawing_size" type_code="32">
                       <W>1586</W>
@@ -4243,19 +4254,19 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1630</X>
-                          <Y>83</Y>
-                          <W>207</W>
-                          <H>204</H>
+                          <X>1629</X>
+                          <Y>86</Y>
+                          <W>214</W>
+                          <H>184</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1711</X>
-                          <Y>185</Y>
+                          <X>1710</X>
+                          <Y>178</Y>
                         </item>
                       </items>
                     </chunk>
                     <chunk name="ParameterData">
-                      <items count="20">
+                      <items count="19">
                         <item name="InputCount" type_name="gh_int32" type_code="3">8</item>
                         <item name="InputId" index="0" type_name="gh_guid" type_code="9">84fa917c-1ed8-4db3-8be1-7bdc4a6495a2</item>
                         <item name="InputId" index="1" type_name="gh_guid" type_code="9">84fa917c-1ed8-4db3-8be1-7bdc4a6495a2</item>
@@ -4265,7 +4276,7 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         <item name="InputId" index="5" type_name="gh_guid" type_code="9">84fa917c-1ed8-4db3-8be1-7bdc4a6495a2</item>
                         <item name="InputId" index="6" type_name="gh_guid" type_code="9">84fa917c-1ed8-4db3-8be1-7bdc4a6495a2</item>
                         <item name="InputId" index="7" type_name="gh_guid" type_code="9">84fa917c-1ed8-4db3-8be1-7bdc4a6495a2</item>
-                        <item name="OutputCount" type_name="gh_int32" type_code="3">10</item>
+                        <item name="OutputCount" type_name="gh_int32" type_code="3">9</item>
                         <item name="OutputId" index="0" type_name="gh_guid" type_code="9">3ede854e-c753-40eb-84cb-b48008f14fd4</item>
                         <item name="OutputId" index="1" type_name="gh_guid" type_code="9">8ec86459-bf01-4409-baee-174d0d2b13d0</item>
                         <item name="OutputId" index="2" type_name="gh_guid" type_code="9">8ec86459-bf01-4409-baee-174d0d2b13d0</item>
@@ -4275,9 +4286,8 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         <item name="OutputId" index="6" type_name="gh_guid" type_code="9">8ec86459-bf01-4409-baee-174d0d2b13d0</item>
                         <item name="OutputId" index="7" type_name="gh_guid" type_code="9">8ec86459-bf01-4409-baee-174d0d2b13d0</item>
                         <item name="OutputId" index="8" type_name="gh_guid" type_code="9">8ec86459-bf01-4409-baee-174d0d2b13d0</item>
-                        <item name="OutputId" index="9" type_name="gh_guid" type_code="9">8ec86459-bf01-4409-baee-174d0d2b13d0</item>
                       </items>
-                      <chunks count="18">
+                      <chunks count="17">
                         <chunk name="InputParam" index="0">
                           <items count="11">
                             <item name="AllowTreeAccess" type_name="gh_bool" type_code="1">true</item>
@@ -4296,14 +4306,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
-                                  <Y>85</Y>
+                                  <X>1631</X>
+                                  <Y>88</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>22</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>97.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>99.25</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4327,14 +4337,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
+                                  <X>1631</X>
                                   <Y>110</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>23</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>122.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>121.75</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4358,14 +4368,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
-                                  <Y>135</Y>
+                                  <X>1631</X>
+                                  <Y>133</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>22</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>147.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>144.25</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4389,14 +4399,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
-                                  <Y>160</Y>
+                                  <X>1631</X>
+                                  <Y>155</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>23</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>172.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>166.75</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4420,14 +4430,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
-                                  <Y>185</Y>
+                                  <X>1631</X>
+                                  <Y>178</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>22</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>197.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>189.25</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4451,14 +4461,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
-                                  <Y>210</Y>
+                                  <X>1631</X>
+                                  <Y>200</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>23</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>222.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>211.75</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4482,14 +4492,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
-                                  <Y>235</Y>
+                                  <X>1631</X>
+                                  <Y>223</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>22</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>247.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>234.25</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4513,14 +4523,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1632</X>
-                                  <Y>260</Y>
+                                  <X>1631</X>
+                                  <Y>245</Y>
                                   <W>64</W>
-                                  <H>25</H>
+                                  <H>23</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1665.5</X>
-                                  <Y>272.5</Y>
+                                  <X>1664.5</X>
+                                  <Y>256.75</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4539,14 +4549,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>85</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>88</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>95</Y>
+                                  <X>1783</X>
+                                  <Y>98</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4554,10 +4564,10 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         </chunk>
                         <chunk name="OutputParam" index="1">
                           <items count="6">
-                            <item name="Description" type_name="gh_string" type_code="10">Script output rg_cutting_plane.</item>
+                            <item name="Description" type_name="gh_string" type_code="10">Script output cutting_plane_tenon.</item>
                             <item name="InstanceGuid" type_name="gh_guid" type_code="9">213adbf5-0592-48ab-b06a-06543b55b8da</item>
-                            <item name="Name" type_name="gh_string" type_code="10">rg_cutting_plane</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">rg_cutting_plane</item>
+                            <item name="Name" type_name="gh_string" type_code="10">cutting_plane_tenon</item>
+                            <item name="NickName" type_name="gh_string" type_code="10">cutting_plane_tenon</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                           </items>
@@ -4565,14 +4575,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>105</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>108</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>115</Y>
+                                  <X>1783</X>
+                                  <Y>118</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4580,10 +4590,10 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         </chunk>
                         <chunk name="OutputParam" index="2">
                           <items count="6">
-                            <item name="Description" type_name="gh_string" type_code="10">Script output rg_cutting_plane_m.</item>
+                            <item name="Description" type_name="gh_string" type_code="10">Script output cutting_plane_mortise.</item>
                             <item name="InstanceGuid" type_name="gh_guid" type_code="9">cc5eda18-08de-4b0d-91bd-9eefbfcc5dc7</item>
-                            <item name="Name" type_name="gh_string" type_code="10">rg_cutting_plane_m</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">rg_cutting_plane_m</item>
+                            <item name="Name" type_name="gh_string" type_code="10">cutting_plane_mortise</item>
+                            <item name="NickName" type_name="gh_string" type_code="10">cutting_plane_mortise</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                           </items>
@@ -4591,14 +4601,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>125</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>128</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>135</Y>
+                                  <X>1783</X>
+                                  <Y>138</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4606,10 +4616,10 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         </chunk>
                         <chunk name="OutputParam" index="3">
                           <items count="6">
-                            <item name="Description" type_name="gh_string" type_code="10">Script output rg_ref_side.</item>
+                            <item name="Description" type_name="gh_string" type_code="10">Script output ref_side_main.</item>
                             <item name="InstanceGuid" type_name="gh_guid" type_code="9">d7c2e387-1413-47f3-96a4-1fd6a08f1e62</item>
-                            <item name="Name" type_name="gh_string" type_code="10">rg_ref_side</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">rg_ref_side</item>
+                            <item name="Name" type_name="gh_string" type_code="10">ref_side_main</item>
+                            <item name="NickName" type_name="gh_string" type_code="10">ref_side_main</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                           </items>
@@ -4617,14 +4627,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>145</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>148</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>155</Y>
+                                  <X>1783</X>
+                                  <Y>158</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4632,10 +4642,10 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         </chunk>
                         <chunk name="OutputParam" index="4">
                           <items count="6">
-                            <item name="Description" type_name="gh_string" type_code="10">Script output rg_ref_side_m.</item>
+                            <item name="Description" type_name="gh_string" type_code="10">Script output ref_side_cross.</item>
                             <item name="InstanceGuid" type_name="gh_guid" type_code="9">a8110476-8bb3-4892-9423-09704614c7a3</item>
-                            <item name="Name" type_name="gh_string" type_code="10">rg_ref_side_m</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">rg_ref_side_m</item>
+                            <item name="Name" type_name="gh_string" type_code="10">ref_side_cross</item>
+                            <item name="NickName" type_name="gh_string" type_code="10">ref_side_cross</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                           </items>
@@ -4643,14 +4653,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>165</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>168</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>175</Y>
+                                  <X>1783</X>
+                                  <Y>178</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4669,14 +4679,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>185</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>188</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>195</Y>
+                                  <X>1783</X>
+                                  <Y>198</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4695,14 +4705,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>205</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>208</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>215</Y>
+                                  <X>1783</X>
+                                  <Y>218</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4710,10 +4720,10 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         </chunk>
                         <chunk name="OutputParam" index="7">
                           <items count="6">
-                            <item name="Description" type_name="gh_string" type_code="10">Script output rg_geometry.</item>
-                            <item name="InstanceGuid" type_name="gh_guid" type_code="9">fe445344-55ec-4537-ac59-27a8c117fcff</item>
-                            <item name="Name" type_name="gh_string" type_code="10">rg_geometry</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">rg_geometry</item>
+                            <item name="Description" type_name="gh_string" type_code="10">Script output geo_tenon.</item>
+                            <item name="InstanceGuid" type_name="gh_guid" type_code="9">be1a6a99-5e4d-460c-a8f0-e8312a661132</item>
+                            <item name="Name" type_name="gh_string" type_code="10">geo_tenon</item>
+                            <item name="NickName" type_name="gh_string" type_code="10">geo_tenon</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                           </items>
@@ -4721,14 +4731,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>225</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>228</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>235</Y>
+                                  <X>1783</X>
+                                  <Y>238</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4736,36 +4746,10 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                         </chunk>
                         <chunk name="OutputParam" index="8">
                           <items count="6">
-                            <item name="Description" type_name="gh_string" type_code="10">Script output rg_tenon.</item>
-                            <item name="InstanceGuid" type_name="gh_guid" type_code="9">be1a6a99-5e4d-460c-a8f0-e8312a661132</item>
-                            <item name="Name" type_name="gh_string" type_code="10">rg_tenon</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">rg_tenon</item>
-                            <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                            <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
-                          </items>
-                          <chunks count="1">
-                            <chunk name="Attributes">
-                              <items count="2">
-                                <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>245</Y>
-                                  <W>109</W>
-                                  <H>20</H>
-                                </item>
-                                <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>255</Y>
-                                </item>
-                              </items>
-                            </chunk>
-                          </chunks>
-                        </chunk>
-                        <chunk name="OutputParam" index="9">
-                          <items count="6">
-                            <item name="Description" type_name="gh_string" type_code="10">Script output rg_mortise_planes.</item>
+                            <item name="Description" type_name="gh_string" type_code="10">Script output geo_mortise.</item>
                             <item name="InstanceGuid" type_name="gh_guid" type_code="9">389410e6-fbd0-4b13-ad00-528c4c2075fd</item>
-                            <item name="Name" type_name="gh_string" type_code="10">rg_mortise_planes</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">rg_mortise_planes</item>
+                            <item name="Name" type_name="gh_string" type_code="10">geo_mortise</item>
+                            <item name="NickName" type_name="gh_string" type_code="10">geo_mortise</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                           </items>
@@ -4773,14 +4757,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1726</X>
-                                  <Y>265</Y>
-                                  <W>109</W>
+                                  <X>1725</X>
+                                  <Y>248</Y>
+                                  <W>116</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1780.5</X>
-                                  <Y>275</Y>
+                                  <X>1783</X>
+                                  <Y>258</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -4812,13 +4796,13 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1879</X>
+                          <X>1882</X>
                           <Y>143</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1904.75</X>
+                          <X>1907.574</X>
                           <Y>155.2027</Y>
                         </item>
                       </items>
@@ -5260,14 +5244,13 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
               </items>
               <chunks count="1">
                 <chunk name="Container">
-                  <items count="7">
+                  <items count="6">
                     <item name="Description" type_name="gh_string" type_code="10">Contains a collection of Breps (Boundary REPresentations)</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">5c4473da-8ccb-4a9f-8e42-e0447b1eaa1e</item>
                     <item name="Name" type_name="gh_string" type_code="10">Brep</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Brep</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                    <item name="Source" index="0" type_name="gh_guid" type_code="9">fe445344-55ec-4537-ac59-27a8c117fcff</item>
-                    <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                    <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                   </items>
                   <chunks count="1">
                     <chunk name="Attributes">
@@ -5608,14 +5591,14 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1877</X>
-                          <Y>255</Y>
+                          <X>1880</X>
+                          <Y>250</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1902.847</X>
-                          <Y>267.946</Y>
+                          <X>1905.77</X>
+                          <Y>262.0995</Y>
                         </item>
                       </items>
                     </chunk>
@@ -5762,7 +5745,7 @@ rg_mortise_planes = [frame_to_rhino(plane) for plane in dovetail_mortise_planes]
                                   <Xz>0.259942858411848</Xz>
                                   <Yx>0.963085199245858</Yx>
                                   <Yy>-0.269196766313353</Yy>
-                                  <Yz>-1.69033921731616E-15</Yz>
+                                  <Yz>-1.69943330747686E-15</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -7182,14 +7165,14 @@ error_length = ((math.sqrt(2) * 60) * math.sin(e))</item>
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1887</X>
-                          <Y>294</Y>
+                          <X>2021</X>
+                          <Y>280</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1912.831</X>
-                          <Y>306.5853</Y>
+                          <X>2046.047</X>
+                          <Y>292.3867</Y>
                         </item>
                       </items>
                     </chunk>
@@ -7306,13 +7289,13 @@ error_length = ((math.sqrt(2) * 60) * math.sin(e))</item>
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1405</X>
+                          <X>1407</X>
                           <Y>246</Y>
                           <W>186</W>
                           <H>20</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1405.724</X>
+                          <X>1407.689</X>
                           <Y>246.8536</Y>
                         </item>
                       </items>
@@ -8436,14 +8419,14 @@ class ModelComponent(component):
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1435</X>
-                          <Y>1165</Y>
+                          <X>1424</X>
+                          <Y>1159</Y>
                           <W>198</W>
                           <H>104</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1554</X>
-                          <Y>1217</Y>
+                          <X>1543</X>
+                          <Y>1211</Y>
                         </item>
                       </items>
                     </chunk>
@@ -8482,14 +8465,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1437</X>
-                                  <Y>1167</Y>
+                                  <X>1426</X>
+                                  <Y>1161</Y>
                                   <W>102</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1497.5</X>
-                                  <Y>1177</Y>
+                                  <X>1486.5</X>
+                                  <Y>1171</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8515,14 +8498,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1437</X>
-                                  <Y>1187</Y>
+                                  <X>1426</X>
+                                  <Y>1181</Y>
                                   <W>102</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1497.5</X>
-                                  <Y>1197</Y>
+                                  <X>1486.5</X>
+                                  <Y>1191</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8546,14 +8529,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1437</X>
-                                  <Y>1207</Y>
+                                  <X>1426</X>
+                                  <Y>1201</Y>
                                   <W>102</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1497.5</X>
-                                  <Y>1217</Y>
+                                  <X>1486.5</X>
+                                  <Y>1211</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8577,14 +8560,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1437</X>
-                                  <Y>1227</Y>
+                                  <X>1426</X>
+                                  <Y>1221</Y>
                                   <W>102</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1497.5</X>
-                                  <Y>1237</Y>
+                                  <X>1486.5</X>
+                                  <Y>1231</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8608,14 +8591,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1437</X>
-                                  <Y>1247</Y>
+                                  <X>1426</X>
+                                  <Y>1241</Y>
                                   <W>102</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1497.5</X>
-                                  <Y>1257</Y>
+                                  <X>1486.5</X>
+                                  <Y>1251</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8634,14 +8617,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1569</X>
-                                  <Y>1167</Y>
+                                  <X>1558</X>
+                                  <Y>1161</Y>
                                   <W>62</W>
                                   <H>33</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1600</X>
-                                  <Y>1183.667</Y>
+                                  <X>1589</X>
+                                  <Y>1177.667</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8660,14 +8643,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1569</X>
-                                  <Y>1200</Y>
+                                  <X>1558</X>
+                                  <Y>1194</Y>
                                   <W>62</W>
                                   <H>33</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1600</X>
-                                  <Y>1217</Y>
+                                  <X>1589</X>
+                                  <Y>1211</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8686,14 +8669,14 @@ class ModelComponent(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1569</X>
-                                  <Y>1233</Y>
+                                  <X>1558</X>
+                                  <Y>1227</Y>
                                   <W>62</W>
                                   <H>34</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1600</X>
-                                  <Y>1250.333</Y>
+                                  <X>1589</X>
+                                  <Y>1244.333</Y>
                                 </item>
                               </items>
                             </chunk>
@@ -8725,7 +8708,7 @@ class ModelComponent(component):
                     <chunk name="Attributes">
                       <items count="1">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1310</X>
+                          <X>1302</X>
                           <Y>1246</Y>
                           <W>104</W>
                           <H>22</H>
@@ -8755,14 +8738,14 @@ class ModelComponent(component):
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1220</X>
-                          <Y>1223</Y>
+                          <X>1211</X>
+                          <Y>1221</Y>
                           <W>195</W>
                           <H>20</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1220.792</X>
-                          <Y>1223.001</Y>
+                          <X>1211.673</X>
+                          <Y>1221.001</Y>
                         </item>
                       </items>
                     </chunk>
@@ -9136,13 +9119,13 @@ class ModelComponent(component):
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1879</X>
+                          <X>1882</X>
                           <Y>169</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1904.395</X>
+                          <X>1907.219</X>
                           <Y>181.47</Y>
                         </item>
                       </items>
@@ -13119,7 +13102,7 @@ class WriteBTLx(component):
                     <item name="NickName" type_name="gh_string" type_code="10">FlipCurve</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
-                    <item name="ToggleValue" type_name="gh_bool" type_code="1">false</item>
+                    <item name="ToggleValue" type_name="gh_bool" type_code="1">true</item>
                   </items>
                   <chunks count="1">
                     <chunk name="Attributes">
@@ -13287,7 +13270,7 @@ class WriteBTLx(component):
                             <item name="InstanceGuid" type_name="gh_guid" type_code="9">36c4deda-ceed-4920-a3f3-2d18ca613b35</item>
                             <item name="Mutable" type_name="gh_bool" type_code="1">false</item>
                             <item name="Name" type_name="gh_string" type_code="10">Stream</item>
-                            <item name="NickName" type_name="gh_string" type_code="10">S(0)</item>
+                            <item name="NickName" type_name="gh_string" type_code="10">S(1)</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                           </items>
@@ -13743,13 +13726,13 @@ class BeamDecompose(component):
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1527</X>
+                          <X>1529</X>
                           <Y>553</Y>
                           <W>156</W>
                           <H>104</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1607</X>
+                          <X>1609</X>
                           <Y>605</Y>
                         </item>
                       </items>
@@ -13787,13 +13770,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1529</X>
+                                  <X>1531</X>
                                   <Y>555</Y>
                                   <W>63</W>
                                   <H>33</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1562</X>
+                                  <X>1564</X>
                                   <Y>571.6667</Y>
                                 </item>
                               </items>
@@ -13817,13 +13800,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1529</X>
+                                  <X>1531</X>
                                   <Y>588</Y>
                                   <W>63</W>
                                   <H>33</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1562</X>
+                                  <X>1564</X>
                                   <Y>605</Y>
                                 </item>
                               </items>
@@ -13848,13 +13831,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1529</X>
+                                  <X>1531</X>
                                   <Y>621</Y>
                                   <W>63</W>
                                   <H>34</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1562</X>
+                                  <X>1564</X>
                                   <Y>638.3334</Y>
                                 </item>
                               </items>
@@ -13874,13 +13857,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1622</X>
+                                  <X>1624</X>
                                   <Y>555</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1651.5</X>
+                                  <X>1653.5</X>
                                   <Y>565</Y>
                                 </item>
                               </items>
@@ -13900,13 +13883,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1622</X>
+                                  <X>1624</X>
                                   <Y>575</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1651.5</X>
+                                  <X>1653.5</X>
                                   <Y>585</Y>
                                 </item>
                               </items>
@@ -13926,13 +13909,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1622</X>
+                                  <X>1624</X>
                                   <Y>595</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1651.5</X>
+                                  <X>1653.5</X>
                                   <Y>605</Y>
                                 </item>
                               </items>
@@ -13952,13 +13935,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1622</X>
+                                  <X>1624</X>
                                   <Y>615</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1651.5</X>
+                                  <X>1653.5</X>
                                   <Y>625</Y>
                                 </item>
                               </items>
@@ -13978,13 +13961,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1622</X>
+                                  <X>1624</X>
                                   <Y>635</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1651.5</X>
+                                  <X>1653.5</X>
                                   <Y>645</Y>
                                 </item>
                               </items>
@@ -14129,13 +14112,13 @@ class BeamDecompose(component):
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1525</X>
+                          <X>1527</X>
                           <Y>386</Y>
                           <W>156</W>
                           <H>104</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>1605</X>
+                          <X>1607</X>
                           <Y>438</Y>
                         </item>
                       </items>
@@ -14173,13 +14156,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1527</X>
+                                  <X>1529</X>
                                   <Y>388</Y>
                                   <W>63</W>
                                   <H>33</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1560</X>
+                                  <X>1562</X>
                                   <Y>404.6667</Y>
                                 </item>
                               </items>
@@ -14203,13 +14186,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1527</X>
+                                  <X>1529</X>
                                   <Y>421</Y>
                                   <W>63</W>
                                   <H>33</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1560</X>
+                                  <X>1562</X>
                                   <Y>438</Y>
                                 </item>
                               </items>
@@ -14234,13 +14217,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1527</X>
+                                  <X>1529</X>
                                   <Y>454</Y>
                                   <W>63</W>
                                   <H>34</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1560</X>
+                                  <X>1562</X>
                                   <Y>471.3333</Y>
                                 </item>
                               </items>
@@ -14260,13 +14243,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1620</X>
+                                  <X>1622</X>
                                   <Y>388</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1649.5</X>
+                                  <X>1651.5</X>
                                   <Y>398</Y>
                                 </item>
                               </items>
@@ -14286,13 +14269,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1620</X>
+                                  <X>1622</X>
                                   <Y>408</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1649.5</X>
+                                  <X>1651.5</X>
                                   <Y>418</Y>
                                 </item>
                               </items>
@@ -14312,13 +14295,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1620</X>
+                                  <X>1622</X>
                                   <Y>428</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1649.5</X>
+                                  <X>1651.5</X>
                                   <Y>438</Y>
                                 </item>
                               </items>
@@ -14338,13 +14321,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1620</X>
+                                  <X>1622</X>
                                   <Y>448</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1649.5</X>
+                                  <X>1651.5</X>
                                   <Y>458</Y>
                                 </item>
                               </items>
@@ -14364,13 +14347,13 @@ class BeamDecompose(component):
                             <chunk name="Attributes">
                               <items count="2">
                                 <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                                  <X>1620</X>
+                                  <X>1622</X>
                                   <Y>468</Y>
                                   <W>59</W>
                                   <H>20</H>
                                 </item>
                                 <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                                  <X>1649.5</X>
+                                  <X>1651.5</X>
                                   <Y>478</Y>
                                 </item>
                               </items>
@@ -14578,6 +14561,41 @@ class BeamDecompose(component):
                 </chunk>
               </chunks>
             </chunk>
+            <chunk name="Object" index="143">
+              <items count="2">
+                <item name="GUID" type_name="gh_guid" type_code="9">919e146f-30ae-4aae-be34-4d72f555e7da</item>
+                <item name="Name" type_name="gh_string" type_code="10">Brep</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
+                  <items count="7">
+                    <item name="Description" type_name="gh_string" type_code="10">Contains a collection of Breps (Boundary REPresentations)</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">8bd29712-ff83-438b-b8f1-1d5f93dba350</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Brep</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">Brep</item>
+                    <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                    <item name="Source" index="0" type_name="gh_guid" type_code="9">389410e6-fbd0-4b13-ad00-528c4c2075fd</item>
+                    <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                  </items>
+                  <chunks count="1">
+                    <chunk name="Attributes">
+                      <items count="2">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>1878</X>
+                          <Y>304</Y>
+                          <W>50</W>
+                          <H>24</H>
+                        </item>
+                        <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                          <X>1903.265</X>
+                          <Y>316.8058</Y>
+                        </item>
+                      </items>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
           </chunks>
         </chunk>
       </chunks>
@@ -14585,7 +14603,7 @@ class BeamDecompose(component):
     <chunk name="Thumbnail">
       <items count="1">
         <item name="Thumbnail" type_name="gh_drawing_bitmap" type_code="37">
-          <bitmap length="11758">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</bitmap>
+          <bitmap length="9322">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</bitmap>
         </item>
       </items>
     </chunk>
