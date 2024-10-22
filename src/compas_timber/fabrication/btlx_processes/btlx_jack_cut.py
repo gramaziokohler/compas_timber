@@ -8,7 +8,7 @@ from compas.geometry import cross_vectors
 
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
-from compas_timber.utils.compas_extra import intersection_line_plane
+from compas_timber.utils import intersection_line_plane
 
 
 class BTLxJackCut(object):

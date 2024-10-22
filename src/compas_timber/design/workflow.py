@@ -1,6 +1,6 @@
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.utils.compas_extra import intersection_line_line_3D
+from compas_timber.utils import intersection_line_line_3D
 
 
 class CollectionDef(object):
