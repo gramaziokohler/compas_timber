@@ -145,7 +145,7 @@ def check_beam_alignment(beam_a, beam_b, tol=TOL):
         The first beam, used to check the alignment with beam_b.
     beam_b : :class:`~compas_timber.parts.Beam`
         The second beam, whose alignment is checked relative to beam_a.
-    tol : float, optional
+    tol : :class:`compas.tolerance.Tolerance`, optional
         A tolerance value for determining near-perpendicular or near-parallel alignment.
 
     Returns
