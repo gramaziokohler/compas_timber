@@ -1,6 +1,7 @@
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
+from compas.tolerance import TOL
 
 
 def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
@@ -96,7 +97,7 @@ def beam_ref_side_incidence_with_vector(beam_b, vector, ignore_ends=True):
     return ref_side_angles
 
 
-def are_beams_coplanar(beam_a, beam_b, tolerance=1e-3):
+def are_beams_coplanar(beam_a, beam_b, tol=TOL):
     """
     Checks if two beams are coplanar based on the cross product of their centerline directions.
 
@@ -106,8 +107,8 @@ def are_beams_coplanar(beam_a, beam_b, tolerance=1e-3):
         The first beam.
     beam_b : :class:`~compas_timber.parts.Beam`
         The second beam.
-    tolerance : float, optional
-        The tolerance for the dot product comparison, default is 1e-3.
+    tol : float, optional
+        The tolerance for the dot product comparison.
 
     Returns
     -------
@@ -123,12 +124,14 @@ def are_beams_coplanar(beam_a, beam_b, tolerance=1e-3):
     dot_with_beam_a_normal = abs(cross_vector.dot(beam_a.frame.normal))
 
     # Check if both dot products are close to 0 or 1 (indicating coplanarity)
-    return (1 - tolerance <= dot_with_beam_b_normal <= 1 + tolerance or 0 <= dot_with_beam_b_normal <= tolerance) and (
-        1 - tolerance <= dot_with_beam_a_normal <= 1 + tolerance or 0 <= dot_with_beam_a_normal <= tolerance
-    )
+    is_beam_a_normal_coplanar = tol.is_close(dot_with_beam_a_normal, 1.0) or tol.is_zero(dot_with_beam_a_normal)
+    is_beam_b_normal_coplanar = tol.is_close(dot_with_beam_b_normal, 1.0) or tol.is_zero(dot_with_beam_b_normal)
+
+    # Return True if both beams are coplanar
+    return is_beam_a_normal_coplanar and is_beam_b_normal_coplanar
 
 
-def check_beam_alignment(beam_a, beam_b, tolerance=1e-3):
+def check_beam_alignment(beam_a, beam_b, tol=TOL):
     """
     Checks the alignment of two beams by comparing their centerline directions and the normal of beam_b's frame.
 
@@ -142,8 +145,8 @@ def check_beam_alignment(beam_a, beam_b, tolerance=1e-3):
         The first beam, used to check the alignment with beam_b.
     beam_b : :class:`~compas_timber.parts.Beam`
         The second beam, whose alignment is checked relative to beam_a.
-    tolerance : float, optional
-        A tolerance value for determining near-perpendicular or near-parallel alignment. Default is 1e-3.
+    tol : float, optional
+        A tolerance value for determining near-perpendicular or near-parallel alignment.
 
     Returns
     -------
@@ -158,4 +161,4 @@ def check_beam_alignment(beam_a, beam_b, tolerance=1e-3):
     dot_with_beam_b_normal = abs(cross_vector.dot(beam_b.frame.normal))
 
     # Return True if the beams are nearly perpendicular (dot product close to 0)
-    return 0 <= dot_with_beam_b_normal <= tolerance
+    return tol.is_zero(dot_with_beam_b_normal)
