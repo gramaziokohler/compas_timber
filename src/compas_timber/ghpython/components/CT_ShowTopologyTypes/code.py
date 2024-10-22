@@ -4,7 +4,7 @@ from compas_rhino.conversions import point_to_rhino
 from ghpythonlib.componentbase import executingcomponent as component
 
 from compas_timber.connections import JointTopology
-from compas_timber.utils import intersection_line_line_3D
+from compas_timber.utils import intersection_line_line_param
 
 
 class ShowTopologyTypes(component):
@@ -19,7 +19,7 @@ class ShowTopologyTypes(component):
             beam_b = topo["beam_b"]
             topology = topo.get("detected_topo")
 
-            [p1, _], [p2, _] = intersection_line_line_3D(
+            [p1, _], [p2, _] = intersection_line_line_param(
                 beam_a.centerline, beam_b.centerline, float("inf"), False, 1e-3
             )
             p1 = point_to_rhino(p1)

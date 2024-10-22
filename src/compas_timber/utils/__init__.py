@@ -12,7 +12,7 @@ from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 
 
-def intersection_line_line_3D(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
+def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
     """Find, if exists, the intersection point of `line1` and `line2` and returns parametric information about it.
 
     For each of the lines, the point of intersection and a `t` parameter are returned.
@@ -133,4 +133,4 @@ def intersection_line_plane(line, plane, tol=1e-6):
     return Point(*add_vectors(a, ab)), t
 
 
-__all__ = ["intersection_line_line_3D", "intersection_line_plane"]
+__all__ = ["intersection_line_line_param", "intersection_line_plane"]

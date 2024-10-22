@@ -1,6 +1,6 @@
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.utils import intersection_line_line_3D
+from compas_timber.utils import intersection_line_line_param
 
 
 class CollectionDef(object):
@@ -204,7 +204,7 @@ class Attribute:
 def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=1e-6):
     # TODO: replace default max_distance ~ zero with global project precision
 
-    [pa, ta], [pb, tb] = intersection_line_line_3D(beamA.centerline, beamB.centerline, max_distance, True, tol)
+    [pa, ta], [pb, tb] = intersection_line_line_param(beamA.centerline, beamB.centerline, max_distance, True, tol)
 
     if ta is None or tb is None:
         # lines do not intersect within max distance or they are parallel
