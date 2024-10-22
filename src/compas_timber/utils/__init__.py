@@ -61,8 +61,8 @@ def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segme
     pln2 = Plane(c, n2)
 
     # get intersection points (should never be None, only if parallel, which was errorcatched before)
-    x1, t1 = intersection_line_plane(line1, pln2, tol)
-    x2, t2 = intersection_line_plane(line2, pln1, tol)
+    x1, t1 = intersection_line_plane_param(line1, pln2, tol)
+    x2, t2 = intersection_line_plane_param(line2, pln1, tol)
 
     # double-check for parallels, should not happen:
     if t1 is None or t2 is None:
@@ -85,7 +85,7 @@ def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segme
     return [x1, t1], [x2, t2]
 
 
-def intersection_line_plane(line, plane, tol=1e-6):
+def intersection_line_plane_param(line, plane, tol=1e-6):
     """Computes the intersection point of a line and a plane.
 
     A tuple containing the intersection point and a `t` value are returned.
@@ -133,4 +133,4 @@ def intersection_line_plane(line, plane, tol=1e-6):
     return Point(*add_vectors(a, ab)), t
 
 
-__all__ = ["intersection_line_line_param", "intersection_line_plane"]
+__all__ = ["intersection_line_line_param", "intersection_line_plane_param"]
