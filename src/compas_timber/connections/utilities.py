@@ -107,7 +107,7 @@ def are_beams_coplanar(beam_a, beam_b, tol=TOL):
         The first beam.
     beam_b : :class:`~compas_timber.parts.Beam`
         The second beam.
-    tol : float, optional
+    tol : :class:`compas.tolerance.Tolerance`, optional
         The tolerance for the dot product comparison.
 
     Returns
