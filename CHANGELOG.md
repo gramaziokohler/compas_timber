@@ -29,8 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Renamed `intersection_line_plane` to `intersection_line_plane_param`.
+* Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
+
 ### Removed
 
+* Removed module `compas_timber.utils.compas_extra`.
 
 ## [0.11.0] 2024-09-17
 

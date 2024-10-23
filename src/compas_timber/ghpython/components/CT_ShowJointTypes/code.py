@@ -3,7 +3,7 @@ import System
 from compas_rhino.conversions import point_to_rhino
 from ghpythonlib.componentbase import executingcomponent as component
 
-from compas_timber.utils.compas_extra import intersection_line_line_3D
+from compas_timber.utils import intersection_line_line_param
 
 
 class ShowJointTypes(component):
@@ -16,7 +16,7 @@ class ShowJointTypes(component):
 
         for joint in model.joints:
             line_a, line_b = joint.beams[0].centerline, joint.beams[1].centerline
-            [p1, t1], [p2, t2] = intersection_line_line_3D(line_a, line_b, float("inf"), False, 1e-3)
+            [p1, t1], [p2, t2] = intersection_line_line_param(line_a, line_b, float("inf"), False, 1e-3)
             p1 = point_to_rhino(p1)
             p2 = point_to_rhino(p2)
 
