@@ -240,12 +240,12 @@ class StepJoint(BTLxProcess):
 
         """
         # type: (Plane|Frame, Beam, float, float, bool, int) -> StepJoint
-        # TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
+
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
         plane.normal = plane.normal * -1  # flip the plane normal to point towards the beam
         # define ref_side & ref_edge
-        ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
+        ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
         # calculate orientation
@@ -482,7 +482,6 @@ class StepJoint(BTLxProcess):
             The height of the tenon. tenon_height < 1000.0.
         """
         self.tenon = True
-        # self.tenon_width = beam.width / 4  # TODO: should this relate to the beam? typically 1/3 or 1/4 of beam.width
         self.tenon_width = tenon_width
         self.tenon_height = (
             self.step_depth if tenon_height < self.step_depth else tenon_height

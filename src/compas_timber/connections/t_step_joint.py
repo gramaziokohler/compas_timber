@@ -71,7 +71,7 @@ class TStepJoint(Joint):
         self,
         main_beam,
         cross_beam,
-        step_shape,
+        step_shape=None,
         step_depth=None,
         heel_depth=None,
         tapered_heel=None,
@@ -83,7 +83,7 @@ class TStepJoint(Joint):
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
 
-        self.step_shape = step_shape
+        self.step_shape = 0 if step_shape is None else step_shape
         self.step_depth, self.heel_depth = self.set_step_depths(step_depth, heel_depth)
 
         self.tapered_heel = tapered_heel

@@ -316,14 +316,12 @@ class StepJointNotch(BTLxProcess):
 
         """
         # type: (Plane|Frame, Beam, float, bool, float, float, float, float, bool, int) -> StepJointNotch
-        # TODO: the stepjointnotch is always orthogonal, this means that the surface should be perpendicular to the beam's ref_side | should there be a check for that?
-
-        # define ref_side & ref_edge
-        ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
-        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
+        # define ref_side & ref_edge
+        ref_side = beam.ref_sides[ref_side_index]
+        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
         # calculate orientation
         orientation = cls._calculate_orientation(ref_side, plane)
@@ -343,7 +341,7 @@ class StepJointNotch(BTLxProcess):
         else:
             notch_width = beam.width
 
-        # restrain step_depth & heel_depth to beam's height # TODO: should it be restrained? should they be proportional to the beam's dimensions?
+        # restrain step_depth & heel_depth to beam's height
         if step_depth > beam.height:
             step_depth = beam.height
             print("Step depth is too large for the beam's height. It has been adjusted to the beam's height.")
@@ -562,7 +560,6 @@ class StepJointNotch(BTLxProcess):
             The height of the mortise. mortise_height < 1000.0.
         """
         self.mortise = True
-        # self.mortise_width = beam.width / 4  # TODO: should this relate to the beam? typically 1/3 or 1/4 of beam.width
         self.mortise_width = mortise_width
 
         if mortise_height > beam.height:  # TODO: should this be constrained?
