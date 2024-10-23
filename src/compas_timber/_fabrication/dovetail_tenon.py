@@ -422,7 +422,9 @@ class DovetailTenon(BTLxProcess):
         inclination = cls._calculate_inclination(ref_side, plane, orientation, angle)
 
         # calculate rotation
-        rotation += 90.0
+        if orientation == OrientationType.END:
+            rotation = -rotation
+        rotation += 90
 
         # calculate start_y
         start_y = start_y + beam.width / 2  # TODO: Should this be bound as well?

@@ -321,9 +321,9 @@ class DovetailMortise(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(
+    def from_frame_and_beam(
         cls,
-        plane,
+        frame,
         beam,
         start_depth=0.0,
         angle=0.0,
@@ -340,8 +340,8 @@ class DovetailMortise(BTLxProcess):
 
         Parameters
         ----------
-        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
-            The cutting plane.
+        frame : :class:`~compas.geometry.Frame` or :class:`~compas.geometry.Plane`
+            The cutting frame.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
         start_depth : float, optional
@@ -370,19 +370,27 @@ class DovetailMortise(BTLxProcess):
         :class:`~compas_timber.fabrication.DovetailMortise`
 
         """
-        # type: (Plane|Frame, Beam, float, float, float, float, float, float, float, float, float, float, int) -> DovetailMortise
+        # type: (Frame|Plane, Beam, float, float, float, float, float, float, float, float, float, float, int) -> DovetailMortise
 
-        if isinstance(plane, Frame):
-            plane = Plane.from_frame(plane)
+        if isinstance(frame, Plane):
+            frame = Frame.from_plane(frame)
 
         # define ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
-        # calclulate start_x and start_y
-        start_x = cls._calculate_start_x(ref_side, ref_edge, plane)
+        # calculate orientation
+        orientation = cls._calculate_orientation(ref_side, frame)
 
-        start_y = abs(plane.point[2] - ref_side.point[2])
+        # calclulate start_x and start_y
+        start_x = cls._calculate_start_x(ref_side, ref_edge, frame)
+        start_y = abs(frame.point[2] - ref_side.point[2])
+
+        # define angle
+        if orientation == OrientationType.START:
+            angle -= 90.0
+        else:
+            angle += 90.0
 
         # define slope and inclination
         # TODO: In which cases do you want indiferent slope and inclination?
@@ -416,10 +424,19 @@ class DovetailMortise(BTLxProcess):
         )
 
     @staticmethod
-    def _calculate_start_x(ref_side, ref_edge, cutting_plane):
-        # calculate the start_x of the cut based on the ref_side, ref_edge and plane
-        perp_plane = Plane(cutting_plane.point, ref_side.xaxis)
+    def _calculate_orientation(ref_side, cutting_frame):
+        # calculate the orientation of the beam by comparing the xaxis's direction of the ref_side and the plane.
+        # Orientation is not set as a param for the BTLxDovetailMortise processing but its essential for the definition of the rest of the params.
+        perp_plane = Plane(cutting_frame.point, cutting_frame.xaxis)
+        if is_point_behind_plane(ref_side.point, perp_plane):
+            return OrientationType.END
+        else:
+            return OrientationType.START
 
+    @staticmethod
+    def _calculate_start_x(ref_side, ref_edge, cutting_frame):
+        # calculate the start_x of the cut based on the ref_side, ref_edge and cutting_frame
+        perp_plane = Plane(cutting_frame.point, ref_side.xaxis)
         point_start_x = intersection_line_plane(ref_edge, perp_plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
@@ -535,14 +552,13 @@ class DovetailMortise(BTLxProcess):
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
-        cutting_frame = Frame(p_origin, -ref_side.frame.xaxis, ref_side.frame.yaxis)
+        cutting_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         # rotate the cutting frame based on the angle
-        if self.angle != 90.0:
-            rotation = Rotation.from_axis_and_angle(
-                cutting_frame.normal, math.radians(self.angle - 90), cutting_frame.point
-            )
-            cutting_frame.transform(rotation)
+        rotation = Rotation.from_axis_and_angle(
+            cutting_frame.normal, math.radians(self.angle + 90), cutting_frame.point
+        )
+        cutting_frame.transform(rotation)
 
         return cutting_frame
 
@@ -564,16 +580,7 @@ class DovetailMortise(BTLxProcess):
         assert self.start_depth is not None
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
-        ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
-        cutting_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
-
-        # rotate the cutting frame based on the angle
-        if abs(self.angle) != 90.0:
-            rotation = Rotation.from_axis_and_angle(
-                cutting_frame.normal, math.radians(self.angle + 90), cutting_frame.point
-            )
-            cutting_frame.transform(rotation)
+        cutting_frame = self.frame_from_params_and_beam(beam)
 
         offseted_cutting_frame = Frame(cutting_frame.point, -cutting_frame.xaxis, cutting_frame.yaxis)
         offseted_cutting_frame.point += cutting_frame.normal * self.depth
@@ -621,8 +628,7 @@ class DovetailMortise(BTLxProcess):
 
         # translate the top trimming frame to the top of the beam if the top is unlimited
         if self.limitation_top == LimitationTopType.UNLIMITED:
-            tolerance = 1e-3
-            trimming_frames[0].translate(cutting_frame.yaxis * (beam.height - tolerance))
+            trimming_frames[0].translate(cutting_frame.yaxis * (beam.height))
 
         cutting_frame.xaxis = -cutting_frame.xaxis
         trimming_frames.append(cutting_frame)

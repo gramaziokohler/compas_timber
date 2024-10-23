@@ -4,8 +4,9 @@ from compas_timber._fabrication import DovetailMortise
 from compas_timber._fabrication import DovetailTenon
 from compas_timber._fabrication.btlx_process import TenonShapeType
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.connections.utilities import get_ref_side_most_ortho_to_cross_vector
+from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
+from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -152,7 +153,8 @@ class TDovetailJoint(Joint):
 
     @property
     def main_beam_ref_side_index(self):
-        ref_side_dict = get_ref_side_most_ortho_to_cross_vector(self.cross_beam, self.main_beam, ignore_ends=True)
+        cross_ref_side_normal = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, cross_ref_side_normal, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
@@ -171,6 +173,28 @@ class TDovetailJoint(Joint):
         else:
             raise ValueError("Invalid tenon shape index. Please provide a valid index between 0 and 4.")
         return shape_type
+
+    # def add_extensions(self):
+    #     """Calculates and adds the necessary extensions to the beams.
+
+    #     This method is automatically called when joint is created by the call to `Joint.create()`.
+
+    #     Raises
+    #     ------
+    #     BeamJoinningError
+    #         If the extension could not be calculated.
+
+    #     """
+    #     assert self.main_beam and self.cross_beam
+    #     try:
+    #         cutting_plane = self.get_main_cutting_plane()[0]
+    #         start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
+    #     except AttributeError as ae:
+    #         raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+    #     except Exception as ex:
+    #         raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+    #     extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+    #     self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
     def add_features(self):
         """Adds the required trimming features to both beams.
@@ -205,11 +229,11 @@ class TDovetailJoint(Joint):
         )
 
         # generate dovetail mortise features
-        cross_feature = DovetailMortise.from_plane_and_beam(
-            plane=main_feature.frame_from_params_and_beam(self.main_beam),
+        cross_feature = DovetailMortise.from_frame_and_beam(
+            frame=main_feature.frame_from_params_and_beam(self.main_beam),
             beam=self.cross_beam,
             start_depth=0.0,  # TODO: to be updated once housing is implemented
-            angle=-main_feature.rotation if main_feature.orientation == "end" else self.rotation - 90.0,
+            angle=self.rotation,
             length=main_feature.length,
             width=main_feature.width,
             depth=main_feature.height,
