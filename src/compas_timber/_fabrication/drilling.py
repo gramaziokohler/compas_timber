@@ -10,8 +10,8 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
-from compas.geometry import intersection_segment_plane
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
@@ -214,6 +214,7 @@ class Drilling(BTLxProcess):
 
     @staticmethod
     def _calculate_ref_side_index(line, beam):
+        # TODO: upstream this to compas.geometry
         def is_point_on_surface(point, surface):
             point = Point(*point)
             local_point = point.transformed(Transformation.from_change_of_basis(Frame.worldXY(), surface.frame))
@@ -340,6 +341,7 @@ class Drilling(BTLxProcess):
         drill_line = self._calculate_drill_line(beam, xy_world, cylinder_frame)
 
         # scale both ends so is protrudes nicely from the surface
+        # TODO: this is a best-effort solution. this can be done more accurately taking the angle into account. consider doing that in the future.
         drill_line = self._scaled_line_by_factor(drill_line, 1.2)
         return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5)
 
@@ -357,6 +359,7 @@ class Drilling(BTLxProcess):
             drill_bottom_plane.point -= drill_bottom_plane.normal * self.depth
         else:
             # this is not always the correct plane, but it's good enough for now, btlx viewer seems to be using the same method..
+            # TODO: this is a best-effort solution. consider calculating intersection with other sides to always find the right one.
             drill_bottom_plane = beam.side_as_surface(beam.opposing_side_index(self.ref_side_index)).to_plane()
 
         intersection_point = intersection_line_plane(drill_line_direction, drill_bottom_plane)
