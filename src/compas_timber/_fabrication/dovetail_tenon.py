@@ -421,18 +421,15 @@ class DovetailTenon(BTLxProcess):
         # calculate inclination
         inclination = cls._calculate_inclination(ref_side, plane, orientation, angle)
 
-        # calculate rotation
+        # calculate start_y & rotation
         if orientation == OrientationType.END:
             rotation = -rotation
+            start_y = -start_y
+        start_y += beam.width / 2  # TODO: Should this be bound as well?
         rotation += 90
 
-        # calculate start_y
-        start_y = start_y + beam.width / 2  # TODO: Should this be bound as well?
-
-        # calculate start_depth
-        start_depth = cls._calculate_start_depth(start_depth, inclination, height)
-
-        # bound length and width
+        # bound start_depth, length and width
+        start_depth = cls._bound_start_depth(start_depth, inclination, height)
         length = cls._bound_length(
             ref_side, plane, beam.height, start_depth, inclination, length, height, frustum_difference
         )
@@ -483,15 +480,18 @@ class DovetailTenon(BTLxProcess):
     @staticmethod
     def _calculate_start_x(ref_side, ref_edge, plane, orientation, start_y, start_depth, angle, inclination):
         # calculate the start_x of the cut based on the ref_side, ref_edge, plane, start_y and angle
+        plane.translate(ref_side.normal * start_depth)
         point_start_x = intersection_line_plane(ref_edge, plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
         start_x = distance_point_point(ref_side.point, point_start_x)
+        print(start_x)
+        print(start_y / math.tan(math.radians(angle)))
         # count for start_depth and start_y in the start_x
         if orientation == OrientationType.END:
-            start_x -= start_y / math.tan(math.radians(angle)) + start_depth * math.cos(math.radians(inclination))
+            start_x -= start_y / math.tan(math.radians(angle))
         else:
-            start_x += start_y / math.tan(math.radians(angle)) + start_depth * math.cos(math.radians(inclination))
+            start_x += start_y / math.tan(math.radians(angle))
         return start_x
 
     @staticmethod
@@ -515,14 +515,6 @@ class DovetailTenon(BTLxProcess):
 
         inclination = angle_vectors_signed(cross_ref_side, cross_plane, rotated_axis, deg=True)
         return abs(inclination)
-
-    @staticmethod
-    def _calculate_start_depth(start_depth, inclination, height):
-        # calculate the start depth of the cut based on the inclination and height
-        start_depth = start_depth * math.sin(math.radians(inclination))
-        # bound the start_depth value to the minimum possible start_depth if the incliantion is larger than 90 so that the tenon does not go out of the blank
-        min_start_depth = height / (math.tan(math.radians(180 - inclination)))
-        return max(start_depth, min_start_depth)
 
     @staticmethod
     def _calculate_length_limits(beam, start_depth, length, inclination):
@@ -561,6 +553,12 @@ class DovetailTenon(BTLxProcess):
         elif width > max_width:
             width = max_width
         return width
+
+    @staticmethod
+    def _bound_start_depth(start_depth, inclination, height):
+        # bound the start_depth value to the minimum possible start_depth if the incliantion is larger than 90 so that the tenon does not go out of the blank
+        min_start_depth = height / (math.tan(math.radians(180 - inclination)))
+        return max(start_depth, min_start_depth)
 
     ########################################################################
     # Class Methods
@@ -681,49 +679,43 @@ class DovetailTenon(BTLxProcess):
         """
         assert self.angle is not None
         assert self.inclination is not None
+        assert self.start_depth is not None
 
         # get the reference side surface of the beam
         ref_side = beam.side_as_surface(self.ref_side_index)
+
+        # move the reference side surface to the start depth
+        ref_side.translate(-ref_side.frame.normal * self.start_depth)
 
         # convert angles to radians
         inclination_radians = math.radians(self.inclination)
         angle_radians = math.radians(self.angle + 90)
 
         # calculate the point of origin based on orientation
-        start_depth_tangent = self.start_depth / math.tan(inclination_radians)
+        p_origin = ref_side.point_at(self.start_x, self.start_y)
         if self.orientation == OrientationType.END:
-            p_origin = ref_side.point_at(self.start_x + start_depth_tangent, self.start_y)
             yaxis = ref_side.frame.yaxis
         else:
-            p_origin = ref_side.point_at(self.start_x - start_depth_tangent, self.start_y)
             yaxis = -ref_side.frame.yaxis
             inclination_radians += math.pi
 
         # create the initial cutting plane
         cutting_frame = Frame(p_origin, -ref_side.frame.xaxis, yaxis)
 
-        # apply rotations to the cutting plane
+        # apply rotations to the cutting plane based on angle and inclination parameters
         rot_a = Rotation.from_axis_and_angle(cutting_frame.zaxis, angle_radians, point=p_origin)
-        cutting_frame.transform(rot_a)
-
         rot_b = Rotation.from_axis_and_angle(cutting_frame.yaxis, inclination_radians, point=p_origin)
-        cutting_frame.transform(rot_b)
-
-        # translate the cutting plane based on the start_depth
-        cutting_frame.point -= cutting_frame.xaxis * self.start_depth
+        cutting_frame.transform(rot_a * rot_b)
 
         # for simplicity align normal towards x-axis
         cutting_frame = Frame(cutting_frame.point, -cutting_frame.yaxis, cutting_frame.xaxis)
 
-        # apply rotation based on the rotation angle
-        if self.rotation != 90:
-            rot_axis = cutting_frame.normal
-            rot_angle = math.radians(self.rotation - 90)
-            rot_point = cutting_frame.point
-            if self.orientation == OrientationType.START:
-                rot_angle = -rot_angle
-            rotation = Rotation.from_axis_and_angle(rot_axis, rot_angle, rot_point)
-            cutting_frame.transform(rotation)
+        # apply rotation based on the rotation parameter
+        rot_angle = math.radians(self.rotation - 90)
+        if self.orientation == OrientationType.START:
+            rot_angle = -rot_angle
+        rotation = Rotation.from_axis_and_angle(cutting_frame.normal, rot_angle, cutting_frame.point)
+        cutting_frame.transform(rotation)
 
         return cutting_frame
 

@@ -390,6 +390,7 @@ class DovetailMortise(BTLxProcess):
         if orientation == OrientationType.START:
             angle -= 90.0
         else:
+            start_y = -start_y
             angle += 90.0
 
         # define slope and inclination
@@ -628,7 +629,7 @@ class DovetailMortise(BTLxProcess):
 
         # translate the top trimming frame to the top of the beam if the top is unlimited
         if self.limitation_top == LimitationTopType.UNLIMITED:
-            trimming_frames[0].translate(cutting_frame.yaxis * (beam.height))
+            trimming_frames[0].translate(cutting_frame.yaxis * (beam.height - TOL.relative))
 
         cutting_frame.xaxis = -cutting_frame.xaxis
         trimming_frames.append(cutting_frame)
@@ -712,7 +713,8 @@ class DovetailMortiseParams(BTLxProcessParams):
         result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
         result["Slope"] = "{:.{prec}f}".format(self._instance.slope, prec=TOL.precision)
-        # result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision) #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+        # result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
         result["LimitationTop"] = self._instance.limitation_top
         result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
         result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)

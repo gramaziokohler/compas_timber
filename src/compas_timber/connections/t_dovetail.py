@@ -10,6 +10,7 @@ from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
+
 class TDovetailJoint(Joint):
     """
     Represents a T-Dovetail type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross).
@@ -174,27 +175,28 @@ class TDovetailJoint(Joint):
             raise ValueError("Invalid tenon shape index. Please provide a valid index between 0 and 4.")
         return shape_type
 
-    # def add_extensions(self):
-    #     """Calculates and adds the necessary extensions to the beams.
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
 
-    #     This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is automatically called when joint is created by the call to `Joint.create()`.
 
-    #     Raises
-    #     ------
-    #     BeamJoinningError
-    #         If the extension could not be calculated.
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
 
-    #     """
-    #     assert self.main_beam and self.cross_beam
-    #     try:
-    #         cutting_plane = self.get_main_cutting_plane()[0]
-    #         start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
-    #     except AttributeError as ae:
-    #         raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
-    #     except Exception as ex:
-    #         raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-    #     extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-    #     self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
+        """
+        assert self.main_beam and self.cross_beam
+        try:
+            opposite_side_index = (self.cross_beam_ref_side_index + 2) % 4
+            cutting_plane = self.cross_beam.ref_sides[opposite_side_index]
+            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
 
     def add_features(self):
         """Adds the required trimming features to both beams.
