@@ -12,7 +12,7 @@ from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
-from compas.geometry import intersection_line_plane
+from compas_timber.utils import intersection_line_plane
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
