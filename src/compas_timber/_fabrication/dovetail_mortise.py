@@ -390,7 +390,6 @@ class DovetailMortise(BTLxProcess):
         if orientation == OrientationType.START:
             angle -= 90.0
         else:
-            start_y = -start_y
             angle += 90.0
 
         # define slope and inclination
