@@ -85,3 +85,24 @@ class OrientationType(object):
 
     START = "start"
     END = "end"
+
+
+class StepShapeType(object):
+    """Enum for the step shape of the cut.
+
+    Attributes
+    ----------
+    STEP : literal("step")
+        A step shape.
+    HEEL : literal("heel")
+        A heel shape.
+    TAPERED_HEEL : literal("taperedheel")
+        A tapered heel shape.
+    DOUBLE : literal("double")
+        A double shape.
+    """
+
+    STEP = "step"
+    HEEL = "heel"
+    TAPERED_HEEL = "taperedheel"
+    DOUBLE = "double"

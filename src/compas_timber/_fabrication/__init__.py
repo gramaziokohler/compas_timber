@@ -6,6 +6,21 @@ from .jack_cut import JackRafterCut
 from .jack_cut import JackRafterCutParams
 from .drilling import Drilling
 from .drilling import DrillingParams
+from .step_joint_notch import StepJointNotch
+from .step_joint_notch import StepJointNotchParams
+from .step_joint import StepJoint
+from .step_joint import StepJointParams
 
 
-__all__ = ["JackRafterCut", "BTLxProcess", "OrientationType", "JackRafterCutParams", "Drilling", "DrillingParams"]
+__all__ = [
+    "JackRafterCut",
+    "BTLxProcess",
+    "OrientationType",
+    "JackRafterCutParams",
+    "Drilling",
+    "DrillingParams",
+    "StepJointNotch",
+    "StepJointNotchParams",
+    "StepJoint",
+    "StepJointParams",
+]
