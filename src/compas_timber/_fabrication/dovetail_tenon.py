@@ -491,7 +491,7 @@ class DovetailTenon(BTLxProcess):
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
         start_x = distance_point_point(ref_side.point, point_start_x)
-        # count for start_y in the start_x
+        # count for start_depth and start_y in the start_x
         if orientation == OrientationType.END:
             start_x -= start_y / math.tan(math.radians(angle))
         else:
