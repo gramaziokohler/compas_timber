@@ -188,15 +188,19 @@ class TDovetailJoint(Joint):
         """
         assert self.main_beam and self.cross_beam
         try:
-            opposite_side_index = (self.cross_beam_ref_side_index + 2) % 4
-            cutting_plane = self.cross_beam.ref_sides[opposite_side_index]
+            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            cutting_plane.translate(-cutting_plane.normal * self.tool_height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
+        self.main_beam.add_blank_extension(
+            start_main + extension_tolerance,
+            end_main + extension_tolerance,
+            self.guid,
+        )
 
     def add_features(self):
         """Adds the required trimming features to both beams.

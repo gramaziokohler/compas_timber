@@ -437,7 +437,13 @@ class DovetailTenon(BTLxProcess):
 
         # calculate start_x
         start_x = cls._calculate_start_x(
-            ref_side, ref_edge, plane, orientation, start_y, start_depth, angle, inclination
+            ref_side,
+            ref_edge,
+            plane,
+            orientation,
+            start_y,
+            start_depth,
+            angle,
         )
 
         # determine if the top and bottom length of the cut is limited
@@ -478,16 +484,14 @@ class DovetailTenon(BTLxProcess):
             return OrientationType.END
 
     @staticmethod
-    def _calculate_start_x(ref_side, ref_edge, plane, orientation, start_y, start_depth, angle, inclination):
+    def _calculate_start_x(ref_side, ref_edge, plane, orientation, start_y, start_depth, angle):
         # calculate the start_x of the cut based on the ref_side, ref_edge, plane, start_y and angle
         plane.translate(ref_side.normal * start_depth)
         point_start_x = intersection_line_plane(ref_edge, plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
         start_x = distance_point_point(ref_side.point, point_start_x)
-        print(start_x)
-        print(start_y / math.tan(math.radians(angle)))
-        # count for start_depth and start_y in the start_x
+        # count for start_y in the start_x
         if orientation == OrientationType.END:
             start_x -= start_y / math.tan(math.radians(angle))
         else:

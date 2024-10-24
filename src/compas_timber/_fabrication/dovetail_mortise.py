@@ -390,7 +390,6 @@ class DovetailMortise(BTLxProcess):
         if orientation == OrientationType.START:
             angle -= 90.0
         else:
-            start_y = -start_y
             angle += 90.0
 
         # define slope and inclination
@@ -616,12 +615,12 @@ class DovetailMortise(BTLxProcess):
 
         trimming_frames = []
         for i, edge in enumerate(dovetail_edges):
-            # Create the initial frame using the line's direction and the cutting frame's normal
+            # create the initial frame using the line's direction and the cutting frame's normal
             frame = Frame(edge.midpoint, edge.direction, cutting_frame.normal)
 
             if i != 0:
-                # Determine the rotation direction: right and bottom are positive, top and left are negative
-                # Apply the rotation based on the flank angle
+                # determine the rotation direction: right and bottom are positive, top and left are negative
+                # apply the rotation based on the flank angle
                 rotation = Rotation.from_axis_and_angle(edge.direction, math.radians(self.flank_angle), frame.point)
                 frame.transform(rotation)
 
