@@ -10,8 +10,8 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
-from compas.geometry import intersection_segment_plane
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
