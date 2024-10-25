@@ -30,7 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
-
 * Added LayerName & ClearLayer Input to GH `BakeBoxMap` and `BakePlateBoxMap` Components.
 
 ### Removed
