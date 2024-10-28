@@ -91,7 +91,7 @@ class StepJointNotch(BTLxProcess):
         mortise=False,
         mortise_width=40.0,
         mortise_height=40.0,
-        **kwargs
+        **kwargs,
     ):
         super(StepJointNotch, self).__init__(**kwargs)
         self._orientation = None

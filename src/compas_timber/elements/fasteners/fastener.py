@@ -1,22 +1,5 @@
-import math
-
-from compas.geometry import Box
-from compas.geometry import Brep
-from compas.geometry import Frame
-from compas.geometry import Line
-from compas.geometry import PlanarSurface
-from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import add_vectors
-from compas.geometry import angle_vectors
-from compas.geometry import bounding_box
-from compas.geometry import cross_vectors
-from compas_timber.utils import intersection_line_plane
-from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
-from .features import FeatureApplicationError
 from .timber import TimberElement
 
 
@@ -104,7 +87,6 @@ class Fastener(TimberElement):
         """
         raise NotImplementedError
 
-
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
         """Computes the Axis Aligned Bounding Box (AABB) of the element.
@@ -154,8 +136,6 @@ class Fastener(TimberElement):
     # ==========================================================================
     # Alternative constructors
     # ==========================================================================
-
-
 
     @staticmethod
     def _create_shape(frame, beams):

@@ -75,7 +75,7 @@ class StepJoint(BTLxProcess):
         tenon=False,
         tenon_width=40.0,
         tenon_height=40.0,
-        **kwargs
+        **kwargs,
     ):
         super(StepJoint, self).__init__(**kwargs)
         self._orientation = None
