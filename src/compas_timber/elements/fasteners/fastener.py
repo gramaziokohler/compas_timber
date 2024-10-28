@@ -1,4 +1,6 @@
-from compas_model.elements import reset_computed, Element
+from compas_model.elements import Element
+from compas_model.elements import reset_computed
+
 
 class Fastener(Element):
     """
