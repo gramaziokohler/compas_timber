@@ -1,6 +1,9 @@
-from compas_model.elements import reset_computed, Element
+from compas_model.elements import reset_computed
 
-class Fastener(Element):
+from .timber import Fastener
+
+
+class BallNodeFastener(Fastener):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
@@ -34,7 +37,7 @@ class Fastener(Element):
         return data
 
     def __init__(self, elements, **kwargs):
-        super(Fastener, self).__init__(elements, **kwargs)
+        super(Fastener, self).__init__(elements=elements, **kwargs)
         self.elements = elements
         self.features = []
         self.attributes = {}
@@ -43,7 +46,7 @@ class Fastener(Element):
 
     def __repr__(self):
         # type: () -> str
-        element_str = ["{} {}".format(element.__class__.__name__, element.key) for element in self.elements]
+        element_str = ["{} {}".format(element.type, element.key) for element in self.elements]
         return "Fastener({})".format(", ".join(element_str))
 
     # ==========================================================================
@@ -66,7 +69,7 @@ class Fastener(Element):
         return self.graph_node
 
     def __str__(self):
-        element_str = ["{} {}".format(element.__class__.__name__, element.key) for element in self.elements]
+        element_str = ["{} {}".format(element.type, element.key) for element in self.elements]
         return "Fastener connecting {}".format(", ".join(element_str))
 
     # ==========================================================================
