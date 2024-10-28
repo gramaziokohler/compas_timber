@@ -1,9 +1,9 @@
 from compas_model.elements import reset_computed
 
-from .timber import TimberElement
+from compas_model.elements import Element
 
 
-class Fastener(TimberElement):
+class Fastener(Element):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 

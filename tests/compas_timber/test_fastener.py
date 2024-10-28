@@ -1,6 +1,5 @@
 import pytest
 from compas_timber.elements.fasteners.fastener import Fastener
-from compas_model.elements import Element
 from compas_timber.elements import Beam
 from compas.geometry import Frame
 
@@ -9,7 +8,6 @@ from compas.geometry import Frame
 def mock_elements():
     beam_1 = Beam(Frame([0.0,0.0,0.0], [1.0,0.0,0.0], [0.0,1.0,0.0]), 100.0, 10.0, 20.0)
     beam_2 = Beam(Frame([0.0,0.0,0.0], [0.0,1.0,0.0], [-1.0,0.0,0.0]), 100.0, 10.0, 20.0)
-
     return [beam_1, beam_2]
 
 def test_fastener_initialization(mock_elements):
