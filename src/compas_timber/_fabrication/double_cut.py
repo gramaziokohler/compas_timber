@@ -59,6 +59,7 @@ class DoubleCut(BTLxProcess):
         data["inclination_2"] = self.inclination_2
         return data
 
+    # fmt: off
     def __init__(
         self,
         orientation,
@@ -221,6 +222,11 @@ class DoubleCut(BTLxProcess):
         # calculate the inclinations of the cuts
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes, orientation)
 
+        # flip the values if the first angle is larger than the second.
+        if angle_1 > angle_2:
+            angle_1, angle_2 = angle_2, angle_1
+            inclination_1, inclination_2 = inclination_2, inclination_1
+
         return cls(
             orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index
         )
@@ -230,9 +236,9 @@ class DoubleCut(BTLxProcess):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
         if is_point_behind_plane(ref_side.point, cutting_plane):
-            return OrientationType.END
-        else:
             return OrientationType.START
+        else:
+            return OrientationType.END
 
     @staticmethod
     def _calculate_start_x_y(ref_edge, point_start_xy):
@@ -249,15 +255,14 @@ class DoubleCut(BTLxProcess):
     @staticmethod
     def _calculate_angle(ref_side, planes, orientation):
         # calculate the angles of the planes in the horizontal direction. (normal: ref_side.zaxis)
+        if orientation == OrientationType.END:
+            planes.reverse()
+
         angles = []
         for plane in planes:
             angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
             angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-            if orientation == OrientationType.START:
-                angle = 180 - abs(angle)  # get the other side of the angle
-            else:
-                angle = abs(angle)
-            angles.append(angle)
+            angles.append(abs(angle))
 
         if sum(angle % 90 for angle in angles) > 180:
             raise ValueError(
@@ -268,14 +273,13 @@ class DoubleCut(BTLxProcess):
     @staticmethod
     def _calculate_inclination(ref_side, planes, orientation):
         # calculate the inclinations of the planes in the vertical direction. (normal: ref_side.yaxis)
+        # if orientation == OrientationType.END:
+        #     planes.reverse()
+
         inclinations = []
         for plane in planes:
-            inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
-            inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
-            if orientation == OrientationType.START:
-                inclination = 180 - abs(inclination)  # get the other side of the angle
-            else:
-                inclination = abs(inclination)
+            ref_vect = Vector.cross(ref_side.normal, plane.normal)
+            inclination = angle_vectors_signed(ref_side.normal, plane.normal, ref_vect, deg=True)
             inclinations.append(inclination)
         return inclinations
 
@@ -347,34 +351,32 @@ class DoubleCut(BTLxProcess):
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
-        ref_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+        ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+
+        if self.orientation == OrientationType.END:
+            ref_frame.xaxis = -ref_frame.xaxis
+            inclination_1 = 180-self.inclination_1
+            inclination_2 = 180-self.inclination_2
+        else:
+            inclination_1 = self.inclination_1
+            inclination_2 = self.inclination_2
 
         # normal pointing towards xaxis so just need the delta
-        cutting_plane_1 = ref_plane.copy()
-        rot_1_horiz = Rotation.from_axis_and_angle(ref_plane.zaxis, math.radians(self.angle_1 - 90), point=p_origin)
+        cutting_frame_1 = ref_frame.copy()
+        rot_1_horiz = Rotation.from_axis_and_angle(ref_frame.zaxis, math.radians(self.angle_1), point=p_origin)
         rot_1_vert = Rotation.from_axis_and_angle(
-            ref_plane.yaxis, math.radians(self.inclination_1 - 90), point=p_origin
+            ref_frame.xaxis, math.radians(inclination_1), point=p_origin
         )
-        cutting_plane_1.transform(rot_1_horiz * rot_1_vert)
+        cutting_frame_1.transform(rot_1_horiz * rot_1_vert)
 
-        cutting_plane_2 = ref_plane.copy()
-        rot_2_horiz = Rotation.from_axis_and_angle(ref_plane.zaxis, math.radians(self.angle_2 - 90), point=p_origin)
+        cutting_frame_2 = ref_frame.copy()
+        rot_2_horiz = Rotation.from_axis_and_angle(ref_frame.zaxis, math.radians(self.angle_2), point=p_origin)
         rot_2_vert = Rotation.from_axis_and_angle(
-            ref_plane.yaxis, math.radians(self.inclination_2 - 90), point=p_origin
+            ref_frame.xaxis, math.radians(inclination_2), point=p_origin
         )
-        cutting_plane_2.transform(rot_2_horiz * rot_2_vert)
+        cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
 
-        # for simplicity, we always start with normal pointing towards xaxis.
-        # if start is cut, we need to flip the normal
-        cutting_planes = []
-        for plane in [cutting_plane_1, cutting_plane_2]:
-            if self.orientation == OrientationType.END:
-                plane_normal = plane.xaxis
-            else:
-                plane_normal = -plane.xaxis
-            cutting_planes.append(Plane(plane.point, plane_normal))
-
-        return cutting_planes
+        return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
 
 class DoubleCutParams(BTLxProcessParams):
@@ -403,8 +405,8 @@ class DoubleCutParams(BTLxProcessParams):
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["Angle_1"] = "{:.{prec}f}".format(self._instance.angle_1, prec=TOL.precision)
-        result["Inclination_1"] = "{:.{prec}f}".format(self._instance.inclination_1, prec=TOL.precision)
-        result["Angle_2"] = "{:.{prec}f}".format(self._instance.angle_2, prec=TOL.precision)
-        result["Inclination_2"] = "{:.{prec}f}".format(self._instance.inclination_2, prec=TOL.precision)
+        result["Angle1"] = "{:.{prec}f}".format(self._instance.angle_1, prec=TOL.precision)
+        result["Inclination1"] = "{:.{prec}f}".format(self._instance.inclination_1, prec=TOL.precision)
+        result["Angle2"] = "{:.{prec}f}".format(self._instance.angle_2, prec=TOL.precision)
+        result["Inclination2"] = "{:.{prec}f}".format(self._instance.inclination_2, prec=TOL.precision)
         return result
