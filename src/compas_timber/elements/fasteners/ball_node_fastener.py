@@ -1,6 +1,15 @@
 from compas_model.elements import reset_computed
+from compas_timber.utils import intersection_line_line_param
+from compas.geometry import Sphere
+from compas.geometry import Cylinder
+from compas.geometry import Box
+from compas.geometry import Plane
+from compas.geometry import Frame
+from compas.geometry.intersections import intersection_sphere_line
+from compas_timber.elements import DrillFeature
+from compas_timber.elements import CutFeature
+from compas_timber.elements.fasteners.fastener import Fastener
 
-from .timber import Fastener
 
 
 class BallNodeFastener(Fastener):
@@ -21,24 +30,19 @@ class BallNodeFastener(Fastener):
 
     """
 
-    OPPOSING_SIDE_MAP = {
-        0: 2,
-        2: 0,
-        1: 3,
-        3: 1,
-        4: 5,
-        5: 4,
-    }
-
     @property
     def __data__(self):
         data = super(Fastener, self).__data__
 
         return data
 
-    def __init__(self, elements, **kwargs):
-        super(Fastener, self).__init__(elements=elements, **kwargs)
-        self.elements = elements
+    def __init__(self, elements,thickness = 10, holes = 6, strut_length = 100, ball_diameter = 50, **kwargs):
+        super(BallNodeFastener, self).__init__(elements, **kwargs)
+        self.elements = elements if isinstance(elements, list) else [elements]
+        self.thickness = thickness
+        self.holes = holes
+        self.strut_length = strut_length
+        self.ball_diameter = ball_diameter
         self.features = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -60,8 +64,37 @@ class BallNodeFastener(Fastener):
     @property
     def shape(self):
         # type: () -> Brep
-        assert self.frame
-        return self._create_shape(self.frame, self.beams)
+        geometry = []
+        ends = []
+        points = intersection_line_line_param(self.elements[0].centerline, self.elements[1].centerline)
+        cpt = None
+        if points[0][0] is not None:
+            cpt = (points[0][0])
+            if points[0][1] > 0.5:
+                ends.append("end")
+            else:
+                ends.append("start")
+
+        for beam in self.elements[1::]:
+            points = intersection_line_line_param(self.elements[0].centerline, beam.centerline)
+            if points[0][0] is not None and points[1][0] is not None:
+                cpt = cpt + points[1][0]
+                if points[1][1] > 0.5:
+                    ends.append("end")
+                else:
+                    ends.append("start")
+        cpt = cpt*(1.0/len(self.elements))
+
+        geometry.append(Sphere(self.ball_diameter/2, point= cpt))
+        cut_sphere = Sphere(self.strut_length, point= cpt)
+        for beam, end in zip(self.elements, ends):
+            cut_pts = intersection_sphere_line([cut_sphere.base, cut_sphere.radius], beam.centerline)
+            if cut_pts:
+                cut_pt = cut_pts[0] if beam.midpoint.distance_to_point(cut_pts[0])<beam.midpoint.distance_to_point(cut_pts[1]) else cut_pts[1]
+                cut_plane = Plane(cut_pt, beam.centerline.direction) if end == "end" else Plane(cut_pt, -beam.centerline.direction)
+                beam.add_feature(CutFeature(cut_plane))
+                geometry.append(Cylinder(self.thickness, self.strut_length, Frame.from_plane(cut_plane)))
+        return geometry
 
     @property
     def key(self):
@@ -69,7 +102,7 @@ class BallNodeFastener(Fastener):
         return self.graph_node
 
     def __str__(self):
-        element_str = ["{} {}".format(element.type, element.key) for element in self.elements]
+        element_str = ["{} {}".format(element.__class__.__name__, element.key) for element in self.elements]
         return "Fastener connecting {}".format(", ".join(element_str))
 
     # ==========================================================================
@@ -137,13 +170,9 @@ class BallNodeFastener(Fastener):
     # Alternative constructors
     # ==========================================================================
 
-    @staticmethod
-    def _create_shape(frame, beams):
-        # type: (Frame,  list[TimberElement]) -> Brep
-        raise NotImplementedError
 
     # ==========================================================================
-    # Featrues
+    # Features
     # ==========================================================================
 
     @reset_computed
