@@ -26,14 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.StepJointNotch`.
 * Added new `compas_timber.connections.TStepJoint`.
 * Added new `utilities` module in `connections` package.
-* Added new `fasteners` module with new `Fastener` element type.
+* Added new `fasteners.py` module with new `Fastener` element type.
+* Added unit tests for `fasteners.py` module.
 
 ### Changed
 
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
+* Renamed `intersection_line_plane` to `intersection_line_plane_param`.
+* Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
 
 ### Removed
 
+* Removed module `compas_timber.utils.compas_extra`.
 
 ## [0.11.0] 2024-09-17
 

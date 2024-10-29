@@ -15,7 +15,7 @@ from compas.geometry import cross_vectors
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
-from compas_timber.utils import intersection_line_plane
+from compas_timber.utils import intersection_line_plane_param
 
 from .features import FeatureApplicationError
 from .timber import TimberElement
@@ -577,10 +577,10 @@ class Beam(TimberElement):
         x = {}
         pln = Plane.from_frame(pln)  # type: ignore
         for e in self.long_edges:
-            p, t = intersection_line_plane(e, pln)
+            p, t = intersection_line_plane_param(e, pln)
             x[t] = p
 
-        px = intersection_line_plane(self.centerline, pln)[0]
+        px = intersection_line_plane_param(self.centerline, pln)[0]
         if px is None:
             raise ValueError("The plane does not intersect with the centerline of the beam.")
         side, _ = self.endpoint_closest_to_point(px)

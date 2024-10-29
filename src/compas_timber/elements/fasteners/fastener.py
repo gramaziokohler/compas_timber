@@ -1,4 +1,6 @@
-from compas_model.elements import reset_computed, Element
+from compas_model.elements import Element
+from compas_model.elements import reset_computed
+
 
 class Fastener(Element):
     """
@@ -172,6 +174,9 @@ class Fastener(Element):
         if features is None:
             self.features = []
         else:
+            if not isinstance(features, list):
+                features = [features]
+            self.features = [f for f in self.features if f not in features]
             if not isinstance(features, list):
                 features = [features]
             self.features = [f for f in self.features if f not in features]
