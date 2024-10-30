@@ -1,11 +1,11 @@
-from compas.tolerance import TOL
+from compas.geometry import Line
 from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_segment_plane
-from compas.geometry import Line
-from compas.geometry import Point
-from compas.geometry import angle_vectors_signed
-from compas.geometry import angle_vectors
+from compas.tolerance import TOL
 
 from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
