@@ -7,6 +7,8 @@ from compas.geometry import Plane
 from compas.geometry import Line
 from compas.geometry import Vector
 
+from compas.tolerance import TOL
+
 from compas_timber.elements import Beam
 from compas_timber._fabrication import DoubleCut
 
@@ -123,7 +125,8 @@ EXPECTED_CUTTING_PLANES = [
             point=Point(x=31224.1239747, y=-3307.66821289, z=-59.9999999995),
             normal=Vector(x=5.24602991441e-15, y=-1.0, z=6.24198463444e-16),
         ),
-    ][
+    ],
+    [
         Plane(
             point=Point(x=31987.3059470, y=-3307.66821289, z=59.9999999999),
             normal=Vector(x=-9.2376139442e-17, y=6.15840929613e-17, z=1.0),
@@ -132,7 +135,8 @@ EXPECTED_CUTTING_PLANES = [
             point=Point(x=31987.3059470, y=-3307.66821289, z=59.9999999999),
             normal=Vector(x=-1.38695476766e-16, y=-1.0, z=5.90388154506e-17),
         ),
-    ][
+    ],
+    [
         Plane(
             point=Point(x=32469.9263052, y=-3207.66821289, z=-60.0000000004),
             normal=Vector(x=-1.02714686652e-16, y=1.0, z=1.71874245103e-16),
@@ -141,7 +145,8 @@ EXPECTED_CUTTING_PLANES = [
             point=Point(x=32469.9263052, y=-3207.66821289, z=-60.0000000004),
             normal=Vector(x=1.63477500676e-16, y=2.44472009656e-17, z=-1.0),
         ),
-    ][
+    ],
+    [
         Plane(
             point=Point(x=33453.7063922, y=-3307.66821289, z=60.0000000000),
             normal=Vector(x=-3.02234139005e-16, y=-1.0, z=-1.41357928117e-16),
@@ -150,7 +155,7 @@ EXPECTED_CUTTING_PLANES = [
             point=Point(x=33453.7063922, y=-3307.66821289, z=60.0000000000),
             normal=Vector(x=-6.92821045815e-17, y=2.46336371845e-16, z=1.0),
         ),
-    ]
+    ],
 ]
 
 
@@ -166,14 +171,14 @@ EXPECTED_CUTTING_PLANES = [
 def test_double_cut_params(
     main_beams,
     cross_beam,
-    main_beam_index,
+    test_index,
     expected_double_cut_params,
     cutting_plane_indexes,
     ref_side_index,
 ):
     # Create the DoubleCut object
     cutting_planes = [cross_beam.ref_sides[index] for index in cutting_plane_indexes]
-    double_cut = DoubleCut.from_planes_and_beam(cutting_planes, main_beams[main_beam_index], ref_side_index)
+    double_cut = DoubleCut.from_planes_and_beam(cutting_planes, main_beams[test_index], ref_side_index)
 
     # Validate generated parameters
     generated_params = double_cut.params_dict
@@ -190,7 +195,7 @@ def test_double_cut_params(
         (3, EXPECTED_DOUBLE_CUT_PARAMS[3], EXPECTED_CUTTING_PLANES[3]),
     ],
 )
-def test_double_cut_frames_from_params(
+def test_double_cut_planes_from_params(
     main_beams,
     test_index,
     expected_double_cut_params,
@@ -210,7 +215,7 @@ def test_double_cut_frames_from_params(
     # convert the OrderedDict values to the expected types
     params = {key.lower(): convert_value(value) for key, value in expected_double_cut_params.items()}
 
-    # instantiate DovetailTenon with unpacked parameters from the OrderedDict
+    # instantiate DoubleCut with unpacked parameters from the OrderedDict
     double_cut = DoubleCut(
         orientation=params["orientation"],
         start_x=params["startx"],
@@ -223,5 +228,12 @@ def test_double_cut_frames_from_params(
     )
 
     # generate frame from the parameters
-    generated_frame = double_cut.planes_from_params_and_beam(main_beams[test_index])
-    assert generated_frame == expected_cutting_planes
+    generated_planes = double_cut.planes_from_params_and_beam(main_beams[test_index])
+    # compare generated planes to expected planes using `approx`
+    for generated, expected in zip(generated_planes, expected_cutting_planes):
+        assert generated.point.x == pytest.approx(expected.point.x, abs=TOL.approximation)
+        assert generated.point.y == pytest.approx(expected.point.y, abs=TOL.approximation)
+        assert generated.point.z == pytest.approx(expected.point.z, abs=TOL.approximation)
+        assert generated.normal.x == pytest.approx(expected.normal.x, abs=TOL.approximation)
+        assert generated.normal.y == pytest.approx(expected.normal.y, abs=TOL.approximation)
+        assert generated.normal.z == pytest.approx(expected.normal.z, abs=TOL.approximation)
