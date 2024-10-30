@@ -1,6 +1,8 @@
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import XHalfLapJoint
 from compas_timber.utils import intersection_line_line_param
+from compas_timber.connections import JointTopology
 
 
 class CollectionDef(object):
@@ -33,6 +35,30 @@ class JointRule(object):
 
         """
         raise NotImplementedError
+
+
+    @staticmethod
+    def get_direct_rules(rules):
+        return [rule for rule in rules if isinstance(rule, DirectRule)]
+
+    @staticmethod
+    def get_category_rules(rules):
+        return [rule for rule in rules if isinstance(rule, CategoryRule)]
+
+    @staticmethod
+    def get_topology_rules(rules, use_defaults = False):
+        if use_defaults:
+            topo_rules = {JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
+                        JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
+                        JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XHalfLapJoint)}
+        else:
+            topo_rules = {JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, None),
+                        JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, None),
+                        JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, None)}
+        for r in rules:  # separate category and topo and direct joint rules
+            if isinstance(r, TopologyRule):
+                topo_rules[r.topology_type] = TopologyRule(r.topology_type, r.joint_type) # overwrites, meaning last rule wins
+        return [rule for rule in topo_rules.values() if rule is not None]
 
 
 class DirectRule(JointRule):
@@ -236,7 +262,7 @@ def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=1e-6):
         return ["X", (beamA, beamB)]
 
 
-def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l-miter"):
+def set_default_joints(model, x_default="x-lap", t_default="t-butt", l_default="l-miter"):
     beams = list(model.beams)
     n = len(beams)
 

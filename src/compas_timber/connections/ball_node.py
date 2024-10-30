@@ -11,10 +11,9 @@ from compas.geometry import Sphere
 from compas.geometry import Cylinder
 from compas.geometry import Box
 
-from datatable import g
 
 from .joint import BeamJoinningError
-from .lap_joint import LapJoint
+from .joint import Joint
 from .solver import JointTopology
 
 
