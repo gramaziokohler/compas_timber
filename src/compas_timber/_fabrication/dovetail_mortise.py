@@ -510,10 +510,10 @@ class DovetailMortise(BTLxProcess):
         if (
             self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
         ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_idexes = [4, 7] if self.length_limited_bottom else [5, 8]
+            edge_indices = [4, 7] if self.length_limited_bottom else [5, 8]
             try:
                 dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_idexes[0]], dovetail_volume.edges[edge_idexes[1]]]
+                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
                 )  # TODO: NotImplementedError
             except Exception as e:
                 raise FeatureApplicationError(
