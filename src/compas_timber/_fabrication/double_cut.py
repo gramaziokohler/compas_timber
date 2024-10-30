@@ -220,7 +220,7 @@ class DoubleCut(BTLxProcess):
         angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
 
         # calculate the inclinations of the cuts
-        inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes, orientation)
+        inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
 
         # flip the values if the first angle is larger than the second.
         if angle_1 > angle_2:
@@ -271,11 +271,8 @@ class DoubleCut(BTLxProcess):
         return angles
 
     @staticmethod
-    def _calculate_inclination(ref_side, planes, orientation):
+    def _calculate_inclination(ref_side, planes):
         # calculate the inclinations of the planes in the vertical direction. (normal: ref_side.yaxis)
-        # if orientation == OrientationType.END:
-        #     planes.reverse()
-
         inclinations = []
         for plane in planes:
             ref_vect = Vector.cross(ref_side.normal, plane.normal)

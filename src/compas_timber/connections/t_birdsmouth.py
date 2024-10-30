@@ -58,15 +58,15 @@ class TBirdsmouthJoint(Joint):
         return [self.main_beam, self.cross_beam]
 
     @property
-    def cross_beam_ref_side_indexes(self):
+    def cross_beam_ref_side_indices(self):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
-        ref_side_indexes = sorted(ref_side_dict, key=ref_side_dict.get)[:2]
-        return ref_side_indexes
+        ref_side_indices = sorted(ref_side_dict, key=ref_side_dict.get)[:2]
+        return ref_side_indices
 
     @property
     def main_beam_ref_side_index(self):
         distance_dict = {}
-        cutting_frames = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indexes]
+        cutting_frames = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indices]
         for i, ref_side in enumerate(self.main_beam.ref_sides[0:4]):
             intercection_pt = intersection_plane_plane_plane(
                 Plane.from_frame(cutting_frames[0]), Plane.from_frame(cutting_frames[1]), Plane.from_frame(ref_side)
@@ -88,7 +88,7 @@ class TBirdsmouthJoint(Joint):
         assert self.main_beam and self.cross_beam
         start_a, end_a = None, None
 
-        face_index = self.cross_beam_ref_side_indexes[1]
+        face_index = self.cross_beam_ref_side_indices[1]
         plane = self.cross_beam.ref_sides[face_index]
 
         try:
@@ -110,7 +110,7 @@ class TBirdsmouthJoint(Joint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        cross_beam_ref_sides = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indexes]
+        cross_beam_ref_sides = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indices]
 
         # generate step joint features
         main_feature = DoubleCut.from_planes_and_beam(
