@@ -2,7 +2,6 @@ from compas.plugins import plugin
 from compas.geometry import Plane
 from compas.geometry import Frame
 from compas.geometry import Box
-from compas.geometry import bounding_box
 
 
 @plugin(category="solvers", requires=["Rhino"])
