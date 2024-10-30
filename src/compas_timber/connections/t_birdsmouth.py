@@ -10,7 +10,7 @@ from .joint import Joint
 from .solver import JointTopology
 
 
-class TBirdsmouth(Joint):
+class TBirdsmouthJoint(Joint):
     """Represents a T-Birdsmouth type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).
 
     This joint type is compatible with beams in T topology.
@@ -39,13 +39,13 @@ class TBirdsmouth(Joint):
 
     @property
     def __data__(self):
-        data = super(TBirdsmouth, self).__data__
+        data = super(TBirdsmouthJoint, self).__data__
         data["main_beam"] = self.main_beam_guid
         data["cross_beam"] = self.cross_beam_guid
         return data
 
     def __init__(self, main_beam, cross_beam):
-        super(TBirdsmouth, self).__init__()
+        super(TBirdsmouthJoint, self).__init__()
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
