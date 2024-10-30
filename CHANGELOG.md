@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.StepJointNotch`.
 * Added new `compas_timber.connections.TStepJoint`.
 * Added new `utilities` module in `connections` package.
+* Added new `compas_timber._fabrication.Slot`.
+* Added new `compas_timber._fabrication.SlotParams`.
 
 ### Changed
 

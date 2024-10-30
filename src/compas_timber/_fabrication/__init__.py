@@ -10,6 +10,8 @@ from .step_joint_notch import StepJointNotch
 from .step_joint_notch import StepJointNotchParams
 from .step_joint import StepJoint
 from .step_joint import StepJointParams
+from .slot import Slot
+from .slot import SlotParams
 
 
 __all__ = [
@@ -23,4 +25,6 @@ __all__ = [
     "StepJointNotchParams",
     "StepJoint",
     "StepJointParams",
+    "Slot",
+    "SlotParams",
 ]
