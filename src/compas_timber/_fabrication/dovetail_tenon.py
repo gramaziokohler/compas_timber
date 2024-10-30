@@ -67,7 +67,7 @@ class DovetailTenon(BTLxProcess):
     PROCESS_NAME = "DovetailTenon"  # type: ignore
 
     # Class-level attribute
-    _dovetail_tool_params = {}
+    _DOVETAIL_TOOL_PARAMS = {}
 
     @property
     def __data__(self):
@@ -91,6 +91,7 @@ class DovetailTenon(BTLxProcess):
         data["shape_radius"] = self.shape_radius
         return data
 
+    # fmt: off
     def __init__(
         self,
         orientation,
@@ -392,11 +393,11 @@ class DovetailTenon(BTLxProcess):
         """
         # type: (Plane|Frame, Beam, float, float, bool, int) -> DovetailTenon
 
-        if cls._dovetail_tool_params:
+        if cls._DOVETAIL_TOOL_PARAMS:
             # get the tool parameters
-            tool_angle = cls._dovetail_tool_params["tool_angle"]
-            tool_diameter = cls._dovetail_tool_params["tool_diameter"]
-            tool_height = cls._dovetail_tool_params["tool_height"]
+            tool_angle = cls._DOVETAIL_TOOL_PARAMS["tool_angle"]
+            tool_diameter = cls._DOVETAIL_TOOL_PARAMS["tool_diameter"]
+            tool_height = cls._DOVETAIL_TOOL_PARAMS["tool_height"]
             tool_top_radius = tool_diameter / 2 - tool_height * (math.tan(math.radians(tool_angle)))
             # update parameters related to the tool if a tool is defined
             height = min(height, tool_height)
@@ -569,7 +570,7 @@ class DovetailTenon(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def define_dovetail_tool(self, tool_angle, tool_diameter, tool_height):
+    def define_dovetail_tool(cls, tool_angle, tool_diameter, tool_height):
         """Define the parameters for the dovetail feature based on a defined dovetail cutting tool.
 
         Parameters
@@ -583,7 +584,7 @@ class DovetailTenon(BTLxProcess):
 
         """
         # type: (float, float, float) -> None
-        self._dovetail_tool_params = {
+        cls._DOVETAIL_TOOL_PARAMS = {
             "tool_angle": tool_angle,
             "tool_diameter": tool_diameter,
             "tool_height": tool_height,
@@ -607,7 +608,7 @@ class DovetailTenon(BTLxProcess):
         Raises
         ------
         :class:`~compas_timber.elements.FeatureApplicationError`
-            If the cutting planes do not create a volume that itersects with beam geometry or any step fails.
+            If the cutting frames do not create a volume that itersects with beam geometry or any step fails.
 
         Returns
         -------
@@ -622,7 +623,7 @@ class DovetailTenon(BTLxProcess):
             cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting plane from parameters and beam: {}".format(str(e))
+                None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
 
         # get dovetail volume from params and beam
@@ -637,10 +638,10 @@ class DovetailTenon(BTLxProcess):
         if (
             self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
         ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_ideces = [4, 7] if self.length_limited_top else [5, 8]
+            edge_idexes = [4, 7] if self.length_limited_top else [5, 8]
             try:
                 dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_ideces[0]], dovetail_volume.edges[edge_ideces[1]]]
+                    self.shape_radius, [dovetail_volume.edges[edge_idexes[0]], dovetail_volume.edges[edge_idexes[1]]]
                 )  # TODO: NotImplementedError
             except Exception as e:
                 raise FeatureApplicationError(
@@ -723,8 +724,8 @@ class DovetailTenon(BTLxProcess):
 
         return cutting_frame
 
-    def dovetail_cutting_planes_from_params_and_beam(self, beam):
-        """Calculates the cutting planes for the dovetail tenon from the machining parameters in this instance and the given beam."""
+    def dovetail_cutting_frames_from_params_and_beam(self, beam):
+        """Calculates the cutting frames for the dovetail tenon from the machining parameters in this instance and the given beam."""
 
         # get the cutting frame
         cutting_frame = self.frame_from_params_and_beam(beam)
@@ -814,8 +815,8 @@ class DovetailTenon(BTLxProcess):
             )
         )
 
-        # get the cutting planes for the dovetail tenon
-        trimming_frames = self.dovetail_cutting_planes_from_params_and_beam(beam)
+        # get the cutting frames for the dovetail tenon
+        trimming_frames = self.dovetail_cutting_frames_from_params_and_beam(beam)
 
         # trim the box to create the dovetail volume
         for frame in trimming_frames:
@@ -823,7 +824,7 @@ class DovetailTenon(BTLxProcess):
                 dovetail_volume.trim(frame)
             except Exception as e:
                 raise FeatureApplicationError(
-                    frame, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
+                    frame, dovetail_volume, "Failed to trim tenon volume with cutting frame: {}".format(str(e))
                 )
 
         return dovetail_volume

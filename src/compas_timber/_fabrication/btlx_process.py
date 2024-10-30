@@ -113,14 +113,16 @@ class TenonShapeType(object):
 
     Attributes
     ----------
-    STEP : literal("step")
-        A step shape.
-    HEEL : literal("heel")
-        A heel shape.
-    TAPERED_HEEL : literal("taperedheel")
-        A tapered heel shape.
-    DOUBLE : literal("double")
-        A double shape.
+    AUTOMATIC : literal("automatic")
+        Automatic tenon shape.
+    SQUARE : literal("square")
+        Square tenon shape.
+    ROUND : literal("round")
+        Round tenon shape.
+    ROUNDED : literal("rounded")
+        Rounded tenon shape.
+    RADIUS : literal("radius")
+        Radius tenon shape.
     """
 
     AUTOMATIC = "automatic"
