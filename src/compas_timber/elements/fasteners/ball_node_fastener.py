@@ -39,13 +39,9 @@ class BallNodeFastener(Fastener):
 
         return data
 
-    def __init__(self, elements,thickness = 10, holes = 6, strut_length = 100, ball_diameter = 50, **kwargs):
-        super(BallNodeFastener, self).__init__(elements, **kwargs)
-        self.elements = elements if isinstance(elements, list) else [elements]
-        self.thickness = thickness
-        self.holes = holes
-        self.strut_length = strut_length
-        self.ball_diameter = ball_diameter
+    def __init__(self, geometry, **kwargs):
+        super(BallNodeFastener, self).__init__(geometry, **kwargs)
+        self.geometry = geometry
         self.features = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -68,72 +64,8 @@ class BallNodeFastener(Fastener):
     @property
     def shape(self):
         # type: () -> Brep
+        return self.geometry
 
-        ends = []
-        points = intersection_line_line_param(self.elements[0].centerline, self.elements[1].centerline)
-        cpt = None
-        if points[0][0] is not None:
-            cpt = (points[0][0])
-            if points[0][1] > 0.5:
-                ends.append("end")
-            else:
-                ends.append("start")
-
-        for beam in self.elements[1::]:
-            points = intersection_line_line_param(self.elements[0].centerline, beam.centerline)
-            if points[0][0] is not None and points[1][0] is not None:
-                cpt = cpt + points[1][0]
-                if points[1][1] > 0.5:
-                    ends.append("end")
-                else:
-                    ends.append("start")
-        cpt = cpt*(1.0/len(self.elements))
-
-        geometry = Brep.from_sphere(Sphere(self.ball_diameter/2, point= cpt))
-        cut_sphere = Sphere(self.strut_length, point= cpt)
-        feat_dict = {}
-        for beam, end in zip(self.elements, ends):
-            print("BEAM", beam.key)
-            feat_dict[beam.key] = []
-            cut_pts = intersection_sphere_line([cut_sphere.base, cut_sphere.radius], beam.centerline)
-            if cut_pts:
-                """ trim beam ends"""
-                cut_pt = cut_pts[0] if beam.midpoint.distance_to_point(cut_pts[0])<beam.midpoint.distance_to_point(cut_pts[1]) else cut_pts[1]
-                cut_plane = Plane(cut_pt, beam.centerline.direction) if end == "end" else Plane(cut_pt, -beam.centerline.direction)
-                beam.add_feature(CutFeature(cut_plane))
-                feat_dict[beam.key].append((cut_plane))
-
-                """ add strut to connect beam to ball node"""
-                cylinder = Cylinder(self.thickness, self.strut_length, Frame.from_plane(cut_plane))
-                cylinder.translate(cylinder.axis.direction * (self.strut_length / 2.0))
-                geometry += Brep.from_cylinder(cylinder)
-
-                """ add plate to connect to beam"""
-                plate_frame = Frame(cut_pt, beam.frame.xaxis, beam.frame.zaxis) if end == "start" else Frame(cut_pt, -beam.frame.xaxis, beam.frame.zaxis)
-                plate = Box(beam.height*self.holes/4.0, beam.height, self.thickness, plate_frame)
-                plate.translate(plate_frame.xaxis * (beam.height*self.holes/8.0))
-                plate = Brep.from_box(plate)
-
-                """ add drill holes to plate and beam"""
-                y_offset = beam.height/6.0
-                for _ in range(2):
-                    drill_start = plate_frame.point + (plate_frame.zaxis * (-beam.width/2.0)) + (plate_frame.yaxis * y_offset)
-                    for _ in range(self.holes/2):
-                        drill_start += (plate_frame.xaxis * (beam.height/3.0))
-                        drill_line = Line.from_point_direction_length(drill_start, plate_frame.zaxis, beam.width)
-                        drill = DrillFeature(drill_line, 10, beam.width)
-                        beam.add_feature(drill)
-
-                        mill = BrepSubtraction(plate)
-                        beam.add_feature(mill)
-                        drillinder = Brep.from_cylinder(Cylinder.from_line_and_radius(drill_line, 5))
-                        feat_dict[beam.key].append((drillinder))
-                        plate -= drillinder
-                    y_offset = -beam.height/6.0
-                geometry += plate
-            # print(feat_dict)
-            self.test.append(feat_dict)
-        return geometry
 
     @property
     def key(self):
