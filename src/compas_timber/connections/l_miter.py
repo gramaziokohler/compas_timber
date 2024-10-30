@@ -5,7 +5,7 @@ from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
 from compas_timber._fabrication import JackRafterCut
-from compas_timber.utils import intersection_line_line_3D
+from compas_timber.utils import intersection_line_line_param
 
 from .joint import BeamJoinningError
 from .joint import Joint
@@ -64,7 +64,7 @@ class LMiterJoint(Joint):
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
         # intersection point (average) of both centrelines
-        [pxA, tA], [pxB, tB] = intersection_line_line_3D(
+        [pxA, tA], [pxB, tB] = intersection_line_line_param(
             self.beam_a.centerline,
             self.beam_b.centerline,
             max_distance=float("inf"),

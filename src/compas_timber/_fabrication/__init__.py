@@ -6,6 +6,10 @@ from .jack_cut import JackRafterCut
 from .jack_cut import JackRafterCutParams
 from .drilling import Drilling
 from .drilling import DrillingParams
+from .step_joint_notch import StepJointNotch
+from .step_joint_notch import StepJointNotchParams
+from .step_joint import StepJoint
+from .step_joint import StepJointParams
 from .slot import Slot
 from .slot import SlotParams
 
@@ -17,6 +21,10 @@ __all__ = [
     "JackRafterCutParams",
     "Drilling",
     "DrillingParams",
+    "StepJointNotch",
+    "StepJointNotchParams",
+    "StepJoint",
+    "StepJointParams",
     "Slot",
     "SlotParams",
 ]
