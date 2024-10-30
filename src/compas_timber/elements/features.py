@@ -144,6 +144,7 @@ class DrillFeature(Feature):
         drill_volume = Cylinder(frame=Frame.from_plane(plane), radius=self.diameter / 2.0, height=self.length)
 
         try:
+            print("trying to subtract drill volume from element geometry")
             return element_geometry - Brep.from_cylinder(drill_volume)
         except IndexError:
             raise FeatureApplicationError(

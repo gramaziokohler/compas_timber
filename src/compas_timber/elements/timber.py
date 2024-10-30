@@ -28,3 +28,7 @@ class TimberElement(Element):
     @property
     def is_wall(self):
         return False
+
+    @property
+    def is_fastener(self):
+        return False
