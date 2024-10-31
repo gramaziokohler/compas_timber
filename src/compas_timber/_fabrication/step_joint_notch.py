@@ -76,6 +76,7 @@ class StepJointNotch(BTLxProcess):
         data["mortise_height"] = self.mortise_height
         return data
 
+    # fmt: off
     def __init__(
         self,
         orientation,
