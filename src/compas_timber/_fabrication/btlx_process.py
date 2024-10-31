@@ -106,3 +106,45 @@ class StepShapeType(object):
     HEEL = "heel"
     TAPERED_HEEL = "taperedheel"
     DOUBLE = "double"
+
+
+class TenonShapeType(object):
+    """Enum for the tenon shape of the cut.
+
+    Attributes
+    ----------
+    AUTOMATIC : literal("automatic")
+        Automatic tenon shape.
+    SQUARE : literal("square")
+        Square tenon shape.
+    ROUND : literal("round")
+        Round tenon shape.
+    ROUNDED : literal("rounded")
+        Rounded tenon shape.
+    RADIUS : literal("radius")
+        Radius tenon shape.
+    """
+
+    AUTOMATIC = "automatic"
+    SQUARE = "square"
+    ROUND = "round"
+    ROUNDED = "rounded"
+    RADIUS = "radius"
+
+
+class LimitationTopType(object):
+    """Enum for the top limitation of the cut.
+
+    Attributes
+    ----------
+    LIMITED : literal("limited")
+        Limitation to the cut.
+    UNLIMITED : literal("unlimited")
+        No limit to the cut.
+    POCKET : literal("pocket")
+        Pocket like limitation to the cut.
+    """
+
+    LIMITED = "limited"
+    UNLIMITED = "unlimited"
+    POCKET = "pocket"

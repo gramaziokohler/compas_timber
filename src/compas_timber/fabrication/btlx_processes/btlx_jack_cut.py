@@ -8,7 +8,7 @@ from compas.geometry import cross_vectors
 
 from compas_timber.fabrication import BTLx
 from compas_timber.fabrication import BTLxProcess
-from compas_timber.utils.compas_extra import intersection_line_plane
+from compas_timber.utils import intersection_line_plane_param
 
 
 class BTLxJackCut(object):
@@ -77,7 +77,9 @@ class BTLxJackCut(object):
 
         self.x_edge = Line.from_point_and_vector(self.reference_side.point, self.reference_side.xaxis)
 
-        self.startX = intersection_line_plane(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
+        self.startX = (
+            intersection_line_plane_param(self.x_edge, Plane.from_frame(self.cut_plane))[1] * self.x_edge.length
+        )
         if self.startX < self.part.blank_length / 2:
             self.orientation = "start"
         else:

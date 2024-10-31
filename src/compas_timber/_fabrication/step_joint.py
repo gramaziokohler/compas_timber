@@ -64,6 +64,7 @@ class StepJoint(BTLxProcess):
         data["tenon_height"] = self.tenon_height
         return data
 
+    # fmt: off
     def __init__(
         self,
         orientation,
