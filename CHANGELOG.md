@@ -24,8 +24,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.DrillingParams`.
 * Added new `compas_timber._fabrication.StepJoint`.
 * Added new `compas_timber._fabrication.StepJointNotch`.
+* Added new `compas_timber._fabrication.DovetailTenon`.
+* Added new `compas_timber._fabrication.DovetailMortise`.
 * Added new `compas_timber.connections.TStepJoint`.
+* Added new `compas_timber.connections.TDovetailJoint`.
 * Added new `utilities` module in `connections` package.
+* Added new `compas_timber._fabrication.DoubleCut`.
+* Added new `compas_timber.connections.TBirdsmouthJoint`.
+* Added `JointRule.joints_from_beams_and_rules()` static method 
+* Added `Element.reset()` method.
+
 * Added new `fasteners.py` module with new `Fastener` element type.
 * Added unit tests for `fasteners.py` module.
 
@@ -34,10 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
 * Renamed `intersection_line_plane` to `intersection_line_plane_param`.
 * Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
+* Reworked the model generation pipeline.
+* Reworked `comply` methods for `JointRule`s. 
 
 ### Removed
 
 * Removed module `compas_timber.utils.compas_extra`.
+* Removed a bunch of spaghetti from `CT_model` GH component.
 
 ## [0.11.0] 2024-09-17
 

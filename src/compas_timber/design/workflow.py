@@ -1,3 +1,5 @@
+from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
@@ -35,6 +37,87 @@ class JointRule(object):
 
         """
         raise NotImplementedError
+
+    @staticmethod
+    def get_direct_rules(rules):
+        return [rule for rule in rules if rule.__class__.__name__ == "DirectRule"]
+
+    @staticmethod
+    def get_category_rules(rules):
+        return [rule for rule in rules if rule.__class__.__name__ == "CategoryRule"]
+
+    @staticmethod
+    def get_topology_rules(rules, use_defaults=False):
+        topo_rules = {}
+        if use_defaults:
+            topo_rules = {
+                JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
+                JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
+                JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XHalfLapJoint),
+            }
+        for rule in rules:  # separate category and topo and direct joint rules
+            if rule.__class__.__name__ == "TopologyRule":
+                topo_rules[rule.topology_type] = TopologyRule(
+                    rule.topology_type, rule.joint_type
+                )  # overwrites, meaning last rule wins
+        return [rule for rule in topo_rules.values() if rule is not None]
+
+    @staticmethod
+    def joints_from_beams_and_rules(beams, rules, max_distance=1e-6):
+        """Culls direct rules that are not applicable to the given beams.
+
+        Parameters
+        ----------
+        beams : list(:class:`~compas_timber.parts.Beam`)
+            A list of beams to be joined.
+        rules : list(:class:`~compas_timber.design.JointRule`)
+            A list of joint rules to be applied.
+        max_distance : float, optional
+            The maximum distance to consider two beams as intersecting.
+
+        Returns
+        -------
+        list(:class:`~compas_timber.design.JointDefinition`)
+            A list of joint definitions that can be applied to the given beams.
+
+        """
+        beams = beams if isinstance(beams, list) else list(beams)
+        direct_rules = JointRule.get_direct_rules(rules)
+        solver = ConnectionSolver()
+
+        beam_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+        joint_defs = []
+        for rule in direct_rules:
+            joint_defs.append(JointDefinition(rule.joint_type, rule.beams, **rule.kwargs))
+
+        while beam_pairs:
+            pair = beam_pairs.pop()
+            match_found = False
+            for rule in direct_rules:  # see if pair is used in a direct rule
+                if rule.comply(pair):
+                    match_found = True
+                    break
+
+            if not match_found:
+                for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
+                    if rule.comply(pair):
+                        match_found = True
+                        joint_defs.append(JointDefinition(rule.joint_type, rule.reorder(pair), **rule.kwargs))
+                        break
+
+            if not match_found:
+                for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
+                    comply, pair = rule.comply(pair)
+                    if comply:
+                        match_found = True
+                        joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
+                        break
+            if not match_found:
+                print(
+                    "Beam pairs could not be resolved by the rules: ",
+                    "({}, {})".format(list(pair)[0].key, list(pair)[1].key),
+                )  # TODO: add something to catch unresolved pairs
+        return joint_defs
 
 
     @staticmethod
@@ -78,7 +161,10 @@ class DirectRule(JointRule):
 
     def comply(self, beams):
         try:
-            return set(self.beams) == set(beams)
+            for beam in self.beams:
+                if beam not in beams:
+                    return False
+            return True
         except TypeError:
             print("unable to comply direct joint beam sets")
             return False
@@ -103,10 +189,19 @@ class CategoryRule(JointRule):
             CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos
         )
 
-    def comply(self, beams):
+    def comply(self, beams, max_distance=1e-6):
         try:
             beam_cats = set([b.attributes["category"] for b in beams])
-            return beam_cats == set([self.category_a, self.category_b])
+            comply = False
+            beams = list(beams)
+            if beam_cats == set([self.category_a, self.category_b]):
+                solver = ConnectionSolver()
+                if (
+                    self.joint_type.SUPPORTED_TOPOLOGY
+                    == solver.find_topology(beams[0], beams[1], max_distance=max_distance)[0]
+                ):
+                    comply = True
+            return comply
         except KeyError:
             return False
 
@@ -158,6 +253,14 @@ class TopologyRule(JointRule):
 
     def __repr__(self):
         return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type)
+
+    def comply(self, beams, max_distance=1e-3):
+        try:
+            beams = list(beams)
+            topo_results = ConnectionSolver.find_topology(beams[0], beams[1], max_distance=max_distance)
+            return (self.topology_type == topo_results[0], [topo_results[1], topo_results[2]]) # comply, if topologies match, reverse if the beam order should be switched
+        except KeyError:
+            return False
 
 
 class JointDefinition(object):

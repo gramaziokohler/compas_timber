@@ -32,3 +32,9 @@ class TimberElement(Element):
     @property
     def is_fastener(self):
         return False
+
+    def reset(self):
+        self.remove_features()
+        if hasattr(self, "remove_blank_extension"):  # only beams should have this attribute
+            self.remove_blank_extension()
+        self.debug_info = []
