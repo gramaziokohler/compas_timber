@@ -18,9 +18,6 @@ class Fastener(Element):
 
     """
 
-
-
-
     def __init__(self, elements, **kwargs):
         super(Fastener, self).__init__(elements, **kwargs)
         self.elements = elements
