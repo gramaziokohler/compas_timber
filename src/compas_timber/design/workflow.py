@@ -54,10 +54,6 @@ class JointRule(object):
                 JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
                 JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XHalfLapJoint),
             }
-        # else:
-        #     topo_rules = {JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, None),
-        #                 JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, None),
-        #                 JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, None)}
         for rule in rules:  # separate category and topo and direct joint rules
             if rule.__class__.__name__ == "TopologyRule":
                 topo_rules[rule.topology_type] = TopologyRule(
@@ -110,7 +106,8 @@ class JointRule(object):
 
             if not match_found:
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
-                    if rule.comply(pair):
+                    comply, pair = rule.comply(pair)
+                    if comply:
                         match_found = True
                         joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
                         break
@@ -235,8 +232,8 @@ class TopologyRule(JointRule):
     def comply(self, beams, max_distance=1e-3):
         try:
             beams = list(beams)
-            solver = ConnectionSolver()
-            return self.topology_type == solver.find_topology(beams[0], beams[1], max_distance=max_distance)[0]
+            topo_results = ConnectionSolver.find_topology(beams[0], beams[1], max_distance=max_distance)
+            return (self.topology_type == topo_results[0], [topo_results[1], topo_results[2]]) # comply, if topologies match, reverse if the beam order should be switched
         except KeyError:
             return False
 
