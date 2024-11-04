@@ -13,27 +13,13 @@ class Fastener(Element):
 
     Attributes
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this fastener.
     elements : list(:class:`~compas_timber.parts.Element`)
         The elements that are connected with this fastener.
 
     """
 
-    OPPOSING_SIDE_MAP = {
-        0: 2,
-        2: 0,
-        1: 3,
-        3: 1,
-        4: 5,
-        5: 4,
-    }
 
-    @property
-    def __data__(self):
-        data = super(Fastener, self).__data__
 
-        return data
 
     def __init__(self, elements, **kwargs):
         super(Fastener, self).__init__(elements, **kwargs)
@@ -59,7 +45,6 @@ class Fastener(Element):
     @property
     def shape(self):
         # type: () -> Brep
-        assert self.frame
         return self._create_shape(self.frame, self.beams)
 
     @property
