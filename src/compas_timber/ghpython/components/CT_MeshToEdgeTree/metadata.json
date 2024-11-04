@@ -1,0 +1,26 @@
+{
+    "name": "MeshToEdgeTree",
+    "nickname": "MeshToEdgeTree",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Creates a data tree with mesh edges organized by connected vertex, allowing direct joint definition with resulting lists of beams.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Mesh",
+                "description": "Mesh input.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Edges",
+                "description": "Data Tree of Line object(s)."
+            }
+        ]
+    }
+}
