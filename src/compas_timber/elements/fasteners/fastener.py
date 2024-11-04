@@ -39,6 +39,7 @@ class Fastener(Element):
     def is_fastener(self):
         return True
 
+
     @property
     def shape(self):
         # type: () -> Brep
