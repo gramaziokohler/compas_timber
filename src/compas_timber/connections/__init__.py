@@ -12,8 +12,10 @@ from .solver import JointTopology
 from .solver import find_neighboring_beams
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
+from .t_birdsmouth import TBirdsmouthJoint
 from .t_halflap import THalfLapJoint
 from .x_halflap import XHalfLapJoint
+from .t_dovetail import TDovetailJoint
 
 __all__ = [
     "Joint",
@@ -24,6 +26,7 @@ __all__ = [
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",
+    "TBirdsmouthJoint",
     "LMiterJoint",
     "XHalfLapJoint",
     "THalfLapJoint",
@@ -33,4 +36,5 @@ __all__ = [
     "JointTopology",
     "ConnectionSolver",
     "find_neighboring_beams",
+    "TDovetailJoint",
 ]
