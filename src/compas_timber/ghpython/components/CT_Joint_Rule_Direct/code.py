@@ -32,6 +32,13 @@ class DirectJointRule(component):
             return None
         else:
             ghenv.Component.Message = self.joint_type.__name__
+            if self.joint_type.supported_topologies:
+                self.AddRuntimeMessage(
+                    Warning,
+                    "Supported topologies: {}".format(
+                        ", ".join([JointTopology.get_name(i) for i in self.joint_type.supported_topologies])
+                    ),
+                )
             beam_a = args[0]
             beam_b = args[1]
             kwargs = {}
