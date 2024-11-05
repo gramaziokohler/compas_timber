@@ -166,7 +166,6 @@ class DirectRule(JointRule):
                     return False
             return True
         except TypeError:
-            print("unable to comply direct joint beam sets")
             return False
 
 
@@ -264,18 +263,13 @@ class TopologyRule(JointRule):
 
 
 class JointDefinition(object):
-    """Container for a joint type and the beam that shall be joined.
+    """Container for a joint type and the beams that shall be joined.
 
     This allows delaying the actual joining of the beams to a downstream component.
 
     """
 
     def __init__(self, joint_type, beams, **kwargs):
-        # if not issubclass(joint_type, Joint):
-        #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-        if len(beams) != 2:
-            raise UserWarning("Expected to get two Beams, got {}.".format(len(beams)))
-
         self.joint_type = joint_type
         self.beams = beams
         self.kwargs = kwargs
