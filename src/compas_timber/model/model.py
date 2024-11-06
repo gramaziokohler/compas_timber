@@ -126,16 +126,13 @@ class TimberModel(Model):
         return self._guid_element[guid]
 
     def add_joint(self, joint):
-        # type: (Joint, tuple[Beam]) -> None
+        # type: (Joint) -> None
         """Add a joint object to the model.
 
         Parameters
         ----------
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
-
-        beams : tuple(:class:`~compas_timber.elements.Beam`)
-            The two beams that should be joined.
 
         """
         for a,b, interaction in joint.interactions:

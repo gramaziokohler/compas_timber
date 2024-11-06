@@ -1,6 +1,5 @@
 import itertools
 import math
-import stat
 
 from compas.geometry import Point
 from compas.geometry import add_vectors
