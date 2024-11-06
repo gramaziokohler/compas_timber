@@ -135,15 +135,13 @@ class Joint(Interaction):
             The instance of the created joint.
 
         """
-        print("beam count: ", len(beams))
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
         if len(beams) == 2:
             joint = cls(*beams, **kwargs)
         else:
-            print("beams: ", beams)
             joint = cls(beams, **kwargs)
-        model.add_joint(joint, beams)
+        model.add_joint(joint)
         return joint
 
     @property
@@ -160,6 +158,15 @@ class Joint(Interaction):
                 self._ends[str(beam.guid)] = "end"
 
         return self._ends
+
+    @property
+    def interactions(self):
+        """Returns the beams that are connected by this joint."""
+        interactions = []
+        for i in range(len(self.beams)):
+            for j in range(i + 1, len(self.beams)):
+                interactions.append((self.beams[i], self.beams[j], self))
+        return interactions
 
     @staticmethod
     def get_face_most_towards_beam(beam_a, beam_b, ignore_ends=True):
