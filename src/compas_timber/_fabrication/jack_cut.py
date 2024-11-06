@@ -190,6 +190,7 @@ class JackRafterCut(BTLxProcess):
         # vector rotation direction of the plane's normal in the vertical direction
         angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
         angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
+        print(angle)
         if orientation == OrientationType.START:
             return 180 - abs(angle)  # get the other side of the angle
         else:
