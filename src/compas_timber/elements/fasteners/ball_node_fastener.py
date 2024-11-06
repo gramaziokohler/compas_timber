@@ -39,8 +39,8 @@ class BallNodeFastener(Fastener):
 
         return data
 
-    def __init__(self, geometry, **kwargs):
-        super(BallNodeFastener, self).__init__(geometry, **kwargs)
+    def __init__(self, geometry = None, **kwargs):
+        super(BallNodeFastener, self).__init__(**kwargs)
         self.geometry = geometry
         self.features = []
         self.attributes = {}

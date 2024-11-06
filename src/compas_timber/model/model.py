@@ -70,9 +70,11 @@ class TimberModel(Model):
     @property
     def joints(self):
         # type: () -> Generator[Joint, None, None]
+        # TODO: consider if there are other interaction types...
+        # TODO: consider, multiple interactions can have the same joint...
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
-                yield interaction  # TODO: consider if there are other interaction types...
+                yield interaction
 
     @property
     def walls(self):
@@ -136,7 +138,6 @@ class TimberModel(Model):
             The two beams that should be joined.
 
         """
-        print("Adding joint")
         for a,b, interaction in joint.interactions:
             _ = self.add_interaction(a, b, interaction=interaction)
 

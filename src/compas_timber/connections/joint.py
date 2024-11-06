@@ -64,7 +64,21 @@ class Joint(Interaction):
 
     @property
     def beams(self):
-        raise NotImplementedError
+        for element in self.elements:
+            if getattr(element, "is_beam", False):
+                yield element
+
+    @property
+    def plates(self):
+        for element in self.elements:
+            if getattr(element, "is_plate", False):
+                yield element
+
+    @property
+    def fasteners(self):
+        for element in self.elements:
+            if getattr(element, "is_fastener", False):
+                yield element
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
@@ -135,12 +149,10 @@ class Joint(Interaction):
             The instance of the created joint.
 
         """
+
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
-        if len(beams) == 2:
-            joint = cls(*beams, **kwargs)
-        else:
-            joint = cls(beams, **kwargs)
+        joint = cls(*beams, **kwargs)
         model.add_joint(joint)
         return joint
 

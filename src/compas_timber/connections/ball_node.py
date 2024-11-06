@@ -5,11 +5,15 @@ from compas_timber.elements import CutFeature
 from compas_timber.elements import MillVolume
 from compas_timber.elements import DrillFeature
 from compas_timber.elements import BrepSubtraction
+from compas_timber.elements.fasteners.fastener import Fastener
 from compas_timber.utils import intersection_line_line_param
 from compas.geometry import Brep
 from compas.geometry import Sphere
 from compas.geometry import Cylinder
 from compas.geometry import Box
+from compas.geometry import Plane
+from compas.geometry import Line
+from compas.geometry import intersection_sphere_line
 
 
 from .joint import BeamJoinningError
@@ -41,22 +45,63 @@ class BallNodeJoint(Joint):
 
     """
 
-    def __init__(self, beams = None, thickness = 10, holes = 6, strut_length = 100, ball_diameter = 50, **kwargs):
-        super(BallNodeJoint, self).__init__(**kwargs)
-        self._beams = beams
-        self.thickness = thickness
-        self.plate_holes = holes
-        self.strut_length = strut_length
-        self.ball_diameter = ball_diameter
+    GH_ARGS = {"beams": None, "thickness": 10, "holes": 6, "strut_length": 100, "ball_diameter": 50}
+
+    def __init__(self, *beams, **kwargs):
+        super(BallNodeJoint, self).__init__( **kwargs)
+        self._elements = beams
+        self.thickness = kwargs.get("thickness", 10)
+        self.plate_holes = kwargs.get("holes", 6)
+        self.strut_length = kwargs.get("strut_length", 100)
+        self.ball_diameter = kwargs.get("ball_diameter", 50)
         self.beam_keys = [str(beam.guid) for beam in beams]
         self.features = []
         self.joint_type = "BallNode"
-        self.element = None
+        self.fastener = BallNodeFastener()
 
     @property
-    def beams(self):
-        return self._beams
+    def elements(self):
+        return self._elements
 
+    @property
+    def interactions(self):
+        for beam in self.beams:
+            yield (beam, self.fastener, self)
+
+    @classmethod
+    def create(cls, model, beams, **kwargs):
+        """Creates an instance of this joint and creates the new connection in `model`.
+
+        `beams` are expected to have been added to `model` before calling this method.
+
+        This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
+        them. This is the responsibility of the calling code.
+
+        A `ValueError` is raised if `beams` contains less than two `Beam` objects.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the beams and this joing belong.
+        beams : list(:class:`~compas_timber.parts.Beam`)
+            A list containing two beams that whould be joined together
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+
+
+        joint = cls(*beams, **kwargs)
+        model.add_element(joint.fastener)
+        for interaction in joint.interactions:
+             _ = model.add_interaction(*interaction)
+        return joint
+
+    def add_element(self, element):
+        self._elements.append(element)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -73,7 +118,8 @@ class BallNodeJoint(Joint):
 
     def add_features(self):
         ends = []
-        points = intersection_line_line_param(self.elements[0].centerline, self.elements[1].centerline)
+        beams = list(self.beams)
+        points = intersection_line_line_param(beams[0].centerline, beams[1].centerline)
         cpt = None
         if points[0][0] is not None:
             cpt = (points[0][0])
@@ -82,21 +128,20 @@ class BallNodeJoint(Joint):
             else:
                 ends.append("start")
 
-        for beam in self.elements[1::]:
-            points = intersection_line_line_param(self.elements[0].centerline, beam.centerline)
+        for beam in list(beams)[1::]:
+            points = intersection_line_line_param(beams[0].centerline, beam.centerline)
             if points[0][0] is not None and points[1][0] is not None:
                 cpt = cpt + points[1][0]
                 if points[1][1] > 0.5:
                     ends.append("end")
                 else:
                     ends.append("start")
-        cpt = cpt*(1.0/len(self.elements))
+        cpt = cpt*(1.0/len(beams))
 
         geometry = Brep.from_sphere(Sphere(self.ball_diameter/2, point= cpt))
         cut_sphere = Sphere(self.strut_length, point= cpt)
         feat_dict = {}
-        for beam, end in zip(self.elements, ends):
-            print("BEAM", beam.key)
+        for beam, end in zip(beams, ends):
             feat_dict[beam.key] = []
             cut_pts = intersection_sphere_line([cut_sphere.base, cut_sphere.radius], beam.centerline)
             if cut_pts:
@@ -113,15 +158,15 @@ class BallNodeJoint(Joint):
 
                 """ add plate to connect to beam"""
                 plate_frame = Frame(cut_pt, beam.frame.xaxis, beam.frame.zaxis) if end == "start" else Frame(cut_pt, -beam.frame.xaxis, beam.frame.zaxis)
-                plate = Box(beam.height*self.holes/4.0, beam.height, self.thickness, plate_frame)
-                plate.translate(plate_frame.xaxis * (beam.height*self.holes/8.0))
+                plate = Box(beam.height*self.plate_holes/4.0, beam.height, self.thickness, plate_frame)
+                plate.translate(plate_frame.xaxis * (beam.height*self.plate_holes/8.0))
                 plate = Brep.from_box(plate)
 
                 """ add drill holes to plate and beam"""
                 y_offset = beam.height/6.0
                 for _ in range(2):
                     drill_start = plate_frame.point + (plate_frame.zaxis * (-beam.width/2.0)) + (plate_frame.yaxis * y_offset)
-                    for _ in range(self.holes/2):
+                    for _ in range(self.plate_holes/2):
                         drill_start += (plate_frame.xaxis * (beam.height/3.0))
                         drill_line = Line.from_point_direction_length(drill_start, plate_frame.zaxis, beam.width)
                         drill = DrillFeature(drill_line, 10, beam.width)
@@ -134,5 +179,5 @@ class BallNodeJoint(Joint):
                         plate -= drillinder
                     y_offset = -beam.height/6.0
                 geometry += plate
-            self.test.append(feat_dict)
-        self.element = BallNodeFastener(geometry)
+            # self.test.append(feat_dict)
+        self.fastener.geometry = geometry
