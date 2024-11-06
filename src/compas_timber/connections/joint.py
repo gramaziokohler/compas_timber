@@ -112,7 +112,7 @@ class Joint(Interaction):
         raise NotImplementedError
 
     @classmethod
-    def create(cls, model, *beams, **kwargs):
+    def create(cls, model, beams, **kwargs):
         """Creates an instance of this joint and creates the new connection in `model`.
 
         `beams` are expected to have been added to `model` before calling this method.
@@ -135,10 +135,14 @@ class Joint(Interaction):
             The instance of the created joint.
 
         """
-
+        print("beam count: ", len(beams))
         if len(beams) < 2:
             raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
-        joint = cls(*beams, **kwargs)
+        if len(beams) == 2:
+            joint = cls(*beams, **kwargs)
+        else:
+            print("beams: ", beams)
+            joint = cls(beams, **kwargs)
         model.add_joint(joint, beams)
         return joint
 

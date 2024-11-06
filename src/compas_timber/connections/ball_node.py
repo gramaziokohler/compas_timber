@@ -41,11 +41,11 @@ class BallNodeJoint(Joint):
 
     """
 
-    def __init__(self, beams=None, thickness = 10, holes = 6, strut_length = 100, ball_diameter = 50, **kwargs):
-        super(BallNodeJoint, self).__init__(beams, **kwargs)
-        self.beams = beams
+    def __init__(self, beams = None, thickness = 10, holes = 6, strut_length = 100, ball_diameter = 50, **kwargs):
+        super(BallNodeJoint, self).__init__(**kwargs)
+        self._beams = beams
         self.thickness = thickness
-        self.holes = holes
+        self.plate_holes = holes
         self.strut_length = strut_length
         self.ball_diameter = ball_diameter
         self.beam_keys = [str(beam.guid) for beam in beams]
@@ -53,7 +53,9 @@ class BallNodeJoint(Joint):
         self.joint_type = "BallNode"
         self.element = None
 
-
+    @property
+    def beams(self):
+        return self._beams
 
 
     def add_extensions(self):

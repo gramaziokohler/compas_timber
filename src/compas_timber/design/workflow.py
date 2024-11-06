@@ -83,9 +83,8 @@ class JointRule(object):
         """
         beams = beams if isinstance(beams, list) else list(beams)
         direct_rules = JointRule.get_direct_rules(rules)
-        solver = ConnectionSolver()
+        beam_pairs = ConnectionSolver().find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
 
-        beam_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         joint_defs = []
         for rule in direct_rules:
             joint_defs.append(JointDefinition(rule.joint_type, rule.beams, **rule.kwargs))
@@ -94,6 +93,7 @@ class JointRule(object):
             pair = beam_pairs.pop()
             match_found = False
             for rule in direct_rules:  # see if pair is used in a direct rule
+
                 if rule.comply(pair):
                     match_found = True
                     break
@@ -107,10 +107,10 @@ class JointRule(object):
 
             if not match_found:
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
-                    comply, pair = rule.comply(pair)
+                    comply, ordered_pair = rule.comply(pair)
                     if comply:
                         match_found = True
-                        joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
+                        joint_defs.append(JointDefinition(rule.joint_type, ordered_pair, **rule.kwargs))
                         break
             if not match_found:
                 print(
@@ -130,14 +130,11 @@ class JointRule(object):
 
     @staticmethod
     def get_topology_rules(rules, use_defaults = False):
+        topo_rules = {}
         if use_defaults:
             topo_rules = {JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
                         JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
                         JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XHalfLapJoint)}
-        else:
-            topo_rules = {JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, None),
-                        JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, None),
-                        JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, None)}
         for r in rules:  # separate category and topo and direct joint rules
             if isinstance(r, TopologyRule):
                 topo_rules[r.topology_type] = TopologyRule(r.topology_type, r.joint_type) # overwrites, meaning last rule wins
@@ -161,8 +158,8 @@ class DirectRule(JointRule):
 
     def comply(self, beams):
         try:
-            for beam in self.beams:
-                if beam not in beams:
+            for beam in beams:
+                if beam not in self.beams:
                     return False
             return True
         except TypeError:
@@ -259,6 +256,7 @@ class TopologyRule(JointRule):
             topo_results = ConnectionSolver.find_topology(beams[0], beams[1], max_distance=max_distance)
             return (self.topology_type == topo_results[0], [topo_results[1], topo_results[2]]) # comply, if topologies match, reverse if the beam order should be switched
         except KeyError:
+
             return False
 
 

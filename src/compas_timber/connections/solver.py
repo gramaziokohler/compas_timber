@@ -137,7 +137,6 @@ class ConnectionSolver(object):
 
         tol = ConnectionSolver.TOLERANCE  # TODO: change to a unit-sensitive value
         angtol = 1e-3
-
         a1, a2 = beam_a.centerline
         b1, b2 = beam_b.centerline
         va = subtract_vectors(a2, a1)
