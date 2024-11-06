@@ -80,6 +80,14 @@ class BallNodeFastener(Fastener):
     # Implementations of abstract methods
     # ==========================================================================
 
+    @property
+    def geometry(self):
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, geometry):
+        self._geometry = geometry
+
     def compute_geometry(self):
         # type: (bool) -> compas.geometry.Brep
         """Compute the geometry of the fastener.

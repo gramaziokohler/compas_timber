@@ -8,36 +8,20 @@ class Fastener(Element):
 
     Parameters
     ----------
-    elements : list(:class:`~compas_timber.parts.Element`)
-        The elements that are connected with this fastener.
+    geometry : list(:class:`~compas_timber.parts.Element`)
+        The geometry that are connected with this fastener.
 
     Attributes
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this fastener.
-    elements : list(:class:`~compas_timber.parts.Element`)
-        The elements that are connected with this fastener.
+    geometry : list(:class:`~compas_timber.parts.Element`)
+        The geometry that are connected with this fastener.
 
     """
+    #TODO: add interface class for connection to timber elements
 
-    OPPOSING_SIDE_MAP = {
-        0: 2,
-        2: 0,
-        1: 3,
-        3: 1,
-        4: 5,
-        5: 4,
-    }
-
-    @property
-    def __data__(self):
-        data = super(Fastener, self).__data__
-
-        return data
-
-    def __init__(self, elements, **kwargs):
-        super(Fastener, self).__init__(elements, **kwargs)
-        self.elements = elements
+    def __init__(self, geometry = None, **kwargs):
+        super(Fastener, self).__init__(**kwargs)
+        self._geometry = geometry
         self.features = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -45,8 +29,8 @@ class Fastener(Element):
 
     def __repr__(self):
         # type: () -> str
-        element_str = ["{} {}".format(element.__class__.__name__, element.key) for element in self.elements]
-        return "Fastener({})".format(", ".join(element_str))
+
+        return "Fastener Element"
 
     # ==========================================================================
     # Computed attributes
@@ -56,10 +40,10 @@ class Fastener(Element):
     def is_fastener(self):
         return True
 
+
     @property
     def shape(self):
         # type: () -> Brep
-        assert self.frame
         return self._create_shape(self.frame, self.beams)
 
     @property
