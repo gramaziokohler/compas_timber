@@ -310,38 +310,27 @@ class Lap(BTLxProcess):
 
         planes = [Plane.from_frame(plane) for plane in planes if isinstance(plane, Frame)]
 
-        # get ref_side and ref_edge of the main beam
+        # get ref_side and ref_edge from the beam
         ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
         # calculate the orientation of the lap
         orientation = cls._calculate_orientation(ref_side, planes[0])
+        print(orientation)
 
-        # find the intersection points of the planes with the reference edge and calculate the distances from the start of the beam
-        x_distances = []
-        for plane in planes:
-            if intersection_line_plane(ref_edge, plane) is None:
-                raise ValueError("One of the planes does not intersect with the beam.")
-            intersection_point = Point(*intersection_line_plane(ref_edge, plane))
-            x_distance = distance_point_point(ref_side.point, intersection_point)
-            x_distances.append(x_distance)
-
-        # Sort planes and distances together based on the distances
-        reverse = False if orientation == OrientationType.END else True
-        x_distances, planes = zip(*sorted(zip(x_distances, planes), reverse=reverse))
-
-        # calculate the start_x of the lap from the closest intersection point
-        start_x = x_distances[0]
+        # calculate the start_x of the lap
+        start_x = cls._calculate_start_x(ref_side, ref_edge, planes, orientation, depth)
 
         # calculate the width of the lap
         width = beam.width if ref_side_index%2 == 0 else beam.height
 
         # calculate the angle of the lap
-        angle = cls._calculate_angle(ref_side, planes[0], orientation)
-        print(angle)
+        angle = cls._calculate_angle(ref_side, planes[0])
+        print(angle, "angle")
 
         # calculate length
-        length = cls._calculate_length(planes, ref_side, ref_edge, depth)
+        length = cls._calculate_length(planes, ref_side, ref_edge, depth, angle)
+        print(length, "length")
 
         # define machining limits
         machining_limits = {
@@ -353,41 +342,56 @@ class Lap(BTLxProcess):
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):
-        # orientation is START if the angle of
+        # orientation is START if the angle of the cross vector of the reference side's y-axis and the cutting plane's normal is greater than 90 degrees
         cross_vect = Vector.cross(ref_side.yaxis, cutting_plane.normal)
-        dot = cross_vect.dot(ref_side.normal)
-        if dot > 0:
-            cross_vect = -cross_vect
         if angle_vectors(ref_side.xaxis, cross_vect, deg=True) > 90:
             return OrientationType.START
         else:
             return OrientationType.END
 
     @staticmethod
-    def _calculate_angle(ref_side, plane, orientation):
-        # vector rotation direction of the plane's normal in the vertical direction
-        angle_vector = Vector.cross(ref_side.normal, plane.normal)
-        return abs(angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True))
+    def _calculate_start_x(ref_side, ref_edge, planes, orientation, depth):
+        # offset the reference edge by the depth of the lap
+        offseted_ref_edge = ref_edge.translated(-ref_side.normal*depth)
+        ref_edges = [ref_edge, offseted_ref_edge]
+        if orientation == OrientationType.END:
+            ref_edges.reverse()
+        # find the intersection points of the planes with the reference edges and calculate the distances from the start of the beam
+        x_distances = []
+        for plane, edge in zip(planes, ref_edges):
+            if intersection_line_plane(edge, plane) is None:
+                raise ValueError("One of the planes does not intersect with the beam.")
+            intersection_point = Point(*intersection_line_plane(edge, plane))
+            x_distance = distance_point_point(edge.start, intersection_point)
+            x_distances.append(x_distance)
 
-    # @staticmethod
-    # def _calculate_inclination(ref_side, plane, orientation):
-    #     # vector rotation direction of the plane's normal in the horizontal direction
-    #     inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
-    #     inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
-    #     if orientation == OrientationType.START:
-    #         return 180 - abs(inclination)  # get the other side of the angle
-    #     else:
-    #         return abs(inclination)
+        if orientation == OrientationType.END:
+            return max(x_distances)
+        else:
+            return min(x_distances)
 
     @staticmethod
-    def _calculate_length(planes, ref_side, ref_edge, depth):
-        # calculate the length of the lap from the intersection points of the planes with the reference edge
-        offseted_ref_edge = ref_edge.translated(-ref_side.normal*depth)
-        ref_edges = ref_edge, offseted_ref_edge
+    def _calculate_angle(ref_side, plane):
+        # vector rotation direction of the plane's normal in the vertical direction
+        angle_vector = Vector.cross(ref_side.normal, plane.normal)
+        angle = abs(angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True))
+        print(angle_vectors(angle_vector, ref_side.xaxis, deg=True))
+        if angle < 90:
+            return  180-angle
+        else:
+            return angle
 
-        intersection_pts = [Point(*intersection_line_plane(ref_edge, plane)) for ref_edge, plane in zip(ref_edges, planes)]
-        vector = Vector.from_start_end(*intersection_pts)
-        return abs(vector.dot(ref_side.xaxis))
+    @staticmethod
+    def _calculate_length(planes, ref_side, ref_edge, depth, angle):
+        vect = ref_side.yaxis.cross(planes[0].normal)
+        angl = angle_vectors_signed(vect, ref_side.xaxis, ref_side.normal)
+
+        intersection_pts = [Point(*intersection_line_plane(ref_edge, plane)) for plane in planes]
+        dist = distance_point_point(*intersection_pts)
+        dist += depth / abs(math.tan(angl))
+        len = math.sin(math.radians(angle))*dist
+        return len
+
 
     ########################################################################
     # Methods
@@ -445,12 +449,12 @@ class Lap(BTLxProcess):
         p_origin = ref_side.point_at(self.start_x, self.start_y)
 
         box_frame = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
-        box_frame.rotate(math.radians(self.angle%90), box_frame.normal, point=box_frame.point)
+        box_frame.rotate(math.radians(90-self.angle), box_frame.normal, point=box_frame.point)
 
         box = Box(xsize=self.length, ysize=self.width, zsize=self.depth, frame=box_frame)
         box.translate(box_frame.xaxis * (self.length / 2) + box_frame.yaxis * (-self.width / 2) + box_frame.zaxis * (self.depth / 2))
 
-        if self.orientation == OrientationType.START:
+        if self.orientation == OrientationType.END:
             box.translate(box_frame.xaxis * -self.length)
 
         if self.machining_limits["FaceLimitedFront"] == "no" or self.machining_limits["FaceLimitedBack"] == "no":

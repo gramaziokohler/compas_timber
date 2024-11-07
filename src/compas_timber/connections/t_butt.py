@@ -110,17 +110,15 @@ class TButtJoint(Joint):
             self.cross_beam.remove_features(self.features)
 
         # get the cutting plane for the main beam
-        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index-1]
+        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
         cutting_plane.xaxis = -cutting_plane.xaxis
         if self.mill_depth:
             cutting_plane.translate(cutting_plane.normal * self.mill_depth)
 
         # apply the cut on the main beam
         main_feature = JackRafterCut.from_plane_and_beam(
-            cutting_plane, self.main_beam, (self.main_beam_ref_side_index) % 4
-        )
+            cutting_plane, self.main_beam)
         self.main_beam.add_features(main_feature)
-
         # store the feature
         self.features = [main_feature]
 
