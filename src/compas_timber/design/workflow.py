@@ -58,7 +58,7 @@ class JointRule(object):
         for rule in rules:  # separate category and topo and direct joint rules
             if rule.__class__.__name__ == "TopologyRule":
                 topo_rules[rule.topology_type] = TopologyRule(
-                    rule.topology_type, rule.joint_type
+                    rule.topology_type, rule.joint_type, **rule.kwargs
                 )  # overwrites, meaning last rule wins
         return [rule for rule in topo_rules.values() if rule is not None]
 
@@ -81,6 +81,7 @@ class JointRule(object):
             A list of joint definitions that can be applied to the given beams.
 
         """
+
         beams = beams if isinstance(beams, list) else list(beams)
         direct_rules = JointRule.get_direct_rules(rules)
         beam_pairs = ConnectionSolver().find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)

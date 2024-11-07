@@ -44,17 +44,17 @@ class BallNodeJoint(Joint):
         A string representation of this joint's type.
 
     """
-
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
     GH_ARGS = {"beams": None, "thickness": 10, "holes": 6, "strut_length": 100, "ball_diameter": 50}
 
-    def __init__(self, *beams, **kwargs):
+    def __init__(self, beams, thickness=10, holes=6, strut_length=100, ball_diameter=50, **kwargs):
         super(BallNodeJoint, self).__init__( **kwargs)
         self._elements = beams
-        self.thickness = kwargs.get("thickness", 10)
-        self.plate_holes = kwargs.get("holes", 6)
-        self.strut_length = kwargs.get("strut_length", 100)
-        self.ball_diameter = kwargs.get("ball_diameter", 50)
-        self.beam_keys = [str(beam.guid) for beam in beams]
+        self.thickness = thickness
+        self.plate_holes = holes
+        self.strut_length = strut_length
+        self.ball_diameter = ball_diameter
+        self.beam_keys = [str(beam.guid) for beam in self.beams]
         self.features = []
         self.joint_type = "BallNode"
         self.fastener = BallNodeFastener()
@@ -67,6 +67,10 @@ class BallNodeJoint(Joint):
     def interactions(self):
         for beam in self.beams:
             yield (beam, self.fastener, self)
+
+    @property
+    def element_parameter_count(self):
+        return 1
 
     @classmethod
     def create(cls, model, beams, **kwargs):
@@ -93,8 +97,7 @@ class BallNodeJoint(Joint):
 
         """
 
-
-        joint = cls(*beams, **kwargs)
+        joint = cls(beams, **kwargs)
         model.add_element(joint.fastener)
         for interaction in joint.interactions:
              _ = model.add_interaction(*interaction)

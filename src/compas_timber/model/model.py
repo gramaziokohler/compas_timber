@@ -72,9 +72,11 @@ class TimberModel(Model):
         # type: () -> Generator[Joint, None, None]
         # TODO: consider if there are other interaction types...
         # TODO: consider, multiple interactions can have the same joint...
+        joints = []
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
-                yield interaction
+                joints.append(interaction)
+        return list(set(joints))
 
     @property
     def walls(self):

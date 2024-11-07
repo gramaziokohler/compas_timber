@@ -46,7 +46,7 @@ class ModelComponent(component):
             # apply reversed. later joints in orginal list override ealier ones
             for joint in joints[::-1]:
                 try:
-                    joint.joint_type.create(Model, *joint.beams, **joint.kwargs)
+                    joint.joint_type.create(Model, joint.beams, **joint.kwargs)
                 except BeamJoinningError as bje:
                     debug_info.add_joint_error(bje)
 

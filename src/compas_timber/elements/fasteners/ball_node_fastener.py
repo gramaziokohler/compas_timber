@@ -73,8 +73,7 @@ class BallNodeFastener(Fastener):
         return self.graph_node
 
     def __str__(self):
-        element_str = ["{} {}".format(element.__class__.__name__, element.key) for element in self.elements]
-        return "Fastener connecting {}".format(", ".join(element_str))
+        return "Ball Node Fastener"
 
     # ==========================================================================
     # Implementations of abstract methods
