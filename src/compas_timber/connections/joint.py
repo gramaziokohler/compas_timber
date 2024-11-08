@@ -64,7 +64,25 @@ class Joint(Interaction):
 
     @property
     def beams(self):
-        raise NotImplementedError
+        for element in self.elements:
+            if getattr(element, "is_beam", False):
+                yield element
+
+    @property
+    def plates(self):
+        for element in self.elements:
+            if getattr(element, "is_plate", False):
+                yield element
+
+    @property
+    def fasteners(self):
+        for element in self.elements:
+            if getattr(element, "is_fastener", False):
+                yield element
+
+    @property
+    def element_parameter_count(self):
+        return 2
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
