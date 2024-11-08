@@ -18,8 +18,8 @@ from compas_timber.elements import FeatureApplicationError
 
 from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
 from .btlx_process import MachiningLimits
+from .btlx_process import OrientationType
 
 
 class Lap(BTLxProcess):
@@ -458,6 +458,7 @@ class Lap(BTLxProcess):
             box.ysize = box.ysize*2
 
         return Brep.from_box(box)
+
 
 class LapParams(BTLxProcessParams):
     """A class to store the parameters of a Lap feature.

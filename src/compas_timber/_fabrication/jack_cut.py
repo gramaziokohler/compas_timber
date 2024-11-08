@@ -175,7 +175,6 @@ class JackRafterCut(BTLxProcess):
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
 
-
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
@@ -190,15 +189,14 @@ class JackRafterCut(BTLxProcess):
         # vector rotation direction of the plane's normal in the vertical direction
         angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
         angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-        return 180-abs(angle)
+        return 180 - abs(angle)
 
     @staticmethod
     def _calculate_inclination(ref_side, plane, orientation):
         # vector rotation direction of the plane's normal in the horizontal direction
         inclination_vector = Vector.cross(ref_side.zaxis, plane.normal)
         inclination = angle_vectors_signed(ref_side.zaxis, plane.normal, inclination_vector, deg=True)
-        return 180-abs(inclination)
-
+        return 180 - abs(inclination)
 
     ########################################################################
     # Methods
@@ -261,16 +259,16 @@ class JackRafterCut(BTLxProcess):
 
         # normal pointing towards xaxis so just need the delta
         if self.orientation == OrientationType.END:
-            horizontal_angle = math.radians(90-self.angle)
-            vertical_angle = math.radians(90-self.inclination)
+            horizontal_angle = math.radians(90 - self.angle)
+            vertical_angle = math.radians(90 - self.inclination)
         else:
-            horizontal_angle = math.radians(self.angle-90)
+            horizontal_angle = math.radians(self.angle - 90)
             vertical_angle = math.radians(self.inclination - 90)
 
         rot_a = Rotation.from_axis_and_angle(cutting_plane.zaxis, horizontal_angle, point=p_origin)
         rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
 
-        cutting_plane.transform(rot_a*rot_b)
+        cutting_plane.transform(rot_a * rot_b)
         # for simplicity, we always start with normal pointing towards xaxis.
         # if start is cut, we need to flip the normal
         if self.orientation == OrientationType.END:

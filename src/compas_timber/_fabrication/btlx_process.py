@@ -149,6 +149,7 @@ class LimitationTopType(object):
     UNLIMITED = "unlimited"
     POCKET = "pocket"
 
+
 class MachiningLimits(object):
     """Configuration class for the machining limits of the cut.
 

@@ -116,8 +116,7 @@ class TButtJoint(Joint):
             cutting_plane.translate(cutting_plane.normal * self.mill_depth)
 
         # apply the cut on the main beam
-        main_feature = JackRafterCut.from_plane_and_beam(
-            cutting_plane, self.main_beam, self.main_beam_ref_side_index)
+        main_feature = JackRafterCut.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
         self.main_beam.add_features(main_feature)
         # store the feature
         self.features = [main_feature]
