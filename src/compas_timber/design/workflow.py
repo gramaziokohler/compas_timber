@@ -57,7 +57,7 @@ class JointRule(object):
         for rule in rules:  # separate category and topo and direct joint rules
             if rule.__class__.__name__ == "TopologyRule":
                 topo_rules[rule.topology_type] = TopologyRule(
-                    rule.topology_type, rule.joint_type
+                    rule.topology_type, rule.joint_type, **rule.kwargs
                 )  # overwrites, meaning last rule wins
         return [rule for rule in topo_rules.values() if rule is not None]
 
@@ -136,10 +136,7 @@ class DirectRule(JointRule):
 
     def comply(self, beams):
         try:
-            for beam in self.beams:
-                if beam not in beams:
-                    return False
-            return True
+            return set(beams).issubset(set(self.beams))
         except TypeError:
             print("unable to comply direct joint beam sets")
             return False
@@ -248,8 +245,8 @@ class JointDefinition(object):
     def __init__(self, joint_type, beams, **kwargs):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-        if len(beams) != 2:
-            raise UserWarning("Expected to get two Beams, got {}.".format(len(beams)))
+        if len(beams) < 2:
+            raise UserWarning("Joint requires at least two Beams, got {}.".format(len(beams)))
 
         self.joint_type = joint_type
         self.beams = beams
