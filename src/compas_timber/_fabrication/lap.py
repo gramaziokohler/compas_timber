@@ -278,8 +278,8 @@ class Lap(BTLxProcess):
         for key, value in machining_limits.items():
             if key not in MachiningLimits.EXPECTED_KEYS:
                 raise ValueError("The key must be one of the following: ", {self.EXPECTED_KEYS})
-            if value not in ["yes", "no"]:
-                raise ValueError("The values must be either 'yes' or 'no'.")
+            if not isinstance(value, bool):
+                raise ValueError("The values must be a boolean.")
         self._machining_limits = machining_limits
 
 
@@ -340,7 +340,14 @@ class Lap(BTLxProcess):
         machining_limits.FaceLimitedBack = False
         machining_limits.FaceLimitedFront = False
 
-        return cls(orientation=orientation, start_x=start_x, angle=angle, length=length, width=width, depth=depth, machining_limits=machining_limits.limits, ref_side_index=ref_side_index)
+        return cls(orientation=orientation,
+                   start_x=start_x,
+                   angle=angle,
+                   length=length,
+                   width=width,
+                   depth=depth,
+                   machining_limits=machining_limits.limits,
+                   ref_side_index=ref_side_index)
 
     @staticmethod
     def _calculate_orientation(ref_side, planes):
@@ -415,7 +422,8 @@ class Lap(BTLxProcess):
 
         """
         # type: (Brep, Beam) -> Brep
-        lap_volume = self.volume_from_params_and_beam(beam)
+        box = self.volume_from_params_and_beam(beam)
+        lap_volume = Brep.from_box(box)
         try:
             return geometry - lap_volume
         except BrepTrimmingError:
@@ -435,8 +443,8 @@ class Lap(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
-            The volume of the cut.
+        :class:`compas.geometry.Box`
+            The boxvolume of the cut as a box.
 
         """
         # type: (Beam) -> Brep
@@ -454,10 +462,10 @@ class Lap(BTLxProcess):
         if self.orientation == OrientationType.END:
             box.translate(box_frame.xaxis * -self.length)
 
-        if self.machining_limits["FaceLimitedFront"] == "no" or self.machining_limits["FaceLimitedBack"] == "no":
+        if not self.machining_limits["FaceLimitedFront"] or not self.machining_limits["FaceLimitedBack"]:
             box.ysize = box.ysize*2
 
-        return Brep.from_box(box)
+        return box
 
 
 class LapParams(BTLxProcessParams):
@@ -496,5 +504,7 @@ class LapParams(BTLxProcessParams):
         result["LeadAngle"] = "{:.{prec}f}".format(self._instance.lead_angle, prec=TOL.precision)
         result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
         result["LeadInclination"] = "{:.{prec}f}".format(self._instance.lead_inclination, prec=TOL.precision)
-        result["MachiningLimits"] = self._instance.machining_limits
+        result["MachiningLimits"] = {
+            key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()
+        }
         return result
