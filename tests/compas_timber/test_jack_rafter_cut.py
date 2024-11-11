@@ -31,11 +31,11 @@ def test_jack_rafter_cut_from_plane_start(tol):
     plane = Plane(Point(x=460.346635340, y=445.167151490, z=473.942755901), normal)
     instance = JackRafterCut.from_plane_and_beam(plane, beam)
 
-    # assert tol.is_close(instance.start_x, 214.922)
-    # assert tol.is_close(instance.start_y, 0.0)
-    # assert tol.is_close(instance.angle, 113.344)
-    # assert tol.is_close(instance.inclination, 95.443)
-    # assert tol.is_close(instance.ref_side_index, 0)
+    assert tol.is_close(instance.start_x, 214.922)
+    assert tol.is_close(instance.start_y, 0.0)
+    assert tol.is_close(instance.angle, 113.344)
+    assert tol.is_close(instance.inclination, 95.000)
+    assert tol.is_close(instance.ref_side_index, 0)
 
     cut_plane = instance.plane_from_params_and_beam(beam)
 
@@ -56,10 +56,9 @@ def test_jack_rafter_cut_from_plane_end(tol):
 
     assert tol.is_close(instance.start_x, 214.922)
     assert tol.is_close(instance.start_y, 0.0)
-    assert tol.is_close(instance.angle, 113.344)
-    assert tol.is_close(instance.inclination, 95.443)
+    assert tol.is_close(instance.angle, 66.656)
+    assert tol.is_close(instance.inclination, 85.000)
     assert tol.is_close(instance.ref_side_index, 0)
-
     cut_plane = instance.plane_from_params_and_beam(beam)
 
     # should be the same plane, but point might be different
