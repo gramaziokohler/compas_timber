@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.StepJointNotch`.
 * Added new `compas_timber.connections.TStepJoint`.
 * Added new `utilities` module in `connections` package.
+* Added new method `add_group_element` to `TimberModel`.
+* Added new method `has_group` to `TimberModel`.
+* Added new method `get_elements_in_group` to `TimberModel`.
+* Added attribute `is_group_element` to `TimberElement`.
 
 ### Changed
 
