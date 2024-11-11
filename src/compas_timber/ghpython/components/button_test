@@ -1,0 +1,58 @@
+from ghpythonlib.componentbase import executingcomponent as component
+import Grasshopper, GhPython
+import System
+import Rhino
+import rhinoscriptsyntax as rs
+from System.Windows.Forms import MessageBox
+from System.Windows.Forms import MessageBoxButtons
+
+class Button_UI(Grasshopper.Kernel.Attributes.GH_ComponentAttributes): # inherits all methods of GH_ComponentAttributes
+    def __init__(self, owner):
+        super(Button_UI, self).__init__(owner)
+        self.component = owner
+        self.button_down = False
+
+
+    def Layout(self): # override inherited method Layout
+        Grasshopper.Kernel.Attributes.GH_ComponentAttributes.Layout(self) # run render before changing the definition
+        component_rect = Grasshopper.Kernel.GH_Convert.ToRectangle(self.Bounds) #System.Drawing.Rectangle
+        component_rect.Height += 22
+        self.button_rect = System.Drawing.Rectangle(component_rect.X, component_rect.Bottom-22, component_rect.Width, 22)
+        self.button_rect.Inflate(-2, -2)
+        Bounds = component_rect
+        self.Bounds=Bounds
+        ButtonBounds = self.button_rect
+        self.ButtonBounds=ButtonBounds
+
+    def Render(self,canvas, graphics, channel): # Override Render method
+        Grasshopper.Kernel.Attributes.GH_ComponentAttributes.Render(self, canvas, graphics, channel) # run render before changing the definition
+        if channel == Grasshopper.GUI.Canvas.GH_CanvasChannel.Objects:
+            button = Grasshopper.GUI.Canvas.GH_Capsule.CreateTextCapsule(self.ButtonBounds, self.ButtonBounds, Grasshopper.GUI.Canvas.GH_Palette.Black, "Button", 2, 0)
+            button.Render(graphics, self.Selected, self.Owner.Locked, False)
+            button.Dispose()
+
+    def RespondToMouseDown(self,sender,e):
+        if e.Button == System.Windows.Forms.MouseButtons.Left:
+            rec = self.button_rect
+            pt = System.Drawing.Point.Round(e.CanvasLocation)
+            if not self.button_down:
+                if pt.X > rec.X and pt.X < rec.X+rec.Width and pt.Y > rec.Y and pt.Y < rec.Y+rec.Height:
+                    self.component.click_response()
+                    return  Grasshopper.GUI.Canvas.GH_ObjectResponse.Handled
+        return  super(Button_UI, self).RespondToMouseDown(sender, e)
+
+
+class MyComponent(component):
+    def __init__(self):
+        self.click_count = 0
+
+    def CreateAttributes(self): # Override inherited method create attributes
+        self.m_attributes=Button_UI(self)
+
+    def RunScript(self, x, y):
+        return self.click_count
+
+
+    def click_response(self):
+        self.click_count += 1
+        self.ExpireSolution(True)
