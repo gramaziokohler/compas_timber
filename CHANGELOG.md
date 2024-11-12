@@ -31,12 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `utilities` module in `connections` package.
 * Added new `compas_timber._fabrication.DoubleCut`.
 * Added new `compas_timber.connections.TBirdsmouthJoint`.
+* Added new `compas_timber._fabrication.Lap`.
 
 ### Changed
 
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
 * Renamed `intersection_line_plane` to `intersection_line_plane_param`.
 * Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
+* Adjusted functions in `compas_timber._fabrication.DovetailMortise` and `compas_timber.connections.TDovetailJoint`.
+* Fixed error with angle and inclination calculation in `compas_timber._fabrication.JackRafterCut` 
+* Changed `compas_timber.connections.TButtJoint` and `compas_timber.connections.LButtJoint` by using the new implemented BTLx Processes to define the Joints
 
 ### Removed
 
