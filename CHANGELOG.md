@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `intersection_line_plane` to `intersection_line_plane_param`.
 * Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
 * Adjusted functions in `compas_timber._fabrication.DovetailMortise` and `compas_timber.connections.TDovetailJoint`.
+* Fixed `**kwargs` inheritance in `__init__` for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
+* Standardized `__data__` structure to store beams directly instead of GUIDs for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
+* Changed `model.element_by_guid()` instead of direct `elementsdict[]` access for beam retrieval in joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
+
 
 ### Removed
 
