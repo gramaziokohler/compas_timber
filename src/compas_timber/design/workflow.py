@@ -114,7 +114,7 @@ class JointRule(object):
                         joint_defs.append(JointDefinition(rule.joint_type, ordered_pair, **rule.kwargs))
                         break
             if not match_found:
-                print(
+                raise UserWarning(
                     "Beam pairs could not be resolved by the rules: ",
                     "({}, {})".format(list(pair)[0].key, list(pair)[1].key),
                 )  # TODO: add something to catch unresolved pairs
@@ -139,6 +139,7 @@ class DirectRule(JointRule):
         try:
             return set(beams).issubset(set(self.beams))
         except TypeError:
+            print("unable to comply direct joint beam sets")
             return False
 
 
@@ -229,8 +230,12 @@ class TopologyRule(JointRule):
     def comply(self, beams, max_distance=1e-3):
         try:
             beams = list(beams)
-            topo_results = ConnectionSolver.find_topology(beams[0], beams[1], max_distance=max_distance)
-            return (self.topology_type == topo_results[0], [topo_results[1], topo_results[2]]) # comply, if topologies match, reverse if the beam order should be switched
+            solver = ConnectionSolver()
+            topo_results = solver.find_topology(beams[0], beams[1], max_distance=max_distance)
+            return (
+                self.topology_type == topo_results[0],
+                [topo_results[1], topo_results[2]],
+            )  # comply, if topologies match, reverse if the beam order should be switched
         except KeyError:
 
             return False
@@ -244,6 +249,11 @@ class JointDefinition(object):
     """
 
     def __init__(self, joint_type, beams, **kwargs):
+        # if not issubclass(joint_type, Joint):
+        #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
+        if len(beams) != 2:
+            raise UserWarning("Expected to get two Beams, got {}.".format(len(beams)))
+
         self.joint_type = joint_type
         self.beams = beams
         self.kwargs = kwargs
