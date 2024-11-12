@@ -229,8 +229,12 @@ class TopologyRule(JointRule):
     def comply(self, beams, max_distance=1e-3):
         try:
             beams = list(beams)
-            topo_results = ConnectionSolver.find_topology(beams[0], beams[1], max_distance=max_distance)
-            return (self.topology_type == topo_results[0], [topo_results[1], topo_results[2]]) # comply, if topologies match, reverse if the beam order should be switched
+            solver = ConnectionSolver()
+            topo_results = solver.find_topology(beams[0], beams[1], max_distance=max_distance)
+            return (
+                self.topology_type == topo_results[0],
+                [topo_results[1], topo_results[2]],
+            )  # comply, if topologies match, reverse if the beam order should be switched
         except KeyError:
             return False
 

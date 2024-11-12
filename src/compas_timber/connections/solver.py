@@ -1,6 +1,5 @@
 import itertools
 import math
-import stat
 
 from compas.geometry import Point
 from compas.geometry import add_vectors
@@ -110,8 +109,7 @@ class ConnectionSolver(object):
         """
         return find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
 
-    @staticmethod
-    def find_topology(beam_a, beam_b, tol=TOLERANCE, max_distance=None):
+    def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
 
         If the topology is role-sensitive, the method outputs the beams in a consistent specific order
@@ -135,7 +133,7 @@ class ConnectionSolver(object):
 
         """
 
-        tol = ConnectionSolver.TOLERANCE  # TODO: change to a unit-sensitive value
+        tol = self.TOLERANCE  # TODO: change to a unit-sensitive value
         angtol = 1e-3
 
         a1, a2 = beam_a.centerline
@@ -153,12 +151,12 @@ class ConnectionSolver(object):
         if parallel:
             pa = a1
             pb = closest_point_on_line(a1, [b1, b2])
-            if ConnectionSolver._exceed_max_distance(pa, pb, max_distance, tol):
+            if self._exceed_max_distance(pa, pb, max_distance, tol):
                 return JointTopology.TOPO_UNKNOWN, None, None
 
             # check if any ends meet
             comb = [[0, 0], [0, 1], [1, 0], [1, 1]]
-            meet = [not ConnectionSolver._exceed_max_distance([a1, a2][ia], [b1, b2][ib], max_distance, tol) for ia, ib in comb]
+            meet = [not self._exceed_max_distance([a1, a2][ia], [b1, b2][ib], max_distance, tol) for ia, ib in comb]
             if sum(meet) != 1:
                 return JointTopology.TOPO_UNKNOWN, None, None
 
@@ -183,9 +181,9 @@ class ConnectionSolver(object):
         vna = cross_vectors(va, vn)
         vnb = cross_vectors(vb, vn)
 
-        ta = ConnectionSolver._calc_t([a1, a2], [b1, vnb])
+        ta = self._calc_t([a1, a2], [b1, vnb])
         pa = Point(*add_vectors(a1, scale_vector(va, ta)))
-        tb = ConnectionSolver._calc_t([b1, b2], [a1, vna])
+        tb = self._calc_t([b1, b2], [a1, vna])
         pb = Point(*add_vectors(b1, scale_vector(vb, tb)))
 
         # for max_distance calculations, limit intersection point to line segment
@@ -198,12 +196,12 @@ class ConnectionSolver(object):
         if tb > 1:
             pb = b2
 
-        if ConnectionSolver._exceed_max_distance(pa, pb, max_distance, tol):
+        if self._exceed_max_distance(pa, pb, max_distance, tol):
             return JointTopology.TOPO_UNKNOWN, None, None
 
         # topologies:
-        xa = ConnectionSolver._is_near_end(ta, beam_a.centerline.length, max_distance or 0, tol)
-        xb = ConnectionSolver._is_near_end(tb, beam_b.centerline.length, max_distance or 0, tol)
+        xa = self._is_near_end(ta, beam_a.centerline.length, max_distance or 0, tol)
+        xb = self._is_near_end(tb, beam_b.centerline.length, max_distance or 0, tol)
 
         # L-joint (both meeting at ends)
         if xa and xb:
