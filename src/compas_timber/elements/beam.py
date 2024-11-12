@@ -629,3 +629,41 @@ class Beam(TimberElement):
             return "start", ps
         else:
             return "end", pe
+
+
+
+
+    @staticmethod
+    def beam_side_normal_angle_to_vector(beam, vector, ignore_ends=True):
+        """Returns a map of face indices of beam and the angle of their normal with vector.
+
+        This is used to find a cutting plane when joining the two beams.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.parts.Beam`
+            The beam that attaches with one of its ends to the side of beam_b.
+        vector : :class:`~compas.geometry.Vector`
+            The vector to compare to.
+        ignore_ends : bool, optional
+            If True, only the first four faces of `beam_b` are considered. Otherwise all faces are considered.
+
+        Returns
+        -------
+        dict(int, float)
+            A map of face indices of beam and their respective angle with vector.
+
+        """
+        # find the orientation of beam_a's centerline so that it's pointing outward of the joint
+        # find the closest end
+
+        if ignore_ends:
+            beam_faces = beam.faces[:4]
+        else:
+            beam_faces = beam.faces
+
+        face_angles = {}
+        for face_index, face in enumerate(beam_faces):
+            face_angles[face_index] = angle_vectors(face.normal, vector)
+
+        return face_angles
