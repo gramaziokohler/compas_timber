@@ -112,7 +112,7 @@ class JointRule(object):
                         joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
                         break
             if not match_found:
-                print(
+                raise UserWarning(
                     "Beam pairs could not be resolved by the rules: ",
                     "({}, {})".format(list(pair)[0].key, list(pair)[1].key),
                 )  # TODO: add something to catch unresolved pairs
@@ -138,8 +138,7 @@ class DirectRule(JointRule):
         try:
             return set(beams).issubset(set(self.beams))
         except TypeError:
-            print("unable to comply direct joint beam sets")
-            return False
+            raise UserWarning("unable to comply direct joint beam sets")
 
 
 class CategoryRule(JointRule):
