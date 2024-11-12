@@ -41,13 +41,13 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data = super(LMiterJoint, self).__data__
-        data["beam_a"] = self.beam_a_guid
-        data["beam_b"] = self.beam_b_guid
+        data["beam_a"] = self.beam_a
+        data["beam_b"] = self.beam_b
         data["cutoff"] = self.cutoff
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None):
-        super(LMiterJoint, self).__init__()
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, **kwargs):
+        super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_guid = str(beam_a.guid) if beam_a else None
@@ -148,5 +148,5 @@ class LMiterJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.elementdict[self.beam_a_guid]
-        self.beam_b = model.elementdict[self.beam_b_guid]
+        self.beam_a = model.element_by_guid(self.beam_a_guid)
+        self.beam_b = model.element_by_guid(self.beam_b_guid)

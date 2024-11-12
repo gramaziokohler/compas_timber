@@ -58,8 +58,8 @@ class TStepJoint(Joint):
     @property
     def __data__(self):
         data = super(TStepJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam"] = self.main_beam
+        data["cross_beam"] = self.cross_beam
         data["step_shape"] = self.step_shape
         data["step_depth"] = self.step_depth
         data["heel_depth"] = self.heel_depth
@@ -67,6 +67,7 @@ class TStepJoint(Joint):
         data["tenon_mortise_height"] = self.tenon_mortise_height
         return data
 
+    # fmt: off
     def __init__(
         self,
         main_beam,
@@ -76,8 +77,9 @@ class TStepJoint(Joint):
         heel_depth=None,
         tapered_heel=None,
         tenon_mortise_height=None,
+        **kwargs
     ):
-        super(TStepJoint, self).__init__()
+        super(TStepJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
@@ -195,5 +197,5 @@ class TStepJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.elementdict[self.main_beam_guid]
-        self.cross_beam = model.elementdict[self.cross_beam_guid]
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
