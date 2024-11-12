@@ -40,8 +40,8 @@ class TButtJoint(Joint):
     @property
     def __data__(self):
         data = super(TButtJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam"] = self.main_beam
+        data["cross_beam"] = self.cross_beam
         data["mill_depth"] = self.mill_depth
         return data
 
@@ -66,7 +66,7 @@ class TButtJoint(Joint):
 
     @property
     def main_beam_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 

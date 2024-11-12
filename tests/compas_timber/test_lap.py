@@ -243,7 +243,7 @@ EXPECTED_CUTTING_FRAMES = [
 EXPECTED_BOX = [
     Box(
         xsize=115.932621049,
-        ysize=240.0,
+        ysize=1200.0,
         zsize=10.0,
         frame=Frame(
             point=Point(x=32119.4156515, y=-3302.66821289, z=73.5839565671),
@@ -253,7 +253,7 @@ EXPECTED_BOX = [
     ),
     Box(
         xsize=125.355190923,
-        ysize=240.0,
+        ysize=1200.0,
         zsize=10.0,
         frame=Frame(
             point=Point(x=32512.1179628, y=-3212.66821289, z=73.5839565671),
@@ -263,7 +263,7 @@ EXPECTED_BOX = [
     ),
     Box(
         xsize=120.388041068,
-        ysize=200.0,
+        ysize=1000.0,
         zsize=10.0,
         frame=Frame(
             point=Point(x=33469.9590708, y=-3257.66821289, z=128.583956567),
@@ -273,7 +273,7 @@ EXPECTED_BOX = [
     ),
     Box(
         xsize=121.593895035,
-        ysize=200.0,
+        ysize=1000.0,
         zsize=10.0,
         frame=Frame(
             point=Point(x=34340.1491250, y=-3216.23451172, z=18.5839565671),
@@ -313,9 +313,9 @@ def test_lap_params(
     "expected_lap_params, expected_box",
     [
         (EXPECTED_LAP_PARAMS[0], EXPECTED_BOX[0]),
-        # (EXPECTED_LAP_PARAMS[1], EXPECTED_BOX[1]),
-        # (EXPECTED_LAP_PARAMS[2], EXPECTED_BOX[2]),
-        # (EXPECTED_LAP_PARAMS[3], EXPECTED_BOX[3]),
+        (EXPECTED_LAP_PARAMS[1], EXPECTED_BOX[1]),
+        (EXPECTED_LAP_PARAMS[2], EXPECTED_BOX[2]),
+        (EXPECTED_LAP_PARAMS[3], EXPECTED_BOX[3]),
     ],
 )
 def test_lap_box_from_params(
@@ -369,6 +369,7 @@ def test_lap_box_from_params(
 
     # generate frame from the parameters
     generated_box = lap.volume_from_params_and_beam(cross_beam)
+    print(generated_box)
 
     # set the tolerance for comparing the generated and expected boxes
     tolerance = Tolerance()

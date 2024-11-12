@@ -463,7 +463,7 @@ class Lap(BTLxProcess):
             box.translate(box_frame.xaxis * -self.length)
 
         if not self.machining_limits["FaceLimitedFront"] or not self.machining_limits["FaceLimitedBack"]:
-            box.ysize = box.ysize*2
+            box.ysize = box.ysize*10 # make the box large enough to cut through the beam
 
         return box
 
