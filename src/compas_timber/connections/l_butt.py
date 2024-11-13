@@ -51,8 +51,8 @@ class LButtJoint(Joint):
     @property
     def __data__(self):
         data = super(LButtJoint, self).__data__
-        data["main_beam"] = self.main_beam
-        data["cross_beam"] = self.cross_beam
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["mill_depth"] = self.mill_depth
         data["small_beam_butts"] = self.small_beam_butts
         data["modify_cross"] = self.modify_cross
@@ -72,8 +72,8 @@ class LButtJoint(Joint):
         super(LButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_guid = str(main_beam.guid) if main_beam else None
-        self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
+        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.mill_depth = mill_depth
         self.small_beam_butts = small_beam_butts
         self.modify_cross = modify_cross
