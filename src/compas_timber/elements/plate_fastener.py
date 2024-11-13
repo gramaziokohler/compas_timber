@@ -64,7 +64,7 @@ class PlateFastener(Element):
 
     @classmethod
     def from_outline_thickness_holes_cutouts(cls, outline,  thickness = 5, holes = None, cutouts = None, **kwargs):
-        """Constructs a fastener from an outline, cutouts and thickness.
+        """Constructs a fastener from an outline, cutouts and thickness. This should be constructed on the XY plane and oriented with the x-axis pointing in the direction of the main_beam.centerline.
 
         Parameters
         ----------
@@ -74,7 +74,7 @@ class PlateFastener(Element):
             The thickness of the fastener.
         holes : tuple of list of tuple, optional
             The holes of the fastener. Structure is as follows:
-            (beam_a_holes, beam_b_holes) where beam_a_holes and beam_b_holes are lists of tuples of points and diameters.
+            (beam_a_holes, beam_b_holes, ...) where beam_a_holes and beam_b_holes are lists of tuples of points and diameters.
         cutouts : list of :class:`~compas.geometry.NurbsCurve`, optional
             The cutouts of the fastener.
 
