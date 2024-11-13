@@ -1,8 +1,11 @@
+import statistics
+
+import compas.geometry
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import bounding_box
-from compas.geometry.brep.brep import Brep
+from compas.geometry import Brep
 
 from .timber import TimberElement
 
@@ -21,17 +24,22 @@ class Wall(TimberElement):
     @property
     def __data__(self):
         data = super(Wall, self).__data__
-        data["width"] = self.width
-        data["height"] = self.height
-        data["length"] = self.length
+        data["outline"] = self.outline
+        data["openings"] = self.openings
+        data["thickness"] = self.thickness
         return data
 
-    def __init__(self, length, width, height, frame=None, **kwargs):
-        frame = frame or Frame.worldXY()
-        super(Wall, self).__init__(frame=frame, **kwargs)
-        self.length = length
-        self.width = width
-        self.height = height
+    def __init__(self, outline, thickness, openings=None, frame=None, **kwargs):
+        # type: (compas.geometry.Polyline, float, list[Polyline], Frame, dict) -> None
+        super(Wall, self).__init__(frame=frame or Frame.worldXY(), **kwargs)
+        self.outline = outline
+        self.thickness = thickness
+        self.openings = openings or []
+
+        if not outline.is_closed:
+            raise ValueError("Outline is not closed.")
+        if len(self.outline) != 5:
+            raise ValueError("Wall outline must have 4 segments.")
 
     @property
     def is_wall(self):
@@ -42,16 +50,6 @@ class Wall(TimberElement):
         return True
 
     @property
-    def shape(self):
-        assert self.frame
-        boxframe = self.frame.copy()
-        origin = boxframe.point
-        origin += boxframe.xaxis * self.length * 0.5
-        origin += boxframe.yaxis * self.width * 0.5
-        origin += boxframe.zaxis * self.height * 0.5
-        return Box(self.length, self.width, self.height, frame=boxframe)
-
-    @property
     def origin(self):
         assert self.frame
         return self.frame.point.copy()
@@ -60,30 +58,42 @@ class Wall(TimberElement):
     def baseline(self):
         # type: () -> Line
         assert self.frame
-        start = self.frame.point
-        end = self.frame.point + self.frame.xaxis * self.length
-        return Line(start, end)
+        # TODO: find the bottom line of wall. don't love this, but it works for now. might be fair to rely on a consistent order of points
+        z_means = {statistics.mean([line.start.z, line.end.z]): line for line in self.outline.lines}
+        return z_means[min(z_means.keys())]
 
     def compute_geometry(self, _=False):
-        return Brep.from_box(self.shape)
+        assert self.frame
 
-    def compute_aabb(self, inflate_by=0.0):
-        vertices, _ = self.shape.to_vertices_and_faces()
-        box = Box.from_bounding_box(bounding_box(vertices))
+        extrusion_vector = self.frame.zaxis * self.thickness
+        return Brep.from_extrusion(self.outline, extrusion_vector)
+
+    def compute_aabb(self, inflate_by=0.1):
+        obb = self.compute_obb(inflate_by)
+        return Box.from_bounding_box(bounding_box(obb.points))
+
+    def compute_obb(self, inflate_by=0.0):
+        assert self.frame
+        points = self.outline.points
+        # TODO: this is more like obb than aabb
+        box_corners = [
+            points[0],
+            points[1],
+            points[1] + self.frame.zaxis * self.thickness,
+            points[0] + self.frame.zaxis * self.thickness,
+            points[3],
+            points[2],
+            points[2] + self.frame.zaxis * self.thickness,
+            points[3] + self.frame.zaxis * self.thickness,
+        ]
+        box = Box.from_bounding_box(box_corners)
         box.xsize += inflate_by
         box.ysize += inflate_by
         box.zsize += inflate_by
         return box
 
-    def compute_obb(self, inflate_by=0.0):
-        obb = self.shape.copy()
-        obb.xsize += inflate_by
-        obb.ysize += inflate_by
-        obb.zsize += inflate_by
-        return obb
-
     def __repr__(self):
-        return "Wall({}, {:.3f}, {:.3f}, {:.3f})".format(self.frame, self.length, self.width, self.height)
+        return "Wall({}, {:.3f}, {:.3f}, {:.3f})".format(self.frame, self.outline, self.thickness, self.openings)
 
     @classmethod
     def from_box(cls, box):
@@ -94,3 +104,8 @@ class Wall(TimberElement):
         origin -= boxframe.yaxis * box.ysize * 0.5
         origin -= boxframe.zaxis * box.zsize * 0.5
         return cls(box.xsize, box.ysize, box.zsize, frame=boxframe)
+
+    @classmethod
+    def from_baseline(cls, baseline, thickness, height, y_vector):
+        # TODO: baseline is x_axis, y_vector must be perpendicular to baseline
+        raise NotImplementedError
