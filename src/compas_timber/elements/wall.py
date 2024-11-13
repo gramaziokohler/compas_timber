@@ -55,6 +55,11 @@ class Wall(TimberElement):
         return self.frame.point.copy()
 
     @property
+    def centerline(self):
+        # TODO: temp hack to make this compatible with `find_topology`.
+        return self.baseline
+
+    @property
     def baseline(self):
         # type: () -> Line
         assert self.frame
