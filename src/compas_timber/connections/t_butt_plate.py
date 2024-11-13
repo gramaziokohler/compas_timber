@@ -53,17 +53,13 @@ class TButtPlateJoint(ButtJoint):
         super(TButtPlateJoint, self).__init__(main_beam, cross_beam, mill_depth, fastener, **kwargs)
         if main_beam and cross_beam:
             self.check_compatiblity()
-            path = os.path.dirname(__file__)
-            path_parts = path.split("\\")
-            path = "/".join(path_parts[:-1])
-            path += "/elements/fasteners/t_butt_plate.json"
-            self.fastener = json_load(path)
-            if fastener.shape:
-                self._fasteners = [PlateFastener(fastener.shape), PlateFastener(fastener.shape)]
-            else:
-                self._fasteners = [PlateFastener(), PlateFastener()]
+            if not fastener:
+                path = os.path.dirname(__file__)
+                path_parts = path.split("\\")
+                path = "/".join(path_parts[:-1])
+                path += "/elements/fasteners/t_butt_plate.json"
+                self.fastener = json_load(path)
             self.place_fasteners()
-            self.test = []
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
@@ -250,4 +246,3 @@ class TButtPlateJoint(ButtJoint):
                 point.transform(transformation)
                 drill_feature = DrillFeature(Line.from_point_direction_length(point, -fastener.frame.zaxis, depth), hole[1], depth)
                 beam.add_features(drill_feature)
-                self.test.append(Line.from_point_direction_length(point, -fastener.frame.zaxis, depth))
