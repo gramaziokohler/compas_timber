@@ -157,13 +157,13 @@ class MachiningLimits(object):
     ----------
     EXPECTED_KEYS : set
         The expected keys for the limits dictionary.
-    FaceLimitedStart : bool
+    face_limited_start : bool
         Limit the start face.
-    FaceLimitedEnd : bool
+    face_limited_end : bool
         Limit the end face.
-    FaceLimitedFront : bool
+    face_limited_front : bool
         Limit the front face.
-    FaceLimitedBack : bool
+    face_limited_back : bool
         Limit the back face.
 
     Properties
@@ -175,17 +175,17 @@ class MachiningLimits(object):
     EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]
 
     def __init__(self):
-        self.FaceLimitedStart = True
-        self.FaceLimitedEnd = True
-        self.FaceLimitedFront = True
-        self.FaceLimitedBack = True
+        self.face_limited_start = True
+        self.face_limited_end = True
+        self.face_limited_front = True
+        self.face_limited_back = True
 
     @property
     def limits(self):
         """Dynamically generate the limits dictionary with boolean values from instance attributes."""
         return {
-            "FaceLimitedStart": self.FaceLimitedStart,
-            "FaceLimitedEnd": self.FaceLimitedEnd,
-            "FaceLimitedFront": self.FaceLimitedFront,
-            "FaceLimitedBack": self.FaceLimitedBack,
+            "FaceLimitedStart": self.face_limited_start,
+            "FaceLimitedEnd": self.face_limited_end,
+            "FaceLimitedFront": self.face_limited_front,
+            "FaceLimitedBack": self.face_limited_back,
         }

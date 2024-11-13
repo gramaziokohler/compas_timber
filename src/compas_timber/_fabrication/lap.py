@@ -337,8 +337,8 @@ class Lap(BTLxProcess):
 
         # define machining limits
         machining_limits = MachiningLimits()
-        machining_limits.FaceLimitedBack = False
-        machining_limits.FaceLimitedFront = False
+        machining_limits.face_limited_back = False
+        machining_limits.face_limited_front = False
 
         return cls(orientation=orientation,
                    start_x=start_x,
