@@ -112,10 +112,11 @@ class JointRule(object):
                         joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
                         break
             if not match_found:
-                raise UserWarning(
-                    "Beam pairs could not be resolved by the rules: ",
-                    "({}, {})".format(list(pair)[0].key, list(pair)[1].key),
-                )  # TODO: add something to catch unresolved pairs
+                pass
+                # raise Warning(
+                #     "Beam pairs could not be resolved by the rules: ",
+                #     "({}, {})".format(list(pair)[0].key, list(pair)[1].key),
+                # )  # TODO: add something to catch unresolved pairs
         return joint_defs
 
 

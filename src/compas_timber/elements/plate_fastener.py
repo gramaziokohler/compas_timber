@@ -31,6 +31,7 @@ class PlateFastener(Element):
         super(PlateFastener, self).__init__(**kwargs)
         self._shape = shape
         self.frame = frame or Frame.worldXY()
+        self.holes = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -71,8 +72,9 @@ class PlateFastener(Element):
             The outline of the fastener.
         thickness : float, optional
             The thickness of the fastener.
-        holes : list of tuple, optional
-            The holes of the fastener. Each tuple contains a point and a diameter.
+        holes : tuple of list of tuple, optional
+            The holes of the fastener. Structure is as follows:
+            (beam_a_holes, beam_b_holes) where beam_a_holes and beam_b_holes are lists of tuples of points and diameters.
         cutouts : list of :class:`~compas.geometry.NurbsCurve`, optional
             The cutouts of the fastener.
 
@@ -90,7 +92,7 @@ class PlateFastener(Element):
         return plate_fastener
 
     @classmethod
-    def from_data(cls, data):
+    def __from_data__(cls, data):
         """Constructs a fastener from its data representation.
 
         Parameters
@@ -104,7 +106,7 @@ class PlateFastener(Element):
 
         """
         plate_fastener = cls()
-        plate_fastener._guid = data.get('guid', None)
+        # plate_fastener._guid = data.get('guid', None)
         plate_fastener.name = data.get('name', None)
         plate_fastener.attributes = data.get('attributes', {})
         plate_fastener.outline = NurbsCurve.__from_data__(data['outline'])
@@ -133,7 +135,7 @@ class PlateFastener(Element):
     @property
     def __data__(self):
         data = super(PlateFastener, self).__data__
-        data['guid'] = self.guid
+        # data['guid'] = self.guid
         data['outline'] = self.outline.__data__
         data['thickness'] = self.thickness
         data['holes'] = self.holes
@@ -159,9 +161,10 @@ class PlateFastener(Element):
                     cutout_brep = Brep.from_extrusion(cutout, vector)
                     self._shape = self._shape - cutout_brep
             if self.holes:
-                for hole in self.holes:
-                    cylinder = Brep.from_cylinder(Cylinder(hole[1] * 0.5, self.thickness*2.0, Frame(hole[0], Vector(1.0,0.0,0.0), Vector(0.0,1.0,0.0))))
-                    self._shape = self._shape - cylinder
+                for list in self.holes:
+                    for hole in list:
+                        cylinder = Brep.from_cylinder(Cylinder(hole[1] * 0.5, self.thickness*2.0, Frame(hole[0], Vector(1.0,0.0,0.0), Vector(0.0,1.0,0.0))))
+                        self._shape = self._shape - cylinder
         return self._shape
 
 
@@ -174,7 +177,6 @@ class PlateFastener(Element):
         :class:`~compas.geometry.Brep`
 
         """
-
         if not self._geometry:
             self._geometry = self.shape.copy()
             transformation = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
