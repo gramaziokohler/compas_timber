@@ -3,6 +3,9 @@ from compas_model.elements import Element
 from compas.geometry import NurbsCurve
 from compas.geometry import Brep
 from compas.geometry import Cylinder
+from compas.geometry import Vector
+from compas.geometry import NurbsCurve
+from compas.geometry import Transformation
 
 class PlateFastener(Element):
     """
@@ -10,8 +13,8 @@ class PlateFastener(Element):
 
     Parameters
     ----------
-    geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the fastener.
+    shape : :class:`~compas.geometry.Geometry`
+        The shape of the fastener at the XY plane origin.
     frame : :class:`~compas.geometry.Frame`
         The frame of the fastener.
 
@@ -24,9 +27,9 @@ class PlateFastener(Element):
 
     """
 
-    def __init__(self, geometry=None, frame=None, **kwargs):
+    def __init__(self, shape=None, frame=None, **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
-        self._geometry = geometry
+        self._shape = shape
         self.frame = frame or Frame.worldXY()
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -86,6 +89,30 @@ class PlateFastener(Element):
 
         return plate_fastener
 
+    @classmethod
+    def from_data(cls, data):
+        """Constructs a fastener from its data representation.
+
+        Parameters
+        ----------
+        data : dict
+            The data dictionary.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.PlateFastener`
+
+        """
+        plate_fastener = cls()
+        plate_fastener._guid = data.get('guid', None)
+        plate_fastener.name = data.get('name', None)
+        plate_fastener.attributes = data.get('attributes', {})
+        plate_fastener.outline = NurbsCurve.__from_data__(data['outline'])
+        plate_fastener.thickness = data.get('thickness', 5)
+        plate_fastener.holes = data.get('holes', [])
+        plate_fastener.cutouts = [NurbsCurve.__from_data__(cutout) for cutout in data['cutouts']] if data.get('cutouts', None) else None
+        plate_fastener.frame = Frame(data['frame']['point'], data['frame']['xaxis'], data['frame']['yaxis'])
+        return plate_fastener
     # ==========================================================================
     # Methods
     # ==========================================================================
@@ -104,20 +131,52 @@ class PlateFastener(Element):
         self.holes.append((point, diameter))
 
     @property
-    def geometry(self):
-        """Constructs the geometry of the fastener.
+    def __data__(self):
+        data = super(PlateFastener, self).__data__
+        data['guid'] = self.guid
+        data['outline'] = self.outline.__data__
+        data['thickness'] = self.thickness
+        data['holes'] = self.holes
+        data['cutouts'] = [cutout.__data__ for cutout in self.cutouts] if self.cutouts else None
+        data['frame'] = self.frame.__data__
+        return data
+
+
+    @property
+    def shape(self):
+        """Constructs the base shape of the fastener.This is located at the origin of the XY plane with the x-axis pointing in the direction of the main_beam.
 
         Returns
         -------
-        :class:`~compas.geometry.Geometry`
+        :class:`~compas.geometry.Brep`
 
         """
+        if not self._shape:
+            vector = Vector(0, 0, self.thickness)
+            self._shape = Brep.from_extrusion(self.outline, vector)
+            if self.cutouts:
+                for cutout in self.cutouts:
+                    cutout_brep = Brep.from_extrusion(cutout, vector)
+                    self._shape = self._shape - cutout_brep
+            if self.holes:
+                for hole in self.holes:
+                    cylinder = Brep.from_cylinder(Cylinder(hole[1] * 0.5, self.thickness*2.0, Frame(hole[0], Vector(1.0,0.0,0.0), Vector(0.0,1.0,0.0))))
+                    self._shape = self._shape - cylinder
+        return self._shape
+
+
+    @property
+    def geometry(self):
+        """Constructs the geometry of the fastener as oriented in space.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+
+        """
+
         if not self._geometry:
-            self._geometry = Brep.from_extrusion(self.outline, self.thickness)
-            for cutout in self.cutouts:
-                cutout_brep = Brep.from_extrusion(cutout, self.thickness)
-                self._geometry = self._geometry - cutout_brep
-            for hole in self.holes:
-                cylinder = Brep.from_cylinder(Cylinder(hole[1] * 0.5, self.thickness, Frame(hole[0], Vector.worldX, Vector.worldY)))
-                self._geometry = self._geometry - cylinder
+            self._geometry = self.shape.copy()
+            transformation = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
+            self._geometry.transform(transformation)
         return self._geometry

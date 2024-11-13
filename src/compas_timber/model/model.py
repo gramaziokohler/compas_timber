@@ -170,3 +170,9 @@ class TimberModel(Model):
 
         for joint in self.joints:
             joint.add_features()
+
+        for joint in self.joints:
+            try:
+                joint.add_fasteners()
+            except:
+                pass

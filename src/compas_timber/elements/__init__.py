@@ -7,7 +7,7 @@ from .features import CutFeature
 from .features import DrillFeature
 from .features import MillVolume
 from .features import FeatureApplicationError
-from .fasteners.plate_fastener import PlateFastener
+from .plate_fastener import PlateFastener
 
 __all__ = [
     "Wall",

@@ -13,7 +13,10 @@ from compas.geometry import distance_point_plane
 from compas.geometry import Plane
 from compas.tolerance import Tolerance
 from compas.geometry import Frame
+from compas_timber.elements.plate import Plate
+from compas_timber.elements.plate_fastener import PlateFastener
 from compas_timber.utils import intersection_line_line_param
+from compas.geometry import Transformation
 
 
 from .joint import BeamJoinningError
@@ -46,17 +49,59 @@ class TButtPlateJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
-        super(TButtPlateJoint, self).__init__(main_beam, cross_beam, mill_depth, birdsmouth, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, fastener = None, **kwargs):
+        super(TButtPlateJoint, self).__init__(main_beam, cross_beam, mill_depth, fastener, **kwargs)
         if main_beam and cross_beam:
             self.check_compatiblity()
-
+            self.fastener = [PlateFastener(), PlateFastener()]
 
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
         self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+
+
+    @property
+    def interactions(self):
+        """Returns interactions between elements used by this joint."""
+        interactions = []
+        interactions.append((self.main_beam, self.cross_beam, self))
+        interactions.append((self.main_beam, self.fasteners[0], self))
+        interactions.append((self.main_beam, self.fasteners[1], self))
+        interactions.append((self.cross_beam, self.fasteners[0], self))
+        interactions.append((self.cross_beam, self.fasteners[1], self))
+
+#================================================================================================================================================================
+# class methods
+#================================================================================================================================================================
+    @classmethod
+    def create(cls, model, *beams, **kwargs):
+        """Creates a T-Butt type joint between the beams.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the joint belongs.
+        beams : :class:`~compas_timber.parts.Beam`
+            The beams to be joined.
+        mill_depth : float, optional
+            The depth to mill the cross beam.
+        fastener : :class:`~compas_timber.elements.PlateFastener`, optional
+            The fastener to be used in the joint.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.TButtPlateJoint`
+            The created joint.
+
+        """
+        joint = cls(*beams, **kwargs)
+        for interaction in joint.interactions:
+             _ = model.add_interaction(*interaction)
+        for fastener in joint.fasteners:
+            model.add_element(fastener)
+        return joint
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -105,13 +150,20 @@ class TButtPlateJoint(ButtJoint):
         self.main_beam.add_features(trim_feature)
         self.features = [trim_feature]
 
+
     def add_fasteners(self):
         """Adds the fasteners to the joint.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        pass
+        self.fasteners = []
+        frames = self.get_fastener_frames()
+        for frame, fastener in zip(frames, self.fasteners):
+
+            fastener.frame = frame
+
+
 
     def check_compatiblity(self):
         """Checks if the beams are compatible with the joint and sets the front and back face indices.
@@ -172,3 +224,4 @@ class TButtPlateJoint(ButtJoint):
         back_frame.rotate(-math.pi/2, back_frame.xaxis)
 
         return [front_frame, back_frame]
+

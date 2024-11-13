@@ -64,9 +64,43 @@ class Joint(Interaction):
 
     @property
     def beams(self):
-        raise NotImplementedError
+        for element in self.elements:
+            if getattr(element, "is_beam", False):
+                yield element
+
+    @property
+    def plates(self):
+        for element in self.elements:
+            if getattr(element, "is_plate", False):
+                yield element
+
+    @property
+    def fasteners(self):
+        for element in self.elements:
+            if getattr(element, "is_fastener", False):
+                yield element
+
+    @property
+    def interactions(self):
+        """Returns interactions consisting of all possible pairs of beams that are connected by this joint and the joint itself."""
+        interactions = []
+        for i in range(len(self.elements)):
+            for j in range(i + 1, len(self.elements)):
+                interactions.append((self.elements[i], self.elements[j], self))
+        return interactions
 
     def add_features(self):
+        """Adds the features defined by this joint to affected beam(s).
+
+        Raises
+        ------
+        :class:`~compas_timber.connections.BeamJoinningError`
+            Should be raised whenever the joint was not able to calculate the features to be applied to the beams.
+
+        """
+        raise NotImplementedError
+
+    def add_fasteners(self):
         """Adds the features defined by this joint to affected beam(s).
 
         Raises
