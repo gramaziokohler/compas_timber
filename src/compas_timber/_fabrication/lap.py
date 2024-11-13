@@ -2,7 +2,7 @@ import math
 
 from compas.geometry import Box
 from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
+from compas.geometry import BrepError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -313,8 +313,9 @@ class Lap(BTLxProcess):
 
         planes = [Plane.from_frame(plane) for plane in planes if isinstance(plane, Frame)]
 
-        # get ref_side and ref_edge from the beam
+        # get ref_side, and ref_edge from the beam
         ref_side = beam.ref_sides[ref_side_index]
+        ref_side_surface = beam.side_as_surface(ref_side_index)
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
         # sort the planes based on the angle between their normals and the reference side's normal
@@ -327,7 +328,7 @@ class Lap(BTLxProcess):
         start_x = cls._calculate_start_x(ref_side, ref_edge, planes, orientation, depth)
 
         # calculate the width of the lap
-        width = beam.width if ref_side_index%2 == 0 else beam.height
+        width = ref_side_surface.ysize
 
         # calculate the angle of the lap
         angle = cls._calculate_angle(ref_side, planes)
@@ -426,7 +427,7 @@ class Lap(BTLxProcess):
         lap_volume = Brep.from_box(box)
         try:
             return geometry - lap_volume
-        except BrepTrimmingError:
+        except BrepError:
             raise FeatureApplicationError(
                 lap_volume,
                 geometry,
