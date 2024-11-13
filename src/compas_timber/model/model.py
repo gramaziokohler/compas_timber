@@ -7,6 +7,10 @@ from compas.geometry import Point
 from compas_model.models import Model
 
 from compas_timber.connections import Joint
+from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import JointTopology
+
+from compas_timber.connections import WallJoint
 
 
 class TimberModel(Model):
@@ -269,3 +273,16 @@ class TimberModel(Model):
 
         for joint in self.joints:
             joint.add_features()
+
+    def connect_adjacent_walls(self):
+        # TODO: first clear all wall to wall joints
+        solver = ConnectionSolver()
+        pairs = solver.find_intersecting_pairs(list(self.walls), rtree=True)
+        for pair in pairs:
+            wall_a, wall_b = pair
+            result = solver.find_wall_wall_topology(wall_a, wall_b)
+            topology = result[0]
+            if topology != JointTopology.TOPO_UNKNOWN:
+                wall_a, wall_b = result[1], result[2]
+            joint = WallJoint(wall_a, wall_b, topology=topology)
+            self.add_interaction(wall_a, wall_b, interaction=joint)
