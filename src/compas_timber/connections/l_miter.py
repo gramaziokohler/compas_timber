@@ -41,8 +41,8 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data = super(LMiterJoint, self).__data__
-        data["beam_a"] = self.beam_a
-        data["beam_b"] = self.beam_b
+        data["beam_a"] = self.beam_a_guid
+        data["beam_b"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
         return data
 
@@ -50,8 +50,8 @@ class LMiterJoint(Joint):
         super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
-        self.beam_a_guid = str(beam_a.guid) if beam_a else None
-        self.beam_b_guid = str(beam_b.guid) if beam_b else None
+        self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
+        self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
         self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
         self.features = []
 
