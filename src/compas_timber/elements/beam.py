@@ -634,7 +634,7 @@ class Beam(TimberElement):
 
 
     @staticmethod
-    def beam_side_normal_angle_to_vector(beam, vector, ignore_ends=True):
+    def angle_beam_side_normal_to_vector(beam, vector, ignore_ends=True):
         """Returns a map of face indices of beam and the angle of their normal with vector.
 
         This is used to find a cutting plane when joining the two beams.
