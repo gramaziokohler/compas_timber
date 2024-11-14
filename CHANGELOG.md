@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new method `has_group` to `TimberModel`.
 * Added new method `get_elements_in_group` to `TimberModel`.
 * Added attribute `is_group_element` to `TimberElement`.
+* Added `JointRule.joints_from_beams_and_rules()` static method 
+* Added `Element.reset()` method.
+
 
 ### Changed
 
@@ -46,10 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `**kwargs` inheritance in `__init__` for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
 * Fixed GUID assignment logic from `**kwargs` to ensure correct fallback behavior for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
 * Changed `model.element_by_guid()` instead of direct `elementsdict[]` access for beam retrieval in joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
+* Reworked the model generation pipeline.
+* Reworked `comply` methods for `JointRule`s. 
 
 ### Removed
 
 * Removed module `compas_timber.utils.compas_extra`.
+* Removed a bunch of spaghetti from `CT_model` GH component.
 
 ## [0.11.0] 2024-09-17
 
