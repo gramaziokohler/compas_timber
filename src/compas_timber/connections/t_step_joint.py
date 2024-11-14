@@ -90,13 +90,16 @@ class TStepJoint(Joint):
         self.tenon_mortise_height = tenon_mortise_height
 
         # Check alignment to determine if the width and height of the main_beam (beam_b) should be swapped
-        swap_dimensions = check_beam_alignment(self.cross_beam, self.main_beam)
+        swap_dimensions_main = check_beam_alignment(self.cross_beam, self.main_beam)
+        swap_dimensions_cross = check_beam_alignment(self.main_beam, self.cross_beam)
         # For the main beam, use width or height based on the alignment result
-        main_width = self.main_beam.width if swap_dimensions else self.main_beam.height
-        main_height = self.main_beam.height if swap_dimensions else self.main_beam.width
+        main_width = self.main_beam.width if swap_dimensions_main else self.main_beam.height
+        main_height = self.main_beam.height if swap_dimensions_main else self.main_beam.width
+        # For the cross beam, use width or height based on the alignment result
+        cross_width = self.cross_beam.width if swap_dimensions_cross else self.cross_beam.height
 
-        self.start_y = (self.cross_beam.width - main_width) / 2 if self.cross_beam.width > main_width else 0.0
-        self.notch_limited = main_width < self.cross_beam.width
+        self.start_y = (cross_width - main_width) / 2 if cross_width > main_width else 0.0
+        self.notch_limited = False
         self.notch_width = main_width
         self.strut_height = main_height
         self.tenon_mortise_width = main_width / 4
@@ -159,6 +162,16 @@ class TStepJoint(Joint):
         main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
         cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
 
+        # generate step joint features
+        main_feature = StepJoint.from_plane_and_beam(
+            cross_beam_ref_side,
+            self.main_beam,
+            self.step_depth,
+            self.heel_depth,
+            self.tapered_heel,
+            self.main_beam_ref_side_index,
+        )
+
         # generate step joint notch features
         cross_feature = StepJointNotch.from_plane_and_beam(
             main_beam_ref_side,
@@ -171,16 +184,6 @@ class TStepJoint(Joint):
             self.strut_height,
             self.tapered_heel,
             self.cross_beam_ref_side_index,
-        )
-
-        # generate step joint features
-        main_feature = StepJoint.from_plane_and_beam(
-            cross_beam_ref_side,
-            self.main_beam,
-            self.step_depth,
-            self.heel_depth,
-            self.tapered_heel,
-            self.main_beam_ref_side_index,
         )
 
         # generate tenon and mortise features

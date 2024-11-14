@@ -5,7 +5,6 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Polyline
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
@@ -133,8 +132,8 @@ class StepJoint(BTLxProcess):
 
     @strut_inclination.setter
     def strut_inclination(self, strut_inclination):
-        if strut_inclination < 0.1 or strut_inclination > 179.9:
-            raise ValueError("StrutInclination must be between 0.1 and 179.9.")
+        if strut_inclination < 0.1 or strut_inclination > 179.9 or strut_inclination == 90.0:
+            raise ValueError("StrutInclination must be between 0.1 and 89.9 or 90.1 and 179.9.")
         self._strut_inclination = strut_inclination
 
     @property
@@ -643,57 +642,49 @@ class StepJoint(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Polyhedron`
+        :class:`compas.geometry.Brep`
             The tenon volume.
 
         """
-        # type: (Beam) -> Mesh
-
-        assert self.tenon
+        # type: (Beam) -> Brep
         assert self.tenon_width is not None
         assert self.tenon_height is not None
 
         # start with a plane aligned with the ref side but shifted to the start of the first cut
-        ref_side = beam.side_as_surface(self.ref_side_index)
-        opp_side = beam.side_as_surface((self.ref_side_index + 2) % 4)
+        ref_side = beam.ref_sides[self.ref_side_index]
+        ref_surface = beam.side_as_surface(self.ref_side_index)
+        beam_height = beam.side_as_surface((self.ref_side_index+1)%4).ysize
 
-        x_displacement_end = self._calculate_x_displacement_end(beam.height, self.strut_inclination, self.orientation)
+        # calculate the dx and dy of the tenon volume
+        dx = beam_height/math.sin(math.radians(self.strut_inclination))
+        dy = self.tenon_width
 
-        # Get the points of the top face of the tenon on the ref_side and opp_side
-        # x-displcement
-        start_x_ref = self.start_x
-        start_x_opp = self.start_x + x_displacement_end
-        # y-displacement
-        start_y = (beam.width - self.tenon_width) / 2
-        end_y = start_y + self.tenon_width
-        # points at ref_side
-        p_ref_start = ref_side.point_at(start_x_ref, start_y)
-        p_ref_end = ref_side.point_at(start_x_ref, end_y)
-        # points at opp_side
-        p_opp_start = opp_side.point_at(start_x_opp, start_y)
-        p_opp_end = opp_side.point_at(start_x_opp, end_y)
+        start_x = self.start_x
+        start_y = ref_surface.ysize/2
 
-        # construct the polyline for the top face of the tenon
-        tenon_polyline = Polyline([p_ref_start, p_ref_end, p_opp_start, p_opp_end, p_ref_start])
+        # create a box volume for the tenon
+        box_origin = ref_surface.point_at(start_x, start_y)
+        box_frame = Frame(box_origin, ref_side.xaxis, ref_side.yaxis)
+        tenon_box = Box(dx, dy, self.tenon_height, box_frame)
 
-        # calcutate the extrusion vector of the tenon
-        extr_vector_length = self.tenon_height / math.sin(math.radians(self.strut_inclination))
-        extr_vector = ref_side.frame.xaxis * extr_vector_length
-        if self.orientation == OrientationType.START:
-            extr_vector = -extr_vector
+        # translate the box to the correct position and rotate it to the strut inclination
+        xaxis_vector = box_frame.xaxis * (dx/2)
+        zaxis_vector = -box_frame.zaxis * (self.tenon_height/2)
+        if self.orientation == OrientationType.END:
+            inclination = math.radians(180-self.strut_inclination)
+            zaxis_vector = -zaxis_vector
+        else:
+            inclination = math.radians(self.strut_inclination)
+        tenon_box.translate(xaxis_vector + zaxis_vector)
 
-        # translate the polyline to create the tenon volume
-        tenon_polyline_extrusion = tenon_polyline.translated(extr_vector)
+        # rotate the tenon volume to the strut inclination
+        rotation = Rotation.from_axis_and_angle(ref_side.yaxis, inclination, box_frame.point)
+        tenon_box.transform(rotation)
 
-        # create Box from tenon points  # TODO: should create Brep directly by extruding the polyline
-        tenon_points = tenon_polyline.points + tenon_polyline_extrusion.points
-        tenon_box = Box.from_points(tenon_points)
-
-        # convert to Brep and trim with ref_side and opp_side
+        # convert to Brep and trim with ref_side
         tenon_brep = Brep.from_box(tenon_box)
         try:
-            tenon_brep.trim(ref_side.to_plane())
-            tenon_brep.trim(opp_side.to_plane())
+            tenon_brep.trim(ref_side)
         except Exception as e:
             raise FeatureApplicationError(
                 None, tenon_brep, "Failed to trim tenon volume with cutting planes: {}".format(str(e))
