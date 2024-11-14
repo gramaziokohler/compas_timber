@@ -574,10 +574,6 @@ class StepJointNotch(BTLxProcess):
         else:
             self.mortise_height = mortise_height
 
-        # avoid mortise in perpendicular joints
-        if self.strut_inclination == 90.0:
-            self.mortise = False
-
     def planes_from_params_and_beam(self, beam):
         """Calculates the cutting planes from the machining parameters in this instance and the given beam
 
