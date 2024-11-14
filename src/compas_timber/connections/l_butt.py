@@ -65,7 +65,7 @@ class LButtJoint(Joint):
         cross_beam=None,
         mill_depth=None,
         small_beam_butts=False,
-        modify_cross=False,
+        modify_cross=True,
         reject_i=False,
         **kwargs
     ):
