@@ -427,7 +427,7 @@ class Lap(BTLxProcess):
         lap_volume = Brep.from_box(box)
         try:
             return geometry - lap_volume
-        except BrepError:
+        except IndexError:
             raise FeatureApplicationError(
                 lap_volume,
                 geometry,
