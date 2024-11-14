@@ -38,6 +38,10 @@ class Wall(TimberElement):
         return True
 
     @property
+    def is_group_element(self):
+        return True
+
+    @property
     def shape(self):
         assert self.frame
         boxframe = self.frame.copy()

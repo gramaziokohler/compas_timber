@@ -14,6 +14,8 @@ class TimberElement(Element):
         True if the element is a plate.
     is_wall : bool
         True if the element is a wall.
+    is_group_element : bool
+        True if the element can be used as container for other elements.
 
     """
 
@@ -27,4 +29,8 @@ class TimberElement(Element):
 
     @property
     def is_wall(self):
+        return False
+
+    @property
+    def is_group_element(self):
         return False
