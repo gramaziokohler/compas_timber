@@ -44,7 +44,9 @@ class ModelComponent(component):
 
         if unmatched_pairs:
             for pair in unmatched_pairs:
-                self.addRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(pair[0].key, pair[1].key)) #TODO: add to debug_info
+                self.addRuntimeMessage(
+                    Warning, "No joint rule found for beams {} and {}".format(pair[0].key, pair[1].key)
+                )  # TODO: add to debug_info
 
         if joints:
             # apply reversed. later joints in orginal list override ealier ones
