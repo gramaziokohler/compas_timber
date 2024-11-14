@@ -1,11 +1,11 @@
-from compas.geometry import Frame
-from compas_model.elements import Element
-from compas.geometry import NurbsCurve
 from compas.geometry import Brep
 from compas.geometry import Cylinder
-from compas.geometry import Vector
+from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas_model.elements import Element
+
 
 class PlateFastener(Element):
     """
@@ -57,14 +57,15 @@ class PlateFastener(Element):
         # type: () -> int | None
         return self.graph_node
 
-
     # ==========================================================================
     # Class methods
     # ==========================================================================
 
     @classmethod
-    def from_outline_thickness_holes_cutouts(cls, outline,  thickness = 5, holes = None, cutouts = None, **kwargs):
-        """Constructs a fastener from an outline, cutouts and thickness. This should be constructed on the XY plane and oriented with the x-axis pointing in the direction of the main_beam.centerline.
+    def from_outline_thickness_holes_cutouts(cls, outline, thickness=5, holes=None, cutouts=None, **kwargs):
+        """
+        Constructs a fastener from an outline, cutouts and thickness.
+        This should be constructed on the XY plane and oriented with the x-axis pointing in the direction of the main_beam.centerline.
 
         Parameters
         ----------
@@ -107,14 +108,17 @@ class PlateFastener(Element):
         """
         plate_fastener = cls()
         # plate_fastener._guid = data.get('guid', None)
-        plate_fastener.name = data.get('name', None)
-        plate_fastener.attributes = data.get('attributes', {})
-        plate_fastener.outline = NurbsCurve.__from_data__(data['outline'])
-        plate_fastener.thickness = data.get('thickness', 5)
-        plate_fastener.holes = data.get('holes', [])
-        plate_fastener.cutouts = [NurbsCurve.__from_data__(cutout) for cutout in data['cutouts']] if data.get('cutouts', None) else None
-        plate_fastener.frame = Frame(data['frame']['point'], data['frame']['xaxis'], data['frame']['yaxis'])
+        plate_fastener.name = data.get("name", None)
+        plate_fastener.attributes = data.get("attributes", {})
+        plate_fastener.outline = NurbsCurve.__from_data__(data["outline"])
+        plate_fastener.thickness = data.get("thickness", 5)
+        plate_fastener.holes = data.get("holes", [])
+        plate_fastener.cutouts = (
+            [NurbsCurve.__from_data__(cutout) for cutout in data["cutouts"]] if data.get("cutouts", None) else None
+        )
+        plate_fastener.frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
         return plate_fastener
+
     # ==========================================================================
     # Methods
     # ==========================================================================
@@ -136,13 +140,12 @@ class PlateFastener(Element):
     def __data__(self):
         data = super(PlateFastener, self).__data__
         # data['guid'] = self.guid
-        data['outline'] = self.outline.__data__
-        data['thickness'] = self.thickness
-        data['holes'] = self.holes
-        data['cutouts'] = [cutout.__data__ for cutout in self.cutouts] if self.cutouts else None
-        data['frame'] = self.frame.__data__
+        data["outline"] = self.outline.__data__
+        data["thickness"] = self.thickness
+        data["holes"] = self.holes
+        data["cutouts"] = [cutout.__data__ for cutout in self.cutouts] if self.cutouts else None
+        data["frame"] = self.frame.__data__
         return data
-
 
     @property
     def shape(self):
@@ -163,10 +166,15 @@ class PlateFastener(Element):
             if self.holes:
                 for list in self.holes:
                     for hole in list:
-                        cylinder = Brep.from_cylinder(Cylinder(hole[1] * 0.5, self.thickness*2.0, Frame(hole[0], Vector(1.0,0.0,0.0), Vector(0.0,1.0,0.0))))
+                        cylinder = Brep.from_cylinder(
+                            Cylinder(
+                                hole[1] * 0.5,
+                                self.thickness * 2.0,
+                                Frame(hole[0], Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)),
+                            )
+                        )
                         self._shape = self._shape - cylinder
         return self._shape
-
 
     @property
     def geometry(self):

@@ -101,14 +101,7 @@ class Joint(Interaction):
         raise NotImplementedError
 
     def add_fasteners(self):
-        """Adds the features defined by this joint to affected beam(s).
-
-        Raises
-        ------
-        :class:`~compas_timber.connections.BeamJoinningError`
-            Should be raised whenever the joint was not able to calculate the features to be applied to the beams.
-
-        """
+        """Adds the fastener defined by this joint to affected beam(s)."""
         raise NotImplementedError
 
     def add_extensions(self):

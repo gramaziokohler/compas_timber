@@ -19,6 +19,5 @@ __all__ = [
     "MillVolume",
     "BrepSubtraction",
     "FeatureApplicationError",
-    "PlateFastener"
+    "PlateFastener",
 ]
-
