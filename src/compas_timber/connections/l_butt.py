@@ -80,8 +80,8 @@ class LButtJoint(Joint):
         self.reject_i = reject_i
         self.features = []
 
-        # update the beams
-        self.update_beams()
+        # update the main and cross beams based on the joint parameters
+        self.update_beam_roles()
 
     @property
     def beams(self):
@@ -108,7 +108,7 @@ class LButtJoint(Joint):
     def main_beam_opposing_side_index(self):
         return self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
 
-    def update_beams(self):
+    def update_beam_roles(self):
         """Flips the main and cross beams based on the joint parameters.
         Prioritizes the beam with the smaller cross-section if `small_beam_butts` is True.
 
