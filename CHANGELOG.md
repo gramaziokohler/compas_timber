@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `intersection_line_plane` to `intersection_line_plane_param`.
 * Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
 * Adjusted functions in `compas_timber._fabrication.DovetailMortise` and `compas_timber.connections.TDovetailJoint`.
+* Added `conda-forge` channel to installation instructions.
 
 ### Removed
 
