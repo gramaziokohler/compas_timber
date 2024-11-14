@@ -45,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 * Removed module `compas_timber.utils.compas_extra`.
+* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
+* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
+* Removed module `compas_timber.connections.butt_joint`
+
+
 
 ## [0.11.0] 2024-09-17
 
