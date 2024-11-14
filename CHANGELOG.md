@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `utilities` module in `connections` package.
 * Added new `compas_timber._fabrication.DoubleCut`.
 * Added new `compas_timber.connections.TBirdsmouthJoint`.
+* Added new method `add_group_element` to `TimberModel`.
+* Added new method `has_group` to `TimberModel`.
+* Added new method `get_elements_in_group` to `TimberModel`.
+* Added attribute `is_group_element` to `TimberElement`.
 
 ### Changed
 
@@ -38,10 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `intersection_line_plane` to `intersection_line_plane_param`.
 * Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
 * Adjusted functions in `compas_timber._fabrication.DovetailMortise` and `compas_timber.connections.TDovetailJoint`.
+* Added `conda-forge` channel to installation instructions.
 * Fixed `**kwargs` inheritance in `__init__` for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
 * Fixed GUID assignment logic from `**kwargs` to ensure correct fallback behavior for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
 * Changed `model.element_by_guid()` instead of direct `elementsdict[]` access for beam retrieval in joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
-
 
 ### Removed
 
