@@ -39,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Element.reset()` method.
 
 * Added new `fasteners.py` module with new `Fastener` element type.
-* Added unit tests for `fasteners.py` module.
 
 ### Changed
 
