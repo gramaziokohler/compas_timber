@@ -2,7 +2,6 @@ import math
 
 from compas.geometry import Box
 from compas.geometry import Brep
-from compas.geometry import BrepError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -427,7 +426,7 @@ class Lap(BTLxProcess):
         lap_volume = Brep.from_box(box)
         try:
             return geometry - lap_volume
-        except BrepError:
+        except IndexError:
             raise FeatureApplicationError(
                 lap_volume,
                 geometry,
