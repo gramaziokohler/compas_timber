@@ -3,6 +3,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
 from compas_model.interactions import Interaction
+import inspect
 
 from .solver import JointTopology
 
@@ -65,6 +66,11 @@ class Joint(Interaction):
     @property
     def beams(self):
         raise NotImplementedError
+    
+    @property
+    def joint_parameters(self):
+        args = inspect.getargspec(self.joint_type.__init__)[0][1:]
+        return [JointParameterDescription(arg) for arg in args]
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
@@ -259,3 +265,36 @@ class Joint(Interaction):
             face_angles[face_index] = angle_vectors(face.normal, centerline_vec)
 
         return face_angles
+
+class JointParameterDescription(object):
+    """Describes a parameter of a joint.
+
+    This class is used to describe the parameters of a joint. It is used by the
+    :class:`~compas_timber.model.TimberModel` to automatically generate a user interface for the joint.
+
+    Attributes
+    ----------
+    name : str
+        The name of the parameter.
+    description : str
+        A description of the parameter.
+    type : str
+        The type of the parameter. Can be one of 'str', 'int', 'float', 'bool'.
+    default : str, int, float, bool
+        The default value of the parameter.
+    options : list(str)
+        A list of options for the parameter. Only used if `type` is 'str'.
+
+    """
+
+    def __init__(self, name, description = None, nickname = None, type = None, data_mapping = 0, optional = True, append_items = []):
+        self.name = name
+        self.nickname = nickname or name
+        self.description = description
+        self.type = type
+        self.data_mapping = data_mapping # 0: none, 1: flatten, 2:graft
+        self.optional = optional
+        self.append_items = []
+
+    def __str__(self):
+        return "Parameter: {} ({}) - Default: {}".format(self.name, self.type, self.description)

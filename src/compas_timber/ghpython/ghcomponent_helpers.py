@@ -98,7 +98,7 @@ def clear_gh_params(ghenv, permanent_param_count=1):
     return changed
 
 
-def rename_gh_input(input_name, index, ghenv):
+def rename_gh_input(param_data, index, ghenv):
     """Renames a parameter in the Grasshopper component.
 
     Parameters
@@ -116,13 +116,24 @@ def rename_gh_input(input_name, index, ghenv):
 
     """
     param = ghenv.Component.Params.Input[index]
-    param.NickName = input_name
-    param.Name = input_name
-    param.Description = input_name
+    param.Name = param_data.name
+    param.NickName = param_data.nickname
+    param.Description = param_data.description
+    param.Type = param_data.type
+    param.DataMapping = param_data.data_mapping
+    param.Optional = param_data.optional
+    param.AppendAdditionalMenuItems(param_data.append_items)
     ghenv.Component.Params.OnParametersChanged()
 
+        self.name = name
+        self.nickname = nickname or name
+        self.description = description
+        self.type = type
+        self.data_mapping = data_mapping # 0: none, 1: flatten, 2:graft
+        self.optional = optional
+        self.append_items = []
 
-def rename_gh_output(output_name, index, ghenv):
+def rename_gh_output(param_data, index, ghenv):
     """Renames a parameter in the Grasshopper component.
 
     Parameters
@@ -140,13 +151,13 @@ def rename_gh_output(output_name, index, ghenv):
 
     """
     param = ghenv.Component.Params.Output[index]
-    param.NickName = output_name
-    param.Name = output_name
-    param.Description = output_name
+    param.NickName = param_data
+    param.Name = param_data
+    param.Description = param_data
     ghenv.Component.Params.OnParametersChanged()
 
 
-def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_count=1, keep_connections=True):
+def manage_dynamic_params(input_params, ghenv, rename_count=0, permanent_param_count=1, keep_connections=True):
     """Clears all input parameters from the component.
 
     Parameters
@@ -163,30 +174,30 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
     None
 
     """
-    if not input_names:  # if no names are input
+    if not input_params:  # if no names are input
         clear_gh_params(ghenv, permanent_param_count)
         return
     else:
         if keep_connections:
             to_remove = []
             for param in ghenv.Component.Params.Input[permanent_param_count + rename_count :]:
-                if param.Name not in input_names:
+                if param.Name not in [param.name for param in input_params]:
                     to_remove.append(param)
             for param in to_remove:
                 param.IsolateObject()
                 ghenv.Component.Params.UnregisterInputParameter(param, True)
-            for i, name in enumerate(input_names):
+            for i, param in enumerate(input_params):
                 if i < rename_count:
-                    rename_gh_input(name, i + permanent_param_count, ghenv)
+                    rename_gh_input(param, i + permanent_param_count, ghenv)
                 elif name not in [param.Name for param in ghenv.Component.Params.Input]:
                     add_gh_param(name, "Input", ghenv, index=i + permanent_param_count)
 
         else:
             register_params = False
             if (
-                len(ghenv.Component.Params.Input) == len(input_names) + permanent_param_count
+                len(ghenv.Component.Params.Input) == len(input_params) + permanent_param_count
             ):  # if param count matches beam_names count
-                for i, name in enumerate(input_names):
+                for i, name in enumerate(input_params):
                     if (
                         ghenv.Component.Params.Input[i + permanent_param_count].Name != name
                     ):  # if param names don't match
@@ -198,7 +209,7 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
                 clear_gh_params(
                     ghenv, permanent_param_count + rename_count
                 )  # we could consider renaming params if we don't want to disconnect GH component inputs
-                for i, name in enumerate(input_names):
+                for i, name in enumerate(input_params):
                     if i < permanent_param_count:
                         continue
                     elif i < rename_count:
