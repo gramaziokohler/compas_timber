@@ -4,7 +4,7 @@ from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
 from compas_model.interactions import Interaction
 import inspect
-
+from collections import OrderedDict
 from .solver import JointTopology
 
 
@@ -67,11 +67,15 @@ class Joint(Interaction):
     def beams(self):
         raise NotImplementedError
     
-    @property
-    def joint_parameters(self):
-        args = inspect.getargspec(self.joint_type.__init__)[0][1:]
-        return [JointParameterDescription(arg) for arg in args]
-
+    @classmethod
+    def get_joint_parameters(cls):
+        args = inspect.getargspec(cls.__init__)[0][1:]
+        param_dict = OrderedDict()
+        for arg in args:
+            param_dict[arg] = JointParameterDescription(arg)
+        return param_dict
+    
+    
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
 
@@ -287,14 +291,14 @@ class JointParameterDescription(object):
 
     """
 
-    def __init__(self, name, description = None, nickname = None, type = None, data_mapping = 0, optional = True, append_items = []):
+    def __init__(self, name, description = None, nickname = None, type = None, data_mapping = 0, optional = True):
         self.name = name
         self.nickname = nickname or name
         self.description = description
         self.type = type
         self.data_mapping = data_mapping # 0: none, 1: flatten, 2:graft
         self.optional = optional
-        self.append_items = []
+        # self.append_items = [] #TODO: implement list items for enumerable context menu 
 
     def __str__(self):
         return "Parameter: {} ({}) - Default: {}".format(self.name, self.type, self.description)

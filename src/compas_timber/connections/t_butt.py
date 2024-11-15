@@ -3,8 +3,9 @@ from compas_timber.elements import CutFeature
 from compas_timber.elements import MillVolume
 
 from .joint import BeamJoinningError
+from .joint import JointParameterDescription
 from .solver import JointTopology
-
+from collections import OrderedDict
 
 class TButtJoint(ButtJoint):
     """Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
@@ -86,3 +87,12 @@ class TButtJoint(ButtJoint):
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
         self.main_beam.add_features(trim_feature)
         self.features = [trim_feature]
+
+    @classmethod
+    def get_joint_parameters(cls):
+        return OrderedDict(
+            ("main_beam", JointParameterDescription("main_beam", "Main Beam to be joined", "Main Beam")),
+            ("cross_beam", JointParameterDescription("cross_beam", "Cross Beam to be joined", "Cross Beam")),
+            ("mill_depth", JointParameterDescription("mill_depth", "Depth of pocket to be milled in cross beam", "Pocket Depth")),
+            ("birdsmouth", JointParameterDescription("birdsmouth", "Whether to add a birdsmouth to the main beam", "Birdsmouth")),
+        )

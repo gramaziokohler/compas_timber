@@ -11,7 +11,7 @@ from compas_timber.design import DirectRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
-
+        
 
 class DirectJointRule(component):
     def __init__(self):
@@ -32,12 +32,13 @@ class DirectJointRule(component):
             return None
         else:
             ghenv.Component.Message = self.joint_type.__name__
+            print(self.param_data())
             beam_a = args[0]
             beam_b = args[1]
             kwargs = {}
             for i, val in enumerate(args[2:]):
                 if val is not None:
-                    kwargs[self.arg_names()[i + 2]] = val
+                    kwargs[self.component_parameter_names()[i + 2]] = val
 
             if not beam_a:
                 self.AddRuntimeMessage(
@@ -71,8 +72,14 @@ class DirectJointRule(component):
                 Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
             return Rules
 
-    def arg_names(self):
-        return inspect.getargspec(self.joint_type.__init__)[0][1:]
+    def component_parameter_names(self):
+        return [param.Name for param in ghenv.Component.Params.Input]
+
+    def param_data(self):
+        return self.joint_type.get_joint_parameters()
+
+    def arg_names(self):        
+        return self.param_data().keys()
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():
@@ -83,5 +90,5 @@ class DirectJointRule(component):
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
         rename_gh_output(self.joint_type.__name__, 0, ghenv)
-        manage_dynamic_params(self.arg_names(), ghenv, rename_count=2, permanent_param_count=0)
+        manage_dynamic_params(self.joint_type.get_joint_parameters(), ghenv, rename_count=2, permanent_param_count=0)
         ghenv.Component.ExpireSolution(True)
