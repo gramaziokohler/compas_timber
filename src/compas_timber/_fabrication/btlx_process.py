@@ -148,3 +148,18 @@ class LimitationTopType(object):
     LIMITED = "limited"
     UNLIMITED = "unlimited"
     POCKET = "pocket"
+
+
+class EdgePositionType(object):
+    """Enum for the edge position of the cut.
+
+    Attributes
+    ----------
+    REFEDGE : literal("refedge")
+        Reference edge.
+    OPPEDGE : literal("oppedge")
+        Opposite edge.
+    """
+
+    REFEDGE = "refedge"
+    OPPEDGE = "oppedge"
