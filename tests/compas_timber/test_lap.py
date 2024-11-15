@@ -188,56 +188,27 @@ EXPECTED_LAP_PARAMS = [
     ),
 ]
 
-
 EXPECTED_CUTTING_FRAMES = [
-    [
-        Frame(
-            point=Point(x=32089.6304179, y=-3208.96062535, z=113.871952827),
-            xaxis=Vector(x=0.535356833682, y=-0.602197739702, z=0.59224230086),
-            yaxis=Vector(x=0.393493090239, y=-0.442621882493, z=-0.805759925209),
-        ),
-        Frame(
-            point=Point(x=32069.1904303, y=-3306.37580043, z=33.2959603066),
-            xaxis=Vector(x=0.535356833682, y=-0.602197739702, z=0.59224230086),
-            yaxis=Vector(x=-0.393493090239, y=0.442621882493, z=0.805759925209),
-        ),
-    ],
-    [
-        Frame(
-            point=Point(x=33665.8981258, y=-2151.51562805, z=49.9490979824),
-            xaxis=Vector(x=-0.717789410535, y=-0.6947973214, z=0.0451114652743),
-            yaxis=Vector(x=-0.0324135303495, y=-0.0313752665244, z=-0.998981959647),
-        ),
-        Frame(
-            point=Point(x=33607.0163428, y=-2097.17148320, z=-49.9490979824),
-            xaxis=Vector(x=-0.717789410535, y=-0.6947973214, z=0.0451114652743),
-            yaxis=Vector(x=0.0324135303495, y=0.0313752665244, z=0.998981959647),
-        ),
-    ],
-    [
-        Frame(
-            point=Point(x=34104.8785573, y=-3217.66821289, z=1358.28945402),
-            xaxis=Vector(x=-0.490578411027, y=0.0, z=-0.871397052229),
-            yaxis=Vector(x=-0.0, y=-1.0, z=0.0),
-        ),
-        Frame(
-            point=Point(x=34192.0182625, y=-3297.66821289, z=1309.23161292),
-            xaxis=Vector(x=-0.490578411027, y=0.0, z=-0.871397052229),
-            yaxis=Vector(x=0.0, y=1.0, z=0.0),
-        ),
-    ],
-    [
-        Frame(
-            point=Point(x=34270.8814019, y=-3247.83444818, z=48.3956383955),
-            xaxis=Vector(x=0.421598058227, y=0.275745582418, z=-0.863839945288),
-            yaxis=Vector(x=0.547367991266, y=-0.836892037325, z=-2.77555756156e-17),
-        ),
-        Frame(
-            point=Point(x=34386.9649184, y=-3267.50197760, z=98.7722747386),
-            xaxis=Vector(x=0.421598058227, y=0.275745582418, z=-0.863839945288),
-            yaxis=Vector(x=-0.547367991266, y=0.836892037325, z=2.77555756156e-17),
-        ),
-    ],
+    Frame(
+        point=Point(x=32089.6304179, y=-3208.96062535, z=113.871952827),
+        xaxis=Vector(x=0.535356833682, y=-0.602197739702, z=0.59224230086),
+        yaxis=Vector(x=0.393493090239, y=-0.442621882493, z=-0.805759925209),
+    ),
+    Frame(
+        point=Point(x=33665.8981258, y=-2151.51562805, z=49.9490979824),
+        xaxis=Vector(x=-0.717789410535, y=-0.6947973214, z=0.0451114652743),
+        yaxis=Vector(x=-0.0324135303495, y=-0.0313752665244, z=-0.998981959647),
+    ),
+    Frame(
+        point=Point(x=34104.8785573, y=-3217.66821289, z=1358.28945402),
+        xaxis=Vector(x=-0.490578411027, y=0.0, z=-0.871397052229),
+        yaxis=Vector(x=-0.0, y=-1.0, z=0.0),
+    ),
+    Frame(
+        point=Point(x=34270.8814019, y=-3247.83444818, z=48.3956383955),
+        xaxis=Vector(x=0.421598058227, y=0.275745582418, z=-0.863839945288),
+        yaxis=Vector(x=0.547367991266, y=-0.836892037325, z=-2.77555756156e-17),
+    ),
 ]
 
 EXPECTED_BOX = [
@@ -285,23 +256,24 @@ EXPECTED_BOX = [
 
 
 @pytest.mark.parametrize(
-    "expected_lap_params, expected_cutting_frames, depth, ref_side_index",
+    "expected_lap_params, expected_cutting_frames, width, depth, ref_side_index",
     [
-        (EXPECTED_LAP_PARAMS[0], EXPECTED_CUTTING_FRAMES[0], 10, 3),  # main_beam_a
-        (EXPECTED_LAP_PARAMS[1], EXPECTED_CUTTING_FRAMES[1], 10, 1),  # main_beam_b
-        (EXPECTED_LAP_PARAMS[2], EXPECTED_CUTTING_FRAMES[2], 10, 2),  # main_beam_c
-        (EXPECTED_LAP_PARAMS[3], EXPECTED_CUTTING_FRAMES[3], 10, 0),  # main_beam_d
+        (EXPECTED_LAP_PARAMS[0], EXPECTED_CUTTING_FRAMES[0], 80, 10, 3),  # main_beam_a
+        (EXPECTED_LAP_PARAMS[1], EXPECTED_CUTTING_FRAMES[1], 80, 10, 1),  # main_beam_b
+        (EXPECTED_LAP_PARAMS[2], EXPECTED_CUTTING_FRAMES[2], 100, 10, 2),  # main_beam_c
+        (EXPECTED_LAP_PARAMS[3], EXPECTED_CUTTING_FRAMES[3], 100, 10, 0),  # main_beam_d
     ],
 )
 def test_lap_params(
     cross_beam,
     expected_lap_params,
     expected_cutting_frames,
+    width,
     depth,
     ref_side_index,
 ):
     # Create the Lap object
-    lap = Lap.from_two_planes_and_beam(expected_cutting_frames, cross_beam, depth, ref_side_index)
+    lap = Lap.from_plane_and_beam(expected_cutting_frames, cross_beam, width, depth, ref_side_index)
 
     # Validate generated parameters
     generated_params = lap.params_dict

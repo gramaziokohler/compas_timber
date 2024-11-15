@@ -310,15 +310,17 @@ class Lap(BTLxProcess):
 
 
     @classmethod
-    def from_two_planes_and_beam(cls, planes, beam, depth, ref_side_index=0):
-        """Create a Lap instance from two planes and a beam. The planes should be parallel to each other and their normals should be facing in the opposite direction.
+    def from_plane_and_beam(cls, plane, beam, width, depth, ref_side_index=0):
+        """Create a Lap instance from a plane and a beam. The lap is defined by the plane given and a plane parallel to that at a distance defined by the width.
 
         Parameters
         ----------
-        planes : list of :class:`~compas.geometry.Plane`
-            The planes that define the lap.
+        plane : :class:`~compas.geometry.Plane`
+            The plane that defines the lap.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that the Lap instance is applied to.
+        width : float
+            The width of the lap.
         depth : float
             The depth of the lap.
         ref_side_index : int, optional
@@ -329,11 +331,13 @@ class Lap(BTLxProcess):
         :class:`~compas_timber.fabrication.Lap`
 
         """
-        # type: (list[Plane], Beam, float, int) -> Lap
-        if len(planes) != 2:
-            raise ValueError("Exactly two planes are required to define the lap.")
+        # type: (Plane, Beam, float, float, int) -> Lap
+        if isinstance(plane, Frame):
+            plane = Plane.from_frame(plane)
 
-        planes = [Plane.from_frame(plane) for plane in planes if isinstance(plane, Frame)]
+        # create an offset plane at the depth of the lap
+        offset_plane = Plane(plane.point - plane.normal * width, -plane.normal)
+        planes = [plane, offset_plane]
 
         # get ref_side, and ref_edge from the beam
         ref_side = beam.ref_sides[ref_side_index]
