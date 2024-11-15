@@ -287,6 +287,29 @@ class Lap(BTLxProcess):
     ########################################################################
 
     @classmethod
+    def from_beam_and_beam(cls, main_beam, cross_beam, depth):
+        """Create a Lap instance from a main beam and a cross beam. The main beam is cut by the cross beam.
+
+        Parameters
+        ----------
+        main_beam : :class:`~compas_timber.elements.Beam`
+            The main beam to be cut.
+        cross_beam : :class:`~compas_timber.elements.Beam`
+            The cross beam that cuts the main beam.
+        depth : float
+            The depth of the lap.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+
+        """
+        # type: (Beam, Beam, float) -> Lap
+
+        raise NotImplementedError
+
+
+    @classmethod
     def from_two_planes_and_beam(cls, planes, beam, depth, ref_side_index=0):
         """Create a Lap instance from two planes and a beam. The planes should be parallel to each other and their normals should be facing in the opposite direction.
 
