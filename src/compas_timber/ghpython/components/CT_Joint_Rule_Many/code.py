@@ -32,24 +32,23 @@ class ManyJointRule(component):
             return None
         else:
             ghenv.Component.Message = self.joint_type.__name__
-            if not self.joint_type.SUPPORTED_TOPOLOGY in range (1,5):
-                beams = args[0]
-                if not beams:
-                    self.AddRuntimeMessage(
-                        Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
-                    )
-                    return
-                kwargs = {}
-                for i, val in enumerate(args[1:]):
-                    if val is not None:
-                        kwargs[self.arg_names()[i + 1]] = val
-                if len(beams) < 2:
-                    self.AddRuntimeMessage(
-                        Warning, "At least two beams are required to create a joint."
-                    )
-                    return
-                Rule = DirectRule(self.joint_type, beams, **kwargs)
-            return Rule
+            beams = args[0]
+            if not beams:
+                self.AddRuntimeMessage(
+                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
+                )
+                return
+            if len(beams) < 2:
+                self.AddRuntimeMessage(
+                    Warning, "At least two beams are required to create a joint."
+                )
+                return            
+            kwargs = {}
+            for i, val in enumerate(args[1:]):
+                if val is not None:
+                    kwargs[self.arg_names()[i + 1]] = val
+
+            return DirectRule(self.joint_type, beams, **kwargs)
 
     def arg_names(self):
         return inspect.getargspec(self.joint_type.__init__)[0][1:]
@@ -63,5 +62,5 @@ class ManyJointRule(component):
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
         rename_gh_output(self.joint_type.__name__, 0, ghenv)
-        manage_dynamic_params(self.arg_names(), ghenv, rename_count=2, permanent_param_count=0)
+        manage_dynamic_params(self.arg_names(), ghenv)
         ghenv.Component.ExpireSolution(True)
