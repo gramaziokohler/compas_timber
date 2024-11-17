@@ -87,6 +87,7 @@ class JointRule(object):
         beam_pairs = ConnectionSolver().find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
 
         joint_defs = []
+        unmatched_pairs = []
         for rule in direct_rules:
             joint_defs.append(JointDefinition(rule.joint_type, rule.beams, **rule.kwargs))
 
@@ -114,11 +115,8 @@ class JointRule(object):
                         joint_defs.append(JointDefinition(rule.joint_type, ordered_pair, **rule.kwargs))
                         break
             if not match_found:
-                raise UserWarning(
-                    "Beam pairs could not be resolved by the rules: ",
-                    "({}, {})".format(list(pair)[0].key, list(pair)[1].key),
-                )  # TODO: add something to catch unresolved pairs
-        return joint_defs
+                unmatched_pairs.append(pair)
+        return joint_defs, unmatched_pairs
 
 class DirectRule(JointRule):
     """Creates a Joint Rule that directly joins two beams."""
