@@ -1,21 +1,18 @@
 import inspect
 
 from ghpythonlib.componentbase import executingcomponent as component
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
-from compas_timber.connections import JointTopology
 from compas_timber.design import DirectRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 
-class ManyJointRule(component):
+class JointRuleFromList(component):
     def __init__(self):
-        super(ManyJointRule, self).__init__()
+        super(JointRuleFromList, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
             self.classes[cls.__name__] = cls
@@ -32,23 +29,26 @@ class ManyJointRule(component):
             return None
         else:
             ghenv.Component.Message = self.joint_type.__name__
-            beams = args[0]
-            if not beams:
+            elements = args[0]
+            if not elements:
                 self.AddRuntimeMessage(
                     Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
                 )
                 return
-            if len(beams) < 2:
+            if not self.joint_type.element_count_complies(elements):
                 self.AddRuntimeMessage(
-                    Warning, "At least two beams are required to create a joint."
+                    Warning,
+                    "{} requires at least {} and at most {} elements.".format(
+                        self.joint_type.__name__, self.joint_type.MIN_ELEMENT_COUNT, self.joint_type.MAX_ELEMENT_COUNT
+                    ),
                 )
-                return            
+                return
             kwargs = {}
             for i, val in enumerate(args[1:]):
                 if val is not None:
                     kwargs[self.arg_names()[i + 1]] = val
 
-            return DirectRule(self.joint_type, beams, **kwargs)
+            return DirectRule(self.joint_type, elements, **kwargs)
 
     def arg_names(self):
         return inspect.getargspec(self.joint_type.__init__)[0][1:]

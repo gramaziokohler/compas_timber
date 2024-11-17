@@ -58,6 +58,8 @@ class Joint(Interaction):
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+    MIN_ELEMENT_COUNT = 2
+    MAX_ELEMENT_COUNT = 2
 
     def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
@@ -80,20 +82,12 @@ class Joint(Interaction):
             if getattr(element, "is_fastener", False):
                 yield element
 
-    @property
-    def min_element_count(self):
-        return 2
-
-    @property
-    def max_element_count(self):
-        return 2
-    
-    def element_count_complies(self, elements): 
-        len = len(elements)
-        if self.max_element_count:
-            return len >= self.min_element_count and len <= self.max_element_count
+    @classmethod
+    def element_count_complies(cls, elements):
+        if cls.MAX_ELEMENT_COUNT:
+            return len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT
         else:
-            return len >= self.min_element_count
+            return len(elements) >= cls.MIN_ELEMENT_COUNT
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).

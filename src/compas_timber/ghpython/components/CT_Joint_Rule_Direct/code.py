@@ -18,7 +18,7 @@ class DirectJointRule(component):
         super(DirectJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            if cls.max_element_count == 2:
+            if cls.MAX_ELEMENT_COUNT == 2:
                 self.classes[cls.__name__] = cls
 
         if ghenv.Component.Params.Output[0].NickName == "Rule":

@@ -236,7 +236,7 @@ class TimberModel(Model):
 
         """
         print("Adding joint")
-        for a,b, interaction in joint.interactions:
+        for a, b, interaction in joint.interactions:
             _ = self.add_interaction(a, b, interaction=interaction)
 
     def remove_joint(self, joint):
