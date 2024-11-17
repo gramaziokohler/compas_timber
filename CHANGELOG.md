@@ -37,8 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added attribute `is_group_element` to `TimberElement`.
 * Added `JointRule.joints_from_beams_and_rules()` static method 
 * Added `Element.reset()` method.
-
 * Added new `fasteners.py` module with new `Fastener` element type.
+* Added new `Joint_Rule_From_List` GH Component that takes lists of beams to create joints.
+* Added `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` class attributes and `element_count_complies` class method to `Joint`.
+* Added `beams`, `plates` and `fasteners` properties to `Joint`.
 
 ### Changed
 
@@ -52,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `model.element_by_guid()` instead of direct `elementsdict[]` access for beam retrieval in joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
 * Reworked the model generation pipeline.
 * Reworked `comply` methods for `JointRule`s. 
+* Changed `DirectJointRule` to allow for more than 2 elements per joint.
 
 ### Removed
 
