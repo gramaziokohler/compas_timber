@@ -13,9 +13,9 @@ from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 
-class DirectJointRule(component):
+class ManyJointRule(component):
     def __init__(self):
-        super(DirectJointRule, self).__init__()
+        super(ManyJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
             self.classes[cls.__name__] = cls
@@ -32,44 +32,24 @@ class DirectJointRule(component):
             return None
         else:
             ghenv.Component.Message = self.joint_type.__name__
-            beam_a = args[0]
-            beam_b = args[1]
-            kwargs = {}
-            for i, val in enumerate(args[2:]):
-                if val is not None:
-                    kwargs[self.arg_names()[i + 2]] = val
-
-            if not beam_a:
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
-                )
-            if not beam_b:
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1])
-                )
-            if not (args[0] and args[1]):
-                return
-            if not isinstance(beam_a, list):
-                beam_a = [beam_a]
-            if not isinstance(beam_b, list):
-                beam_b = [beam_b]
-            if len(beam_a) != len(beam_b):
-                self.AddRuntimeMessage(
-                    Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1])
-                )
-                return
-            Rules = []
-            for main, secondary in zip(beam_a, beam_b):
-                topology, _, _ = ConnectionSolver().find_topology(main, secondary)
-                if topology != self.joint_type.SUPPORTED_TOPOLOGY:
+            if not self.joint_type.SUPPORTED_TOPOLOGY in range (1,5):
+                beams = args[0]
+                if not beams:
                     self.AddRuntimeMessage(
-                        Warning,
-                        "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                            JointTopology.get_name(topology), self.joint_type.__name__
-                        ),
+                        Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
                     )
-                Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
-            return Rules
+                    return
+                kwargs = {}
+                for i, val in enumerate(args[1:]):
+                    if val is not None:
+                        kwargs[self.arg_names()[i + 1]] = val
+                if len(beams) < 2:
+                    self.AddRuntimeMessage(
+                        Warning, "At least two beams are required to create a joint."
+                    )
+                    return
+                Rule = DirectRule(self.joint_type, beams, **kwargs)
+            return Rule
 
     def arg_names(self):
         return inspect.getargspec(self.joint_type.__init__)[0][1:]
