@@ -81,9 +81,17 @@ class Joint(Interaction):
                 yield element
 
     @property
-    def element_parameter_count(self):
+    def min_element_count(self):
         return 2
 
+    @property
+    def max_element_count(self):
+        return 2
+    
+    def element_count_complies(self, elements):
+        len = len(elements)
+        return len >= self.min_element_count and len <= self.max_element_count
+    
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
 
