@@ -72,7 +72,6 @@ class TimberModel(Model):
         # type: () -> Generator[Joint, None, None]
         joints = []
         for interaction in self.interactions():
-            print("interaction is: ",interaction)
             if isinstance(interaction, Joint):
                 joints.append(interaction)
         return set(joints)  # remove duplicates
