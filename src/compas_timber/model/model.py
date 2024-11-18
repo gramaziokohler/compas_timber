@@ -1,4 +1,3 @@
-from code import interact
 import compas
 
 if not compas.IPY:
@@ -234,7 +233,6 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
-        print("Adding joint")
         for a, b, interaction in joint.interactions:
             _ = self.add_interaction(a, b, interaction=interaction)
 
