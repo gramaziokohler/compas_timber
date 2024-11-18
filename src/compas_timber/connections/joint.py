@@ -180,7 +180,6 @@ class Joint(Interaction):
                 self._ends[str(beam.guid)] = "start"
             else:
                 self._ends[str(beam.guid)] = "end"
-
         return self._ends
 
     @property
@@ -189,10 +188,8 @@ class Joint(Interaction):
         interaction is defined as a tuple of (element_a, element_b, joint).
         """
         interactions = []
-        print(self.elements, self)
         for i in range(len(self.beams)):
             for j in range(i + 1, len(self.elements)):
-                print(self.elements[i], self.elements[j], self)
                 interactions.append((self.elements[i], self.elements[j], self))
         return interactions
 
