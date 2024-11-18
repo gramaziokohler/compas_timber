@@ -16,7 +16,7 @@ class PlateFastener(Element):
     shape : :class:`~compas.geometry.Geometry`
         The shape of the fastener at the XY plane origin.
     frame : :class:`~compas.geometry.Frame`
-        The frame of the instance of the fastener that is applied to the model. 
+        The frame of the instance of the fastener that is applied to the model.
         The fastener should be defined at the XY plane origin with the x-axis pointing in the direction of the main_beam.
 
     Attributes
