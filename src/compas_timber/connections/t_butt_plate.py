@@ -52,10 +52,16 @@ class TButtPlateJoint(ButtJoint):
     HERE = os.path.dirname(os.path.normpath(os.path.normpath(__file__)))
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, fastener=None, **kwargs):
-        super(TButtPlateJoint, self).__init__(main_beam, cross_beam, mill_depth, fastener, **kwargs)
+        super(TButtPlateJoint, self).__init__(**kwargs)
+        self.mill_depth = mill_depth
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
         if main_beam and cross_beam:
-            self.check_compatiblity()
-            if not fastener:
+            self.elements.extend([main_beam, cross_beam])
+            self.front_face_index, self.back_face_index = TButtPlateJoint.validate_beam_compatibility(main_beam, cross_beam)
+            if fastener:
+                self.fastener = fastener
+            else:
                 path = os.path.dirname(__file__)
                 path_parts = path.split("\\")
                 path = "/".join(path_parts[:-1])
@@ -78,10 +84,6 @@ class TButtPlateJoint(ButtJoint):
             interactions.append((self.cross_beam, fastener, self))
 
         return interactions
-
-    @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam] + list(self._fasteners)
 
     # ================================================================================================================================================================
     # class methods
@@ -108,6 +110,7 @@ class TButtPlateJoint(ButtJoint):
 
         """
         joint = cls(*beams, **kwargs)
+
         for fastener in joint.fasteners:
             model.add_element(fastener)
         model.add_joint(joint)
@@ -169,10 +172,13 @@ class TButtPlateJoint(ButtJoint):
 
         """
         frames = self.get_fastener_frames()
-        for frame, fastener in zip(frames, self.fasteners):
+        for frame in frames:
+            fastener = self.fastener.copy()
             fastener.frame = frame
+            self.elements.append(fastener)
 
-    def check_compatiblity(self):
+    @classmethod
+    def validate_beam_compatibility(cls, main_beam, cross_beam):
         """Checks if the beams are compatible with the joint and sets the front and back face indices.
 
         Raises
@@ -181,41 +187,41 @@ class TButtPlateJoint(ButtJoint):
             If the beams are not compatible.
 
         """
-        if not TOL.is_zero(angle_vectors(self.main_beam.frame.xaxis, self.cross_beam.frame.xaxis) - math.pi / 2):
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info="Beams are not perpendicular")
+        if not TOL.is_zero(angle_vectors(main_beam.frame.xaxis, cross_beam.frame.xaxis) - math.pi / 2):
+            raise BeamJoinningError(beams=[main_beam, cross_beam], joint=cls(), debug_info="Beams are not perpendicular")
 
-        cross_vector = cross_vectors(self.main_beam.centerline.direction, self.cross_beam.centerline.direction)
-        main_faces = Beam.angle_beam_face_vector(self.main_beam, cross_vector)
-        cross_faces = Beam.angle_beam_face_vector(self.cross_beam, cross_vector)
+        cross_vector = cross_vectors(main_beam.centerline.direction, cross_beam.centerline.direction)
+        main_faces = Beam.angle_beam_face_vector(main_beam, cross_vector)
+        cross_faces = Beam.angle_beam_face_vector(cross_beam, cross_vector)
 
-        self.front_face_index = min(main_faces, key=main_faces.get)
+        front_face_index = min(main_faces, key=main_faces.get)
         cross_face_index = min(cross_faces, key=cross_faces.get)
 
-        if not TOL.is_zero(main_faces[self.front_face_index]):
+        if not TOL.is_zero(main_faces[front_face_index]):
             raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info="Main beam is not perpendicular to the cross vector"
+                beams=[main_beam, cross_beam], joint=cls(), debug_info="Main beam is not perpendicular to the cross vector"
             )
         if not TOL.is_zero(cross_faces[cross_face_index]):
             raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info="Cross beam is not perpendicular to the cross vector"
+                beams=[main_beam, cross_beam], joint=cls(), debug_info="Cross beam is not perpendicular to the cross vector"
             )
         if not TOL.is_zero(
             distance_point_plane(
-                self.main_beam.faces[self.front_face_index].point,
-                Plane.from_frame(self.cross_beam.faces[cross_face_index]),
+                main_beam.faces[front_face_index].point,
+                Plane.from_frame(cross_beam.faces[cross_face_index]),
             )
         ):
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info="beam faces are not coplanar")
-
-        self.back_face_index = (self.front_face_index + 2) % 4
+            raise BeamJoinningError(beams=[main_beam, cross_beam], joint=cls(), debug_info="beam faces are not coplanar")
+        back_face_index = (front_face_index + 2) % 4
         cross_back_face_index = (cross_face_index + 2) % 4
         if not TOL.is_zero(
             distance_point_plane(
-                self.main_beam.faces[self.back_face_index].point,
-                Plane.from_frame(self.cross_beam.faces[cross_back_face_index]),
+                main_beam.faces[back_face_index].point,
+                Plane.from_frame(cross_beam.faces[cross_back_face_index]),
             )
         ):
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info="beam faces are not coplanar")
+            raise BeamJoinningError(beams=[main_beam, cross_beam], joint=cls, debug_info="beam faces are not coplanar")
+        return front_face_index, back_face_index
 
     def get_fastener_frames(self):
         """Calculates the frames of the fasteners.
@@ -232,7 +238,6 @@ class TButtPlateJoint(ButtJoint):
         int_point = (main_point + cross_point) * 0.5
         front_face = self.main_beam.faces[self.front_face_index]
         front_point = Plane.from_frame(front_face).closest_point(int_point)
-
         front_frame = Frame(
             front_point,
             self.main_beam.centerline.direction if main_param < 0.5 else -self.main_beam.centerline.direction,

@@ -74,7 +74,6 @@ class ButtJoint(Joint):
         self.btlx_params_main = {}
         self.btlx_params_cross = {}
         self.features = []
-        self.test = []
 
     @property
     def beams(self):
@@ -235,7 +234,6 @@ class ButtJoint(Joint):
         else:
             ref_frame.point = ref_frame.point - ref_frame.yaxis * self.main_beam.width * 0.5
             ref_frame.point = ref_frame.point + ref_frame.zaxis * self.main_beam.height * 0.5
-        self.test.append(ref_frame)
 
         start_point = Point(*intersection_plane_plane_plane(plane1, plane2, Plane.from_frame(ref_frame)))
         start_point.transform(Transformation.from_frame_to_frame(ref_frame, Frame.worldXY()))
