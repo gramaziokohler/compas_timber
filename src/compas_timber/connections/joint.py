@@ -180,11 +180,13 @@ class Joint(Interaction):
 
     @property
     def interactions(self):
-        """Returns the beams that are connected by this joint."""
+        """Returns all possible interactions between elements that are connected by this joint.
+        interaction is defined as a tuple of (element_a, element_b, joint).
+        """
         interactions = []
         for i in range(len(self.beams)):
-            for j in range(i + 1, len(self.beams)):
-                interactions.append((self.beams[i], self.beams[j], self))
+            for j in range(i + 1, len(self.elements)):
+                interactions.append((self.elements[i], self.elements[j], self))
         return interactions
 
     @staticmethod
