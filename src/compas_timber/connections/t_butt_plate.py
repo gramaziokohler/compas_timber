@@ -1,27 +1,29 @@
 import math
-from compas_timber.connections.butt_joint import ButtJoint
-from compas_timber.elements import CutFeature
-from compas_timber.elements import MillVolume
-from compas_timber.elements import DrillFeature
-from compas_timber.elements import Beam
-from compas.geometry import cross_vectors
-from compas.geometry import angle_vectors
-from compas.geometry import distance_point_plane
-from compas.geometry import Plane
-from compas.geometry import Line
-from compas.tolerance import Tolerance
-from compas.geometry import Frame
-from compas_timber.elements.plate_fastener import PlateFastener
-from compas_timber.utils import intersection_line_line_param
-from compas.geometry import Transformation
-from compas.data import json_load
 import os
 
+from compas.data import json_load
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Transformation
+from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
+from compas.geometry import distance_point_plane
+from compas.tolerance import Tolerance
+
+from compas_timber.connections.butt_joint import ButtJoint
+from compas_timber.elements import Beam
+from compas_timber.elements import CutFeature
+from compas_timber.elements import DrillFeature
+from compas_timber.elements import MillVolume
+from compas_timber.utils import intersection_line_line_param
 
 from .joint import BeamJoinningError
 from .solver import JointTopology
 
 TOL = Tolerance()
+
+
 class TButtPlateJoint(ButtJoint):
     """Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
     trimming the main beam.
@@ -49,7 +51,7 @@ class TButtPlateJoint(ButtJoint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
     HERE = os.path.dirname(os.path.normpath(os.path.normpath(__file__)))
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, fastener = None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, fastener=None, **kwargs):
         super(TButtPlateJoint, self).__init__(main_beam, cross_beam, mill_depth, fastener, **kwargs)
         if main_beam and cross_beam:
             self.check_compatiblity()
@@ -66,7 +68,6 @@ class TButtPlateJoint(ButtJoint):
         self.main_beam = model.element_by_guid(self.main_beam_guid)
         self.cross_beam = model.element_by_guid(self.cross_beam_guid)
 
-
     @property
     def interactions(self):
         """Returns interactions between elements used by this joint."""
@@ -82,9 +83,9 @@ class TButtPlateJoint(ButtJoint):
     def elements(self):
         return [self.main_beam, self.cross_beam] + list(self._fasteners)
 
-#================================================================================================================================================================
-# class methods
-#================================================================================================================================================================
+    # ================================================================================================================================================================
+    # class methods
+    # ================================================================================================================================================================
     @classmethod
     def create(cls, model, *beams, **kwargs):
         """Creates a T-Butt type joint between the beams.
@@ -161,9 +162,6 @@ class TButtPlateJoint(ButtJoint):
         self.apply_drill_features()
         self.features = [trim_feature]
 
-
-
-
     def place_fasteners(self):
         """Adds the fasteners to the joint.
 
@@ -174,8 +172,6 @@ class TButtPlateJoint(ButtJoint):
         for frame, fastener in zip(frames, self.fasteners):
             fastener.frame = frame
 
-
-
     def check_compatiblity(self):
         """Checks if the beams are compatible with the joint and sets the front and back face indices.
 
@@ -185,29 +181,41 @@ class TButtPlateJoint(ButtJoint):
             If the beams are not compatible.
 
         """
-        if not TOL.is_zero(angle_vectors(self.main_beam.frame.xaxis, self.cross_beam.frame.xaxis)-math.pi/2):
+        if not TOL.is_zero(angle_vectors(self.main_beam.frame.xaxis, self.cross_beam.frame.xaxis) - math.pi / 2):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info="Beams are not perpendicular")
 
         cross_vector = cross_vectors(self.main_beam.centerline.direction, self.cross_beam.centerline.direction)
-        main_faces = Beam.angle_beam_side_normal_to_vector(self.main_beam, cross_vector)
-        cross_faces = Beam.angle_beam_side_normal_to_vector(self.cross_beam, cross_vector)
+        main_faces = Beam.angle_beam_face_vector(self.main_beam, cross_vector)
+        cross_faces = Beam.angle_beam_face_vector(self.cross_beam, cross_vector)
 
         self.front_face_index = min(main_faces, key=main_faces.get)
         cross_face_index = min(cross_faces, key=cross_faces.get)
 
         if not TOL.is_zero(main_faces[self.front_face_index]):
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info="Main beam is not perpendicular to the cross vector")
+            raise BeamJoinningError(
+                beams=self.beams, joint=self, debug_info="Main beam is not perpendicular to the cross vector"
+            )
         if not TOL.is_zero(cross_faces[cross_face_index]):
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info="Cross beam is not perpendicular to the cross vector")
-        if not TOL.is_zero(distance_point_plane(self.main_beam.faces[self.front_face_index].point, Plane.from_frame(self.cross_beam.faces[cross_face_index]))):
+            raise BeamJoinningError(
+                beams=self.beams, joint=self, debug_info="Cross beam is not perpendicular to the cross vector"
+            )
+        if not TOL.is_zero(
+            distance_point_plane(
+                self.main_beam.faces[self.front_face_index].point,
+                Plane.from_frame(self.cross_beam.faces[cross_face_index]),
+            )
+        ):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info="beam faces are not coplanar")
 
         self.back_face_index = (self.front_face_index + 2) % 4
         cross_back_face_index = (cross_face_index + 2) % 4
-        if not TOL.is_zero(distance_point_plane(self.main_beam.faces[self.back_face_index].point, Plane.from_frame(self.cross_beam.faces[cross_back_face_index]))):
+        if not TOL.is_zero(
+            distance_point_plane(
+                self.main_beam.faces[self.back_face_index].point,
+                Plane.from_frame(self.cross_beam.faces[cross_back_face_index]),
+            )
+        ):
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info="beam faces are not coplanar")
-
-
 
     def get_fastener_frames(self):
         """Calculates the frames of the fasteners.
@@ -218,25 +226,35 @@ class TButtPlateJoint(ButtJoint):
             The frames of the fasteners with the x-axis along the main_beam.centerline and the y-axis along the cross_beam.centerline, offset to lay on the beam_faces.
 
         """
-        (main_point, main_param), (cross_point, _) = intersection_line_line_param(self.main_beam.centerline, self.cross_beam.centerline)
+        (main_point, main_param), (cross_point, _) = intersection_line_line_param(
+            self.main_beam.centerline, self.cross_beam.centerline
+        )
         int_point = (main_point + cross_point) * 0.5
         front_face = self.main_beam.faces[self.front_face_index]
         front_point = Plane.from_frame(front_face).closest_point(int_point)
 
-        front_frame = Frame(front_point, self.main_beam.centerline.direction if main_param < 0.5 else -self.main_beam.centerline.direction, front_face.normal)
-        front_frame.rotate(-math.pi/2, front_frame.xaxis, front_point)
+        front_frame = Frame(
+            front_point,
+            self.main_beam.centerline.direction if main_param < 0.5 else -self.main_beam.centerline.direction,
+            front_face.normal,
+        )
+        front_frame.rotate(-math.pi / 2, front_frame.xaxis, front_point)
         back_face = self.main_beam.faces[self.back_face_index]
         back_point = Plane.from_frame(back_face).closest_point(int_point)
 
-        back_frame = Frame(back_point, self.main_beam.centerline.direction if main_param < 0.5 else -self.main_beam.centerline.direction, back_face.normal)
-        back_frame.rotate(-math.pi/2, back_frame.xaxis, back_point)
+        back_frame = Frame(
+            back_point,
+            self.main_beam.centerline.direction if main_param < 0.5 else -self.main_beam.centerline.direction,
+            back_face.normal,
+        )
+        back_frame.rotate(-math.pi / 2, back_frame.xaxis, back_point)
         return [front_frame, back_frame]
 
     def apply_drill_features(self):
         """Returns the drill features of the joint."""
         fastener = list(self.fasteners)[0]
         transformation = Transformation.from_frame_to_frame(Frame.worldXY(), fastener.frame)
-        if self.front_face_index%2 == 0:
+        if self.front_face_index % 2 == 0:
             depth = self.main_beam.width
         else:
             depth = self.main_beam.height
@@ -244,5 +262,7 @@ class TButtPlateJoint(ButtJoint):
             for hole in hole_list:
                 point = hole[0].copy()
                 point.transform(transformation)
-                drill_feature = DrillFeature(Line.from_point_direction_length(point, -fastener.frame.zaxis, depth), hole[1], depth)
+                drill_feature = DrillFeature(
+                    Line.from_point_direction_length(point, -fastener.frame.zaxis, depth), hole[1], depth
+                )
                 beam.add_features(drill_feature)
