@@ -117,7 +117,7 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """Creates a Joint Rule that directly joins two beams."""
+    """Creates a Joint Rule that directly joins multiple elements."""
 
     def __init__(self, joint_type, beams, **kwargs):
         self.beams = beams
@@ -236,7 +236,7 @@ class TopologyRule(JointRule):
 
 
 class JointDefinition(object):
-    """Container for a joint type and the beam that shall be joined.
+    """Container for a joint type and the elements that shall be joined.
 
     This allows delaying the actual joining of the beams to a downstream component.
 
@@ -276,7 +276,7 @@ class JointDefinition(object):
 
 
 class FeatureDefinition(object):
-    """Container linking a feature for the beams on which it should be applied.
+    """Container linking a feature to the elements on which it should be applied.
 
     This allows delaying the actual applying of features to a downstream component.
 

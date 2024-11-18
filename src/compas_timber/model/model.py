@@ -70,11 +70,11 @@ class TimberModel(Model):
     @property
     def joints(self):
         # type: () -> Generator[Joint, None, None]
-        interactions = []
+        joints = []
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
-                interactions.append(interaction)
-        return set(interactions)
+                joints.append(interaction)
+        return set(joints)  # remove duplicates
 
     @property
     def walls(self):
@@ -232,8 +232,6 @@ class TimberModel(Model):
         ----------
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
-
-
         """
         for interaction in joint.interactions:
             _ = self.add_interaction(*interaction)
