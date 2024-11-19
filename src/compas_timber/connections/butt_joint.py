@@ -66,7 +66,8 @@ class ButtJoint(Joint):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.elements.extend([main_beam, cross_beam])
+        if main_beam and cross_beam:
+            self.elements.extend([main_beam, cross_beam])
         self.main_beam_guid = str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
         self.mill_depth = mill_depth

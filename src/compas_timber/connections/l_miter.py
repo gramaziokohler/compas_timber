@@ -50,6 +50,8 @@ class LMiterJoint(Joint):
         super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
+        if beam_a and beam_b:
+            self.elements.extend([beam_a, beam_b])
         self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
         self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
         self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint

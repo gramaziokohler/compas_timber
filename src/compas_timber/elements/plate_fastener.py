@@ -21,6 +21,10 @@ class PlateFastener(Fastener):
     frame : :class:`~compas.geometry.Frame`
         The frame of the instance of the fastener that is applied to the model.
         The fastener should be defined at the XY plane origin with the x-axis pointing in the direction of the main_beam.
+    holes : list of tuple, optional
+        The holes of the fastener. Structure is as follows: [(point, diameter), ...]
+    angle : float, optional (default=math.pi / 2)
+        The angle of the fastener. The angle between the beam elements must be the same.
 
     Attributes
     ----------
@@ -76,8 +80,8 @@ class PlateFastener(Fastener):
 
         Parameters
         ----------
-        outline : :class:`~compas.geometry.NurbsCurve`
-            The outline of the fastener.
+        outline : dict
+            The outline of the fastener, given by :class:`~compas.geometry.NurbsCurve.__data__`.
         thickness : float, optional
             The thickness of the fastener.
         holes : tuple of list of tuple, optional
@@ -115,16 +119,13 @@ class PlateFastener(Fastener):
 
         """
         plate_fastener = cls()
-        # plate_fastener._guid = data.get('guid', None)
         plate_fastener.name = data.get("name", None)
         plate_fastener.attributes = data.get("attributes", {})
-        plate_fastener.outline = NurbsCurve.__from_data__(data["outline"])
+        plate_fastener.outline = data.get("outline", None)
         plate_fastener.angle = data.get("angle", math.pi / 2)
         plate_fastener.thickness = data.get("thickness", 5)
         plate_fastener.holes = data.get("holes", [])
-        plate_fastener.cutouts = (
-            [NurbsCurve.__from_data__(cutout) for cutout in data["cutouts"]] if data.get("cutouts", None) else None
-        )
+        plate_fastener.cutouts = data.get("cutouts", None)
         plate_fastener.frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
         return plate_fastener
 
@@ -148,12 +149,11 @@ class PlateFastener(Fastener):
     @property
     def __data__(self):
         data = super(PlateFastener, self).__data__
-        # data['guid'] = self.guid
-        data["outline"] = self.outline.__data__
+        data["outline"] = self.outline
         data["angle"] = self.angle
         data["thickness"] = self.thickness
         data["holes"] = self.holes
-        data["cutouts"] = [cutout.__data__ for cutout in self.cutouts] if self.cutouts else None
+        data["cutouts"] = self.cutouts
         data["frame"] = self.frame.__data__
         return data
 
@@ -168,10 +168,11 @@ class PlateFastener(Fastener):
         """
         if not self._shape:
             vector = Vector(0, 0, self.thickness)
-            self._shape = Brep.from_extrusion(self.outline, vector)
+            self._shape = Brep.from_extrusion(NurbsCurve.__from_data__(self.outline), vector)
             if self.cutouts:
                 for cutout in self.cutouts:
-                    cutout_brep = Brep.from_extrusion(cutout, vector)
+                    curve = NurbsCurve.__from_data__(cutout)
+                    cutout_brep = Brep.from_extrusion(curve, vector)
                     self._shape = self._shape - cutout_brep
             if self.holes:
                 for list in self.holes:

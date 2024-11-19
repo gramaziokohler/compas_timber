@@ -31,10 +31,6 @@ class TButtJoint(ButtJoint):
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
-
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
-        super(TButtJoint, self).__init__(**kwargs)
-
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)

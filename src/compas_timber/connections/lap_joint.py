@@ -53,7 +53,8 @@ class LapJoint(Joint):
         super(LapJoint, self).__init__()
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.elements.extend([main_beam, cross_beam])
+        if main_beam and cross_beam:
+            self.elements.extend([main_beam, cross_beam])
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
         self.main_beam_guid = str(main_beam.guid) if main_beam else None

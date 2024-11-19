@@ -56,6 +56,7 @@ class TButtPlateJoint(ButtJoint):
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.mill_depth = mill_depth
+        print("ELEMENTS: ", self.elements)
         if main_beam and cross_beam:
             self.elements.extend([main_beam, cross_beam])
             if fastener:
@@ -182,6 +183,8 @@ class TButtPlateJoint(ButtJoint):
     @classmethod
     def validate_fastener_beam_compatibility(cls, fastener, beams):
         """Checks if the beams are compatible with the joint and sets the front and back face indices.
+
+        returns the front and back face indices of the cross beam.
 
         Raises
         ------
