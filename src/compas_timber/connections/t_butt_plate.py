@@ -53,12 +53,11 @@ class TButtPlateJoint(ButtJoint):
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, fastener=None, **kwargs):
         super(TButtPlateJoint, self).__init__(**kwargs)
-        self.mill_depth = mill_depth
         self.main_beam = main_beam
         self.cross_beam = cross_beam
+        self.mill_depth = mill_depth
         if main_beam and cross_beam:
             self.elements.extend([main_beam, cross_beam])
-            self.front_face_index, self.back_face_index = TButtPlateJoint.validate_beam_compatibility(main_beam, cross_beam)
             if fastener:
                 self.fastener = fastener
             else:
@@ -67,6 +66,9 @@ class TButtPlateJoint(ButtJoint):
                 path = "/".join(path_parts[:-1])
                 path += "/elements/fasteners/t_butt_plate.json"
                 self.fastener = json_load(path)
+            self.front_face_index, self.back_face_index = TButtPlateJoint.validate_fastener_beam_compatibility(
+                self.fastener, [main_beam, cross_beam]
+            )
             self.place_fasteners()
 
     def restore_beams_from_keys(self, model):
@@ -109,7 +111,7 @@ class TButtPlateJoint(ButtJoint):
             The created joint.
 
         """
-        joint = cls(*beams, **kwargs)
+        joint = TButtPlateJoint(*beams, **kwargs)
 
         for fastener in joint.fasteners:
             model.add_element(fastener)
@@ -178,7 +180,7 @@ class TButtPlateJoint(ButtJoint):
             self.elements.append(fastener)
 
     @classmethod
-    def validate_beam_compatibility(cls, main_beam, cross_beam):
+    def validate_fastener_beam_compatibility(cls, fastener, beams):
         """Checks if the beams are compatible with the joint and sets the front and back face indices.
 
         Raises
@@ -187,8 +189,11 @@ class TButtPlateJoint(ButtJoint):
             If the beams are not compatible.
 
         """
-        if not TOL.is_zero(angle_vectors(main_beam.frame.xaxis, cross_beam.frame.xaxis) - math.pi / 2):
-            raise BeamJoinningError(beams=[main_beam, cross_beam], joint=cls(), debug_info="Beams are not perpendicular")
+        main_beam, cross_beam = beams
+        if not TOL.is_zero(angle_vectors(main_beam.frame.xaxis, cross_beam.frame.xaxis) - fastener.angle):
+            raise BeamJoinningError(
+                beams=[main_beam, cross_beam], joint=cls(), debug_info="Beams are not perpendicular"
+            )
 
         cross_vector = cross_vectors(main_beam.centerline.direction, cross_beam.centerline.direction)
         main_faces = Beam.angle_beam_face_vector(main_beam, cross_vector)
@@ -199,11 +204,15 @@ class TButtPlateJoint(ButtJoint):
 
         if not TOL.is_zero(main_faces[front_face_index]):
             raise BeamJoinningError(
-                beams=[main_beam, cross_beam], joint=cls(), debug_info="Main beam is not perpendicular to the cross vector"
+                beams=[main_beam, cross_beam],
+                joint=cls(),
+                debug_info="Main beam is not perpendicular to the cross vector",
             )
         if not TOL.is_zero(cross_faces[cross_face_index]):
             raise BeamJoinningError(
-                beams=[main_beam, cross_beam], joint=cls(), debug_info="Cross beam is not perpendicular to the cross vector"
+                beams=[main_beam, cross_beam],
+                joint=cls(),
+                debug_info="Cross beam is not perpendicular to the cross vector",
             )
         if not TOL.is_zero(
             distance_point_plane(
@@ -211,7 +220,9 @@ class TButtPlateJoint(ButtJoint):
                 Plane.from_frame(cross_beam.faces[cross_face_index]),
             )
         ):
-            raise BeamJoinningError(beams=[main_beam, cross_beam], joint=cls(), debug_info="beam faces are not coplanar")
+            raise BeamJoinningError(
+                beams=[main_beam, cross_beam], joint=cls(), debug_info="beam faces are not coplanar"
+            )
         back_face_index = (front_face_index + 2) % 4
         cross_back_face_index = (cross_face_index + 2) % 4
         if not TOL.is_zero(
@@ -256,7 +267,10 @@ class TButtPlateJoint(ButtJoint):
         return [front_frame, back_frame]
 
     def apply_drill_features(self):
-        """Returns the drill features of the joint."""
+        """Applies the drill features of the joint to the beams.
+        Drill features are defined by `fastener.holes`
+        This assumes the same fastener on each side of the joint.
+        """
         fastener = list(self.fasteners)[0]
         transformation = Transformation.from_frame_to_frame(Frame.worldXY(), fastener.frame)
         if self.front_face_index % 2 == 0:

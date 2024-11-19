@@ -1,13 +1,16 @@
+import math
+
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas_model.elements import Element
+
+from compas_timber.elements.fastener import Fastener
 
 
-class PlateFastener(Element):
+class PlateFastener(Fastener):
     """
     A class to represent flat plate timber fasteners (e.g. steel plates).
 
@@ -28,11 +31,12 @@ class PlateFastener(Element):
 
     """
 
-    def __init__(self, shape=None, frame=None, **kwargs):
+    def __init__(self, shape=None, frame=None, angle=math.pi / 2, **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
         self._shape = shape
         self.frame = frame or Frame.worldXY()
         self.holes = []
+        self.angle = angle
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -63,7 +67,9 @@ class PlateFastener(Element):
     # ==========================================================================
 
     @classmethod
-    def from_outline_thickness_holes_cutouts(cls, outline, thickness=5, holes=None, cutouts=None, **kwargs):
+    def from_outline_thickness_holes_cutouts(
+        cls, outline, angle=math.pi / 2, thickness=5, holes=None, cutouts=None, **kwargs
+    ):
         """
         Constructs a fastener from an outline, cutouts and thickness.
         This should be constructed on the XY plane and oriented with the x-axis pointing in the direction of the main_beam.centerline.
@@ -87,6 +93,7 @@ class PlateFastener(Element):
         """
         plate_fastener = cls(**kwargs)
         plate_fastener.outline = outline
+        plate_fastener.angle = angle
         plate_fastener.thickness = thickness
         plate_fastener.holes = holes
         plate_fastener.cutouts = cutouts
@@ -112,6 +119,7 @@ class PlateFastener(Element):
         plate_fastener.name = data.get("name", None)
         plate_fastener.attributes = data.get("attributes", {})
         plate_fastener.outline = NurbsCurve.__from_data__(data["outline"])
+        plate_fastener.angle = data.get("angle", math.pi / 2)
         plate_fastener.thickness = data.get("thickness", 5)
         plate_fastener.holes = data.get("holes", [])
         plate_fastener.cutouts = (
@@ -142,6 +150,7 @@ class PlateFastener(Element):
         data = super(PlateFastener, self).__data__
         # data['guid'] = self.guid
         data["outline"] = self.outline.__data__
+        data["angle"] = self.angle
         data["thickness"] = self.thickness
         data["holes"] = self.holes
         data["cutouts"] = [cutout.__data__ for cutout in self.cutouts] if self.cutouts else None
