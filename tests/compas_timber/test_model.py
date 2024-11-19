@@ -55,6 +55,7 @@ def test_get_joint_from_interaction():
 
     assert joint is list(model.joints)[0]
 
+
 def test_copy(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
