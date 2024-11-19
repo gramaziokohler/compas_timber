@@ -69,12 +69,12 @@ class TimberModel(Model):
 
     @property
     def joints(self):
-        # type: () -> Generator[Joint, None, None]
+        # type: () -> List[Joint, None, None]
         joints = []
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
                 joints.append(interaction)
-        return list(set(joints))
+        return list(set(joints))  # remove duplicates
 
     @property
     def walls(self):
