@@ -101,7 +101,6 @@ class Joint(Interaction):
         """
         raise NotImplementedError
 
-
     def add_extensions(self):
         """Adds the extensions defined by this joint to affected beam(s).
         This is optional and should only be implemented by joints that require it.
