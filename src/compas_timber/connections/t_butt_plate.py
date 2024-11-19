@@ -64,7 +64,7 @@ class TButtPlateJoint(ButtJoint):
                 path = os.path.dirname(__file__)
                 path_parts = path.split(os.path.sep)
                 path = os.path.sep.join(path_parts[:-1])
-                path = os.path.sep.join([path,"elements","fasteners","t_butt_plate.json"])
+                path = os.path.sep.join([path, "elements", "fasteners", "t_butt_plate.json"])
                 self.fastener = json_load(path)
             self.front_face_index, self.back_face_index = TButtPlateJoint.validate_fastener_beam_compatibility(
                 self.fastener, [main_beam, cross_beam]
