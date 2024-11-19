@@ -58,9 +58,12 @@ class Joint(Interaction):
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+    MIN_ELEMENT_COUNT = 2
+    MAX_ELEMENT_COUNT = 2
 
     def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
+        self.elements = []
 
     @property
     def beams(self):
@@ -80,9 +83,12 @@ class Joint(Interaction):
             if getattr(element, "is_fastener", False):
                 yield element
 
-    @property
-    def element_parameter_count(self):
-        return 2
+    @classmethod
+    def element_count_complies(cls, elements):
+        if cls.MAX_ELEMENT_COUNT:
+            return len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT
+        else:
+            return len(elements) >= cls.MIN_ELEMENT_COUNT
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
@@ -176,11 +182,15 @@ class Joint(Interaction):
 
     @property
     def interactions(self):
-        """Returns interactions consisting of all possible pairs of beams that are connected by this joint and the joint itself."""
+        """Returns all possible interactions between elements that are connected by this joint.
+        interaction is defined as a tuple of (element_a, element_b, joint).
+        """
         interactions = []
+        print(self.elements, self)
         for i in range(len(self.beams)):
-            for j in range(i + 1, len(self.beams)):
-                interactions.append((self.beams[i], self.beams[j], self))
+            for j in range(i + 1, len(self.elements)):
+                print(self.elements[i], self.elements[j], self)
+                interactions.append((self.elements[i], self.elements[j], self))
         return interactions
 
     @staticmethod

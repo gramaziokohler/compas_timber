@@ -70,8 +70,6 @@ class TimberModel(Model):
     @property
     def joints(self):
         # type: () -> Generator[Joint, None, None]
-        # TODO: consider if there are other interaction types...
-        # TODO: consider, multiple interactions can have the same joint...
         joints = []
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
@@ -234,10 +232,9 @@ class TimberModel(Model):
         ----------
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
-
         """
-        for a,b, interaction in joint.interactions:
-            _ = self.add_interaction(a, b, interaction=interaction)
+        for interaction in joint.interactions:
+            _ = self.add_interaction(*interaction)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
