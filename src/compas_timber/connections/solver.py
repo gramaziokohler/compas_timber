@@ -132,7 +132,6 @@ class ConnectionSolver(object):
         tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
 
         """
-
         tol = self.TOLERANCE  # TODO: change to a unit-sensitive value
         angtol = 1e-3
         a1, a2 = beam_a.centerline

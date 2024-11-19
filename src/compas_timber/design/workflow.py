@@ -4,7 +4,6 @@ from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
 from compas_timber.utils import intersection_line_line_param
-from compas_timber.connections import JointTopology
 
 
 class CollectionDef(object):
@@ -81,11 +80,11 @@ class JointRule(object):
             A list of joint definitions that can be applied to the given beams.
 
         """
-
         beams = beams if isinstance(beams, list) else list(beams)
         direct_rules = JointRule.get_direct_rules(rules)
-        beam_pairs = ConnectionSolver().find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+        solver = ConnectionSolver()
 
+        beam_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         joint_defs = []
         unmatched_pairs = []
         for rule in direct_rules:
@@ -95,7 +94,6 @@ class JointRule(object):
             pair = beam_pairs.pop()
             match_found = False
             for rule in direct_rules:  # see if pair is used in a direct rule
-
                 if rule.comply(pair):
                     match_found = True
                     break
@@ -109,14 +107,15 @@ class JointRule(object):
 
             if not match_found:
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
-                    comply, ordered_pair = rule.comply(pair)
+                    comply, pair = rule.comply(pair)
                     if comply:
                         match_found = True
-                        joint_defs.append(JointDefinition(rule.joint_type, ordered_pair, **rule.kwargs))
+                        joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
                         break
             if not match_found:
                 unmatched_pairs.append(pair)
         return joint_defs, unmatched_pairs
+
 
 class DirectRule(JointRule):
     """Creates a Joint Rule that directly joins multiple elements."""
@@ -234,7 +233,6 @@ class TopologyRule(JointRule):
                 [topo_results[1], topo_results[2]],
             )  # comply, if topologies match, reverse if the beam order should be switched
         except KeyError:
-
             return False
 
 
@@ -248,8 +246,8 @@ class JointDefinition(object):
     def __init__(self, joint_type, beams, **kwargs):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-        if len(beams) != 2:
-            raise UserWarning("Expected to get two Beams, got {}.".format(len(beams)))
+        if len(beams) < 2:
+            raise UserWarning("Joint requires at least two Beams, got {}.".format(len(beams)))
 
         self.joint_type = joint_type
         self.beams = beams

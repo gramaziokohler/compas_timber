@@ -138,7 +138,6 @@ class DrillFeature(Feature):
             The resulting geometry after processing.
 
         """
-        print("applying drill hole feature to element")
         plane = Plane(point=self.line.start, normal=self.line.vector)
         plane.point += plane.normal * 0.5 * self.length
         drill_volume = Cylinder(frame=Frame.from_plane(plane), radius=self.diameter / 2.0, height=self.length)
