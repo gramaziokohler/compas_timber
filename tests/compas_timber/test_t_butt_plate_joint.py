@@ -16,7 +16,9 @@ def test_create():
     instance = TButtPlateJoint.create(A, B1, B2)
 
     F1 = Frame(point=Point(x=0.0, y=0.0, z=0.05), xaxis=Vector(x=1.0, y=0.0, z=0.0), yaxis=Vector(x=-0.0, y=1.0, z=0.0))
-    F2 = Frame(point=Point(x=0.0, y=0.0, z=-0.05), xaxis=Vector(x=1.0, y=0.0, z=0.0), yaxis=Vector(x=0.0, y=-1.0, z=0.0))
+    F2 = Frame(
+        point=Point(x=0.0, y=0.0, z=-0.05), xaxis=Vector(x=1.0, y=0.0, z=0.0), yaxis=Vector(x=0.0, y=-1.0, z=0.0)
+    )
 
     assert len(instance.beams) == 2
     assert isinstance(instance, TButtPlateJoint)
