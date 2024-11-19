@@ -50,3 +50,22 @@ class Fastener(Element):
     def key(self):
         # type: () -> int | None
         return self.graph_node
+
+
+class FastenerTimberInterface(object):
+
+    def __init__(self, outline = None, thickness = None, holes = None):
+        self.outline = outline
+        self.thickness = thickness
+        self.holes = holes
+
+    def shape(self):
+        """Return the shape of the interface between the fastener and the timber.
+        this is represented by a Brep generated from an outline of the fastener geometry,
+        the thickness of the fastener plate, and the locations and diameters of the fastener holes.
+        """
+
+
+
+    def __str__(self):
+        return "FastenerTimberInterface"
