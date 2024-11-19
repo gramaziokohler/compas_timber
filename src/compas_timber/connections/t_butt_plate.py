@@ -56,7 +56,6 @@ class TButtPlateJoint(ButtJoint):
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.mill_depth = mill_depth
-        print("ELEMENTS: ", self.elements)
         if main_beam and cross_beam:
             self.elements.extend([main_beam, cross_beam])
             if fastener:

@@ -101,9 +101,6 @@ class Joint(Interaction):
         """
         raise NotImplementedError
 
-    def add_fasteners(self):
-        """Adds the fastener defined by this joint to affected beam(s)."""
-        raise NotImplementedError
 
     def add_extensions(self):
         """Adds the extensions defined by this joint to affected beam(s).
