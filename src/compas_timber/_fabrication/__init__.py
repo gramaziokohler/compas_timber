@@ -16,6 +16,8 @@ from .dovetail_tenon import DovetailTenon
 from .dovetail_tenon import DovetailTenonParams
 from .dovetail_mortise import DovetailMortise
 from .dovetail_mortise import DovetailMortiseParams
+from .french_ridge_lap import FrenchRidgeLap
+from .french_ridge_lap import FrenchRidgeLapParams
 
 
 __all__ = [
@@ -35,4 +37,6 @@ __all__ = [
     "DovetailTenonParams",
     "DovetailMortise",
     "DovetailMortiseParams",
+    "FrenchRidgeLap",
+    "FrenchRidgeLapParams",
 ]

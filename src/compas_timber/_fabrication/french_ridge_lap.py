@@ -1,15 +1,20 @@
 import math
 
+from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Rotation
+from compas.geometry import Point
+from compas.geometry import Polyhedron
 from compas.geometry import Vector
+from compas.datastructures import Mesh
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas.geometry import project_points_plane
+from compas.geometry import Rotation
 from compas.tolerance import TOL
 
 from compas_timber.elements import FeatureApplicationError
@@ -33,9 +38,9 @@ class FrenchRidgeLap(BTLxProcess):
         The horizontal angle of the cut. 0.1 < angle < 179.9.
     ref_position: int
         The reference position of the cut. Must be either EdgePositionType.REFEDGE or EdgePositionType.OPPEDGE.
-    drill_hole : bool
+    drillhole : bool
         Flag indicating if a drill hole should be made.
-    drill_hole_diameter : float
+    drillhole_diam : float
         The diameter of the drill hole.
 
     """
@@ -49,8 +54,8 @@ class FrenchRidgeLap(BTLxProcess):
         data["start_x"] = self.start_x
         data["angle"] = self.angle
         data["ref_position"] = self.ref_position
-        data["drill_hole"] = self.drill_hole
-        data["drill_hole_diameter"] = self.drill_hole_diameter
+        data["drillhole"] = self.drillhole
+        data["drillhole_diam"] = self.drillhole_diam
         return data
 
     def __init__(
@@ -59,8 +64,8 @@ class FrenchRidgeLap(BTLxProcess):
         start_x=0.0,
         angle=90.0,
         ref_position=EdgePositionType.REFEDGE,
-        drill_hole=False,
-        drill_hole_diameter=0.0,
+        drillhole=False,
+        drillhole_diam=0.0,
         **kwargs
     ):
         super(FrenchRidgeLap, self).__init__(**kwargs)
@@ -68,15 +73,15 @@ class FrenchRidgeLap(BTLxProcess):
         self._start_x = None
         self._angle = None
         self._ref_position = None
-        self._drill_hole = None
-        self._drill_hole_diameter = None
+        self._drillhole = None
+        self._drillhole_diam = None
 
         self.orientation = orientation
         self.start_x = start_x
         self.angle = angle
         self.ref_position = ref_position
-        self.drill_hole = drill_hole
-        self.drill_hole_diameter = drill_hole_diameter
+        self.drillhole = drillhole
+        self.drillhole_diam = drillhole_diam
 
     ########################################################################
     # Properties
@@ -127,31 +132,31 @@ class FrenchRidgeLap(BTLxProcess):
         self._ref_position = ref_position
 
     @property
-    def drill_hole(self):
-        return self._drill_hole
+    def drillhole(self):
+        return self._drillhole
 
-    @drill_hole.setter
-    def drill_hole(self, drill_hole):
-        if not isinstance(drill_hole, bool):
-            raise ValueError("Drill hole must be a boolean.")
-        self._drill_hole = drill_hole
+    @drillhole.setter
+    def drillhole(self, drillhole):
+        if not isinstance(drillhole, bool):
+            raise ValueError("Drillhole must be a boolean.")
+        self._drillhole = drillhole
 
     @property
-    def drill_hole_diameter(self):
-        return self._drill_hole_diameter
+    def drillhole_diam(self):
+        return self._drillhole_diam
 
-    @drill_hole_diameter.setter
-    def drill_hole_diameter(self, drill_hole_diameter):
-        if 1000.0 < drill_hole_diameter < 0.0:
-            raise ValueError("Drill hole diameter must be between 0.0 and 1000.0.")
-        self._drill_hole_diameter = drill_hole_diameter
+    @drillhole_diam.setter
+    def drillhole_diam(self, drillhole_diam):
+        if 1000.0 < drillhole_diam < 0.0:
+            raise ValueError("Drillhole diameter must be between 0.0 and 1000.0.")
+        self._drillhole_diam = drillhole_diam
 
     ########################################################################
     # Alternative constructors
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, drill_hole_diameter, ref_side_index=0):
+    def from_plane_and_beam(cls, plane, beam, drillhole_diam=0.0, ref_side_index=0):
         """Create a FrenchRidgeLap instance from a cutting plane and the beam it should cut.
 
         Parameters
@@ -160,6 +165,10 @@ class FrenchRidgeLap(BTLxProcess):
             The cutting plane.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
+        ref_position : int
+            The reference position of the cut. Must be either EdgePositionType.REFEDGE or EdgePositionType.OPPEDGE.
+        drillhole_diam : float
+            The diameter of the drillhole.
         ref_side_index : int, optional
             The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
 
@@ -171,20 +180,28 @@ class FrenchRidgeLap(BTLxProcess):
         # type: (Plane | Frame, Beam, int) -> JackRafterCut
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
-        start_y = 0.0
-        start_depth = 0.0
-        ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
-        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
+        ref_side = beam.ref_sides[ref_side_index]
+        ref_surface = beam.side_as_surface(ref_side_index)
+
+        # calculate the orientation of the cut
         orientation = cls._calculate_orientation(ref_side, plane)
+        print(orientation)
 
-        point_start_x = intersection_line_plane(ref_edge, plane)
-        if point_start_x is None:
-            raise ValueError("Plane does not intersect with beam.")
+        # calculate the angle of the cut
+        angle = cls._calculate_angle(ref_side, plane)
+        print(angle)
 
-        start_x = distance_point_point(ref_edge.point, point_start_x)
-        angle = cls._calculate_angle(ref_side, plane, orientation)
-        inclination = cls._calculate_inclination(ref_side, plane, orientation)
-        return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
+        # determine the reference position of the edge
+        ref_position = EdgePositionType.REFEDGE if angle > 90 else EdgePositionType.OPPEDGE
+
+        # calculate the start_x of the cut
+        start_x = cls._calculate_start_x(ref_surface, plane, ref_position)
+        print(start_x)
+
+        drillhole = True if drillhole_diam else False
+        drillhole_diam = 0.0 if not drillhole else drillhole_diam
+
+        return cls(orientation, start_x, angle, ref_position, drillhole, drillhole_diam, ref_side_index=ref_side_index)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):
@@ -196,24 +213,26 @@ class FrenchRidgeLap(BTLxProcess):
             return OrientationType.START
 
     @staticmethod
-    def _calculate_angle(ref_side, plane, orientation):
-        # vector rotation direction of the plane's normal in the vertical direction
-        angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
-        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-        if orientation == OrientationType.START:
-            return 180 - abs(angle)  # get the other side of the angle
+    def _calculate_start_x(ref_surface, cutting_plane, ref_position):
+        # distance between the start of the beam and the intersection of the cutting plane with the reference edge
+        if ref_position == EdgePositionType.REFEDGE:
+            y_pos = 0
         else:
-            return abs(angle)
+            y_pos = ref_surface.ysize
+
+        ref_point = ref_surface.point_at(0, y_pos)
+        ref_edge = Line.from_point_and_vector(ref_point, ref_surface.frame.xaxis)
+        point_start_x = intersection_line_plane(ref_edge, cutting_plane)
+        if point_start_x is None:
+            raise ValueError("Plane does not intersect with beam.")
+        return distance_point_point(ref_point, point_start_x)
 
     @staticmethod
-    def _calculate_inclination(ref_side, plane, orientation):
-        # vector rotation direction of the plane's normal in the horizontal direction
-        inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
-        inclination = angle_vectors_signed(ref_side.xaxis, inclination_vector, ref_side.yaxis, deg=True)
-        if orientation == OrientationType.START:
-            return 180 - abs(inclination)  # get the other side of the angle
-        else:
-            return abs(inclination)
+    def _calculate_angle(ref_side, plane):
+        # angle between the normal of the reference side and the normal of the cutting plane
+        angle_vector = Vector.cross(ref_side.normal, plane.normal)
+        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True)
+        return 180 - abs(angle)
 
     ########################################################################
     # Methods
@@ -241,18 +260,36 @@ class FrenchRidgeLap(BTLxProcess):
 
         """
         # type: (Brep, Beam) -> Brep
-        cutting_plane = self.plane_from_params_and_beam(beam)
+        trimming_plane = self.plane_from_params_and_beam(beam)
         try:
-            return geometry.trimmed(cutting_plane)
+            geometry.trim(trimming_plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                cutting_plane,
+                trimming_plane,
                 geometry,
-                "The cutting plane does not intersect with beam geometry.",
+                "Could not trim the beam geometry with the cutting plane.",
+            )
+
+        subtracting_volume = self.volume_from_params_and_beam(beam)
+        try:
+            brep_subtracting_volume = Brep.from_mesh(subtracting_volume)
+        except ValueError:  # TODO: check if this is the right exception
+            raise FeatureApplicationError(
+                subtracting_volume,
+                geometry,
+                "Could not convert the cutting volume to a Brep.",
+            )
+        try:
+            return geometry - brep_subtracting_volume
+        except IndexError:
+            raise FeatureApplicationError(
+                subtracting_volume,
+                geometry,
+                "Could not subtract the cutting volume from the beam geometry.",
             )
 
     def plane_from_params_and_beam(self, beam):
-        """Calculates the cutting plane from the machining parameters in this instance and the given beam
+        """Calculates the plane that cuts the exceeding part of the blank of the beam from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -265,31 +302,89 @@ class FrenchRidgeLap(BTLxProcess):
             The cutting plane.
 
         """
-        # type: (Beam) -> Plane
         assert self.angle is not None
-        assert self.inclination is not None
+        ref_surface = beam.side_as_surface(self.ref_side_index)
+        origin = ref_surface.point_at(self.start_x, 0)
+        cutting_frame = Frame(origin, ref_surface.frame.xaxis, ref_surface.frame.yaxis)
 
-        # start with a plane aligned with the ref side but shifted to the start_x of the cut
+        angle = self.angle
+        if self.orientation == OrientationType.START:
+            angle = -angle
+        cutting_frame.rotate(math.radians(180 - angle), cutting_frame.yaxis, cutting_frame.point)
+
+        return cutting_frame
+
+    def equilateral_quadrilateral_vertices_from_params_and_beam(self, beam):
+        """Calculates the vertices of the quadrilateral that represents the French Ridge Lap feature. The quadrilateral is a rhombus with the given angle.
+
+        Parameters:
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns:
+        ----------
+        list of :class:`compas.geometry.Point`
+            The vertices of the quadrilateral.
+
+        """
+        assert self.angle is not None
+
+        # Get the reference side of the beam (planar surface)
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, 0.0)
-        cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
-        # normal pointing towards xaxis so just need the delta
-        horizontal_angle = math.radians(self.angle - 90)
-        rot_a = Rotation.from_axis_and_angle(cutting_plane.zaxis, horizontal_angle, point=p_origin)
+        # Translate the reference side to the middle of the beam
+        height = beam.height if self.ref_side_index % 2 == 0 else beam.width
+        ref_side.translate(-ref_side.frame.normal * (height / 2))
 
-        # normal pointing towards xaxis so just need the delta
-        vertical_angle = math.radians(self.inclination - 90)
-        rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
+        # Calculate the edge length from the height
+        edge_length = ref_side.ysize / math.sin(math.radians(180 - self.angle))
 
-        cutting_plane.transform(rot_a * rot_b)
-        # for simplicity, we always start with normal pointing towards xaxis.
-        # if start is cut, we need to flip the normal
-        if self.orientation == OrientationType.END:
-            plane_normal = cutting_plane.xaxis
-        else:
-            plane_normal = -cutting_plane.xaxis
-        return Plane(cutting_plane.point, plane_normal)
+        # Determine origin point based on ref_position
+        x_pos = self.start_x
+        y_pos1, y_pos2 = [0, ref_side.ysize] if self.ref_position == EdgePositionType.REFEDGE else [ref_side.ysize, 0]
+
+        # First vertex (origin)
+        v0 = ref_side.point_at(x_pos, y_pos1)
+
+        # Second vertex
+        v1 = ref_side.point_at(x_pos + edge_length, y_pos1)
+
+        # Third vertex
+        v2 = ref_side.point_at(x_pos + edge_length, y_pos2)
+
+        # Fourth vertex
+        v3 = ref_side.point_at(x_pos, y_pos2)
+
+        return [v0, v1, v2, v3]
+
+    def volume_from_params_and_beam(self, beam):
+        """Calculates the lap volume from the machining parameters in this instance and the given beam
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`compas.geometry.Mesh`
+            The lap volume.
+
+        """
+        # type: (Beam) -> Mesh
+        ref_side = beam.ref_sides[self.ref_side_index]
+
+        quad_vertices = self.equilateral_quadrilateral_vertices_from_params_and_beam(beam)
+        projected_vertices = project_points_plane(quad_vertices, Plane.from_frame(ref_side))
+
+        vertices = quad_vertices + projected_vertices
+        faces = [[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
+
+        if self.ref_position == EdgePositionType.OPPEDGE:
+            faces = [face[::-1] for face in faces]
+
+        return Mesh.from_vertices_and_faces(vertices, faces)
 
 
 class FrenchRidgeLapParams(BTLxProcessParams):
@@ -319,6 +414,6 @@ class FrenchRidgeLapParams(BTLxProcessParams):
         result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
         result["RefPosition"] = self._instance.ref_position
-        result["DrillHole"] = "yes" if self._instance.drill_hole else "no"
-        result["DrillHoleDiameter"] = "{:.{prec}f}".format(self._instance.drill_hole_diameter, prec=TOL.precision)
+        result["Drillhole"] = "yes" if self._instance.drillhole else "no"
+        result["DrillholeDiam"] = "{:.{prec}f}".format(self._instance.drillhole_diam, prec=TOL.precision)
         return result

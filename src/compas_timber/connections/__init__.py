@@ -1,10 +1,11 @@
 from .butt_joint import ButtJoint
-from .french_ridge_lap import FrenchRidgeLapJoint
+
 from .joint import BeamJoinningError
 from .joint import Joint
 from .l_butt import LButtJoint
 from .l_halflap import LHalfLapJoint
 from .l_miter import LMiterJoint
+from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .null_joint import NullJoint
 from .solver import ConnectionSolver
@@ -32,7 +33,7 @@ __all__ = [
     "THalfLapJoint",
     "LHalfLapJoint",
     "NullJoint",
-    "FrenchRidgeLapJoint",
+    "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
     "find_neighboring_beams",
