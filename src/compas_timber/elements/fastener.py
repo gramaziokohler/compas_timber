@@ -124,6 +124,8 @@ class FastenerTimberInterface(object):
     @property
     def plate(self):
         """Generate a plate from outline, thickness, and holes."""
+        if not self.outline_pts:
+            return None
         plate = Brep.from_extrusion(
             NurbsCurve.from_points(self.outline_pts, degree=1), Vector(0.0, 0.0, 1.0) * self.thickness
         )
@@ -156,9 +158,14 @@ class FastenerTimberInterface(object):
     def shape(self):
         """Return a Brep representation of the interface located at the WorldXY origin."""
         if not self._shape:
-            self._shape = self.plate
-            if self.shapes:
-                for shape in self.shapes:
+            if self.plate:
+                self._shape = self.plate
+                if self.shapes:
+                    for shape in self.shapes:
+                        self._shape += shape
+            elif self.shapes:
+                self._shape = self.shapes[0]
+                for shape in self.shapes[1:]:
                     self._shape += shape
         return self._shape
 
