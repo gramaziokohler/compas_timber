@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `compas_timber.connections.BallNodeJoint`.
 * Added `compas_timber.elements.BallNodeFastener`.
 * Added `transform()` method to `Feature` types.
+* Added `FastenerInterfaceComponent` GH component.
 
 ### Changed
 

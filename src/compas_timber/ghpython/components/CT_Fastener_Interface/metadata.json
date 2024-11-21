@@ -1,0 +1,60 @@
+{
+    "name": "FastenerTimberInterface",
+    "nickname": "Interface",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Creates a fastener-timber interface for use in defining fasteners and propagating features to timber elements.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "outline_points",
+                "description": "points defining the polyline that defines the shape of the interface plate.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "thickness",
+                "description": "The thickness of the interface plate.",
+                "typeHintID": "vector",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "drill_points",
+                "description": "location of holes to be drilled in the interface plate and the timber elements.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "drill_diameters",
+                "description": "The diameter of the holes to be drilled in the interface plate and the timber elements.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "extra_shapes",
+                "description": "Closed Brep objects that make up the geometry of the fastener.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "features",
+                "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "fastener interface",
+                "description": "the fastener interface to be passed to the joint component."
+            },
+            {
+                "name": "shape",
+                "description": "Shape of the fastener interface."
+            }
+        ]
+    }
+}
