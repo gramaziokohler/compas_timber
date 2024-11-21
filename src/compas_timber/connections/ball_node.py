@@ -1,22 +1,8 @@
-from compas.geometry import Frame
-from compas_timber.elements import BallNodeFastener
-from compas_timber.elements import CutFeature
-from compas_timber.elements import DrillFeature
-from compas_timber.elements import BrepSubtraction
-from compas_timber.elements import Fastener
-from compas_timber.elements import FastenerTimberInterface
-from compas_timber.utils import intersection_line_line_param
-from compas.geometry import Brep
-from compas.geometry import Sphere
-from compas.geometry import Cylinder
 from compas.geometry import Point
-from compas.geometry import Plane
-from compas.geometry import Line
-from compas.geometry import Vector
-from compas.geometry import intersection_sphere_line
 
+from compas_timber.elements import BallNodeFastener
+from compas_timber.utils import intersection_line_line_param
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -44,10 +30,11 @@ class BallNodeJoint(Joint):
         A string representation of this joint's type.
 
     """
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
     MAX_ELEMENT_COUNT = None
 
-    def __init__(self, beams = None, timber_interface = None, ball_diameter = 100, **kwargs):
+    def __init__(self, beams=None, timber_interface=None, ball_diameter=100, **kwargs):
         super(BallNodeJoint, self).__init__(**kwargs)
         self.elements = beams
         self.timber_interface = timber_interface
@@ -91,7 +78,7 @@ class BallNodeJoint(Joint):
         joint = cls(beams, **kwargs)
         model.add_element(joint.fastener)
         for interaction in joint.interactions:
-             _ = model.add_interaction(*interaction)
+            _ = model.add_interaction(*interaction)
         return joint
 
     def add_features(self):
@@ -107,8 +94,10 @@ class BallNodeJoint(Joint):
             beams = list(self.beams)
             cpt = Point(0, 0, 0)
             for i, beam in enumerate(beams):
-                points = intersection_line_line_param(beams[i-1].centerline, beam.centerline) #TODO: include Tolerance check here.
+                points = intersection_line_line_param(
+                    beams[i - 1].centerline, beam.centerline
+                )  # TODO: include Tolerance check here.
                 if points[0][0] is not None and points[1][0] is not None:
                     cpt += points[1][0]
-            self._node_point = cpt*(1.0/len(beams))
+            self._node_point = cpt * (1.0 / len(beams))
         return self._node_point

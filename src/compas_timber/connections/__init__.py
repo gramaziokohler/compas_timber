@@ -38,5 +38,5 @@ __all__ = [
     "ConnectionSolver",
     "find_neighboring_beams",
     "TDovetailJoint",
-    "BallNodeJoint"
+    "BallNodeJoint",
 ]

@@ -7,7 +7,6 @@ from compas.geometry import Plane
 from compas.geometry import Polyhedron
 
 
-
 class FeatureApplicationError(Exception):
     """Raised when a feature cannot be applied to an element geometry.
 
@@ -158,6 +157,7 @@ class DrillFeature(Feature):
     def transform(self, transformation):
         self.line.transform(transformation)
 
+
 class MillVolume(Feature):
     """A volume to be milled out of an element.
 
@@ -208,6 +208,7 @@ class MillVolume(Feature):
 
     def transform(self, transformation):
         self.mesh_volume.transform(transformation)
+
 
 class BrepSubtraction(Feature):
     """Generic volume subtraction from an element.

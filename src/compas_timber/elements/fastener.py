@@ -1,14 +1,14 @@
-from compas.geometry import Frame
 from compas.geometry import Brep
 from compas.geometry import Cylinder
-from compas.geometry import Vector
-from compas.geometry import Plane
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
+from compas.geometry import Vector
+
 from compas_timber.elements.features import DrillFeature
-from compas_timber.elements.features import BrepSubtraction
 from compas_timber.elements.timber import TimberElement
+
 
 class Fastener(TimberElement):
     """
@@ -61,7 +61,7 @@ class Fastener(TimberElement):
 
 
 class FastenerTimberInterface(object):
-    """ A class to represent the interface between a fastener and a timber element.
+    """A class to represent the interface between a fastener and a timber element.
 
     Parameters
     ----------
@@ -105,7 +105,10 @@ class FastenerTimberInterface(object):
 
 
     """
-    def __init__(self, outline_pts = None, thickness = None, holes = None, frame = Frame.worldXY(), shapes = None, feature_defs = None):
+
+    def __init__(
+        self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, feature_defs=None
+    ):
         self.outline_pts = outline_pts
         self.thickness = thickness
         self.holes = holes
@@ -121,10 +124,12 @@ class FastenerTimberInterface(object):
     @property
     def plate(self):
         """Generate a plate from outline, thickness, and holes."""
-        plate = Brep.from_extrusion(NurbsCurve.from_points(self.outline_pts, degree=1), Vector(0.0,0.0,1.0) * self.thickness)
+        plate = Brep.from_extrusion(
+            NurbsCurve.from_points(self.outline_pts, degree=1), Vector(0.0, 0.0, 1.0) * self.thickness
+        )
         for hole in self.holes:
             frame = Frame(hole["point"], self.frame.xaxis, self.frame.yaxis)
-            hole = Brep.from_cylinder(Cylinder(hole["diameter"]/2, self.thickness * 2, frame))
+            hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, self.thickness * 2, frame))
             plate -= hole
         return plate
 
@@ -133,12 +138,14 @@ class FastenerTimberInterface(object):
         """Generate features from the interface that are applied to the timber element."""
         features = []
         for hole in self.holes:
-            vector = hole["vector"] or Vector(0.0,0.0,1.0)
+            vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
             length = self.element.width if hole["through"] else hole["vector"].length
-            point = hole["point"] - vector * length *0.5
+            point = hole["point"] - vector * length * 0.5
             drill_line = Line.from_point_direction_length(point, vector, length)
             drill_line.transform(Transformation.from_frame(self.frame))
-            features.append(DrillFeature(drill_line, hole["diameter"], self.element.width)) #TODO: make this adapt using intersection with `element.blank` or similar
+            features.append(
+                DrillFeature(drill_line, hole["diameter"], self.element.width)
+            )  # TODO: make this adapt using intersection with `element.blank` or similar
         for feature_def in self.feature_defs:
             feature_def = feature_def.copy()
             feature_def.transform(Transformation.from_frame(self.frame))
@@ -168,7 +175,9 @@ class FastenerTimberInterface(object):
         return "FastenerTimberInterface at {}".format(self.frame)
 
     def copy(self):
-        fast =  FastenerTimberInterface(self.outline_pts, self.thickness, self.holes, shapes = self.shapes, feature_defs = self.feature_defs)
+        fast = FastenerTimberInterface(
+            self.outline_pts, self.thickness, self.holes, shapes=self.shapes, feature_defs=self.feature_defs
+        )
         fast._shape = self.shape
         fast.element = self.element
         fast.fastener = self.fastener

@@ -1,16 +1,8 @@
-from compas_model.elements import reset_computed
-from compas_timber.utils import intersection_line_line_param
-from compas.geometry import Sphere
-from compas.geometry import Cylinder
-from compas.geometry import Box
-from compas.geometry import Plane
-from compas.geometry import Frame
-from compas.geometry import Vector
 from compas.geometry import Brep
-from compas.geometry.intersections import intersection_sphere_line
-from compas_timber.elements import DrillFeature
-from compas_timber.elements import BrepSubtraction
-from compas_timber.elements import CutFeature
+from compas.geometry import Frame
+from compas.geometry import Sphere
+from compas.geometry import Vector
+
 from compas_timber.elements.fastener import Fastener
 
 
@@ -37,7 +29,7 @@ class BallNodeFastener(Fastener):
         data = super(Fastener, self).__data__
         return data
 
-    def __init__(self, node_point, ball_diameter = 100, **kwargs):
+    def __init__(self, node_point, ball_diameter=100, **kwargs):
         super(BallNodeFastener, self).__init__(**kwargs)
         self.node_point = node_point
         self.ball_diameter = ball_diameter
@@ -45,7 +37,6 @@ class BallNodeFastener(Fastener):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-
 
     def __repr__(self):
         # type: () -> str
@@ -80,7 +71,7 @@ class BallNodeFastener(Fastener):
     def geometry(self):
         # type: () -> compas.geometry.Geometry
         """Returns the geometry of the fastener including all interfaces."""
-        geometry = Brep.from_sphere(Sphere(self.ball_diameter/2, point= self.node_point))
+        geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2, point=self.node_point))
 
         for interface in self.interfaces:
             geometry += interface.geometry.copy()
@@ -104,8 +95,6 @@ class BallNodeFastener(Fastener):
         pt = beam.centerline.closest_point(self.node_point)
         interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
         self.interfaces.append(interface)
-
-
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh

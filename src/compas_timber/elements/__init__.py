@@ -22,5 +22,5 @@ __all__ = [
     "FeatureApplicationError",
     "BallNodeFastener",
     "Fastener",
-    "FastenerTimberInterface"
+    "FastenerTimberInterface",
 ]
