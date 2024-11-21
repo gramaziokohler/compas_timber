@@ -1,5 +1,4 @@
 from compas_timber._fabrication import FrenchRidgeLap
-from compas_timber._fabrication.btlx_process import EdgePositionType
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
@@ -122,11 +121,11 @@ class LFrenchRidgeLapJoint(Joint):
             self.beam_a.remove_features(self.features)
             self.beam_b.remove_features(self.features)
 
-        frl_a = FrenchRidgeLap.from_plane_and_beam(
-            self.cutting_plane_b, self.beam_a, self.drillhole_diam, self.beam_a_ref_side_index
+        frl_a = FrenchRidgeLap.from_beam_and_beam(
+            self.beam_a, self.beam_b, self.drillhole_diam, self.beam_a_ref_side_index
         )
-        frl_b = FrenchRidgeLap.from_plane_and_beam(
-            self.cutting_plane_a, self.beam_b, self.drillhole_diam, self.beam_b_ref_side_index
+        frl_b = FrenchRidgeLap.from_beam_and_beam(
+            self.beam_b, self.beam_a, self.drillhole_diam, self.beam_b_ref_side_index
         )
         self.beam_a.add_features(frl_a)
         self.beam_b.add_features(frl_b)
