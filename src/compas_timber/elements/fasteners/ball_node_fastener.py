@@ -5,7 +5,7 @@ from compas.geometry import Cylinder
 from compas.geometry import Box
 from compas.geometry import Plane
 from compas.geometry import Frame
-from compas.geometry import Line
+from compas.geometry import Vector
 from compas.geometry import Brep
 from compas.geometry.intersections import intersection_sphere_line
 from compas_timber.elements import DrillFeature
@@ -37,17 +37,19 @@ class BallNodeFastener(Fastener):
         data = super(Fastener, self).__data__
         return data
 
-    def __init__(self, geometry = None, **kwargs):
+    def __init__(self, node_point, ball_diameter = 100, **kwargs):
         super(BallNodeFastener, self).__init__(**kwargs)
-        self.geometry = geometry
+        self.node_point = node_point
+        self.ball_diameter = ball_diameter
+        self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
 
+
     def __repr__(self):
         # type: () -> str
-        element_str = ["{} {}".format(element.__class__.__name__, element.key) for element in self.elements]
-        return "Fastener({})".format(", ".join(element_str))
+        return "ball node fastener with {} interfaces".format(len(self.interfaces))
 
     # ==========================================================================
     # Computed attributes
@@ -57,10 +59,10 @@ class BallNodeFastener(Fastener):
     def is_fastener(self):
         return True
 
-    @property
-    def shape(self):
-        # type: () -> Brep
-        return self.geometry
+    # @property
+    # def shape(self):
+    #     # type: () -> Brep
+    #     return self.geometry
 
     @property
     def key(self):
@@ -76,11 +78,34 @@ class BallNodeFastener(Fastener):
 
     @property
     def geometry(self):
-        return self._geometry
+        # type: () -> compas.geometry.Geometry
+        """Returns the geometry of the fastener including all interfaces."""
+        geometry = Brep.from_sphere(Sphere(self.ball_diameter/2, point= self.node_point))
 
-    @geometry.setter
-    def geometry(self, geometry):
-        self._geometry = geometry
+        for interface in self.interfaces:
+            geometry += interface.geometry.copy()
+
+        return geometry
+
+    def add_interface(self, beam, interface):
+        # type: (compas_timber.parts.Beam, FastenerTimberInterface) -> None
+        """Adds an interface to the fastener.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.parts.Beam`
+            The beam to which the interface is added.
+        interface : :class:`~compas_timber.elements.FastenerTimberInterface`
+            The interface to be added.
+
+        """
+        interface = interface.copy()
+        interface.element = beam
+        pt = beam.centerline.closest_point(self.node_point)
+        interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
+        self.interfaces.append(interface)
+
+
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh

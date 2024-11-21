@@ -7,6 +7,7 @@ from compas.geometry import Plane
 from compas.geometry import Polyhedron
 
 
+
 class FeatureApplicationError(Exception):
     """Raised when a feature cannot be applied to an element geometry.
 
@@ -95,6 +96,9 @@ class CutFeature(Feature):
                 "The cutting plane does not intersect with element geometry.",
             )
 
+    def transform(self, transformation):
+        self.cutting_plane.transform(transformation)
+
 
 class DrillFeature(Feature):
     """Parametric drill hole to be made on an element.
@@ -143,7 +147,6 @@ class DrillFeature(Feature):
         drill_volume = Cylinder(frame=Frame.from_plane(plane), radius=self.diameter / 2.0, height=self.length)
 
         try:
-            print("trying to subtract drill volume from element geometry")
             return element_geometry - Brep.from_cylinder(drill_volume)
         except IndexError:
             raise FeatureApplicationError(
@@ -152,6 +155,8 @@ class DrillFeature(Feature):
                 "The drill volume is not contained in the element geometry.",
             )
 
+    def transform(self, transformation):
+        self.line.transform(transformation)
 
 class MillVolume(Feature):
     """A volume to be milled out of an element.
@@ -201,6 +206,8 @@ class MillVolume(Feature):
                 "The volume does not intersect with element geometry.",
             )
 
+    def transform(self, transformation):
+        self.mesh_volume.transform(transformation)
 
 class BrepSubtraction(Feature):
     """Generic volume subtraction from an element.
@@ -244,3 +251,6 @@ class BrepSubtraction(Feature):
                 element_geometry,
                 "The volume does not intersect with element geometry.",
             )
+
+    def transform(self, transformation):
+        self.volume.transform(transformation)

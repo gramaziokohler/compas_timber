@@ -8,7 +8,7 @@ from .features import DrillFeature
 from .features import MillVolume
 from .features import FeatureApplicationError
 from .fasteners.ball_node_fastener import BallNodeFastener
-from .fasteners.fastener import Fastener
+from .fastener import FastenerTimberInterface
 
 __all__ = [
     "Wall",
@@ -21,5 +21,6 @@ __all__ = [
     "BrepSubtraction",
     "FeatureApplicationError",
     "BallNodeFastener",
-    "Fastener"
+    "Fastener",
+    "FastenerTimberInterface"
 ]

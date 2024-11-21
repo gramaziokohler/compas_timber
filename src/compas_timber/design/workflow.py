@@ -283,7 +283,7 @@ class FeatureDefinition(object):
 
     """
 
-    def __init__(self, feature, elements):
+    def __init__(self, feature, elements = None):
         self.feature = feature
         self.elements = elements
 

@@ -68,6 +68,13 @@ class TimberModel(Model):
                 yield element
 
     @property
+    def fasteners(self):
+        # type: () -> Generator[Fastener, None, None]
+        for element in self.elements():
+            if getattr(element, "is_fastener", False):
+                yield element
+
+    @property
     def joints(self):
         # type: () -> List[Joint, None, None]
         joints = []
