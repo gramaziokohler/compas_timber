@@ -1,0 +1,52 @@
+{
+    "name": "SurfaceModel",
+    "nickname": "SurfaceModel",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Creates Beams and joint rules from a planar brep surface.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "mesh",
+                "description": "Mesh whose edges are used to generate beams.",
+                "typeHintID": "mesh",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "width",
+                "description": "width of beams",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "height",
+                "description": "Height of beams",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "category",
+                "description": "category assigned to beams that can be used to define joint rules.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "beams",
+                "description": "list of compas_timber Beams."
+            },
+            {
+                "name": "beam map",
+                "description": "a Data Tree with the beams organized by connection to a mesh vertex. Used to define joint rules using the Joint_Rules_From_List component."
+            },
+            {
+                "name": "blanks",
+                "description": "base beam geometry before adding features or joining operations"
+            }
+        ]
+    }
+}
