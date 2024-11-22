@@ -117,6 +117,9 @@ class LFrenchRidgeLapJoint(Joint):
         """
         assert self.beam_a and self.beam_b
 
+        # check if the beams are aligned and have the same width and height
+        self.check_geometry()
+
         if self.features:
             self.beam_a.remove_features(self.features)
             self.beam_b.remove_features(self.features)
@@ -130,6 +133,33 @@ class LFrenchRidgeLapJoint(Joint):
         self.beam_a.add_features(frl_a)
         self.beam_b.add_features(frl_b)
         self.features = [frl_a, frl_b]
+
+    def check_geometry(self):
+        """Checks if the geometry of the joint is valid.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the geometry is invalid.
+
+        """
+        # check if the beams are aligned
+        cross_vect = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
+        for beam in self.beams:
+            beam_normal = beam.frame.normal.unitized()
+            if abs(beam_normal.dot(cross_vect.unitized())) not in [0, 1]:
+                raise BeamJoinningError(
+                    self.beam_a,
+                    self.beam_b,
+                    debug_info="The the two beams are not aligned to create a French Ridge Lap joint.",
+                )
+        # check if the beams have the same width and height
+        beam_a_width = self.beam_a.side_as_surface(self.beam_a_ref_side_index).ysize
+        beam_b_width = self.beam_b.side_as_surface(self.beam_b_ref_side_index).ysize
+        beam_a_height = self.beam_a.height if self.beam_a_ref_side_index % 2 == 0 else self.beam_a.width
+        beam_b_height = self.beam_b.height if self.beam_b_ref_side_index % 2 == 0 else self.beam_b.width
+        if beam_a_width != beam_b_width or beam_a_height != beam_b_height:
+            raise BeamJoinningError(self.beam_a, self.beam_b, debug_info="The beams have different dimensions.")
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

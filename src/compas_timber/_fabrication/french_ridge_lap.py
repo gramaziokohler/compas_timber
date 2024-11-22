@@ -3,27 +3,25 @@ import math
 from compas.datastructures import Mesh
 from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
+from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
+from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
-from compas.geometry import project_points_plane
 from compas.tolerance import TOL
 
+from compas_timber.connections.utilities import beam_ref_side_incidence  # TODO: is there a better way to import?
+from compas_timber.connections.utilities import point_centerline_towards_joint  # TODO: is there a better way to import?
 from compas_timber.elements import FeatureApplicationError
-from compas_timber.connections.utilities import beam_ref_side_incidence  # TODO: think of a better way to import this
-from compas_timber.connections.utilities import (
-    point_centerline_towards_joint,
-)  # TODO: think of a better way to import this
 
 from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
 from .btlx_process import EdgePositionType
+from .btlx_process import OrientationType
 
 
 class FrenchRidgeLap(BTLxProcess):
@@ -177,7 +175,6 @@ class FrenchRidgeLap(BTLxProcess):
 
         """
         # type: (Beam, Beam, float, int) -> FrenchRidgeLap
-
         # the reference side of the beam to be cut
         ref_side = beam.ref_sides[ref_side_index]
         ref_surface = beam.side_as_surface(ref_side_index)
@@ -289,27 +286,18 @@ class FrenchRidgeLap(BTLxProcess):
 
         """
         # type: (Brep, Beam) -> Brep
-        subtracting_volume = geometry.copy()
-        trimming_planes = self.trimming_frames_from_params_and_beam(beam)
+        # trim the beam geometry with the cutting frame
+        trimming_frame = self.frame_from_params_and_beam(beam)
         try:
-            geometry.trim(trimming_planes[0])
+            geometry.trim(trimming_frame)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                trimming_planes[0],
+                trimming_frame,
                 geometry,
                 "Could not trim the beam geometry with the cutting frame.",
             )
-
-        for plane in trimming_planes:
-            try:
-                subtracting_volume.trim(plane)
-            except BrepTrimmingError:
-                raise FeatureApplicationError(
-                    subtracting_volume,
-                    plane,
-                    "Could not trim subtracting volume with frame.",
-                )
-
+        # subtract the lap volume from the beam geometry
+        subtracting_volume = self.lap_volume_from_params_and_beam(beam)
         try:
             return geometry - subtracting_volume
         except IndexError:
@@ -320,7 +308,7 @@ class FrenchRidgeLap(BTLxProcess):
             )
 
     def frame_from_params_and_beam(self, beam):
-        """Calculates the frame that cuts the exceeding part of the blank of the beam from the machining parameters in this instance and the given beam.
+        """Calculates the frame that cuts the exceeding part of the blank of the beam from the machining parameters and the given beam.
 
         Parameters
         ----------
@@ -333,16 +321,23 @@ class FrenchRidgeLap(BTLxProcess):
             The cutting frame.
 
         """
+        # type: (Beam) -> Frame
+        assert self.orientation is not None
+        assert self.start_x is not None
         assert self.angle is not None
+        assert self.ref_position is not None
+
         ref_surface = beam.side_as_surface(self.ref_side_index)
         origin = ref_surface.point_at(
             self.start_x, ref_surface.ysize if self.ref_position == EdgePositionType.OPPEDGE else 0
         )
 
+        # flip the rot_axis if the orientation is END
         rot_axis = -ref_surface.frame.normal
         if self.orientation == OrientationType.END:
             rot_axis = -rot_axis
 
+        # get the opposite angle if the reference position is REFEDGE
         angle = self.angle
         if self.ref_position == EdgePositionType.REFEDGE:
             angle = 180 - self.angle
@@ -350,8 +345,9 @@ class FrenchRidgeLap(BTLxProcess):
         ref_surface.rotate(math.radians(angle), rot_axis, origin)
         return Frame(origin, ref_surface.frame.xaxis, ref_surface.frame.normal)
 
-    def trimming_frames_from_params_and_beam(self, beam):
-        """Calculates the trimming frames of the lap volume from the machining parameters and the given beam
+    def lap_volume_from_params_and_beam(self, beam):
+        """
+        Calculates the trimming volume of the french ridge lap from the machining parameters and the given beam.
 
         Parameters
         ----------
@@ -360,26 +356,72 @@ class FrenchRidgeLap(BTLxProcess):
 
         Returns
         -------
-        list of :class:`compas.geometry.Frame`
-            The trimming frames.
-
+        :class:`compas.geometry.Brep`
+            The trimming volume of the lap.
         """
-        # type: (Beam) -> Mesh
+        # type: (Beam) -> Brep
+        assert self.orientation is not None
+        assert self.angle is not None
+        assert self.ref_position is not None
+
         ref_side = beam.side_as_surface(self.ref_side_index)
+        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
+        opp_edge = ref_edge.translated(ref_side.yaxis * ref_side.ysize)
 
         height = beam.height if self.ref_side_index % 2 == 0 else beam.width
         edge_length = ref_side.ysize / math.sin(math.radians(self.angle))
         if self.orientation == OrientationType.END:
             edge_length = -edge_length
 
+        # side cutting frames of the lap
         frame1 = self.frame_from_params_and_beam(beam)
-        frame2 = frame1.translated(ref_side.frame.xaxis * edge_length)
+        frame2 = frame1.translated(ref_side.xaxis * edge_length)
         frame2.xaxis = -frame2.xaxis
 
-        frame3 = ref_side.frame.translated(-ref_side.frame.normal * (height / 2))
-        frame3.xaxis = -frame3.xaxis
+        # bottom vertices
+        v0 = Point(*intersection_line_plane(ref_edge, Plane.from_frame(frame1)))
+        v1 = Point(*intersection_line_plane(ref_edge, Plane.from_frame(frame2)))
+        v2 = Point(*intersection_line_plane(opp_edge, Plane.from_frame(frame2)))
+        v3 = Point(*intersection_line_plane(opp_edge, Plane.from_frame(frame1)))
 
-        return [frame1, frame2, frame3]
+        # top vertices
+        top_vertices = [v0, v1, v2, v3]
+        bottom_vertices = [v.translated(-ref_side.zaxis * (height / 2)) for v in top_vertices]
+
+        # translate vertices to create the french ridge lap
+        if self.ref_position == EdgePositionType.OPPEDGE:
+            frl_indexes = [0, 2]
+        else:
+            frl_indexes = [3, 1]
+        bottom_vertices[frl_indexes[0]].translate(ref_side.zaxis * (height / 6))
+        bottom_vertices[frl_indexes[1]].translate(-ref_side.zaxis * (height / 6))
+
+        # create the faces of the french ridge lap
+        vertices = top_vertices + bottom_vertices
+        faces = [
+            [0, 1, 2, 3],  # Top face
+            [4, 7, 6, 5],  # Bottom face
+            [0, 4, 5, 1],  # Side face 1
+            [1, 5, 6, 2],  # Side face 2
+            [2, 6, 7, 3],  # Side face 3
+            [3, 7, 4, 0],  # Side face 4
+        ]
+
+        # reverse face orientation if the orientation is END
+        if self.orientation == OrientationType.END:
+            faces = [face[::-1] for face in faces]
+
+        # generate the subtraction volume and convert it to a Brep
+        subtraction_volume_mesh = Mesh.from_vertices_and_faces(vertices, faces)
+        subtraction_volume = Brep.from_mesh(subtraction_volume_mesh)
+
+        # add drilling cylinder to the subtraction_volume
+        if self.drillhole:
+            diagonal = Line(v0, v2)
+            drill_frame = Frame(diagonal.midpoint, -ref_side.xaxis, ref_side.yaxis)
+            drill_cylinder = Cylinder(self.drillhole_diam / 2, height * 2, drill_frame)
+            subtraction_volume += Brep.from_cylinder(drill_cylinder)
+        return subtraction_volume
 
 
 class FrenchRidgeLapParams(BTLxProcessParams):
