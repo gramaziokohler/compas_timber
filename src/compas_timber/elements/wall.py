@@ -100,17 +100,12 @@ class Wall(TimberElement):
     def __repr__(self):
         return "Wall({}, {:.3f}, {:.3f}, {:.3f})".format(self.frame, self.outline, self.thickness, self.openings)
 
-    @classmethod
-    def from_box(cls, box):
-        # type: (Box) -> Wall
-        boxframe = box.frame.copy()
-        origin = boxframe.point
-        origin -= boxframe.xaxis * box.xsize * 0.5
-        origin -= boxframe.yaxis * box.ysize * 0.5
-        origin -= boxframe.zaxis * box.zsize * 0.5
-        return cls(box.xsize, box.ysize, box.zsize, frame=boxframe)
-
-    @classmethod
-    def from_baseline(cls, baseline, thickness, height, y_vector):
-        # TODO: baseline is x_axis, y_vector must be perpendicular to baseline
-        raise NotImplementedError
+    # @classmethod
+    # def from_box(cls, box):
+    #     # type: (Box) -> Wall
+    #     boxframe = box.frame.copy()
+    #     origin = boxframe.point
+    #     origin -= boxframe.xaxis * box.xsize * 0.5
+    #     origin -= boxframe.yaxis * box.ysize * 0.5
+    #     origin -= boxframe.zaxis * box.zsize * 0.5
+    #     return cls(box.xsize, box.ysize, box.zsize, frame=boxframe)
