@@ -289,27 +289,29 @@ class FrenchRidgeLap(BTLxProcess):
 
         """
         # type: (Brep, Beam) -> Brep
-        trimming_plane = self.plane_from_params_and_beam(beam)
+        subtracting_volume = geometry.copy()
+        trimming_planes = self.trimming_frames_from_params_and_beam(beam)
         try:
-            geometry.trim(trimming_plane)
+            geometry.trim(trimming_planes[0])
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                trimming_plane,
+                trimming_planes[0],
                 geometry,
-                "Could not trim the beam geometry with the cutting plane.",
+                "Could not trim the beam geometry with the cutting frame.",
             )
 
-        subtracting_volume = self.volume_from_params_and_beam(beam)
+        for plane in trimming_planes:
+            try:
+                subtracting_volume.trim(plane)
+            except BrepTrimmingError:
+                raise FeatureApplicationError(
+                    subtracting_volume,
+                    plane,
+                    "Could not trim subtracting volume with frame.",
+                )
+
         try:
-            brep_subtracting_volume = Brep.from_mesh(subtracting_volume)
-        except ValueError:  # TODO: check if this is the right exception
-            raise FeatureApplicationError(
-                subtracting_volume,
-                geometry,
-                "Could not convert the cutting volume to a Brep.",
-            )
-        try:
-            return geometry
+            return geometry - subtracting_volume
         except IndexError:
             raise FeatureApplicationError(
                 subtracting_volume,
@@ -317,8 +319,8 @@ class FrenchRidgeLap(BTLxProcess):
                 "Could not subtract the cutting volume from the beam geometry.",
             )
 
-    def plane_from_params_and_beam(self, beam):
-        """Calculates the plane that cuts the exceeding part of the blank of the beam from the machining parameters in this instance and the given beam.
+    def frame_from_params_and_beam(self, beam):
+        """Calculates the frame that cuts the exceeding part of the blank of the beam from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -327,8 +329,8 @@ class FrenchRidgeLap(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Plane`
-            The cutting plane.
+        :class:`compas.geometry.Frame`
+            The cutting frame.
 
         """
         assert self.angle is not None
@@ -337,66 +339,19 @@ class FrenchRidgeLap(BTLxProcess):
             self.start_x, ref_surface.ysize if self.ref_position == EdgePositionType.OPPEDGE else 0
         )
 
-        angle = self.angle
-        if self.orientation == OrientationType.START:
-            angle = 180 + angle
-
-        ref_surface.rotate(math.radians(angle), ref_surface.frame.normal, origin)
-        cutting_frame = Frame(origin, ref_surface.frame.xaxis, ref_surface.frame.zaxis)
-
-        # cutting_frame.rotate(math.radians(180 - angle), cutting_frame.yaxis, cutting_frame.point)
-
-        return cutting_frame
-
-    def equilateral_quadrilateral_vertices_from_params_and_beam(self, beam):
-        """Calculates the vertices of the quadrilateral that represents the French Ridge Lap feature. The quadrilateral is a rhombus with the given angle.
-
-        Parameters:
-        ----------
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
-
-        Returns:
-        ----------
-        list of :class:`compas.geometry.Point`
-            The vertices of the quadrilateral.
-
-        """
-        assert self.angle is not None
-
-        # Get the reference side of the beam (planar surface)
-        ref_side = beam.side_as_surface(self.ref_side_index)
-
-        # Translate the reference side to the middle of the beam
-        height = beam.height if self.ref_side_index % 2 == 0 else beam.width
-        ref_side.translate(-ref_side.frame.normal * (height / 2))
-
-        # Calculate the edge length from the height
-        edge_length = ref_side.ysize / math.sin(math.radians(180 - self.angle))
+        rot_axis = -ref_surface.frame.normal
         if self.orientation == OrientationType.END:
-            edge_length = -edge_length
+            rot_axis = -rot_axis
 
-        # Determine origin point based on ref_position
-        x_pos_1 = self.start_x
-        x_pos_2 = ref_side.xsize if self.orientation == OrientationType.END else 0
-        y_pos1, y_pos2 = [0, ref_side.ysize] if self.ref_position == EdgePositionType.REFEDGE else [ref_side.ysize, 0]
+        angle = self.angle
+        if self.ref_position == EdgePositionType.REFEDGE:
+            angle = 180 - self.angle
 
-        # First vertex (origin)
-        v0 = ref_side.point_at(x_pos_1, y_pos1)
+        ref_surface.rotate(math.radians(angle), rot_axis, origin)
+        return Frame(origin, ref_surface.frame.xaxis, ref_surface.frame.normal)
 
-        # Second vertex
-        v1 = ref_side.point_at(x_pos_1 + edge_length, y_pos1)
-
-        # Third vertex
-        v2 = ref_side.point_at(x_pos_2 + edge_length, y_pos2)
-
-        # Fourth vertex
-        v3 = ref_side.point_at(x_pos_2, y_pos2)
-
-        return [v0, v1, v2, v3]
-
-    def volume_from_params_and_beam(self, beam):
-        """Calculates the lap volume from the machining parameters in this instance and the given beam
+    def trimming_frames_from_params_and_beam(self, beam):
+        """Calculates the trimming frames of the lap volume from the machining parameters and the given beam
 
         Parameters
         ----------
@@ -405,30 +360,26 @@ class FrenchRidgeLap(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Mesh`
-            The lap volume.
+        list of :class:`compas.geometry.Frame`
+            The trimming frames.
 
         """
         # type: (Beam) -> Mesh
-        ref_side = beam.ref_sides[self.ref_side_index]
+        ref_side = beam.side_as_surface(self.ref_side_index)
 
-        quad_vertices = self.equilateral_quadrilateral_vertices_from_params_and_beam(beam)
-        projected_vertices = project_points_plane(quad_vertices, Plane.from_frame(ref_side))
+        height = beam.height if self.ref_side_index % 2 == 0 else beam.width
+        edge_length = ref_side.ysize / math.sin(math.radians(self.angle))
+        if self.orientation == OrientationType.END:
+            edge_length = -edge_length
 
-        vertices = quad_vertices + projected_vertices
-        faces = [
-            [0, 1, 2, 3],
-            [4, 7, 6, 5],
-            [0, 4, 5, 1],
-            [1, 5, 6, 2],
-            [2, 6, 7, 3],
-            [3, 7, 4, 0],
-        ]
+        frame1 = self.frame_from_params_and_beam(beam)
+        frame2 = frame1.translated(ref_side.frame.xaxis * edge_length)
+        frame2.xaxis = -frame2.xaxis
 
-        if self.ref_position == EdgePositionType.OPPEDGE:
-            faces = [face[::-1] for face in faces]
+        frame3 = ref_side.frame.translated(-ref_side.frame.normal * (height / 2))
+        frame3.xaxis = -frame3.xaxis
 
-        return Mesh.from_vertices_and_faces(vertices, faces)
+        return [frame1, frame2, frame3]
 
 
 class FrenchRidgeLapParams(BTLxProcessParams):
