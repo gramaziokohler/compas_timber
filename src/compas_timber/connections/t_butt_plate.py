@@ -58,18 +58,13 @@ class TButtPlateJoint(ButtJoint):
         self.mill_depth = mill_depth
         if main_beam and cross_beam:
             self.elements.extend([main_beam, cross_beam])
-            if fastener:
-                self.fastener = fastener
-            else:
-                path = os.path.dirname(__file__)
-                path_parts = path.split(os.path.sep)
-                path = os.path.sep.join(path_parts[:-1])
-                path = os.path.sep.join([path, "elements", "fasteners", "t_butt_plate.json"])
-                self.fastener = json_load(path)
+        if fastener:
+            self.fastener = fastener
             self.front_face_index, self.back_face_index = TButtPlateJoint.validate_fastener_beam_compatibility(
                 self.fastener, [main_beam, cross_beam]
             )
             self.place_fasteners()
+
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
@@ -119,27 +114,14 @@ class TButtPlateJoint(ButtJoint):
 
         return joint
 
-    def add_extensions(self):
-        """Calculates and adds the necessary extensions to the beams.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-
-        Raises
-        ------
-        BeamJoinningError
-            If the extension could not be calculated.
-
-        """
-        assert self.main_beam and self.cross_beam
-        try:
-            cutting_plane = self.get_main_cutting_plane()[0]
-            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
-        except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
-        except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
+    # @classmethod
+    # def fastener_from_json(cls, filename):
+    #     path = os.path.dirname(__file__)
+    #     path_parts = path.split(os.path.sep)
+    #     path = os.path.sep.join(path_parts[:-1])
+    #     path = os.path.sep.join([path, "elements", "fasteners", filename])
+    #     fastener = json_load(path)
+    #     return fastener
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).
@@ -164,7 +146,7 @@ class TButtPlateJoint(ButtJoint):
         if self.mill_depth:
             self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
         self.main_beam.add_features(trim_feature)
-        self.apply_drill_features()
+        self.apply_interface_features()
         self.features = [trim_feature]
 
     def place_fasteners(self):
@@ -176,8 +158,11 @@ class TButtPlateJoint(ButtJoint):
         frames = self.get_fastener_frames()
         for frame in frames:
             fastener = self.fastener.copy()
-            fastener.frame = frame
+            fastener.frame = Frame(frame.point, frame.xaxis, frame.yaxis)
+            for interface, element in zip(fastener.interfaces, self.beams):
+                interface.element = element
             self.elements.append(fastener)
+
 
     @classmethod
     def validate_fastener_beam_compatibility(cls, fastener, beams):
@@ -268,22 +253,13 @@ class TButtPlateJoint(ButtJoint):
         back_frame.rotate(-math.pi / 2, back_frame.xaxis, back_point)
         return [front_frame, back_frame]
 
-    def apply_drill_features(self):
+    def apply_interface_features(self):
         """Applies the drill features of the joint to the beams.
         Drill features are defined by `fastener.holes`
         This assumes the same fastener on each side of the joint.
         """
         fastener = list(self.fasteners)[0]
-        transformation = Transformation.from_frame_to_frame(Frame.worldXY(), fastener.frame)
-        if self.front_face_index % 2 == 0:
-            depth = self.main_beam.width
-        else:
-            depth = self.main_beam.height
-        for beam, hole_list in zip([self.main_beam, self.cross_beam], self.fastener.holes):
-            for hole in hole_list:
-                point = hole[0].copy()
-                point.transform(transformation)
-                drill_feature = DrillFeature(
-                    Line.from_point_direction_length(point, -fastener.frame.zaxis, depth), hole[1], depth
-                )
-                beam.add_features(drill_feature)
+        for beam, interface in zip([self.main_beam, self.cross_beam], fastener.interfaces):
+            interface.element = beam
+            for feature in interface.features:
+                interface.element.add_features(feature)

@@ -7,6 +7,7 @@ from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
+from compas_timber.elements import plate
 from compas_timber.elements.fastener import Fastener
 
 
@@ -37,42 +38,36 @@ class PlateFastener(Fastener):
 
     def __init__(self, shape=None, frame=None, angle=math.pi / 2, **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
+        self.frame = frame
         self._shape = shape
-        self.frame = frame or Frame.worldXY()
-        self.holes = []
+        self._holes = []
         self.angle = angle
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
 
+
     def __repr__(self):
         # type: () -> str
-        return "Fastener(frame={!r}, name={})".format(self.frame, self.name)
+        return "Plate Fastener(frame={!r}, name={})".format(self.frame, self.name)
+
 
     def __str__(self):
         # type: () -> str
-        return "<Fastener {}>".format(self.name)
+        return "<Plate Fastener {} at frame={!r}>".format(self.name, self.frame)
 
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
 
-    @property
-    def is_fastener(self):
-        return True
-
-    @property
-    def key(self):
-        # type: () -> int | None
-        return self.graph_node
 
     # ==========================================================================
     # Class methods
     # ==========================================================================
 
     @classmethod
-    def from_outline_thickness_holes_cutouts(
-        cls, outline, angle=math.pi / 2, thickness=5, holes=None, cutouts=None, **kwargs
+    def from_outline_thickness_interfaces_cutouts(
+        cls, outline, angle=math.pi / 2, thickness=5, interfaces=None, cutouts=None, frame = None, **kwargs
     ):
         """
         Constructs a fastener from an outline, cutouts and thickness.
@@ -80,14 +75,13 @@ class PlateFastener(Fastener):
 
         Parameters
         ----------
-        outline : dict
-            The outline of the fastener, given by :class:`~compas.geometry.NurbsCurve.__data__`.
+        outline : list of :class:`~compas.geometry.Point`
+            The outline of the fastener as a list of points.
         thickness : float, optional
             The thickness of the fastener.
-        holes : tuple of list of tuple, optional
-            The holes of the fastener. Structure is as follows:
-            (beam_a_holes, beam_b_holes, ...) where beam_a_holes and beam_b_holes are lists of tuples of points and diameters.
-        cutouts : list of :class:`~compas.geometry.NurbsCurve`, optional
+        interfaces : list of compas_timber.elements.FastenerTimberInterface, optional
+            The connection interfaces to the timber elements
+        cutouts : list of list of :class:`~compas.geometry.Point`, optional
             The cutouts of the fastener.
 
         Returns
@@ -99,63 +93,49 @@ class PlateFastener(Fastener):
         plate_fastener.outline = outline
         plate_fastener.angle = angle
         plate_fastener.thickness = thickness
-        plate_fastener.holes = holes
+        plate_fastener.frame = frame
+        for interface in interfaces:
+            plate_fastener.add_interface(interface)
         plate_fastener.cutouts = cutouts
-
         return plate_fastener
 
-    @classmethod
-    def __from_data__(cls, data):
-        """Constructs a fastener from its data representation.
-
-        Parameters
-        ----------
-        data : dict
-            The data dictionary.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.PlateFastener`
-
-        """
-        plate_fastener = cls()
-        plate_fastener.name = data.get("name", None)
-        plate_fastener.attributes = data.get("attributes", {})
-        plate_fastener.outline = data.get("outline", None)
-        plate_fastener.angle = data.get("angle", math.pi / 2)
-        plate_fastener.thickness = data.get("thickness", 5)
-        plate_fastener.holes = data.get("holes", [])
-        plate_fastener.cutouts = data.get("cutouts", None)
-        plate_fastener.frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
-        return plate_fastener
 
     # ==========================================================================
     # Methods
     # ==========================================================================
 
-    def add_hole(self, point, diameter):
-        """Adds a hole to the fastener.
+    def add_interface(self, interface):
+        """Add an interface to the fastener.
 
         Parameters
         ----------
-        point : :class:`~compas.geometry.Point`
-            The point of the hole.
-        diameter : float
-            The diameter of the hole.
+        interface : :class:`~compas_timber.elements.FastenerTimberInterface`
+            The interface to add.
 
         """
-        self.holes.append((point, diameter))
+        interface.thickness = self.thickness
+        interface.frame = self.frame
+        interface.outline = None
+        self.interfaces.append(interface)
 
     @property
-    def __data__(self):
-        data = super(PlateFastener, self).__data__
-        data["outline"] = self.outline
-        data["angle"] = self.angle
-        data["thickness"] = self.thickness
-        data["holes"] = self.holes
-        data["cutouts"] = self.cutouts
-        data["frame"] = self.frame.__data__
-        return data
+    def frame(self):
+        return self._frame
+
+    @frame.setter
+    def frame(self, frame):
+        self._frame = frame
+        for interface in self.interfaces:
+            interface.frame = frame
+
+
+    @property
+    def holes(self):
+        if not self._holes:
+            for interface in self.interfaces:
+                self._holes.extend(interface.holes)
+        return self._holes
+
 
     @property
     def shape(self):
@@ -168,23 +148,22 @@ class PlateFastener(Fastener):
         """
         if not self._shape:
             vector = Vector(0, 0, self.thickness)
-            self._shape = Brep.from_extrusion(NurbsCurve.__from_data__(self.outline), vector)
+            self._shape = Brep.from_extrusion(NurbsCurve.from_points(self.outline, degree = 1), vector)
             if self.cutouts:
                 for cutout in self.cutouts:
                     curve = NurbsCurve.__from_data__(cutout)
                     cutout_brep = Brep.from_extrusion(curve, vector)
-                    self._shape = self._shape - cutout_brep
+                    self._shape -= cutout_brep
             if self.holes:
-                for list in self.holes:
-                    for hole in list:
+                for hole in self.holes:
                         cylinder = Brep.from_cylinder(
                             Cylinder(
-                                hole[1] * 0.5,
+                                hole["diameter"] * 0.5,
                                 self.thickness * 2.0,
-                                Frame(hole[0], Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)),
+                                Frame(hole["point"], Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)),
                             )
                         )
-                        self._shape = self._shape - cylinder
+                        self._shape -= cylinder
         return self._shape
 
     @property
@@ -196,8 +175,8 @@ class PlateFastener(Fastener):
         :class:`~compas.geometry.Brep`
 
         """
-        if not self._geometry:
-            self._geometry = self.shape.copy()
-            transformation = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
-            self._geometry.transform(transformation)
-        return self._geometry
+
+        print("Constructing geometry at frame: ", self.frame)
+        transformation = Transformation.from_frame(self.frame)
+        return self.shape.transformed(transformation)
+
