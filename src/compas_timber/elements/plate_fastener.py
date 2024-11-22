@@ -7,7 +7,6 @@ from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.elements import plate
 from compas_timber.elements.fastener import Fastener
 
 
@@ -46,11 +45,9 @@ class PlateFastener(Fastener):
         self.attributes.update(kwargs)
         self.debug_info = []
 
-
     def __repr__(self):
         # type: () -> str
         return "Plate Fastener(frame={!r}, name={})".format(self.frame, self.name)
-
 
     def __str__(self):
         # type: () -> str
@@ -60,14 +57,13 @@ class PlateFastener(Fastener):
     # Computed attributes
     # ==========================================================================
 
-
     # ==========================================================================
     # Class methods
     # ==========================================================================
 
     @classmethod
     def from_outline_thickness_interfaces_cutouts(
-        cls, outline, angle=math.pi / 2, thickness=5, interfaces=None, cutouts=None, frame = None, **kwargs
+        cls, outline, angle=math.pi / 2, thickness=5, interfaces=None, cutouts=None, frame=None, **kwargs
     ):
         """
         Constructs a fastener from an outline, cutouts and thickness.
@@ -99,11 +95,6 @@ class PlateFastener(Fastener):
         plate_fastener.cutouts = cutouts
         return plate_fastener
 
-
-    # ==========================================================================
-    # Methods
-    # ==========================================================================
-
     def add_interface(self, interface):
         """Add an interface to the fastener.
 
@@ -128,14 +119,11 @@ class PlateFastener(Fastener):
         for interface in self.interfaces:
             interface.frame = frame
 
-
     @property
     def holes(self):
-        if not self._holes:
-            for interface in self.interfaces:
-                self._holes.extend(interface.holes)
-        return self._holes
-
+        for interface in self.interfaces:
+            for hole in interface.holes:
+                yield hole
 
     @property
     def shape(self):
@@ -148,7 +136,7 @@ class PlateFastener(Fastener):
         """
         if not self._shape:
             vector = Vector(0, 0, self.thickness)
-            self._shape = Brep.from_extrusion(NurbsCurve.from_points(self.outline, degree = 1), vector)
+            self._shape = Brep.from_extrusion(NurbsCurve.from_points(self.outline, degree=1), vector)
             if self.cutouts:
                 for cutout in self.cutouts:
                     curve = NurbsCurve.__from_data__(cutout)
@@ -156,14 +144,14 @@ class PlateFastener(Fastener):
                     self._shape -= cutout_brep
             if self.holes:
                 for hole in self.holes:
-                        cylinder = Brep.from_cylinder(
-                            Cylinder(
-                                hole["diameter"] * 0.5,
-                                self.thickness * 2.0,
-                                Frame(hole["point"], Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)),
-                            )
+                    cylinder = Brep.from_cylinder(
+                        Cylinder(
+                            hole["diameter"] * 0.5,
+                            self.thickness * 2.0,
+                            Frame(hole["point"], Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)),
                         )
-                        self._shape -= cylinder
+                    )
+                    self._shape -= cylinder
         return self._shape
 
     @property
@@ -176,7 +164,5 @@ class PlateFastener(Fastener):
 
         """
 
-        print("Constructing geometry at frame: ", self.frame)
         transformation = Transformation.from_frame(self.frame)
         return self.shape.transformed(transformation)
-

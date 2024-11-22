@@ -5,12 +5,9 @@ from compas.geometry import Line
 from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import intersection_line_plane
-from compas.geometry import Plane
 
 from compas_timber.elements.features import DrillFeature
 from compas_timber.elements.timber import TimberElement
-from compas_timber.utils import intersection_line_plane_param
 from compas_timber.utils import intersection_line_box
 
 
@@ -47,7 +44,6 @@ class Fastener(TimberElement):
         # type: () -> str
         return "Fastener(frame={!r}, name={})".format(self.frame, self.name)
 
-    @property
     def __str__(self):
         # type: () -> str
         return "<Fastener {}>".format(self.name)
@@ -80,7 +76,6 @@ class Fastener(TimberElement):
     def geometry(self):
         """returns the geometry of the fastener in the model"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
-
 
 
 class FastenerTimberInterface(object):
@@ -128,6 +123,7 @@ class FastenerTimberInterface(object):
 
 
     """
+
     def __init__(
         self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, feature_defs=None
     ):
@@ -184,7 +180,7 @@ class FastenerTimberInterface(object):
             if hole["through"]:
                 pts = intersection_line_box(drill_line, self.element.blank)
                 if pts:
-                    drill_line =Line(*pts)
+                    drill_line = Line(*pts)
                     length = drill_line.length
             features.append(
                 DrillFeature(drill_line, hole["diameter"], length)
@@ -228,7 +224,6 @@ class FastenerTimberInterface(object):
     def geometry(self):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
-
 
     def copy(self):
         fast = FastenerTimberInterface(

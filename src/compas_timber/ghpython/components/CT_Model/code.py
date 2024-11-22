@@ -73,7 +73,10 @@ class ModelComponent(component):
                 if element.debug_info:
                     debug_info.add_feature_error(element.debug_info)
             else:
-                scene.add(element.blank)
+                if element.is_beam or element.is_plate:
+                    scene.add(element.blank)
+                elif element.is_fastener:
+                    scene.add(element.geometry)
 
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")

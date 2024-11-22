@@ -1,11 +1,8 @@
 import math
 import os
 
-from compas.data import json_load
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
@@ -14,7 +11,6 @@ from compas.tolerance import Tolerance
 from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import CutFeature
-from compas_timber.elements import DrillFeature
 from compas_timber.elements import MillVolume
 from compas_timber.utils import intersection_line_line_param
 
@@ -65,7 +61,6 @@ class TButtPlateJoint(ButtJoint):
             )
             self.place_fasteners()
 
-
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
@@ -107,21 +102,10 @@ class TButtPlateJoint(ButtJoint):
 
         """
         joint = TButtPlateJoint(*beams, **kwargs)
-
         for fastener in joint.fasteners:
             model.add_element(fastener)
         model.add_joint(joint)
-
         return joint
-
-    # @classmethod
-    # def fastener_from_json(cls, filename):
-    #     path = os.path.dirname(__file__)
-    #     path_parts = path.split(os.path.sep)
-    #     path = os.path.sep.join(path_parts[:-1])
-    #     path = os.path.sep.join([path, "elements", "fasteners", filename])
-    #     fastener = json_load(path)
-    #     return fastener
 
     def add_features(self):
         """Adds the trimming plane to the main beam (no features for the cross beam).
@@ -162,7 +146,6 @@ class TButtPlateJoint(ButtJoint):
             for interface, element in zip(fastener.interfaces, self.beams):
                 interface.element = element
             self.elements.append(fastener)
-
 
     @classmethod
     def validate_fastener_beam_compatibility(cls, fastener, beams):
