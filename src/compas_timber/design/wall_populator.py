@@ -32,8 +32,75 @@ from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
 from compas_timber.model import TimberModel
 
+from .workflow import JointDefinition
 
-class SurfaceModel(object):
+
+class WallSelector(object):
+    """Selects walls based on their attributes."""
+
+    def __init__(self, wall_attr, attr_vlaue):
+        self._wall_attr = wall_attr
+        self._attr_value = attr_vlaue
+
+    def select(self, wall):
+        value = getattr(wall, self._wall_attr, None)
+        if value is None:
+            return False
+        else:
+            return value == self._attr_value
+
+
+class AnyWallSelector(object):
+    def select(self, _):
+        return True
+
+
+class WallPopulatorConfigurationSet(object):
+    """Contains one or more configuration set for the WallPopulator.
+
+    wall_selector can be used to apply different configurations to different walls based on e.g. their name.
+    Parameters
+    ----------
+
+
+    """
+
+    def __init__(
+        self,
+        stud_spacing,
+        beam_width,
+        wall_depth,
+        z_axis=None,
+        tolerance=None,
+        sheeting_outside=None,
+        sheeting_inside=None,
+        lintel_posts=True,
+        edge_stud_offset=0.0,
+        custom_dimensions=None,
+        joint_overrides=None,
+        wall_selector=None,
+    ):
+
+        self.stud_spacing = stud_spacing
+        self.beam_width = beam_width
+        self.wall_depth = wall_depth
+        self.z_axis = z_axis or Vector.Zaxis()
+        self.tolerance = tolerance
+        self.sheeting_outside = sheeting_outside
+        self.sheeting_inside = sheeting_inside
+        self.lintel_posts = lintel_posts
+        self.edge_stud_offset = edge_stud_offset or 0.0
+        self.custom_dimensions = custom_dimensions
+        self.joint_overrides = joint_overrides
+        self.wall_selector = wall_selector or AnyWallSelector()
+
+    def __str__(self):
+        return "WallPopulatorConfigurationSet({}, {}, {}, {})".format(
+            self.stud_spacing, self.beam_width, self.wall_depth, self.z_axis
+        )
+
+
+class WallPopulator(object):
     """Create a timber assembly from a surface.
 
     Parameters
@@ -85,33 +152,14 @@ class SurfaceModel(object):
 
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill"]
 
-    def __init__(
-        self,
-        surface,
-        stud_spacing,
-        beam_width=None,
-        frame_depth=None,
-        z_axis=None,
-        tolerance=Tolerance(unit="MM", absolute=1e-3, relative=1e-3),
-        sheeting_outside=None,
-        sheeting_inside=None,
-        lintel_posts=True,
-        edge_stud_offset=0.0,
-        custom_dimensions=None,
-        joint_overrides=None,
-    ):
-        self.surface = surface
-        self.beam_width = beam_width
-        self.frame_depth = frame_depth
-        self.stud_spacing = stud_spacing
-        self._z_axis = z_axis or Vector.Zaxis()
-        self.sheeting_outside = sheeting_outside
-        self.sheeting_inside = sheeting_inside
-        self.edge_stud_offset = edge_stud_offset or 0.0
-        self.lintel_posts = lintel_posts
-        self._normal = None
-        self.outer_polyline = None
-        self.inner_polylines = []
+    # TODO: this takes interfaces! let's the populator know how this wall potentially interacts with other walls
+    def __init__(self, configuration_set, wall):
+        self._wall = wall
+        self._config_set = configuration_set
+        self._z_axis = Vector.Zaxis()
+        self._normal = wall.frame.zaxis
+        self.outer_polyline = wall.outline
+        self.inner_polylines = wall.openings
         self.edges = []
         self._frame = None
         self._panel_length = None
@@ -122,21 +170,24 @@ class SurfaceModel(object):
         self.windows = []
         self._features = []
         self.beam_dimensions = {}
-        self.joint_overrides = joint_overrides
-        self.dist_tolerance = tolerance.relative
+        self.dist_tolerance = configuration_set.tolerance.relative
 
+        # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
-            self.beam_dimensions[key] = [self.beam_width, self.frame_depth]
-        if custom_dimensions:
-            for key, value in custom_dimensions.items():
-                if value:
-                    if value[0] != 0:
-                        self.beam_dimensions[key][0] = value[0]
-                    if value[1] != 0:
-                        self.beam_dimensions[key][1] = value[1]
-        self.parse_loops()
-        self.generate_frame()
-        self.generate_plates()
+            self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
+        # if custom_dimensions:
+        #     for key, value in custom_dimensions.items():
+        #         if value:
+        #             if value[0] != 0:
+        #                 self.beam_dimensions[key][0] = value[0]
+        #             if value[1] != 0:
+        #                 self.beam_dimensions[key][1] = value[1]
+        # self.parse_loops()
+        # self.generate_frame()
+        # self.generate_plates()
+
+    def __repr__(self):
+        return "WallPopulator({}, {})".format(self._config_set, self._wall)
 
     @property
     def z_axis(self):
@@ -148,7 +199,7 @@ class SurfaceModel(object):
         return [
             (
                 CategoryRule(LButtJoint, "edge_stud", "plate")
-                if self.edge_stud_offset == 0
+                if self._config_set.edge_stud_offset == 0
                 else CategoryRule(TButtJoint, "edge_stud", "plate")
             ),
             CategoryRule(TButtJoint, "stud", "plate"),
@@ -169,8 +220,8 @@ class SurfaceModel(object):
     def rules(self):
         if not self._rules:
             self._rules = self.default_rules
-            if self.joint_overrides:
-                for rule in self.joint_overrides:
+            if self._config_set.joint_overrides:
+                for rule in self._config_set.joint_overrides:
                     rule_set = set([rule.category_a, rule.category_b])
                     for i, _rule in enumerate(self._rules):
                         _set = set([_rule.category_a, _rule.category_b])
@@ -261,12 +312,60 @@ class SurfaceModel(object):
 
     @classmethod
     def beam_category_names(cls):
-        return SurfaceModel.BEAM_CATEGORY_NAMES
+        return WallPopulator.BEAM_CATEGORY_NAMES
 
     def generate_frame(self):
+        # TODO: remove
         self.generate_perimeter_beams()
         self.generate_windows()
         self.generate_studs()
+
+    @classmethod
+    def from_walls(cls, walls, configuration_sets):
+        """matches configuration sets to walls and returns a list of WallPopulator instances, each per wall"""
+        # TODO: make sure number of walls and configuration sets match
+        if len(walls) != len(configuration_sets):
+            raise ValueError("Number of walls and configuration sets do not match")
+
+        wall_populators = []
+        for wall in walls:
+            for config_set in configuration_sets:
+                if config_set.wall_selector.select(wall):
+                    wall_populators.append(cls(config_set, wall))
+                    break
+        return wall_populators
+
+    def create_elements(self):
+        """Does the actual populating of the wall
+
+        creates and returns all the elements in the wall, returns also the joint definitions
+        """
+        self.generate_perimeter_beams()
+        self.generate_windows()
+        self.generate_studs()
+        self.generate_plates()
+        elements = self.elements
+        return elements, self.create_joint_definitions(elements)
+
+    def create_joint_definitions(self, elements):
+        beams = [element for element in elements if element.is_beam]
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
+
+        joint_definitions = []
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            if detected_topo == JointTopology.TOPO_UNKNOWN:
+                continue
+
+            for rule in self.rules:
+                if rule.comply(pair) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
+                    if rule.joint_type == LButtJoint:
+                        beam_a, beam_b = rule.reorder([beam_a, beam_b])
+                    joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+                    # break # ?
+        return joint_definitions
 
     def create_model(self):
         model = TimberModel()
@@ -289,7 +388,7 @@ class SurfaceModel(object):
                         if rule.joint_type == LButtJoint:
                             beam_a, beam_b = rule.reorder([beam_a, beam_b])
                         rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
-        model.set_topologies(topologies)
+        model.set_topologies(topologies)  # TODO: this is literaly the graph, maybe add a topo attribute to `Joint`
         return model
 
     def parse_loops(self):
@@ -332,7 +431,7 @@ class SurfaceModel(object):
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 45
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
                 ):
-                    if self.lintel_posts:
+                    if self._config_set.lintel_posts:
                         beam_def.type = "jack_stud"
                     else:
                         beam_def.type = "king_stud"
@@ -348,7 +447,7 @@ class SurfaceModel(object):
                     beam_def.type = "plate"
             self._beam_definitions.append(beam_def)
         self._beam_definitions = self.offset_elements(self._beam_definitions)
-        if self.lintel_posts:
+        if self._config_set.lintel_posts:
             for beam_def in self._beam_definitions:
                 if beam_def.type == "jack_stud":
                     offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
@@ -378,11 +477,11 @@ class SurfaceModel(object):
         for beam_def in element_loop:
             beam_def.offset(self.beam_dimensions[beam_def.type][0] / 2)
             if beam_def.type == "edge_stud":
-                beam_def.offset(self.edge_stud_offset)
+                beam_def.offset(self._config_set.edge_stud_offset)
             offset_loop.append(beam_def)
 
         for i, beam_def in enumerate(offset_loop):
-            if self.edge_stud_offset > 0:
+            if self._config_set.edge_stud_offset > 0:
                 if beam_def.type != "plate":
                     element_before = offset_loop[i - 1]
                     element_after = offset_loop[(i + 1) % len(offset_loop)]
@@ -422,13 +521,13 @@ class SurfaceModel(object):
         self.cull_overlaps()
 
     def generate_stud_lines(self):
-        x_position = self.stud_spacing
-        while x_position < self.panel_length - self.beam_width:
+        x_position = self._config_set.stud_spacing
+        while x_position < self.panel_length - self._config_set.beam_width:
             start_point = Point(x_position, 0, 0)
             start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
             line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
             self._beam_definitions.append(self.BeamDefinition(line, type="stud", parent=self))
-            x_position += self.stud_spacing
+            x_position += self._config_set.stud_spacing
 
     def get_beam_intersections(self, beam_def, *element_lists_to_intersect):
         intersections = []
@@ -513,12 +612,12 @@ class SurfaceModel(object):
         return math.sqrt(min(distances))
 
     def generate_plates(self):
-        if self.sheeting_inside:
-            self._elements.append(Plate(self.outer_polyline, self.sheeting_inside))
-        if self.sheeting_outside:
+        if self._config_set.sheeting_inside:
+            self._elements.append(Plate(self.outer_polyline, self._config_set.sheeting_inside))
+        if self._config_set.sheeting_outside:
             pline = self.outer_polyline.copy()
-            pline.translate(self.frame.zaxis * (self.frame_depth + self.sheeting_outside))
-            self._elements.append(Plate(pline, self.sheeting_outside))
+            pline.translate(self.frame.zaxis * (self._config_set.wall_depth + self._config_set.sheeting_outside))
+            self._elements.append(Plate(pline, self._config_set.sheeting_outside))
         for window in self.windows:
             self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
 
@@ -631,7 +730,7 @@ class SurfaceModel(object):
 
         def process_outlines(self):
             for i, segment in enumerate(self.outline.lines):
-                beam_def = SurfaceModel.BeamDefinition(segment, parent=self)
+                beam_def = WallPopulator.BeamDefinition(segment, parent=self)
                 if (
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 1
                     or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
@@ -753,6 +852,7 @@ class SurfaceModel(object):
             centerline = Line(*self.centerline)
             centerline.translate(self.normal * 0.5 * self.height)
             beam = Beam.from_centerline(centerline, self.width, self.height, self.normal)
+            beam.name = "{}_{}".format(self.type, beam.guid)
             beam.attributes["category"] = self.type
             return beam
 

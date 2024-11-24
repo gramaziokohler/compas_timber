@@ -1,4 +1,8 @@
 import compas
+from compas_model.elements import Element
+from compas_model.materials import Material
+from compas_model.models.elementnode import ElementNode
+from compas_model.models.groupnode import GroupNode
 
 if not compas.IPY:
     from typing import Generator  # noqa: F401
@@ -127,6 +131,16 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
+    def add_element(self, element, parent=None, **kwargs):
+        # resolve parent name to GroupNode object
+        # TODO: upstream this to compas_model
+        if parent and isinstance(parent, str):
+            if not self.has_group(parent):
+                raise ValueError("Group {} not found in model.".format(parent))
+            parent = next((group for group in self._tree.groups if group.name == parent))
+        # print("add_element({}, {}, {})".format(element, parent, kwargs))
+        return super(TimberModel, self).add_element(element, parent, **kwargs)
+
     def add_group_element(self, element, name=None):
         """Add an element which shall contain other elements.
 
@@ -178,6 +192,8 @@ class TimberModel(Model):
 
         group_node = self.add_group(group_name)
         self.add_element(element, parent=group_node)
+
+        element.name = group_name
         return group_node
 
     def has_group(self, group_name):

@@ -98,7 +98,9 @@ class Wall(TimberElement):
         return box
 
     def __repr__(self):
-        return "Wall({}, {:.3f}, {:.3f}, {:.3f})".format(self.frame, self.outline, self.thickness, self.openings)
+        return "Wall(name={}, {}, {:.3f}, {:.3f}, {:.3f})".format(
+            self.name, self.frame, self.outline, self.thickness, self.openings
+        )
 
     # @classmethod
     # def from_box(cls, box):
