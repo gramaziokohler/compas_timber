@@ -7,6 +7,10 @@ from .workflow import FeatureDefinition
 from .workflow import DebugInfomation
 
 from .wall_from_surface import SurfaceModel
+from .wall_populator import WallPopulator
+from .wall_populator import WallPopulatorConfigurationSet
+from .wall_populator import WallSelector
+from .wall_populator import AnyWallSelector
 
 __all__ = [
     "CategoryRule",
@@ -17,4 +21,8 @@ __all__ = [
     "FeatureDefinition",
     "DebugInfomation",
     "SurfaceModel",
+    "WallPopulator",
+    "WallPopulatorConfigurationSet",
+    "WallSelector",
+    "AnyWallSelector",
 ]
