@@ -2,6 +2,8 @@ from compas_timber._fabrication import FrenchRidgeLap
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
+from compas.tolerance import TOL
+
 from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
@@ -157,7 +159,8 @@ class LFrenchRidgeLapJoint(Joint):
         cross_vect = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
         for beam in self.beams:
             beam_normal = beam.frame.normal.unitized()
-            if abs(beam_normal.dot(cross_vect.unitized())) not in [0, 1]:
+            dot = abs(beam_normal.dot(cross_vect.unitized()))
+            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
                 raise BeamJoinningError(
                     self.beam_a,
                     self.beam_b,
