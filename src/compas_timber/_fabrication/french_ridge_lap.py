@@ -191,7 +191,7 @@ class FrenchRidgeLap(BTLxProcess):
         angle = cls._calculate_angle(beam, other_beam, ref_side, orientation)
 
         # determine the reference position of the edge
-        ref_position = cls._calculate_ref_position(ref_side, plane, angle)
+        ref_position = cls._calculate_ref_position(other_beam, ref_side, plane, angle)
 
         # calculate the start_x of the cut
         start_x = cls._calculate_start_x(ref_surface, orientation, angle)
@@ -232,14 +232,17 @@ class FrenchRidgeLap(BTLxProcess):
         return start_x
 
     @staticmethod
-    def _calculate_ref_position(ref_side, plane, angle):
+    def _calculate_ref_position(other_beam, ref_side, plane, angle):
         # determine if the position of the ridge lap is on the reference edge or the opposite edge
         angle_vector = Vector.cross(ref_side.normal, plane.normal)
         signed_angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True)
-        if angle > 90:
+        dot = angle_vector.dot(other_beam.centerline.direction)
+        if angle > 90.0:
             is_ref_edge = abs(signed_angle) < 90
+        elif angle < 90.0:
+            is_ref_edge = abs(signed_angle) > 90
         else:
-            is_ref_edge = abs(signed_angle) >= 90
+            is_ref_edge = dot < 0
         if is_ref_edge:
             return EdgePositionType.REFEDGE
         return EdgePositionType.OPPEDGE
