@@ -4,6 +4,7 @@ from compas_timber.connections.utilities import are_beams_coplanar
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
+from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -122,6 +123,13 @@ class TStepJoint(Joint):
         ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
+    @property
+    def main_extension_plane(self):
+        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        opp_side_index = self.cross_beam.opposing_side_index(ref_side_index)
+        return self.cross_beam.ref_sides[opp_side_index]
+
     def set_step_depths(self, step_depth=None, heel_depth=None):
         """Sets the default step and heel depths based on the joint type if they are not provided."""
         if self.step_shape == 0:  # 'step' shape
@@ -138,19 +146,39 @@ class TStepJoint(Joint):
 
         return step_depth, heel_depth
 
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the extension could not be calculated.
+
+        """
+        assert self.cross_beam and self.main_beam
+        start_a = None
+        try:
+            plane_a = self.main_extension_plane
+            start_a, end_a = self.main_beam.extension_to_plane(plane_a)
+        except AttributeError as ae:
+            # I want here just the plane that caused the error
+            raise BeamJoinningError(self.main_beam, self, debug_info=str(ae), debug_geometries=plane_a)
+        except Exception as ex:
+            raise BeamJoinningError(self.main_beam, self, debug_info=str(ex))
+        self.main_beam.add_blank_extension(start_a, end_a, self.main_beam_guid)
+
     def add_features(self):
         """Adds the required trimming features to both beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        # TODO: In the future the step, heel and tenon mortise depths should be proportional to the cross beam section wheareas the proportions are defined by the national norms.
-        # TODO: As well the step shape should maybe be defined automatically by the shear reqirements of the joint.
-
         assert self.main_beam and self.cross_beam  # should never happen
-        assert are_beams_coplanar(
-            self.main_beam, self.cross_beam
-        ), "The beams are not coplanar, the joint cannot be created."
+
+        # check if the geometry of the joint is valid compared to the values of the joint parameters
+        self.check_geometry()
 
         if self.features:
             self.main_beam.remove_features(self.features)
@@ -192,6 +220,24 @@ class TStepJoint(Joint):
         self.cross_beam.add_features(cross_feature)
         # add features to joint
         self.features = [cross_feature, main_feature]
+
+    def check_geometry(self):
+        """Checks if the geometry of the joint is valid compared to the values of the joint parameters."""
+        if not are_beams_coplanar(self.main_beam, self.cross_beam):
+            raise BeamJoinningError(self.beams, "Beams must be coplanar.")
+
+        if self.step_depth >= self.strut_height or self.heel_depth >= self.strut_height:
+            raise BeamJoinningError(self.beams, "Step or heel depth must be smaller than the strut height.")
+        if self.step_depth >= self.notch_width or self.heel_depth >= self.notch_width:
+            raise BeamJoinningError(self.beams, "Step or heel depth must be smaller than the notch width.")
+
+        cross_beam_height = self.cross_beam.side_as_surface(self.cross_beam_ref_side_index).ysize
+        if self.step_depth >= cross_beam_height or self.heel_depth >= cross_beam_height:
+            raise BeamJoinningError(self.beams, "Step or heel depth must be smaller than the cross beam height.")
+        if self.tenon_mortise_height > cross_beam_height:
+            raise BeamJoinningError(
+                self.beams, "Tenon mortise height must be smaller or equal to the cross beam height."
+            )
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

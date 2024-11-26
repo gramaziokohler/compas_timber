@@ -260,18 +260,6 @@ class StepJoint(BTLxProcess):
         # calculate strut_inclination
         strut_inclination = cls._calculate_strut_inclination(ref_side, plane)
 
-        # restrain step_depth & heel_depth to beam's height and the maximum possible heel depth for the beam
-        if step_depth > beam.height:
-            step_depth = beam.height
-            print("Step depth is too large for the beam's height. It has been adjusted to the beam's height.")
-
-        max_heel_depth = abs(beam.height / math.tan(math.radians(strut_inclination)))
-        if heel_depth > max_heel_depth and not tapered_heel:
-            heel_depth = max_heel_depth
-            print(
-                "Heel depth is too large for the given strut inclination. It has been adjusted to the maximum possible value."
-            )
-
         # define step_shape
         step_shape = cls._define_step_shape(step_depth, heel_depth, tapered_heel)
 
