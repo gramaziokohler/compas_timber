@@ -3,7 +3,6 @@ from compas_timber._fabrication import StepJointNotch
 from compas_timber.connections.utilities import are_beams_coplanar
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-from compas_timber.connections.utilities import check_beam_alignment
 
 from .joint import Joint
 from .solver import JointTopology
@@ -89,14 +88,12 @@ class TStepJoint(Joint):
         self.tapered_heel = tapered_heel
         self.tenon_mortise_height = tenon_mortise_height
 
-        # Check alignment to determine if the width and height of the main_beam (beam_b) should be swapped
-        swap_dimensions_main = check_beam_alignment(self.cross_beam, self.main_beam)
-        swap_dimensions_cross = check_beam_alignment(self.main_beam, self.cross_beam)
-        # For the main beam, use width or height based on the alignment result
-        main_width = self.main_beam.width if swap_dimensions_main else self.main_beam.height
-        main_height = self.main_beam.height if swap_dimensions_main else self.main_beam.width
-        # For the cross beam, use width or height based on the alignment result
-        cross_width = self.cross_beam.width if swap_dimensions_cross else self.cross_beam.height
+        # For the main beam, use width or height based on the alignment
+        swap_main_dimensions = self.main_beam_ref_side_index % 2 == 0
+        main_width = self.main_beam.width if swap_main_dimensions else self.main_beam.height
+        main_height = self.main_beam.height if swap_main_dimensions else self.main_beam.width
+        # For the cross beam, use width or height based on the alignment
+        cross_width = self.cross_beam.width if self.cross_beam_ref_side_index % 2 == 0 else self.cross_beam.height
 
         self.start_y = (cross_width - main_width) / 2 if cross_width > main_width else 0.0
         self.notch_limited = False
