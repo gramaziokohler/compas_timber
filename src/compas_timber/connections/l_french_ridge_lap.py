@@ -9,6 +9,7 @@ from .solver import JointTopology
 
 class LFrenchRidgeLapJoint(Joint):
     """Represents an L-FrenchRidgeLap type joint which joins two beams in their ends, by lapping them with a ridge.
+    The joint can only be created between two beams that are aligned and have the same dimensions.
 
     This joint type is compatible with beams in L topology.
 
@@ -22,6 +23,8 @@ class LFrenchRidgeLapJoint(Joint):
         Second beam to be joined.
     drillhole_diam : float
         Diameter of the drill hole to be made in the joint.
+    flip_beams : bool
+        If True, the beams will be flipped in the joint. Default is False.
 
     Attributes
     ----------
@@ -31,6 +34,8 @@ class LFrenchRidgeLapJoint(Joint):
         Second beam to be joined.
     drillhole_diam : float
         Diameter of the drill hole to be made in the joint.
+    flip_beams : bool
+        If True, the beams will be flipped in the joint. Default is False.
 
     """
 
@@ -42,9 +47,10 @@ class LFrenchRidgeLapJoint(Joint):
         data["beam_a"] = self.beam_a_guid
         data["beam_b"] = self.beam_b_guid
         data["drillhole_diam"] = self.drillhole_diam
+        data["flip_beams"] = self.flip_beams
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, drillhole_diam=None, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, drillhole_diam=None, flip_beams=None, **kwargs):
         super(LFrenchRidgeLapJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -52,6 +58,7 @@ class LFrenchRidgeLapJoint(Joint):
         self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
 
         self.drillhole_diam = drillhole_diam
+        self.flip_beams = flip_beams
         self.features = []
 
     @property
@@ -62,12 +69,16 @@ class LFrenchRidgeLapJoint(Joint):
     def beam_a_ref_side_index(self):
         cross_vector = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
         ref_side_dict = beam_ref_side_incidence_with_vector(self.beam_a, cross_vector, ignore_ends=True)
+        if self.flip_beams:
+            return max(ref_side_dict, key=ref_side_dict.get)
         return min(ref_side_dict, key=ref_side_dict.get)
 
     @property
     def beam_b_ref_side_index(self):
         cross_vector = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
         ref_side_dict = beam_ref_side_incidence_with_vector(self.beam_b, cross_vector, ignore_ends=True)
+        if self.flip_beams:
+            return min(ref_side_dict, key=ref_side_dict.get)
         return max(ref_side_dict, key=ref_side_dict.get)
 
     @property
@@ -116,7 +127,6 @@ class LFrenchRidgeLapJoint(Joint):
 
         """
         assert self.beam_a and self.beam_b
-
         # check if the beams are aligned and have the same width and height
         self.check_geometry()
 
@@ -135,7 +145,7 @@ class LFrenchRidgeLapJoint(Joint):
         self.features = [frl_a, frl_b]
 
     def check_geometry(self):
-        """Checks if the geometry of the joint is valid.
+        """Checks if the geometry of the beams is valid for the joint.
 
         Raises
         ------
@@ -153,12 +163,15 @@ class LFrenchRidgeLapJoint(Joint):
                     self.beam_b,
                     debug_info="The the two beams are not aligned to create a French Ridge Lap joint.",
                 )
-        # check if the beams have the same width and height
-        beam_a_width = self.beam_a.side_as_surface(self.beam_a_ref_side_index).ysize
-        beam_b_width = self.beam_b.side_as_surface(self.beam_b_ref_side_index).ysize
-        beam_a_height = self.beam_a.height if self.beam_a_ref_side_index % 2 == 0 else self.beam_a.width
-        beam_b_height = self.beam_b.height if self.beam_b_ref_side_index % 2 == 0 else self.beam_b.width
-        if beam_a_width != beam_b_width or beam_a_height != beam_b_height:
+        # calculate widths and heights of the beams
+        dimensions = []
+        ref_side_indices = [self.beam_a_ref_side_index, self.beam_b_ref_side_index]
+        for i, beam in enumerate(self.beams):
+            width = beam.side_as_surface(ref_side_indices[i]).ysize
+            height = beam.height if ref_side_indices[i] % 2 == 0 else beam.width
+            dimensions.append((width, height))
+        # check if the dimensions of both beams match
+        if dimensions[0] != dimensions[1]:
             raise BeamJoinningError(self.beam_a, self.beam_b, debug_info="The beams have different dimensions.")
 
     def restore_beams_from_keys(self, model):
