@@ -10,12 +10,12 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.connections.utilities import beam_ref_side_incidence  # TODO: is there a better way to import?
-from compas_timber.connections.utilities import point_centerline_towards_joint  # TODO: is there a better way to import?
 from compas_timber.elements import FeatureApplicationError
 
 from .btlx_process import BTLxProcess
@@ -155,8 +155,9 @@ class FrenchRidgeLap(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_beam_and_beam(cls, beam, other_beam, drillhole_diam=0.0, ref_side_index=0):
-        """Create a FrenchRidgeLap instance from two beams. The instance is used to cut the principal beam with the other beam.
+    def from_beam_beam_and_plane(cls, beam, other_beam, plane, drillhole_diam=0.0, ref_side_index=0):
+        """Create a FrenchRidgeLap instance from two beams and a cutting plane. The instance is used to cut the principal beam with the other beam.
+        The plane is the furthest reference side of the other beam that cuts the exceeding part of the principal beam.
 
         Parameters
         ----------
@@ -164,6 +165,8 @@ class FrenchRidgeLap(BTLxProcess):
             The beam that is cut by this instance.
         other_beam : :class:`~compas_timber.elements.Beam`
             The beam that is used to cut the beam.
+        plane : :class:`~compas.geometry.Plane`
+            The plane that cuts the principal beam.
         drillhole_diam : float
             The diameter of the drillhole.
         ref_side_index : int, optional
@@ -175,23 +178,20 @@ class FrenchRidgeLap(BTLxProcess):
 
         """
         # type: (Beam, Beam, float, int) -> FrenchRidgeLap
+        if isinstance(plane, Frame):
+            plane = Plane.from_frame(plane)
         # the reference side of the beam to be cut
         ref_side = beam.ref_sides[ref_side_index]
         ref_surface = beam.side_as_surface(ref_side_index)
 
-        # the plane that cuts the beam
-        ref_side_dict = beam_ref_side_incidence(beam, other_beam, ignore_ends=True)
-        cut_ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
-        cutting_plane = Plane.from_frame(other_beam.ref_sides[cut_ref_side_index])
-
         # calculate the orientation of the cut
-        orientation = cls._calculate_orientation(ref_side, cutting_plane)
+        orientation = cls._calculate_orientation(ref_side, plane)
 
         # calculate the angle of the cut
         angle = cls._calculate_angle(beam, other_beam, ref_side, orientation)
 
         # determine the reference position of the edge
-        ref_position = cls._calculate_ref_position(ref_side, cutting_plane, angle)
+        ref_position = cls._calculate_ref_position(ref_side, plane, angle)
 
         # calculate the start_x of the cut
         start_x = cls._calculate_start_x(ref_surface, orientation, angle)
@@ -211,10 +211,10 @@ class FrenchRidgeLap(BTLxProcess):
         )
 
     @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
+    def _calculate_orientation(ref_side, plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
+        if is_point_behind_plane(ref_side.point, plane):
             return OrientationType.END
         else:
             return OrientationType.START
@@ -246,10 +246,15 @@ class FrenchRidgeLap(BTLxProcess):
 
     @staticmethod
     def _calculate_angle(beam, other_beam, ref_side, orientation):
-        # angle between the normal of the reference side and the normal of the cutting plane
+        # angle between the two beams at the intersection point of their centerlines, projected onto the plane of the reference side.
+        intersection_pt = intersection_line_line(other_beam.centerline, beam.centerline)[0]
+        vector_angle = other_beam.centerline.direction
         # make sure the direction of the other beam's centerline is facing outwards
-        vect = point_centerline_towards_joint(other_beam, beam)
-        angle = angle_vectors_signed(beam.centerline.direction, vect, ref_side.normal, deg=True)
+        if distance_point_point(other_beam.centerline.start, Point(*intersection_pt)) < distance_point_point(
+            other_beam.centerline.end, Point(*intersection_pt)
+        ):
+            vector_angle = -vector_angle
+        angle = angle_vectors_signed(ref_side.xaxis, vector_angle, ref_side.normal, deg=True)
         if orientation == OrientationType.START:
             return 180 - abs(angle)
         else:
