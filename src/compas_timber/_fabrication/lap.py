@@ -475,22 +475,41 @@ class Lap(BTLxProcess):
 
         """
         # type: (Beam) -> Brep
+        assert self.orientation is not None
+        assert self.start_x is not None
+        assert self.start_y is not None
+        assert self.angle is not None
+        assert self.inclination is not None
+        assert self.slope is not None
+        assert self.length is not None
+        assert self.width is not None
+        assert self.depth is not None
+        assert self.machining_limits is not None
+
 
         ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
 
-        box_frame = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
+        box_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.zaxis)
+
+        # apply angle rotation
         rot_angle = 90-self.angle if self.orientation == OrientationType.END else self.angle-90
-        box_frame.rotate(math.radians(rot_angle), box_frame.normal, point=box_frame.point)
+        box_frame.rotate(math.radians(self.angle), box_frame.yaxis, point=box_frame.point)
 
-        box = Box(xsize=self.length, ysize=self.width, zsize=self.depth, frame=box_frame)
-        box.translate(box_frame.xaxis * (self.length / 2) + box_frame.yaxis * (-self.width / 2) + box_frame.zaxis * (self.depth / 2))
+        # apply inclination rotation
+        box_frame.rotate(math.radians(self.inclination), box_frame.xaxis, point=box_frame.point)
 
-        if self.orientation == OrientationType.END:
-            box.translate(box_frame.xaxis * -self.length)
+        # apply slope rotation
+        box_frame.rotate(math.radians(self.slope), box_frame.yaxis, point=box_frame.point)
+
+        box = Box(xsize=self.width, ysize=self.length, zsize=self.depth, frame=box_frame)
+        box.translate(box_frame.xaxis * (self.width / 2) + box_frame.yaxis * (-self.length / 2) + box_frame.zaxis * (self.depth / 2))
+
 
         if not self.machining_limits["FaceLimitedFront"] or not self.machining_limits["FaceLimitedBack"]:
-            box.ysize = box.ysize*10 # make the box large enough to cut through the beam
+            box.xsize *= 5 # make the box large enough to cut through the beam
+        if not self.machining_limits["FaceLimitedStart"] or not self.machining_limits["FaceLimitedEnd"]:
+            box.ysize *= 5 # make the box long enough to cut through the beam
 
         return box
 
