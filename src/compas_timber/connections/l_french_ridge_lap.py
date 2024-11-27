@@ -1,8 +1,8 @@
+from compas.tolerance import TOL
+
 from compas_timber._fabrication import FrenchRidgeLap
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-
-from compas.tolerance import TOL
 
 from .joint import BeamJoinningError
 from .joint import Joint
