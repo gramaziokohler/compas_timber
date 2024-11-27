@@ -37,9 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added attribute `is_group_element` to `TimberElement`.
 * Added `JointRule.joints_from_beams_and_rules()` static method 
 * Added `Element.reset()` method.
-
 * Added new `fasteners.py` module with new `Fastener` element type.
 * Added new `compas_timber._fabrication.Lap`.
+* Added new `compas_timber._fabrication.FrenchRidgeLap`.
+* Added new `compas_timber.connections.LFrenchRidgeLapJoint`.
 
 ### Changed
 
@@ -63,6 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
 * Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
 * Removed module `compas_timber.connections.butt_joint`
+* Removed module `compas_timber.connections.french_ridge_lap`
+* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`
+* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`
 
 
 
