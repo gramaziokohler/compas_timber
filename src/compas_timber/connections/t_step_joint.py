@@ -226,19 +226,19 @@ class TStepJoint(Joint):
     def check_geometry(self):
         """Checks if the geometry of the joint is valid compared to the values of the joint parameters."""
         if not are_beams_coplanar(self.main_beam, self.cross_beam):
-            raise BeamJoinningError(self.beams, "Beams must be coplanar.")
+            raise BeamJoinningError(self.beams, self, debug_info="Beams must be coplanar.")
 
         if self.step_depth >= self.strut_height or self.heel_depth >= self.strut_height:
-            raise BeamJoinningError(self.beams, "Step or heel depth must be smaller than the strut height.")
+            raise BeamJoinningError(self.beams, self, debug_info="Step or heel depth must be smaller than the strut height.")
         if self.step_depth >= self.notch_width or self.heel_depth >= self.notch_width:
-            raise BeamJoinningError(self.beams, "Step or heel depth must be smaller than the notch width.")
+            raise BeamJoinningError(self.beams, self, debug_info="Step or heel depth must be smaller than the notch width.")
 
-        cross_beam_height = self.cross_beam.side_as_surface(self.cross_beam_ref_side_index).ysize
+        cross_beam_height = self.cross_beam.height if self.cross_beam_ref_side_index % 2 == 0 else self.cross_beam.width
         if self.step_depth >= cross_beam_height or self.heel_depth >= cross_beam_height:
-            raise BeamJoinningError(self.beams, "Step or heel depth must be smaller than the cross beam height.")
+            raise BeamJoinningError(self.beams, self, debug_info="Step or heel depth must be smaller than the cross beam height.")
         if self.tenon_mortise_height > cross_beam_height:
             raise BeamJoinningError(
-                self.beams, "Tenon mortise height must be smaller or equal to the cross beam height."
+                self.beams, self, debug_info="Tenon mortise height must be smaller or equal to the cross beam height."
             )
 
     def restore_beams_from_keys(self, model):
