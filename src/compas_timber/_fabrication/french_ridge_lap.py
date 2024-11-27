@@ -10,7 +10,6 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
@@ -191,7 +190,7 @@ class FrenchRidgeLap(BTLxProcess):
         angle = cls._calculate_angle(beam, other_beam, ref_side, orientation)
 
         # determine the reference position of the edge
-        ref_position = cls._calculate_ref_position(other_beam, ref_side, plane, angle)
+        ref_position = cls._calculate_ref_position(beam, other_beam, ref_side, plane, angle)
 
         # calculate the start_x of the cut
         start_x = cls._calculate_start_x(ref_surface, orientation, angle)
@@ -232,17 +231,25 @@ class FrenchRidgeLap(BTLxProcess):
         return start_x
 
     @staticmethod
-    def _calculate_ref_position(other_beam, ref_side, plane, angle):
+    def _calculate_ref_position(beam, other_beam, ref_side, plane, angle):
         # determine if the position of the ridge lap is on the reference edge or the opposite edge
         angle_vector = Vector.cross(ref_side.normal, plane.normal)
+        # condition for orthogonal connection
+        if angle == 90.0:
+            intersection_pt = intersection_line_line(other_beam.centerline, beam.centerline)[0]
+            angle_vector = other_beam.centerline.direction
+            # make sure the direction of the other beam's centerline is facing outwards
+            if other_beam.endpoint_closest_to_point(Point(*intersection_pt))[0] == "start":
+                angle_vector = -angle_vector
+
+        # calculate the angle between angle vector and the reference side's x-axis
         signed_angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True)
-        dot = angle_vector.dot(other_beam.centerline.direction)
         if angle > 90.0:
             is_ref_edge = abs(signed_angle) < 90
         elif angle < 90.0:
             is_ref_edge = abs(signed_angle) > 90
         else:
-            is_ref_edge = dot < 0
+            is_ref_edge = signed_angle < 0
         if is_ref_edge:
             return EdgePositionType.REFEDGE
         return EdgePositionType.OPPEDGE
@@ -253,9 +260,7 @@ class FrenchRidgeLap(BTLxProcess):
         intersection_pt = intersection_line_line(other_beam.centerline, beam.centerline)[0]
         vector_angle = other_beam.centerline.direction
         # make sure the direction of the other beam's centerline is facing outwards
-        if distance_point_point(other_beam.centerline.start, Point(*intersection_pt)) < distance_point_point(
-            other_beam.centerline.end, Point(*intersection_pt)
-        ):
+        if other_beam.endpoint_closest_to_point(Point(*intersection_pt))[0] == "start":
             vector_angle = -vector_angle
         angle = angle_vectors_signed(ref_side.xaxis, vector_angle, ref_side.normal, deg=True)
         if orientation == OrientationType.START:
