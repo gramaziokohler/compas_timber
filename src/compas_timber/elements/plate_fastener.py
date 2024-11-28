@@ -3,7 +3,6 @@ import math
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
-from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
@@ -51,7 +50,6 @@ class PlateFastener(Fastener):
     def __str__(self):
         # type: () -> str
         return "<Plate Fastener {} at frame={!r}>".format(self.name, self.frame)
-
 
     @classmethod
     def from_outline_thickness_interfaces_cutouts(

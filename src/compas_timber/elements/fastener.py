@@ -67,7 +67,7 @@ class Fastener(TimberElement):
 
     def copy(self):
         cls = type(self)
-        fast = cls(shape=self.shape, frame=self.frame)
+        fast = cls(shape=self._shape, frame=self.frame)
         fast.interfaces = [interface.copy() for interface in self.interfaces]
         fast.debug_info = self.debug_info
         return fast
@@ -124,9 +124,7 @@ class FastenerTimberInterface(object):
 
     """
 
-    def __init__(
-        self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None
-    ):
+    def __init__(self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None):
         self.outline_pts = outline_pts
         self.thickness = thickness
         self.holes = holes
@@ -217,7 +215,7 @@ class FastenerTimberInterface(object):
         fast = FastenerTimberInterface(
             self.outline_pts, self.thickness, self.holes, shapes=self.shapes, features=self.features
         )
-        fast._shape = self.shape
+        fast._shape = self._shape
         fast.element = self.element
         fast.fastener = self.fastener
         return fast
