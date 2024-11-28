@@ -95,6 +95,9 @@ class CutFeature(Feature):
                 "The cutting plane does not intersect with element geometry.",
             )
 
+    def transform(self, transformation):
+        self.cutting_plane.transform(transformation)
+
 
 class DrillFeature(Feature):
     """Parametric drill hole to be made on an element.
@@ -151,6 +154,9 @@ class DrillFeature(Feature):
                 "The drill volume is not contained in the element geometry.",
             )
 
+    def transform(self, transformation):
+        self.line.transform(transformation)
+
 
 class MillVolume(Feature):
     """A volume to be milled out of an element.
@@ -200,6 +206,9 @@ class MillVolume(Feature):
                 "The volume does not intersect with element geometry.",
             )
 
+    def transform(self, transformation):
+        self.mesh_volume.transform(transformation)
+
 
 class BrepSubtraction(Feature):
     """Generic volume subtraction from an element.
@@ -243,3 +252,6 @@ class BrepSubtraction(Feature):
                 element_geometry,
                 "The volume does not intersect with element geometry.",
             )
+
+    def transform(self, transformation):
+        self.volume.transform(transformation)

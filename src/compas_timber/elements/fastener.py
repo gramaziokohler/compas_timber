@@ -125,20 +125,19 @@ class FastenerTimberInterface(object):
     """
 
     def __init__(
-        self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, feature_defs=None
+        self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None
     ):
         self.outline_pts = outline_pts
         self.thickness = thickness
         self.holes = holes
         self.frame = frame
         self.shapes = shapes
-        self.feature_defs = feature_defs
+        self.features = features
         self.element = None
         self.fastener = None
         self._shape = None
         self.test = []
 
-    @property
     def __str__(self):
         return "FastenerTimberInterface at {}".format(self.frame)
 
@@ -167,43 +166,32 @@ class FastenerTimberInterface(object):
             plate -= hole
         return plate
 
-    @property
-    def features(self):
-        """Generate features from the interface that are applied to the timber element."""
-        features = []
-        for hole in self.holes:
-            vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
-            length = vector.length
-            point = hole["point"] - vector * length * 0.5
-            drill_line = Line.from_point_direction_length(point, vector, length)
-            drill_line.transform(Transformation.from_frame(self.frame))
-            if hole["through"]:
-                pts = intersection_line_box(drill_line, self.element.blank)
-                if pts:
-                    drill_line = Line(*pts)
-                    length = drill_line.length
-            features.append(
-                DrillFeature(drill_line, hole["diameter"], length)
-            )  # TODO: make this adapt using intersection with `element.blank` or similar
-        for feature_def in self.feature_defs:
-            feature_def = feature_def.copy()
-            feature_def.transform(Transformation.from_frame(self.frame))
-            features.append(feature_def)
-        return features
-
     def add_features(self):
         """Add a feature to the interface."""
+        features = []
+        for hole in self.holes:
+            features.append(self.get_hole_feature(hole))
+            print("hole", hole)
         for feature in self.features:
-            feature.element.add_feature(feature)
+            feature = feature.copy()
+            feature.transform(Transformation.from_frame(self.frame))
+            features.append(feature)
+        for feature in features:
+            self.element.add_feature(feature)
 
-    def get_through_line(self, hole):
+    def get_hole_feature(self, hole):
         """Get the line that goes through the timber element."""
         vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
-        length = self.element.width if hole["through"] else hole["vector"].length
+        length = vector.length
         point = hole["point"] - vector * length * 0.5
         drill_line = Line.from_point_direction_length(point, vector, length)
         drill_line.transform(Transformation.from_frame(self.frame))
-        return drill_line
+        if hole["through"]:
+            pts = intersection_line_box(drill_line, self.element.blank)
+            if pts:
+                drill_line = Line(*pts)
+                length = drill_line.length
+        return DrillFeature(drill_line, hole["diameter"], length)
 
     @property
     def shape(self):
@@ -227,7 +215,7 @@ class FastenerTimberInterface(object):
 
     def copy(self):
         fast = FastenerTimberInterface(
-            self.outline_pts, self.thickness, self.holes, shapes=self.shapes, feature_defs=self.feature_defs
+            self.outline_pts, self.thickness, self.holes, shapes=self.shapes, features=self.features
         )
         fast._shape = self.shape
         fast.element = self.element

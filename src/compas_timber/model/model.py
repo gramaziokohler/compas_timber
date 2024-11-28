@@ -74,7 +74,7 @@ class TimberModel(Model):
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
                 joints.append(interaction)
-        return set(joints)  # remove duplicates
+        return list(set(joints))  # remove duplicates
 
     @property
     def walls(self):

@@ -126,6 +126,12 @@ class PlateFastener(Fastener):
                 yield hole
 
     @property
+    def shapes(self):
+        for interface in self.interfaces:
+            for shape in interface.shapes:
+                yield shape
+
+    @property
     def shape(self):
         """Constructs the base shape of the fastener.This is located at the origin of the XY plane with the x-axis pointing in the direction of the main_beam.
 
@@ -136,11 +142,11 @@ class PlateFastener(Fastener):
         """
         if not self._shape:
             vector = Vector(0, 0, self.thickness)
-            self._shape = Brep.from_extrusion(NurbsCurve.from_points(self.outline, degree=1), vector)
+            self._shape = Brep.from_extrusion(self.outline, vector)
             if self.cutouts:
+                print("cutouts", self.cutouts)
                 for cutout in self.cutouts:
-                    curve = NurbsCurve.__from_data__(cutout)
-                    cutout_brep = Brep.from_extrusion(curve, vector)
+                    cutout_brep = Brep.from_extrusion(cutout, vector)
                     self._shape -= cutout_brep
             if self.holes:
                 for hole in self.holes:
@@ -152,6 +158,9 @@ class PlateFastener(Fastener):
                         )
                     )
                     self._shape -= cylinder
+            if self.shapes:
+                for shape in self.shapes:
+                    self._shape += shape
         return self._shape
 
     @property

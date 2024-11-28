@@ -241,8 +241,7 @@ class TButtPlateJoint(ButtJoint):
         Drill features are defined by `fastener.holes`
         This assumes the same fastener on each side of the joint.
         """
-        fastener = list(self.fasteners)[0]
-        for beam, interface in zip([self.main_beam, self.cross_beam], fastener.interfaces):
-            interface.element = beam
-            for feature in interface.features:
-                interface.element.add_features(feature)
+        for fastener in self.fasteners:
+            for beam, interface in zip([self.main_beam, self.cross_beam], fastener.interfaces):
+                interface.element = beam
+                interface.add_features()
