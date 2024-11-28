@@ -166,6 +166,26 @@ class FastenerTimberInterface(object):
             plate -= hole
         return plate
 
+    @property
+    def shape(self):
+        """Return a Brep representation of the interface located at the WorldXY origin."""
+        if not self._shape:
+            if self.plate:
+                self._shape = self.plate
+                if self.shapes:
+                    for shape in self.shapes:
+                        self._shape += shape
+            elif self.shapes:
+                self._shape = self.shapes[0]
+                for shape in self.shapes[1:]:
+                    self._shape += shape
+        return self._shape
+
+    @property
+    def geometry(self):
+        """returns the geometry of the interface in the model (oriented on the timber element)"""
+        return self.shape.transformed(Transformation.from_frame(self.frame))
+
     def add_features(self):
         """Add a feature to the interface."""
         features = []
@@ -192,26 +212,6 @@ class FastenerTimberInterface(object):
                 drill_line = Line(*pts)
                 length = drill_line.length
         return DrillFeature(drill_line, hole["diameter"], length)
-
-    @property
-    def shape(self):
-        """Return a Brep representation of the interface located at the WorldXY origin."""
-        if not self._shape:
-            if self.plate:
-                self._shape = self.plate
-                if self.shapes:
-                    for shape in self.shapes:
-                        self._shape += shape
-            elif self.shapes:
-                self._shape = self.shapes[0]
-                for shape in self.shapes[1:]:
-                    self._shape += shape
-        return self._shape
-
-    @property
-    def geometry(self):
-        """returns the geometry of the interface in the model (oriented on the timber element)"""
-        return self.shape.transformed(Transformation.from_frame(self.frame))
 
     def copy(self):
         fast = FastenerTimberInterface(

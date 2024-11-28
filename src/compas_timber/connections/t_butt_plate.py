@@ -61,11 +61,6 @@ class TButtPlateJoint(ButtJoint):
             )
             self.place_fasteners()
 
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
-
     @property
     def interactions(self):
         """Returns interactions between elements used by this joint."""
@@ -74,12 +69,8 @@ class TButtPlateJoint(ButtJoint):
         for fastener in self.fasteners:
             interactions.append((self.main_beam, fastener, self))
             interactions.append((self.cross_beam, fastener, self))
-
         return interactions
 
-    # ================================================================================================================================================================
-    # class methods
-    # ================================================================================================================================================================
     @classmethod
     def create(cls, model, *beams, **kwargs):
         """Creates a T-Butt type joint between the beams.
@@ -106,46 +97,6 @@ class TButtPlateJoint(ButtJoint):
             model.add_element(fastener)
         model.add_joint(joint)
         return joint
-
-    def add_features(self):
-        """Adds the trimming plane to the main beam (no features for the cross beam).
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-
-        """
-        assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-
-        cutting_plane = None
-        try:
-            cutting_plane = self.get_main_cutting_plane()[0]
-        except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
-        except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-
-        trim_feature = CutFeature(cutting_plane)
-        if self.mill_depth:
-            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
-        self.main_beam.add_features(trim_feature)
-        self.apply_interface_features()
-        self.features = [trim_feature]
-
-    def place_fasteners(self):
-        """Adds the fasteners to the joint.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-
-        """
-        frames = self.get_fastener_frames()
-        for frame in frames:
-            fastener = self.fastener.copy()
-            fastener.frame = Frame(frame.point, frame.xaxis, frame.yaxis)
-            for interface, element in zip(fastener.interfaces, self.beams):
-                interface.element = element
-            self.elements.append(fastener)
 
     @classmethod
     def validate_fastener_beam_compatibility(cls, fastener, beams):
@@ -235,6 +186,46 @@ class TButtPlateJoint(ButtJoint):
         )
         back_frame.rotate(-math.pi / 2, back_frame.xaxis, back_point)
         return [front_frame, back_frame]
+
+    def place_fasteners(self):
+        """Adds the fasteners to the joint.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+        frames = self.get_fastener_frames()
+        for frame in frames:
+            fastener = self.fastener.copy()
+            fastener.frame = Frame(frame.point, frame.xaxis, frame.yaxis)
+            for interface, element in zip(fastener.interfaces, self.beams):
+                interface.element = element
+            self.elements.append(fastener)
+
+    def add_features(self):
+        """Adds the trimming plane to the main beam (no features for the cross beam).
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+        assert self.main_beam and self.cross_beam  # should never happen
+
+        if self.features:
+            self.main_beam.remove_features(self.features)
+
+        cutting_plane = None
+        try:
+            cutting_plane = self.get_main_cutting_plane()[0]
+        except AttributeError as ae:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        except Exception as ex:
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+
+        trim_feature = CutFeature(cutting_plane)
+        if self.mill_depth:
+            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
+        self.main_beam.add_features(trim_feature)
+        self.apply_interface_features()
+        self.features = [trim_feature]
 
     def apply_interface_features(self):
         """Applies the drill features of the joint to the beams.

@@ -39,7 +39,6 @@ class PlateFastener(Fastener):
         super(PlateFastener, self).__init__(**kwargs)
         self.frame = frame
         self._shape = shape
-        self._holes = []
         self.angle = angle
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -53,13 +52,6 @@ class PlateFastener(Fastener):
         # type: () -> str
         return "<Plate Fastener {} at frame={!r}>".format(self.name, self.frame)
 
-    # ==========================================================================
-    # Computed attributes
-    # ==========================================================================
-
-    # ==========================================================================
-    # Class methods
-    # ==========================================================================
 
     @classmethod
     def from_outline_thickness_interfaces_cutouts(
@@ -73,12 +65,16 @@ class PlateFastener(Fastener):
         ----------
         outline : list of :class:`~compas.geometry.Point`
             The outline of the fastener as a list of points.
+        angle : float, optional
+            The angle of the fastener. default is math.pi / 2
         thickness : float, optional
             The thickness of the fastener.
         interfaces : list of compas_timber.elements.FastenerTimberInterface, optional
             The connection interfaces to the timber elements
         cutouts : list of list of :class:`~compas.geometry.Point`, optional
             The cutouts of the fastener.
+        frame : :class:`~compas.geometry.Frame`, optional
+            The frame of the fastener, denoting its location in space.
 
         Returns
         -------
