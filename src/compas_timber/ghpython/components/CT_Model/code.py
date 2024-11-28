@@ -62,8 +62,11 @@ class ModelComponent(component):
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
-                for element in f_def.elements:
-                    element.add_features(f_def.feature)
+                if f_def.elements:
+                    for element in f_def.elements:
+                        element.add_features(f_def.feature)
+                else:
+                    self.AddRuntimeMessage(Warning, "No elements found for feature definition")
 
         Geometry = None
         scene = Scene()

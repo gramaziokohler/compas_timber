@@ -9,10 +9,7 @@ def test_fastener_initialization():
 
 def test_fastener_repr():
     fastener = Fastener()
-    assert (
-        repr(fastener)
-        == "Fastener(frame=None, name=Fastener)"
-    )
+    assert repr(fastener) == "Fastener(frame=None, name=Fastener)"
 
 
 def test_fastener_str():
