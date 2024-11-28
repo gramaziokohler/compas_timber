@@ -14,7 +14,7 @@ from compas.plugins import pluggable
 
 
 @pluggable(category="solvers")
-def find_neighboring_beams(beams, inflate_by=0.0):
+def find_neighboring_elements(elements, inflate_by=0.0):
     """Finds neighboring pairs of beams in the given list of beams, using R-tree search.
 
     The inputs to the R-tree algorithm are the axis-aligned bounding boxes of the beams (beam.aabb), enlarged by the `inflate_by` amount.
@@ -107,7 +107,7 @@ class ConnectionSolver(object):
             List containing sets or neightboring pairs beams.
 
         """
-        return find_neighboring_beams(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
+        return find_neighboring_elements(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
 
     def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
         """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
@@ -115,6 +115,8 @@ class ConnectionSolver(object):
         If the topology is role-sensitive, the method outputs the beams in a consistent specific order
         (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
         order as they were inputted.
+
+        # TODO: this needs to be reworked ASAP
 
         Parameters
         ----------
@@ -217,6 +219,10 @@ class ConnectionSolver(object):
 
         # X-joint (both meeting somewhere along the line)
         return JointTopology.TOPO_X, beam_a, beam_b
+
+    def find_wall_wall_topology(self, wall_a, wall_b, tol=TOLERANCE, max_distance=None):
+        # TODO: make find topology more generic. break down to find_line_line_topo etc.
+        return self.find_topology(wall_a, wall_b, tol, max_distance)
 
     @staticmethod
     def _calc_t(line, plane):
