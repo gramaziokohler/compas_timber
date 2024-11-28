@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Reworked `comply` methods for `JointRule`s. 
 * Changed `DirectJointRule` to allow for more than 2 elements per joint.
 * Changed `beam` objects get added to `Joint.elements` in `Joint.__init__()`.
+* Changed `Trim_Feature` and `Brep_Subtraction_Feature` GH components to optionally accept elements.
 
 ### Removed
 
