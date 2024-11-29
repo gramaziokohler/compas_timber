@@ -70,9 +70,11 @@ class TimberModel(Model):
     @property
     def joints(self):
         # type: () -> Generator[Joint, None, None]
+        joints = []
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
-                yield interaction  # TODO: consider if there are other interaction types...
+                joints.append(interaction)
+        return set(joints)  # remove duplicates
 
     @property
     def walls(self):
@@ -222,7 +224,7 @@ class TimberModel(Model):
         elements = (node.element for node in group.children)
         return filter(filter_, elements)
 
-    def add_joint(self, joint, beams):
+    def add_joint(self, joint):
         # type: (Joint, tuple[Beam]) -> None
         """Add a joint object to the model.
 
@@ -230,15 +232,9 @@ class TimberModel(Model):
         ----------
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
-
-        beams : tuple(:class:`~compas_timber.elements.Beam`)
-            The two beams that should be joined.
-
         """
-        if len(beams) != 2:
-            raise ValueError("Expected 2 parts. Got instead: {}".format(len(beams)))
-        a, b = beams
-        _ = self.add_interaction(a, b, interaction=joint)
+        for interaction in joint.interactions:
+            _ = self.add_interaction(*interaction)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None

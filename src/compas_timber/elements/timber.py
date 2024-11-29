@@ -32,6 +32,10 @@ class TimberElement(Element):
         return False
 
     @property
+    def is_fastener(self):
+        return False
+
+    @property
     def is_group_element(self):
         return False
 

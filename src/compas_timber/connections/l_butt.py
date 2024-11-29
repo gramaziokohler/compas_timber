@@ -72,8 +72,10 @@ class LButtJoint(Joint):
         super(LButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        if main_beam and cross_beam:
+            self.elements.extend([main_beam, cross_beam])
+        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid) if main_beam else None
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid) if cross_beam else None
         self.mill_depth = mill_depth
         self.small_beam_butts = small_beam_butts
         self.modify_cross = modify_cross
@@ -134,7 +136,8 @@ class LButtJoint(Joint):
         if self.mill_depth:
             try:
                 cutting_plane_main = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-                cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
+                if self.mill_depth:
+                    cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
                 start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
             except AttributeError as ae:
                 raise BeamJoinningError(
@@ -208,5 +211,5 @@ class LButtJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beam = model.element_by_guid(self.main_beam_guid) if self.main_beam_guid else None
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid) if self.cross_beam_guid else None

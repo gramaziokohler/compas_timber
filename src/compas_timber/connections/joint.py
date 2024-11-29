@@ -58,13 +58,37 @@ class Joint(Interaction):
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+    MIN_ELEMENT_COUNT = 2
+    MAX_ELEMENT_COUNT = 2
 
     def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
+        self.elements = []
 
     @property
     def beams(self):
-        raise NotImplementedError
+        for element in self.elements:
+            if getattr(element, "is_beam", False):
+                yield element
+
+    @property
+    def plates(self):
+        for element in self.elements:
+            if getattr(element, "is_plate", False):
+                yield element
+
+    @property
+    def fasteners(self):
+        for element in self.elements:
+            if getattr(element, "is_fastener", False):
+                yield element
+
+    @classmethod
+    def element_count_complies(cls, elements):
+        if cls.MAX_ELEMENT_COUNT:
+            return len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT
+        else:
+            return len(elements) >= cls.MIN_ELEMENT_COUNT
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
@@ -136,10 +160,8 @@ class Joint(Interaction):
 
         """
 
-        if len(beams) < 2:
-            raise ValueError("Expected at least 2 beams. Got instead: {}".format(len(beams)))
         joint = cls(*beams, **kwargs)
-        model.add_joint(joint, beams)
+        model.add_joint(joint)
         return joint
 
     @property
@@ -154,8 +176,18 @@ class Joint(Interaction):
                 self._ends[str(beam.guid)] = "start"
             else:
                 self._ends[str(beam.guid)] = "end"
-
         return self._ends
+
+    @property
+    def interactions(self):
+        """Returns all possible interactions between elements that are connected by this joint.
+        interaction is defined as a tuple of (element_a, element_b, joint).
+        """
+        interactions = []
+        for i in range(len(self.beams)):
+            for j in range(i + 1, len(self.elements)):
+                interactions.append((self.elements[i], self.elements[j], self))
+        return interactions
 
     @staticmethod
     def get_face_most_towards_beam(beam_a, beam_b, ignore_ends=True):
