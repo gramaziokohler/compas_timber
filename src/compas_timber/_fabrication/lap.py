@@ -1,6 +1,6 @@
 import math
 
-from compas.geometry import Box
+from compas.datastructures import Mesh
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -11,6 +11,7 @@ from compas.geometry import Rotation
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
@@ -451,8 +452,7 @@ class Lap(BTLxProcess):
 
         """
         # type: (Brep, Beam) -> Brep
-        box = self.volume_from_params_and_beam(beam)
-        lap_volume = Brep.from_box(box)
+        lap_volume = self.volume_from_params_and_beam(beam)
         try:
             return geometry - lap_volume
         except IndexError:
@@ -462,8 +462,8 @@ class Lap(BTLxProcess):
                 "The lap volume does not intersect with the beam geometry.",
             )
 
-    def frames_from_params_and_beam(self, beam):
-        """Calculates the frames that create the lap from the machining parameters in this instance and the given beam
+    def planes_from_params_and_beam(self, beam):
+        """Calculates the planes that create the lap from the machining parameters in this instance and the given beam
 
         Parameters
         ----------
@@ -472,11 +472,11 @@ class Lap(BTLxProcess):
 
         Returns
         -------
-        list of :class:`compas.geometry.Frame`
-            The frames of the cut as a list of frames.
+        list of :class:`compas.geometry.Plane`
+            The planes of the cut as a list.
 
         """
-        # type: (Beam) -> Frame
+        # type: (Beam) -> List[Plane]
         assert self.orientation is not None
         assert self.start_x is not None
         assert self.start_y is not None
@@ -484,13 +484,13 @@ class Lap(BTLxProcess):
         assert self.inclination is not None
         assert self.slope is not None
         assert self.length is not None
-        assert self.width is not None # TODO: check if this is needed
+        assert self.width is not None
         assert self.depth is not None
         assert self.machining_limits is not None
 
         ref_surface = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_surface.point_at(self.start_x, self.start_y)
-        ref_frame = Frame(p_origin, ref_surface.frame.xaxis, ref_surface.frame.zaxis)
+        start_frame = Frame(p_origin, ref_surface.frame.xaxis, ref_surface.frame.zaxis)
 
         # apply angle rotation
         angle_axis = ref_surface.frame.zaxis if self.orientation == OrientationType.END else -ref_surface.frame.zaxis
@@ -502,30 +502,45 @@ class Lap(BTLxProcess):
         slope_axis = -ref_surface.frame.xaxis
         slope_rot = Rotation.from_axis_and_angle(slope_axis, math.radians(self.slope), point=p_origin)
 
-        # get ref_frame and opp_frame (two sides of the cut)
-        ref_frame.transform(angle_rot * inclination_rot * slope_rot)
-        opp_frame = ref_frame.translated(-ref_frame.zaxis * self.length)
-        opp_frame.yaxis = -opp_frame.yaxis
+        # get start_frame and opp_frame (two sides of the cut)
+        start_frame.transform(angle_rot * inclination_rot * slope_rot)
+        end_frame = start_frame.translated(-start_frame.zaxis * self.length)
+        end_frame.yaxis = -end_frame.yaxis
 
         # get top_frame and bottom_frame
         top_frame = Frame(p_origin, ref_surface.frame.xaxis, ref_surface.frame.yaxis)
         top_frame.transform(angle_rot*slope_rot)
-        bottom_frame = top_frame.translated(-top_frame.zaxis * self.depth)
+        TOL.absolute=1e-3
+        top_frame.translate(top_frame.zaxis * TOL.absolute) # offset the top frame to avoid tolerance issues
+        bottom_frame = top_frame.translated(-top_frame.zaxis * (self.depth + TOL.absolute))
         bottom_frame.xaxis = -bottom_frame.xaxis
 
-        side_frame_1 = ref_frame.rotated(math.radians(self.lead_angle), ref_frame.xaxis, point=ref_frame.point)
-        side_frame_2 = side_frame_1.translated(-side_frame_1.zaxis * self.length)
-        side_frame_2.xaxis = -side_frame_2.xaxis
+        # get side_frame_1 and side_frame_2
+        front_frame = start_frame.rotated(math.radians(self.lead_angle), start_frame.xaxis, point=start_frame.point)
+        back_frame = front_frame.translated(-front_frame.zaxis * self.width)
+        back_frame.xaxis = -back_frame.xaxis
 
+        # replace frames according to machining limits
         if not self.machining_limits["FaceLimitedFront"]:
-            side_frame_1 = beam.ref_sides[(self.ref_side_index-1)%4] #TODO: check with orientation
+            front_frame = beam.ref_sides[(self.ref_side_index-1)%4]
         if not self.machining_limits["FaceLimitedBack"]:
-            side_frame_2 = beam.ref_sides[(self.ref_side_index+1)%4] #TODO: check with orientation
+            back_frame = beam.ref_sides[(self.ref_side_index+1)%4]
+        if not self.machining_limits["FaceLimitedBottom"]:
+            opp_ref_side_index = beam.opposing_side_index(self.ref_side_index)
+            bottom_frame = beam.ref_sides[opp_ref_side_index]
+            bottom_frame.translate(bottom_frame.zaxis * TOL.absolute)
+        if not self.machining_limits["FaceLimitedStart"]:
+            start_frame = beam.ref_sides[4]
+        if not self.machining_limits["FaceLimitedEnd"]:
+            end_frame = beam.ref_sides[5]
 
-        return ref_frame, opp_frame, top_frame, bottom_frame, side_frame_1, side_frame_2
+        frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
+        return [Plane.from_frame(frame) for frame in frames]
 
     def volume_from_params_and_beam(self, beam):
-        """Calculates the volume of the cut from the machining parameters in this instance and the given beam
+        """
+        Calculates the trimming volume from the machining parameters in this instance and the given beam,
+        ensuring correct face orientation.
 
         Parameters
         ----------
@@ -535,14 +550,39 @@ class Lap(BTLxProcess):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The volume of the cut as a Brep.
-
+            The correctly oriented trimming volume of the cut.
         """
-        # type: (Beam) -> Brep
-        frames = self.frames_from_params_and_beam(beam)
+        # Get cutting frames
+        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self.planes_from_params_and_beam(beam)
 
+        # Calculate vertices using plane-plane-plane intersection
+        vertices = [
+            Point(*intersection_plane_plane_plane(start_plane, bottom_plane, front_plane)),     # v0
+            Point(*intersection_plane_plane_plane(start_plane, bottom_plane, back_plane)),      # v1
+            Point(*intersection_plane_plane_plane(end_plane, bottom_plane, back_plane)),        # v2
+            Point(*intersection_plane_plane_plane(end_plane, bottom_plane, front_plane)),       # v3
+            Point(*intersection_plane_plane_plane(start_plane, top_plane, front_plane)),        # v4
+            Point(*intersection_plane_plane_plane(start_plane, top_plane, back_plane)),         # v5
+            Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),           # v6
+            Point(*intersection_plane_plane_plane(end_plane, top_plane, front_plane)),          # v7
+        ]
+        # define faces of the trimming volume
+        # ensure vertices are defined in counter-clockwise order when viewed from the outside
+        faces = [
+            [3, 2, 1, 0],  # Bottom face
+            [7, 6, 5, 4],  # Top face
+            [0, 1, 5, 4],  # Side face 1
+            [1, 2, 6, 5],  # Side face 2
+            [2, 3, 7, 6],  # Side face 3
+            [3, 0, 4, 7],  # Side face 4
+        ]
+        # ensure proper vertex order based on orientation
+        if self.orientation == OrientationType.END:
+            faces = [face[::-1] for face in faces]
 
-        return Brep.from_mesh(mesh)
+        # create the volume mesh
+        trimming_volume_mesh = Mesh.from_vertices_and_faces(vertices, faces)
+        return Brep.from_mesh(trimming_volume_mesh)
 
 
 class LapParams(BTLxProcessParams):
