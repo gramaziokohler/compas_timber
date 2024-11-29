@@ -62,8 +62,11 @@ class ModelComponent(component):
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
-                for element in f_def.elements:
-                    element.add_features(f_def.feature)
+                if f_def.elements:
+                    for element in f_def.elements:
+                        element.add_features(f_def.feature)
+                else:
+                    self.AddRuntimeMessage(Warning, "No elements found for feature definition")
 
         Geometry = None
         scene = Scene()
@@ -73,7 +76,10 @@ class ModelComponent(component):
                 if element.debug_info:
                     debug_info.add_feature_error(element.debug_info)
             else:
-                scene.add(element.blank)
+                if element.is_beam or element.is_plate:
+                    scene.add(element.blank)
+                elif element.is_fastener:
+                    scene.add(element.geometry)
 
         if debug_info.has_errors:
             self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")

@@ -176,7 +176,6 @@ class Joint(Interaction):
                 self._ends[str(beam.guid)] = "start"
             else:
                 self._ends[str(beam.guid)] = "end"
-
         return self._ends
 
     @property
