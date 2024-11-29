@@ -89,7 +89,6 @@ class JointRule(object):
         unmatched_pairs = []
         for rule in direct_rules:
             joint_defs.append(JointDefinition(rule.joint_type, rule.beams, **rule.kwargs))
-
         while beam_pairs:
             pair = beam_pairs.pop()
             match_found = False

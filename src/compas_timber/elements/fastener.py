@@ -8,6 +8,7 @@ from compas.geometry import Vector
 
 from compas_timber.elements.features import DrillFeature
 from compas_timber.elements.timber import TimberElement
+from compas_timber.utils import intersection_line_box
 
 
 class Fastener(TimberElement):
@@ -30,10 +31,11 @@ class Fastener(TimberElement):
 
     """
 
-    def __init__(self, geometry=None, frame=None, **kwargs):
+    def __init__(self, shape=None, frame=None, **kwargs):
         super(Fastener, self).__init__(**kwargs)
-        self._geometry = geometry
-        self.frame = frame or Frame.worldXY()
+        self._shape = shape
+        self.interfaces = []
+        self.frame = frame
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -46,9 +48,13 @@ class Fastener(TimberElement):
         # type: () -> str
         return "<Fastener {}>".format(self.name)
 
-    # ==========================================================================
-    # Computed attributes
-    # ==========================================================================
+    @property
+    def frame(self):
+        return self._frame
+
+    @frame.setter
+    def frame(self, frame):
+        self._frame = frame
 
     @property
     def is_fastener(self):
@@ -58,6 +64,18 @@ class Fastener(TimberElement):
     def key(self):
         # type: () -> int | None
         return self.graph_node
+
+    def copy(self):
+        cls = type(self)
+        fast = cls(shape=self._shape, frame=self.frame)
+        fast.interfaces = [interface.copy() for interface in self.interfaces]
+        fast.debug_info = self.debug_info
+        return fast
+
+    @property
+    def geometry(self):
+        """returns the geometry of the fastener in the model"""
+        return self.shape.transformed(Transformation.from_frame(self.frame))
 
 
 class FastenerTimberInterface(object):
@@ -106,20 +124,29 @@ class FastenerTimberInterface(object):
 
     """
 
-    def __init__(
-        self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, feature_defs=None
-    ):
+    def __init__(self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None):
         self.outline_pts = outline_pts
         self.thickness = thickness
         self.holes = holes
         self.frame = frame
         self.shapes = shapes
-        self.feature_defs = feature_defs
-        self.element = None
-        self.fastener = None
+        self.features = features
         self._shape = None
         self.test = []
-        self.b_sup_plate = None
+
+    def __str__(self):
+        return "FastenerTimberInterface at {}".format(self.frame)
+
+    @property
+    def __data__(self):
+        return {
+            "outline_pts": self.outline_pts.__data__,
+            "thickness": self.thickness,
+            "holes": self.holes.__data__,
+            "frame": self.frame.__data__,
+            "shapes": self.shapes,
+            "feature_defs": self.feature_defs,
+        }
 
     @property
     def plate(self):
@@ -134,25 +161,6 @@ class FastenerTimberInterface(object):
             hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, self.thickness * 2, frame))
             plate -= hole
         return plate
-
-    @property
-    def features(self):
-        """Generate features from the interface that are applied to the timber element."""
-        features = []
-        for hole in self.holes:
-            vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
-            length = self.element.width if hole["through"] else hole["vector"].length
-            point = hole["point"] - vector * length * 0.5
-            drill_line = Line.from_point_direction_length(point, vector, length)
-            drill_line.transform(Transformation.from_frame(self.frame))
-            features.append(
-                DrillFeature(drill_line, hole["diameter"], self.element.width)
-            )  # TODO: make this adapt using intersection with `element.blank` or similar
-        for feature_def in self.feature_defs:
-            feature_def = feature_def.copy()
-            feature_def.transform(Transformation.from_frame(self.frame))
-            features.append(feature_def)
-        return features
 
     @property
     def shape(self):
@@ -172,20 +180,38 @@ class FastenerTimberInterface(object):
     @property
     def geometry(self):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
-        shape = self.shape.copy()
-        transform = Transformation.from_frame(self.frame)
-        shape.transform(transform)
-        return shape
+        return self.shape.transformed(Transformation.from_frame(self.frame))
 
-    @property
-    def __str__(self):
-        return "FastenerTimberInterface at {}".format(self.frame)
+    def add_features(self, element):
+        """Add a feature to the interface."""
+        features = []
+        for hole in self.holes:
+            features.append(self.get_hole_feature(hole))
+            print("hole", hole)
+        for feature in self.features:
+            feature = feature.copy()
+            feature.transform(Transformation.from_frame(self.frame))
+            features.append(feature)
+        for feature in features:
+            element.add_feature(feature)
+
+    def get_hole_feature(self, hole):
+        """Get the line that goes through the timber element."""
+        vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
+        length = vector.length
+        point = hole["point"] - vector * length * 0.5
+        drill_line = Line.from_point_direction_length(point, vector, length)
+        drill_line.transform(Transformation.from_frame(self.frame))
+        if hole["through"]:
+            pts = intersection_line_box(drill_line, self.element.blank)
+            if pts:
+                drill_line = Line(*pts)
+                length = drill_line.length
+        return DrillFeature(drill_line, hole["diameter"], length)
 
     def copy(self):
         fast = FastenerTimberInterface(
-            self.outline_pts, self.thickness, self.holes, shapes=self.shapes, feature_defs=self.feature_defs
+            self.outline_pts, self.thickness, self.holes, shapes=self.shapes, features=self.features
         )
-        fast._shape = self.shape
-        fast.element = self.element
-        fast.fastener = self.fastener
+        fast._shape = self._shape
         return fast
