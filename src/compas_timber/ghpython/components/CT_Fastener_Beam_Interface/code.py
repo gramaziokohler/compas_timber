@@ -1,11 +1,11 @@
 from compas.geometry import Brep
 from compas.scene import Scene
+from compas_rhino.conversions import curve_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.design import FeatureDefinition
 from compas_timber.elements import FastenerTimberInterface
-from compas_rhino.conversions import curve_to_compas
 
 
 class FastenerTimberInterfaceComponent(component):

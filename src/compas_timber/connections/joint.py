@@ -184,7 +184,7 @@ class Joint(Interaction):
         interaction is defined as a tuple of (element_a, element_b, joint).
         """
         interactions = []
-        for i in range(len(self.beams)):
+        for i in range(len(self.elements)):
             for j in range(i + 1, len(self.elements)):
                 interactions.append((self.elements[i], self.elements[j], self))
         return interactions

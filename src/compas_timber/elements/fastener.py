@@ -2,7 +2,6 @@ from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
@@ -185,7 +184,6 @@ class FastenerTimberInterface(object):
         features = []
         for hole in self.holes:
             features.append(self.get_hole_feature(hole))
-            print("hole", hole)
         for feature in self.features:
             feature = feature.copy()
             feature.transform(Transformation.from_frame(self.frame))
