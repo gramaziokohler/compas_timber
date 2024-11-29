@@ -2,9 +2,9 @@ from compas_timber._fabrication import JackRafterCut
 from compas_timber._fabrication import Lap
 from compas_timber.connections.utilities import beam_ref_side_incidence
 
-from .joint import BeamJoinningError
-from .joint import Joint
-from .solver import JointTopology
+from compas_timber.connections import BeamJoinningError
+from compas_timber.connections import Joint
+from compas_timber.connections import JointTopology
 
 
 class TButtJoint(Joint):
@@ -49,8 +49,8 @@ class TButtJoint(Joint):
         super(TButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid) if main_beam else None
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid) if cross_beam else None
         self.mill_depth = mill_depth
         self.features = []
 

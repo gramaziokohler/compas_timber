@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TButtPlateJoint`.
 * Added `PlateFastener`, an interface to generate steel plate fasteners.
 * Added `t_butt_plate.json`, serialization for a single type of `PlateFastener`.
+* Added `FastenerTimberInterface` GH component.
+* Added `PlateFasterner` GH component.
 
 ### Changed
 

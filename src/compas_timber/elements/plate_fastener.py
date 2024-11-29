@@ -166,6 +166,4 @@ class PlateFastener(Fastener):
         :class:`~compas.geometry.Brep`
 
         """
-
-        transformation = Transformation.from_frame(self.frame)
-        return self.shape.transformed(transformation)
+        return self.shape.transformed(Transformation.from_frame(self.frame))

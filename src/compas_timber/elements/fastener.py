@@ -131,8 +131,6 @@ class FastenerTimberInterface(object):
         self.frame = frame
         self.shapes = shapes
         self.features = features
-        self.element = None
-        self.fastener = None
         self._shape = None
         self.test = []
 
@@ -184,7 +182,7 @@ class FastenerTimberInterface(object):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
 
-    def add_features(self):
+    def add_features(self, element):
         """Add a feature to the interface."""
         features = []
         for hole in self.holes:
@@ -195,7 +193,7 @@ class FastenerTimberInterface(object):
             feature.transform(Transformation.from_frame(self.frame))
             features.append(feature)
         for feature in features:
-            self.element.add_feature(feature)
+            element.add_feature(feature)
 
     def get_hole_feature(self, hole):
         """Get the line that goes through the timber element."""
@@ -216,6 +214,4 @@ class FastenerTimberInterface(object):
             self.outline_pts, self.thickness, self.holes, shapes=self.shapes, features=self.features
         )
         fast._shape = self._shape
-        fast.element = self.element
-        fast.fastener = self.fastener
         return fast

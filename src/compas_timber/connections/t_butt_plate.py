@@ -8,7 +8,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
-from compas_timber.connections.butt_joint import ButtJoint
+from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import CutFeature
 from compas_timber.elements import MillVolume
@@ -20,7 +20,7 @@ from .solver import JointTopology
 TOL = Tolerance()
 
 
-class TButtPlateJoint(ButtJoint):
+class TButtPlateJoint(TButtJoint):
     """Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
     trimming the main beam.
 
@@ -92,8 +92,8 @@ class TButtPlateJoint(ButtJoint):
             The created joint.
 
         """
-        joint = TButtPlateJoint(*beams, **kwargs)
-        for fastener in joint.fasteners:
+        joint = cls(*beams, **kwargs)
+        for fastener in joint.fasteners: # TODO: consider if this should be in parent class.
             model.add_element(fastener)
         model.add_joint(joint)
         return joint
@@ -202,37 +202,14 @@ class TButtPlateJoint(ButtJoint):
             self.elements.append(fastener)
 
     def add_features(self):
-        """Adds the trimming plane to the main beam (no features for the cross beam).
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        """Adds the geometric features to the beams. TODO: add btlx features in separate function.
 
         """
-        assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-
-        cutting_plane = None
-        try:
-            cutting_plane = self.get_main_cutting_plane()[0]
-        except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
-        except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-
-        trim_feature = CutFeature(cutting_plane)
-        if self.mill_depth:
-            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
-        self.main_beam.add_features(trim_feature)
-        self.apply_interface_features()
-        self.features = [trim_feature]
-
-    def apply_interface_features(self):
-        """Applies the drill features of the joint to the beams.
-        Drill features are defined by `fastener.holes`
-        This assumes the same fastener on each side of the joint.
-        """
+        super(TButtPlateJoint, self).add_features()
         for fastener in self.fasteners:
             for beam, interface in zip([self.main_beam, self.cross_beam], fastener.interfaces):
-                interface.element = beam
-                interface.add_features()
+                interface.add_features(beam)
+
+
+
+
