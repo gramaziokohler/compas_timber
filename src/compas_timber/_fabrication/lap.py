@@ -7,6 +7,7 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Rotation
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
@@ -312,6 +313,7 @@ class Lap(BTLxProcess):
     @classmethod
     def from_plane_and_beam(cls, plane, beam, width, depth, ref_side_index=0):
         """Create a Lap instance from a plane and a beam. The lap is defined by the plane given and a plane parallel to that at a distance defined by the width.
+        This method is used to create pocket cuts.
 
         Parameters
         ----------
@@ -460,6 +462,68 @@ class Lap(BTLxProcess):
                 "The lap volume does not intersect with the beam geometry.",
             )
 
+    def frames_from_params_and_beam(self, beam):
+        """Calculates the frames that create the lap from the machining parameters in this instance and the given beam
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        list of :class:`compas.geometry.Frame`
+            The frames of the cut as a list of frames.
+
+        """
+        # type: (Beam) -> Frame
+        assert self.orientation is not None
+        assert self.start_x is not None
+        assert self.start_y is not None
+        assert self.angle is not None
+        assert self.inclination is not None
+        assert self.slope is not None
+        assert self.length is not None
+        assert self.width is not None # TODO: check if this is needed
+        assert self.depth is not None
+        assert self.machining_limits is not None
+
+        ref_surface = beam.side_as_surface(self.ref_side_index)
+        p_origin = ref_surface.point_at(self.start_x, self.start_y)
+        ref_frame = Frame(p_origin, ref_surface.frame.xaxis, ref_surface.frame.zaxis)
+
+        # apply angle rotation
+        angle_axis = ref_surface.frame.zaxis if self.orientation == OrientationType.END else -ref_surface.frame.zaxis
+        angle_rot = Rotation.from_axis_and_angle(angle_axis, math.radians(self.angle), point=p_origin)
+        # apply inclination rotation
+        inclination_axis = ref_surface.frame.yaxis if self.orientation == OrientationType.END else -ref_surface.frame.yaxis
+        inclination_rot = Rotation.from_axis_and_angle(inclination_axis, math.radians(self.inclination), point=p_origin)
+        # apply slope rotation
+        slope_axis = -ref_surface.frame.xaxis
+        slope_rot = Rotation.from_axis_and_angle(slope_axis, math.radians(self.slope), point=p_origin)
+
+        # get ref_frame and opp_frame (two sides of the cut)
+        ref_frame.transform(angle_rot * inclination_rot * slope_rot)
+        opp_frame = ref_frame.translated(-ref_frame.zaxis * self.length)
+        opp_frame.yaxis = -opp_frame.yaxis
+
+        # get top_frame and bottom_frame
+        top_frame = Frame(p_origin, ref_surface.frame.xaxis, ref_surface.frame.yaxis)
+        top_frame.transform(angle_rot*slope_rot)
+        bottom_frame = top_frame.translated(-top_frame.zaxis * self.depth)
+        bottom_frame.xaxis = -bottom_frame.xaxis
+
+        side_frame_1 = ref_frame.rotated(math.radians(self.lead_angle), ref_frame.xaxis, point=ref_frame.point)
+        side_frame_2 = side_frame_1.translated(-side_frame_1.zaxis * self.length)
+        side_frame_2.xaxis = -side_frame_2.xaxis
+
+        if not self.machining_limits["FaceLimitedFront"]:
+            side_frame_1 = beam.ref_sides[(self.ref_side_index-1)%4] #TODO: check with orientation
+        if not self.machining_limits["FaceLimitedBack"]:
+            side_frame_2 = beam.ref_sides[(self.ref_side_index+1)%4] #TODO: check with orientation
+
+        return ref_frame, opp_frame, top_frame, bottom_frame, side_frame_1, side_frame_2
+
     def volume_from_params_and_beam(self, beam):
         """Calculates the volume of the cut from the machining parameters in this instance and the given beam
 
@@ -470,48 +534,15 @@ class Lap(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Box`
-            The boxvolume of the cut as a box.
+        :class:`compas.geometry.Brep`
+            The volume of the cut as a Brep.
 
         """
         # type: (Beam) -> Brep
-        assert self.orientation is not None
-        assert self.start_x is not None
-        assert self.start_y is not None
-        assert self.angle is not None
-        assert self.inclination is not None
-        assert self.slope is not None
-        assert self.length is not None
-        assert self.width is not None
-        assert self.depth is not None
-        assert self.machining_limits is not None
+        frames = self.frames_from_params_and_beam(beam)
 
 
-        ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
-
-        box_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.zaxis)
-
-        # apply angle rotation
-        rot_angle = 90-self.angle if self.orientation == OrientationType.END else self.angle-90
-        box_frame.rotate(math.radians(self.angle), box_frame.yaxis, point=box_frame.point)
-
-        # apply inclination rotation
-        box_frame.rotate(math.radians(self.inclination), box_frame.xaxis, point=box_frame.point)
-
-        # apply slope rotation
-        box_frame.rotate(math.radians(self.slope), box_frame.yaxis, point=box_frame.point)
-
-        box = Box(xsize=self.width, ysize=self.length, zsize=self.depth, frame=box_frame)
-        box.translate(box_frame.xaxis * (self.width / 2) + box_frame.yaxis * (-self.length / 2) + box_frame.zaxis * (self.depth / 2))
-
-
-        if not self.machining_limits["FaceLimitedFront"] or not self.machining_limits["FaceLimitedBack"]:
-            box.xsize *= 5 # make the box large enough to cut through the beam
-        if not self.machining_limits["FaceLimitedStart"] or not self.machining_limits["FaceLimitedEnd"]:
-            box.ysize *= 5 # make the box long enough to cut through the beam
-
-        return box
+        return Brep.from_mesh(mesh)
 
 
 class LapParams(BTLxProcessParams):
