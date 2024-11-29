@@ -9,10 +9,10 @@ from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.elements import Beam as CTBeam
+from compas_timber.elements import Beam
 
 
-class Beam_tree_from_mesh(component):
+class BeamTreeFromMesh(component):
     def RunScript(self, mesh, width, height, category):
         # minimum inputs required
         if not mesh:
@@ -51,7 +51,7 @@ class Beam_tree_from_mesh(component):
         beam_list = []
         for edge, z in zip(edge_index_pairs, beam_Zs):  # create the beams from the edges
             edge = Line(points[list(edge)[0]], points[list(edge)[1]])
-            beam = CTBeam.from_centerline(edge, width, height, z)
+            beam = Beam.from_centerline(edge, width, height, z)
             if category:
                 beam.attributes["category"] = category
             beam_list.append(beam)

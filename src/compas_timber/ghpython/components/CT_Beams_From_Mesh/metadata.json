@@ -10,42 +10,42 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "mesh",
+                "name": "Mesh",
                 "description": "Mesh whose edges are used to generate beams.",
                 "typeHintID": "mesh",
                 "scriptParamAccess": 0
             },
             {
-                "name": "width",
-                "description": "width of beams",
+                "name": "Width",
+                "description": "Width of beams",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             },
             {
-                "name": "height",
+                "name": "Height",
                 "description": "Height of beams",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             },
             {
-                "name": "category",
-                "description": "category assigned to beams that can be used to define joint rules.",
+                "name": "Category",
+                "description": "Category assigned to beams that can be used to define joint rules.",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
-                "name": "beams",
-                "description": "list of compas_timber Beams."
+                "name": "Beams",
+                "description": "List of compas_timber Beams."
             },
             {
-                "name": "beam map",
+                "name": "Beam Map",
                 "description": "a Data Tree with the beams organized by connection to a mesh vertex. Used to define joint rules using the Joint_Rules_From_List component."
             },
             {
-                "name": "blanks",
-                "description": "base beam geometry before adding features or joining operations"
+                "name": "Blanks",
+                "description": "Base beam geometry before adding features or joining operations"
             }
         ]
     }
