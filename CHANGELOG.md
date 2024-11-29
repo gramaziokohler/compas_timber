@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `JointRule.joints_from_beams_and_rules()` static method 
 * Added `Element.reset()` method.
 * Added new `fasteners.py` module with new `Fastener` element type.
+* Added new `compas_timber._fabrication.Lap`.
 * Added unit tests for `fasteners.py` module.
 * Added `Joint_Rule_From_List` GH Component that takes lists of beams to create joints.
 * Added `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` class attributes to `Joint`.
@@ -61,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `model.element_by_guid()` instead of direct `elementsdict[]` access for beam retrieval in joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
 * Reworked the model generation pipeline.
 * Reworked `comply` methods for `JointRule`s. 
+* Fixed error with angle and inclination calculation in `compas_timber._fabrication.JackRafterCut` 
+* Changed `compas_timber.connections.TButtJoint` and `compas_timber.connections.LButtJoint` by using the new implemented BTLx Processes to define the Joints
 * Changed `DirectJointRule` to allow for more than 2 elements per joint.
 * Changed `beam` objects get added to `Joint.elements` in `Joint.create()`.
 
@@ -68,6 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Removed module `compas_timber.utils.compas_extra`.
 * Removed a bunch of spaghetti from `CT_model` GH component.
+* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
+* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
+* Removed module `compas_timber.connections.butt_joint`
+
+
 
 ## [0.11.0] 2024-09-17
 

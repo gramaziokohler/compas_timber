@@ -1,4 +1,3 @@
-from .butt_joint import ButtJoint
 from .french_ridge_lap import FrenchRidgeLapJoint
 from .joint import BeamJoinningError
 from .joint import Joint
@@ -21,7 +20,6 @@ from .ball_node import BallNodeJoint
 __all__ = [
     "Joint",
     "LapJoint",
-    "ButtJoint",
     "BeamJoinningError",
     "TButtJoint",
     "LButtJoint",
