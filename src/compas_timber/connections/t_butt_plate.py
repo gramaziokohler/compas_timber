@@ -10,8 +10,6 @@ from compas.tolerance import Tolerance
 
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.elements import CutFeature
-from compas_timber.elements import MillVolume
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import BeamJoinningError
@@ -93,7 +91,7 @@ class TButtPlateJoint(TButtJoint):
 
         """
         joint = cls(*beams, **kwargs)
-        for fastener in joint.fasteners: # TODO: consider if this should be in parent class.
+        for fastener in joint.fasteners:  # TODO: consider if this should be in parent class.
             model.add_element(fastener)
         model.add_joint(joint)
         return joint
@@ -202,14 +200,8 @@ class TButtPlateJoint(TButtJoint):
             self.elements.append(fastener)
 
     def add_features(self):
-        """Adds the geometric features to the beams. TODO: add btlx features in separate function.
-
-        """
+        """Adds the geometric features to the beams. TODO: add btlx features in separate function."""
         super(TButtPlateJoint, self).add_features()
         for fastener in self.fasteners:
             for beam, interface in zip([self.main_beam, self.cross_beam], fastener.interfaces):
                 interface.add_features(beam)
-
-
-
-

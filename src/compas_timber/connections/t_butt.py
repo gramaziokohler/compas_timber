@@ -1,10 +1,9 @@
 from compas_timber._fabrication import JackRafterCut
 from compas_timber._fabrication import Lap
-from compas_timber.connections.utilities import beam_ref_side_incidence
-
 from compas_timber.connections import BeamJoinningError
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
+from compas_timber.connections.utilities import beam_ref_side_incidence
 
 
 class TButtJoint(Joint):
@@ -49,6 +48,8 @@ class TButtJoint(Joint):
         super(TButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
+        if main_beam and cross_beam:
+            self.elements.extend([main_beam, cross_beam])
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid) if cross_beam else None
         self.mill_depth = mill_depth
@@ -88,7 +89,8 @@ class TButtJoint(Joint):
         assert self.main_beam and self.cross_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
+            if self.mill_depth:
+                cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -141,5 +143,5 @@ class TButtJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beam = model.element_by_guid(self.main_beam_guid) if self.main_beam_guid else None
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid) if self.cross_beam_guid else None
