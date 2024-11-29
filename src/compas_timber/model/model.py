@@ -76,7 +76,7 @@ class TimberModel(Model):
 
     @property
     def fasteners(self):
-        # type: () -> Generator[Plate, None, None]
+        # type: () -> Generator[Fastener, None, None]
         for element in self.elements():
             if getattr(element, "is_fastener", False):
                 yield element
