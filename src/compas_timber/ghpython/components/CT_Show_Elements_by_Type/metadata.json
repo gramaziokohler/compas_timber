@@ -18,15 +18,15 @@
         ],
         "outputParameters": [
             {
-                "name": "beams",
+                "name": "Beams",
                 "description": "beam element geometries."
             },
             {
-                "name": "plates",
+                "name": "Plates",
                 "description": "plate element geometries."
             },
             {
-                "name": "fasteners",
+                "name": "Fasteners",
                 "description": "fastener element geometries."
             }
         ]
