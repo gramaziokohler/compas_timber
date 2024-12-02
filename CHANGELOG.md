@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-
+* Added LayerName & ClearLayer Input to GH `BakeBoxMap` and `BakePlateBoxMap` Components.
 * Added new base class for timber elements `TimberElement`.
 * Added property `is_beam` to `Beam` class.
 * Added property `is_plate` to `Plate` class.
@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed random offset in GH `BakeBoxMap`Component
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
 * Renamed `intersection_line_plane` to `intersection_line_plane_param`.
 * Renamed `intersection_line_line_3D` to `intersection_line_line_param`.

@@ -89,14 +89,14 @@ class BakeBeamBoxMap(component):
         randangle = (random.random() - 0.5) * b
         w.Rotate(randangle, pln.XAxis)
 
-        randpos = sx * random.random()
-        pt += pln.XAxis * randpos
+        # Random offset
+        random_offset = [(random.random() - 0.5) * scale / 2 for scale in (sx, sy, sz)]
 
         # Create box mapping
         mapping_pln = Plane(pt, w, v)
-        dx = Interval(-sx * 0.5, sx * 0.5)
-        dy = Interval(-sy * 0.5, sy * 0.5)
-        dz = Interval(-sz * 0.5, sz * 0.5)
+        dx = Interval(-sx * 0.5 + random_offset[0], sx * 0.5 + random_offset[0])
+        dy = Interval(-sy * 0.5 + random_offset[1], sy * 0.5 + random_offset[1])
+        dz = Interval(-sz * 0.5 + random_offset[2], sz * 0.5 + random_offset[2])
 
         box_map = Render.TextureMapping.CreateBoxMapping(mapping_pln, dx, dy, dz, False)
 
