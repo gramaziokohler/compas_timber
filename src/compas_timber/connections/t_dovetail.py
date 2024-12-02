@@ -5,6 +5,7 @@ from compas_timber._fabrication import DovetailTenon
 from compas_timber._fabrication.btlx_process import TenonShapeType
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
+from compas_timber.connections.utilities import point_centerline_towards_joint
 
 from .joint import BeamJoinningError
 from .joint import Joint
@@ -102,6 +103,7 @@ class TDovetailJoint(Joint):
         data["tool_height"] = self.tool_height
         return data
 
+    # fmt: off
     def __init__(
         self,
         main_beam,
@@ -116,12 +118,13 @@ class TDovetailJoint(Joint):
         tool_angle=None,
         tool_diameter=None,
         tool_height=None,
+        **kwargs
     ):
-        super(TDovetailJoint, self).__init__()
+        super(TDovetailJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_guid = str(main_beam.guid) if main_beam else None
-        self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
+        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
 
         # Default values if not provided
         self.start_y = start_y if start_y is not None else 0.0
@@ -154,8 +157,13 @@ class TDovetailJoint(Joint):
 
     @property
     def main_beam_ref_side_index(self):
-        cross_ref_side_normal = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
-        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, cross_ref_side_normal, ignore_ends=True)
+        # get the vector towards the joint
+        centerline_vect = point_centerline_towards_joint(self.main_beam, self.cross_beam)
+        # flip the vector if the dot product with the y-axis of the reference side is negative
+        vector = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].yaxis
+        if centerline_vect.dot(vector) < 0:
+            vector = -vector
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, vector, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
@@ -279,5 +287,5 @@ class TDovetailJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.elementdict[self.main_beam_guid]
-        self.cross_beam = model.elementdict[self.cross_beam_guid]
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)

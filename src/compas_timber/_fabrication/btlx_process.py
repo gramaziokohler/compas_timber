@@ -148,3 +148,44 @@ class LimitationTopType(object):
     LIMITED = "limited"
     UNLIMITED = "unlimited"
     POCKET = "pocket"
+
+
+class MachiningLimits(object):
+    """Configuration class for the machining limits of the cut.
+
+    Attributes
+    ----------
+    EXPECTED_KEYS : set
+        The expected keys for the limits dictionary.
+    face_limited_start : bool
+        Limit the start face.
+    face_limited_end : bool
+        Limit the end face.
+    face_limited_front : bool
+        Limit the front face.
+    face_limited_back : bool
+        Limit the back face.
+
+    Properties
+    ----------
+    limits : dict
+        The limits dictionary with values as a boolean.
+    """
+
+    EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]
+
+    def __init__(self):
+        self.face_limited_start = True
+        self.face_limited_end = True
+        self.face_limited_front = True
+        self.face_limited_back = True
+
+    @property
+    def limits(self):
+        """Dynamically generate the limits dictionary with boolean values from instance attributes."""
+        return {
+            "FaceLimitedStart": self.face_limited_start,
+            "FaceLimitedEnd": self.face_limited_end,
+            "FaceLimitedFront": self.face_limited_front,
+            "FaceLimitedBack": self.face_limited_back,
+        }

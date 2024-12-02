@@ -57,7 +57,56 @@ def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
     return ref_side_angles
 
 
-def beam_ref_side_incidence_with_vector(beam_b, vector, ignore_ends=True):
+def beam_ref_side_incidence_cross(beam_a, beam_b, ignore_ends=True):
+    """Returns a map of ref_side indices of beam_a and the angle of their normal with the cross product of beam_a's centerline and beam_b's centerline.
+
+    This is used to find a cutting plane when joining the two beams.
+
+    Compared to beam_side_incidence, this function considers the ref_sides and not faces and forms part of the transition to the new implementation system
+
+    Parameters
+    ----------
+    beam_a : :class:`~compas_timber.parts.Beam`
+        The beam that attaches with one of its ends to the side of beam_b.
+    beam_b : :class:`~compas_timber.parts.Beam`
+        The other beam.
+    ignore_ends : bool, optional
+        If True, only the first four ref_sides of `beam_a` are considered. Otherwise all ref_sides are considered.
+
+    Returns
+    -------
+    dict(int, float)
+        A map of ref_side indices of beam_a and their respective angle with the cross product of it's own centerline and beam_b's centerline.
+
+    """
+    # find the orientation of beam_a's centerline so that it's pointing outward of the joint
+    # find the closest end
+    p1x, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
+    if p1x is None:
+        raise ValueError("The two beams do not intersect with each other")
+
+    end, _ = beam_a.endpoint_closest_to_point(Point(*p1x))
+
+    if end == "start":
+        centerline_vec = beam_a.centerline.vector * -1
+    else:
+        centerline_vec = beam_a.centerline.vector
+
+    if ignore_ends:
+        beam_a_ref_sides = beam_a.ref_sides[:4]
+    else:
+        beam_a_ref_sides = beam_a.ref_sides
+
+    cross_vector = centerline_vec.cross(beam_b.centerline.direction)
+
+    ref_side_angles = {}
+    for ref_side_index, ref_side in enumerate(beam_a_ref_sides):
+        ref_side_angles[ref_side_index] = angle_vectors(ref_side.normal, cross_vector)
+
+    return ref_side_angles
+
+
+def beam_ref_side_incidence_with_vector(beam_a, vector, ignore_ends=True):
     """
     Returns a map of ref_side indices of beam_b and the angle of their normal with a given vector.
 
@@ -65,33 +114,33 @@ def beam_ref_side_incidence_with_vector(beam_b, vector, ignore_ends=True):
 
     Parameters
     ----------
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.parts.Beam`
         The beam for which ref_side angles will be calculated.
     vector : :class:`~compas.geometry.Vector`
         The vector to compare against the ref_sides' normals.
     ignore_ends : bool, optional
-        If True, only the first four ref_sides of `beam_b` are considered. Otherwise all ref_sides are considered.
+        If True, only the first four ref_sides of `beam_a` are considered. Otherwise all ref_sides are considered.
 
     Examples
     --------
     >>> vector = Vector(1, 0, 0)
-    >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_b, vector)
+    >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_a, vector)
     >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
-    >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index]
+    >>> cutting_plane = beam_a.ref_sides[closest_ref_side_index]
 
     Returns
     -------
     dict(int, float)
-        A map of ref_side indices of beam_b and their respective angle with the given vector.
+        A map of ref_side indices of beam_a and their respective angle with the given vector.
 
     """
     if ignore_ends:
-        beam_b_ref_sides = beam_b.ref_sides[:4]
+        beam_a_ref_sides = beam_a.ref_sides[:4]
     else:
-        beam_b_ref_sides = beam_b.ref_sides
+        beam_a_ref_sides = beam_a.ref_sides
 
     ref_side_angles = {}
-    for ref_side_index, ref_side in enumerate(beam_b_ref_sides):
+    for ref_side_index, ref_side in enumerate(beam_a_ref_sides):
         ref_side_angles[ref_side_index] = angle_vectors(vector, ref_side.normal)
 
     return ref_side_angles
@@ -162,3 +211,33 @@ def check_beam_alignment(beam_a, beam_b, tol=TOL):
 
     # Return True if the beams are nearly perpendicular (dot product close to 0)
     return tol.is_zero(dot_with_beam_b_normal)
+
+
+def point_centerline_towards_joint(beam_a, beam_b):
+    """
+    Returns the centerline vector of beam_a pointing towards the joint with beam_b.
+
+    Parameters
+    ----------
+    beam_a : :class:`~compas_timber.parts.Beam`
+        The beam that attaches with one of its ends to the side of beam_b.
+    beam_b : :class:`~compas_timber.parts.Beam`
+        The other beam.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Vector`
+        The centerline vector of beam_a pointing towards the joint with beam_b.
+    """
+
+    # find the orientation of main_beams's centerline so that it's pointing towards the joint
+    # find the closest end
+    p1x, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
+    if p1x is None:
+        raise ValueError("The two beams do not intersect with each other")
+    end, _ = beam_a.endpoint_closest_to_point(Point(*p1x))
+    if end == "start":
+        centerline_vec = beam_a.centerline.vector * -1
+    else:
+        centerline_vec = beam_a.centerline.vector
+    return centerline_vec

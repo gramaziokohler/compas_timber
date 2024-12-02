@@ -7,6 +7,7 @@ from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Rotation
+from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
@@ -385,13 +386,10 @@ class DovetailMortise(BTLxProcess):
 
         # calclulate start_x and start_y
         start_x = cls._calculate_start_x(ref_side, ref_edge, frame)
-        start_y = abs(frame.point[2] - ref_side.point[2])
+        start_y = cls._calculate_start_y(ref_side, frame)
 
         # define angle
-        if orientation == OrientationType.START:
-            angle -= 90.0
-        else:
-            angle += 90.0
+        angle = cls._calculate_angle(ref_side, frame, orientation)
 
         # define slope and inclination
         # TODO: In which cases do you want indiferent slope and inclination?
@@ -444,6 +442,23 @@ class DovetailMortise(BTLxProcess):
 
         start_x = distance_point_point(ref_side.point, point_start_x)
         return start_x
+
+    @staticmethod
+    def _calculate_start_y(ref_side, cutting_frame):
+        # calculate the start_y from the distance between the ref_side and the cutting frame in the y-axis direction of the ref_side
+        direction = ref_side.yaxis.unitized()
+        vector = cutting_frame.point - ref_side.point
+        return abs(vector.dot(direction))
+
+    @staticmethod
+    def _calculate_angle(ref_side, cutting_frame, orientation):
+        # calculate the angle of the cut based on the ref_side and cutting_frame
+        if orientation == OrientationType.START:
+            angle = angle_vectors_signed(ref_side.xaxis, -cutting_frame.xaxis, ref_side.normal, deg=True)
+            return angle - 90.0
+        else:
+            angle = angle_vectors_signed(ref_side.xaxis, cutting_frame.xaxis, ref_side.normal, deg=True)
+            return angle + 90.0
 
     ########################################################################
     # Class Methods

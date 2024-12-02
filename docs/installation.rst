@@ -12,7 +12,7 @@ In an new environment:
 
 .. code-block:: bash
 
-    conda create -n <myenvname> compas_timber --yes
+    conda create -n <myenvname> compas_timber -c conda-forge --yes
     conda activate <myenvname>
 
 Install to Rhino 7.0

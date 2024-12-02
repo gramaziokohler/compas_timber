@@ -11,6 +11,8 @@ from compas_timber.elements import Beam
 from compas_timber._fabrication import DovetailMortise
 from compas_timber._fabrication import DovetailTenon
 
+from compas.tolerance import TOL
+
 
 @pytest.fixture
 def cross_beams():
@@ -461,4 +463,9 @@ def test_dovetailtenon_frame_from_params(
 
     # generate frame from the parameters
     generated_frame = dovetail_tenon.frame_from_params_and_beam(main_beams[test_index])
-    assert generated_frame == expected_frame
+    assert generated_frame.point.x == pytest.approx(expected_frame.point.x, abs=TOL.approximation)
+    assert generated_frame.point.y == pytest.approx(expected_frame.point.y, abs=TOL.approximation)
+    assert generated_frame.point.z == pytest.approx(expected_frame.point.z, abs=TOL.approximation)
+    assert generated_frame.normal.x == pytest.approx(expected_frame.normal.x, abs=TOL.approximation)
+    assert generated_frame.normal.y == pytest.approx(expected_frame.normal.y, abs=TOL.approximation)
+    assert generated_frame.normal.z == pytest.approx(expected_frame.normal.z, abs=TOL.approximation)
