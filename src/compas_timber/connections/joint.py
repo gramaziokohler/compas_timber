@@ -3,6 +3,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
 from compas_model.interactions import Interaction
+from itertools import combinations
 
 from .solver import JointTopology
 
@@ -185,9 +186,8 @@ class Joint(Interaction):
         interaction is defined as a tuple of (element_a, element_b, joint).
         """
         interactions = []
-        for i in range(len(self.beams)):
-            for j in range(i + 1, len(self.elements)):
-                interactions.append((self.elements[i], self.elements[j], self))
+        for pair in combinations(self.elements, 2):
+                interactions.append((pair[0], pair[1], self))
         return interactions
 
     @staticmethod
