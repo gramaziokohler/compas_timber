@@ -135,6 +135,7 @@ class TButtJoint(Joint):
                 lap_width,
                 self.mill_depth,
                 self.cross_beam_ref_side_index,
+                is_pocket=True,
             )
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)

@@ -37,19 +37,19 @@ class XHalfLapJoint(Joint):
         data = super(XHalfLapJoint, self).__data__
         data["main_beam_guid"] = self.main_beam_guid
         data["cross_beam_guid"] = self.cross_beam_guid
-        data["mill_depth"] = self.mill_depth
+        data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, cut_plane_bias=None, **kwargs):
         super(XHalfLapJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-        self.mill_depth = mill_depth
+        self.cut_plane_bias = cut_plane_bias
         self.features = []
 
-        self.cross_vector = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
+        self.cut_plane_bias = 0.5 if cut_plane_bias is None else cut_plane_bias
 
     @property
     def beams(self):
@@ -57,13 +57,15 @@ class XHalfLapJoint(Joint):
 
     @property
     def cross_beam_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence_with_vector(self.cross_beam, self.cross_vector, ignore_ends=True)
+        cross_vector = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.cross_beam, cross_vector, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     @property
     def main_beam_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, self.cross_vector, ignore_ends=True)
+        cross_vector = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, cross_vector, ignore_ends=True)
         ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
@@ -79,31 +81,36 @@ class XHalfLapJoint(Joint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        # apply the pocket on the cross beam
-        if self.mill_depth:
-            cross_cutting_plane = self.main_beam.ref_sides[(self.main_beam_ref_side_index + 1) % 4]
-            lap_width = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
-            cross_feature = Lap.from_planes_and_beam(
-                cross_cutting_plane,
-                self.cross_beam,
-                lap_width,
-                self.mill_depth,
-                (self.cross_beam_ref_side_index),
-            )
-            self.cross_beam.add_features(cross_feature)
+        # define the cutting planes
+        cross_cutting_plane = self.main_beam.ref_sides[(self.main_beam_ref_side_index + 1) % 4]
+        main_cutting_plane = self.cross_beam.ref_sides[(self.cross_beam_ref_side_index + 1) % 4]
 
-            main_cutting_plane = self.cross_beam.ref_sides[(self.cross_beam_ref_side_index + 1) % 4]
-            lap_width_2 = self.cross_beam.height if self.cross_beam_ref_side_index % 2 == 0 else self.cross_beam.width
-            main_feature = Lap.from_planes_and_beam(
-                main_cutting_plane,
-                self.main_beam,
-                lap_width_2,
-                self.mill_depth,
-                (self.main_beam_ref_side_index),
-            )
-            self.main_beam.add_features(main_feature)
+        # define the lap width and depth
+        cross_lap_length = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+        main_lap_length = self.cross_beam.height if self.cross_beam_ref_side_index % 2 == 0 else self.cross_beam.width
+        lap_depth = ((cross_lap_length + main_lap_length) / 2) * self.cut_plane_bias
 
-            self.features = [cross_feature, main_feature]
+        # cross Lap feature
+        cross_feature = Lap.from_plane_and_beam(
+            cross_cutting_plane,
+            self.cross_beam,
+            cross_lap_length,
+            lap_depth,
+            self.cross_beam_ref_side_index,
+        )
+        self.cross_beam.add_features(cross_feature)
+
+        # main Lap feature
+        main_feature = Lap.from_plane_and_beam(
+            main_cutting_plane,
+            self.main_beam,
+            main_lap_length,
+            lap_depth,
+            self.main_beam_ref_side_index,
+        )
+        self.main_beam.add_features(main_feature)
+
+        self.features = [cross_feature, main_feature]
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
