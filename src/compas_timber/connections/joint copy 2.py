@@ -63,25 +63,28 @@ class Joint(Interaction):
 
     def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
-        self.elements = []
+        self._elements = {}
+
+    @property
+    def elements(self):
+        for element_list in self._elements.items():
+            for element in element_list:
+                yield element
+
+    def add_element(self, element):
+        self._elements[element.BASE_TYPE].append(element)
 
     @property
     def beams(self):
-        for element in self.elements:
-            if getattr(element, "is_beam", False):
-                yield element
+        return self._elements.get("Beam", None)
 
     @property
     def plates(self):
-        for element in self.elements:
-            if getattr(element, "is_plate", False):
-                yield element
-
+        return self._elements.get("Plate", None)
+    
     @property
     def fasteners(self):
-        for element in self.elements:
-            if getattr(element, "is_fastener", False):
-                yield element
+        return self._elements.get("Fastener", None)
 
     @classmethod
     def element_count_complies(cls, elements):
