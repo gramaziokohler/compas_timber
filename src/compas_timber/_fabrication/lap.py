@@ -289,28 +289,6 @@ class Lap(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_beam_and_beam(cls, main_beam, cross_beam, depth):
-        """Create a Lap instance from a main beam and a cross beam. The main beam is cut by the cross beam.
-
-        Parameters
-        ----------
-        main_beam : :class:`~compas_timber.elements.Beam`
-            The main beam to be cut.
-        cross_beam : :class:`~compas_timber.elements.Beam`
-            The cross beam that cuts the main beam.
-        depth : float
-            The depth of the lap.
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Lap`
-
-        """
-        # type: (Beam, Beam, float) -> Lap
-
-        raise NotImplementedError
-
-    @classmethod
     def from_plane_and_beam(cls, plane, beam, length, depth, is_pocket=False, ref_side_index=0):
         """Create a Lap instance from a plane and a beam. The lap is defined by the plane given and a plane parallel to that at a distance defined by the length and a given depth.
         This method is used to create pocket cuts.
@@ -357,9 +335,6 @@ class Lap(BTLxProcess):
         # calculate the start_x of the lap
         start_x = cls._calculate_start_x(ref_side, ref_edge, planes, orientation, depth, is_pocket)
 
-        # calculate the width of the lap
-        width = ref_side_surface.ysize
-
         # calculate the angle of the lap
         angle = cls._calculate_angle(ref_side, planes)
 
@@ -371,6 +346,9 @@ class Lap(BTLxProcess):
 
         # calculate length
         length = cls._calculate_length(planes, ref_side, ref_edge, depth, angle)
+
+        # define the width of the lap
+        width = ref_side_surface.ysize
 
         # define machining limits
         machining_limits = MachiningLimits()
@@ -399,24 +377,20 @@ class Lap(BTLxProcess):
 
     @staticmethod
     def _calculate_start_x(ref_side, ref_edge, planes, orientation, depth, is_pocket):
-        # offset the reference edge by the depth of the lap
-        offseted_ref_edge = ref_edge.translated(-ref_side.normal*depth)
-        ref_edges = [ref_edge]
+        # calculate the start x distance based on intersections of planes with reference edges.
+        # if the lap is meant for a pocket one must consider the offseted reference edge
         if is_pocket:
-            ref_edges.append(offseted_ref_edge)
-
-        # find the intersection points of the planes with the reference edges and calculate the distances from the start of the beam
+            offseted_ref_edge = ref_edge.translated(-ref_side.normal * depth)
+            ref_edges = [offseted_ref_edge, ref_edge]
+        else:
+            ref_edges = [ref_edge]
         x_distances = []
         for edge, plane in zip(ref_edges, planes):
             if intersection_line_plane(edge, plane) is None:
                 raise ValueError("One of the planes does not intersect with the beam.")
-
             intersection_point = Point(*intersection_line_plane(edge, plane))
             x_distances.append(distance_point_point(edge.start, intersection_point))
-        if orientation == OrientationType.END:
-            return max(x_distances)
-        else:
-            return min(x_distances)
+        return max(x_distances) if orientation == OrientationType.END else min(x_distances)
 
     @staticmethod
     def _calculate_angle(ref_side, planes):
@@ -513,54 +487,38 @@ class Lap(BTLxProcess):
         p_origin = ref_surface.point_at(self.start_x, self.start_y)
         start_frame = Frame(p_origin, ref_surface.frame.xaxis, ref_surface.frame.yaxis)
 
-        # apply angle rotation
-        angle_axis = start_frame.zaxis if self.orientation == OrientationType.END else -start_frame.zaxis
-        angle_rot = Rotation.from_axis_and_angle(angle_axis, math.radians(self.angle), point=p_origin)
-        # apply inclination rotation
+        # define angle rotation matrix
+        angle_angle = self.angle if self.orientation == OrientationType.END else 180-self.angle
+        angle_rot = Rotation.from_axis_and_angle(start_frame.zaxis, math.radians(angle_angle), point=p_origin)
+        # define inclination rotation matrix
         inclination_axis = start_frame.xaxis if self.orientation == OrientationType.END else -start_frame.xaxis
         inclination_rot = Rotation.from_axis_and_angle(inclination_axis, math.radians(self.inclination), point=p_origin)
-        # apply slope rotation
+        # define slope rotation matrix
         slope_axis = -start_frame.zaxis
         slope_rot = Rotation.from_axis_and_angle(slope_axis, math.radians(self.slope), point=p_origin)
 
-        # get start_frame and opp_frame (two sides of the cut)
+        # get start_face and opp_face (two sides of the cut)
         start_frame.transform(angle_rot*inclination_rot*slope_rot)
         end_frame = start_frame.translated(-start_frame.zaxis * self.length)
         end_frame.yaxis = -end_frame.yaxis
 
-        # get top_frame and bottom_frame
-        lead_inclination_axis = -start_frame.xaxis if self.orientation == OrientationType.END else -start_frame.xaxis
+        # get top_face and bottom_face
+        lead_inclination_axis = -start_frame.xaxis if self.orientation == OrientationType.END else start_frame.xaxis
         lead_inclination_rot = Rotation.from_axis_and_angle(lead_inclination_axis, math.radians(self.lead_inclination), point=p_origin)
         top_frame = start_frame.transformed(lead_inclination_rot)
         bottom_frame = top_frame.translated(-top_frame.zaxis * self.depth)
         bottom_frame.xaxis = -bottom_frame.xaxis
 
-        # get side_frame_1 and side_frame_2 #TODO: implement side frames
+        # get front_face and back_face #TODO: implement side frames
         front_frame = start_frame.rotated(math.radians(self.lead_angle), start_frame.xaxis, point=start_frame.point)
         back_frame = front_frame.translated(-front_frame.zaxis * self.width)
         back_frame.xaxis = -back_frame.xaxis
 
-        # # replace frames according to machining limits
-        TOL.absolute=1e-3
-        if not self.machining_limits["FaceLimitedTop"]:
-            top_frame = beam.ref_sides[self.ref_side_index]
-            top_frame.translate(top_frame.zaxis * TOL.absolute) # offset the top frame to avoid tolerance issues
-        if not self.machining_limits["FaceLimitedBottom"]:
-            opp_ref_side_index = beam.opposing_side_index(self.ref_side_index)
-            bottom_frame = beam.ref_sides[opp_ref_side_index]
-            bottom_frame.translate(bottom_frame.zaxis * TOL.absolute) # offset the bottom frame to avoid tolerance issues
-        if not self.machining_limits["FaceLimitedFront"]:
-            front_frame = beam.ref_sides[(self.ref_side_index-1)%4]
-            front_frame.translate(front_frame.zaxis * TOL.absolute) # offset the front frame to avoid tolerance issues
-        if not self.machining_limits["FaceLimitedBack"]:
-            back_frame = beam.ref_sides[(self.ref_side_index+1)%4]
-            back_frame.translate(back_frame.zaxis * TOL.absolute) # offset the back frame to avoid tolerance issues
-        if not self.machining_limits["FaceLimitedStart"]:
-            start_frame = beam.ref_sides[4]
-        if not self.machining_limits["FaceLimitedEnd"]:
-            end_frame = beam.ref_sides[5]
-
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
+
+        # replace frames according to machining limits
+        frames = self._update_frames_based_on_machining_limits(frames, beam)
+
         # return [Plane.from_frame(frame) for frame in frames]
         return frames
 
@@ -612,6 +570,43 @@ class Lap(BTLxProcess):
         # create the volume mesh
         trimming_volume_mesh = Mesh.from_vertices_and_faces(vertices, faces)
         return Brep.from_mesh(trimming_volume_mesh)
+
+    def _update_frames_based_on_machining_limits(self, frames, beam):
+        """Updates the frames based on the machining limits.
+
+        Parameters
+        ----------
+        frames : list of :class:`compas.geometry.Frame`
+            The frames of the cut.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        list of :class:`compas.geometry.Frame`
+            The updated frames of the cut.
+        """
+        TOL.absolute=1e-3
+
+        if not self.machining_limits["FaceLimitedStart"]:
+            frames[0] = beam.ref_sides[4]
+        if not self.machining_limits["FaceLimitedEnd"]:
+            frames[1] = beam.ref_sides[5]
+        if not self.machining_limits["FaceLimitedTop"]:
+            frames[2] = beam.ref_sides[self.ref_side_index]
+            frames[2].translate(frames[2].zaxis * TOL.absolute) # offset the top frame to avoid tolerance issues
+        if not self.machining_limits["FaceLimitedBottom"]:
+            opp_ref_side_index = beam.opposing_side_index(self.ref_side_index)
+            frames[3] = beam.ref_sides[opp_ref_side_index]
+            frames[3].translate(frames[3].zaxis * TOL.absolute) # offset the bottom frame to avoid tolerance issues
+        if not self.machining_limits["FaceLimitedFront"]:
+            frames[4] = beam.ref_sides[(self.ref_side_index-1)%4]
+            frames[4].translate(frames[4].zaxis * TOL.absolute) # offset the front frame to avoid tolerance issues
+        if not self.machining_limits["FaceLimitedBack"]:
+            frames[5] = beam.ref_sides[(self.ref_side_index+1)%4]
+            frames[5].translate(frames[5].zaxis * TOL.absolute) # offset the back frame to avoid tolerance issues
+
+        return frames
 
 
 class LapParams(BTLxProcessParams):
