@@ -311,8 +311,8 @@ class Lap(BTLxProcess):
         raise NotImplementedError
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, length, depth, ref_side_index=0, is_pocket=False):
-        """Create a Lap instance from a plane and a beam. The lap is defined by the plane given and a plane parallel to that at a distance defined by the width and a given depth.
+    def from_plane_and_beam(cls, plane, beam, length, depth, is_pocket=False, ref_side_index=0):
+        """Create a Lap instance from a plane and a beam. The lap is defined by the plane given and a plane parallel to that at a distance defined by the length and a given depth.
         This method is used to create pocket cuts.
 
         Parameters
@@ -325,10 +325,10 @@ class Lap(BTLxProcess):
             The length of the lap.
         depth : float
             The depth of the lap.
-        ref_side_index : int, optional
-            The reference side index of the main_beam to be cut. Default is 0 (i.e. RS1).
         is_pocket : bool, optional
             If True, the lap is a pocket cut. Default is False
+        ref_side_index : int, optional
+            The reference side index of the main_beam to be cut. Default is 0 (i.e. RS1).
 
         Returns
         -------
