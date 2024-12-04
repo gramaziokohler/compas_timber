@@ -1,5 +1,6 @@
 from compas_timber._fabrication import Lap
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
+from compas_timber.connections.utilities import beam_ref_side_incidence
 
 from .joint import BeamJoinningError
 from .joint import Joint
@@ -64,34 +65,28 @@ class XHalfLapJoint(Joint):
         ref_side_dict = beam_ref_side_incidence_with_vector(self.cross_beam, self.cross_vector, ignore_ends=True)
         if self.flip_lap_side:
             return max(ref_side_dict, key=ref_side_dict.get)
-        else:
-            return min(ref_side_dict, key=ref_side_dict.get)
+        return min(ref_side_dict, key=ref_side_dict.get)
 
     @property
     def main_ref_side_index(self):
         ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, self.cross_vector, ignore_ends=True)
         if self.flip_lap_side:
             return min(ref_side_dict, key=ref_side_dict.get)
-        else:
-            return max(ref_side_dict, key=ref_side_dict.get)
+        return max(ref_side_dict, key=ref_side_dict.get)
 
     @property
     def cross_cutting_surface(self):
-        index = self.main_ref_side_index
-        if self.flip_lap_side:
-            index += 1
-        else:
-            index -= 1
-        return self.main_beam.side_as_surface(index % 4)
+        # the planar surface that cuts the cross_beam
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
+        return self.main_beam.side_as_surface(ref_side_index)
 
     @property
     def main_cutting_surface(self):
-        index = self.cross_ref_side_index
-        if self.flip_lap_side:
-            index += 1
-        else:
-            index -= 1
-        return self.cross_beam.side_as_surface(index % 4)
+        # the planar surface that cuts the main_beam
+        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
+        return self.cross_beam.side_as_surface(ref_side_index)
 
     @property
     def cross_lap_depth(self):
