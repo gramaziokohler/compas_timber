@@ -448,6 +448,18 @@ class Lap(BTLxProcess):
         """
         # type: (Brep, Beam) -> Brep
         lap_volume = self.volume_from_params_and_beam(beam)
+
+        # convert mesh to brep
+        try:
+            lap_volume = Brep.from_mesh(lap_volume)
+        except Exception:
+            raise FeatureApplicationError(
+                lap_volume,
+                geometry,
+                "Could not convert the lap volume to a Brep.",
+            )
+
+        # subtract the lap volume from the beam geometry
         try:
             return geometry - lap_volume
         except IndexError:
@@ -565,9 +577,7 @@ class Lap(BTLxProcess):
         if self.orientation == OrientationType.END:
             faces = [face[::-1] for face in faces]
 
-        # create the volume mesh
-        trimming_volume_mesh = Mesh.from_vertices_and_faces(vertices, faces)
-        return Brep.from_mesh(trimming_volume_mesh)
+        return Mesh.from_vertices_and_faces(vertices, faces)
 
     def _update_frames_based_on_machining_limits(self, frames, beam):
         """Updates the frames based on the machining limits.
