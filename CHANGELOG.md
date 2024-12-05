@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `Nester` class for one-dimensional bin packing. this is to fit the beams of an assembly into material stock of a given length
+* Added `Beam Nester` GH component for `Nester` class
 
 * Added new base class for timber elements `TimberElement`.
 * Added property `is_beam` to `Beam` class.
