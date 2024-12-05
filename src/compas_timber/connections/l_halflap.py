@@ -1,11 +1,12 @@
 from compas_timber._fabrication import Lap
+from compas_timber._fabrication import JackRafterCut
+from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
 from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
-from compas.geometry import Plane
 from compas.tolerance import TOL
 
 
@@ -19,10 +20,10 @@ class LHalfLapJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
-        The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
-        The cross beam to be joined.
+    beam_a : :class:`~compas_timber.parts.Beam`
+        The first beam to be joined.
+    beam_b : :class:`~compas_timber.parts.Beam`
+        The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
     cut_plane_bias : float
@@ -32,10 +33,10 @@ class LHalfLapJoint(Joint):
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams joined by this joint.
-    main_beam : :class:`~compas_timber.parts.Beam`
-        The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
-        The cross beam to be joined.
+    beam_a : :class:`~compas_timber.parts.Beam`
+        The first beam to be joined.
+    beam_b : :class:`~compas_timber.parts.Beam`
+        The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
     cut_plane_bias : float
@@ -47,72 +48,59 @@ class LHalfLapJoint(Joint):
     @property
     def __data__(self):
         data = super(LHalfLapJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
+        data["beam_a"] = self.beam_a_guid
+        data["beam_b"] = self.beam_b_guid
         data["flip_lap_side"] = self.flip_lap_side
         data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=None, cut_plane_bias=None, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=None, cut_plane_bias=None, **kwargs):
         super(LHalfLapJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.beam_a = beam_a
+        self.beam_b = beam_b
+        self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
+        self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
 
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = 0.5 if cut_plane_bias is None else cut_plane_bias
         self.features = []
 
-        self.cross_vector = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
-        self.main_width = self.main_beam.width if self.main_ref_side_index % 2 == 0 else self.main_beam.height
-        self.cross_width = self.cross_beam.width if self.cross_ref_side_index % 2 == 0 else self.cross_beam.height
+        # check if the geometry is valid. (beams should be aligned)
+        self._check_geometry()  # TODO: in the future, half laps should be possible for non-aligned beams
 
     @property
     def beams(self):
-        return [self.main_beam, self.cross_beam]
+        return [self.beam_a, self.beam_b]
 
     @property
-    def cross_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence_with_vector(self.cross_beam, self.cross_vector, ignore_ends=True)
+    def beam_a_ref_side_index(self):
+        cross_vector = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.beam_a, cross_vector, ignore_ends=True)
         if self.flip_lap_side:
             return max(ref_side_dict, key=ref_side_dict.get)
-        else:
-            return min(ref_side_dict, key=ref_side_dict.get)
+        return min(ref_side_dict, key=ref_side_dict.get)
 
     @property
-    def main_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, self.cross_vector, ignore_ends=True)
+    def beam_b_ref_side_index(self):
+        cross_vector = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.beam_b, cross_vector, ignore_ends=True)
         if self.flip_lap_side:
             return min(ref_side_dict, key=ref_side_dict.get)
-        else:
-            return max(ref_side_dict, key=ref_side_dict.get)
+        return max(ref_side_dict, key=ref_side_dict.get)
 
     @property
-    def cross_cutting_surface(self):
-        index = self.main_ref_side_index
-        if self.flip_lap_side:
-            index += 1
-        else:
-            index -= 1
-        return self.main_beam.side_as_surface(index % 4)
+    def cutting_plane_a(self):
+        # the plane that cuts beam_b as a planar surface
+        ref_side_dict = beam_ref_side_incidence(self.beam_b, self.beam_a, ignore_ends=True)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
+        return self.beam_a.side_as_surface(ref_side_index)
 
     @property
-    def main_cutting_surface(self):
-        index = self.cross_ref_side_index
-        if self.flip_lap_side:
-            index += 1
-        else:
-            index -= 1
-        return self.cross_beam.side_as_surface(index % 4)
-
-    @property
-    def cross_lap_depth(self):
-        return ((self.cross_cutting_surface.ysize + self.main_cutting_surface.ysize) / 2) * (1 - self.cut_plane_bias)
-
-    @property
-    def main_lap_depth(self):
-        return ((self.cross_cutting_surface.ysize + self.main_cutting_surface.ysize) / 2) * self.cut_plane_bias
+    def cutting_plane_b(self):
+        # the plane that cuts beam_a as a planar surface
+        ref_side_dict = beam_ref_side_incidence(self.beam_a, self.beam_b, ignore_ends=True)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
+        return self.beam_b.side_as_surface(ref_side_index)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -125,61 +113,76 @@ class LHalfLapJoint(Joint):
             If the extension could not be calculated.
 
         """
-        assert self.cross_beam and self.main_beam
+        assert self.beam_a and self.beam_b
         start_a, start_b = None, None
         try:
-            main_plane = Plane.from_frame(self.main_cutting_surface.frame)
-            cross_plane = Plane.from_frame(self.cross_cutting_surface.frame)
-            start_a, end_a = self.cross_beam.extension_to_plane(main_plane)
-            start_b, end_b = self.beam_b.extension_to_plane(cross_plane)
+            start_a, end_a = self.beam_a.extension_to_plane(self.cutting_plane_b.to_plane())
+            start_b, end_b = self.beam_b.extension_to_plane(self.cutting_plane_a.to_plane())
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            geometries = [cross_plane] if start_a is not None else [main_plane]
+            geometries = [self.cutting_plane_a] if start_a is not None else [self.cutting_plane_b]
             raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
-        self.cross_beam.add_blank_extension(start_a, end_a, self.cross_beam_guid)
-        self.main_beam.add_blank_extension(start_b, end_b, self.main_beam_guid)
+        self.beam_a.add_blank_extension(start_a, end_a, self.beam_a_guid)
+        self.beam_b.add_blank_extension(start_b, end_b, self.beam_b_guid)
 
     def add_features(self):
-        """Adds the required extension and trimming features to both beams.
+        """Adds the required joint features to both beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        assert self.main_beam and self.cross_beam
+        assert self.beam_a and self.beam_b
 
         if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
+            self.beam_a.remove_features(self.features)
+            self.beam_b.remove_features(self.features)
 
-        # check if the geometry is valid
-        self.check_geometry()
+        # calculate the lap length and depth for each beam
+        beam_a_lap_length, beam_b_lap_length = self._get_lap_lengths()
+        beam_a_lap_depth, beam_b_lap_depth = self._get_lap_depths()
 
-        # cross Lap feature
-        cross_feature = Lap.from_plane_and_beam(
-            self.cross_cutting_surface.frame,
-            self.cross_beam,
-            self.main_width,
-            self.cross_lap_depth,
-            ref_side_index=self.cross_ref_side_index,
+        ## beam_a
+        # lap feature on beam_a
+        lap_feature_a = Lap.from_plane_and_beam(
+            self.cutting_plane_b.to_plane(),
+            self.beam_a,
+            beam_a_lap_length,
+            beam_a_lap_depth,
+            ref_side_index=self.beam_a_ref_side_index,
         )
-        self.cross_beam.add_features(cross_feature)
-
-        # main Lap feature
-        main_feature = Lap.from_plane_and_beam(
-            self.main_cutting_surface.frame,
-            self.main_beam,
-            self.cross_width,
-            self.main_lap_depth,
-            ref_side_index=self.main_ref_side_index,
+        # cutoff feature for beam_a
+        cutoff_feature_a = JackRafterCut.from_plane_and_beam(
+            self.cutting_plane_b.to_plane(), self.beam_a, self.beam_a_ref_side_index
         )
-        self.main_beam.add_features(main_feature)
+        beam_a_features = [lap_feature_a, cutoff_feature_a]
+        self.beam_a.add_features(beam_a_features)
+        self.features.extend(beam_a_features)
 
-        # register features to the joint
-        self.features = [cross_feature, main_feature]
+        ## beam_b
+        # lap feature on beam_b
+        lap_feature_b = Lap.from_plane_and_beam(
+            self.cutting_plane_a.to_plane(),
+            self.beam_b,
+            beam_b_lap_length,
+            beam_b_lap_depth,
+            ref_side_index=self.beam_b_ref_side_index,
+        )
+        # cutoff feature for beam_b
+        cutoff_feature_b = JackRafterCut.from_plane_and_beam(
+            self.cutting_plane_a.to_plane(), self.beam_b, self.beam_b_ref_side_index
+        )
+        beam_b_features = [lap_feature_b, cutoff_feature_b]
+        self.beam_b.add_features(beam_b_features)
+        self.features.extend(beam_b_features)
 
-    def check_geometry(self):
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.beam_a = model.element_by_guid(self.beam_a_guid)
+        self.beam_b = model.element_by_guid(self.beam_b_guid)
+
+    def _check_geometry(self):
         """Checks if the geometry of the beams is valid for the joint.
 
         Raises
@@ -190,16 +193,21 @@ class LHalfLapJoint(Joint):
         """
         # check if the beams are aligned
         for beam in self.beams:
+            cross_vector = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
             beam_normal = beam.frame.normal.unitized()
-            dot = abs(beam_normal.dot(self.cross_vector.unitized()))
+            dot = abs(beam_normal.dot(cross_vector.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
                 raise BeamJoinningError(
-                    self.main_beam,
-                    self.cross_beam,
+                    self.beams,
+                    self,
                     debug_info="The the two beams are not aligned to create a Half Lap joint.",
                 )
 
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+    def _get_lap_lengths(self):
+        lap_a_length = self.beam_b.side_as_surface(self.beam_b_ref_side_index).ysize
+        lap_b_length = self.beam_a.side_as_surface(self.beam_a_ref_side_index).ysize
+        return lap_a_length, lap_b_length
+
+    def _get_lap_depths(self):
+        lap_depth = (self.cutting_plane_a.ysize + self.cutting_plane_b.ysize) / 2
+        return lap_depth * self.cut_plane_bias, lap_depth * (1 - self.cut_plane_bias)
