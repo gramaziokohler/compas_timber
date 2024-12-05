@@ -90,17 +90,17 @@ class LHalfLapJoint(Joint):
 
     @property
     def cutting_plane_a(self):
-        # the plane that cuts beam_b as a planar surface
-        ref_side_dict = beam_ref_side_incidence(self.beam_b, self.beam_a, ignore_ends=True)
-        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
-        return self.beam_a.side_as_surface(ref_side_index)
-
-    @property
-    def cutting_plane_b(self):
         # the plane that cuts beam_a as a planar surface
         ref_side_dict = beam_ref_side_incidence(self.beam_a, self.beam_b, ignore_ends=True)
         ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return self.beam_b.side_as_surface(ref_side_index)
+
+    @property
+    def cutting_plane_b(self):
+        # the plane that cuts beam_b as a planar surface
+        ref_side_dict = beam_ref_side_incidence(self.beam_b, self.beam_a, ignore_ends=True)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
+        return self.beam_a.side_as_surface(ref_side_index)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -116,11 +116,11 @@ class LHalfLapJoint(Joint):
         assert self.beam_a and self.beam_b
         start_a, start_b = None, None
         try:
-            start_a, end_a = self.beam_a.extension_to_plane(self.cutting_plane_b.to_plane())
-            start_b, end_b = self.beam_b.extension_to_plane(self.cutting_plane_a.to_plane())
+            start_a, end_a = self.beam_a.extension_to_plane(self.cutting_plane_a.to_plane())
+            start_b, end_b = self.beam_b.extension_to_plane(self.cutting_plane_b.to_plane())
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            geometries = [self.cutting_plane_a] if start_a is not None else [self.cutting_plane_b]
+            geometries = [self.cutting_plane_b] if start_a is not None else [self.cutting_plane_a]
             raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(self.beams, self, debug_info=str(ex))
@@ -146,7 +146,7 @@ class LHalfLapJoint(Joint):
         ## beam_a
         # lap feature on beam_a
         lap_feature_a = Lap.from_plane_and_beam(
-            self.cutting_plane_b.to_plane(),
+            self.cutting_plane_a.to_plane(),
             self.beam_a,
             beam_a_lap_length,
             beam_a_lap_depth,
@@ -154,7 +154,7 @@ class LHalfLapJoint(Joint):
         )
         # cutoff feature for beam_a
         cutoff_feature_a = JackRafterCut.from_plane_and_beam(
-            self.cutting_plane_b.to_plane(), self.beam_a, self.beam_a_ref_side_index
+            self.cutting_plane_a.to_plane(), self.beam_a, self.beam_a_ref_side_index
         )
         beam_a_features = [lap_feature_a, cutoff_feature_a]
         self.beam_a.add_features(beam_a_features)
@@ -163,7 +163,7 @@ class LHalfLapJoint(Joint):
         ## beam_b
         # lap feature on beam_b
         lap_feature_b = Lap.from_plane_and_beam(
-            self.cutting_plane_a.to_plane(),
+            self.cutting_plane_b.to_plane(),
             self.beam_b,
             beam_b_lap_length,
             beam_b_lap_depth,
@@ -171,7 +171,7 @@ class LHalfLapJoint(Joint):
         )
         # cutoff feature for beam_b
         cutoff_feature_b = JackRafterCut.from_plane_and_beam(
-            self.cutting_plane_a.to_plane(), self.beam_b, self.beam_b_ref_side_index
+            self.cutting_plane_b.to_plane(), self.beam_b, self.beam_b_ref_side_index
         )
         beam_b_features = [lap_feature_b, cutoff_feature_b]
         self.beam_b.add_features(beam_b_features)
