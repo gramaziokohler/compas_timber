@@ -1,0 +1,34 @@
+{
+    "name": "ShowElementsByType",
+    "nickname": "ElementTypes",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "allows user to filter element geometries by type.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+                {
+                    "name": "Model",
+                    "description": "Model object.",
+                    "typeHintID": "none",
+                    "scriptParamAccess": 0
+                }
+        ],
+        "outputParameters": [
+            {
+                "name": "Beams",
+                "description": "beam element geometries."
+            },
+            {
+                "name": "Plates",
+                "description": "plate element geometries."
+            },
+            {
+                "name": "Fasteners",
+                "description": "fastener element geometries."
+            }
+        ]
+    }
+}
