@@ -509,7 +509,7 @@ class Lap(BTLxProcess):
         bottom_frame = top_frame.translated(-top_frame.zaxis * self.depth)
         bottom_frame.xaxis = -bottom_frame.xaxis
 
-        # get front_face and back_face #TODO: implement side frames
+        # get front_face and back_face #TODO: is this correct?
         front_frame = start_frame.rotated(math.radians(self.lead_angle), start_frame.xaxis, point=start_frame.point)
         back_frame = front_frame.translated(-front_frame.zaxis * self.width)
         back_frame.xaxis = -back_frame.xaxis
@@ -519,8 +519,7 @@ class Lap(BTLxProcess):
         # replace frames according to machining limits
         frames = self._update_frames_based_on_machining_limits(frames, beam)
 
-        # return [Plane.from_frame(frame) for frame in frames]
-        return frames
+        return [Plane.from_frame(frame) for frame in frames]
 
     def volume_from_params_and_beam(self, beam):
         """
@@ -539,8 +538,7 @@ class Lap(BTLxProcess):
         """
         # Get cutting frames
 
-        # start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self.planes_from_params_and_beam(beam)
-        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane  = [Plane.from_frame(frame) for frame in self.planes_from_params_and_beam(beam)]
+        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self.planes_from_params_and_beam(beam)
 
         # Calculate vertices using plane-plane-plane intersection
         vertices = [
