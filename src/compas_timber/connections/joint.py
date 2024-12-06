@@ -61,6 +61,7 @@ class Joint(Interaction):
 
     def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
+        
 
     @property
     def beams(self):
