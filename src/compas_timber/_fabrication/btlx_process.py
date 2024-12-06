@@ -165,6 +165,10 @@ class MachiningLimits(object):
         Limit the front face.
     face_limited_back : bool
         Limit the back face.
+    face_limited_top : bool
+        Limit the top face.
+    face_limited_bottom : bool
+        Limit the bottom face.
 
     Properties
     ----------
@@ -172,13 +176,22 @@ class MachiningLimits(object):
         The limits dictionary with values as a boolean.
     """
 
-    EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]
+    EXPECTED_KEYS = [
+        "FaceLimitedStart",
+        "FaceLimitedEnd",
+        "FaceLimitedFront",
+        "FaceLimitedBack",
+        "FaceLimitedTop",
+        "FaceLimitedBottom",
+    ]
 
     def __init__(self):
         self.face_limited_start = True
         self.face_limited_end = True
         self.face_limited_front = True
         self.face_limited_back = True
+        self.face_limited_top = True
+        self.face_limited_bottom = True
 
     @property
     def limits(self):
@@ -188,4 +201,6 @@ class MachiningLimits(object):
             "FaceLimitedEnd": self.face_limited_end,
             "FaceLimitedFront": self.face_limited_front,
             "FaceLimitedBack": self.face_limited_back,
+            "FaceLimitedTop": self.face_limited_top,
+            "FaceLimitedBottom": self.face_limited_bottom,
         }
