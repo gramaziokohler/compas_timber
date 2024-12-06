@@ -88,7 +88,8 @@ class TButtJoint(Joint):
         assert self.main_beam and self.cross_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
+            if self.mill_depth:
+                cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -128,11 +129,12 @@ class TButtJoint(Joint):
         # apply the pocket on the cross beam
         if self.mill_depth:
             cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
-            lap_width = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+            lap_length = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+
             cross_feature = Lap.from_plane_and_beam(
                 cross_cutting_plane,
                 self.cross_beam,
-                lap_width,
+                lap_length,
                 self.mill_depth,
                 is_pocket=True,
                 ref_side_index=self.cross_beam_ref_side_index,
