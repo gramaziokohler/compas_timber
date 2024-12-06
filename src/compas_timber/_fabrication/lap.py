@@ -545,7 +545,7 @@ class Lap(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas.geometry.Mesh`
             The correctly oriented trimming volume of the cut.
         """
         # Get cutting frames
