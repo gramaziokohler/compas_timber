@@ -122,7 +122,7 @@ class StepJointNotch(BTLxProcess):
         self.mortise = mortise
         self.mortise_width = mortise_width
         self.mortise_height = mortise_height
-
+        
     ########################################################################
     # Properties
     ########################################################################

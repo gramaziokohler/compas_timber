@@ -37,9 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added attribute `is_group_element` to `TimberElement`.
 * Added `JointRule.joints_from_beams_and_rules()` static method 
 * Added `Element.reset()` method.
-
 * Added new `fasteners.py` module with new `Fastener` element type.
 * Added new `compas_timber._fabrication.Lap`.
+* Added new `Joint_Rule_From_List` GH Component that takes lists of beams to create joints.
+* Added `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` class attributes and `element_count_complies` class method to `Joint`.
+* Added `beams`, `plates` and `fasteners` properties to `Joint`.
+* Added `BTLxFeature` GH Component.
 
 ### Changed
 
@@ -56,6 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed error with angle and inclination calculation in `compas_timber._fabrication.JackRafterCut` 
 * Changed `compas_timber.connections.TButtJoint` and `compas_timber.connections.LButtJoint` by using the new implemented BTLx Processes to define the Joints
 * Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
+* Changed `DirectJointRule` to allow for more than 2 elements per joint.
+* Changed `beam` objects get added to `Joint.elements` in `Joint.create()`.
+* Changed `StepJointNotch` to take `MachiningLimit().limits` as default `machining_limits` argument.
 
 ### Removed
 

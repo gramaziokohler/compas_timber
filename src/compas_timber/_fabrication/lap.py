@@ -94,7 +94,7 @@ class Lap(BTLxProcess):
         lead_angle=90.0,
         lead_inclination_parallel=True,
         lead_inclination=90.0,
-        machining_limits=None,
+        machining_limits=MachiningLimits().limits,
         **kwargs
     ):
         super(Lap, self).__init__(**kwargs)

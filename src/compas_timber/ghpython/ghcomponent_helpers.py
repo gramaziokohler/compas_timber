@@ -155,6 +155,8 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
         The names of the input parameters.
     ghenv : object
         The Grasshopper environment object.
+    rename_count : int, optional
+        The number of parameters that should be renamed. Default is 0.
     permanent_param_count : int, optional
         The number of parameters that should not be deleted. Default is 1.
 
