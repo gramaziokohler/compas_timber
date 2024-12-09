@@ -47,19 +47,17 @@ class NullJoint(Joint):
         super(NullJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
-        if beam_a and beam_b:
-            self.elements.extend([beam_a, beam_b])
         self.beam_a_guid = str(beam_a.guid) if beam_a else None
         self.beam_b_guid = str(beam_b.guid) if beam_b else None
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.beam_a, self.beam_b]
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.beam_by_guid(self.beam_a_guid)
-        self.beam_b = model.beam_by_guid(self.beam_b_guid)
+        self.beam_a = model.beam_by_guid(self.beam_a_guid) if self.beam_a_guid else None
+        self.beam_b = model.beam_by_guid(self.beam_b_guid) if self.beam_b_guid else None
 
     def add_features(self):
         """This joint does not add any features to the beams."""

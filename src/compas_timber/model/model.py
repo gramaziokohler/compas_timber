@@ -81,7 +81,7 @@ class TimberModel(Model):
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
                 joints.append(interaction)
-        return list(set(joints))  # remove duplicates
+        return set(joints)  # remove duplicates
 
     @property
     def walls(self):
@@ -240,8 +240,10 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
+        self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
-            _ = self.add_interaction(*interaction)
+            element_a, element_b = interaction
+            _ = self.add_interaction(element_a, element_b, joint)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -253,8 +255,12 @@ class TimberModel(Model):
             The joint to remove.
 
         """
-        a, b = joint.beams  # TODO: make this generic elements not beams
-        super(TimberModel, self).remove_interaction(a, b)  # TODO: Can two elements share more than one interaction?
+        for interaction in joint.interactions:
+            element_a, element_b = interaction
+            self.remove_interaction(element_a, element_b)
+        for element in joint.generated_elements:
+            self.remove_element(element)
+
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""

@@ -72,8 +72,8 @@ class LButtJoint(Joint):
         super(LButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid) if main_beam else None
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid) if cross_beam else None
         self.mill_depth = mill_depth
         self.small_beam_butts = small_beam_butts
         self.modify_cross = modify_cross
@@ -84,7 +84,7 @@ class LButtJoint(Joint):
         self.update_beam_roles()
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property
@@ -100,7 +100,7 @@ class LButtJoint(Joint):
 
         if self.reject_i and ref_side_index in [4, 5]:
             raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
+                beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
             )
         return ref_side_index
 
@@ -134,14 +134,15 @@ class LButtJoint(Joint):
         if self.mill_depth:
             try:
                 cutting_plane_main = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-                cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
+                if self.mill_depth:
+                    cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
                 start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
             except AttributeError as ae:
                 raise BeamJoinningError(
-                    beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main]
+                    beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main]
                 )
             except Exception as ex:
-                raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+                raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
             extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
             self.main_beam.add_blank_extension(
                 start_main + extension_tolerance,
@@ -154,7 +155,7 @@ class LButtJoint(Joint):
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
         except AttributeError as ae:
             raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross]
+                beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross]
             )
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.cross_beam.add_blank_extension(
@@ -208,5 +209,5 @@ class LButtJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beam = model.element_by_guid(self.main_beam_guid) if self.main_beam_guid else None
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid) if self.cross_beam_guid else None

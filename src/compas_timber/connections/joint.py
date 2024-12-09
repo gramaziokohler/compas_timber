@@ -3,6 +3,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
 from compas_model.interactions import Interaction
+from itertools import combinations
 
 from .solver import JointTopology
 
@@ -63,25 +64,14 @@ class Joint(Interaction):
 
     def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
-        self.elements = []
 
     @property
-    def beams(self):
-        for element in self.elements:
-            if getattr(element, "is_beam", False):
-                yield element
+    def elements(self):
+        raise NotImplementedError
 
     @property
-    def plates(self):
-        for element in self.elements:
-            if getattr(element, "is_plate", False):
-                yield element
-
-    @property
-    def fasteners(self):
-        for element in self.elements:
-            if getattr(element, "is_fastener", False):
-                yield element
+    def generated_elements(self):
+        return []
 
     @classmethod
     def element_count_complies(cls, elements):
@@ -169,9 +159,9 @@ class Joint(Interaction):
         """Returns a map of which end of each beam is joined by this joint."""
 
         self._ends = {}
-        for index, beam in enumerate(self.beams):
-            if distance_point_line(beam.centerline.start, self.beams[index - 1].centerline) < distance_point_line(
-                beam.centerline.end, self.beams[index - 1].centerline
+        for index, beam in enumerate(self.elements):
+            if distance_point_line(beam.centerline.start, self.elements[index - 1].centerline) < distance_point_line(
+                beam.centerline.end, self.elements[index - 1].centerline
             ):
                 self._ends[str(beam.guid)] = "start"
             else:
@@ -184,9 +174,8 @@ class Joint(Interaction):
         interaction is defined as a tuple of (element_a, element_b, joint).
         """
         interactions = []
-        for i in range(len(self.beams)):
-            for j in range(i + 1, len(self.elements)):
-                interactions.append((self.elements[i], self.elements[j], self))
+        for pair in combinations(self.elements, 2):
+            interactions.append((pair[0], pair[1]))
         return interactions
 
     @staticmethod

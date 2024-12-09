@@ -9,7 +9,6 @@ from .features import DrillFeature
 from .features import MillVolume
 from .features import FeatureApplicationError
 from .fasteners.ball_node_fastener import BallNodeFastener
-from .fastener import FastenerTimberInterface
 
 __all__ = [
     "Wall",
