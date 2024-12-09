@@ -64,7 +64,7 @@ class LFrenchRidgeLapJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.beam_a, self.beam_b]
 
     @property
@@ -116,9 +116,9 @@ class LFrenchRidgeLapJoint(Joint):
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [self.cutting_plane_a] if start_a is not None else [self.cutting_plane_b]
-            raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
+            raise BeamJoinningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
-            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
         self.beam_a.add_blank_extension(start_a, end_a, self.guid)
         self.beam_b.add_blank_extension(start_b, end_b, self.guid)
 
@@ -157,7 +157,7 @@ class LFrenchRidgeLapJoint(Joint):
         """
         # check if the beams are aligned
         cross_vect = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
-        for beam in self.beams:
+        for beam in self.elements:
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vect.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
@@ -169,7 +169,7 @@ class LFrenchRidgeLapJoint(Joint):
         # calculate widths and heights of the beams
         dimensions = []
         ref_side_indices = [self.beam_a_ref_side_index, self.beam_b_ref_side_index]
-        for i, beam in enumerate(self.beams):
+        for i, beam in enumerate(self.elements):
             width = beam.side_as_surface(ref_side_indices[i]).ysize
             height = beam.height if ref_side_indices[i] % 2 == 0 else beam.width
             dimensions.append((width, height))
