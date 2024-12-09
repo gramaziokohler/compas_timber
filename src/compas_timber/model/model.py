@@ -240,6 +240,7 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
+        self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
             _ = self.add_interaction(*interaction)
 

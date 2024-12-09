@@ -63,13 +63,10 @@ class Joint(Interaction):
 
     def __init__(self, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
-        self.elements = []
 
     @property
-    def beams(self):
-        for element in self.elements:
-            if getattr(element, "is_beam", False):
-                yield element
+    def elements(self):
+        raise NotImplementedError
 
     @property
     def plates(self):
@@ -82,6 +79,10 @@ class Joint(Interaction):
         for element in self.elements:
             if getattr(element, "is_fastener", False):
                 yield element
+
+    @property
+    def generated_elements(self):
+        return []
 
     @classmethod
     def element_count_complies(cls, elements):

@@ -46,35 +46,9 @@ class BallNodeJoint(Joint):
         for beam in self.beams:
             self.fastener.add_interface(beam, timber_interface)
 
-    @classmethod
-    def create(cls, model, *beams, **kwargs):
-        """Creates an instance of this joint and creates the new connection in `model`.
-
-        `beams` are expected to have been added to `model` before calling this method.
-
-        This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
-        them. This is the responsibility of the calling code.
-
-        A `ValueError` is raised if `beams` contains less than two `Beam` objects.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joing belong.
-        beams : list(:class:`~compas_timber.parts.Beam`)
-            A list containing two beams that whould be joined together
-
-        Returns
-        -------
-        :class:`compas_timber.connections.Joint`
-            The instance of the created joint.
-
-        """
-        joint = cls(beams, **kwargs)
-        model.add_element(joint.fastener)
-        for interaction in joint.interactions:
-            _ = model.add_interaction(*interaction)
-        return joint
+    @property
+    def generated_elements(self):
+        return [self.fastener]
 
     @property
     def interactions(self):
