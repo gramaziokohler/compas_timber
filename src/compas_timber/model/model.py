@@ -255,8 +255,12 @@ class TimberModel(Model):
             The joint to remove.
 
         """
-        a, b = joint.beams  # TODO: make this generic elements not beams
-        super(TimberModel, self).remove_interaction(a, b)  # TODO: Can two elements share more than one interaction?
+        for interaction in joint.interactions:
+            element_a, element_b = interaction
+            self.remove_interaction(element_a, element_b)
+        for element in joint.generated_elements:
+            self.remove_element(element)
+
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""

@@ -175,7 +175,7 @@ class Joint(Interaction):
         """
         interactions = []
         for pair in combinations(self.elements, 2):
-            interactions.append((pair[0], pair[1], self))
+            interactions.append((pair[0], pair[1]))
         return interactions
 
     @staticmethod
