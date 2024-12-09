@@ -242,7 +242,8 @@ class TimberModel(Model):
         """
         self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
-            _ = self.add_interaction(*interaction)
+            element_a, element_b = interaction
+            _ = self.add_interaction(element_a, element_b, joint)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None

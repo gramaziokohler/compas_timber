@@ -51,9 +51,13 @@ class BallNodeJoint(Joint):
         return [self.fastener]
 
     @property
+    def elements(self):
+        return self.beams + [self.fastener]
+
+    @property
     def interactions(self):
         for beam in self.beams:
-            yield (beam, self.fastener, self)
+            yield (beam, self.fastener)
 
     @property
     def node_point(self):
