@@ -121,7 +121,6 @@ class FastenerTimberInterface(object):
     features : list of :class:`~compas_timber.parts.Feature`
         The features that are applied by this interface to the timber element. This returns the features in world coordinates.
 
-
     """
 
     def __init__(self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None):
