@@ -159,9 +159,9 @@ class Joint(Interaction):
         """Returns a map of which end of each beam is joined by this joint."""
 
         self._ends = {}
-        for index, beam in enumerate(self.beams):
-            if distance_point_line(beam.centerline.start, self.beams[index - 1].centerline) < distance_point_line(
-                beam.centerline.end, self.beams[index - 1].centerline
+        for index, beam in enumerate(self.elements):
+            if distance_point_line(beam.centerline.start, self.elements[index - 1].centerline) < distance_point_line(
+                beam.centerline.end, self.elements[index - 1].centerline
             ):
                 self._ends[str(beam.guid)] = "start"
             else:

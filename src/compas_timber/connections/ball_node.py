@@ -36,7 +36,7 @@ class BallNodeJoint(Joint):
 
     def __init__(self, beams=None, timber_interface=None, ball_diameter=100, **kwargs):
         super(BallNodeJoint, self).__init__(**kwargs)
-        self.elements = beams
+        self.beams = beams
         self.timber_interface = timber_interface
         self.ball_diameter = ball_diameter
         self.beam_keys = [str(beam.guid) for beam in self.beams]

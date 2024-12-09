@@ -48,15 +48,13 @@ class TButtJoint(Joint):
         super(TButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        if main_beam and cross_beam:
-            self.elements.extend([main_beam, cross_beam])
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid) if main_beam else None
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid) if cross_beam else None
         self.mill_depth = mill_depth
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property
@@ -93,9 +91,9 @@ class TButtJoint(Joint):
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
