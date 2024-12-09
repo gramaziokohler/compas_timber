@@ -82,8 +82,6 @@ class TStepJoint(Joint):
         super(TStepJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        if main_beam and cross_beam:
-            self.elements.extend([main_beam, cross_beam])
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
 
@@ -108,7 +106,7 @@ class TStepJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property

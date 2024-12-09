@@ -40,8 +40,6 @@ class FrenchRidgeLapJoint(Joint):
         super(FrenchRidgeLapJoint, self).__init__(beams=(beam_a, beam_b), **kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
-        if beam_a and beam_b:
-            self.elements.extend([beam_a, beam_b])
         self.beam_a_guid = str(beam_a.guid) if beam_a else None
         self.beam_b_guid = str(beam_b.guid) if beam_b else None
         self.reference_face_indices = {}

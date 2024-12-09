@@ -2,7 +2,6 @@ from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
@@ -124,8 +123,8 @@ class FastenerTimberInterface(object):
 
     """
 
-    def __init__(self, outline_pts=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None):
-        self.outline_pts = outline_pts
+    def __init__(self, outline=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None):
+        self.outline = outline
         self.thickness = thickness
         self.holes = holes
         self.frame = frame
@@ -140,7 +139,7 @@ class FastenerTimberInterface(object):
     @property
     def __data__(self):
         return {
-            "outline_pts": self.outline_pts.__data__,
+            "outline": self.outline.__data__,
             "thickness": self.thickness,
             "holes": self.holes.__data__,
             "frame": self.frame.__data__,
@@ -151,11 +150,9 @@ class FastenerTimberInterface(object):
     @property
     def plate(self):
         """Generate a plate from outline, thickness, and holes."""
-        if not self.outline_pts:
+        if not self.outline:
             return None
-        plate = Brep.from_extrusion(
-            NurbsCurve.from_points(self.outline_pts, degree=1), Vector(0.0, 0.0, 1.0) * self.thickness
-        )
+        plate = Brep.from_extrusion(self.outline, Vector(0.0, 0.0, 1.0) * self.thickness)
         for hole in self.holes:
             frame = Frame(hole["point"], self.frame.xaxis, self.frame.yaxis)
             hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, self.thickness * 2, frame))
@@ -187,7 +184,6 @@ class FastenerTimberInterface(object):
         features = []
         for hole in self.holes:
             features.append(self.get_hole_feature(hole))
-            print("hole", hole)
         for feature in self.features:
             feature = feature.copy()
             feature.transform(Transformation.from_frame(self.frame))
@@ -211,7 +207,7 @@ class FastenerTimberInterface(object):
 
     def copy(self):
         fast = FastenerTimberInterface(
-            self.outline_pts, self.thickness, self.holes, shapes=self.shapes, features=self.features
+            self.outline, self.thickness, self.holes, shapes=self.shapes, features=self.features
         )
         fast._shape = self._shape
         return fast
