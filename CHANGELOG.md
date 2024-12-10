@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Element.reset()` method.
 * Added new `fasteners.py` module with new `Fastener` element type.
 * Added new `compas_timber._fabrication.Lap`.
+* Added `ShowElementsByType` GH Component.
+* Added `fasteners` property to `TimberModel`.
+* Added `BTLx_Feature` GH component.
 * Added `CT_Beams_From_Mesh` GH component.
 
 ### Changed
@@ -55,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Reworked `comply` methods for `JointRule`s. 
 * Fixed error with angle and inclination calculation in `compas_timber._fabrication.JackRafterCut` 
 * Changed `compas_timber.connections.TButtJoint` and `compas_timber.connections.LButtJoint` by using the new implemented BTLx Processes to define the Joints
+* Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
 
 ### Removed
 
