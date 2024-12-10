@@ -10,6 +10,27 @@ from compas_timber.elements.timber import TimberElement
 from compas_timber.utils import intersection_line_box
 
 
+class FastenerApplicationError(Exception):
+    """Raised when a feature cannot be applied to an element geometry.
+
+    Attributes
+    ----------
+    elements : list of : class:`~compas_timber.elements.TimberElement`
+        The elements to which the fastener could not be applied.
+    fastener : :class:`~compas_timber.elements.Fastener`
+        The fastener that could not be applied.
+    message : str
+        The error message.
+
+    """
+
+    def __init__(self, elements, fastener, message):
+        super(FastenerApplicationError, self).__init__(message)
+        self.elements = elements
+        self.fastener = fastener
+        self.message = message
+
+
 class Fastener(TimberElement):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
@@ -58,6 +79,10 @@ class Fastener(TimberElement):
     @property
     def is_fastener(self):
         return True
+
+    @property
+    def interactions(self):
+        return []
 
     @property
     def key(self):

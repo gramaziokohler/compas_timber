@@ -44,7 +44,7 @@ class TButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener = None, **kwargs):
         super(TButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -52,10 +52,33 @@ class TButtJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid) if cross_beam else None
         self.mill_depth = mill_depth
         self.features = []
+        self.base_fastener = fastener
+        self.fasteners = []
+        if self.base_fastener:
+            fastener.place_instances(self)
+
+
+    @property
+    def interactions(self):
+        """Returns interactions between elements used by this joint."""
+        interactions = []
+        interactions.append((self.main_beam, self.cross_beam))
+        for fastener in self.fasteners:
+            for interface in fastener.interfaces:
+                interactions.append((interface.element, fastener))
+        return interactions
+
+    @property
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
 
     @property
     def elements(self):
-        return [self.main_beam, self.cross_beam]
+        return self.beams + self.fasteners
+
+    @property
+    def generated_elements(self):
+        return self.fasteners
 
     @property
     def cross_beam_ref_side_index(self):
@@ -72,6 +95,8 @@ class TButtJoint(Joint):
     @property
     def main_beam_opposing_side_index(self):
         return self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
+
+
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -138,6 +163,11 @@ class TButtJoint(Joint):
             )
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)
+
+        # add the features applied by the fastener.interfaces
+        for fastener in self.fasteners:
+            for interface in fastener.interfaces:
+                interface.add_features(interface.element)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

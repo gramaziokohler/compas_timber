@@ -242,36 +242,36 @@ class JointDefinition(object):
 
     """
 
-    def __init__(self, joint_type, beams, **kwargs):
+    def __init__(self, joint_type, elements, **kwargs):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-        if len(beams) < 2:
-            raise UserWarning("Joint requires at least two Beams, got {}.".format(len(beams)))
+        if len(elements) < 2:
+            raise UserWarning("Joint requires at least two Elements, got {}.".format(len(elements)))
 
         self.joint_type = joint_type
-        self.beams = beams
+        self.elements = elements
         self.kwargs = kwargs
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.beams, self.kwargs)
+        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.elements, self.kwargs)
 
     def ToString(self):
         return repr(self)
 
     def __hash__(self):
-        return hash((self.joint_type, self.beams))
+        return hash((self.joint_type, self.elements))
 
     def is_identical(self, other):
         return (
             isinstance(other, JointDefinition)
             and self.joint_type == other.joint_type
-            and set([b.key for b in self.beams]) == set([b.key for b in other.beams])
+            and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
         )
 
-    def match(self, beams):
+    def match(self, elements):
         """Returns True if beams are defined within this JointDefinition."""
-        set_a = set([id(b) for b in beams])
-        set_b = set([id(b) for b in self.beams])
+        set_a = set([id(e) for e in elements])
+        set_b = set([id(e) for e in self.elements])
         return set_a == set_b
 
 
@@ -380,6 +380,7 @@ class DebugInfomation(object):
     """
 
     def __init__(self):
+        self.fastener_errors = []
         self.feature_errors = []
         self.joint_errors = []
 
@@ -394,6 +395,13 @@ class DebugInfomation(object):
     @property
     def has_errors(self):
         return self.feature_errors or self.joint_errors
+
+    def add_fastener_error(self, error):
+        if isinstance(error, list):
+            self.fastener_errors.extend(error)
+        else:
+            self.fastener_errors.append(error)
+
 
     def add_feature_error(self, error):
         if isinstance(error, list):
