@@ -24,6 +24,7 @@ def test_add_element():
     A.add_element(B)
 
     assert B in A.beams
+    assert B in A.elements()
     assert len(list(A.graph.nodes())) == 1
     assert len(list(A.graph.edges())) == 0
     assert list(A.beams)[0] is B
@@ -41,6 +42,18 @@ def test_add_joint():
 
     assert len(list(model.beams)) == 2
     assert len(list(model.joints)) == 1
+
+
+def test_get_joint_from_interaction():
+    model = TimberModel()
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+
+    model.add_element(b1)
+    model.add_element(b2)
+    joint = LButtJoint.create(model, b1, b2)
+
+    assert joint is list(model.joints)[0]
 
 
 def test_copy(mocker):

@@ -54,7 +54,7 @@ class TBirdsmouthJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property
@@ -94,7 +94,7 @@ class TBirdsmouthJoint(Joint):
         try:
             start_a, end_a = self.main_beam.extension_to_plane(plane)
         except Exception as ex:
-            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
         self.main_beam.add_blank_extension(start_a, end_a, self.guid)
 
     def add_features(self):

@@ -15,6 +15,7 @@ from .t_birdsmouth import TBirdsmouthJoint
 from .t_halflap import THalfLapJoint
 from .x_halflap import XHalfLapJoint
 from .t_dovetail import TDovetailJoint
+from .ball_node import BallNodeJoint
 
 __all__ = [
     "Joint",
@@ -35,4 +36,5 @@ __all__ = [
     "ConnectionSolver",
     "find_neighboring_beams",
     "TDovetailJoint",
+    "BallNodeJoint",
 ]
