@@ -1,12 +1,14 @@
 from compas_timber._fabrication import StepJoint
 from compas_timber._fabrication import StepJointNotch
-from compas_timber.connections.utilities import are_beams_coplanar
+from compas_timber.connections import BeamJoinningError
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.connections.utilities import check_beam_alignment
 
 from .joint import Joint
 from .solver import JointTopology
+
+from compas.tolerance import TOL
 
 
 class TStepJoint(Joint):
@@ -106,7 +108,7 @@ class TStepJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property
@@ -150,9 +152,6 @@ class TStepJoint(Joint):
         # TODO: As well the step shape should maybe be defined automatically by the shear reqirements of the joint.
 
         assert self.main_beam and self.cross_beam  # should never happen
-        assert are_beams_coplanar(
-            self.main_beam, self.cross_beam
-        ), "The beams are not coplanar, the joint cannot be created."
 
         if self.features:
             self.main_beam.remove_features(self.features)
@@ -194,6 +193,26 @@ class TStepJoint(Joint):
         self.cross_beam.add_features(cross_feature)
         # add features to joint
         self.features = [cross_feature, main_feature]
+
+    def check_element_compatibility(self):
+        """Checks if the elements are compatible for the creation of the joint.
+
+        Raises
+        ------
+        BeamJoinningError
+            If the elements are not compatible for the creation of the joint.
+
+        """
+        # check if the beams are aligned
+        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
+        for beam in self.elements:
+            beam_normal = beam.frame.normal.unitized()
+            dot = abs(beam_normal.dot(cross_vect.unitized()))
+            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
+                raise BeamJoinningError(
+                    self.main_beam,
+                    self.cross_beam,
+                    debug_info="The the two beams are not aligned to create a Step joint.")
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

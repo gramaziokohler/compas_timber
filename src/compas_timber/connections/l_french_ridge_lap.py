@@ -100,7 +100,8 @@ class LFrenchRidgeLapJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during the `Model.process_joinery()` process after the joint
+        has been instantiated and added to the model.
 
         Raises
         ------
@@ -108,6 +109,7 @@ class LFrenchRidgeLapJoint(Joint):
             If the extension could not be calculated.
 
         """
+
         assert self.beam_a and self.beam_b
         start_a, start_b = None, None
         try:
@@ -123,14 +125,14 @@ class LFrenchRidgeLapJoint(Joint):
         self.beam_b.add_blank_extension(start_b, end_b, self.guid)
 
     def add_features(self):
-        """Adds the required extension and trimming features to both beams.
+        """Adds the necessary features to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during the `Model.process_joinery()` process after the joint
+        has been instantiated and added to the model. It is executed after the beam extensions
+        have been added via `Joint.add_extensions()`.
 
         """
         assert self.beam_a and self.beam_b
-        # check if the beams are aligned and have the same width and height
-        self.check_geometry()
 
         if self.features:
             self.beam_a.remove_features(self.features)
@@ -146,13 +148,13 @@ class LFrenchRidgeLapJoint(Joint):
         self.beam_b.add_features(frl_b)
         self.features = [frl_a, frl_b]
 
-    def check_geometry(self):
-        """Checks if the geometry of the beams is valid for the joint.
+    def check_element_compatibility(self):
+        """Checks if the elements are compatible for the creation of the joint.
 
         Raises
         ------
         BeamJoinningError
-            If the geometry is invalid.
+            If the elements are not compatible for the creation of the joint.
 
         """
         # check if the beams are aligned
