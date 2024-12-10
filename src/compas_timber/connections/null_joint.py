@@ -51,7 +51,7 @@ class NullJoint(Joint):
         self.beam_b_guid = str(beam_b.guid) if beam_b else None
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.beam_a, self.beam_b]
 
     def restore_beams_from_keys(self, model):

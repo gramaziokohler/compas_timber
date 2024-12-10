@@ -14,7 +14,7 @@ def test_create():
     A.add_element(B2)
     instance = TButtJoint.create(A, B1, B2)
 
-    assert len(instance.beams) == 2
+    assert len(instance.elements) == 2
     assert isinstance(instance, TButtJoint)
     assert instance.main_beam == B1
     assert instance.cross_beam == B2

@@ -67,7 +67,7 @@ class LHalfLapJoint(LapJoint):
             main_cutting_frame = self.get_main_cutting_frame()
             cross_cutting_frame = self.get_cross_cutting_frame()
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
 
         start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
         start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_frame)
@@ -86,7 +86,7 @@ class LHalfLapJoint(LapJoint):
             cross_cutting_frame = self.get_cross_cutting_frame()
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)
