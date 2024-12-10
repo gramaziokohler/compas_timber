@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `FastenerInterfaceComponent` GH component.
 * Added `ShowElementsByType` GH Component.
 * Added `fasteners` property to `TimberModel`.
+* Added `BTLx_Feature` GH component.
+* Added `CT_Beams_From_Mesh` GH component.
 
 ### Changed
 
