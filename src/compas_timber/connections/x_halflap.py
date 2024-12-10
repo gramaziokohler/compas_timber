@@ -68,7 +68,7 @@ class XHalfLapJoint(Joint):
         self._check_geometry()  # TODO: in the future, half laps should be possible for non-aligned beams
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.beam_a, self.beam_b]
 
     @property
@@ -157,13 +157,13 @@ class XHalfLapJoint(Joint):
 
         """
         # check if the beams are aligned
-        for beam in self.beams:
+        for beam in self.elements:
             cross_vector = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vector.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
                 raise BeamJoinningError(
-                    self.beams,
+                    self.elements,
                     self,
                     debug_info="The the two beams are not aligned to create a Half Lap joint.",
                 )

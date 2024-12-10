@@ -70,7 +70,7 @@ class THalfLapJoint(Joint):
         self._check_geometry()  # TODO: in the future, half laps should be possible for non-aligned beams
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property
@@ -119,10 +119,13 @@ class THalfLapJoint(Joint):
             start_main, end_main = self.main_beam.extension_to_plane(self.main_cutting_plane.to_plane())
         except AttributeError as ae:
             raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[self.main_cutting_plane.to_plane()]
+                beams=self.elements,
+                joint=self,
+                debug_info=str(ae),
+                debug_geometries=[self.main_cutting_plane.to_plane()],
             )
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
@@ -192,13 +195,13 @@ class THalfLapJoint(Joint):
 
         """
         # check if the beams are aligned
-        for beam in self.beams:
+        for beam in self.elements:
             cross_vector = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vector.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
                 raise BeamJoinningError(
-                    self.beams,
+                    self.elements,
                     self,
                     debug_info="The two beams are not aligned to create a Half Lap joint.",
                 )

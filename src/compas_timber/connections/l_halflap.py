@@ -69,7 +69,7 @@ class LHalfLapJoint(Joint):
         self._check_geometry()  # TODO: in the future, half laps should be possible for non-aligned beams
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.beam_a, self.beam_b]
 
     @property
@@ -121,9 +121,9 @@ class LHalfLapJoint(Joint):
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [self.cutting_plane_b] if start_a is not None else [self.cutting_plane_a]
-            raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
+            raise BeamJoinningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
-            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
         self.beam_a.add_blank_extension(start_a, end_a, self.beam_a_guid)
         self.beam_b.add_blank_extension(start_b, end_b, self.beam_b_guid)
 
@@ -192,13 +192,13 @@ class LHalfLapJoint(Joint):
 
         """
         # check if the beams are aligned
-        for beam in self.beams:
+        for beam in self.elements:
             cross_vector = self.beam_a.centerline.direction.cross(self.beam_b.centerline.direction)
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vector.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
                 raise BeamJoinningError(
-                    self.beams,
+                    self.elements,
                     self,
                     debug_info="The the two beams are not aligned to create a Half Lap joint.",
                 )
