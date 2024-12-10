@@ -60,7 +60,7 @@ class LapJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     def restore_beams_from_keys(self, model):
@@ -112,22 +112,22 @@ class LapJoint(Joint):
         )
 
     def get_main_cutting_frame(self):
-        assert self.beams
-        beam_a, beam_b = self.beams
+        assert self.elements
+        beam_a, beam_b = self.elements
 
         _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
         cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
         return cfr
 
     def get_cross_cutting_frame(self):
-        assert self.beams
-        beam_a, beam_b = self.beams
+        assert self.elements
+        beam_a, beam_b = self.elements
         _, cfr = self.get_face_most_towards_beam(beam_b, beam_a)
         return cfr
 
     def _create_negative_volumes(self):
-        assert self.beams
-        beam_a, beam_b = self.beams
+        assert self.elements
+        beam_a, beam_b = self.elements
 
         # Get Cut Plane
         plane_cut_vector = beam_a.centerline.vector.cross(beam_b.centerline.vector)
