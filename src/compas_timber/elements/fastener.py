@@ -94,19 +94,18 @@ class Fastener(TimberElement):
         # type: () -> int | None
         return self.graph_node
 
-    # TODO: implement Data instead of re-implementing
-    # def copy(self):
-    #     cls = type(self)
-    #     fast = cls(shape=self._shape, frame=self.frame)
-    #     fast.interfaces = [interface.copy() for interface in self.interfaces]
-    #     fast.debug_info = self.debug_info
-    #     return fast
+    @property
+    def __data__(self):
+        return {
+            "shape": self._shape,
+            "frame": self.frame,
+            "interfaces": self.interfaces,
+        }
 
-    # TODO: should implement compute_geometry instead
-    # @property
-    # def geometry(self):
-    #     """returns the geometry of the fastener in the model"""
-    #     return self.shape.transformed(Transformation.from_frame(self.frame))
+    @property
+    def compute_geometry(self):
+        """returns the geometry of the fastener in the model"""
+        return self.shape.transformed(Transformation.from_frame(self.frame))
 
 
 class FastenerTimberInterface(Data):
@@ -161,15 +160,13 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(self, outline, thickness, shapes=None, holes=None, frame=None, features=None):
+    def __init__(self, outline=None, thickness=None, holes=None, shapes=None, frame=None, features=None):
         super(FastenerTimberInterface, self).__init__()
-        assert outline
-        assert thickness
         self.outline = outline
         self.thickness = thickness
         self.holes = holes or []
         self.frame = frame or Frame.worldXY()
-        self.shapes = shapes
+        self.shapes = shapes or []
         self.features = features or []  # TODO: what are these? FeatureDefinitions?
         self._shape = None
         self.test = []

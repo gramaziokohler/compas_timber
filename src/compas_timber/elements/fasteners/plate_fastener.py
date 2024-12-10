@@ -11,7 +11,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
-from compas_timber.elements import Beam
+from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerApplicationError
 from compas_timber.utils import intersection_line_line_param
@@ -44,11 +44,12 @@ class PlateFastener(Fastener):
 
     """
 
-    def __init__(self, shape=None, frame=None, angle=math.pi / 2, **kwargs):
+    def __init__(self, shape=None, frame=None, angle=math.pi / 2, interfaces = [], **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
         self.frame = frame
         self._shape = shape
         self.angle = angle
+        self.interfaces = interfaces
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -199,12 +200,10 @@ class PlateFastener(Fastener):
             )
 
         cross_vector = cross_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
-        main_faces = Beam.angle_beam_face_vector(beam_a, cross_vector)
-        cross_faces = Beam.angle_beam_face_vector(beam_b, cross_vector)
-
+        main_faces = beam_ref_side_incidence_with_vector(beam_a, cross_vector)
+        cross_faces = beam_ref_side_incidence_with_vector(beam_b, cross_vector)
         front_face_index = min(main_faces, key=main_faces.get)
         cross_face_index = min(cross_faces, key=cross_faces.get)
-
         if not TOL.is_zero(main_faces[front_face_index]):
             raise FastenerApplicationError(
                 elements=[beam_a, beam_b],
@@ -219,8 +218,8 @@ class PlateFastener(Fastener):
             )
         if not TOL.is_zero(
             distance_point_plane(
-                beam_a.faces[front_face_index].point,
-                Plane.from_frame(beam_b.faces[cross_face_index]),
+                beam_a.ref_sides[front_face_index].point,
+                Plane.from_frame(beam_b.ref_sides[cross_face_index]),
             )
         ):
             raise FastenerApplicationError(
@@ -230,8 +229,8 @@ class PlateFastener(Fastener):
         cross_back_face_index = (cross_face_index + 2) % 4
         if not TOL.is_zero(
             distance_point_plane(
-                beam_a.faces[back_face_index].point,
-                Plane.from_frame(beam_b.faces[cross_back_face_index]),
+                beam_a.ref_sides[back_face_index].point,
+                Plane.from_frame(beam_b.ref_sides[cross_back_face_index]),
             )
         ):
             raise FastenerApplicationError(
@@ -257,7 +256,6 @@ class PlateFastener(Fastener):
             vector = Vector(0, 0, self.thickness)
             self._shape = Brep.from_extrusion(self.outline, vector)
             if self.cutouts:
-                print("cutouts", self.cutouts)
                 for cutout in self.cutouts:
                     cutout_brep = Brep.from_extrusion(cutout, vector)
                     self._shape -= cutout_brep
