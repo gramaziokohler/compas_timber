@@ -72,7 +72,7 @@ def test_create(mocker):
     model.add_element(b2)
     _ = TButtJoint.create(model, b1, b2)
 
-    assert len(list(model.beams)) == 2
+    assert len(list(model.elements())) == 2
     assert len(list(model.joints)) == 1
 
 
@@ -91,7 +91,7 @@ def test_deepcopy(mocker, t_topo_beams):
 
     t_butt_copy = list(model_copy.joints)[0]
     assert t_butt_copy is not t_butt
-    assert t_butt_copy.beams
+    assert t_butt_copy.elements
 
 
 def test_joint_create_t_butt(t_topo_beams):
@@ -103,7 +103,7 @@ def test_joint_create_t_butt(t_topo_beams):
 
     assert joint.main_beam is main_beam
     assert joint.cross_beam is cross_beam
-    assert joint.beams
+    assert joint.elements
 
 
 def test_joint_create_l_butt(l_topo_beams):
@@ -115,7 +115,7 @@ def test_joint_create_l_butt(l_topo_beams):
 
     assert joint.main_beam is beam_a
     assert joint.cross_beam is beam_b
-    assert joint.beams
+    assert joint.elements
 
 
 def test_joint_create_x_half_lap(x_topo_beams):
@@ -127,7 +127,7 @@ def test_joint_create_x_half_lap(x_topo_beams):
 
     assert joint.beam_a is beam_a
     assert joint.beam_b is beam_b
-    assert joint.beams
+    assert joint.elements
 
 
 def test_joint_create_t_lap(t_topo_beams):
@@ -139,7 +139,7 @@ def test_joint_create_t_lap(t_topo_beams):
 
     assert joint.main_beam is main_beam
     assert joint.cross_beam is cross_beam
-    assert joint.beams
+    assert joint.elements
 
 
 def test_joint_create_l_lap(l_topo_beams):
@@ -151,7 +151,7 @@ def test_joint_create_l_lap(l_topo_beams):
 
     assert joint.beam_a is beam_a
     assert joint.beam_b is beam_b
-    assert joint.beams
+    assert joint.elements
 
 
 def test_joint_create_kwargs_passthrough_lbutt():

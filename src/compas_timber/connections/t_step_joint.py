@@ -107,7 +107,7 @@ class TStepJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property

@@ -56,7 +56,7 @@ class LMiterJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.beam_a, self.beam_b]
 
     def get_cutting_planes(self):
@@ -117,9 +117,9 @@ class LMiterJoint(Joint):
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [plane_b] if start_a is not None else [plane_a]
-            raise BeamJoinningError(self.beams, self, debug_info=str(ae), debug_geometries=geometries)
+            raise BeamJoinningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
-            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
         self.beam_a.add_blank_extension(start_a, end_a, self.guid)
         self.beam_b.add_blank_extension(start_b, end_b, self.guid)
 
@@ -138,7 +138,7 @@ class LMiterJoint(Joint):
         try:
             plane_a, plane_b = self.get_cutting_planes()
         except Exception as ex:
-            raise BeamJoinningError(self.beams, self, debug_info=str(ex))
+            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
 
         cut1 = JackRafterCut.from_plane_and_beam(plane_a, self.beam_a)
         cut2 = JackRafterCut.from_plane_and_beam(plane_b, self.beam_b)
@@ -148,5 +148,5 @@ class LMiterJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.element_by_guid(self.beam_a_guid)
-        self.beam_b = model.element_by_guid(self.beam_b_guid)
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
