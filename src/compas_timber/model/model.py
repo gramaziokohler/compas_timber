@@ -261,7 +261,6 @@ class TimberModel(Model):
         for element in joint.generated_elements:
             self.remove_element(element)
 
-
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies

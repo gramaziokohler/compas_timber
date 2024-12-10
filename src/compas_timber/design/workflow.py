@@ -242,18 +242,18 @@ class JointDefinition(object):
 
     """
 
-    def __init__(self, joint_type, beams, **kwargs):
+    def __init__(self, joint_type, elements, **kwargs):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-        if len(beams) < 2:
-            raise UserWarning("Joint requires at least two Beams, got {}.".format(len(beams)))
+        if len(elements) < 2:
+            raise UserWarning("Joint requires at least two elements, got {}.".format(len(elements)))
 
         self.joint_type = joint_type
-        self.beams = beams
+        self.elements = elements
         self.kwargs = kwargs
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.beams, self.kwargs)
+        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.elements, self.kwargs)
 
     def ToString(self):
         return repr(self)
@@ -265,13 +265,13 @@ class JointDefinition(object):
         return (
             isinstance(other, JointDefinition)
             and self.joint_type == other.joint_type
-            and set([b.key for b in self.beams]) == set([b.key for b in other.beams])
+            and set([b.key for b in self.elements]) == set([b.key for b in other.elements])
         )
 
-    def match(self, beams):
+    def match(self, elements):
         """Returns True if beams are defined within this JointDefinition."""
-        set_a = set([id(b) for b in beams])
-        set_b = set([id(b) for b in self.beams])
+        set_a = set([id(b) for b in elements])
+        set_b = set([id(b) for b in self.elements])
         return set_a == set_b
 
 
