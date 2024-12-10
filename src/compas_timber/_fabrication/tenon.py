@@ -309,11 +309,11 @@ class Tenon(BTLxProcess):
         plane,
         beam,
         start_y=0.0,
-        start_depth=50.0,
+        start_depth=0.0,
         rotation=0.0,
         length=80.0,
         width=40.0,
-        height=28.0,
+        height=40.0,
         shape=TenonShapeType.AUTOMATIC,
         shape_radius=20.0,
         chamfer=False,
@@ -374,16 +374,19 @@ class Tenon(BTLxProcess):
         if orientation == OrientationType.END:
             rotation = -rotation
             start_y = -start_y
-        start_y += beam.width / 2  # TODO: Should this be bound as well?
+            # start_depth = -start_depth
+        start_y += beam.width / 2
         rotation += 90
 
-        # bound start_depth, length and width
-        start_depth = cls._bound_start_depth(start_depth, inclination, height)
-        length = cls._bound_length(
-            ref_side, plane, beam.height, start_depth, inclination, length, height
-        )
-        width = cls._bound_width(beam.width, angle, length, width, shape_radius)
-        start_depth = cls._calculate_start_depth(beam, inclination, length)
+        # calculate start_depth, length and width
+
+        # length = cls._bound_length(
+        #     ref_side, plane, beam.height, start_depth, inclination, length, height
+        # )
+        # width = cls._bound_width(beam.width, angle, length, width, shape_radius)
+
+        # calculate start_depth
+        start_depth += cls._calculate_start_depth(beam, inclination, length)
 
         # calculate start_x
         start_x = cls._calculate_start_x(
@@ -400,6 +403,9 @@ class Tenon(BTLxProcess):
         length_limited_top, length_limited_bottom = cls._calculate_length_limits(
             beam, start_depth, length, inclination
         )  # TODO: Should this instead come first and override the start_depth and length?
+
+        length_limited_bottom = False
+        length_limited_top = False
 
         return cls(
             orientation,
@@ -558,21 +564,21 @@ class Tenon(BTLxProcess):
                 None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
 
-        # fillet the edges of the dovetail volume based on the shape
-        if (
-            self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
-        ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_indices = [4, 7] if self.length_limited_top else [5, 8]
-            try:
-                tenon_volume.fillet(
-                    self.shape_radius, [tenon_volume.edges[edge_indices[0]], tenon_volume.edges[edge_indices[1]]]
-                )  # TODO: NotImplementedError
-            except Exception as e:
-                raise FeatureApplicationError(
-                    tenon_volume,
-                    geometry,
-                    "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
-                )
+        # # fillet the edges of the dovetail volume based on the shape
+        # if (
+        #     self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
+        # ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
+        #     edge_indices = [4, 7] if self.length_limited_top else [5, 8]
+        #     try:
+        #         tenon_volume.fillet(
+        #             self.shape_radius, [tenon_volume.edges[edge_indices[0]], tenon_volume.edges[edge_indices[1]]]
+        #         )  # TODO: NotImplementedError
+        #     except Exception as e:
+        #         raise FeatureApplicationError(
+        #             tenon_volume,
+        #             geometry,
+        #             "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
+        #         )
 
         # trim geometry with cutting planes
         try:
