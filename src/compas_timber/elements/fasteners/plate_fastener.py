@@ -3,20 +3,21 @@ import math
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import Plane
-from compas.geometry import distance_point_plane
-from compas.geometry import cross_vectors
 from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
+from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
-from compas_timber.elements import Fastener
 from compas_timber.elements import Beam
+from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerApplicationError
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
+
 
 class PlateFastener(Fastener):
     """
@@ -42,8 +43,6 @@ class PlateFastener(Fastener):
         The frame of the fastener.
 
     """
-
-
 
     def __init__(self, shape=None, frame=None, angle=math.pi / 2, **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
@@ -161,9 +160,7 @@ class PlateFastener(Fastener):
         """
         front_face_index, back_face_index = self.validate_fastener_beam_compatibility(joint)
         beam_a, beam_b = joint.elements[0:2]
-        (main_point, main_param), (cross_point, _) = intersection_line_line_param(
-            beam_a.centerline, beam_b.centerline
-        )
+        (main_point, main_param), (cross_point, _) = intersection_line_line_param(beam_a.centerline, beam_b.centerline)
         int_point = (main_point + cross_point) * 0.5
         front_face = beam_a.faces[front_face_index]
         front_point = Plane.from_frame(front_face).closest_point(int_point)
@@ -198,7 +195,7 @@ class PlateFastener(Fastener):
         beam_a, beam_b = joint.elements[0:2]
         if not TOL.is_zero(angle_vectors(beam_a.frame.xaxis, beam_b.frame.xaxis) - self.angle):
             raise FastenerApplicationError(
-                elements=[beam_a, beam_b], fastener = self, message="Beams are not perpendicular"
+                elements=[beam_a, beam_b], fastener=self, message="Beams are not perpendicular"
             )
 
         cross_vector = cross_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
@@ -211,13 +208,13 @@ class PlateFastener(Fastener):
         if not TOL.is_zero(main_faces[front_face_index]):
             raise FastenerApplicationError(
                 elements=[beam_a, beam_b],
-                fastener = self,
+                fastener=self,
                 message="beam_a is not perpendicular to the cross vector",
             )
         if not TOL.is_zero(cross_faces[cross_face_index]):
             raise FastenerApplicationError(
                 elements=[beam_a, beam_b],
-                fastener = self,
+                fastener=self,
                 message="Cross beam is not perpendicular to the cross vector",
             )
         if not TOL.is_zero(
@@ -227,7 +224,7 @@ class PlateFastener(Fastener):
             )
         ):
             raise FastenerApplicationError(
-                elements=[beam_a, beam_b], fastener = self, message="beam faces are not coplanar"
+                elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar"
             )
         back_face_index = (front_face_index + 2) % 4
         cross_back_face_index = (cross_face_index + 2) % 4
@@ -237,9 +234,10 @@ class PlateFastener(Fastener):
                 Plane.from_frame(beam_b.faces[cross_back_face_index]),
             )
         ):
-            raise FastenerApplicationError(elements=[beam_a, beam_b], fastener = self, message="beam faces are not coplanar")
+            raise FastenerApplicationError(
+                elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar"
+            )
         return front_face_index, back_face_index
-
 
     def add_features(self):
         """Adds the geometric features to the beams. TODO: add btlx features in separate function."""

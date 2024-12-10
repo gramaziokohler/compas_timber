@@ -402,7 +402,6 @@ class DebugInfomation(object):
         else:
             self.fastener_errors.append(error)
 
-
     def add_feature_error(self, error):
         if isinstance(error, list):
             self.feature_errors.extend(error)

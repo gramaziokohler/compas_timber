@@ -44,7 +44,7 @@ class TButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener = None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, **kwargs):
         super(TButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -56,7 +56,6 @@ class TButtJoint(Joint):
         self.fasteners = []
         if self.base_fastener:
             fastener.place_instances(self)
-
 
     @property
     def interactions(self):
@@ -95,8 +94,6 @@ class TButtJoint(Joint):
     @property
     def main_beam_opposing_side_index(self):
         return self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
-
-
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
