@@ -594,7 +594,7 @@ document.write(`
 <h1>THalfLapJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.THalfLapJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">THalfLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/27c744f/src/compas_timber/connections/t_halflap.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">THalfLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/7c0b569/src/compas_timber/connections/t_halflap.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.LapJoint.html#compas_timber.connections.LapJoint" title="compas_timber.connections.lap_joint.LapJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p>
 <p>Represents a T-Lap type joint which joins the end of a beam along the length of another beam,
 trimming the main beam.</p>
@@ -637,37 +637,40 @@ trimming the main beam.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.create.html#compas_timber.connections.THalfLapJoint.create" title="compas_timber.connections.THalfLapJoint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
 <td><p>Creates an instance of this joint and creates the new connection in <cite>model</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.from_json.html#compas_timber.connections.THalfLapJoint.from_json" title="compas_timber.connections.THalfLapJoint.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.element_count_complies.html#compas_timber.connections.THalfLapJoint.element_count_complies" title="compas_timber.connections.THalfLapJoint.element_count_complies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_count_complies</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.from_json.html#compas_timber.connections.THalfLapJoint.from_json" title="compas_timber.connections.THalfLapJoint.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.from_jsonstring.html#compas_timber.connections.THalfLapJoint.from_jsonstring" title="compas_timber.connections.THalfLapJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.from_jsonstring.html#compas_timber.connections.THalfLapJoint.from_jsonstring" title="compas_timber.connections.THalfLapJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_cross_cutting_frame.html#compas_timber.connections.THalfLapJoint.get_cross_cutting_frame" title="compas_timber.connections.THalfLapJoint.get_cross_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cross_cutting_frame</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_cross_cutting_frame.html#compas_timber.connections.THalfLapJoint.get_cross_cutting_frame" title="compas_timber.connections.THalfLapJoint.get_cross_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cross_cutting_frame</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam.html#compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam" title="compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam.html#compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam" title="compas_timber.connections.THalfLapJoint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal is most orthogonal to <cite>beam_a</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_face_most_towards_beam.html#compas_timber.connections.THalfLapJoint.get_face_most_towards_beam" title="compas_timber.connections.THalfLapJoint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_face_most_towards_beam.html#compas_timber.connections.THalfLapJoint.get_face_most_towards_beam" title="compas_timber.connections.THalfLapJoint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal most faces <cite>beam_a</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_main_cutting_frame.html#compas_timber.connections.THalfLapJoint.get_main_cutting_frame" title="compas_timber.connections.THalfLapJoint.get_main_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_main_cutting_frame</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.get_main_cutting_frame.html#compas_timber.connections.THalfLapJoint.get_main_cutting_frame" title="compas_timber.connections.THalfLapJoint.get_main_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_main_cutting_frame</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.restore_beams_from_keys.html#compas_timber.connections.THalfLapJoint.restore_beams_from_keys" title="compas_timber.connections.THalfLapJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.restore_beams_from_keys.html#compas_timber.connections.THalfLapJoint.restore_beams_from_keys" title="compas_timber.connections.THalfLapJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.sha256.html#compas_timber.connections.THalfLapJoint.sha256" title="compas_timber.connections.THalfLapJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.sha256.html#compas_timber.connections.THalfLapJoint.sha256" title="compas_timber.connections.THalfLapJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.to_json.html#compas_timber.connections.THalfLapJoint.to_json" title="compas_timber.connections.THalfLapJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.to_json.html#compas_timber.connections.THalfLapJoint.to_json" title="compas_timber.connections.THalfLapJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.to_jsonstring.html#compas_timber.connections.THalfLapJoint.to_jsonstring" title="compas_timber.connections.THalfLapJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.to_jsonstring.html#compas_timber.connections.THalfLapJoint.to_jsonstring" title="compas_timber.connections.THalfLapJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.validate_data.html#compas_timber.connections.THalfLapJoint.validate_data" title="compas_timber.connections.THalfLapJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.THalfLapJoint.validate_data.html#compas_timber.connections.THalfLapJoint.validate_data" title="compas_timber.connections.THalfLapJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
