@@ -1,3 +1,5 @@
+from compas.tolerance import TOL
+
 from compas_timber._fabrication import StepJoint
 from compas_timber._fabrication import StepJointNotch
 from compas_timber.connections import BeamJoinningError
@@ -7,8 +9,6 @@ from compas_timber.connections.utilities import check_beam_alignment
 
 from .joint import Joint
 from .solver import JointTopology
-
-from compas.tolerance import TOL
 
 
 class TStepJoint(Joint):
