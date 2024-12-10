@@ -16,6 +16,9 @@ class Fastener(TimberElement):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
+    TODO: we should rethink this class. it is not entirely clear if it's an abstract class or a generic fastener.
+    It inherits from TimberElement/Element but does not implement the appropriate methods.
+
     Parameters
     ----------
     geometry : :class:`~compas.geometry.Geometry`
@@ -66,17 +69,19 @@ class Fastener(TimberElement):
         # type: () -> int | None
         return self.graph_node
 
-    def copy(self):
-        cls = type(self)
-        fast = cls(shape=self._shape, frame=self.frame)
-        fast.interfaces = [interface.copy() for interface in self.interfaces]
-        fast.debug_info = self.debug_info
-        return fast
+    # TODO: implement Data instead of re-implementing
+    # def copy(self):
+    #     cls = type(self)
+    #     fast = cls(shape=self._shape, frame=self.frame)
+    #     fast.interfaces = [interface.copy() for interface in self.interfaces]
+    #     fast.debug_info = self.debug_info
+    #     return fast
 
-    @property
-    def geometry(self):
-        """returns the geometry of the fastener in the model"""
-        return self.shape.transformed(Transformation.from_frame(self.frame))
+    # TODO: should implement compute_geometry instead
+    # @property
+    # def geometry(self):
+    #     """returns the geometry of the fastener in the model"""
+    #     return self.shape.transformed(Transformation.from_frame(self.frame))
 
 
 class FastenerTimberInterface(Data):

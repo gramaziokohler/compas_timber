@@ -67,8 +67,7 @@ class BallNodeFastener(Fastener):
     # Implementations of abstract methods
     # ==========================================================================
 
-    @property
-    def geometry(self):
+    def compute_geometry(self):
         # type: () -> compas.geometry.Geometry
         """Returns the geometry of the fastener including all interfaces."""
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2, point=self.node_point))
@@ -77,6 +76,9 @@ class BallNodeFastener(Fastener):
             geometry += interface.geometry.copy()  # TODO: is copy really necessary here?
 
         return geometry
+
+    # TODO: implement compute_aabb()
+    # TODO: implement compute_obb()
 
     def add_interface(self, beam, interface):
         # type: (compas_timber.parts.Beam, FastenerTimberInterface) -> None
