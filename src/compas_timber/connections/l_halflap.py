@@ -65,9 +65,6 @@ class LHalfLapJoint(Joint):
         self.cut_plane_bias = 0.5 if cut_plane_bias is None else cut_plane_bias
         self.features = []
 
-        # check if the geometry is valid. (beams should be aligned)
-        self._check_geometry()  # TODO: in the future, half laps should be possible for non-aligned beams
-
     @property
     def elements(self):
         return [self.beam_a, self.beam_b]
@@ -182,14 +179,13 @@ class LHalfLapJoint(Joint):
         self.beam_a = model.element_by_guid(self.beam_a_guid)
         self.beam_b = model.element_by_guid(self.beam_b_guid)
 
-    def _check_geometry(self):
-        """Checks if the geometry of the beams is valid for the joint.
+    def check_elements_compatibility(self):
+        """Checks if the elements are compatible for the creation of the joint.
 
         Raises
         ------
         BeamJoinningError
-            If the geometry is invalid.
-
+            If the elements are not compatible for the creation of the joint.
         """
         # check if the beams are aligned
         for beam in self.elements:
