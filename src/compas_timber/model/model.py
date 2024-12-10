@@ -274,7 +274,7 @@ class TimberModel(Model):
         """
 
         for joint in self.joints:
-            joint.check_element_compatibility()
+            joint.check_elements_compatibility()
             joint.add_extensions()
 
         for joint in self.joints:

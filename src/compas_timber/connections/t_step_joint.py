@@ -221,7 +221,7 @@ class TStepJoint(Joint):
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-    def check_element_compatibility(self):
+    def check_elements_compatibility(self):
         """Checks if the elements are compatible for the creation of the joint.
 
         Raises

@@ -108,7 +108,7 @@ class Joint(Interaction):
         """
         pass
 
-    def check_element_compatability(self):
+    def check_elements_compatability(self):
         """Checks if the beams are compatible for the creation of the joint.
         This is optional and should only be implemented by joints that require it.
 

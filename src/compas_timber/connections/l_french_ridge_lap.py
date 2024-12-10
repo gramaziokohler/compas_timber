@@ -148,7 +148,7 @@ class LFrenchRidgeLapJoint(Joint):
         self.beam_b.add_features(frl_b)
         self.features = [frl_a, frl_b]
 
-    def check_element_compatibility(self):
+    def check_elements_compatibility(self):
         """Checks if the elements are compatible for the creation of the joint.
 
         Raises
