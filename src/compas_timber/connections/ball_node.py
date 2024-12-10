@@ -58,7 +58,6 @@ class BallNodeJoint(Joint):
             point = self._calculate_node_point()
             self.fastener = BallNodeFastener(point, self.ball_diameter)
 
-
     @property
     def generated_elements(self):
         return [self.fastener]
