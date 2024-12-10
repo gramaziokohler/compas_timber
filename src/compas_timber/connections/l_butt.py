@@ -193,7 +193,12 @@ class LButtJoint(Joint):
             cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
             lap_width = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
             cross_feature = Lap.from_plane_and_beam(
-                cross_cutting_plane, self.cross_beam, lap_width, self.mill_depth, self.cross_beam_ref_side_index
+                cross_cutting_plane,
+                self.cross_beam,
+                lap_width,
+                self.mill_depth,
+                is_pocket=True,
+                ref_side_index=self.cross_beam_ref_side_index,
             )
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)

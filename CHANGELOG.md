@@ -69,6 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `DirectJointRule` to allow for more than 2 elements per joint.
 * Changed `beam` objects get added to `Joint.elements` in `Joint.create()`.
 * Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
+* Changed `compas_timber._fabrication.Lap` so that the volume is generated fully from the relevant BTLx params.
+* Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the Lap process.
 
 ### Removed
 
