@@ -1,3 +1,5 @@
+# TODO: move this to compas_timber.fasteners
+from compas.data import Data
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
@@ -34,6 +36,9 @@ class FastenerApplicationError(Exception):
 class Fastener(TimberElement):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
+
+    TODO: we should rethink this class. it is not entirely clear if it's an abstract class or a generic fastener.
+    It inherits from TimberElement/Element but does not implement the appropriate methods.
 
     Parameters
     ----------
@@ -89,21 +94,29 @@ class Fastener(TimberElement):
         # type: () -> int | None
         return self.graph_node
 
-    def copy(self):
-        cls = type(self)
-        fast = cls(shape=self._shape, frame=self.frame)
-        fast.interfaces = [interface.copy() for interface in self.interfaces]
-        fast.debug_info = self.debug_info
-        return fast
+    # TODO: implement Data instead of re-implementing
+    # def copy(self):
+    #     cls = type(self)
+    #     fast = cls(shape=self._shape, frame=self.frame)
+    #     fast.interfaces = [interface.copy() for interface in self.interfaces]
+    #     fast.debug_info = self.debug_info
+    #     return fast
 
-    @property
-    def geometry(self):
-        """returns the geometry of the fastener in the model"""
-        return self.shape.transformed(Transformation.from_frame(self.frame))
+    # TODO: should implement compute_geometry instead
+    # @property
+    # def geometry(self):
+    #     """returns the geometry of the fastener in the model"""
+    #     return self.shape.transformed(Transformation.from_frame(self.frame))
 
 
-class FastenerTimberInterface(object):
+class FastenerTimberInterface(Data):
     """A class to represent the interface between a fastener and a timber element.
+
+    # TODO: we need to put some thought as to what's the minimal representation of an interface.
+    # TODO: the responsibilities of the Fastener-based-joint vs. Fastener vs. FastenerTimberInterface should be perhaps more clearly defined
+    # TODO: prehaps it would make sense to move stuff over from here to the BallNodeJoint
+    # TODO: while it attempts to be generic, it is tightly coupled with the BallNodeJoint.
+    # TODO: what is the differece between the outline and the shapes? they seem to all just result in geometry.
 
     Parameters
     ----------
@@ -123,7 +136,7 @@ class FastenerTimberInterface(object):
         The frame of the instance of the fastener that is applied to the model.
     shapes : :class:`~compas.geometry.Geometry`
         Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.
-    feature_defs : list of compas_timber.Feature
+    feature : list of compas_timber.elements.Feature
         A list of user defined features that are applied to the timber element.
 
     Attributes
@@ -148,13 +161,16 @@ class FastenerTimberInterface(object):
 
     """
 
-    def __init__(self, outline=None, thickness=None, holes=None, frame=Frame.worldXY(), shapes=None, features=None):
+    def __init__(self, outline, thickness, shapes=None, holes=None, frame=None, features=None):
+        super(FastenerTimberInterface, self).__init__()
+        assert outline
+        assert thickness
         self.outline = outline
         self.thickness = thickness
-        self.holes = holes
-        self.frame = frame
+        self.holes = holes or []
+        self.frame = frame or Frame.worldXY()
         self.shapes = shapes
-        self.features = features
+        self.features = features or []  # TODO: what are these? FeatureDefinitions?
         self._shape = None
         self.test = []
 
@@ -164,12 +180,12 @@ class FastenerTimberInterface(object):
     @property
     def __data__(self):
         return {
-            "outline": self.outline.__data__,
+            "outline": self.outline,
             "thickness": self.thickness,
-            "holes": self.holes.__data__,
-            "frame": self.frame.__data__,
+            "holes": self.holes,
+            "frame": self.frame,
             "shapes": self.shapes,
-            "feature_defs": self.feature_defs,
+            "features": self.features,
         }
 
     @property
@@ -188,15 +204,15 @@ class FastenerTimberInterface(object):
     def shape(self):
         """Return a Brep representation of the interface located at the WorldXY origin."""
         if not self._shape:
+            geometries = []
             if self.plate:
-                self._shape = self.plate
-                if self.shapes:
-                    for shape in self.shapes:
-                        self._shape += shape
-            elif self.shapes:
-                self._shape = self.shapes[0]
-                for shape in self.shapes[1:]:
-                    self._shape += shape
+                geometries.append(self.plate)
+            if self.shapes:
+                geometries.extend(self.shapes)
+
+            self._shape = geometries[0]
+            for geometry in geometries[1:]:
+                self._shape += geometry
         return self._shape
 
     @property
@@ -208,7 +224,8 @@ class FastenerTimberInterface(object):
         """Add a feature to the interface."""
         features = []
         for hole in self.holes:
-            features.append(self.get_hole_feature(hole))
+            features.append(self._get_hole_feature(hole, element))
+        # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
             feature = feature.copy()
             feature.transform(Transformation.from_frame(self.frame))
@@ -216,7 +233,7 @@ class FastenerTimberInterface(object):
         for feature in features:
             element.add_feature(feature)
 
-    def get_hole_feature(self, hole):
+    def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element."""
         vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
         length = vector.length
@@ -224,15 +241,9 @@ class FastenerTimberInterface(object):
         drill_line = Line.from_point_direction_length(point, vector, length)
         drill_line.transform(Transformation.from_frame(self.frame))
         if hole["through"]:
-            pts = intersection_line_box(drill_line, self.element.blank)
+            pts = intersection_line_box(drill_line, element.blank)
             if pts:
                 drill_line = Line(*pts)
                 length = drill_line.length
+        # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         return DrillFeature(drill_line, hole["diameter"], length)
-
-    def copy(self):
-        fast = FastenerTimberInterface(
-            self.outline, self.thickness, self.holes, shapes=self.shapes, features=self.features
-        )
-        fast._shape = self._shape
-        return fast

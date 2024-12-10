@@ -10,6 +10,8 @@ class BallNodeFastener(Fastener):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
+    #TODO: finish this docstring
+
     Parameters
     ----------
     elements : list(:class:`~compas_timber.parts.Element`)
@@ -67,16 +69,18 @@ class BallNodeFastener(Fastener):
     # Implementations of abstract methods
     # ==========================================================================
 
-    @property
-    def geometry(self):
+    def compute_geometry(self):
         # type: () -> compas.geometry.Geometry
         """Returns the geometry of the fastener including all interfaces."""
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2, point=self.node_point))
 
         for interface in self.interfaces:
-            geometry += interface.geometry.copy()
+            geometry += interface.geometry.copy()  # TODO: is copy really necessary here?
 
         return geometry
+
+    # TODO: implement compute_aabb()
+    # TODO: implement compute_obb()
 
     def add_interface(self, beam, interface):
         # type: (compas_timber.parts.Beam, FastenerTimberInterface) -> None
@@ -91,8 +95,10 @@ class BallNodeFastener(Fastener):
 
         """
         interface = interface.copy()
-        interface.element = beam
+        # interface.element = beam
         pt = beam.centerline.closest_point(self.node_point)
+
+        # TODO: this is where the interface is places relative to the beam, a bit hidden here..
         interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
         self.interfaces.append(interface)
 

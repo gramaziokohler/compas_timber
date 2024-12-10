@@ -6,6 +6,7 @@ from compas_timber.elements import PlateFastener
 
 
 class MyComponent(component):
+    # TODO: rename this class
     def RunScript(self, outline, cutouts, main_beam_interface, cross_beam_interface):
         if not outline and main_beam_interface and cross_beam_interface:
             return

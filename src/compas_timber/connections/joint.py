@@ -1,9 +1,10 @@
+from itertools import combinations
+
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
 from compas_model.interactions import Interaction
-from itertools import combinations
 
 from .solver import JointTopology
 

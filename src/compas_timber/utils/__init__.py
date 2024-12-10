@@ -141,6 +141,7 @@ __all__ = ["intersection_line_line_param", "intersection_line_plane_param"]
 
 def intersection_line_box(line, box, ignore_ends=False):
     """Get the intersection of a line with a box in the XY plane."""
+    # TODO: can we not use `compas.geometry.intersection_line_box_xy()`?
     frame_indices = [
         (1, 2, 0),
         (7, 6, 1),

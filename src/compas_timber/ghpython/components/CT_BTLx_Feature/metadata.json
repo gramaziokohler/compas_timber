@@ -1,0 +1,36 @@
+{
+    "name": "BTLx Feature",
+    "nickname": "BTLxFeature",
+    "category": "COMPAS Timber",
+    "subcategory": "Features",
+    "description": "Generates a feature from BTLx parameters.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beam",
+                "description": "Beam to apply BTLx feature to.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Reference Face",
+                "description": "integer 1-6 corresponding to BTLx reference side.",
+                "typeHintID": "int",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Feature",
+                "description": "Feature Definition. Should connect to CT_Model features input."
+            },
+            {
+                "name": "Reference Face",
+                "description": "Lines showing the X and Y axes of the reference face."
+            }
+        ]
+    }
+}
