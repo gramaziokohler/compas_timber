@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `fasteners` property to `TimberModel`.
 * Added `BTLx_Feature` GH component.
 * Added `CT_Beams_From_Mesh` GH component.
+* Added `PlateFastener` class.
 
 ### Changed
 
@@ -69,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `DirectJointRule` to allow for more than 2 elements per joint.
 * Changed `beam` objects get added to `Joint.elements` in `Joint.create()`.
 * Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
+* Changed `TButtJoint` to take an optional `PlateFastener`.
 
 ### Removed
 
