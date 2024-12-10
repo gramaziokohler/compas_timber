@@ -74,9 +74,9 @@ class FrenchRidgeLapJoint(Joint):
 
     def restore_beams_from_keys(self, assemly):
         """After de-serialization, restores references to the top and bottom beams saved in the model."""
-        self.beam_a = assemly.find_by_key(self.beam_a_guid) if self.beam_a_guid else None
-        self.beam_b = assemly.find_by_key(self.beam_b_guid) if self.beam_b_guid else None
-        self._beams = (self.beam_a, self.beam_b)
+        self.beam_a = assemly.find_by_key(self.beam_a_guid)
+        self.beam_b = assemly.find_by_key(self.beam_b_guid)
+        self._beams = (self.beam_a, self.beam_b) # TODO: why?
 
     def check_geometry(self):
         """
