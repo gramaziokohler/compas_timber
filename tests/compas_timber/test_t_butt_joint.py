@@ -30,7 +30,7 @@ def test_create_with_fastener():
     A.add_element(B2)
     I1 = FastenerTimberInterface()
     I2 = FastenerTimberInterface()
-    F = PlateFastener(interfaces = [I1, I2])
+    F = PlateFastener(interfaces=[I1, I2])
     instance = TButtJoint.create(A, B1, B2, fastener=F)
 
     assert len(instance.elements) == 4

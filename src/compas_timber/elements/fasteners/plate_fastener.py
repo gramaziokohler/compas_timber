@@ -44,7 +44,7 @@ class PlateFastener(Fastener):
 
     """
 
-    def __init__(self, shape=None, frame=None, angle=math.pi / 2, interfaces = [], **kwargs):
+    def __init__(self, shape=None, frame=None, angle=math.pi / 2, interfaces=[], **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
         self.frame = frame
         self._shape = shape
