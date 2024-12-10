@@ -84,6 +84,13 @@ class TimberModel(Model):
         return set(joints)  # remove duplicates
 
     @property
+    def fasteners(self):
+        # type: () -> Generator[Fastener, None, None]
+        for element in self.elements():
+            if getattr(element, "is_fastener", False):
+                yield element
+
+    @property
     def walls(self):
         # type: () -> Generator[Wall, None, None]
         for element in self.elements():
