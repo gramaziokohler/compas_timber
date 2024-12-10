@@ -22,7 +22,7 @@ class FastenerTimberInterfaceComponent(component):
                 raise Warning("Number of diameters must either match the number of points or be a single value")
 
         features = [feature.feature if isinstance(feature, FeatureDefinition) else feature for feature in features]
-        outline_curve = curve_to_compas(outline)
+        outline_curve = curve_to_compas(outline) if outline else None
         fast_int = FastenerTimberInterface(
             outline_curve,
             thickness,

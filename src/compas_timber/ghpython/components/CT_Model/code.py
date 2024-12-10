@@ -10,6 +10,8 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
+from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
@@ -44,15 +46,15 @@ class ModelComponent(component):
 
         if unmatched_pairs:
             for pair in unmatched_pairs:
-                self.AddRuntimeMessage(
-                    Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key)
+                self.addRuntimeMessage(
+                    Warning, "No joint rule found for beams {} and {}".format(pair[0].key, pair[1].key)
                 )  # TODO: add to debug_info
 
         if joints:
             # apply reversed. later joints in orginal list override ealier ones
             for joint in joints[::-1]:
                 try:
-                    joint.joint_type.create(Model, *joint.beams, **joint.kwargs)
+                    joint.joint_type.create(Model, *joint.elements, **joint.kwargs)
                 except BeamJoinningError as bje:
                     debug_info.add_joint_error(bje)
 
@@ -62,11 +64,8 @@ class ModelComponent(component):
         if Features:
             features = [f for f in Features if f is not None]
             for f_def in features:
-                if f_def.elements:
-                    for element in f_def.elements:
-                        element.add_features(f_def.feature)
-                else:
-                    self.AddRuntimeMessage(Warning, "No elements found for feature definition")
+                for element in f_def.elements:
+                    element.add_features(f_def.feature)
 
         Geometry = None
         scene = Scene()
@@ -76,9 +75,9 @@ class ModelComponent(component):
                 if element.debug_info:
                     debug_info.add_feature_error(element.debug_info)
             else:
-                if element.is_beam or element.is_plate:
+                if isinstance(element, Beam) or isinstance(element, Plate):
                     scene.add(element.blank)
-                elif element.is_fastener:
+                else:
                     scene.add(element.geometry)
 
         if debug_info.has_errors:
