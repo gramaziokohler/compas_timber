@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Element.reset()` method.
 * Added new `fasteners.py` module with new `Fastener` element type.
 * Added new `compas_timber._fabrication.Lap`.
+* Added `ShowElementsByType` GH Component.
+* Added `fasteners` property to `TimberModel`.
 * Added `BTLx_Feature` GH component.
 
 ### Changed
