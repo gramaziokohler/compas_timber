@@ -238,7 +238,7 @@ class TopologyRule(JointRule):
 class JointDefinition(object):
     """Container for a joint type and the elements that shall be joined.
 
-    This allows delaying the actual joining of the beams to a downstream component.
+    This allows delaying the actual joining of the elements to a downstream component.
 
     """
 
@@ -246,7 +246,7 @@ class JointDefinition(object):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
         if len(elements) < 2:
-            raise UserWarning("Joint requires at least two Beams, got {}.".format(len(elements)))
+            raise UserWarning("Joint requires at least two Elements, got {}.".format(len(elements)))
 
         self.joint_type = joint_type
         self.elements = elements
@@ -268,9 +268,9 @@ class JointDefinition(object):
             and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
         )
 
-    def match(self, beams):
-        """Returns True if beams are defined within this JointDefinition."""
-        set_a = set([id(e) for e in beams])
+    def match(self, elements):
+        """Returns True if elements are defined within this JointDefinition."""
+        set_a = set([id(e) for e in elements])
         set_b = set([id(e) for e in self.elements])
         return set_a == set_b
 
