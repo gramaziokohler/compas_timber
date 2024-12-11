@@ -34,7 +34,7 @@ def find_neighboring_elements(elements, inflate_by=0.0):
     Notes
     -----
     This is a `pluggable`. In order to use this function, a compatible `plugin` has to be available.
-    For example, in Rhino, the function :func:`~compas_timber.rhino.find_neighboring_beams` will be used.
+    For example, in Rhino, the function :func:`~compas_timber.rhino.find_neighboring_elements` will be used.
 
     """
     raise NotImplementedError
