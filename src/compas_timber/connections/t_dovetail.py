@@ -103,6 +103,7 @@ class TDovetailJoint(Joint):
         data["tool_height"] = self.tool_height
         return data
 
+    # fmt: off
     def __init__(
         self,
         main_beam,
@@ -117,12 +118,13 @@ class TDovetailJoint(Joint):
         tool_angle=None,
         tool_diameter=None,
         tool_height=None,
+        **kwargs
     ):
-        super(TDovetailJoint, self).__init__()
+        super(TDovetailJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
-        self.main_beam_guid = str(main_beam.guid) if main_beam else None
-        self.cross_beam_guid = str(cross_beam.guid) if cross_beam else None
+        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
 
         # Default values if not provided
         self.start_y = start_y if start_y is not None else 0.0
@@ -144,7 +146,7 @@ class TDovetailJoint(Joint):
         self.features = []
 
     @property
-    def beams(self):
+    def elements(self):
         return [self.main_beam, self.cross_beam]
 
     @property
@@ -198,9 +200,9 @@ class TDovetailJoint(Joint):
             cutting_plane.translate(-cutting_plane.normal * self.tool_height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
@@ -285,5 +287,5 @@ class TDovetailJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.elementdict[self.main_beam_guid]
-        self.cross_beam = model.elementdict[self.cross_beam_guid]
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)

@@ -34,3 +34,14 @@ class TimberElement(Element):
     @property
     def is_group_element(self):
         return False
+
+    @property
+    def is_fastener(self):
+        return False
+
+    def reset(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self.remove_features()
+        if hasattr(self, "remove_blank_extension"):  # only beams should have this attribute
+            self.remove_blank_extension()
+        self.debug_info = []

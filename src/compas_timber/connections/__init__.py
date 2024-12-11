@@ -1,10 +1,9 @@
-from .butt_joint import ButtJoint
-from .french_ridge_lap import FrenchRidgeLapJoint
 from .joint import BeamJoinningError
 from .joint import Joint
 from .l_butt import LButtJoint
 from .l_halflap import LHalfLapJoint
 from .l_miter import LMiterJoint
+from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .null_joint import NullJoint
 from .solver import ConnectionSolver
@@ -17,11 +16,11 @@ from .t_halflap import THalfLapJoint
 from .x_halflap import XHalfLapJoint
 from .t_dovetail import TDovetailJoint
 from .wall_joint import WallJoint
+from .ball_node import BallNodeJoint
 
 __all__ = [
     "Joint",
     "LapJoint",
-    "ButtJoint",
     "BeamJoinningError",
     "TButtJoint",
     "LButtJoint",
@@ -33,10 +32,11 @@ __all__ = [
     "THalfLapJoint",
     "LHalfLapJoint",
     "NullJoint",
-    "FrenchRidgeLapJoint",
+    "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
     "find_neighboring_elements",
     "TDovetailJoint",
     "WallJoint",
+    "BallNodeJoint",
 ]

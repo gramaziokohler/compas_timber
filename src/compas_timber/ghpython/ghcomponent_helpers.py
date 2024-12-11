@@ -146,7 +146,7 @@ def rename_gh_output(output_name, index, ghenv):
     ghenv.Component.Params.OnParametersChanged()
 
 
-def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_count=1, keep_connections=True):
+def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_count=0, keep_connections=True):
     """Clears all input parameters from the component.
 
     Parameters
@@ -155,8 +155,10 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
         The names of the input parameters.
     ghenv : object
         The Grasshopper environment object.
+    rename_count : int, optional
+        The number of parameters that should be renamed. Default is 0.
     permanent_param_count : int, optional
-        The number of parameters that should not be deleted. Default is 1.
+        The number of parameters that should not be deleted. Default is 0.
 
     Returns
     -------

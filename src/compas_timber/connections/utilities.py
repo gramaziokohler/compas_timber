@@ -180,39 +180,6 @@ def are_beams_coplanar(beam_a, beam_b, tol=TOL):
     return is_beam_a_normal_coplanar and is_beam_b_normal_coplanar
 
 
-def check_beam_alignment(beam_a, beam_b, tol=TOL):
-    """
-    Checks the alignment of two beams by comparing their centerline directions and the normal of beam_b's frame.
-
-    This function calculates the cross product of the two beams' centerline directions and checks the alignment by
-    computing the dot product with the normal of beam_b's frame. The result can be used for further decisions based
-    on the alignment of the beams.
-
-    Parameters
-    ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
-        The first beam, used to check the alignment with beam_b.
-    beam_b : :class:`~compas_timber.parts.Beam`
-        The second beam, whose alignment is checked relative to beam_a.
-    tol : :class:`compas.tolerance.Tolerance`, optional
-        A tolerance value for determining near-perpendicular or near-parallel alignment.
-
-    Returns
-    -------
-    bool
-        True if the beams are nearly perpendicular, False if they are not.
-    """
-    # Compute the cross product of the centerline directions of the two beams
-    cross_vector = beam_a.centerline.direction.cross(beam_b.centerline.direction)
-    cross_vector.unitize()
-
-    # Calculate the dot product of the cross vector with the normal of beam_b's frame
-    dot_with_beam_b_normal = abs(cross_vector.dot(beam_b.frame.normal))
-
-    # Return True if the beams are nearly perpendicular (dot product close to 0)
-    return tol.is_zero(dot_with_beam_b_normal)
-
-
 def point_centerline_towards_joint(beam_a, beam_b):
     """
     Returns the centerline vector of beam_a pointing towards the joint with beam_b.
