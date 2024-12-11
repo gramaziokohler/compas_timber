@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Joint.add_extensions" href="compas_timber.connections.Joint.add_extensions.html" />
-    <link rel="prev" title="FrenchRidgeLapJoint.validate_data" href="compas_timber.connections.FrenchRidgeLapJoint.validate_data.html" />
+    <link rel="prev" title="ConnectionSolver.find_topology" href="compas_timber.connections.ConnectionSolver.find_topology.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -594,7 +594,7 @@ document.write(`
 <h1>Joint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.Joint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">Joint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b1757da/src/compas_timber/connections/joint.py#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">Joint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/09d5dd7/src/compas_timber/connections/joint.py#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Interaction</span></code></p>
 <p>Base class for a joint connecting two beams.</p>
 <p>This is a base class and should not be instantiated directly.
@@ -626,19 +626,22 @@ Use the <cite>create()</cite> class method of the respective implementation of <
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.Joint.add_features.html#compas_timber.connections.Joint.add_features" title="compas_timber.connections.Joint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds the features defined by this joint to affected beam(s).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.Joint.create.html#compas_timber.connections.Joint.create" title="compas_timber.connections.Joint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.Joint.check_elements_compatability.html#compas_timber.connections.Joint.check_elements_compatability" title="compas_timber.connections.Joint.check_elements_compatability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_elements_compatability</span></code></a></p></td>
+<td><p>Checks if the beams are compatible for the creation of the joint.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.Joint.create.html#compas_timber.connections.Joint.create" title="compas_timber.connections.Joint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
 <td><p>Creates an instance of this joint and creates the new connection in <cite>model</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.Joint.element_count_complies.html#compas_timber.connections.Joint.element_count_complies" title="compas_timber.connections.Joint.element_count_complies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_count_complies</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.Joint.element_count_complies.html#compas_timber.connections.Joint.element_count_complies" title="compas_timber.connections.Joint.element_count_complies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_count_complies</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.Joint.get_face_most_ortho_to_beam.html#compas_timber.connections.Joint.get_face_most_ortho_to_beam" title="compas_timber.connections.Joint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.Joint.get_face_most_ortho_to_beam.html#compas_timber.connections.Joint.get_face_most_ortho_to_beam" title="compas_timber.connections.Joint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal is most orthogonal to <cite>beam_a</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.Joint.get_face_most_towards_beam.html#compas_timber.connections.Joint.get_face_most_towards_beam" title="compas_timber.connections.Joint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.Joint.get_face_most_towards_beam.html#compas_timber.connections.Joint.get_face_most_towards_beam" title="compas_timber.connections.Joint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal most faces <cite>beam_a</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.Joint.restore_beams_from_keys.html#compas_timber.connections.Joint.restore_beams_from_keys" title="compas_timber.connections.Joint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.Joint.restore_beams_from_keys.html#compas_timber.connections.Joint.restore_beams_from_keys" title="compas_timber.connections.Joint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>Restores the reference to the beams associate with this joint.</p></td>
 </tr>
 </tbody>
