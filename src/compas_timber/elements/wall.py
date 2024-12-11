@@ -6,6 +6,7 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import bounding_box
 from compas.geometry import Brep
+from compas.geometry import Polyline
 
 from .timber import TimberElement
 
@@ -30,7 +31,7 @@ class Wall(TimberElement):
         return data
 
     def __init__(self, outline, thickness, openings=None, frame=None, **kwargs):
-        # type: (compas.geometry.Polyline, float, list[Polyline], Frame, dict) -> None
+        # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
         super(Wall, self).__init__(frame=frame or Frame.worldXY(), **kwargs)
         self.outline = outline
         self.thickness = thickness
@@ -62,10 +63,34 @@ class Wall(TimberElement):
     @property
     def baseline(self):
         # type: () -> Line
-        assert self.frame
         # TODO: find the bottom line of wall. don't love this, but it works for now. might be fair to rely on a consistent order of points
-        z_means = {statistics.mean([line.start.z, line.end.z]): line for line in self.outline.lines}
-        return z_means[min(z_means.keys())]
+        points = self.outline.points
+        return Line(points[0], points[1])
+
+    @property
+    def width(self):
+        return self.thickness
+
+    @property
+    def length(self):
+        return self.baseline.length
+
+    @property
+    def corners(self):
+        assert self.frame
+        points = self.outline.points
+        # TODO: this is more like obb than aabb
+        return [
+            #
+            points[0],
+            points[1],
+            points[1] + self.frame.zaxis * self.thickness,
+            points[0] + self.frame.zaxis * self.thickness,
+            points[3],
+            points[2],
+            points[2] + self.frame.zaxis * self.thickness,
+            points[3] + self.frame.zaxis * self.thickness,
+        ]
 
     def compute_geometry(self, _=False):
         assert self.frame
@@ -79,19 +104,8 @@ class Wall(TimberElement):
 
     def compute_obb(self, inflate_by=0.0):
         assert self.frame
-        points = self.outline.points
         # TODO: this is more like obb than aabb
-        box_corners = [
-            points[0],
-            points[1],
-            points[1] + self.frame.zaxis * self.thickness,
-            points[0] + self.frame.zaxis * self.thickness,
-            points[3],
-            points[2],
-            points[2] + self.frame.zaxis * self.thickness,
-            points[3] + self.frame.zaxis * self.thickness,
-        ]
-        box = Box.from_bounding_box(box_corners)
+        box = Box.from_bounding_box(self.corners)
         box.xsize += inflate_by
         box.ysize += inflate_by
         box.zsize += inflate_by
@@ -102,12 +116,31 @@ class Wall(TimberElement):
             self.name, self.frame, self.outline, self.thickness, self.openings
         )
 
-    # @classmethod
-    # def from_box(cls, box):
-    #     # type: (Box) -> Wall
-    #     boxframe = box.frame.copy()
-    #     origin = boxframe.point
-    #     origin -= boxframe.xaxis * box.xsize * 0.5
-    #     origin -= boxframe.yaxis * box.ysize * 0.5
-    #     origin -= boxframe.zaxis * box.zsize * 0.5
-    #     return cls(box.xsize, box.ysize, box.zsize, frame=boxframe)
+    @staticmethod
+    def _frame_from_polyline(polyline, normal):
+        points = polyline.points
+        xaxis = points[1] - points[0]
+        xaxis.unitize()
+        yaxis = normal.cross(xaxis)
+        return Frame(points[0], xaxis, yaxis)
+
+    @staticmethod
+    def _oriented_polyline(polyline, normal):
+        sorted_points = sorted(polyline.points[:4], key=lambda pt: pt.z)
+        bottom_points = sorted_points[:2]
+        top_points = sorted_points[2:]
+
+        # Ensure counterclockwise order
+        if normal.cross(bottom_points[1] - bottom_points[0]).z < 0:
+            bottom_points.reverse()
+
+        if normal.cross(top_points[1] - top_points[0]).z > 0:
+            top_points.reverse()
+
+        return Polyline(bottom_points + top_points + [bottom_points[0]])
+
+    @classmethod
+    def from_polyline(cls, polyline, normal, thickness, openings=None, **kwargs):
+        oriented_polyline = cls._oriented_polyline(polyline, normal)
+        wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
+        return cls(oriented_polyline, thickness, openings, wall_frame, **kwargs)
