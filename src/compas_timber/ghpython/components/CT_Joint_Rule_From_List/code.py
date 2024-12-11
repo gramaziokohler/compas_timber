@@ -2,6 +2,7 @@ import inspect
 
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 
 from compas_timber.connections import Joint
 from compas_timber.design import DirectRule
@@ -44,14 +45,24 @@ class JointRuleFromList(component):
                 )
                 return
             kwargs = {}
-            for i, val in enumerate(args[1:]):
+            for i, val in enumerate(args[self.arg_start_index-1:]):
                 if val is not None:
-                    kwargs[self.arg_names()[i + 1]] = val
+                    kwargs[self.arg_names[i]] = val
 
             return DirectRule(self.joint_type, elements, **kwargs)
 
+    @property
+    def arg_start_index(self):
+        if self.joint_type.MAX_ELEMENT_COUNT is None:
+            return 2
+        elif self.joint_type.MAX_ELEMENT_COUNT == self.joint_type.MIN_ELEMENT_COUNT:
+            return self.joint_type.MAX_ELEMENT_COUNT+1
+        else:
+            raise Error ("I don't know how to handle this joint type")
+
+    @property
     def arg_names(self):
-        return inspect.getargspec(self.joint_type.__init__)[0][2:]
+        return inspect.getargspec(self.joint_type.__init__)[0][self.arg_start_index:]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():
@@ -62,5 +73,5 @@ class JointRuleFromList(component):
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
         rename_gh_output(self.joint_type.__name__, 0, ghenv)
-        manage_dynamic_params(self.arg_names(), ghenv, permanent_param_count=1)
+        manage_dynamic_params(self.arg_names, ghenv, permanent_param_count=1)
         ghenv.Component.ExpireSolution(True)
