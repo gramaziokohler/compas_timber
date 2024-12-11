@@ -53,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `CT_Beams_From_Mesh` GH component.
 * Added new `compas_timber._fabrication.FrenchRidgeLap`.
 * Added new `compas_timber.connections.LFrenchRidgeLapJoint`.
+* Added `create` override to `BallNodeJoint`.
+* Added `PlateFastener` class.
 
 ### Changed
 
@@ -72,6 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `beam` objects get added to `Joint.elements` in `Joint.create()`.
 * Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
 * Changed `model.process_joinery()`so that it calls `joint.check_elements_compatibility()` before adding extensions and features.
+* Fixed `JointRuleFromList` GH component.
+* Changed `TButtJoint` to take an optional `PlateFastener`.
 
 ### Removed
 

@@ -12,6 +12,27 @@ from compas_timber.elements.timber import TimberElement
 from compas_timber.utils import intersection_line_box
 
 
+class FastenerApplicationError(Exception):
+    """Raised when a feature cannot be applied to an element geometry.
+
+    Attributes
+    ----------
+    elements : list of : class:`~compas_timber.elements.TimberElement`
+        The elements to which the fastener could not be applied.
+    fastener : :class:`~compas_timber.elements.Fastener`
+        The fastener that could not be applied.
+    message : str
+        The error message.
+
+    """
+
+    def __init__(self, elements, fastener, message):
+        super(FastenerApplicationError, self).__init__(message)
+        self.elements = elements
+        self.fastener = fastener
+        self.message = message
+
+
 class Fastener(TimberElement):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
@@ -65,23 +86,26 @@ class Fastener(TimberElement):
         return True
 
     @property
+    def interactions(self):
+        return []
+
+    @property
     def key(self):
         # type: () -> int | None
         return self.graph_node
 
-    # TODO: implement Data instead of re-implementing
-    # def copy(self):
-    #     cls = type(self)
-    #     fast = cls(shape=self._shape, frame=self.frame)
-    #     fast.interfaces = [interface.copy() for interface in self.interfaces]
-    #     fast.debug_info = self.debug_info
-    #     return fast
+    @property
+    def __data__(self):
+        return {
+            "shape": self._shape,
+            "frame": self.frame,
+            "interfaces": self.interfaces,
+        }
 
-    # TODO: should implement compute_geometry instead
-    # @property
-    # def geometry(self):
-    #     """returns the geometry of the fastener in the model"""
-    #     return self.shape.transformed(Transformation.from_frame(self.frame))
+    @property
+    def compute_geometry(self):
+        """returns the geometry of the fastener in the model"""
+        return self.shape.transformed(Transformation.from_frame(self.frame))
 
 
 class FastenerTimberInterface(Data):
@@ -136,18 +160,15 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(self, outline, thickness, shapes=None, holes=None, frame=None, features=None):
+    def __init__(self, outline=None, thickness=None, holes=None, shapes=None, frame=None, features=None):
         super(FastenerTimberInterface, self).__init__()
-        assert outline
-        assert thickness
         self.outline = outline
         self.thickness = thickness
         self.holes = holes or []
         self.frame = frame or Frame.worldXY()
-        self.shapes = shapes
+        self.shapes = shapes or []
         self.features = features or []  # TODO: what are these? FeatureDefinitions?
         self._shape = None
-        self.test = []
 
     def __str__(self):
         return "FastenerTimberInterface at {}".format(self.frame)
@@ -195,18 +216,18 @@ class FastenerTimberInterface(Data):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
 
-    def add_features(self, element):
+    def add_features(self):
         """Add a feature to the interface."""
         features = []
         for hole in self.holes:
-            features.append(self._get_hole_feature(hole, element))
+            features.append(self._get_hole_feature(hole, self.element))
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
             feature = feature.copy()
             feature.transform(Transformation.from_frame(self.frame))
             features.append(feature)
         for feature in features:
-            element.add_feature(feature)
+            self.element.add_feature(feature)
 
     def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element."""
