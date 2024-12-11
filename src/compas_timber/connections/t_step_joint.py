@@ -1,6 +1,7 @@
+from compas.tolerance import TOL
+
 from compas_timber._fabrication import StepJoint
 from compas_timber._fabrication import StepJointNotch
-from compas_timber.connections.utilities import are_beams_coplanar
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
@@ -179,9 +180,6 @@ class TStepJoint(Joint):
         """
         assert self.main_beam and self.cross_beam  # should never happen
 
-        # check if the geometry of the joint is valid compared to the values of the joint parameters
-        self.check_geometry()
-
         if self.features:
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
@@ -223,23 +221,25 @@ class TStepJoint(Joint):
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-    def check_geometry(self):
-        """Checks if the geometry of the joint is valid compared to the values of the joint parameters."""
-        if not are_beams_coplanar(self.main_beam, self.cross_beam):
-            raise BeamJoinningError(self.beams, self, debug_info="Beams must be coplanar.")
+    def check_elements_compatibility(self):
+        """Checks if the elements are compatible for the creation of the joint.
 
-        if self.step_depth >= self.strut_height or self.heel_depth >= self.strut_height:
-            raise BeamJoinningError(self.beams, self, debug_info="Step or heel depth must be smaller than the strut height.")
-        if self.step_depth >= self.notch_width or self.heel_depth >= self.notch_width:
-            raise BeamJoinningError(self.beams, self, debug_info="Step or heel depth must be smaller than the notch width.")
+        Raises
+        ------
+        BeamJoinningError
+            If the elements are not compatible for the creation of the joint.
 
-        cross_beam_height = self.cross_beam.height if self.cross_beam_ref_side_index % 2 == 0 else self.cross_beam.width
-        if self.step_depth >= cross_beam_height or self.heel_depth >= cross_beam_height:
-            raise BeamJoinningError(self.beams, self, debug_info="Step or heel depth must be smaller than the cross beam height.")
-        if self.tenon_mortise_height > cross_beam_height:
-            raise BeamJoinningError(
-                self.beams, self, debug_info="Tenon mortise height must be smaller or equal to the cross beam height."
-            )
+        """
+        # check if the beams are aligned
+        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
+        for beam in self.elements:
+            beam_normal = beam.frame.normal.unitized()
+            dot = abs(beam_normal.dot(cross_vect.unitized()))
+            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
+                raise BeamJoinningError(
+                    self.main_beam,
+                    self.cross_beam,
+                    debug_info="The the two beams are not aligned to create a Step joint.")
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
