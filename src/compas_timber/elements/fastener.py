@@ -136,10 +136,8 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(self, outline, thickness, holes=None, shapes=None, frame=None, features=None):
+    def __init__(self, outline = None, thickness = None, holes=None, shapes=None, frame=None, features=None):
         super(FastenerTimberInterface, self).__init__()
-        assert outline
-        assert thickness
         self.outline = outline
         self.thickness = thickness
         self.holes = holes or []
@@ -147,7 +145,6 @@ class FastenerTimberInterface(Data):
         self.shapes = shapes
         self.features = features or []  # TODO: what are these? FeatureDefinitions?
         self._shape = None
-        self.test = []
 
     def __str__(self):
         return "FastenerTimberInterface at {}".format(self.frame)
