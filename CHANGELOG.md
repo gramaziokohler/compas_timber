@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `fasteners` property to `TimberModel`.
 * Added `BTLx_Feature` GH component.
 * Added `CT_Beams_From_Mesh` GH component.
+* Added new `compas_timber._fabrication.FrenchRidgeLap`.
+* Added new `compas_timber.connections.LFrenchRidgeLapJoint`.
+* Added `create` override to `BallNodeJoint`.
 * Added `PlateFastener` class.
 
 ### Changed
@@ -70,6 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `DirectJointRule` to allow for more than 2 elements per joint.
 * Changed `beam` objects get added to `Joint.elements` in `Joint.create()`.
 * Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
+* Changed `model.process_joinery()`so that it calls `joint.check_elements_compatibility()` before adding extensions and features.
+* Fixed `JointRuleFromList` GH component.
 * Changed `TButtJoint` to take an optional `PlateFastener`.
 
 ### Removed
@@ -79,6 +84,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
 * Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
 * Removed module `compas_timber.connections.butt_joint`
+* Removed module `compas_timber.connections.french_ridge_lap`
+* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`
+* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`
 
 
 

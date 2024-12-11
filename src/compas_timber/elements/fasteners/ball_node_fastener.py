@@ -72,11 +72,10 @@ class BallNodeFastener(Fastener):
     def compute_geometry(self):
         # type: () -> compas.geometry.Geometry
         """Returns the geometry of the fastener including all interfaces."""
-        geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2, point=self.node_point))
+        geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
         for interface in self.interfaces:
-            geometry += interface.geometry.copy()  # TODO: is copy really necessary here?
-
+            geometry += interface.geometry
         return geometry
 
     # TODO: implement compute_aabb()
@@ -95,7 +94,7 @@ class BallNodeFastener(Fastener):
 
         """
         interface = interface.copy()
-        # interface.element = beam
+        interface.element = beam
         pt = beam.centerline.closest_point(self.node_point)
 
         # TODO: this is where the interface is places relative to the beam, a bit hidden here..

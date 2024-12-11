@@ -238,21 +238,26 @@ class TopologyRule(JointRule):
 class JointDefinition(object):
     """Container for a joint type and the elements that shall be joined.
 
-    This allows delaying the actual joining of the beams to a downstream component.
+    This allows delaying the actual joining of the elements to a downstream component.
 
     """
 
+    def __init__(self, joint_type, elements, **kwargs):
     def __init__(self, joint_type, elements, **kwargs):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
         if len(elements) < 2:
             raise UserWarning("Joint requires at least two Elements, got {}.".format(len(elements)))
+        if len(elements) < 2:
+            raise UserWarning("Joint requires at least two Elements, got {}.".format(len(elements)))
 
         self.joint_type = joint_type
+        self.elements = elements
         self.elements = elements
         self.kwargs = kwargs
 
     def __repr__(self):
+        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.elements, self.kwargs)
         return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.elements, self.kwargs)
 
     def ToString(self):
@@ -260,11 +265,13 @@ class JointDefinition(object):
 
     def __hash__(self):
         return hash((self.joint_type, self.elements))
+        return hash((self.joint_type, self.elements))
 
     def is_identical(self, other):
         return (
             isinstance(other, JointDefinition)
             and self.joint_type == other.joint_type
+            and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
             and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
         )
 

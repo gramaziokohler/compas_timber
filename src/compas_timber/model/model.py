@@ -266,13 +266,15 @@ class TimberModel(Model):
         self._topologies = topologies
 
     def process_joinery(self):
-        """Process the joinery of the model. This methods instructs all joints to add their extensions and features.
+        """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
 
         The sequence is important here since the feature parameters must be calculated based on the extended blanks.
         For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
 
         """
+
         for joint in self.joints:
+            joint.check_elements_compatibility()
             joint.add_extensions()
 
         for joint in self.joints:

@@ -108,6 +108,18 @@ class Joint(Interaction):
         """
         pass
 
+    def check_elements_compatibility(self):
+        """Checks if the beams are compatible for the creation of the joint.
+        This is optional and should only be implemented by joints that require it.
+
+        Raises
+        ------
+        :class:`~compas_timber.connections.BeamJoinningError`
+            Should be raised whenever the elements did not comply with the requirements of the joint.
+
+        """
+        pass
+
     def restore_beams_from_keys(self, model):
         """Restores the reference to the beams associate with this joint.
 
