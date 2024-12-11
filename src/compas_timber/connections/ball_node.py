@@ -1,11 +1,10 @@
-from compas.geometry import Point
+from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
-from compas.geometry import Point
-from compas.geometry import Vector
 from compas.geometry import NurbsCurve
 from compas.geometry import Plane
-from compas.geometry import Brep
+from compas.geometry import Point
+from compas.geometry import Vector
 
 from compas_timber.elements import BallNodeFastener
 from compas_timber.elements import FastenerTimberInterface
@@ -52,11 +51,11 @@ class BallNodeJoint(Joint):
         data["timber_interface"] = self.timber_interface
         return data
 
-    def __init__(self, beams=None, timber_interface=None, ball_diameter=100, **kwargs):
+    def __init__(self, beams=None, timber_interface=None, ball_diameter=None, **kwargs):
         super(BallNodeJoint, self).__init__(**kwargs)
         self._beam_guids = []
         self.beams = beams or []
-        self.ball_diameter = ball_diameter
+        self.ball_diameter = ball_diameter or beams[0].height or 100
         self.timber_interface = timber_interface or self._default_interface
         self._node_point = None
         self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
@@ -80,16 +79,25 @@ class BallNodeJoint(Joint):
 
     @property
     def _default_interface(self):
-        shape = Brep.from_cylinder(Cylinder(self.ball_diameter / 8.0, self.ball_diameter * 2.0, Frame(Point(self.ball_diameter * 1.0, 0, 0), Vector(0, 1, 0),Vector(0, 0, 1))))
-        cut_feature = CutFeature(Plane((self.ball_diameter * 2.0, 0, 0), (-1, 0, 0)))
-        outline = NurbsCurve.from_points([Point(self.ball_diameter * 2.0, -self.ball_diameter/2, -self.ball_diameter/8),
-                              Point(self.ball_diameter * 2.0, self.ball_diameter/2, -self.ball_diameter/8),
-                              Point(self.ball_diameter * 4.0, self.ball_diameter/2, -self.ball_diameter/8),
-                              Point(self.ball_diameter * 4.0, -self.ball_diameter/2, -self.ball_diameter/8),
-                              Point(self.ball_diameter * 2.0, -self.ball_diameter/2, -self.ball_diameter/8)],
-                                degree=1)
+        height = self.beams[0].height
+        width = self.beams[0].width
+        thickness = width / 5.0
+        shape = Brep.from_cylinder(
+            Cylinder(height / 8.0, height * 2.0, Frame(Point(height * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))
+        )
+        cut_feature = CutFeature(Plane((height * 2.0, 0, 0), (-1, 0, 0)))
+        outline = NurbsCurve.from_points(
+            [
+                Point(height * 2.0, -height / 2, -thickness / 2),
+                Point(height * 2.0, height / 2, -thickness / 2),
+                Point(height * 4.0, height / 2, -thickness / 2),
+                Point(height * 4.0, -height / 2, -thickness / 2),
+                Point(height * 2.0, -height / 2, -thickness / 2),
+            ],
+            degree=1,
+        )
 
-        return FastenerTimberInterface(outline, self.ball_diameter/4.0, shapes = [shape], features = [cut_feature])
+        return FastenerTimberInterface(outline, thickness, shapes=[shape], features=[cut_feature])
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
