@@ -163,7 +163,7 @@ class PlateFastener(Fastener):
         beam_a, beam_b = joint.elements[0:2]
         (main_point, main_param), (cross_point, _) = intersection_line_line_param(beam_a.centerline, beam_b.centerline)
         int_point = (main_point + cross_point) * 0.5
-        front_face = beam_a.faces[front_face_index]
+        front_face = beam_a.ref_sides[front_face_index]
         front_point = Plane.from_frame(front_face).closest_point(int_point)
         front_frame = Frame(
             front_point,
@@ -171,7 +171,7 @@ class PlateFastener(Fastener):
             front_face.normal,
         )
         front_frame.rotate(-math.pi / 2, front_frame.xaxis, front_point)
-        back_face = beam_a.faces[back_face_index]
+        back_face = beam_a.ref_sides[back_face_index]
         back_point = Plane.from_frame(back_face).closest_point(int_point)
 
         back_frame = Frame(
