@@ -55,7 +55,6 @@ class BallNodeJoint(Joint):
     def __init__(self, beams=None, timber_interface=None, ball_diameter=100, **kwargs):
         super(BallNodeJoint, self).__init__(**kwargs)
         self._beam_guids = []
-        self.fastener = None
         self.beams = beams or []
         self.ball_diameter = ball_diameter
         self.timber_interface = timber_interface or self._default_interface
@@ -81,15 +80,16 @@ class BallNodeJoint(Joint):
 
     @property
     def _default_interface(self):
-        shapes = [Brep.from_cylinder(Cylinder(self.ball_diameter / 4.0, self.ball_diameter * 4.0, Frame(Point(0, 0, 0), Vector(0, 1, 0),Vector(0, 0, 1))))]
-        cut_feature = CutFeature(Plane((self.ball_diameter / 4.0, 0, 0), (1, 0, 0)))
-        outline = NurbsCurve.from_points([Point(self.ball_diameter * 4.0, -self.ball_diameter/2, -self.ball_diameter/8),
-                              Point(self.ball_diameter * 6.0, -self.ball_diameter/2, -self.ball_diameter/8),
-                              Point(self.ball_diameter * 6.0, self.ball_diameter/2, -self.ball_diameter/8),
+        shape = Brep.from_cylinder(Cylinder(self.ball_diameter / 8.0, self.ball_diameter * 2.0, Frame(Point(self.ball_diameter * 1.0, 0, 0), Vector(0, 1, 0),Vector(0, 0, 1))))
+        cut_feature = CutFeature(Plane((self.ball_diameter * 2.0, 0, 0), (-1, 0, 0)))
+        outline = NurbsCurve.from_points([Point(self.ball_diameter * 2.0, -self.ball_diameter/2, -self.ball_diameter/8),
+                              Point(self.ball_diameter * 2.0, self.ball_diameter/2, -self.ball_diameter/8),
                               Point(self.ball_diameter * 4.0, self.ball_diameter/2, -self.ball_diameter/8),
-                              Point(self.ball_diameter * 4.0, -self.ball_diameter/2, -self.ball_diameter/8)],
+                              Point(self.ball_diameter * 4.0, -self.ball_diameter/2, -self.ball_diameter/8),
+                              Point(self.ball_diameter * 2.0, -self.ball_diameter/2, -self.ball_diameter/8)],
                                 degree=1)
-        return FastenerTimberInterface(outline, self.ball_diameter/4.0, shapes = shapes, features = [cut_feature])
+
+        return FastenerTimberInterface(outline, self.ball_diameter/4.0, shapes = [shape], features = [cut_feature])
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
@@ -145,8 +145,8 @@ class BallNodeJoint(Joint):
         for beam in self.beams:
             self.fastener.add_interface(beam, self.timber_interface)
 
-        for beam, interface in zip(self.beams, self.fastener.interfaces):
-            interface.add_features(beam)
+        for interface in self.fastener.interfaces:
+            interface.add_features()
 
     def restore_beams_from_keys(self, model):
         self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]

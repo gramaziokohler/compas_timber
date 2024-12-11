@@ -136,7 +136,7 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(self, outline, thickness, shapes=None, holes=None, frame=None, features=None):
+    def __init__(self, outline, thickness, holes=None, shapes=None, frame=None, features=None):
         super(FastenerTimberInterface, self).__init__()
         assert outline
         assert thickness
@@ -195,18 +195,18 @@ class FastenerTimberInterface(Data):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
 
-    def add_features(self, element):
+    def add_features(self):
         """Add a feature to the interface."""
         features = []
         for hole in self.holes:
-            features.append(self._get_hole_feature(hole, element))
+            features.append(self._get_hole_feature(hole, self.element))
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
             feature = feature.copy()
             feature.transform(Transformation.from_frame(self.frame))
             features.append(feature)
         for feature in features:
-            element.add_feature(feature)
+            self.element.add_feature(feature)
 
     def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element."""
