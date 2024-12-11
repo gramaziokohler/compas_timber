@@ -51,7 +51,7 @@ class JointRuleFromList(component):
             return DirectRule(self.joint_type, elements, **kwargs)
 
     def arg_names(self):
-        return inspect.getargspec(self.joint_type.__init__)[0][1:]
+        return inspect.getargspec(self.joint_type.__init__)[0][2:]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():
@@ -62,5 +62,5 @@ class JointRuleFromList(component):
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
         rename_gh_output(self.joint_type.__name__, 0, ghenv)
-        manage_dynamic_params(self.arg_names(), ghenv)
+        manage_dynamic_params(self.arg_names(), ghenv, permanent_param_count=1)
         ghenv.Component.ExpireSolution(True)
