@@ -311,6 +311,8 @@ class Tenon(BTLxProcess):
         start_y=0.0,
         start_depth=0.0,
         rotation=0.0,
+        length_limited_top=True,
+        length_limited_bottom=True,
         length=80.0,
         width=40.0,
         height=40.0,
@@ -333,6 +335,10 @@ class Tenon(BTLxProcess):
             The start depth of the tenon, which is an offset along the normal of the reference side. Default is 50.0.
         rotation : float, optional
             The angle of rotation of the tenon. Default is 0.0.
+        length_limited_top : bool, optional
+            Whether the top length of the tenon is limited. Default is True.
+        length_limited_bottom : bool, optional
+            Whether the bottom length of the tenon is limited. Default is True.
         length : float, optional
             The length of the tenon. Default is 80.0.
         width : float, optional
@@ -353,7 +359,7 @@ class Tenon(BTLxProcess):
         :class:`~compas_timber.fabrication.Tenon`
 
         """
-        # type: (Plane|Frame, Beam, float, float, bool, int) -> Tenon
+        # type: (Plane|Frame, Beam, float, float, float, bool, bool, float, float, float, str, float, bool, int) -> Tenon
 
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
@@ -374,19 +380,17 @@ class Tenon(BTLxProcess):
         if orientation == OrientationType.END:
             rotation = -rotation
             start_y = -start_y
-            # start_depth = -start_depth
         start_y += beam.width / 2
         rotation += 90
 
-        # calculate start_depth, length and width
-
-        # length = cls._bound_length(
-        #     ref_side, plane, beam.height, start_depth, inclination, length, height
-        # )
-        # width = cls._bound_width(beam.width, angle, length, width, shape_radius)
-
         # calculate start_depth
         start_depth += cls._calculate_start_depth(beam, inclination, length)
+
+        # override start_depth and length if not limited
+        if not length_limited_top:
+            start_depth = 0.0
+        if not length_limited_bottom:
+            length = (beam.height) / math.sin(math.radians(inclination)) - start_depth
 
         # calculate start_x
         start_x = cls._calculate_start_x(
@@ -398,14 +402,6 @@ class Tenon(BTLxProcess):
             start_depth,
             angle,
         )
-
-        # determine if the top and bottom length of the cut is limited
-        length_limited_top, length_limited_bottom = cls._calculate_length_limits(
-            beam, start_depth, length, inclination
-        )  # TODO: Should this instead come first and override the start_depth and length?
-
-        length_limited_bottom = False
-        length_limited_top = False
 
         return cls(
             orientation,
@@ -451,6 +447,12 @@ class Tenon(BTLxProcess):
         return start_x
 
     @staticmethod
+    def _calculate_start_depth(beam, inclination, length):
+        # calculate the start_depth of the tenon from height of the beam and the projected length of the tenon
+        proj_length = (length * math.sin(math.radians(inclination)))
+        return (beam.height  - proj_length)/2
+
+    @staticmethod
     def _calculate_angle(ref_side, plane):
         # vector rotation direction of the plane's normal in the vertical direction
         angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
@@ -471,54 +473,6 @@ class Tenon(BTLxProcess):
 
         inclination = angle_vectors_signed(cross_ref_side, cross_plane, rotated_axis, deg=True)
         return abs(inclination)
-
-    @staticmethod
-    def _calculate_length_limits(beam, start_depth, length, inclination):
-        # determine if the top and bottom length of the cut is limited
-        length_limited_top = start_depth > 0.0
-        length_limited_bottom = length < ((beam.height) / math.sin(math.radians(inclination)) - start_depth)
-
-        # necessary override, otherwise tenon would go out of the blank
-        if inclination > 90.0:
-            length_limited_bottom = True
-        elif inclination < 90.0:
-            length_limited_top = True
-        return length_limited_top, length_limited_bottom
-
-    @staticmethod
-    def _calculate_start_depth(beam, inclination, length):
-        mid = beam.height / 2
-        length = (length / math.sin(math.radians(inclination)))/2
-        return mid - length
-
-    @staticmethod
-    def _bound_length(ref_side, plane, beam_height, start_depth, inclination, length, height):
-        # bound the inserted length value to the maximum possible length for the beam based on the inclination so that the tenon does not go out of the blank
-        max_length = (beam_height) / (math.sin(math.radians(inclination)))
-
-        # define the inclination angle regardless of the orientation start or end
-        inclination_vector = Vector.cross(ref_side.yaxis, plane.normal)
-        origin_inclination = math.degrees(ref_side.xaxis.angle(inclination_vector))
-        if origin_inclination < 90.0:
-            max_length = max_length - (height / abs(math.tan(math.radians(inclination))))
-        return min(max_length, length)
-
-    @staticmethod
-    def _bound_width(beam_width, angle, length, width, shape_radius):
-        # bound the inserted width value to the minumum(based on the dovetail tool radius) and maximum(so that the tenon does not go out of the blank) possible width for the beam
-        max_width = beam_width / math.sin(math.radians(angle)) - 2 * length
-        min_width = 2 * shape_radius
-        if width < min_width:
-            width = min_width
-        elif width > max_width:
-            width = max_width
-        return width
-
-    @staticmethod
-    def _bound_start_depth(start_depth, inclination, height):
-        # bound the start_depth value to the minimum possible start_depth if the incliantion is larger than 90 so that the tenon does not go out of the blank
-        min_start_depth = height / (math.tan(math.radians(180 - inclination)))
-        return max(start_depth, min_start_depth)
 
     ########################################################################
     # Methods
@@ -595,7 +549,6 @@ class Tenon(BTLxProcess):
             raise FeatureApplicationError(
                 tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
             )
-
         return geometry
 
     def frame_from_params_and_beam(self, beam):
@@ -682,12 +635,11 @@ class Tenon(BTLxProcess):
         cutting_frame.translate(cutting_frame.normal * (self.height / 2))
         cutting_frame.translate(-cutting_frame.yaxis * (self.length / 2))
 
-
-        # create the dovetail volume by trimming a box  # TODO: PluginNotInstalledError for Brep.from_loft
         # get the box as a brep
         tenon_volume = Brep.from_box(
             Box(self.width/2, self.length, self.height, cutting_frame))
 
+        # fillet the edges of the volume based on the shape
 
         return tenon_volume
 
