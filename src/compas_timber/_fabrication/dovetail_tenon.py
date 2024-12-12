@@ -636,12 +636,12 @@ class DovetailTenon(BTLxProcess):
 
         # fillet the edges of the dovetail volume based on the shape
         if (
-            self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
-        ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_indices = [4, 7] if self.length_limited_top else [5, 8]
+            self.shape != TenonShapeType.SQUARE and self.length_limited_bottom
+        ):
+            edge_indices = dovetail_volume.edges[:-2]
             try:
                 dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
+                    self.shape_radius, edge_indices
                 )  # TODO: NotImplementedError
             except Exception as e:
                 raise FeatureApplicationError(
