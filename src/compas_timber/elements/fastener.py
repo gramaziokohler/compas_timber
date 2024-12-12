@@ -102,7 +102,6 @@ class Fastener(TimberElement):
             "interfaces": self.interfaces,
         }
 
-    @property
     def compute_geometry(self):
         """returns the geometry of the fastener in the model"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
