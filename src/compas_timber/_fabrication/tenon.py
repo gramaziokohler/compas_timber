@@ -545,7 +545,7 @@ class Tenon(BTLxProcess):
             )
         return geometry
 
-    def plane_from_params_and_beam(self, beam):
+    def frame_from_params_and_beam(self, beam):
         """
         Calculates the cutting plane from the machining parameters in this instance and the given beam.
 
@@ -556,10 +556,10 @@ class Tenon(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Plane`
-            The cutting plane.
+        :class:`compas.geometry.Frame`
+            The cutting Frame.
         """
-        # type: (Beam) -> Plane
+        # type: (Beam) -> Frame
         assert self.orientation is not None
         assert self.start_x is not None
         assert self.start_y is not None
@@ -604,7 +604,7 @@ class Tenon(BTLxProcess):
         rotation = Rotation.from_axis_and_angle(cutting_frame.normal, rot_angle, cutting_frame.point)
         cutting_frame.transform(rotation)
 
-        return Plane.from_frame(cutting_frame)
+        return cutting_frame
 
     def volume_from_params_and_beam(self, beam):
         """Calculates the tenon volume from the machining parameters in this instance and the given beam.
@@ -625,12 +625,12 @@ class Tenon(BTLxProcess):
         assert self.width is not None
         assert self.height is not None
 
-        cutting_plane = self.plane_from_params_and_beam(beam)
-        cutting_plane.translate(cutting_plane.normal * (self.height / 2))
-        cutting_plane.translate(-cutting_plane.yaxis * (self.length / 2))
+        cutting_frame = self.frame_from_params_and_beam(beam)
+        cutting_frame.translate(cutting_frame.normal * (self.height / 2))
+        cutting_frame.translate(-cutting_frame.yaxis * (self.length / 2))
 
         # get the tenon as a box
-        tenon_box = Box(self.width/2, self.length, self.height, cutting_plane)
+        tenon_box = Box(self.width/2, self.length, self.height, cutting_frame)
         return Brep.from_box(tenon_box)
 
 
