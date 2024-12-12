@@ -66,7 +66,6 @@ class TButtJoint(Joint):
         interactions.append((self.main_beam, self.cross_beam))
         for fastener in self.fasteners:
             for interface in fastener.interfaces:
-                print("INTERFACE", interface)
                 interactions.append((interface.element, fastener))
         return interactions
 
