@@ -52,14 +52,11 @@ class TButtJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.mill_depth = mill_depth
         self.features = []
-        print("fastener", fastener)
         if isinstance(fastener, type):
             fastener = fastener.default_T(main_beam.width)
-            print("HEREHEREHERE", fastener.interfaces)
         self.base_fastener = fastener
         self.fasteners = []
         if self.base_fastener:
-            print("fresh fastener interfaces", self.base_fastener.interfaces)
             self.base_fastener.place_instances(self)
 
     @property

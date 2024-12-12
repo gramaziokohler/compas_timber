@@ -168,18 +168,18 @@ class PlateFastener(Fastener):
         )
         beam_a_interface = FastenerTimberInterface(
             holes=[
-                {"point": Point(beam_width, 0, 0), "diameter": 10, "through": True},
-                {"point": Point(beam_width * 2, 0, 0), "diameter": 10, "through": True},
-                {"point": Point(beam_width * 3, 0, 0), "diameter": 10, "through": True},
+                {"point": Point(beam_width, 0, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(beam_width * 2, 0, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(beam_width * 3, 0, 0), "diameter": beam_width/10, "through": True},
             ]
         )
         beam_b_interface = FastenerTimberInterface(
             holes=[
-                {"point": Point(0, -beam_width * 2, 0), "diameter": 10, "through": True},
-                {"point": Point(0, -beam_width, 0), "diameter": 10, "through": True},
-                {"point": Point(0, 0, 0), "diameter": 10, "through": True},
-                {"point": Point(0, beam_width, 0), "diameter": 10, "through": True},
-                {"point": Point(0, beam_width * 2, 0), "diameter": 10, "through": True},
+                {"point": Point(0, -beam_width * 2, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(0, -beam_width, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(0, 0, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(0, beam_width, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(0, beam_width * 2, 0), "diameter": beam_width/10, "through": True},
             ]
         )
 
