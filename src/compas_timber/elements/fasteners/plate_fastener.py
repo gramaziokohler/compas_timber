@@ -58,6 +58,8 @@ class PlateFastener(Fastener):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+        self.outline = None
+        self.thickness = None
 
     @property
     def __data__(self):
@@ -65,9 +67,10 @@ class PlateFastener(Fastener):
         data["shape"] = self.shape
         data["frame"] = self.frame
         data["angle"] = self.angle
-        data["interfaces"] = self.interfaces
         data["topology"] = self.topology
+        data["interfaces"] = self.interfaces
         return data
+
 
     def __repr__(self):
         # type: () -> str
@@ -168,23 +171,23 @@ class PlateFastener(Fastener):
         )
         beam_a_interface = FastenerTimberInterface(
             holes=[
-                {"point": Point(beam_width, 0, 0), "diameter": beam_width/10, "through": True},
-                {"point": Point(beam_width * 2, 0, 0), "diameter": beam_width/10, "through": True},
-                {"point": Point(beam_width * 3, 0, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(beam_width, 0, 0), "diameter": beam_width / 10, "through": True},
+                {"point": Point(beam_width * 2, 0, 0), "diameter": beam_width / 10, "through": True},
+                {"point": Point(beam_width * 3, 0, 0), "diameter": beam_width / 10, "through": True},
             ]
         )
         beam_b_interface = FastenerTimberInterface(
             holes=[
-                {"point": Point(0, -beam_width * 2, 0), "diameter": beam_width/10, "through": True},
-                {"point": Point(0, -beam_width, 0), "diameter": beam_width/10, "through": True},
-                {"point": Point(0, 0, 0), "diameter": beam_width/10, "through": True},
-                {"point": Point(0, beam_width, 0), "diameter": beam_width/10, "through": True},
-                {"point": Point(0, beam_width * 2, 0), "diameter": beam_width/10, "through": True},
+                {"point": Point(0, -beam_width * 2, 0), "diameter": beam_width / 10, "through": True},
+                {"point": Point(0, -beam_width, 0), "diameter": beam_width / 10, "through": True},
+                {"point": Point(0, 0, 0), "diameter": beam_width / 10, "through": True},
+                {"point": Point(0, beam_width, 0), "diameter": beam_width / 10, "through": True},
+                {"point": Point(0, beam_width * 2, 0), "diameter": beam_width / 10, "through": True},
             ]
         )
 
         return cls.from_outline_thickness_interfaces_cutouts(
-            outline=outline, interfaces=[beam_a_interface, beam_b_interface]
+            outline=outline, thickenss = beam_width/20, interfaces=[beam_a_interface, beam_b_interface]
         )
 
     def place_instances(self, joint):
@@ -199,7 +202,6 @@ class PlateFastener(Fastener):
             fastener.frame = Frame(frame.point, frame.xaxis, frame.yaxis)
             for interface, element in zip(fastener.interfaces, joint.elements):
                 interface.element = element
-                print("INTERFACE", interface, "element", element)
             joint.fasteners.append(fastener)
 
     def get_fastener_frames(self, joint):
@@ -305,6 +307,8 @@ class PlateFastener(Fastener):
 
         """
         if not self._shape:
+            if not self.outline or not self.thickness:
+                return None
             vector = Vector(0, 0, self.thickness)
             self._shape = Brep.from_extrusion(self.outline, vector)
             if self.cutouts:

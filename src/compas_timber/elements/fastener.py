@@ -207,7 +207,7 @@ class FastenerTimberInterface(Data):
             if self.shapes:
                 geometries.extend(self.shapes)
 
-            self._shape=None
+            self._shape = None
             if geometries:
                 self._shape = geometries[0]
                 for geometry in geometries[1:]:
