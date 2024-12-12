@@ -626,8 +626,9 @@ class Tenon(BTLxProcess):
         assert self.height is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
-        cutting_frame.translate(cutting_frame.normal * (self.height / 2))
-        cutting_frame.translate(-cutting_frame.yaxis * (self.length / 2))
+        # translate the cutting frame to the center of the tenon
+        translation_vector = (cutting_frame.normal * self.height - cutting_frame.yaxis * self.length)
+        cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
         tenon_box = Box(self.width/2, self.length, self.height, cutting_frame)
