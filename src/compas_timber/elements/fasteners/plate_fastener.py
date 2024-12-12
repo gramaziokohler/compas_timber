@@ -3,7 +3,9 @@ import math
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
+from compas.geometry import NurbsCurve
 from compas.geometry import Plane
+from compas.geometry import Point
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
@@ -11,9 +13,11 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
+from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerApplicationError
+from compas_timber.elements import FastenerTimberInterface
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
@@ -44,15 +48,26 @@ class PlateFastener(Fastener):
 
     """
 
-    def __init__(self, shape=None, frame=None, angle=math.pi / 2, interfaces=[], **kwargs):
+    def __init__(self, shape=None, frame=None, angle=math.pi / 2, topology=None, interfaces=[], **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
         self.frame = frame
         self._shape = shape
         self.angle = angle
+        self.topology = topology or JointTopology.TOPO_T
         self.interfaces = interfaces
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+
+    @property
+    def __data__(self):
+        data = super(PlateFastener, self).__data__
+        data["shape"] = self.shape
+        data["frame"] = self.frame
+        data["angle"] = self.angle
+        data["interfaces"] = self.interfaces
+        data["topology"] = self.topology
+        return data
 
     def __repr__(self):
         # type: () -> str
@@ -95,8 +110,7 @@ class PlateFastener(Fastener):
         plate_fastener.angle = angle
         plate_fastener.thickness = thickness
         plate_fastener.frame = frame
-        for interface in interfaces:
-            plate_fastener.add_interface(interface)
+        plate_fastener.interfaces = interfaces
         plate_fastener.cutouts = cutouts
         return plate_fastener
 
@@ -136,6 +150,43 @@ class PlateFastener(Fastener):
             for shape in interface.shapes:
                 yield shape
 
+    @classmethod
+    def default_T(cls, beam_width=60.0):
+        outline = NurbsCurve.from_points(
+            [
+                Point(-beam_width / 2, -beam_width * 2.5, 0),
+                Point(-beam_width / 2, beam_width * 2.5, 0),
+                Point(beam_width / 2, beam_width * 2.5, 0),
+                Point(beam_width / 2, beam_width * 0.5, 0),
+                Point(beam_width * 3.5, beam_width * 0.5, 0),
+                Point(beam_width * 3.5, -beam_width * 0.5, 0),
+                Point(beam_width / 2, -beam_width * 0.5, 0),
+                Point(beam_width / 2, -beam_width * 2.5, 0),
+                Point(-beam_width / 2, -beam_width * 2.5, 0),
+            ],
+            degree=1,
+        )
+        beam_a_interface = FastenerTimberInterface(
+            holes=[
+                {"point": Point(beam_width, 0, 0), "diameter": 10, "through": True},
+                {"point": Point(beam_width * 2, 0, 0), "diameter": 10, "through": True},
+                {"point": Point(beam_width * 3, 0, 0), "diameter": 10, "through": True},
+            ]
+        )
+        beam_b_interface = FastenerTimberInterface(
+            holes=[
+                {"point": Point(0, -beam_width * 2, 0), "diameter": 10, "through": True},
+                {"point": Point(0, -beam_width, 0), "diameter": 10, "through": True},
+                {"point": Point(0, 0, 0), "diameter": 10, "through": True},
+                {"point": Point(0, beam_width, 0), "diameter": 10, "through": True},
+                {"point": Point(0, beam_width * 2, 0), "diameter": 10, "through": True},
+            ]
+        )
+
+        return cls.from_outline_thickness_interfaces_cutouts(
+            outline=outline, interfaces=[beam_a_interface, beam_b_interface]
+        )
+
     def place_instances(self, joint):
         """Adds the fasteners to the joint.
 
@@ -148,6 +199,7 @@ class PlateFastener(Fastener):
             fastener.frame = Frame(frame.point, frame.xaxis, frame.yaxis)
             for interface, element in zip(fastener.interfaces, joint.elements):
                 interface.element = element
+                print("INTERFACE", interface, "element", element)
             joint.fasteners.append(fastener)
 
     def get_fastener_frames(self, joint):

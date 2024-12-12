@@ -166,6 +166,7 @@ class FastenerTimberInterface(Data):
         self.thickness = thickness
         self.holes = holes or []
         self.frame = frame or Frame.worldXY()
+        self.element = None
         self.shapes = shapes or []
         self.features = features or []  # TODO: what are these? FeatureDefinitions?
         self._shape = None
@@ -231,7 +232,7 @@ class FastenerTimberInterface(Data):
 
     def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element."""
-        vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
+        vector = hole.get("vector", None) or Vector(0.0, 0.0, 1.0)
         length = vector.length
         point = hole["point"] - vector * length * 0.5
         drill_line = Line.from_point_direction_length(point, vector, length)
