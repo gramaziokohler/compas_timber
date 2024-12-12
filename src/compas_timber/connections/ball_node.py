@@ -88,11 +88,11 @@ class BallNodeJoint(Joint):
         cut_feature = CutFeature(Plane((height * 2.0, 0, 0), (-1, 0, 0)))
         outline = NurbsCurve.from_points(
             [
-                Point(height * 2.0, -height / 2, -thickness / 2),
-                Point(height * 2.0, height / 2, -thickness / 2),
-                Point(height * 4.0, height / 2, -thickness / 2),
-                Point(height * 4.0, -height / 2, -thickness / 2),
-                Point(height * 2.0, -height / 2, -thickness / 2),
+                Point(height * 2.0, -height / 2, 0),
+                Point(height * 2.0, height / 2, 0),
+                Point(height * 4.0, height / 2, 0),
+                Point(height * 4.0, -height / 2, 0),
+                Point(height * 2.0, -height / 2, 0),
             ],
             degree=1,
         )

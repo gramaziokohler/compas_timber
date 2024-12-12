@@ -23,12 +23,12 @@ class CollectionDef(object):
 
 
 class JointRule(object):
-    def comply(self, beams):
-        """Returns True if the provided beams comply with the rule defined by this instance. False otherwise.
+    def comply(self, elements):
+        """Returns True if the provided elements comply with the rule defined by this instance. False otherwise.
 
         Parameters
         ----------
-        beams : list(:class:`~compas_timber.parts.Beam`)
+        elements : list(:class:`~compas_timber.elements.TimberElement`)
 
         Returns
         -------
@@ -62,35 +62,35 @@ class JointRule(object):
         return [rule for rule in topo_rules.values() if rule is not None]
 
     @staticmethod
-    def joints_from_beams_and_rules(beams, rules, max_distance=1e-6):
-        """Culls direct rules that are not applicable to the given beams.
+    def joints_from_beams_and_rules(elements, rules, max_distance=1e-6):
+        """processes joint rules into joint definitions.
 
         Parameters
         ----------
-        beams : list(:class:`~compas_timber.parts.Beam`)
-            A list of beams to be joined.
+        elements : list(:class:`~compas_timber.elements.TimberElement`)
+            A list of elements to be joined.
         rules : list(:class:`~compas_timber.design.JointRule`)
             A list of joint rules to be applied.
         max_distance : float, optional
-            The maximum distance to consider two beams as intersecting.
+            The maximum distance to consider two elements as intersecting.
 
         Returns
         -------
         list(:class:`~compas_timber.design.JointDefinition`)
-            A list of joint definitions that can be applied to the given beams.
+            A list of joint definitions that can be applied to the given elements.
 
         """
-        beams = beams if isinstance(beams, list) else list(beams)
+        elements = elements if isinstance(elements, list) else list(elements)
         direct_rules = JointRule.get_direct_rules(rules)
         solver = ConnectionSolver()
 
-        beam_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+        element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
         joint_defs = []
         unmatched_pairs = []
         for rule in direct_rules:
-            joint_defs.append(JointDefinition(rule.joint_type, rule.beams, **rule.kwargs))
-        while beam_pairs:
-            pair = beam_pairs.pop()
+            joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
+        while element_pairs:
+            pair = element_pairs.pop()
             match_found = False
             for rule in direct_rules:  # see if pair is used in a direct rule
                 if rule.comply(pair):
@@ -119,8 +119,8 @@ class JointRule(object):
 class DirectRule(JointRule):
     """Creates a Joint Rule that directly joins multiple elements."""
 
-    def __init__(self, joint_type, beams, **kwargs):
-        self.beams = beams
+    def __init__(self, joint_type, elements, **kwargs):
+        self.elements = elements
         self.joint_type = joint_type
         self.kwargs = kwargs
 
@@ -129,17 +129,17 @@ class DirectRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {})".format(DirectRule, self.beams, self.joint_type)
+        return "{}({}, {})".format(DirectRule, self.elements, self.joint_type)
 
-    def comply(self, beams):
+    def comply(self, elements):
         try:
-            return set(beams).issubset(set(self.beams))
+            return set(elements).issubset(set(self.elements))
         except TypeError:
-            raise UserWarning("unable to comply direct joint beam sets")
+            raise UserWarning("unable to comply direct joint element sets")
 
 
 class CategoryRule(JointRule):
-    """Based on the category attribute attached to the beams, this rule assigns"""
+    """Based on the category attribute attached to the elements, this rule assigns"""
 
     def __init__(self, joint_type, category_a, category_b, topos=None, **kwargs):
         self.joint_type = joint_type
@@ -157,44 +157,44 @@ class CategoryRule(JointRule):
             CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos
         )
 
-    def comply(self, beams, max_distance=1e-6):
+    def comply(self, elements, max_distance=1e-6):
         try:
-            beam_cats = set([b.attributes["category"] for b in beams])
+            element_cats = set([e.attributes["category"] for e in elements])
             comply = False
-            beams = list(beams)
-            if beam_cats == set([self.category_a, self.category_b]):
+            elements = list(elements)
+            if element_cats == set([self.category_a, self.category_b]):
                 solver = ConnectionSolver()
                 if (
                     self.joint_type.SUPPORTED_TOPOLOGY
-                    == solver.find_topology(beams[0], beams[1], max_distance=max_distance)[0]
+                    == solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
                 ):
                     comply = True
             return comply
         except KeyError:
             return False
 
-    def reorder(self, beams):
-        """Returns the given beams in a sorted order.
+    def reorder(self, elements):
+        """Returns the given elements in a sorted order.
 
-        The beams are sorted according to their category attribute, first the beams with `catergory_a` and second the
+        The elements are sorted according to their category attribute, first the elements with `catergory_a` and second the
         one with `category_b`.
-        This allows using the category to determine the role of the beams.
+        This allows using the category to determine the role of the elements.
 
         Parameters
         ----------
-        beams : tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
-            A tuple containing two beams to sort.
+        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
+            A tuple containing two elements to sort.
 
         Returns
         -------
-        tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+        tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
 
         """
-        beam_a, beam_b = beams
-        if beam_a.attributes["category"] == self.category_a:
-            return beam_a, beam_b
+        element_a, element_b = elements
+        if element_a.attributes["category"] == self.category_a:
+            return element_a, element_b
         else:
-            return beam_b, beam_a
+            return element_b, element_a
 
 
 class TopologyRule(JointRule):
@@ -222,15 +222,15 @@ class TopologyRule(JointRule):
     def __repr__(self):
         return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type)
 
-    def comply(self, beams, max_distance=1e-3):
+    def comply(self, elements, max_distance=1e-3):
         try:
-            beams = list(beams)
+            elements = list(elements)
             solver = ConnectionSolver()
-            topo_results = solver.find_topology(beams[0], beams[1], max_distance=max_distance)
+            topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
             return (
                 self.topology_type == topo_results[0],
                 [topo_results[1], topo_results[2]],
-            )  # comply, if topologies match, reverse if the beam order should be switched
+            )  # comply, if topologies match, reverse if the element order should be switched
         except KeyError:
             return False
 
@@ -270,7 +270,7 @@ class JointDefinition(object):
         )
 
     def match(self, elements):
-        """Returns True if beams are defined within this JointDefinition."""
+        """Returns True if elements are defined within this JointDefinition."""
         set_a = set([id(e) for e in elements])
         set_b = set([id(e) for e in self.elements])
         return set_a == set_b
