@@ -71,7 +71,6 @@ class PlateFastener(Fastener):
         data["interfaces"] = self.interfaces
         return data
 
-
     def __repr__(self):
         # type: () -> str
         return "Plate Fastener(frame={!r}, name={})".format(self.frame, self.name)
@@ -187,7 +186,7 @@ class PlateFastener(Fastener):
         )
 
         return cls.from_outline_thickness_interfaces_cutouts(
-            outline=outline, thickenss = beam_width/20, interfaces=[beam_a_interface, beam_b_interface]
+            outline=outline, thickenss=beam_width / 20, interfaces=[beam_a_interface, beam_b_interface]
         )
 
     def place_instances(self, joint):
