@@ -4,7 +4,6 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
@@ -360,10 +359,10 @@ class Tenon(BTLxProcess):
 
         """
         # type: (Plane|Frame, Beam, float, float, float, bool, bool, float, float, float, str, float, bool, int) -> Tenon
-
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
-        # define ref_side & ref_edge
+
+        # get ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
@@ -402,6 +401,10 @@ class Tenon(BTLxProcess):
             start_depth,
             angle,
         )
+
+        # calculate radius based on shape
+        if shape == TenonShapeType.ROUND:
+            shape_radius = width / 4
 
         return cls(
             orientation,
@@ -501,7 +504,6 @@ class Tenon(BTLxProcess):
 
         """
         # type: (Brep, Beam) -> Brep
-
         # get cutting plane from params and beam
         try:
             cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
@@ -509,31 +511,6 @@ class Tenon(BTLxProcess):
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
-
-        # get tenon volume from params and beam
-        try:
-            tenon_volume = self.volume_from_params_and_beam(beam)
-        except ValueError as e:
-            raise FeatureApplicationError(
-                None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
-            )
-
-        # # fillet the edges of the dovetail volume based on the shape
-        # if (
-        #     self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
-        # ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-        #     edge_indices = [4, 7] if self.length_limited_top else [5, 8]
-        #     try:
-        #         tenon_volume.fillet(
-        #             self.shape_radius, [tenon_volume.edges[edge_indices[0]], tenon_volume.edges[edge_indices[1]]]
-        #         )  # TODO: NotImplementedError
-        #     except Exception as e:
-        #         raise FeatureApplicationError(
-        #             tenon_volume,
-        #             geometry,
-        #             "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
-        #         )
-
         # trim geometry with cutting planes
         try:
             geometry.trim(cutting_plane)
@@ -541,7 +518,24 @@ class Tenon(BTLxProcess):
             raise FeatureApplicationError(
                 cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
             )
-
+        # get tenon volume from params and beam
+        try:
+            tenon_volume = self.volume_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
+            )
+        # fillet the edges of the volume based on the shape
+        if self.shape is not TenonShapeType.SQUARE:
+            try:
+                edges = tenon_volume.edges[:8]
+                tenon_volume.fillet(self.shape_radius, edges)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    tenon_volume,
+                    geometry,
+                    "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
+                )
         # add tenon volume to geometry
         try:
             geometry += tenon_volume
@@ -551,9 +545,9 @@ class Tenon(BTLxProcess):
             )
         return geometry
 
-    def frame_from_params_and_beam(self, beam):
+    def plane_from_params_and_beam(self, beam):
         """
-        Calculates the cutting frame from the machining parameters in this instance and the given beam.
+        Calculates the cutting plane from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -562,11 +556,16 @@ class Tenon(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Frame`
-            The cutting frame.
+        :class:`compas.geometry.Plane`
+            The cutting plane.
         """
+        # type: (Beam) -> Plane
+        assert self.orientation is not None
+        assert self.start_x is not None
+        assert self.start_y is not None
         assert self.angle is not None
         assert self.inclination is not None
+        assert self.rotation is not None
         assert self.start_depth is not None
 
         # get the reference side surface of the beam
@@ -605,7 +604,7 @@ class Tenon(BTLxProcess):
         rotation = Rotation.from_axis_and_angle(cutting_frame.normal, rot_angle, cutting_frame.point)
         cutting_frame.transform(rotation)
 
-        return cutting_frame
+        return Plane.from_frame(cutting_frame)
 
     def volume_from_params_and_beam(self, beam):
         """Calculates the tenon volume from the machining parameters in this instance and the given beam.
@@ -622,26 +621,17 @@ class Tenon(BTLxProcess):
 
         """
         # type: (Beam) -> Brep
-
-        assert self.inclination is not None
-        assert self.rotation is not None
+        assert self.length is not None
+        assert self.width is not None
         assert self.height is not None
-        assert self.shape is not None
-        assert self.shape_radius is not None
-        assert self.length_limited_top is not None
-        assert self.length_limited_bottom is not None
 
-        cutting_frame = self.frame_from_params_and_beam(beam)
-        cutting_frame.translate(cutting_frame.normal * (self.height / 2))
-        cutting_frame.translate(-cutting_frame.yaxis * (self.length / 2))
+        cutting_plane = self.plane_from_params_and_beam(beam)
+        cutting_plane.translate(cutting_plane.normal * (self.height / 2))
+        cutting_plane.translate(-cutting_plane.yaxis * (self.length / 2))
 
-        # get the box as a brep
-        tenon_volume = Brep.from_box(
-            Box(self.width/2, self.length, self.height, cutting_frame))
-
-        # fillet the edges of the volume based on the shape
-
-        return tenon_volume
+        # get the tenon as a box
+        tenon_box = Box(self.width/2, self.length, self.height, cutting_plane)
+        return Brep.from_box(tenon_box)
 
 
 class TenonParams(BTLxProcessParams):
