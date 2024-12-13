@@ -545,6 +545,12 @@ class Tenon(BTLxProcess):
                     geometry,
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
+        # remove any parts of the volume that are outside of the beam geometry. Fails silently.
+        for frame in beam.ref_sides[:4]:
+            try:
+                tenon_volume = tenon_volume.trimmed(frame)
+            except Exception:
+                pass
         # add tenon volume to geometry
         try:
             geometry += tenon_volume
