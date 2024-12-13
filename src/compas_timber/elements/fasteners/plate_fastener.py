@@ -13,7 +13,6 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
-from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerApplicationError
@@ -21,7 +20,6 @@ from compas_timber.elements import FastenerTimberInterface
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
-
 
 class PlateFastener(Fastener):
     """
@@ -53,7 +51,7 @@ class PlateFastener(Fastener):
         self.frame = frame
         self._shape = shape
         self.angle = angle
-        self.topology = topology or JointTopology.TOPO_T
+        self.topology = topology
         self.interfaces = interfaces
         self.attributes = {}
         self.attributes.update(kwargs)
