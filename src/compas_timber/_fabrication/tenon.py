@@ -375,12 +375,13 @@ class Tenon(BTLxProcess):
         # calculate inclination
         inclination = cls._calculate_inclination(ref_side, plane, orientation, angle)
 
-        # calculate start_y & rotation
+        # calculate rotation
+        rotation = cls._calculate_rotation(orientation, rotation) # TODO: calculate and include the rotation of the beam and the plane
+
+        # calculate start_y
         if orientation == OrientationType.END:
-            rotation = -rotation
             start_y = -start_y
         start_y += beam.width / 2
-        rotation += 90
 
         # calculate start_depth
         start_depth += cls._calculate_start_depth(beam, inclination, length)
@@ -404,7 +405,7 @@ class Tenon(BTLxProcess):
 
         # calculate radius based on shape
         if shape == TenonShapeType.ROUND:
-            shape_radius = width / 4
+            shape_radius = width / 2
 
         return cls(
             orientation,
@@ -476,6 +477,14 @@ class Tenon(BTLxProcess):
 
         inclination = angle_vectors_signed(cross_ref_side, cross_plane, rotated_axis, deg=True)
         return abs(inclination)
+
+    @staticmethod
+    def _calculate_rotation(orientation, rotation):
+        # calculate rotation. Constrain the input (additional) rotation value to be between -90 and 90.
+        rotation = (rotation % 90) if rotation >= 0 else -(abs(rotation) % 90)
+        if orientation == OrientationType.END:
+            rotation = -rotation
+        return rotation + 90
 
     ########################################################################
     # Methods
@@ -631,7 +640,7 @@ class Tenon(BTLxProcess):
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
-        tenon_box = Box(self.width/2, self.length, self.height, cutting_frame)
+        tenon_box = Box(self.width, self.length, self.height, cutting_frame)
         return Brep.from_box(tenon_box)
 
 
