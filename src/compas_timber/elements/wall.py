@@ -5,7 +5,6 @@ from compas.geometry import Line
 from compas.geometry import bounding_box
 from compas.geometry import Brep
 from compas.geometry import Polyline
-from compas.geometry import Plane
 
 from .timber import TimberElement
 
@@ -95,13 +94,12 @@ class Wall(TimberElement):
     def faces(self):
         corners = self.corners
         # a: origin, ba: xaxis, ca: yaxis
-        # Plane.from_three_points(a, b, c)
-        bottom_face = Plane.from_three_points(corners[0], corners[1], corners[3])  # V
-        left_face = Plane.from_three_points(corners[4], corners[5], corners[0]) # V
-        top_face = Plane.from_three_points(corners[7], corners[6], corners[4]) # V
-        right_face = Plane.from_three_points(corners[3], corners[2], corners[7]) # V
-        back_face = Plane.from_three_points(corners[0], corners[3], corners[4]) # V
-        front_face = Plane.from_three_points(corners[5], corners[6], corners[1]) # V
+        bottom_face = Frame.from_points(corners[0], corners[1], corners[3])
+        left_face = Frame.from_points(corners[4], corners[5], corners[0])
+        top_face = Frame.from_points(corners[7], corners[6], corners[4])
+        right_face = Frame.from_points(corners[3], corners[2], corners[7])
+        back_face = Frame.from_points(corners[0], corners[3], corners[4])
+        front_face = Frame.from_points(corners[5], corners[6], corners[1])
         return [bottom_face, left_face, top_face, right_face, back_face, front_face]
 
     def compute_geometry(self, _=False):
