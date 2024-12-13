@@ -522,30 +522,23 @@ class DovetailMortise(BTLxProcess):
             )
 
         # fillet the edges of the dovetail volume based on the shape
-        if (
-            self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
-        ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_indices = [4, 7] if self.length_limited_bottom else [5, 8]
+        if (self.shape != TenonShapeType.SQUARE and self.length_limited_bottom):
+            excluded_edges = [edge for i, edge in enumerate(dovetail_volume.edges) if i not in [2, 4]]
             try:
-                dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
-                )  # TODO: NotImplementedError
+                dovetail_volume.fillet(self.shape_radius, excluded_edges)
             except Exception as e:
                 raise FeatureApplicationError(
                     dovetail_volume,
                     geometry,
                     "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
                 )
-
         # remove tenon volume to geometry
         try:
-            geometry -= dovetail_volume
+            return geometry - dovetail_volume
         except Exception as e:
             raise FeatureApplicationError(
                 dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
             )
-
-        return geometry
 
     def frame_from_params_and_beam(self, beam):
         """Calculates the cutting frame from the machining parameters in this instance and the given beam
@@ -575,7 +568,6 @@ class DovetailMortise(BTLxProcess):
             cutting_frame.normal, math.radians(self.angle + 90), cutting_frame.point
         )
         cutting_frame.transform(rotation)
-
         return cutting_frame
 
     def dovetail_cutting_frames_from_params_and_beam(self, beam):
@@ -682,10 +674,8 @@ class DovetailMortise(BTLxProcess):
                 cutting_frame,
             )
         )
-
         # get the cutting frames for the dovetail tenon
         trimming_frames = self.dovetail_cutting_frames_from_params_and_beam(beam)
-
         # trim the box to create the dovetail volume
         for frame in trimming_frames:
             try:
@@ -695,7 +685,6 @@ class DovetailMortise(BTLxProcess):
                 raise FeatureApplicationError(
                     frame, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
                 )
-
         return dovetail_volume
 
 

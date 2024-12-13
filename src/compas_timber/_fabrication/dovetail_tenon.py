@@ -13,6 +13,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.elements import FeatureApplicationError
 
@@ -434,7 +435,7 @@ class DovetailTenon(BTLxProcess):
         length = cls._bound_length(
             ref_side, plane, beam.height, start_depth, inclination, length, height, frustum_difference
         )
-        width = cls._bound_width(beam.width, angle, length, width, cone_angle, shape_radius, frustum_difference)
+        width = cls._bound_width(width, shape_radius)
 
         # calculate start_x
         start_x = cls._calculate_start_x(
@@ -547,17 +548,12 @@ class DovetailTenon(BTLxProcess):
         return min(max_length, length)
 
     @staticmethod
-    def _bound_width(beam_width, angle, length, width, cone_angle, shape_radius, frustum_difference):
-        # bound the inserted width value to the minumum(based on the dovetail tool radius) and maximum(so that the tenon does not go out of the blank) possible width for the beam
-        max_width = beam_width / math.sin(math.radians(angle)) - 2 * (
-            frustum_difference + length * math.tan(math.radians(cone_angle))
-        )
-        min_width = 2 * shape_radius
-        if width < min_width:
-            width = min_width
-        elif width > max_width:
-            width = max_width
-        return width
+    def _bound_width(width, shape_radius):
+        # bound the inserted width value to the minumum(based on the dovetail tool radius)
+        tol = Tolerance()
+        tol.ABSOLUTE = 1.05
+        min_width = 2 * shape_radius + tol.ABSOLUTE
+        return max(min_width, width)
 
     @staticmethod
     def _bound_start_depth(start_depth, inclination, height):
@@ -625,31 +621,6 @@ class DovetailTenon(BTLxProcess):
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
-
-        # get dovetail volume from params and beam
-        try:
-            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
-        except ValueError as e:
-            raise FeatureApplicationError(
-                None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
-            )
-
-        # fillet the edges of the dovetail volume based on the shape
-        if (
-            self.shape != TenonShapeType.SQUARE and self.length_limited_bottom
-        ):
-            edge_indices = dovetail_volume.edges[:-2]
-            try:
-                dovetail_volume.fillet(
-                    self.shape_radius, edge_indices
-                )  # TODO: NotImplementedError
-            except Exception as e:
-                raise FeatureApplicationError(
-                    dovetail_volume,
-                    geometry,
-                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
-                )
-
         # trim geometry with cutting planes
         try:
             geometry.trim(cutting_plane)
@@ -657,16 +628,26 @@ class DovetailTenon(BTLxProcess):
             raise FeatureApplicationError(
                 cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
             )
-
+        # get dovetail volume from params and beam
+        try:
+            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
+            )
+        # remove any parts of the volume that are outside of the beam geometry. Fails silently.
+        for frame in beam.ref_sides[:4]:
+            try:
+                dovetail_volume = dovetail_volume.trimmed(frame)
+            except Exception:
+                pass
         # add tenon volume to geometry
         try:
-            geometry += dovetail_volume
+            return geometry + dovetail_volume
         except Exception as e:
             raise FeatureApplicationError(
                 dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
             )
-
-        return geometry
 
     def frame_from_params_and_beam(self, beam):
         """
@@ -770,7 +751,6 @@ class DovetailTenon(BTLxProcess):
                 # apply the rotation based on the flank angle
                 rotation = Rotation.from_axis_and_angle(-edge.direction, math.radians(self.flank_angle), frame.point)
                 frame.transform(rotation)
-
             trimming_frames.append(frame)
 
         cutting_frame.xaxis = -cutting_frame.xaxis
@@ -803,7 +783,6 @@ class DovetailTenon(BTLxProcess):
         assert self.length_limited_bottom is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
-
         # create the dovetail volume by trimming a box  # TODO: PluginNotInstalledError for Brep.from_loft
         # get the box as a brep
         dovetail_volume = Brep.from_box(
@@ -814,10 +793,8 @@ class DovetailTenon(BTLxProcess):
                 cutting_frame,
             )
         )
-
         # get the cutting frames for the dovetail tenon
         trimming_frames = self.dovetail_cutting_frames_from_params_and_beam(beam)
-
         # trim the box to create the dovetail volume
         for frame in trimming_frames:
             try:
@@ -826,7 +803,16 @@ class DovetailTenon(BTLxProcess):
                 raise FeatureApplicationError(
                     frame, dovetail_volume, "Failed to trim tenon volume with cutting frame: {}".format(str(e))
                 )
-
+        # fillet the edges of the dovetail volume based on the shape and trim the exceeding parts
+        if self.shape != TenonShapeType.SQUARE and self.length_limited_bottom:
+            excluded_edges = dovetail_volume.edges[:-2]
+            try:
+                dovetail_volume.fillet(self.shape_radius, excluded_edges)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    dovetail_volume,
+                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(e),
+                )
         return dovetail_volume
 
 
