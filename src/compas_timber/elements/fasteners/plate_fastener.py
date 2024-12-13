@@ -21,6 +21,7 @@ from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
 
+
 class PlateFastener(Fastener):
     """
     A class to represent flat plate timber fasteners (e.g. steel plates).
