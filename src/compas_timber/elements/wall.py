@@ -1,5 +1,3 @@
-import statistics
-
 import compas.geometry
 from compas.geometry import Box
 from compas.geometry import Frame
@@ -7,6 +5,7 @@ from compas.geometry import Line
 from compas.geometry import bounding_box
 from compas.geometry import Brep
 from compas.geometry import Polyline
+from compas.geometry import Plane
 
 from .timber import TimberElement
 
@@ -92,6 +91,19 @@ class Wall(TimberElement):
             points[3] + self.frame.zaxis * self.thickness,
         ]
 
+    @property
+    def faces(self):
+        corners = self.corners
+        # a: origin, ba: xaxis, ca: yaxis
+        # Plane.from_three_points(a, b, c)
+        bottom_face = Plane.from_three_points(corners[0], corners[1], corners[3])  # V
+        left_face = Plane.from_three_points(corners[4], corners[5], corners[0]) # V
+        top_face = Plane.from_three_points(corners[7], corners[6], corners[4]) # V
+        right_face = Plane.from_three_points(corners[3], corners[2], corners[7]) # V
+        back_face = Plane.from_three_points(corners[0], corners[3], corners[4]) # V
+        front_face = Plane.from_three_points(corners[5], corners[6], corners[1]) # V
+        return [bottom_face, left_face, top_face, right_face, back_face, front_face]
+
     def compute_geometry(self, _=False):
         assert self.frame
 
@@ -141,6 +153,7 @@ class Wall(TimberElement):
 
     @classmethod
     def from_polyline(cls, polyline, normal, thickness, openings=None, **kwargs):
+        """Use this to make sure the polyline is oriented correctly."""
         oriented_polyline = cls._oriented_polyline(polyline, normal)
         wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
         return cls(oriented_polyline, thickness, openings, wall_frame, **kwargs)
