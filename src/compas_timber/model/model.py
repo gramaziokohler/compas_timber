@@ -1,11 +1,8 @@
 import compas
-from compas_model.elements import Element
-from compas_model.materials import Material
-from compas_model.models.elementnode import ElementNode
-from compas_model.models.groupnode import GroupNode
 
 if not compas.IPY:
     from typing import Generator  # noqa: F401
+    from typing import List  # noqa: F401
 
 from compas.geometry import Point
 from compas_model.models import Model
@@ -251,6 +248,31 @@ class TimberModel(Model):
         elements = (node.element for node in group.children)
         return filter(filter_, elements)
 
+    def get_interactions_for_element(self, element):
+        # type: (Element) -> List[Interaction]
+        """Get all interactions for a given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element to query.
+
+        Returns
+        -------
+        list[:class:`~compas_model.interactions.Interaction`]
+            A list of interactions for the given element.
+        """
+
+        negihbors = self._graph.neighbors(element.graph_node)
+        result = []
+        for nbr in negihbors:
+            try:
+                result.extend(self._graph.edge_interactions((element.graph_node, nbr)))
+            except KeyError:
+                # no interactions
+                pass
+        return result
+
     def add_joint(self, joint):
         # type: (Joint) -> None
         """Add a joint object to the model.
@@ -307,8 +329,12 @@ class TimberModel(Model):
         for pair in pairs:
             wall_a, wall_b = pair
             result = solver.find_wall_wall_topology(wall_a, wall_b)
+
             topology = result[0]
             if topology != JointTopology.TOPO_UNKNOWN:
                 wall_a, wall_b = result[1], result[2]
+
+            assert wall_a and wall_b
+
             joint = WallJoint(wall_a, wall_b, topology=topology)
             self.add_interaction(wall_a, wall_b, interaction=joint)
