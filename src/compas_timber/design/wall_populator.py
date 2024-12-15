@@ -55,6 +55,23 @@ class AnyWallSelector(object):
         return True
 
 
+class WallToWallInterface(object):
+    """
+
+    Parameters
+    ----------
+    face : :class:`compas.geometry.PlanarSurface`
+        Planar surface representing the portion of the wall which touches the other wall.
+        The face's normal points towards the other wall.
+    topology : :class:`compas_timber.connections.JointTopology`
+        The topology of the joint between the two walls.
+
+    """
+    def __init__(self, face, topology):
+        self.face = face
+        self.topology = topology
+
+
 class WallPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
@@ -153,7 +170,7 @@ class WallPopulator(object):
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill"]
 
     # TODO: this takes interfaces! let's the populator know how this wall potentially interacts with other walls
-    def __init__(self, configuration_set, wall):
+    def __init__(self, configuration_set, wall, interactions=None):
         self._wall = wall
         self._config_set = configuration_set
         self._z_axis = Vector.Zaxis()
@@ -172,6 +189,7 @@ class WallPopulator(object):
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
 
+        self._interactions = interactions or []
         # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
@@ -321,9 +339,11 @@ class WallPopulator(object):
         self.generate_studs()
 
     @classmethod
-    def from_walls(cls, walls, configuration_sets):
+    def from_model(cls, model, configuration_sets):
+        # type: (TimberModel, List[WallPopulatorConfigurationSet]) -> List[WallPopulator]
         """matches configuration sets to walls and returns a list of WallPopulator instances, each per wall"""
         # TODO: make sure number of walls and configuration sets match
+        walls = list(model.walls)  # TODO: these are anoying, consider making these lists again
         if len(walls) != len(configuration_sets):
             raise ValueError("Number of walls and configuration sets do not match")
 
@@ -331,7 +351,8 @@ class WallPopulator(object):
         for wall in walls:
             for config_set in configuration_sets:
                 if config_set.wall_selector.select(wall):
-                    wall_populators.append(cls(config_set, wall))
+                    interactions = model.get_interactions_for_element(wall)
+                    wall_populators.append(cls(config_set, wall, interactions))
                     break
         return wall_populators
 
