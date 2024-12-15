@@ -1,10 +1,9 @@
-import compas.geometry
 from compas.geometry import Box
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import bounding_box
-from compas.geometry import Brep
 from compas.geometry import Polyline
+from compas.geometry import bounding_box
 
 from .timber import TimberElement
 

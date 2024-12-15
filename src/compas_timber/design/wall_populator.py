@@ -19,7 +19,6 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.geometry import offset_polyline
-from compas.tolerance import Tolerance
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -67,6 +66,7 @@ class WallToWallInterface(object):
         The topology of the joint between the two walls.
 
     """
+
     def __init__(self, face, topology):
         self.face = face
         self.topology = topology
@@ -97,7 +97,6 @@ class WallPopulatorConfigurationSet(object):
         joint_overrides=None,
         wall_selector=None,
     ):
-
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
         self.wall_depth = wall_depth

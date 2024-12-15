@@ -1,4 +1,3 @@
-from compas.itertools import pairwise
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -6,6 +5,7 @@ from compas.geometry import Polyline
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane
+from compas.itertools import pairwise
 from compas_model.interactions import Interaction
 
 from .joint import JointTopology
@@ -49,7 +49,7 @@ class WallJoint(Interaction):
         self.main_wall = main_wall
         self.cross_wall = cross_wall
         self._main_wall_guid = kwargs.get("main_wall_guid", None) or str(main_wall.guid)  # type: ignore
-        self._cross_wall_guid = kwargs.get("cross_wall_guid", None) or str(cross_wall.guid) # type: ignore
+        self._cross_wall_guid = kwargs.get("cross_wall_guid", None) or str(cross_wall.guid)  # type: ignore
         self.topology = topology or JointTopology.TOPO_UNKNOWN
 
         self.main_wall_interface = None, None
@@ -58,9 +58,7 @@ class WallJoint(Interaction):
             self._calculate_interfaces()
 
     def __repr__(self):
-        return "WallJoint({0}, {1}, {2})".format(
-            self.main_wall, self.cross_wall, JointTopology.get_name(self.topology)
-        )
+        return "WallJoint({0}, {1}, {2})".format(self.main_wall, self.cross_wall, JointTopology.get_name(self.topology))
 
     @property
     def walls(self):
@@ -133,4 +131,3 @@ class WallJoint(Interaction):
         self.main_wall = model.element_by_guid(self._main_wall_guid)
         self.cross_wall = model.element_by_guid(self._cross_wall_guid)
         self._calculate_interfaces()
-
