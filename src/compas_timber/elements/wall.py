@@ -35,6 +35,9 @@ class Wall(TimberElement):
         self.thickness = thickness
         self.openings = openings or []
 
+        self._faces = None
+        self._corners = None
+
         if not outline.is_closed:
             raise ValueError("Outline is not closed.")
         if len(self.outline) != 5:
@@ -61,7 +64,6 @@ class Wall(TimberElement):
     @property
     def baseline(self):
         # type: () -> Line
-        # TODO: find the bottom line of wall. don't love this, but it works for now. might be fair to rely on a consistent order of points
         points = self.outline.points
         return Line(points[0], points[1])
 
@@ -76,31 +78,41 @@ class Wall(TimberElement):
     @property
     def corners(self):
         assert self.frame
-        points = self.outline.points
-        # TODO: this is more like obb than aabb
-        return [
-            #
-            points[0],
-            points[1],
-            points[1] + self.frame.zaxis * self.thickness,
-            points[0] + self.frame.zaxis * self.thickness,
-            points[3],
-            points[2],
-            points[2] + self.frame.zaxis * self.thickness,
-            points[3] + self.frame.zaxis * self.thickness,
-        ]
+        if not self._corners:
+            points = self.outline.points
+            self._corners = (
+                points[0],
+                points[1],
+                points[1] + self.frame.zaxis * self.thickness,
+                points[0] + self.frame.zaxis * self.thickness,
+                points[3],
+                points[2],
+                points[2] + self.frame.zaxis * self.thickness,
+                points[3] + self.frame.zaxis * self.thickness,
+            )  # this order is consistent with what's required by `Box.from_bounding_box`
+        return self._corners
 
     @property
     def faces(self):
-        corners = self.corners
-        # a: origin, ba: xaxis, ca: yaxis
-        bottom_face = Frame.from_points(corners[0], corners[1], corners[3])
-        left_face = Frame.from_points(corners[4], corners[5], corners[0])
-        top_face = Frame.from_points(corners[7], corners[6], corners[4])
-        right_face = Frame.from_points(corners[3], corners[2], corners[7])
-        back_face = Frame.from_points(corners[0], corners[3], corners[4])
-        front_face = Frame.from_points(corners[5], corners[6], corners[1])
-        return [bottom_face, left_face, top_face, right_face, back_face, front_face]
+        if not self._faces:
+            corners = self.corners
+            bottom_face = Frame.from_points(corners[0], corners[1], corners[3])
+            left_face = Frame.from_points(corners[4], corners[5], corners[0])
+            top_face = Frame.from_points(corners[7], corners[6], corners[4])
+            right_face = Frame.from_points(corners[3], corners[2], corners[7])
+            back_face = Frame.from_points(corners[0], corners[3], corners[4])
+            front_face = Frame.from_points(corners[5], corners[6], corners[1])
+            # this order is consistent with BTLx ref-side system
+            self._faces = (bottom_face, left_face, top_face, right_face, back_face, front_face)
+        return self._faces
+
+    @property
+    def end_faces(self):
+        return self.faces[-2:]
+
+    @property
+    def envelope_faces(self):
+        return self.faces[:4]
 
     def compute_geometry(self, _=False):
         assert self.frame
@@ -136,6 +148,11 @@ class Wall(TimberElement):
 
     @staticmethod
     def _oriented_polyline(polyline, normal):
+        # returns a polyline that is oriented consistently ccw around the normal
+        # ^  3 ---- 2
+        # |  |      |
+        # z  0 ---- 1
+        #    x -->
         sorted_points = sorted(polyline.points[:4], key=lambda pt: pt.z)
         bottom_points = sorted_points[:2]
         top_points = sorted_points[2:]
@@ -155,3 +172,11 @@ class Wall(TimberElement):
         oriented_polyline = cls._oriented_polyline(polyline, normal)
         wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
         return cls(oriented_polyline, thickness, openings, wall_frame, **kwargs)
+
+    @classmethod
+    def from_brep(cls, brep, thickness, **kwargs):
+        """Creates a wall from a brep with a single planar face."""
+        # TODO: grab normal, outline and openings from brep
+        # orient polylines
+        # return cls.from_polyline(outline, normal, thickness, **kwargs)
+        raise NotImplementedError
