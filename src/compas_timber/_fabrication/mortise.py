@@ -283,7 +283,7 @@ class Mortise(BTLxProcess):
         shape_radius=20.0,
         ref_side_index=0,
     ):
-        """Create a Mortise instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the cross beam.
+        """Create a Mortise instance from a cutting frame and the beam it should cut. This could be the ref_side of the main beam of a Joint and the cross beam.
 
         Parameters
         ----------
@@ -313,7 +313,7 @@ class Mortise(BTLxProcess):
         :class:`~compas_timber.fabrication.Mortise`
 
         """
-        # type: (Frame|Plane, Beam, float, float, float, float, float, float, float, float, float, float, int) -> Mortise
+        # type: (Frame|Plane, Beam, float, float, float, float, float, str, float, int) -> Mortise
 
         if isinstance(frame, Plane):
             frame = Frame.from_plane(frame)
@@ -340,7 +340,6 @@ class Mortise(BTLxProcess):
         # determine if the top and bottom length of the cut is limited
         length_limited_top = True
         length_limited_bottom = True
-
 
         return cls(
             start_x,
@@ -376,7 +375,6 @@ class Mortise(BTLxProcess):
         point_start_x = intersection_line_plane(ref_edge, perp_plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
-
         start_x = distance_point_point(ref_side.point, point_start_x)
         return start_x
 
@@ -502,7 +500,7 @@ class Mortise(BTLxProcess):
         assert self.depth is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
-        # translate the cutting frame to the center of the tenon
+        # translate the cutting frame to the center of the mortise
         translation_vector = (-cutting_frame.normal * (self.depth-TOL.RELATIVE) - cutting_frame.yaxis * self.length)
         cutting_frame.translate(translation_vector * 0.5)
 

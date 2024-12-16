@@ -1,5 +1,3 @@
-import math
-
 from compas_timber._fabrication import Mortise
 from compas_timber._fabrication import Tenon
 from compas_timber._fabrication.btlx_process import TenonShapeType
@@ -193,6 +191,7 @@ class TTenonMortiseJoint(Joint):
         assert self.main_beam and self.cross_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            cutting_plane.translate(-cutting_plane.normal * self.height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
