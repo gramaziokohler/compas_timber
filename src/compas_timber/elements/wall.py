@@ -133,8 +133,8 @@ class Wall(TimberElement):
         return box
 
     def __repr__(self):
-        return "Wall(name={}, {}, {:.3f}, {:.3f}, {:.3f})".format(
-            self.name, self.frame, self.outline, self.thickness, self.openings
+        return "Wall(name={}, {}, {}, {:.3f})".format(
+            self.name, self.frame, self.outline, self.thickness
         )
 
     @staticmethod
