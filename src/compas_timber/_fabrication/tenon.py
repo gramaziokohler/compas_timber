@@ -379,18 +379,17 @@ class Tenon(BTLxProcess):
         rotation = cls._calculate_rotation(orientation, rotation) # TODO: calculate and include the rotation of the beam and the plane
 
         # calculate start_y
-        if orientation == OrientationType.END:
-            start_y = -start_y
-        start_y += beam.width / 2
+        start_y = cls._calculate_start_y(beam, orientation, start_y, ref_side_index)
 
         # calculate start_depth
-        start_depth += cls._calculate_start_depth(beam, inclination, length)
+        start_depth += cls._calculate_start_depth(beam, inclination, length, ref_side_index)
 
         # override start_depth and length if not limited
         if not length_limited_top:
             start_depth = 0.0
         if not length_limited_bottom:
-            length = (beam.height) / math.sin(math.radians(inclination)) - start_depth
+            beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
+            length = beam_height / math.sin(math.radians(inclination)) - start_depth
 
         # calculate start_x
         start_x = cls._calculate_start_x(
@@ -451,10 +450,19 @@ class Tenon(BTLxProcess):
         return start_x
 
     @staticmethod
-    def _calculate_start_depth(beam, inclination, length):
+    def _calculate_start_y(beam, orientation, start_y, ref_side_index):
+        # calculate the start_y of the cut based on the beam, orientation, start_y and ref_side_index
+        if orientation == OrientationType.END:
+            start_y = -start_y
+        beam_width = beam.width if ref_side_index % 2 == 0 else beam.height
+        return start_y + beam_width / 2
+
+    @staticmethod
+    def _calculate_start_depth(beam, inclination, length, ref_side_index):
         # calculate the start_depth of the tenon from height of the beam and the projected length of the tenon
         proj_length = (length * math.sin(math.radians(inclination)))
-        return (beam.height  - proj_length)/2
+        beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
+        return (beam_height  - proj_length)/2
 
     @staticmethod
     def _calculate_angle(ref_side, plane):
