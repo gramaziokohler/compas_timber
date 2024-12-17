@@ -72,6 +72,251 @@ class WallToWallInterface(object):
         self.topology = topology
 
 
+class BeamDefinition(object):
+    """
+    TODO: Move this to a separate module (potentially into workflow.py)
+
+    Container for Beam attributes before beam is instantiated.
+
+    Parameters
+    ----------
+    centerline : :class:`compas.geometry.Line`
+        The centerline of the beam.
+    width : float, optional
+        The width of the beam.
+    height : float, optional
+        The height of the beam.
+    z_axis : :class:`compas.geometry.Vector`, optional
+        The z axis of the beam.
+    normal : :class:`compas.geometry.Vector`, optional
+        The normal of the beam.
+    type : str, optional
+        The type of the beam.
+    polyline : :class:`compas.geometry.Polyline`, optional
+        The polyline of the beam.
+    parent : :class:`compas_timber.model.SurfaceAssembly` or :class:`compas_timber.model.SurfaceAssembly.Window`
+        The parent of the beam.
+
+    Attributes
+    ----------
+    centerline : :class:`compas.geometry.Line`
+        The centerline of the beam element.
+    width : float
+        The width of the beam element.
+    height : float
+        The height of the beam element.
+    z_axis : :class:`compas.geometry.Vector`
+        The z axis of the parent (Not the Beam).
+    normal : :class:`compas.geometry.Vector`
+        The normal of the parent.
+
+
+    """
+
+    def __init__(
+        self,
+        centerline,
+        width=None,
+        height=None,
+        z_axis=None,
+        normal=None,
+        type=None,
+        parent=None,
+    ):
+        self.original_centerline = centerline
+        self.centerline = Line(centerline[0], centerline[1])
+        self._width = width
+        self._height = height
+        self._normal = normal
+        self.type = type
+        self.parent = parent
+
+    @property
+    def width(self):
+        return self._width if self._width else self.parent.beam_dimensions[self.type][0]
+
+    @property
+    def height(self):
+        return self._height if self._height else self.parent.beam_dimensions[self.type][1]
+
+    @property
+    def z_aligned_centerline(self):
+        if dot_vectors(self.centerline.direction, self.parent.z_axis) < 0:
+            return Line(self.centerline.end, self.centerline.start)
+        else:
+            return self.centerline
+
+    @property
+    def normal(self):
+        return self._normal if self._normal else self.parent.normal
+
+    def offset(self, distance):
+        line = offset_line(self.centerline, distance, self.normal)
+        self.centerline = Line(line[0], line[1])
+
+    def translate(self, vector):
+        self.centerline.transform(vector)
+
+    def to_beam(self):
+        centerline = Line(*self.centerline)
+        centerline.translate(self.normal * 0.5 * self.height)
+        beam = Beam.from_centerline(centerline, self.width, self.height, self.normal)
+        beam.name = "{}_{}".format(self.type, beam.guid)
+        beam.attributes["category"] = self.type
+        return beam
+
+    def set_centerline(self, line):
+        self.centerline = line
+
+
+class Window(object):
+    """
+
+    # TODO: is this an Element maybe?
+
+    A window object for the SurfaceAssembly.
+
+    Parameters
+    ----------
+    outline : :class:`compas.geometry.Polyline`
+        The outline of the window.
+    sill_height : float, optional
+        The height of the sill.
+    header_height : float, optional
+        The height of the header.
+    parent : :class:`compas_timber.model.SurfaceAssembly`
+        The parent of the window.
+
+    Attributes
+    ----------
+    outline : :class:`compas.geometry.Polyline`
+        The outline of the window.
+    sill_height : float
+        The height of the sill.
+    header_height : float
+        The height of the header.
+    parent : :class:`compas_timber.model.SurfaceAssembly`
+        The parent of the window.
+    z_axis : :class:`compas.geometry.Vector`
+        The z axis of the parent.
+    normal : :class:`compas.geometry.Vector`
+        The normal of the parent.
+    beam_dimensions : dict
+        The beam dimensions of the parent.
+    beam_definions : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+        The beam_definions of the window.
+    length : float
+        The length of the window.
+    height : float
+        The height of the window.
+    frame : :class:`compas.geometry.Frame`
+        The frame of the window.
+
+    """
+
+    def __init__(self, outline, sill_height=None, header_height=None, parent=None):
+        self.outline = outline
+        if sill_height:
+            self.sill_height = sill_height
+        else:
+            self.sill_height = parent.beam_dimensions["sill"][0]
+        if header_height:
+            self.header_height = header_height
+        else:
+            self.header_height = parent.beam_dimensions["header"][0]
+        self.parent = parent
+        self.z_axis = parent.frame.yaxis
+        self.normal = parent.frame.zaxis
+        self.beam_dimensions = parent.beam_dimensions
+        self._beam_definitions = []
+        self._length = None
+        self._height = None
+        self._frame = None
+        self.dist_tolerance = parent.dist_tolerance
+        self.process_outlines()
+
+    @property
+    def jack_studs(self):
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "jack_stud"]
+
+    @property
+    def sills(self):
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "sill"]
+
+    @property
+    def headers(self):
+        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "header"]
+
+    @property
+    def length(self):
+        if not self._length:
+            _ = self.frame
+        return self._length
+
+    @property
+    def height(self):
+        if not self._height:
+            _ = self.frame
+        return self._height
+
+    @property
+    def frame(self):
+        if not self._frame:
+            self._frame, self._panel_length, self._panel_height = get_frame(
+                self.points, self.parent.normal, self.zaxis
+            )
+        return self._frame
+
+    @property
+    def boolean_feature(self):
+        offset = self.parent.sheeting_inside if self.parent.sheeting_inside else 0
+        so = self.parent.sheeting_outside if self.parent.sheeting_outside else 0
+        thickness = offset + so + self.parent.frame_depth
+
+        crv = self.outline.copy()
+        crv.translate(self.normal * -offset)
+
+        vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
+        return BrepSubtraction(vol)
+
+    def process_outlines(self):
+        for i, segment in enumerate(self.outline.lines):
+            beam_def = BeamDefinition(segment, parent=self)
+            if (
+                angle_vectors(segment.direction, self.z_axis, deg=True) < 1
+                or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
+            ):
+                if self.parent.lintel_posts:
+                    beam_def.type = "jack_stud"
+                else:
+                    beam_def.type = "king_stud"
+            else:
+                ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
+                pts = []
+                for seg in self.outline.lines:
+                    if seg != segment:
+                        pt = intersection_line_segment(ray, seg, self.dist_tolerance)[0]
+                        if pt:
+                            pts.append(Point(*pt))
+                if len(pts) > 1:
+                    raise ValueError("Window outline is wonky")
+                elif len(pts) == 1:
+                    vector = Vector.from_start_end(ray.start, pts[0])
+                    if dot_vectors(vector, self.z_axis) < 0:
+                        beam_def.type = "header"
+                    else:
+                        beam_def.type = "sill"
+            self._beam_definitions.append(beam_def)
+        self._beam_definitions = self.parent.offset_elements(self._beam_definitions)
+        if self.parent.lintel_posts:
+            for beam_def in self.jack_studs:
+                offset = (
+                    self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]
+                ) / 2
+                king_line = offset_line(beam_def.centerline, offset, self.normal)
+                self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+
+
 class WallPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
@@ -150,19 +395,19 @@ class WallPopulator(object):
         The height of the panel.
     frame : :class:`compas.geometry.Frame`
         The frame of the assembly.
-    jack_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+    jack_studs : list of :class:`BeamDefinition`
         The jack studs of the assembly.
-    king_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+    king_studs : list of :class:`BeamDefinition`
         The king studs of the assembly.
-    edge_studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+    edge_studs : list of :class:`BeamDefinition`
         The edge studs of the assembly.
-    studs : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+    studs : list of :class:`BeamDefinition`
         The studs of the assembly.
-    sills : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+    sills : list of :class:`BeamDefinition`
         The sills of the assembly.
-    headers : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+    headers : list of :class:`BeamDefinition`
         The headers of the assembly.
-    plates : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
+    plates : list of :class:`BeamDefinition`
 
     """
 
@@ -411,41 +656,41 @@ class WallPopulator(object):
         model.set_topologies(topologies)  # TODO: this is literaly the graph, maybe add a topo attribute to `Joint`
         return model
 
-    def parse_loops(self):
-        # TODO: make this a `SurfaceModel.from_brep` instead
-        # TODO: it would take a surface as compas brep and part inner and outer loops returning them as polylines
-        for loop in self.surface.loops:
-            polyline_points = []
-            polyline_length = 0.0
-            for i, edge in enumerate(loop.edges):
-                if not edge.is_line:
-                    raise ValueError("function only supprorts polyline edges")
-                if edge.start_vertex.point in [
-                    loop.edges[i - 1].start_vertex.point,
-                    loop.edges[i - 1].end_vertex.point,
-                ]:
-                    polyline_points.append(edge.start_vertex.point)
-                else:
-                    polyline_points.append(edge.end_vertex.point)
-                polyline_length += edge.length
-            polyline_points.append(polyline_points[0])
-            loop_polyline = Polyline(polyline_points)
-            offset_dist = self.dist_tolerance * 1000
-            if loop.is_outer:
-                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
-                if offset_loop.length > loop_polyline.length:
-                    polyline_points.reverse()
-                self.outer_polyline = Polyline(polyline_points)
-            else:
-                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
-                if offset_loop.length < loop_polyline.length:
-                    polyline_points.reverse()
-                self.inner_polylines.append(Polyline(polyline_points))
+    # def parse_loops(self):
+    #     # TODO: make this a `SurfaceModel.from_brep` instead
+    #     # TODO: it would take a surface as compas brep and part inner and outer loops returning them as polylines
+    #     for loop in self.surface.loops:
+    #         polyline_points = []
+    #         polyline_length = 0.0
+    #         for i, edge in enumerate(loop.edges):
+    #             if not edge.is_line:
+    #                 raise ValueError("function only supprorts polyline edges")
+    #             if edge.start_vertex.point in [
+    #                 loop.edges[i - 1].start_vertex.point,
+    #                 loop.edges[i - 1].end_vertex.point,
+    #             ]:
+    #                 polyline_points.append(edge.start_vertex.point)
+    #             else:
+    #                 polyline_points.append(edge.end_vertex.point)
+    #             polyline_length += edge.length
+    #         polyline_points.append(polyline_points[0])
+    #         loop_polyline = Polyline(polyline_points)
+    #         offset_dist = self.dist_tolerance * 1000
+    #         if loop.is_outer:
+    #             offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
+    #             if offset_loop.length > loop_polyline.length:
+    #                 polyline_points.reverse()
+    #             self.outer_polyline = Polyline(polyline_points)
+    #         else:
+    #             offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
+    #             if offset_loop.length < loop_polyline.length:
+    #                 polyline_points.reverse()
+    #             self.inner_polylines.append(Polyline(polyline_points))
 
     def generate_perimeter_beams(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
         for i, segment in enumerate(self.outer_polyline.lines):
-            beam_def = self.BeamDefinition(segment, parent=self)
+            beam_def = BeamDefinition(segment, parent=self)
             if i in interior_indices:
                 if (
                     angle_vectors(segment.direction, self.z_axis, deg=True) < 45
@@ -472,7 +717,7 @@ class WallPopulator(object):
                 if beam_def.type == "jack_stud":
                     offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
                     king_line = offset_line(beam_def.centerline, offset, self.normal)
-                    self._beam_definitions.append(self.BeamDefinition(king_line, type="king_stud", parent=self))
+                    self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
         points = polyline.points[0:-1]
@@ -546,7 +791,7 @@ class WallPopulator(object):
             start_point = Point(x_position, 0, 0)
             start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
             line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
-            self._beam_definitions.append(self.BeamDefinition(line, type="stud", parent=self))
+            self._beam_definitions.append(BeamDefinition(line, type="stud", parent=self))
             x_position += self._config_set.stud_spacing
 
     def get_beam_intersections(self, beam_def, *element_lists_to_intersect):
@@ -607,7 +852,7 @@ class WallPopulator(object):
                     while len(intersections) > 1:
                         top = intersections.pop()
                         bottom = intersections.pop()
-                        stud_elements.append(self.BeamDefinition(Line(bottom, top), type="stud", parent=self))
+                        stud_elements.append(BeamDefinition(Line(bottom, top), type="stud", parent=self))
                     self._beam_definitions.remove(beam_def)
         self._beam_definitions.extend(stud_elements)
 
@@ -641,243 +886,8 @@ class WallPopulator(object):
         for window in self.windows:
             self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
 
-    class Window(object):
-        """
-        A window object for the SurfaceAssembly.
-
-        Parameters
-        ----------
-        outline : :class:`compas.geometry.Polyline`
-            The outline of the window.
-        sill_height : float, optional
-            The height of the sill.
-        header_height : float, optional
-            The height of the header.
-        parent : :class:`compas_timber.model.SurfaceAssembly`
-            The parent of the window.
-
-        Attributes
-        ----------
-        outline : :class:`compas.geometry.Polyline`
-            The outline of the window.
-        sill_height : float
-            The height of the sill.
-        header_height : float
-            The height of the header.
-        parent : :class:`compas_timber.model.SurfaceAssembly`
-            The parent of the window.
-        z_axis : :class:`compas.geometry.Vector`
-            The z axis of the parent.
-        normal : :class:`compas.geometry.Vector`
-            The normal of the parent.
-        beam_dimensions : dict
-            The beam dimensions of the parent.
-        beam_definions : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
-            The beam_definions of the window.
-        length : float
-            The length of the window.
-        height : float
-            The height of the window.
-        frame : :class:`compas.geometry.Frame`
-            The frame of the window.
-
-        """
-
-        def __init__(self, outline, sill_height=None, header_height=None, parent=None):
-            self.outline = outline
-            if sill_height:
-                self.sill_height = sill_height
-            else:
-                self.sill_height = parent.beam_dimensions["sill"][0]
-            if header_height:
-                self.header_height = header_height
-            else:
-                self.header_height = parent.beam_dimensions["header"][0]
-            self.parent = parent
-            self.z_axis = parent.frame.yaxis
-            self.normal = parent.frame.zaxis
-            self.beam_dimensions = parent.beam_dimensions
-            self._beam_definitions = []
-            self._length = None
-            self._height = None
-            self._frame = None
-            self.dist_tolerance = parent.dist_tolerance
-            self.process_outlines()
-
-        @property
-        def jack_studs(self):
-            return [beam_def for beam_def in self._beam_definitions if beam_def.type == "jack_stud"]
-
-        @property
-        def sills(self):
-            return [beam_def for beam_def in self._beam_definitions if beam_def.type == "sill"]
-
-        @property
-        def headers(self):
-            return [beam_def for beam_def in self._beam_definitions if beam_def.type == "header"]
-
-        @property
-        def length(self):
-            if not self._length:
-                _ = self.frame
-            return self._length
-
-        @property
-        def height(self):
-            if not self._height:
-                _ = self.frame
-            return self._height
-
-        @property
-        def frame(self):
-            if not self._frame:
-                self._frame, self._panel_length, self._panel_height = get_frame(
-                    self.points, self.parent.normal, self.zaxis
-                )
-            return self._frame
-
-        @property
-        def boolean_feature(self):
-            offset = self.parent.sheeting_inside if self.parent.sheeting_inside else 0
-            so = self.parent.sheeting_outside if self.parent.sheeting_outside else 0
-            thickness = offset + so + self.parent.frame_depth
-
-            crv = self.outline.copy()
-            crv.translate(self.normal * -offset)
-
-            vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
-            return BrepSubtraction(vol)
-
-        def process_outlines(self):
-            for i, segment in enumerate(self.outline.lines):
-                beam_def = WallPopulator.BeamDefinition(segment, parent=self)
-                if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
-                ):
-                    if self.parent.lintel_posts:
-                        beam_def.type = "jack_stud"
-                    else:
-                        beam_def.type = "king_stud"
-                else:
-                    ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
-                    pts = []
-                    for seg in self.outline.lines:
-                        if seg != segment:
-                            pt = intersection_line_segment(ray, seg, self.dist_tolerance)[0]
-                            if pt:
-                                pts.append(Point(*pt))
-                    if len(pts) > 1:
-                        raise ValueError("Window outline is wonky")
-                    elif len(pts) == 1:
-                        vector = Vector.from_start_end(ray.start, pts[0])
-                        if dot_vectors(vector, self.z_axis) < 0:
-                            beam_def.type = "header"
-                        else:
-                            beam_def.type = "sill"
-                self._beam_definitions.append(beam_def)
-            self._beam_definitions = self.parent.offset_elements(self._beam_definitions)
-            if self.parent.lintel_posts:
-                for beam_def in self.jack_studs:
-                    offset = (
-                        self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]
-                    ) / 2
-                    king_line = offset_line(beam_def.centerline, offset, self.normal)
-                    self._beam_definitions.append(self.parent.BeamDefinition(king_line, type="king_stud", parent=self))
-
-    class BeamDefinition(object):
-        """
-        Container for Beam attributes before beam is instantiated.
-
-        Parameters
-        ----------
-        centerline : :class:`compas.geometry.Line`
-            The centerline of the beam.
-        width : float, optional
-            The width of the beam.
-        height : float, optional
-            The height of the beam.
-        z_axis : :class:`compas.geometry.Vector`, optional
-            The z axis of the beam.
-        normal : :class:`compas.geometry.Vector`, optional
-            The normal of the beam.
-        type : str, optional
-            The type of the beam.
-        polyline : :class:`compas.geometry.Polyline`, optional
-            The polyline of the beam.
-        parent : :class:`compas_timber.model.SurfaceAssembly` or :class:`compas_timber.model.SurfaceAssembly.Window`
-            The parent of the beam.
-
-        Attributes
-        ----------
-        centerline : :class:`compas.geometry.Line`
-            The centerline of the beam element.
-        width : float
-            The width of the beam element.
-        height : float
-            The height of the beam element.
-        z_axis : :class:`compas.geometry.Vector`
-            The z axis of the parent (Not the Beam).
-        normal : :class:`compas.geometry.Vector`
-            The normal of the parent.
 
 
-        """
-
-        def __init__(
-            self,
-            centerline,
-            width=None,
-            height=None,
-            z_axis=None,
-            normal=None,
-            type=None,
-            parent=None,
-        ):
-            self.original_centerline = centerline
-            self.centerline = Line(centerline[0], centerline[1])
-            self._width = width
-            self._height = height
-            self._normal = normal
-            self.type = type
-            self.parent = parent
-
-        @property
-        def width(self):
-            return self._width if self._width else self.parent.beam_dimensions[self.type][0]
-
-        @property
-        def height(self):
-            return self._height if self._height else self.parent.beam_dimensions[self.type][1]
-
-        @property
-        def z_aligned_centerline(self):
-            if dot_vectors(self.centerline.direction, self.parent.z_axis) < 0:
-                return Line(self.centerline.end, self.centerline.start)
-            else:
-                return self.centerline
-
-        @property
-        def normal(self):
-            return self._normal if self._normal else self.parent.normal
-
-        def offset(self, distance):
-            line = offset_line(self.centerline, distance, self.normal)
-            self.centerline = Line(line[0], line[1])
-
-        def translate(self, vector):
-            self.centerline.transform(vector)
-
-        def to_beam(self):
-            centerline = Line(*self.centerline)
-            centerline.translate(self.normal * 0.5 * self.height)
-            beam = Beam.from_centerline(centerline, self.width, self.height, self.normal)
-            beam.name = "{}_{}".format(self.type, beam.guid)
-            beam.attributes["category"] = self.type
-            return beam
-
-        def set_centerline(self, line):
-            self.centerline = line
 
 
 def get_frame(points, normal, z_axis):
