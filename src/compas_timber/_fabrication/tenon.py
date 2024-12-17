@@ -550,7 +550,7 @@ class Tenon(BTLxProcess):
             try:
                 tenon_volume = tenon_volume.trimmed(frame)
             except Exception:
-                pass
+                pass # Fail silently since it won't be possible to trim the tenon if it doesn't exceed the beam geometry.
         # add tenon volume to geometry
         try:
             geometry += tenon_volume

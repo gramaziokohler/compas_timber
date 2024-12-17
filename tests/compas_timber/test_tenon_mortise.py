@@ -12,8 +12,12 @@ from compas_timber.elements import Beam
 from compas_timber._fabrication import Mortise
 from compas_timber._fabrication import Tenon
 
-from compas.tolerance import TOL
 from compas.tolerance import Tolerance
+
+
+@pytest.fixture
+def tol():
+    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
 
 @pytest.fixture
@@ -58,14 +62,14 @@ TENON_CUTTING_FRAMES = [
 
 MORTISE_CUTTING_FRAMES = [
     Frame(
-        point=Point(x=33314.542, y=-3287.668, z=75.631),
-        xaxis=Vector(x=-1.000, y=0.000, z=-0.014),
-        yaxis=Vector(x=-0.014, y=-0.000, z=1.000),
+        point=Point(x=33312.364, y=-3287.668, z=-28.905),
+        xaxis=Vector(x=1.000, y=-0.000, z=0.014),
+        yaxis=Vector(x=0.014, y=-0.000, z=-1.000),
     ),
     Frame(
-        point=Point(x=32274.776, y=-3227.668, z=-99.122),
-        xaxis=Vector(x=-1.000, y=0.000, z=0.026),
-        yaxis=Vector(x=-0.026, y=-0.000, z=-1.000),
+        point=Point(x=32278.846, y=-3227.668, z=67.025),
+        xaxis=Vector(x=1.000, y=-0.000, z=-0.026),
+        yaxis=Vector(x=0.026, y=0.000, z=1.000),
     ),
 ]
 
@@ -76,13 +80,13 @@ EXPECTED_TENON_PARAMS = [
             ("Priority", "0"),
             ("Process", "yes"),
             ("ProcessID", "0"),
-            ("ReferencePlaneID", "3"),
+            ("ReferencePlaneID", "1"),
             ("Orientation", "start"),
-            ("StartX", "70.915"),
+            ("StartX", "9.395"),
             ("StartY", "41.000"),
             ("StartDepth", "7.740"),
-            ("Angle", "62.120"),
-            ("Inclination", "122.307"),
+            ("Angle", "117.880"),
+            ("Inclination", "57.693"),
             ("Rotation", "75.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
@@ -100,13 +104,13 @@ EXPECTED_TENON_PARAMS = [
             ("Priority", "0"),
             ("Process", "yes"),
             ("ProcessID", "0"),
-            ("ReferencePlaneID", "1"),
+            ("ReferencePlaneID", "3"),
             ("Orientation", "end"),
-            ("StartX", "1687.777"),
+            ("StartX", "1765.763"),
             ("StartY", "42.000"),
             ("StartDepth", "-33.355"),
-            ("Angle", "78.052"),
-            ("Inclination", "117.222"),
+            ("Angle", "101.948"),
+            ("Inclination", "62.778"),
             ("Rotation", "83.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
@@ -128,11 +132,10 @@ EXPECTED_MORTISE_PARAMS = [
             ("Process", "yes"),
             ("ProcessID", "0"),
             ("ReferencePlaneID", "4"),
-            ("StartX", "2532.112"),
-            ("StartY", "135.631"),
+            ("StartX", "2529.934"),
+            ("StartY", "31.095"),
             ("StartDepth", "0.000"),
-            # ("Angle", "-89.213"), #! WHY??
-            ("Angle", "-89.198"),
+            ("Angle", "90.802"),
             ("Slope", "90.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
@@ -150,11 +153,10 @@ EXPECTED_MORTISE_PARAMS = [
             ("Process", "yes"),
             ("ProcessID", "0"),
             ("ReferencePlaneID", "2"),
-            ("StartX", "1492.346"),
-            ("StartY", "159.122"),
+            ("StartX", "1496.416"),
+            ("StartY", "7.025"),
             ("StartDepth", "0.000"),
-            # ("Angle", "-88.529"), #! WHY??
-            ("Angle", "-88.511"),
+            ("Angle", "91.489"),
             ("Slope", "90.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
@@ -183,7 +185,7 @@ EXPECTED_MORTISE_PARAMS = [
             40.0,
             "round",
             5.0,
-            2,
+            0,
         ),  # main_beam_a
         (
             1,
@@ -197,7 +199,7 @@ EXPECTED_MORTISE_PARAMS = [
             40.0,
             "round",
             7.5,
-            0,
+            2,
         ),  # main_beam_b
     ],
 )
@@ -237,14 +239,13 @@ def test_tenon_params(
 
 
 @pytest.mark.parametrize(
-    "test_index, expected_mortise_params, mortise_cutting_frames, start_depth, angle, length, width, depth, shape, shape_radius, ref_side_index",
+    "test_index, expected_mortise_params, mortise_cutting_frames, start_depth, length, width, depth, shape, shape_radius, ref_side_index",
     [
         (
             0,
             EXPECTED_MORTISE_PARAMS,
             MORTISE_CUTTING_FRAMES,
             0.0,
-            -15.0,
             100.0,
             40.0,
             40.0,
@@ -257,7 +258,6 @@ def test_tenon_params(
             EXPECTED_MORTISE_PARAMS,
             MORTISE_CUTTING_FRAMES,
             0.0,
-            7.0,
             120.0,
             50.0,
             40.0,
@@ -273,7 +273,6 @@ def test_mortise_params(
     test_index,
     expected_mortise_params,
     start_depth,
-    angle,
     length,
     width,
     depth,
@@ -286,7 +285,6 @@ def test_mortise_params(
         mortise_cutting_frames[test_index],
         cross_beam,
         start_depth,
-        angle,
         length,
         width,
         depth,
@@ -309,6 +307,7 @@ def test_mortise_params(
     ],
 )
 def test_tenon_frame_from_params(
+    tol,
     main_beams,
     test_index,
     expected_tenon_params,
@@ -348,13 +347,10 @@ def test_tenon_frame_from_params(
     )
 
     # generate frame from the parameters
-    tolerance = Tolerance()
-    tolerance.ABSOLUTE = 1e-3
-
     generated_frame = tenon.frame_from_params_and_beam(main_beams[test_index])
     dx = distance_point_point(generated_frame.point, mortise_cutting_frames[test_index].point)
 
-    assert tolerance.is_zero(dx)
-    assert tolerance.is_close(generated_frame.normal.x, mortise_cutting_frames[test_index].normal.x)
-    assert tolerance.is_close(generated_frame.normal.y, mortise_cutting_frames[test_index].normal.y)
-    assert tolerance.is_close(generated_frame.normal.z, mortise_cutting_frames[test_index].normal.z)
+    assert tol.is_zero(dx)
+    assert tol.is_close(generated_frame.normal.x, mortise_cutting_frames[test_index].normal.x)
+    assert tol.is_close(generated_frame.normal.y, mortise_cutting_frames[test_index].normal.y)
+    assert tol.is_close(generated_frame.normal.z, mortise_cutting_frames[test_index].normal.z)

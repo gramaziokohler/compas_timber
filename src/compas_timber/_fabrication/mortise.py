@@ -275,7 +275,6 @@ class Mortise(BTLxProcess):
         frame,
         beam,
         start_depth=0.0,
-        angle=0.0,
         length=80.0,
         width=40.0,
         depth=28.0,

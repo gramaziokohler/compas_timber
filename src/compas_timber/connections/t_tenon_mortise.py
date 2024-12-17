@@ -234,7 +234,6 @@ class TTenonMortiseJoint(Joint):
             frame=main_feature.frame_from_params_and_beam(self.main_beam),
             beam=self.cross_beam,
             start_depth=0.0,  # TODO: to be updated once housing is implemented
-            angle=self.rotation,
             length=main_feature.length,
             width=main_feature.width,
             depth=main_feature.height,
