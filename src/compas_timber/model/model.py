@@ -247,6 +247,13 @@ class TimberModel(Model):
         elements = (node.element for node in group.children)
         return filter(filter_, elements)
 
+    def _safely_get_interactions(self, node_pair):
+        # type: (tuple) -> List[Interaction]
+        try:
+            return self._graph.edge_interactions(node_pair)
+        except KeyError:
+            return []
+
     def get_interactions_for_element(self, element):
         # type: (Element) -> List[Interaction]
         """Get all interactions for a given element.
@@ -265,11 +272,8 @@ class TimberModel(Model):
         negihbors = self._graph.neighbors(element.graph_node)
         result = []
         for nbr in negihbors:
-            try:
-                result.extend(self._graph.edge_interactions((element.graph_node, nbr)))
-            except KeyError:
-                # no interactions
-                pass
+            result.extend(self._safely_get_interactions((element.graph_node, nbr)))
+            result.extend(self._safely_get_interactions((nbr, element.graph_node)))
         return result
 
     def add_joint(self, joint):
