@@ -131,3 +131,8 @@ class WallJoint(Interaction):
         self.main_wall = model.element_by_guid(self._main_wall_guid)
         self.cross_wall = model.element_by_guid(self._cross_wall_guid)
         self._calculate_interfaces()
+
+    def flip_roles(self):
+        self.main_wall, self.cross_wall = self.cross_wall, self.main_wall
+        self._main_wall_guid, self._cross_wall_guid = self._cross_wall_guid, self._main_wall_guid
+        self._calculate_interfaces()
