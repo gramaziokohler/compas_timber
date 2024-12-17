@@ -137,13 +137,7 @@ class TTenonMortiseJoint(Joint):
 
     @property
     def main_beam_ref_side_index(self):
-        # get the vector towards the joint
-        centerline_vect = point_centerline_towards_joint(self.main_beam, self.cross_beam)
-        # flip the vector if the dot product with the y-axis of the reference side is negative
-        vector = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].yaxis
-        if centerline_vect.dot(vector) < 0:
-            vector = -vector
-        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, vector, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
