@@ -6,15 +6,16 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane
 from compas.itertools import pairwise
-from compas_model.interactions import Interaction
 
+from .joint import Joint
 from .joint import JointTopology
 
 
-class WallJoint(Interaction):
+class WallJoint(Joint):
     """Models a wall to wall interaction.
 
     TODO:First in a very minimal way until we know where this is going.
+
 
     Parameters
     ----------
@@ -62,6 +63,10 @@ class WallJoint(Interaction):
 
     @property
     def walls(self):
+        return self.elements
+
+    @property
+    def elements(self):
         return self.main_wall, self.cross_wall
 
     @property
@@ -72,7 +77,6 @@ class WallJoint(Interaction):
     def _calculate_interfaces(self):
         # from cross get the face that is closest to main with normal pointing towards main
         # from main we then need the four envelope faces
-        # TODO: find the cross face using something like find side_incidence_...
         assert self.main_wall
         assert self.cross_wall
 
@@ -85,8 +89,9 @@ class WallJoint(Interaction):
         for face in self.main_wall.envelope_faces:
             face_plane = Plane.from_frame(face)
             intersection = intersection_plane_plane(face_plane, cross_face_plane)
-            if not intersection:
-                raise ValueError("mmhh..")
+
+            assert intersection  # back to the drawing board if this fails
+
             lines.append(Line(*intersection))
 
         # find the intersection points of the lines
@@ -136,3 +141,6 @@ class WallJoint(Interaction):
         self.main_wall, self.cross_wall = self.cross_wall, self.main_wall
         self._main_wall_guid, self._cross_wall_guid = self._cross_wall_guid, self._main_wall_guid
         self._calculate_interfaces()
+
+    def add_features(self):
+        pass
