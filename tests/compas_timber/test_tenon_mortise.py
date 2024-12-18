@@ -22,25 +22,24 @@ def tol():
 
 @pytest.fixture
 def cross_beam():
-    section = [60, 120]
+    section = [60, 100]
     centerline = Line(Point(x=30782.4296640, y=-3257.66821289, z=0.0), Point(x=33782.4296640, y=-3257.66821289, z=0.0))
     return Beam.from_centerline(centerline, section[0], section[1])
 
 
 @pytest.fixture
 def main_beams():
-    widths = [80.0, 80.0, 100.0]
-    heights = [100.0, 80.0, 120.0]
+    widths = [80.0, 120.0]
+    heights = [100.0, 80.0]
 
     centerlines = [
         Line(
-            Point(x=33300.5452394, y=-3257.66821289, z=0.0), Point(x=33600.2957658, y=-3954.34485987, z=542.549175576)
+            Point(x=33300.5452394, y=-3257.66821289, z=0.0), Point(x=33607.9516217, y=-4000.58982486, z=156.858089632)
         ),
         Line(
             Point(x=31995.4509589, y=-1725.41351885, z=-819.665898454), Point(x=32282.4296640, y=-3257.66821289, z=0.0)
         ),
     ]
-
     return [
         Beam.from_centerline(centerline, width, height)
         for centerline, width, height in zip(centerlines, widths, heights)
@@ -49,12 +48,12 @@ def main_beams():
 
 TENON_CUTTING_FRAMES = [
     Frame(
-        point=Point(x=30782.430, y=-3287.668, z=-60.000),
+        point=Point(x=30782.430, y=-3287.668, z=-50.000),
         xaxis=Vector(x=1.000, y=-0.000, z=0.000),
         yaxis=Vector(x=0.000, y=0.000, z=1.000),
     ),
     Frame(
-        point=Point(x=30782.430, y=-3227.668, z=60.000),
+        point=Point(x=30782.430, y=-3227.668, z=50.000),
         xaxis=Vector(x=1.000, y=-0.000, z=0.000),
         yaxis=Vector(x=0.000, y=-0.000, z=-1.000),
     ),
@@ -62,14 +61,14 @@ TENON_CUTTING_FRAMES = [
 
 MORTISE_CUTTING_FRAMES = [
     Frame(
-        point=Point(x=33312.364, y=-3287.668, z=-28.905),
-        xaxis=Vector(x=1.000, y=-0.000, z=0.014),
-        yaxis=Vector(x=0.014, y=-0.000, z=-1.000),
+        point=Point(x=33267.5475182, y=-3287.66821289, z=-2.14751049418),
+        xaxis=Vector(x=0.258819045103, y=2.74488004975e-17, z=-0.965925826289),
+        yaxis=Vector(x=-0.965925826289, y=1.80834604553e-16, z=-0.258819045103),
     ),
     Frame(
-        point=Point(x=32278.846, y=-3227.668, z=67.025),
-        xaxis=Vector(x=1.000, y=-0.000, z=-0.026),
-        yaxis=Vector(x=0.026, y=0.000, z=1.000),
+        point=Point(x=32329.7761348, y=-3227.66821289, z=-18.8301288595),
+        xaxis=Vector(x=0.104528463268, y=-1.03409422113e-16, z=-0.994521895368),
+        yaxis=Vector(x=0.994521895368, y=-4.78555402447e-16, z=0.104528463268),
     ),
 ]
 
@@ -80,21 +79,21 @@ EXPECTED_TENON_PARAMS = [
             ("Priority", "0"),
             ("Process", "yes"),
             ("ProcessID", "0"),
-            ("ReferencePlaneID", "1"),
+            ("ReferencePlaneID", "4"),
             ("Orientation", "start"),
-            ("StartX", "9.395"),
-            ("StartY", "41.000"),
-            ("StartDepth", "7.740"),
-            ("Angle", "117.880"),
-            ("Inclination", "57.693"),
-            ("Rotation", "75.000"),
+            ("StartX", "14.413"),
+            ("StartY", "45.000"),
+            ("StartDepth", "-1.961"),
+            ("Angle", "78.961"),
+            ("Inclination", "67.521"),
+            ("Rotation", "105.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
-            ("Length", "100.000"),
-            ("Width", "40.000"),
-            ("Height", "40.000"),
+            ("Length", "80.000"),
+            ("Width", "30.000"),
+            ("Height", "60.000"),
             ("Shape", "round"),
-            ("ShapeRadius", "20.000"),
+            ("ShapeRadius", "15.000"),
             ("Chamfer", "no"),
         ]
     ),
@@ -104,21 +103,21 @@ EXPECTED_TENON_PARAMS = [
             ("Priority", "0"),
             ("Process", "yes"),
             ("ProcessID", "0"),
-            ("ReferencePlaneID", "3"),
+            ("ReferencePlaneID", "2"),
             ("Orientation", "end"),
-            ("StartX", "1765.763"),
-            ("StartY", "42.000"),
-            ("StartDepth", "-33.355"),
-            ("Angle", "101.948"),
-            ("Inclination", "62.778"),
-            ("Rotation", "83.000"),
+            ("StartX", "1734.105"),
+            ("StartY", "47.000"),
+            ("StartDepth", "7.940"),
+            ("Angle", "62.265"),
+            ("Inclination", "79.392"),
+            ("Rotation", "96.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
-            ("Length", "120.000"),
-            ("Width", "50.000"),
-            ("Height", "40.000"),
+            ("Length", "110.000"),
+            ("Width", "40.000"),
+            ("Height", "60.000"),
             ("Shape", "round"),
-            ("ShapeRadius", "25.000"),
+            ("ShapeRadius", "20.000"),
             ("Chamfer", "no"),
         ]
     ),
@@ -132,18 +131,18 @@ EXPECTED_MORTISE_PARAMS = [
             ("Process", "yes"),
             ("ProcessID", "0"),
             ("ReferencePlaneID", "4"),
-            ("StartX", "2529.934"),
-            ("StartY", "31.095"),
+            ("StartX", "2485.118"),
+            ("StartY", "47.852"),
             ("StartDepth", "0.000"),
-            ("Angle", "90.802"),
+            ("Angle", "15.000"),
             ("Slope", "90.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
-            ("Length", "100.000"),
-            ("Width", "40.000"),
-            ("Depth", "40.000"),
+            ("Length", "80.000"),
+            ("Width", "30.000"),
+            ("Depth", "60.000"),
             ("Shape", "round"),
-            ("ShapeRadius", "20.000"),
+            ("ShapeRadius", "15.000"),
         ]
     ),
     OrderedDict(
@@ -153,18 +152,18 @@ EXPECTED_MORTISE_PARAMS = [
             ("Process", "yes"),
             ("ProcessID", "0"),
             ("ReferencePlaneID", "2"),
-            ("StartX", "1496.416"),
-            ("StartY", "7.025"),
+            ("StartX", "1547.346"),
+            ("StartY", "68.830"),
             ("StartDepth", "0.000"),
-            ("Angle", "91.489"),
+            ("Angle", "174.000"),
             ("Slope", "90.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
-            ("Length", "120.000"),
-            ("Width", "50.000"),
-            ("Depth", "40.000"),
+            ("Length", "110.000"),
+            ("Width", "40.000"),
+            ("Depth", "60.000"),
             ("Shape", "round"),
-            ("ShapeRadius", "25.000"),
+            ("ShapeRadius", "20.000"),
         ]
     ),
 ]
@@ -177,29 +176,29 @@ EXPECTED_MORTISE_PARAMS = [
             0,
             EXPECTED_TENON_PARAMS,
             TENON_CUTTING_FRAMES,
-            1.0,
-            0.0,
-            -15.0,
-            100.0,
-            40.0,
-            40.0,
+            -5.0,
+            -5.0,
+            15.0,
+            80.0,
+            30.0,
+            60.0,
             "round",
             5.0,
-            0,
+            3,
         ),  # main_beam_a
         (
             1,
             EXPECTED_TENON_PARAMS,
             TENON_CUTTING_FRAMES,
-            -2.0,
-            -20.0,
-            7.0,
-            120.0,
-            50.0,
+            -7.0,
+            2,
+            -6.0,
+            110.0,
             40.0,
+            60.0,
             "round",
             7.5,
-            2,
+            1,
         ),  # main_beam_b
     ],
 )
@@ -246,11 +245,11 @@ def test_tenon_params(
             EXPECTED_MORTISE_PARAMS,
             MORTISE_CUTTING_FRAMES,
             0.0,
-            100.0,
-            40.0,
-            40.0,
+            80.0,
+            30.0,
+            60.0,
             "round",
-            20.0,
+            15.0,
             3,
         ),  # main_beam_a
         (
@@ -258,11 +257,11 @@ def test_tenon_params(
             EXPECTED_MORTISE_PARAMS,
             MORTISE_CUTTING_FRAMES,
             0.0,
-            120.0,
-            50.0,
+            110.0,
             40.0,
+            60.0,
             "round",
-            25.0,
+            20.0,
             1,
         ),  # main_beam_b
     ],
