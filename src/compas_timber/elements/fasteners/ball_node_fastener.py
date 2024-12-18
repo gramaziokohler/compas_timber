@@ -81,26 +81,6 @@ class BallNodeFastener(Fastener):
     # TODO: implement compute_aabb()
     # TODO: implement compute_obb()
 
-    def add_interface(self, beam, interface):
-        # type: (compas_timber.parts.Beam, FastenerTimberInterface) -> None
-        """Adds an interface to the fastener.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.parts.Beam`
-            The beam to which the interface is added.
-        interface : :class:`~compas_timber.elements.FastenerTimberInterface`
-            The interface to be added.
-
-        """
-        interface = interface.copy()
-        interface.element = beam
-        pt = beam.centerline.closest_point(self.node_point)
-
-        # TODO: this is where the interface is places relative to the beam, a bit hidden here..
-        interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
-        self.interfaces.append(interface)
-
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
         """Computes the collision geometry of the element.

@@ -55,8 +55,13 @@ class BallNodeJoint(Joint):
         super(BallNodeJoint, self).__init__(**kwargs)
         self._beam_guids = []
         self.beams = beams or []
-        self.ball_diameter = ball_diameter or beams[0].height or 100
-        self.timber_interface = timber_interface or self._default_interface
+        if ball_diameter:
+            self.ball_diameter = ball_diameter
+        elif beams is not None:
+            self.ball_diameter = beams[0].height
+        else:
+            self.ball_diameter = 100
+        self.timber_interface = timber_interface or self._default_interface()
         self._node_point = None
         self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
         self._fastener_guid = kwargs.get("fastener_guid", None)
@@ -77,7 +82,6 @@ class BallNodeJoint(Joint):
         for beam in self.beams:
             yield (beam, self.fastener)
 
-    @property
     def _default_interface(self):
         height = self.beams[0].height
         width = self.beams[0].width
@@ -101,7 +105,10 @@ class BallNodeJoint(Joint):
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
-        """Creates an instance of this joint and creates the new connection in `model`.
+        """Creates an instance of the BallNodeJoint and creates the new connection in `model`.
+
+        This differs fom the generic `Joint.create()` method in that it passes the `beams` to
+        the constructor of the BallNodeJoint as a list instead of as separate arguments.
 
         `beams` are expected to have been added to `model` before calling this method.
 
@@ -115,7 +122,7 @@ class BallNodeJoint(Joint):
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the beams and this joing belong.
         beams : list(:class:`~compas_timber.parts.Beam`)
-            A list containing two beams that whould be joined together
+            A list containing beams that whould be joined together
 
         Returns
         -------
@@ -149,9 +156,11 @@ class BallNodeJoint(Joint):
 
         """
         assert self.fastener
-
         for beam in self.beams:
-            self.fastener.add_interface(beam, self.timber_interface)
+            interface = self.timber_interface.copy()
+            pt = beam.centerline.closest_point(self.node_point)
+            interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
+            self.fastener.interfaces.append(interface)
 
         for interface in self.fastener.interfaces:
             interface.add_features()
