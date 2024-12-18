@@ -219,7 +219,8 @@ class FastenerTimberInterface(Data):
                 self._shape += geometry
         return self._shape
 
-    def compute_geometry(self):
+    @property
+    def geometry(self):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
         return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None
 

@@ -11,7 +11,7 @@ class PlateFastenerComponent(component):
             return PlateFastener, SceneObject(item=PlateFastener.default_T().shape).draw()
         outline_curve = curve_to_compas(outline)
         cutout_curves = [curve_to_compas(cutout) for cutout in cutouts]
-        fastener = PlateFastener.from_outline_thickness_interfaces_cutouts(
-            outline_curve, thickness=4, interfaces=[main_beam_interface, cross_beam_interface], cutouts=cutout_curves
+        fastener = PlateFastener(
+            outline=outline_curve, thickness=4, interfaces=[main_beam_interface, cross_beam_interface], cutouts=cutout_curves
         )
         return fastener, SceneObject(item=fastener.shape).draw()

@@ -1,6 +1,6 @@
 from compas_timber._fabrication import JackRafterCut
 from compas_timber._fabrication import Lap
-from compas_timber.connections import BeamJoinningError
+from compas_timber.connections import BeamJoinningError, joint
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence
@@ -52,8 +52,8 @@ class TButtJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.mill_depth = mill_depth
         self.features = []
-        if isinstance(fastener, type):
-            fastener = fastener.default_T(main_beam.width)
+        if fastener.outline is None:
+            fastener.set_default(joint=self)
         self.base_fastener = fastener
         self.fasteners = []
         if self.base_fastener:
