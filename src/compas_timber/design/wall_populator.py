@@ -450,9 +450,6 @@ class WallPopulator(object):
         #                 self.beam_dimensions[key][0] = value[0]
         #             if value[1] != 0:
         #                 self.beam_dimensions[key][1] = value[1]
-        # self.parse_loops()
-        # self.generate_frame()
-        # self.generate_plates()
 
     def __repr__(self):
         return "WallPopulator({}, {})".format(self._config_set, self._wall)
@@ -553,12 +550,6 @@ class WallPopulator(object):
     @classmethod
     def beam_category_names(cls):
         return WallPopulator.BEAM_CATEGORY_NAMES
-
-    def generate_frame(self):
-        # TODO: remove
-        self.generate_perimeter_beams()
-        self.generate_windows()
-        self.generate_studs()
 
     @classmethod
     def from_model(cls, model, configuration_sets):
