@@ -20,6 +20,10 @@ from .lap import Lap
 from .lap import LapParams
 from .french_ridge_lap import FrenchRidgeLap
 from .french_ridge_lap import FrenchRidgeLapParams
+from .tenon import Tenon
+from .tenon import TenonParams
+from .mortise import Mortise
+from .mortise import MortiseParams
 
 
 __all__ = [
@@ -43,4 +47,8 @@ __all__ = [
     "LapParams",
     "FrenchRidgeLap",
     "FrenchRidgeLapParams",
+    "Tenon",
+    "TenonParams",
+    "Mortise",
+    "MortiseParams",
 ]

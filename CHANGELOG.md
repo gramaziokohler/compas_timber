@@ -53,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `CT_Beams_From_Mesh` GH component.
 * Added new `compas_timber._fabrication.FrenchRidgeLap`.
 * Added new `compas_timber.connections.LFrenchRidgeLapJoint`.
+* Added new `compas_timber._fabrication.Tenon` and `compas_timber._fabrication.Mortise`.
+* Added new `compas_timber.connections.TTenonMortiseJoint`.
 
 ### Changed
 
