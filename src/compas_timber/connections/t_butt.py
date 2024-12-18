@@ -168,7 +168,8 @@ class TButtJoint(Joint):
         # add the features applied by the fastener.interfaces
         for fastener in self.fasteners:
             for interface in fastener.interfaces:
-                interface.add_features()
+                features = interface.get_features(interface.element)
+                interface.element.add_features(features)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

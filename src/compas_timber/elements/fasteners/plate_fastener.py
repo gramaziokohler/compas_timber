@@ -47,7 +47,7 @@ class PlateFastener(Fastener):
 
     """
 
-    def __init__(self, shape=None, frame=None, angle=math.pi / 2, topology=None, interfaces=[], **kwargs):
+    def __init__(self, shape=None, frame=None, angle=math.pi / 2, topology=None, interfaces=[], outline = None, thickness = None, **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
         self.frame = frame
         self._shape = shape
@@ -57,8 +57,8 @@ class PlateFastener(Fastener):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.outline = None
-        self.thickness = None
+        self.outline = outline
+        self.thickness = thickness
 
     @property
     def __data__(self):
@@ -185,7 +185,7 @@ class PlateFastener(Fastener):
         )
 
         return cls.from_outline_thickness_interfaces_cutouts(
-            outline=outline, thickenss=beam_width / 20, interfaces=[beam_a_interface, beam_b_interface]
+            outline=outline, thickness=beam_width / 20, interfaces=[beam_a_interface, beam_b_interface]
         )
 
     def place_instances(self, joint):

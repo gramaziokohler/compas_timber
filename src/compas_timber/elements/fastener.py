@@ -160,13 +160,13 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(self, outline=None, thickness=None, holes=None, shapes=None, frame=None, features=None):
+    def __init__(self, outline=None, thickness=None, holes=None, shapes=None, frame=None, element = None, features=None):
         super(FastenerTimberInterface, self).__init__()
         self.outline = outline
         self.thickness = thickness
         self.holes = holes or []
         self.frame = frame or Frame.worldXY()
-        self.element = None
+        self.element = element
         self.shapes = shapes or []
         self.features = features or []  # TODO: what are these? FeatureDefinitions?
         self._shape = None
@@ -181,6 +181,7 @@ class FastenerTimberInterface(Data):
             "thickness": self.thickness,
             "holes": self.holes,
             "frame": self.frame,
+            "element": self.element,
             "shapes": self.shapes,
             "features": self.features,
         }
