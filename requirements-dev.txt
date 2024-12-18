@@ -9,4 +9,5 @@ twine
 build
 wheel
 pytest-mock
+lxml
 -e .
