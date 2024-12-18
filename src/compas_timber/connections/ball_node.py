@@ -1,7 +1,5 @@
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
-from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
@@ -68,6 +66,7 @@ class BallNodeJoint(Joint):
         if not self._fastener_guid:
             point = self._calculate_node_point()
             self.fastener = BallNodeFastener(point, self.ball_diameter)
+            self._fastener_guid = str(self.fastener.guid)
 
     @property
     def generated_elements(self):
@@ -75,7 +74,7 @@ class BallNodeJoint(Joint):
 
     @property
     def elements(self):
-        return self.beams + [self.fastener]
+        return self.beams + [self.generated_elements]
 
     @property
     def interactions(self):
@@ -86,20 +85,15 @@ class BallNodeJoint(Joint):
         height = self.beams[0].height
         width = self.beams[0].width
         thickness = width / 5.0
-        shape = Brep.from_cylinder(
-            Cylinder(height / 8.0, height * 2.0, Frame(Point(height * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))
-        )
+        shape = Cylinder(height / 8.0, height * 2.0, Frame(Point(height * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))
         cut_feature = CutFeature(Plane((height * 2.0, 0, 0), (-1, 0, 0)))
-        outline = NurbsCurve.from_points(
-            [
-                Point(height * 2.0, -height / 2, -thickness / 2),
-                Point(height * 2.0, height / 2, -thickness / 2),
-                Point(height * 4.0, height / 2, -thickness / 2),
-                Point(height * 4.0, -height / 2, -thickness / 2),
-                Point(height * 2.0, -height / 2, -thickness / 2),
-            ],
-            degree=1,
-        )
+        outline = [
+            Point(height * 2.0, -height / 2, -thickness / 2),
+            Point(height * 2.0, height / 2, -thickness / 2),
+            Point(height * 4.0, height / 2, -thickness / 2),
+            Point(height * 4.0, -height / 2, -thickness / 2),
+            Point(height * 2.0, -height / 2, -thickness / 2),
+        ]
 
         return FastenerTimberInterface(outline, thickness, shapes=[shape], features=[cut_feature])
 
@@ -130,7 +124,7 @@ class BallNodeJoint(Joint):
             The instance of the created joint.
 
         """
-
+        elements = list(elements)
         joint = cls(elements, **kwargs)
         model.add_joint(joint)
         return joint
@@ -158,12 +152,10 @@ class BallNodeJoint(Joint):
         assert self.fastener
         for beam in self.beams:
             interface = self.timber_interface.copy()
-            pt = beam.centerline.closest_point(self.node_point)
+            pt = beam.centerline.closest_point(self.fastener.node_point)
             interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
             self.fastener.interfaces.append(interface)
-
-        for interface in self.fastener.interfaces:
-            interface.add_features()
+            beam.add_features(interface.get_features(beam))
 
     def restore_beams_from_keys(self, model):
         self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
