@@ -8,7 +8,7 @@ from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.elements.features import DrillFeature
+from compas_timber._fabrication.drilling import Drilling
 from compas_timber.elements.timber import TimberElement
 from compas_timber.utils import intersection_line_box
 
@@ -208,7 +208,8 @@ class FastenerTimberInterface(Data):
         for feature in self.features:
             feat = feature.copy()
             feat.transform(Transformation.from_frame(self.frame))
-            features.append(feat)
+            btlx_feature = feat.process_type.generator(element)
+            features.append(btlx_feature)
         return features
 
     def _get_hole_feature(self, hole, element):
@@ -222,6 +223,5 @@ class FastenerTimberInterface(Data):
             pts = intersection_line_box(drill_line, element.blank)
             if pts:
                 drill_line = Line(*pts)
-                length = drill_line.length
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
-        return DrillFeature(drill_line, hole["diameter"], length)
+        return Drilling.from_line_and_beam(drill_line, hole["diameter"], element)

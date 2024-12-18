@@ -403,3 +403,25 @@ class DebugInfomation(object):
 
     def add_joint_error(self, error):
         self.joint_errors.append(error)
+
+class BTLxFeatureDefinition(object):
+    """Container linking a BTLx Process Type and generator function to an input geometry.
+
+    This allows delaying the actual applying of features to a downstream component.
+
+    """
+
+    def __init__(self, process_type, generator, geometry):
+        self.type = process_type
+        self.generator = generator
+        self.geometry = geometry
+
+    def __repr__(self):
+        return "{}({}, {})".format(BTLxFeatureDefinition.__name__, self.type, self.geometry)
+
+    def ToString(self):
+        return repr(self)
+
+    def transform(self, transformation):
+        self.geometry.transform(transformation)
+        return self
