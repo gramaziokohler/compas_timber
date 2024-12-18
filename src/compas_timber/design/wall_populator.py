@@ -5,7 +5,6 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import NurbsCurve
 from compas.geometry import Point
-from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
@@ -18,7 +17,6 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
-from compas.geometry import offset_polyline
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -32,6 +30,20 @@ from compas_timber.elements.features import BrepSubtraction
 from compas_timber.model import TimberModel
 
 from .workflow import JointDefinition
+
+
+def get_frame(points, normal, z_axis):
+    frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
+    pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
+    for point in pts_on_xy:
+        point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
+    box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
+    pt = Point(box_min[0], box_min[1], box_min[2])
+    box_length = box_max[0] - box_min[0]
+    box_height = box_max[1] - box_min[1]
+    pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
+    frame.point = pt
+    return frame, box_length, box_height
 
 
 class WallSelector(object):
@@ -118,7 +130,7 @@ class BeamDefinition(object):
         centerline,
         width=None,
         height=None,
-        z_axis=None,  # TODO: remove?
+        z_axis=None,  # TODO: remove
         normal=None,
         type=None,
         parent=None,
@@ -262,9 +274,7 @@ class Window(object):
     @property
     def frame(self):
         if not self._frame:
-            self._frame, self._panel_length, self._panel_height = get_frame(
-                self.points, self.parent.normal, self.zaxis
-            )
+            self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
         return self._frame
 
     @property
@@ -310,9 +320,7 @@ class Window(object):
         self._beam_definitions = self.parent.offset_elements(self._beam_definitions)
         if self.parent.lintel_posts:
             for beam_def in self.jack_studs:
-                offset = (
-                    self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]
-                ) / 2
+                offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]) / 2
                 king_line = offset_line(beam_def.centerline, offset, self.normal)
                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
@@ -418,13 +426,10 @@ class WallPopulator(object):
         self._wall = wall
         self._config_set = configuration_set
         self._z_axis = Vector.Zaxis()
-        self._normal = wall.frame.zaxis
+        self.normal = wall.frame.zaxis
         self.outer_polyline = wall.outline
         self.inner_polylines = wall.openings
         self.edges = []
-        self._frame = None
-        self._panel_length = None
-        self._panel_height = None
         self._elements = []
         self._beam_definitions = []
         self._rules = []
@@ -432,6 +437,12 @@ class WallPopulator(object):
         self._features = []
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
+
+        # these should just be properties of the wall
+        self.frame = None
+        self.panel_length = None
+        self.panel_height = None
+        self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
 
         self._interactions = interactions or []
         # TODO: get this mapping from the config set
@@ -519,30 +530,6 @@ class WallPopulator(object):
     @property
     def points(self):
         return self.outer_polyline.points
-
-    @property
-    def normal(self):
-        if not self._normal:
-            self._normal = self.surface.native_brep.Faces[0].NormalAt(0.5, 0.5)
-        return self._normal
-
-    @property
-    def panel_length(self):
-        if not self._panel_length:
-            _ = self.frame
-        return self._panel_length
-
-    @property
-    def panel_height(self):
-        if not self._panel_height:
-            _ = self.frame
-        return self._panel_height
-
-    @property
-    def frame(self):
-        if not self._frame:
-            self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.normal, self.z_axis)
-        return self._frame
 
     @property
     def jack_studs(self):
@@ -656,37 +643,6 @@ class WallPopulator(object):
         model.set_topologies(topologies)  # TODO: this is literaly the graph, maybe add a topo attribute to `Joint`
         return model
 
-    # def parse_loops(self):
-    #     # TODO: make this a `SurfaceModel.from_brep` instead
-    #     # TODO: it would take a surface as compas brep and part inner and outer loops returning them as polylines
-    #     for loop in self.surface.loops:
-    #         polyline_points = []
-    #         polyline_length = 0.0
-    #         for i, edge in enumerate(loop.edges):
-    #             if not edge.is_line:
-    #                 raise ValueError("function only supprorts polyline edges")
-    #             if edge.start_vertex.point in [
-    #                 loop.edges[i - 1].start_vertex.point,
-    #                 loop.edges[i - 1].end_vertex.point,
-    #             ]:
-    #                 polyline_points.append(edge.start_vertex.point)
-    #             else:
-    #                 polyline_points.append(edge.end_vertex.point)
-    #             polyline_length += edge.length
-    #         polyline_points.append(polyline_points[0])
-    #         loop_polyline = Polyline(polyline_points)
-    #         offset_dist = self.dist_tolerance * 1000
-    #         if loop.is_outer:
-    #             offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
-    #             if offset_loop.length > loop_polyline.length:
-    #                 polyline_points.reverse()
-    #             self.outer_polyline = Polyline(polyline_points)
-    #         else:
-    #             offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
-    #             if offset_loop.length < loop_polyline.length:
-    #                 polyline_points.reverse()
-    #             self.inner_polylines.append(Polyline(polyline_points))
-
     def generate_perimeter_beams(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)
         for i, segment in enumerate(self.outer_polyline.lines):
@@ -775,7 +731,7 @@ class WallPopulator(object):
 
     def generate_windows(self):
         for polyline in self.inner_polylines:
-            self.windows.append(self.Window(polyline, parent=self))
+            self.windows.append(Window(polyline, parent=self))
             self._beam_definitions.extend(self.windows[-1]._beam_definitions)
 
     def generate_studs(self):
@@ -885,20 +841,3 @@ class WallPopulator(object):
             self._elements.append(Plate(pline, self._config_set.sheeting_outside))
         for window in self.windows:
             self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
-
-
-
-
-
-def get_frame(points, normal, z_axis):
-    frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
-    pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
-    for point in pts_on_xy:
-        point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
-    box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
-    pt = Point(box_min[0], box_min[1], box_min[2])
-    box_length = box_max[0] - box_min[0]
-    box_height = box_max[1] - box_min[1]
-    pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
-    frame.point = pt
-    return frame, box_length, box_height
