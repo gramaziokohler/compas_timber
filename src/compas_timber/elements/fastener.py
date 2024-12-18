@@ -4,6 +4,7 @@ from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
@@ -118,8 +119,8 @@ class FastenerTimberInterface(Data):
 
     Parameters
     ----------
-    outline : :class:`~compas.geometry.Geometry`
-        The outline of the fastener geometry.
+    outline : List of :class:`~compas.geometry.Point`
+        The points of the polyline outline of the fastener geometry.
     thickness : float
         The thickness of the fastener plate.
     holes : list of dict, optional
@@ -139,8 +140,8 @@ class FastenerTimberInterface(Data):
 
     Attributes
     ----------
-    outline : :class:`~compas.geometry.Geometry`
-        The outline of the fastener geometry.
+    outline : List of :class:`~compas.geometry.Point`
+        The points of the polyline outline of the fastener geometry.
     thickness : float
         The thickness of the fastener plate.
     holes : list of dict, optional
@@ -189,8 +190,11 @@ class FastenerTimberInterface(Data):
         """Generate a plate from outline, thickness, and holes."""
         if not self.outline:
             return None
-        plate = Brep.from_extrusion(self.outline, Vector(0.0, 0.0, self.thickness))
-        plate.translate(Vector(0.0, 0.0, -self.thickness / 2))
+        if isinstance(self.outline, NurbsCurve):
+            outline = self.outline
+        else:
+            outline = NurbsCurve.from_points(self.outline, degree=1)
+        plate = Brep.from_extrusion(outline, Vector(0.0, 0.0, 1.0) * self.thickness)
         for hole in self.holes:
             frame = Frame(hole["point"], self.frame.xaxis, self.frame.yaxis)
             hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, self.thickness * 2, frame))
@@ -204,14 +208,14 @@ class FastenerTimberInterface(Data):
             geometries = []
             if self.plate:
                 geometries.append(self.plate)
-            if self.shapes:
-                geometries.extend(self.shapes)
-
-            self._shape = None
-            if geometries:
-                self._shape = geometries[0]
-                for geometry in geometries[1:]:
-                    self._shape += geometry
+            for shape in self.shapes:
+                if isinstance(shape, Brep):
+                    geometries.append(shape)
+                elif isinstance(shape, Cylinder):
+                    geometries.append(Brep.from_cylinder(shape))
+            self._shape = geometries[0]
+            for geometry in geometries[1:]:
+                self._shape += geometry
         return self._shape
 
     @property
@@ -219,18 +223,17 @@ class FastenerTimberInterface(Data):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
         return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None
 
-    def add_features(self):
+    def get_features(self, element):
         """Add a feature to the interface."""
         features = []
         for hole in self.holes:
-            features.append(self._get_hole_feature(hole, self.element))
+            features.append(self._get_hole_feature(hole, element))
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
-            feature = feature.copy()
-            feature.transform(Transformation.from_frame(self.frame))
-            features.append(feature)
-        for feature in features:
-            self.element.add_feature(feature)
+            feat = feature.copy()
+            feat.transform(Transformation.from_frame(self.frame))
+            features.append(feat)
+        return features
 
     def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element."""
