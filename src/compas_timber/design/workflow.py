@@ -404,6 +404,7 @@ class DebugInfomation(object):
     def add_joint_error(self, error):
         self.joint_errors.append(error)
 
+
 class BTLxFeatureDefinition(object):
     """Container linking a BTLx Process Type and generator function to an input geometry.
 
