@@ -47,18 +47,19 @@ class PlateFastener(Fastener):
 
     """
 
-    def __init__(self, shape=None, frame=None, angle=math.pi / 2, topology=None, interfaces=[], outline = None, thickness = None, **kwargs):
+    def __init__(self, frame=None, angle=math.pi / 2, topology=None, interfaces=None, outline = None, thickness = None, cutouts = None, **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
+        self.outline = outline
+        self.thickness = thickness
+        self.interfaces = interfaces
         self.frame = frame
-        self._shape = shape
         self.angle = angle
         self.topology = topology
-        self.interfaces = interfaces
+        self.cutouts = cutouts
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self.outline = outline
-        self.thickness = thickness
+
 
     @property
     def __data__(self):
@@ -77,57 +78,6 @@ class PlateFastener(Fastener):
     def __str__(self):
         # type: () -> str
         return "<Plate Fastener {} at frame={!r}>".format(self.name, self.frame)
-
-    @classmethod
-    def from_outline_thickness_interfaces_cutouts(
-        cls, outline, angle=math.pi / 2, thickness=5, interfaces=None, cutouts=None, frame=None, **kwargs
-    ):
-        """
-        Constructs a fastener from an outline, cutouts and thickness.
-        This should be constructed on the XY plane and oriented with the x-axis pointing in the direction of the main_beam.centerline.
-
-        Parameters
-        ----------
-        outline : list of :class:`~compas.geometry.Point`
-            The outline of the fastener as a list of points.
-        angle : float, optional
-            The angle of the fastener. default is math.pi / 2
-        thickness : float, optional
-            The thickness of the fastener.
-        interfaces : list of compas_timber.elements.FastenerTimberInterface, optional
-            The connection interfaces to the timber elements
-        cutouts : list of list of :class:`~compas.geometry.Point`, optional
-            The cutouts of the fastener.
-        frame : :class:`~compas.geometry.Frame`, optional
-            The frame of the fastener, denoting its location in space.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.PlateFastener`
-
-        """
-        plate_fastener = cls(**kwargs)
-        plate_fastener.outline = outline
-        plate_fastener.angle = angle
-        plate_fastener.thickness = thickness
-        plate_fastener.frame = frame
-        plate_fastener.interfaces = interfaces
-        plate_fastener.cutouts = cutouts
-        return plate_fastener
-
-    def add_interface(self, interface):
-        """Add an interface to the fastener.
-
-        Parameters
-        ----------
-        interface : :class:`~compas_timber.elements.FastenerTimberInterface`
-            The interface to add.
-
-        """
-        interface.thickness = self.thickness
-        interface.frame = self.frame
-        interface.outline = None
-        self.interfaces.append(interface)
 
     @property
     def frame(self):
@@ -152,7 +102,7 @@ class PlateFastener(Fastener):
                 yield shape
 
     @classmethod
-    def default_T(cls, beam_width=60.0):
+    def default_t(cls, beam_width=60.0):
         outline = NurbsCurve.from_points(
             [
                 Point(-beam_width / 2, -beam_width * 2.5, 0),

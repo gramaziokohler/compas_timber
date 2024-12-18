@@ -14,12 +14,12 @@ from compas_timber.utils import intersection_line_box
 
 
 class FastenerApplicationError(Exception):
-    """Raised when a feature cannot be applied to an element geometry.
+    """Raised when a fastener cannot be applied to a joint.
 
     Attributes
     ----------
     elements : list of : class:`~compas_timber.elements.TimberElement`
-        The elements to which the fastener could not be applied.
+        The elements of the `Joint` to which the fastener could not be applied.
     fastener : :class:`~compas_timber.elements.Fastener`
         The fastener that could not be applied.
     message : str
@@ -219,8 +219,7 @@ class FastenerTimberInterface(Data):
                 self._shape += geometry
         return self._shape
 
-    @property
-    def geometry(self):
+    def compute_geometry(self):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
         return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None
 

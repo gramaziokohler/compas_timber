@@ -38,3 +38,4 @@ def test_create_with_fastener():
     assert instance.main_beam == B1
     assert instance.cross_beam == B2
     assert len(list(A.interactions())) == 5
+    assert len(list(A.copy().elements())) == 4
