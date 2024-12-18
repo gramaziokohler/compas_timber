@@ -118,7 +118,7 @@ class BeamDefinition(object):
         centerline,
         width=None,
         height=None,
-        z_axis=None,
+        z_axis=None,  # TODO: remove?
         normal=None,
         type=None,
         parent=None,

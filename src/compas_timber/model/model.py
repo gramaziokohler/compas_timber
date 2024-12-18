@@ -289,6 +289,7 @@ class TimberModel(Model):
         for interaction in joint.interactions:
             element_a, element_b = interaction
             _ = self.add_interaction(element_a, element_b, joint)
+            # TODO: should we create a bidirectional interaction here?
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
