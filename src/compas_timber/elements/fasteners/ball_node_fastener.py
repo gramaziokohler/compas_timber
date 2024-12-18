@@ -1,7 +1,5 @@
 from compas.geometry import Brep
-from compas.geometry import Frame
 from compas.geometry import Sphere
-from compas.geometry import Vector
 
 from compas_timber.elements.fastener import Fastener
 
