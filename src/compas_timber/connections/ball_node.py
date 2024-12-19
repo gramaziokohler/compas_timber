@@ -59,13 +59,13 @@ class BallNodeJoint(Joint):
             self.ball_diameter = beams[0].height
         else:
             self.ball_diameter = 100
-        self.timber_interface = timber_interface or self._default_interface()
+
         self._node_point = None
         self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
         self._fastener_guid = kwargs.get("fastener_guid", None)
         if not self._fastener_guid:
-            point = self._calculate_node_point()
-            self.fastener = BallNodeFastener(point, self.ball_diameter)
+            self.fastener = BallNodeFastener(self.node_point, self.ball_diameter)
+            self.fastener.base_interface = timber_interface or self._default_interface()
             self._fastener_guid = str(self.fastener.guid)
 
     @property
@@ -129,7 +129,8 @@ class BallNodeJoint(Joint):
         model.add_joint(joint)
         return joint
 
-    def _calculate_node_point(self):
+    @property
+    def node_point(self):
         """Returns the point at which the beams are joined, essentially the average of their intersection points."""
         if not self._node_point:
             beams = list(self.beams)
@@ -151,8 +152,8 @@ class BallNodeJoint(Joint):
         """
         assert self.fastener
         for beam in self.beams:
-            interface = self.timber_interface.copy()
-            pt = beam.centerline.closest_point(self.fastener.node_point)
+            interface = self.fastener.base_interface.copy()
+            pt = beam.centerline.closest_point(self._node_point)
             interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
             self.fastener.interfaces.append(interface)
             beam.add_features(interface.get_features(beam))

@@ -33,11 +33,12 @@ class BallNodeFastener(Fastener):
         data = super(Fastener, self).__data__
         return data
 
-    def __init__(self, node_point, ball_diameter=100, **kwargs):
+    def __init__(self, node_point, ball_diameter=100, base_interface = None, **kwargs):
         super(BallNodeFastener, self).__init__(**kwargs)
         self.node_point = node_point
         self.ball_diameter = ball_diameter
-        self.interface_params = {}
+        self.base_interface = base_interface
+        self._interface_shape = None
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -78,7 +79,8 @@ class BallNodeFastener(Fastener):
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
         for interface in self.interfaces:
-            geometry += interface.geometry
+            interface_geometry = self.interface_shape.transformed(Transformation.from_frame(interface.frame))
+            geometry += interface_geometry
         return geometry
 
     # TODO: implement compute_aabb()
@@ -96,20 +98,22 @@ class BallNodeFastener(Fastener):
         """
         return self.shape.to_mesh()
 
-
     @property
     def interface_plate(self):
         """Generate a plate from outline, thickness, and holes."""
-        if not self.outline:
+        outline = self.base_interface.outline
+        holes = self.base_interface.holes
+        thickness = self.base_interface.thickness
+        if not outline:
             return None
-        if isinstance(self.outline, NurbsCurve):
-            outline = self.outline
+        if isinstance(outline, NurbsCurve):
+            outline = outline
         else:
-            outline = NurbsCurve.from_points(self.outline, degree=1)
-        plate = Brep.from_extrusion(outline, Vector(0.0, 0.0, 1.0) * self.thickness)
-        for hole in self.holes:
-            frame = Frame(hole["point"], self.frame.xaxis, self.frame.yaxis)
-            hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, self.thickness * 2, frame))
+            outline = NurbsCurve.from_points(outline, degree=1)
+        plate = Brep.from_extrusion(outline, Vector(0.0, 0.0, 1.0) * thickness)
+        for hole in holes:
+            frame = Frame(hole["point"], Vector(1,0,0), Vector(0,1,0))
+            hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, thickness * 2, frame))
             plate -= hole
         return plate
 
@@ -118,19 +122,17 @@ class BallNodeFastener(Fastener):
         """Return a Brep representation of the interface located at the WorldXY origin."""
         if not self._interface_shape:
             geometries = []
-            if self.plate:
-                geometries.append(self.plate)
-            for shape in self.interface_shapes:
+            if self.interface_plate:
+                geometries.append(self.interface_plate)
+            for shape in self.base_interface.shapes:
                 if isinstance(shape, Brep):
                     geometries.append(shape)
                 else:
                     geometries.append(shape.to_brep())
-            self._interface_shape = geometries[0]
-            for geometry in geometries[1:]:
-                self._interface_shape += geometry
+            if geometries:
+                self._interface_shape = geometries[0]
+                for geometry in geometries[1:]:
+                    self._interface_shape += geometry
         return self._interface_shape
 
-    @property
-    def geometry(self):
-        """returns the geometry of the interface in the model (oriented on the timber element)"""
-        return self.shape.transformed(Transformation.from_frame(self.frame))
+
