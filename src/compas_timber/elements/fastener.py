@@ -206,9 +206,8 @@ class FastenerTimberInterface(Data):
             features.append(self._get_hole_feature(hole, element))
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
-            feat = feature.copy()
-            feat.transform(Transformation.from_frame(self.frame))
-            btlx_feature = feat.process_type.generator(element)
+            feat = feature.transformed(Transformation.from_frame(self.frame))
+            btlx_feature = feat.call_constructor(element)
             features.append(btlx_feature)
         return features
 

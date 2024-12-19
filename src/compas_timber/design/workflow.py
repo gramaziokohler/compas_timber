@@ -412,17 +412,30 @@ class BTLxFeatureDefinition(object):
 
     """
 
-    def __init__(self, process_type, generator, geometry):
-        self.type = process_type
-        self.generator = generator
+    def __init__(self, process_type, constructor, geometry):
+        self.process_type = process_type
+        self.constructor = constructor
         self.geometry = geometry
 
+    @property
+    def __data__(self):
+        return {"process_type": self.process_type, "constructor": self.constructor, "geometry": self.geometry}
+
     def __repr__(self):
-        return "{}({}, {})".format(BTLxFeatureDefinition.__name__, self.type, self.geometry)
+        return "{}({}, {})".format(BTLxFeatureDefinition.__name__, self.process_type, self.geometry)
 
     def ToString(self):
         return repr(self)
 
-    def transform(self, transformation):
-        self.geometry.transform(transformation)
-        return self
+    def transformed(self, transformation):
+        instance = self.__class__(self.process_type, self.constructor, self.geometry.transformed(transformation))
+        return instance
+
+
+
+    def get_feature(self, element):
+
+        return self.process_type.__call__(self.constructor(self.geometry, element))
+
+    def call_constructor(self, element):
+        return self.constructor(self.geometry, element)
