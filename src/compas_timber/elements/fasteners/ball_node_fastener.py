@@ -1,7 +1,5 @@
 from compas.geometry import Brep
-from compas.geometry import Frame
 from compas.geometry import Sphere
-from compas.geometry import Vector
 
 from compas_timber.elements.fastener import Fastener
 
@@ -52,11 +50,6 @@ class BallNodeFastener(Fastener):
     def is_fastener(self):
         return True
 
-    # @property
-    # def shape(self):
-    #     # type: () -> Brep
-    #     return self.geometry
-
     @property
     def key(self):
         # type: () -> int | None
@@ -72,35 +65,14 @@ class BallNodeFastener(Fastener):
     def compute_geometry(self):
         # type: () -> compas.geometry.Geometry
         """Returns the geometry of the fastener including all interfaces."""
-        geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2, point=self.node_point))
+        geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
         for interface in self.interfaces:
-            geometry += interface.geometry.copy()  # TODO: is copy really necessary here?
-
+            geometry += interface.geometry
         return geometry
 
     # TODO: implement compute_aabb()
     # TODO: implement compute_obb()
-
-    def add_interface(self, beam, interface):
-        # type: (compas_timber.parts.Beam, FastenerTimberInterface) -> None
-        """Adds an interface to the fastener.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.parts.Beam`
-            The beam to which the interface is added.
-        interface : :class:`~compas_timber.elements.FastenerTimberInterface`
-            The interface to be added.
-
-        """
-        interface = interface.copy()
-        # interface.element = beam
-        pt = beam.centerline.closest_point(self.node_point)
-
-        # TODO: this is where the interface is places relative to the beam, a bit hidden here..
-        interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
-        self.interfaces.append(interface)
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
