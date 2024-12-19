@@ -8,14 +8,14 @@ from .joint import Joint
 from .solver import JointTopology
 
 
-class TTenonMortiseJoint(Joint):
+class TenonMortiseJoint(Joint):
     """
-    Represents a T-TenonMortise type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross).
+    Represents a TenonMortise type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross) or both of them at their ends.
     A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam's tenon.
 
-    This joint type is compatible with beams in T topology.
+    This joint type is compatible with beams in T and L topology.
 
-    Please use `TTenonMortiseJoint.create()` to properly create an instance of this class and associate it with a model.
+    Please use `TenonMortiseJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -71,13 +71,13 @@ class TTenonMortiseJoint(Joint):
         List of features or machining processes applied to the elements.
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_T, JointTopology.TOPO_L]
 
     @property
     def __data__(self):
-        data = super(TTenonMortiseJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data = super(TenonMortiseJoint, self).__data__
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
@@ -103,7 +103,7 @@ class TTenonMortiseJoint(Joint):
         shape_radius=None,
         **kwargs
     ):
-        super(TTenonMortiseJoint, self).__init__(**kwargs)
+        super(TenonMortiseJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
