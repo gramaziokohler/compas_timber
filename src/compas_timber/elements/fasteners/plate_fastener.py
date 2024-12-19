@@ -13,12 +13,12 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
+from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerApplicationError
 from compas_timber.elements import FastenerTimberInterface
 from compas_timber.utils import intersection_line_line_param
-from compas_timber.connections import JointTopology
 
 TOL = Tolerance()
 
@@ -48,7 +48,17 @@ class PlateFastener(Fastener):
 
     """
 
-    def __init__(self, outline = None, thickness = None, interfaces=None, frame=None, angle=math.pi / 2, topology=None, cutouts = None, **kwargs):
+    def __init__(
+        self,
+        outline=None,
+        thickness=None,
+        interfaces=None,
+        frame=None,
+        angle=math.pi / 2,
+        topology=None,
+        cutouts=None,
+        **kwargs
+    ):
         super(PlateFastener, self).__init__(**kwargs)
         self.outline = outline
         self.thickness = thickness
@@ -60,7 +70,6 @@ class PlateFastener(Fastener):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-
 
     @property
     def __data__(self):
@@ -107,37 +116,41 @@ class PlateFastener(Fastener):
         width_b = joint.beams[1].width
         if joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_T:
             self.outline = [
-                    Point(-width_b / 2, -width_b * 2.5, 0),
-                    Point(-width_b / 2, width_b * 2.5, 0),
-                    Point(width_b / 2, width_b * 2.5, 0),
-                    Point(width_b / 2, width_a * 0.5, 0),
-                    Point(width_b * 3.5, width_a * 0.5, 0),
-                    Point(width_b * 3.5, -width_a * 0.5, 0),
-                    Point(width_b / 2, -width_a * 0.5, 0),
-                    Point(width_b / 2, -width_b * 2.5, 0),
-                    Point(-width_b / 2, -width_b * 2.5, 0),
-                ]
+                Point(-width_b / 2, -width_b * 2.5, 0),
+                Point(-width_b / 2, width_b * 2.5, 0),
+                Point(width_b / 2, width_b * 2.5, 0),
+                Point(width_b / 2, width_a * 0.5, 0),
+                Point(width_a * 3.5, width_a * 0.5, 0),
+                Point(width_a * 3.5, -width_a * 0.5, 0),
+                Point(width_b / 2, -width_a * 0.5, 0),
+                Point(width_b / 2, -width_b * 2.5, 0),
+                Point(-width_b / 2, -width_b * 2.5, 0),
+            ]
 
-            self.interfaces.append(FastenerTimberInterface(
-                holes=[
-                    {"point": Point(width_a, 0, 0), "diameter": width_a / 10, "through": True},
-                    {"point": Point(width_a * 2, 0, 0), "diameter": width_a / 10, "through": True},
-                    {"point": Point(width_a * 3, 0, 0), "diameter": width_a / 10, "through": True},
-                ]
-            ))
-            self.interfaces.append(FastenerTimberInterface(
-                holes=[
-                    {"point": Point(0, -width_b * 2, 0), "diameter": width_b / 10, "through": True},
-                    {"point": Point(0, -width_b, 0), "diameter": width_b / 10, "through": True},
-                    {"point": Point(0, 0, 0), "diameter": width_b / 10, "through": True},
-                    {"point": Point(0, width_b, 0), "diameter": width_b / 10, "through": True},
-                    {"point": Point(0, width_b * 2, 0), "diameter": width_b / 10, "through": True},
-                ]
-            ))
-            self.thickness=width_a/20
-        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_X: #TODO: implement
+            self.interfaces.append(
+                FastenerTimberInterface(
+                    holes=[
+                        {"point": Point(width_a, 0, 0), "diameter": width_a / 10, "through": True},
+                        {"point": Point(width_a * 2, 0, 0), "diameter": width_a / 10, "through": True},
+                        {"point": Point(width_a * 3, 0, 0), "diameter": width_a / 10, "through": True},
+                    ]
+                )
+            )
+            self.interfaces.append(
+                FastenerTimberInterface(
+                    holes=[
+                        {"point": Point(0, -width_b * 2, 0), "diameter": width_b / 10, "through": True},
+                        {"point": Point(0, -width_b, 0), "diameter": width_b / 10, "through": True},
+                        {"point": Point(0, 0, 0), "diameter": width_b / 10, "through": True},
+                        {"point": Point(0, width_b, 0), "diameter": width_b / 10, "through": True},
+                        {"point": Point(0, width_b * 2, 0), "diameter": width_b / 10, "through": True},
+                    ]
+                )
+            )
+            self.thickness = width_a / 20
+        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_X:  # TODO: implement
             raise NotImplementedError
-        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L: #TODO: implement
+        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L:  # TODO: implement
             raise NotImplementedError
 
     def place_instances(self, joint):
