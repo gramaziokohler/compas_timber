@@ -499,14 +499,13 @@ class Mortise(BTLxProcess):
         assert self.width is not None
         assert self.depth is not None
 
-        TOL.RELATIVE = 1e-3
         cutting_frame = self.frame_from_params_and_beam(beam)
         # translate the cutting frame to the center of the mortise
-        translation_vector = (-cutting_frame.normal * (self.depth+TOL.RELATIVE) - cutting_frame.yaxis * self.length)
+        translation_vector = (-cutting_frame.normal * self.depth - cutting_frame.yaxis * self.length)
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
-        tenon_box = Box(self.width, self.length, self.depth+TOL.RELATIVE, cutting_frame)
+        tenon_box = Box(self.width, self.length, self.depth, cutting_frame)
         return Brep.from_box(tenon_box)
 
 
