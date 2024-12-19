@@ -161,43 +161,6 @@ class FastenerTimberInterface(Data):
             "features": self.features,
         }
 
-    @property
-    def plate(self):
-        """Generate a plate from outline, thickness, and holes."""
-        if not self.outline:
-            return None
-        if isinstance(self.outline, NurbsCurve):
-            outline = self.outline
-        else:
-            outline = NurbsCurve.from_points(self.outline, degree=1)
-        plate = Brep.from_extrusion(outline, Vector(0.0, 0.0, 1.0) * self.thickness)
-        for hole in self.holes:
-            frame = Frame(hole["point"], self.frame.xaxis, self.frame.yaxis)
-            hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, self.thickness * 2, frame))
-            plate -= hole
-        return plate
-
-    @property
-    def shape(self):
-        """Return a Brep representation of the interface located at the WorldXY origin."""
-        if not self._shape:
-            geometries = []
-            if self.plate:
-                geometries.append(self.plate)
-            for shape in self.shapes:
-                if isinstance(shape, Brep):
-                    geometries.append(shape)
-                elif isinstance(shape, Cylinder):
-                    geometries.append(Brep.from_cylinder(shape))
-            self._shape = geometries[0]
-            for geometry in geometries[1:]:
-                self._shape += geometry
-        return self._shape
-
-    @property
-    def geometry(self):
-        """returns the geometry of the interface in the model (oriented on the timber element)"""
-        return self.shape.transformed(Transformation.from_frame(self.frame))
 
     def get_features(self, element):
         """Add a feature to the interface."""
