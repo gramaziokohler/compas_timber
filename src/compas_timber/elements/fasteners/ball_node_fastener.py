@@ -1,7 +1,9 @@
 from compas.geometry import Brep
-from compas.geometry import Frame
 from compas.geometry import Sphere
+from compas.geometry import Transformation
+from compas.geometry import NurbsCurve
 from compas.geometry import Vector
+
 
 from compas_timber.elements.fastener import Fastener
 
@@ -31,10 +33,12 @@ class BallNodeFastener(Fastener):
         data = super(Fastener, self).__data__
         return data
 
-    def __init__(self, node_point, ball_diameter=100, **kwargs):
+    def __init__(self, node_point, ball_diameter=100, base_interface = None, **kwargs):
         super(BallNodeFastener, self).__init__(**kwargs)
         self.node_point = node_point
         self.ball_diameter = ball_diameter
+        self.base_interface = base_interface
+        self._interface_shape = None
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -72,35 +76,15 @@ class BallNodeFastener(Fastener):
     def compute_geometry(self):
         # type: () -> compas.geometry.Geometry
         """Returns the geometry of the fastener including all interfaces."""
-        geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2, point=self.node_point))
+        geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
         for interface in self.interfaces:
-            geometry += interface.geometry.copy()  # TODO: is copy really necessary here?
-
+            interface_geometry = self.interface_shape.transformed(Transformation.from_frame(interface.frame))
+            geometry += interface_geometry
         return geometry
 
     # TODO: implement compute_aabb()
     # TODO: implement compute_obb()
-
-    def add_interface(self, beam, interface):
-        # type: (compas_timber.parts.Beam, FastenerTimberInterface) -> None
-        """Adds an interface to the fastener.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.parts.Beam`
-            The beam to which the interface is added.
-        interface : :class:`~compas_timber.elements.FastenerTimberInterface`
-            The interface to be added.
-
-        """
-        interface = interface.copy()
-        # interface.element = beam
-        pt = beam.centerline.closest_point(self.node_point)
-
-        # TODO: this is where the interface is places relative to the beam, a bit hidden here..
-        interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
-        self.interfaces.append(interface)
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
@@ -113,3 +97,42 @@ class BallNodeFastener(Fastener):
 
         """
         return self.shape.to_mesh()
+
+    @property
+    def interface_plate(self):
+        """Generate a plate from outline, thickness, and holes."""
+        outline = self.base_interface.outline
+        holes = self.base_interface.holes
+        thickness = self.base_interface.thickness
+        if not outline:
+            return None
+        if isinstance(outline, NurbsCurve):
+            outline = outline
+        else:
+            outline = NurbsCurve.from_points(outline, degree=1)
+        plate = Brep.from_extrusion(outline, Vector(0.0, 0.0, 1.0) * thickness)
+        for hole in holes:
+            frame = Frame(hole["point"], Vector(1,0,0), Vector(0,1,0))
+            hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, thickness * 2, frame))
+            plate -= hole
+        return plate
+
+    @property
+    def interface_shape(self):
+        """Return a Brep representation of the interface located at the WorldXY origin."""
+        if not self._interface_shape:
+            geometries = []
+            if self.interface_plate:
+                geometries.append(self.interface_plate)
+            for shape in self.base_interface.shapes:
+                if isinstance(shape, Brep):
+                    geometries.append(shape)
+                else:
+                    geometries.append(shape.to_brep())
+            if geometries:
+                self._interface_shape = geometries[0]
+                for geometry in geometries[1:]:
+                    self._interface_shape += geometry
+        return self._interface_shape
+
+
