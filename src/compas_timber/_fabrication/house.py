@@ -20,9 +20,6 @@ from .btlx_process import BTLxProcessParams
 from .btlx_process import OrientationType
 from .btlx_process import TenonShapeType
 
-# from .tenon import Tenon
-# from .dovetail_tenon import DovetailTenon
-
 
 class House(BTLxProcess):
     """Represents a House feature to be made on a beam. A House feature is always accompanied by a Tenon or DovetailTenon feature.
@@ -105,7 +102,6 @@ class House(BTLxProcess):
         shape=TenonShapeType.AUTOMATIC,
         shape_radius=20.0,
         chamfer=False,
-        # tenon=Tenon(),
         tenon=None,
         **kwargs
     ):
@@ -316,8 +312,6 @@ class House(BTLxProcess):
     def tenon(self, tenon):
         if tenon.__class__.__name__ not in ["Tenon", "DovetailTenon"]:
             raise ValueError("Tenon must be an instance of Tenon or DovetailTenon.")
-        # if not isinstance(tenon, Tenon) or not isinstance(tenon, DovetailTenon):
-        #     raise ValueError("Tenon must be an instance of Tenon or DovetailTenon.")
         self._tenon = tenon
 
     ########################################################################
@@ -758,5 +752,4 @@ class HouseParams(BTLxProcessParams):
         result["Shape"] = self._instance.shape
         result["ShapeRadius"] = "{:.{prec}f}".format(self._instance.shape_radius, prec=TOL.precision)
         result["Chamfer"] = "yes" if self._instance.chamfer else "no"
-        result["Tenon"] = self._instance.tenon.params_dict
         return result
