@@ -13,7 +13,7 @@ from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
 
-class BTLx(object):
+class BTLxWriter(object):
     """Class representing a BTLx object.
 
     BTLx is a format used for representing timber fabrication data.
@@ -58,6 +58,74 @@ class BTLx(object):
         self._test = []
         self.joints = model.joints
         self.process_model()
+
+    @classmethod
+    def write(cls, model, file_path):
+        """Writes the BTLx file to the given file path.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model object.
+        file_path : str
+            The file path to write the BTLx file to.
+
+        Returns
+        -------
+        None
+
+        """
+        btlx = cls(model)
+        with open(file_path, "w") as file:
+            file.write(btlx.btlx_string())
+
+    def _model_to_xml(self):
+        """Converts the model to an XML string.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model object.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The XML element of the model.
+
+        """
+        root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
+        root_element.append(self.file_history)
+        return root_element
+
+    def _create_project_element(self, root_element):
+        """Creates the project element.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The project element.
+
+        """
+        project_element = ET.SubElement(root_element="Project", Name="testProject")
+        parts_element = ET.SubElement(project_element, "Parts")
+        return project_element
+
+    def _create_part(self, beam):
+        """Creates a part element.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam object.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The part element.
+
+        """
+        part_element = BTLxPart(beam).et_element
+        return part_element
 
     @property
     def history(self):
@@ -258,16 +326,6 @@ class BTLxPart(object):
             "Layer": "0",
             "ModuleNumber": "",
         }
-
-    @property
-    def test(self):
-        items = []
-        for item in self._test:
-            items.append(item)
-        for process in self.processings:
-            for item in process.test:
-                items.append(item)
-        return items
 
     def et_point_vals(self, point):
         """Returns the ET point values for a given point.
