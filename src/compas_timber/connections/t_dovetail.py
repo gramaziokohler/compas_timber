@@ -89,8 +89,8 @@ class TDovetailJoint(Joint):
     @property
     def __data__(self):
         data = super(TDovetailJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
