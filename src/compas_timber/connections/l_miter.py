@@ -41,8 +41,8 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data = super(LMiterJoint, self).__data__
-        data["beam_a"] = self.beam_a_guid
-        data["beam_b"] = self.beam_b_guid
+        data["beam_a_guid"] = self.beam_a_guid
+        data["beam_b_guid"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
         return data
 

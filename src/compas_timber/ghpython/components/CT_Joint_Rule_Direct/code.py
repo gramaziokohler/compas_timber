@@ -62,7 +62,10 @@ class DirectJointRule(component):
             Rules = []
             for main, secondary in zip(beam_a, beam_b):
                 topology, _, _ = ConnectionSolver().find_topology(main, secondary)
-                if topology != self.joint_type.SUPPORTED_TOPOLOGY:
+                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
+                if not isinstance(supported_topo, list):
+                    supported_topo = [supported_topo]
+                if topology not in supported_topo:
                     self.AddRuntimeMessage(
                         Warning,
                         "Beams meet with topology: {} which does not agree with joint of type: {}".format(
