@@ -17,12 +17,11 @@ class T_TopologyJointRule(component):
         super(T_TopologyJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            if isinstance(cls.SUPPORTED_TOPOLOGY, list):
-                if JointTopology.TOPO_T in cls.SUPPORTED_TOPOLOGY:
-                    self.classes[cls.__name__] = cls
-            else:
-                if cls.SUPPORTED_TOPOLOGY == JointTopology.TOPO_T:
-                    self.classes[cls.__name__] = cls
+            supported_topo = cls.SUPPORTED_TOPOLOGY
+            if not isinstance(supported_topo, list):
+                supported_topo = [supported_topo]
+            if JointTopology.TOPO_T in cls.SUPPORTED_TOPOLOGY:
+                self.classes[cls.__name__] = cls
         if ghenv.Component.Params.Output[0].NickName == "Rule":
             self.joint_type = TButtJoint
             self.clicked = False

@@ -40,8 +40,8 @@ class TBirdsmouthJoint(Joint):
     @property
     def __data__(self):
         data = super(TBirdsmouthJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         return data
 
     def __init__(self, main_beam, cross_beam, **kwargs):
