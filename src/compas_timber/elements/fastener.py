@@ -1,10 +1,7 @@
 # TODO: move this to compas_timber.fasteners
 from compas.data import Data
-from compas.geometry import Brep
-from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
@@ -96,7 +93,7 @@ class FastenerTimberInterface(Data):
 
     Parameters
     ----------
-    outline : List of :class:`~compas.geometry.Point`
+    outline_points : List of :class:`~compas.geometry.Point`
         The points of the polyline outline of the fastener geometry.
     thickness : float
         The thickness of the fastener plate.
@@ -117,7 +114,7 @@ class FastenerTimberInterface(Data):
 
     Attributes
     ----------
-    outline : List of :class:`~compas.geometry.Point`
+    outline_points : List of :class:`~compas.geometry.Point`
         The points of the polyline outline of the fastener geometry.
     thickness : float
         The thickness of the fastener plate.
@@ -137,9 +134,9 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(self, outline=None, thickness=None, holes=None, shapes=None, frame=None, features=None):
+    def __init__(self, outline_points=None, thickness=None, holes=None, shapes=None, frame=None, features=None):
         super(FastenerTimberInterface, self).__init__()
-        self.outline = outline
+        self.outline_points = outline_points
         self.thickness = thickness
         self.holes = holes or []
         self.frame = frame or Frame.worldXY()
@@ -153,14 +150,13 @@ class FastenerTimberInterface(Data):
     @property
     def __data__(self):
         return {
-            "outline": self.outline,
+            "outline_points": self.outline_points,
             "thickness": self.thickness,
             "holes": self.holes,
             "frame": self.frame,
             "shapes": self.shapes,
             "features": self.features,
         }
-
 
     def get_features(self, element):
         """Add a feature to the interface."""
