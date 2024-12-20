@@ -59,8 +59,8 @@ class TStepJoint(Joint):
     @property
     def __data__(self):
         data = super(TStepJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["step_shape"] = self.step_shape
         data["step_depth"] = self.step_depth
         data["heel_depth"] = self.heel_depth
