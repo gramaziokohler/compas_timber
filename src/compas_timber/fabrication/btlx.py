@@ -13,7 +13,7 @@ from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
 
-class BTLxWriter(object):
+class BTLx(object):
     """Class representing a BTLx object.
 
     BTLx is a format used for representing timber fabrication data.
@@ -75,7 +75,7 @@ class BTLxWriter(object):
         None
 
         """
-        btlx = cls(model)
+        btlx = cls._model_to_xml(model)
         with open(file_path, "w") as file:
             file.write(btlx.btlx_string())
 
@@ -95,7 +95,7 @@ class BTLxWriter(object):
         """
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         root_element.append(self.file_history)
-        return root_element
+        return MD.parseString(ET.tostring(root_element)).toprettyxml(indent="   ")
 
     def _create_project_element(self, root_element):
         """Creates the project element.
@@ -126,6 +126,9 @@ class BTLxWriter(object):
         """
         part_element = BTLxPart(beam).et_element
         return part_element
+
+    def _create_processing(self, processing):
+        pass
 
     @property
     def history(self):
