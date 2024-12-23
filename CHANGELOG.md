@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.connections.LFrenchRidgeLapJoint`.
 * Added new `compas_timber._fabrication.Tenon` and `compas_timber._fabrication.Mortise`.
 * Added new `compas_timber.connections.TTenonMortiseJoint`.
+* Added `create` override to `BallNodeJoint`.
 
 ### Changed
 
@@ -75,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
 * Changed `model.process_joinery()`so that it calls `joint.check_elements_compatibility()` before adding extensions and features.
 * Fixed incorrect data keys for `beam_guid` in the `__data__` property for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`, `LFrenchRidgeLapJoint`.
+* Fixed `JointRuleFromList` GH component.
 
 ### Removed
 
