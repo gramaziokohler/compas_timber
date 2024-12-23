@@ -56,7 +56,7 @@ class House(BTLxProcessing):
         The radius of the shape of the cut. 0.0 < shape_radius < 1000.0.
     chamfer : bool
         Whether the edges of the tenon are chamfered. True or False.
-    tenon : :class:`~compas_timber._fabrication.Tenon` or :class:`~compas_timber._fabrication.DovetailTenon`
+    tenon : :class:`~compas_timber.fabrication.Tenon` or :class:`~compas_timber.fabrication.DovetailTenon`
         The tenon feature that is made in conjunction with this House feature.
 
     """
@@ -330,7 +330,7 @@ class House(BTLxProcessing):
             The width of the house.
         height : float
             The height of the house.
-        tenon : :class:`~compas_timber._fabrication.Tenon` or :class:`~compas_timber._fabrication.DovetailTenon`
+        tenon : :class:`~compas_timber.fabrication.Tenon` or :class:`~compas_timber.fabrication.DovetailTenon`
             The tenon feature that is made in conjunction with this House feature.
 
         Returns
@@ -719,7 +719,7 @@ class HouseParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.House`
+    instance : :class:`~compas_timber.fabrication.House`
         The instance of the House feature.
     """
 

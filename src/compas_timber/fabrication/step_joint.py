@@ -685,7 +685,7 @@ class StepJointParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.StepJoint`
+    instance : :class:`~compas_timber.fabrication.StepJoint`
         The instance of the Step Joint feature.
     """
 

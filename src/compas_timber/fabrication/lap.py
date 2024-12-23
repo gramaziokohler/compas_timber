@@ -500,7 +500,7 @@ class LapParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.Lap`
+    instance : :class:`~compas_timber.fabrication.Lap`
         The instance of the Lap feature.
     """
 

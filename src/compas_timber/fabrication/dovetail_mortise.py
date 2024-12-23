@@ -704,7 +704,7 @@ class DovetailMortiseParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DovetailMortise`
+    instance : :class:`~compas_timber.fabrication.DovetailMortise`
         The instance of the Dovetail Mortise feature.
     """
 

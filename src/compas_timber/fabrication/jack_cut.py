@@ -283,7 +283,7 @@ class JackRafterCutParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.JackRafterCut`
+    instance : :class:`~compas_timber.fabrication.JackRafterCut`
         The instance of the Jack Rafter Cut feature.
     """
 

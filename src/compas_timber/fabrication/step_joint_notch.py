@@ -800,7 +800,7 @@ class StepJointNotchParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.StepJointNotch`
+    instance : :class:`~compas_timber.fabrication.StepJointNotch`
         The instance of the Step Joint Notch feature.
     """
 

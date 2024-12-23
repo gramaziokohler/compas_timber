@@ -381,7 +381,7 @@ class DoubleCutParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DoubleCut`
+    instance : :class:`~compas_timber.fabrication.DoubleCut`
         The instance of the Double Cut feature.
     """
 

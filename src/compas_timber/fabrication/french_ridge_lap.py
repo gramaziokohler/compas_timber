@@ -442,7 +442,7 @@ class FrenchRidgeLapParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.FrenchRidgeLap`
+    instance : :class:`~compas_timber.fabrication.FrenchRidgeLap`
         The instance of the French Ridge Lap feature.
     """
 

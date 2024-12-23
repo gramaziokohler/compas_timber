@@ -514,7 +514,7 @@ class MortiseParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.Mortise`
+    instance : :class:`~compas_timber.fabrication.Mortise`
         The instance of the Mortise feature.
     """
 

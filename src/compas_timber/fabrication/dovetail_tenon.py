@@ -835,7 +835,7 @@ class DovetailTenonParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DovetailTenon`
+    instance : :class:`~compas_timber.fabrication.DovetailTenon`
         The instance of the Dovetail Tenon feature.
     """
 

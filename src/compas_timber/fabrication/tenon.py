@@ -663,7 +663,7 @@ class TenonParams(BTLxProcessingParams):
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.Tenon`
+    instance : :class:`~compas_timber.fabrication.Tenon`
         The instance of the Tenon feature.
     """
 
