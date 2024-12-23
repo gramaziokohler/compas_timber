@@ -164,10 +164,11 @@ class CategoryRule(JointRule):
             elements = list(elements)
             if element_cats == set([self.category_a, self.category_b]):
                 solver = ConnectionSolver()
-                if (
-                    self.joint_type.SUPPORTED_TOPOLOGY
-                    == solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
-                ):
+                found_topology = solver.find_topology(beams[0], beams[1], max_distance=max_distance)[0]
+                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
+                if not isinstance(supported_topo, list):
+                    supported_topo = [supported_topo]
+                if found_topology in supported_topo:
                     comply = True
             return comply
         except KeyError:

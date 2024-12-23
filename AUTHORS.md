@@ -24,3 +24,4 @@ Authors
 * Jonas Haldemann <haldemann@arch.ethz.ch> `@jonashaldemann <https://github.com/jonashaldemann>`_
 * Oliver Appling Bucklin <bucklin@arch.ethz.ch> `@obucklin <https://github.com/obucklin>`_
 * Aurèle L. Gheyselinck <gheyselinck@arch.ethz.ch> `@gheyselinck <https://github.com/gheyselinck`>_
+* Panayiotis Papacharalambous <<papacharalambous@arch.ethz.ch>> `@papachap <https://github.com/papachap>`_

@@ -1,12 +1,8 @@
-from compas.geometry import Cylinder
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.elements import BallNodeFastener
-from compas_timber.elements import FastenerTimberInterface
-from compas_timber.elements.features import CutFeature
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
@@ -23,7 +19,7 @@ class BallNodeJoint(Joint):
     ----------
     beams :  list(:class:`~compas_timber.parts.Beam`)
         The beams to be joined.
-    timber_interface : :class:`~compas_timber.connections.FastenerTimberInterface`
+    base_interface : :class:`~compas_timber.connections.FastenerTimberInterface`
         Describes the interface between the fastener and each of the timber elements.
     ball_diameter : float
         The diameter of the ball node.
@@ -46,10 +42,10 @@ class BallNodeJoint(Joint):
         data["beam_guids"] = self._beam_guids
         data["ball_diameter"] = self.ball_diameter
         data["fastener_guid"] = self._fastener_guid
-        data["timber_interface"] = self.timber_interface
+        data["base_interface"] = self.fastener.base_interface
         return data
 
-    def __init__(self, beams=None, timber_interface=None, ball_diameter=None, **kwargs):
+    def __init__(self, beams=None, base_interface=None, ball_diameter=None, **kwargs):
         super(BallNodeJoint, self).__init__(**kwargs)
         self._beam_guids = []
         self.beams = beams or []
@@ -59,13 +55,13 @@ class BallNodeJoint(Joint):
             self.ball_diameter = beams[0].height
         else:
             self.ball_diameter = 100
-        self.timber_interface = timber_interface or self._default_interface()
+
         self._node_point = None
         self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
         self._fastener_guid = kwargs.get("fastener_guid", None)
         if not self._fastener_guid:
-            point = self._calculate_node_point()
-            self.fastener = BallNodeFastener(point, self.ball_diameter)
+            self.fastener = BallNodeFastener(self.node_point, self.ball_diameter)
+            self.fastener.base_interface = base_interface
             self._fastener_guid = str(self.fastener.guid)
 
     @property
@@ -80,22 +76,6 @@ class BallNodeJoint(Joint):
     def interactions(self):
         for beam in self.beams:
             yield (beam, self.fastener)
-
-    def _default_interface(self):
-        height = self.beams[0].height
-        width = self.beams[0].width
-        thickness = width / 5.0
-        shape = Cylinder(height / 8.0, height * 2.0, Frame(Point(height * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))
-        cut_feature = CutFeature(Plane((height * 2.0, 0, 0), (-1, 0, 0)))
-        outline = [
-            Point(height * 2.0, -height / 2, -thickness / 2),
-            Point(height * 2.0, height / 2, -thickness / 2),
-            Point(height * 4.0, height / 2, -thickness / 2),
-            Point(height * 4.0, -height / 2, -thickness / 2),
-            Point(height * 2.0, -height / 2, -thickness / 2),
-        ]
-
-        return FastenerTimberInterface(outline, thickness, shapes=[shape], features=[cut_feature])
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
@@ -129,7 +109,8 @@ class BallNodeJoint(Joint):
         model.add_joint(joint)
         return joint
 
-    def _calculate_node_point(self):
+    @property
+    def node_point(self):
         """Returns the point at which the beams are joined, essentially the average of their intersection points."""
         if not self._node_point:
             beams = list(self.beams)
@@ -151,8 +132,8 @@ class BallNodeJoint(Joint):
         """
         assert self.fastener
         for beam in self.beams:
-            interface = self.timber_interface.copy()
-            pt = beam.centerline.closest_point(self.fastener.node_point)
+            interface = self.fastener.base_interface.copy()
+            pt = beam.centerline.closest_point(self._node_point)
             interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
             self.fastener.interfaces.append(interface)
             beam.add_features(interface.get_features(beam))

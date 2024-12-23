@@ -46,8 +46,8 @@ class LFrenchRidgeLapJoint(Joint):
     @property
     def __data__(self):
         data = super(LFrenchRidgeLapJoint, self).__data__
-        data["beam_a"] = self.beam_a_guid
-        data["beam_b"] = self.beam_b_guid
+        data["beam_a_guid"] = self.beam_a_guid
+        data["beam_b_guid"] = self.beam_b_guid
         data["drillhole_diam"] = self.drillhole_diam
         data["flip_beams"] = self.flip_beams
         return data
