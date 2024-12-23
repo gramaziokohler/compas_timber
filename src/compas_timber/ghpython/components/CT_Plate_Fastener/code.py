@@ -1,18 +1,27 @@
 from compas.scene import SceneObject
-from compas_rhino.conversions import curve_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 
 from compas_timber.elements import PlateFastener
 
 
-class MyComponent(component):
-    # TODO: rename this class
-    def RunScript(self, outline, cutouts, main_beam_interface, cross_beam_interface):
-        if not outline and main_beam_interface and cross_beam_interface:
-            return
-        outline_curve = curve_to_compas(outline)
-        cutout_curves = [curve_to_compas(cutout) for cutout in cutouts]
-        fastener = PlateFastener.from_outline_thickness_interfaces_cutouts(
-            outline_curve, thickness=4, interfaces=[main_beam_interface, cross_beam_interface], cutouts=cutout_curves
+class PlateFastenerComponent(component):
+    def RunScript(self, outline, thickness, cutouts, main_beam_interface, cross_beam_interface):
+        outline_points = [point for point in outline] if outline else None
+        cutout_points = []
+        for cutout in cutouts:
+            cutout_points.append([pt for pt in cutout])
+        if main_beam_interface and cross_beam_interface:
+            interfaces = [main_beam_interface, cross_beam_interface]
+        else:
+            interfaces = []
+        fastener = PlateFastener(
+            outline=outline_points,
+            thickness=thickness,
+            interfaces=interfaces,
+            cutouts=cutout_points,
         )
-        return fastener, SceneObject(item=fastener.shape).draw()
+        shape = None
+        if outline and thickness:
+            shape = SceneObject(item=fastener.shape).draw()
+
+        return fastener, shape

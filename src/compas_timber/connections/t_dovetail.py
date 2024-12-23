@@ -6,8 +6,8 @@ from compas_timber._fabrication.btlx_process import TenonShapeType
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.connections.utilities import point_centerline_towards_joint
+from compas_timber.errors import BeamJoinningError
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 

@@ -1,4 +1,4 @@
-from .joint import BeamJoinningError
+from compas_timber.errors import BeamJoinningError
 from .joint import Joint
 from .l_butt import LButtJoint
 from .l_halflap import LHalfLapJoint
