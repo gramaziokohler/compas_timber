@@ -26,6 +26,7 @@ from .mortise import Mortise
 from .mortise import MortiseParams
 from .house import House
 from .house import HouseParams
+from .btlx import TenonShapeType
 
 __all__ = [
     "BTLxWriter",
@@ -56,4 +57,5 @@ __all__ = [
     "MortiseParams",
     "House",
     "HouseParams",
+    "TenonShapeType",
 ]

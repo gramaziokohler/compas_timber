@@ -2,7 +2,7 @@ from compas.geometry import Plane
 from compas.geometry import distance_point_line
 from compas.geometry import intersection_plane_plane_plane
 
-from compas_timber._fabrication import DoubleCut
+from compas_timber.fabrication import DoubleCut
 from compas_timber.connections.utilities import beam_ref_side_incidence
 
 from .joint import BeamJoinningError

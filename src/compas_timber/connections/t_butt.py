@@ -1,5 +1,5 @@
-from compas_timber._fabrication import JackRafterCut
-from compas_timber._fabrication import Lap
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import Lap
 from compas_timber.connections import BeamJoinningError
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
