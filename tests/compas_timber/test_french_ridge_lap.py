@@ -9,9 +9,9 @@ from compas.geometry import Vector
 from compas.geometry import is_point_on_plane
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import FrenchRidgeLap
-from compas_timber._fabrication import OrientationType
-from compas_timber._fabrication.btlx_process import EdgePositionType
+from compas_timber.fabrication import FrenchRidgeLap
+from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication import EdgePositionType
 
 from compas.tolerance import Tolerance
 

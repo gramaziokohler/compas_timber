@@ -9,8 +9,8 @@ from compas.geometry import Vector
 from compas.geometry import distance_point_point
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import Mortise
-from compas_timber._fabrication import Tenon
+from compas_timber.fabrication import Mortise
+from compas_timber.fabrication import Tenon
 
 from compas.tolerance import Tolerance
 

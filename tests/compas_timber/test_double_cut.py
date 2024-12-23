@@ -10,7 +10,7 @@ from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import DoubleCut
+from compas_timber.fabrication import DoubleCut
 
 
 @pytest.fixture

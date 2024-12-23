@@ -6,8 +6,8 @@ from compas.geometry import Point
 from compas.geometry import Line
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import StepJointNotch
-from compas_timber._fabrication import StepJoint
+from compas_timber.fabrication import StepJointNotch
+from compas_timber.fabrication import StepJoint
 
 
 @pytest.fixture

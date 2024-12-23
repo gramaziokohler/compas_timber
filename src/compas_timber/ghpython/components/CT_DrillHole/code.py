@@ -2,7 +2,7 @@ from compas_rhino.conversions import line_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber._fabrication import Drilling
+from compas_timber.fabrication import Drilling
 from compas_timber.design import FeatureDefinition
 
 
