@@ -1,6 +1,6 @@
 from compas_timber.elements import MillVolume
 
-from .joint import BeamJoinningError
+from compas_timber.errors import BeamJoinningError
 from .lap_joint import LapJoint
 from .solver import JointTopology
 

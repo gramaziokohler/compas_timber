@@ -17,7 +17,7 @@ from compas_model.elements import reset_computed
 
 from compas_timber.utils import intersection_line_plane_param
 
-from .features import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 from .timber import TimberElement
 
 

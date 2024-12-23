@@ -13,7 +13,6 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
-from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerApplicationError
@@ -63,7 +62,7 @@ class PlateFastener(Fastener):
         self.outline = outline
         self.thickness = thickness
         self.interfaces = interfaces
-        self.frame = frame
+        self.frame = frame or Frame.worldXY()
         self.angle = angle
         self.topology = topology
         self.cutouts = cutouts
@@ -74,12 +73,26 @@ class PlateFastener(Fastener):
     @property
     def __data__(self):
         data = super(PlateFastener, self).__data__
-        data["shape"] = self.shape
+        data["outline"] = self.outline
+        data["thickness"] = self.thickness
+        data["interfaces"] = [interface.__data__ for interface in self.interfaces]
         data["frame"] = self.frame
         data["angle"] = self.angle
         data["topology"] = self.topology
-        data["interfaces"] = self.interfaces
+        data["cutouts"] = self.cutouts
         return data
+
+    @classmethod
+    def __from_data__(cls, data):
+        return cls(
+        outline = data["outline"],
+        thickness = data["thickness"],
+        interfaces = [FastenerTimberInterface.__from_data__(interface) for interface in data["interfaces"]],
+        frame = data["frame"],
+        angle = data["angle"],
+        topology = data["topology"],
+        cutouts = data["cutouts"]
+        )
 
     def __repr__(self):
         # type: () -> str
@@ -97,7 +110,8 @@ class PlateFastener(Fastener):
     def frame(self, frame):
         self._frame = frame
         for interface in self.interfaces:
-            interface.frame = frame
+            if interface is not None:
+                interface.frame = frame
 
     @property
     def holes(self):
@@ -114,7 +128,7 @@ class PlateFastener(Fastener):
     def set_default(self, joint):
         width_a = joint.beams[0].width
         width_b = joint.beams[1].width
-        if joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_T:
+        if joint.SUPPORTED_TOPOLOGY == 3: #JointTopology.TOPO_T
             self.outline = [
                 Point(-width_b / 2, -width_b * 2.5, 0),
                 Point(-width_b / 2, width_b * 2.5, 0),
@@ -126,31 +140,31 @@ class PlateFastener(Fastener):
                 Point(width_b / 2, -width_b * 2.5, 0),
                 Point(-width_b / 2, -width_b * 2.5, 0),
             ]
-
-            self.interfaces.append(
-                FastenerTimberInterface(
-                    holes=[
-                        {"point": Point(width_a, 0, 0), "diameter": width_a / 10, "through": True},
-                        {"point": Point(width_a * 2, 0, 0), "diameter": width_a / 10, "through": True},
-                        {"point": Point(width_a * 3, 0, 0), "diameter": width_a / 10, "through": True},
-                    ]
+            if len(self.interfaces) == 0:
+                self.interfaces.append(
+                    FastenerTimberInterface(
+                        holes=[
+                            {"point": Point(width_a, 0, 0), "diameter": width_a / 10, "through": True},
+                            {"point": Point(width_a * 2, 0, 0), "diameter": width_a / 10, "through": True},
+                            {"point": Point(width_a * 3, 0, 0), "diameter": width_a / 10, "through": True},
+                        ]
+                    )
                 )
-            )
-            self.interfaces.append(
-                FastenerTimberInterface(
-                    holes=[
-                        {"point": Point(0, -width_b * 2, 0), "diameter": width_b / 10, "through": True},
-                        {"point": Point(0, -width_b, 0), "diameter": width_b / 10, "through": True},
-                        {"point": Point(0, 0, 0), "diameter": width_b / 10, "through": True},
-                        {"point": Point(0, width_b, 0), "diameter": width_b / 10, "through": True},
-                        {"point": Point(0, width_b * 2, 0), "diameter": width_b / 10, "through": True},
-                    ]
+                self.interfaces.append(
+                    FastenerTimberInterface(
+                        holes=[
+                            {"point": Point(0, -width_b * 2, 0), "diameter": width_b / 10, "through": True},
+                            {"point": Point(0, -width_b, 0), "diameter": width_b / 10, "through": True},
+                            {"point": Point(0, 0, 0), "diameter": width_b / 10, "through": True},
+                            {"point": Point(0, width_b, 0), "diameter": width_b / 10, "through": True},
+                            {"point": Point(0, width_b * 2, 0), "diameter": width_b / 10, "through": True},
+                        ]
+                    )
                 )
-            )
             self.thickness = width_a / 20
-        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_X:  # TODO: implement
+        elif joint.SUPPORTED_TOPOLOGY == 4:  #  JointTopology.TOPO_X TODO: implement
             raise NotImplementedError
-        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L:  # TODO: implement
+        elif joint.SUPPORTED_TOPOLOGY == 2:  # JointTopology.TOPO_L TODO: implement
             raise NotImplementedError
 
     def place_instances(self, joint):
@@ -269,13 +283,11 @@ class PlateFastener(Fastener):
         :class:`~compas.geometry.Brep`
 
         """
-        print("shape", self._shape)
         if not self._shape:
             if not self.outline or not self.thickness:
                 return None
             vector = Vector(0, 0, self.thickness)
             outline = NurbsCurve.from_points(self.outline, degree=1)
-            print("outline", outline)
             self._shape = Brep.from_extrusion(outline, vector)
             if self.cutouts:
                 for cutout in self.cutouts:

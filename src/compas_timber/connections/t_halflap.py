@@ -4,7 +4,7 @@ from compas_timber.connections.lap_joint import LapJoint
 from compas_timber.elements import CutFeature
 from compas_timber.elements import MillVolume
 
-from .joint import BeamJoinningError
+from compas_timber.errors import BeamJoinningError
 from .solver import JointTopology
 
 

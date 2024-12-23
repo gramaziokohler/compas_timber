@@ -7,8 +7,7 @@ from .features import BrepSubtraction
 from .features import CutFeature
 from .features import DrillFeature
 from .features import MillVolume
-from .features import FeatureApplicationError
-from .fastener import FastenerApplicationError
+from compas_timber.errors import FastenerApplicationError
 from .fasteners.ball_node_fastener import BallNodeFastener
 from .fasteners.plate_fastener import PlateFastener
 
