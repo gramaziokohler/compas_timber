@@ -15,8 +15,8 @@ from compas.tolerance import Tolerance
 
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
-from compas_timber.elements import FastenerApplicationError
 from compas_timber.elements import FastenerTimberInterface
+from compas_timber.errors import FastenerApplicationError
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
@@ -85,13 +85,13 @@ class PlateFastener(Fastener):
     @classmethod
     def __from_data__(cls, data):
         return cls(
-        outline = data["outline"],
-        thickness = data["thickness"],
-        interfaces = [FastenerTimberInterface.__from_data__(interface) for interface in data["interfaces"]],
-        frame = data["frame"],
-        angle = data["angle"],
-        topology = data["topology"],
-        cutouts = data["cutouts"]
+            outline=data["outline"],
+            thickness=data["thickness"],
+            interfaces=[FastenerTimberInterface.__from_data__(interface) for interface in data["interfaces"]],
+            frame=data["frame"],
+            angle=data["angle"],
+            topology=data["topology"],
+            cutouts=data["cutouts"],
         )
 
     def __repr__(self):
@@ -128,7 +128,7 @@ class PlateFastener(Fastener):
     def set_default(self, joint):
         width_a = joint.beams[0].width
         width_b = joint.beams[1].width
-        if joint.SUPPORTED_TOPOLOGY == 3: #JointTopology.TOPO_T
+        if joint.SUPPORTED_TOPOLOGY == 3:  # JointTopology.TOPO_T
             self.outline = [
                 Point(-width_b / 2, -width_b * 2.5, 0),
                 Point(-width_b / 2, width_b * 2.5, 0),

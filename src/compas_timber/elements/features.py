@@ -6,6 +6,8 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
 
+from compas_timber.errors import FeatureApplicationError
+
 
 class Feature(Data):
     """

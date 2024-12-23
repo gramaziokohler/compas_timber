@@ -15,9 +15,9 @@ from compas.geometry import cross_vectors
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
 
-from compas_timber.errors import FeatureApplicationError
 from .timber import TimberElement
 
 

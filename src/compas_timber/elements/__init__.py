@@ -7,7 +7,6 @@ from .features import BrepSubtraction
 from .features import CutFeature
 from .features import DrillFeature
 from .features import MillVolume
-from compas_timber.errors import FastenerApplicationError
 from .fasteners.ball_node_fastener import BallNodeFastener
 from .fasteners.plate_fastener import PlateFastener
 
@@ -25,6 +24,5 @@ __all__ = [
     "BallNodeFastener",
     "Fastener",
     "FastenerTimberInterface",
-    "FastenerApplicationError",
     "PlateFastener",
 ]

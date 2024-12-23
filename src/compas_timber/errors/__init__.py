@@ -46,7 +46,6 @@ class BeamJoinningError(Exception):
         self.debug_geometries = debug_geometries or []
 
 
-
 class FastenerApplicationError(Exception):
     """Raised when a fastener cannot be applied to a joint.
 
@@ -69,8 +68,6 @@ class FastenerApplicationError(Exception):
 
 
 __all__ = [
-"FeatureApplicationError",
-"BeamJoinningError"
-"FeatureApplicationError",
-
+    "FeatureApplicationError",
+    "BeamJoinningError" "FeatureApplicationError",
 ]

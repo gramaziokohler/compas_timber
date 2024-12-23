@@ -9,6 +9,7 @@ from compas_timber.elements.features import DrillFeature
 from compas_timber.elements.timber import TimberElement
 from compas_timber.utils import intersection_line_box
 
+
 class Fastener(TimberElement):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
@@ -60,10 +61,6 @@ class Fastener(TimberElement):
     @property
     def is_fastener(self):
         return True
-
-    @property
-    def interactions(self):
-        return []
 
     @property
     def key(self):

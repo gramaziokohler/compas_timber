@@ -9,6 +9,7 @@ from compas.geometry import dot_vectors
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
+
 from .timber import TimberElement
 
 
