@@ -1,6 +1,8 @@
 from collections import OrderedDict
 
 from compas.data import Data
+import xml.dom.minidom as MD
+import xml.etree.ElementTree as ET
 
 
 class BTLxProcess(Data):
@@ -28,6 +30,7 @@ class BTLxProcess(Data):
         self.ref_side_index = ref_side_index
         self._priority = priority
         self._process_id = process_id
+        self.subprocesses = []
 
     @property
     def priority(self):
@@ -40,6 +43,29 @@ class BTLxProcess(Data):
     @property
     def PROCESS_NAME(self):
         raise NotImplementedError("PROCESS_NAME must be implemented as class attribute in subclasses!")
+
+    def add_subprocess(self, subprocess):
+        """Add a nested subprocess."""
+        self.subprocesses.append(subprocess)
+
+    def et_element(self):
+        """Generate XML element for the process, including nested subprocesses."""
+        element = ET.Element(self.PROCESS_NAME)
+
+        for key, value in self.params_dict.items():
+            child = ET.SubElement(element, key)
+            child.text = str(value)
+
+        for subprocess in self.subprocesses:
+            element.append(subprocess.et_element())
+        return element
+
+    def test_btlx(self):
+        """Generate BTLx XML for the process, including nested subprocesses."""
+        xml_element = self.et_element()
+        xml_string = ET.tostring(xml_element)
+        pretty_xml = MD.parseString(xml_string).toprettyxml(indent="   ")
+        return pretty_xml
 
 
 class BTLxProcessParams(object):

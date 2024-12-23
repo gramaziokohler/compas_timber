@@ -79,7 +79,7 @@ class BTLx(object):
         with open(file_path, "w") as file:
             file.write(btlx.btlx_string())
 
-    def _model_to_xml(self):
+    def _model_to_xml(self, model):
         """Converts the model to an XML string.
 
         Parameters
@@ -94,10 +94,18 @@ class BTLx(object):
 
         """
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
+        # first child -> file_history
         root_element.append(self.file_history)
+        # second child -> project
+        project_element = self._create_project_element(model)
+        root_element.append(project_element)
+        # third child -> part
+        for beam in model.beams:
+            part_element = self._create_part(beam)
+            root_element.append(part_element)
         return MD.parseString(ET.tostring(root_element)).toprettyxml(indent="   ")
 
-    def _create_project_element(self, root_element):
+    def _create_project_element(self, model):
         """Creates the project element.
 
         Returns
@@ -106,9 +114,27 @@ class BTLx(object):
             The project element.
 
         """
-        project_element = ET.SubElement(root_element="Project", Name="testProject")
-        parts_element = ET.SubElement(project_element, "Parts")
+        project_element = ET.Element(
+            "Project", Name="testProject"
+        )  # TODOL Eventually a name should be set from the model and passed here.
+        project_element = ET.SubElement(project_element, "Parts")
         return project_element
+
+    # @property
+    # def et_element(self):
+    #     if not self._et_element:
+    #         self._et_element = ET.Element("Part", self.attr)
+    #         self._shape_strings = None
+    #         self._et_element.append(self.et_transformations)
+    #         self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
+    #         self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
+    #         processings_et = ET.Element("Processings")
+    #         if self.processings:  # otherwise there will be an empty <Processings/> tag
+    #             for process in self.processings:
+    #                 processings_et.append(process.et_element)
+    #             self._et_element.append(processings_et)
+    #         self._et_element.append(self.et_shape)
+    #     return self._et_element
 
     def _create_part(self, beam):
         """Creates a part element.
@@ -124,11 +150,30 @@ class BTLx(object):
             The part element.
 
         """
-        part_element = BTLxPart(beam).et_element
+        part = BTLxPart(beam)
+        part_element = ET.Element("Part", part.attr)
+        part_element.append(part.et_transformations)
+        part_element.append(part.et_grain_direction)
+        part_element.append(part.et_reference_side)
+        part_element.append(ET.Element("Processings"))
+        for feature in beam.features:
+            processing_element = self._create_processing(feature)
+            part_element.append(processing_element)
+        part_element.append(part.et_shape)
         return part_element
 
     def _create_processing(self, processing):
-        pass
+        """Generate XML element for the processing, including nested subprocessings."""
+        processing_element = ET.Element(
+            processing.PROCESS_NAME
+        )  # TODO: eventually could be passing the joint as information
+        for key, value in processing.params_dict.items():
+            child = ET.SubElement(processing_element, key)
+            child.text = str(value)
+        if processing.subprocesses:
+            for subprocess in processing.subprocesses:
+                processing_element.append(self._create_processing(subprocess))
+        return processing_element
 
     @property
     def history(self):
@@ -144,6 +189,13 @@ class BTLx(object):
             "Time": "{}".format(datetime.now().strftime("%H:%M:%S")),
             "Comment": "",
         }
+
+    @property
+    def file_history(self):
+        """Returns the file history element."""
+        file_history = ET.Element("FileHistory")
+        file_history.append(ET.Element("InitialExportProgram", self.history))
+        return file_history
 
     def btlx_string(self):
         """Returns a pretty XML string for visualization in GH, Terminal, etc."""
@@ -222,13 +274,6 @@ class BTLx(object):
         """
         cls.REGISTERED_JOINTS[str(joint_type)] = joint_factory
 
-    @property
-    def file_history(self):
-        """Returns the file history element."""
-        file_history = ET.Element("FileHistory")
-        file_history.append(ET.Element("InitialExportProgram", self.history))
-        return file_history
-
 
 class BTLxPart(object):
     """Class representing a BTLx part. This acts as a wrapper for a Beam object.
@@ -281,6 +326,14 @@ class BTLxPart(object):
     @property
     def part_guid(self):
         return str(self.beam.guid)
+
+    @property
+    def et_grain_direction(self):
+        return ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no")
+
+    @property
+    def et_reference_side(self):
+        return ET.Element("ReferenceSide", Side="1", Align="no")
 
     def ref_side_from_face(self, beam_face):
         """Finds the one-based index of the reference side with normal that matches the normal of the given beam face.
