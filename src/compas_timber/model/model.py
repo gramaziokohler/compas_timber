@@ -51,9 +51,7 @@ class TimberModel(Model):
 
     def __str__(self):
         # type: () -> str
-        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(
-            str(self.guid), len(list(self.elements())), len(list(self.joints))
-        )
+        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
 
     @property
     def beams(self):
@@ -73,12 +71,12 @@ class TimberModel(Model):
 
     @property
     def joints(self):
-        # type: () -> List[Joint, None, None]
-        joints = []
+        # type: () -> set[Joint]
+        joints = set()  # some joints might apear on more than one interaction
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
-                joints.append(interaction)
-        return set(joints)  # remove duplicates
+                joints.add(interaction)
+        return joints
 
     @property
     def fasteners(self):
@@ -105,9 +103,7 @@ class TimberModel(Model):
         total_position = Point(0, 0, 0)
 
         for element in self.elements():
-            vol = (
-                element.obb.volume
-            )  # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
+            vol = element.obb.volume  # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
             point = element.obb.frame.point
             total_vol += vol
             total_position += point * vol
@@ -327,7 +323,7 @@ class TimberModel(Model):
             joint.add_features()
 
     def connect_adjacent_walls(self):
-        # TODO: first clear all wall to wall joints
+        self._clear_wall_joints()
         solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(list(self.walls), rtree=True)
         for pair in pairs:
@@ -342,3 +338,8 @@ class TimberModel(Model):
 
             joint = WallJoint(wall_a, wall_b, topology=topology)
             self.add_interaction(wall_a, wall_b, interaction=joint)
+
+    def _clear_wall_joints(self):
+        for joint in self.joints:
+            if isinstance(joint, WallJoint):
+                self.remove_joint(joint)
