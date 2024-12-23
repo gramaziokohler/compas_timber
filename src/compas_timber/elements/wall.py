@@ -25,6 +25,7 @@ class Wall(TimberElement):
         data["outline"] = self.outline
         data["openings"] = self.openings
         data["thickness"] = self.thickness
+        data["attributes"] = self.attributes
         return data
 
     def __init__(self, outline, thickness, openings=None, frame=None, **kwargs):
@@ -33,6 +34,8 @@ class Wall(TimberElement):
         self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
+        self.attributes = {}
+        self.attributes.update(kwargs)
 
         self._faces = None
         self._corners = None
