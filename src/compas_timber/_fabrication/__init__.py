@@ -24,6 +24,8 @@ from .tenon import Tenon
 from .tenon import TenonParams
 from .mortise import Mortise
 from .mortise import MortiseParams
+from .house import House
+from .house import HouseParams
 
 
 __all__ = [
@@ -51,4 +53,6 @@ __all__ = [
     "TenonParams",
     "Mortise",
     "MortiseParams",
+    "House",
+    "HouseParams",
 ]
