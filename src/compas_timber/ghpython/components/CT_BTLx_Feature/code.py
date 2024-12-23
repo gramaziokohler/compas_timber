@@ -5,7 +5,7 @@ from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber._fabrication import BTLxProcess
+from compas_timber.fabrication import BTLxProcessing
 from compas_timber.design import FeatureDefinition
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
@@ -16,7 +16,7 @@ class BTLxFeature(component):
     def __init__(self):
         super(BTLxFeature, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(BTLxProcess):
+        for cls in get_leaf_subclasses(BTLxProcessing):
             self.classes[cls.__name__] = cls
 
         if ghenv.Component.Params.Output[0].NickName == "Process":
