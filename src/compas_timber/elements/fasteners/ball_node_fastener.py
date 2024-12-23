@@ -7,6 +7,7 @@ from compas.geometry import Point
 from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import angle_vectors_signed
 
 from compas_timber.elements import CutFeature
 from compas_timber.elements import Fastener
@@ -124,7 +125,8 @@ class BallNodeFastener(Fastener):
     @property
     def interface_plate(self):
         """Generate a plate from outline_points, thickness, and holes."""
-        outline = NurbsCurve.from_points(self.base_interface.outline_points, degree=1)
+        outline_points = correct_polyline_direction(self.base_interface.outline_points, Vector(0, 0, 1))
+        outline = NurbsCurve.from_points(outline_points, degree=1)
         holes = self.base_interface.holes
         thickness = self.base_interface.thickness
         if not outline:
@@ -153,3 +155,28 @@ class BallNodeFastener(Fastener):
                 for geometry in geometries[1:]:
                     self._interface_shape += geometry
         return self._interface_shape
+
+
+def correct_polyline_direction(polyline, normal_vector):
+    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to correct.
+
+    Returns
+    -------
+    :class:`compas.geometry.Polyline`
+        The corrected polyline.
+
+    """
+    angle_sum = 0
+    for i in range(len(polyline) - 1):
+        u = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+        angle = angle_vectors_signed(u, v, normal_vector)
+        angle_sum += angle
+    if angle_sum > 0:
+        polyline = polyline[::-1]
+    return polyline
