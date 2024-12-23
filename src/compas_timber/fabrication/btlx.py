@@ -7,13 +7,14 @@ from datetime import date
 from datetime import datetime
 
 import compas
+from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
 
-class BTLx(object):
+class BTLxWriter(object):
     """Class representing a BTLx object.
 
     BTLx is a format used for representing timber fabrication data.
@@ -23,16 +24,6 @@ class BTLx(object):
     model : :class:`~compas_timber.model.Model`
         The model object.
 
-    Attributes
-    ----------
-    history : dict
-        The history of the BTLx file.
-    btlx_string : str
-        A pretty XML string for visualization.
-    parts : dict
-        A dictionary of the BTLxParts in the model.
-    joints : list
-        A list of the joints in the model.
 
     """
 
@@ -51,13 +42,22 @@ class BTLx(object):
             ),
         ]
     )
+    FILE_HISTORY_ATTRIBUTES = OrderedDict(
+        [
+            ("CompanyName", "Gramazio Kohler Research"),
+            ("ProgramName", "COMPAS_Timber"),
+            ("ProgramVersion", "Compas: {}".format(compas.__version__)),
+            ("ComputerName", "{}".format(os.getenv("computername"))),
+            ("UserName", "{}".format(os.getenv("USERNAME"))),
+            ("FileName", ""),
+            ("Date", "{}".format(date.today())),
+            ("Time", "{}".format(datetime.now().strftime("%H:%M:%S"))),
+            ("Comment", ""),
+        ]
+    )
 
     def __init__(self, model):
         self.model = model
-        self.parts = {}
-        self._test = []
-        self.joints = model.joints
-        self.process_model()
 
     @classmethod
     def write(cls, model, file_path):
@@ -75,11 +75,14 @@ class BTLx(object):
         None
 
         """
+        if not file_path.endswith(".btlx"):
+            file_path += ".btlx"
         btlx = cls._model_to_xml(model)
         with open(file_path, "w") as file:
-            file.write(btlx.btlx_string())
+            file.write(btlx)
 
-    def _model_to_xml(self, model):
+    @classmethod
+    def _model_to_xml(cls, model):
         """Converts the model to an XML string.
 
         Parameters
@@ -93,20 +96,33 @@ class BTLx(object):
             The XML element of the model.
 
         """
-        root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
+        root_element = ET.Element("BTLx", cls.FILE_ATTRIBUTES)
         # first child -> file_history
-        root_element.append(self.file_history)
+        file_history_element = cls._create_file_history()
         # second child -> project
-        project_element = self._create_project_element(model)
-        root_element.append(project_element)
-        # third child -> part
-        for beam in model.beams:
-            part_element = self._create_part(beam)
-            root_element.append(part_element)
+        project_element = cls._create_project_element(model)
+        root_element.extend([file_history_element, project_element])
         return MD.parseString(ET.tostring(root_element)).toprettyxml(indent="   ")
 
-    def _create_project_element(self, model):
-        """Creates the project element.
+    @classmethod
+    def _create_file_history(cls):
+        """Creates the file history element. This method creates the initial export program element and appends it to the file history element.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The file history element.
+
+        """
+        # create file history element
+        file_history = ET.Element("FileHistory")
+        # create initial export program element
+        file_history.append(ET.Element("InitialExportProgram", cls.FILE_HISTORY_ATTRIBUTES))
+        return file_history
+
+    @classmethod
+    def _create_project_element(cls, model):
+        """Creates the project element. This method creates the parts element and appends it to the project element.
 
         Returns
         -------
@@ -114,35 +130,28 @@ class BTLx(object):
             The project element.
 
         """
+        # create project element
         project_element = ET.Element(
             "Project", Name="testProject"
-        )  # TODOL Eventually a name should be set from the model and passed here.
-        project_element = ET.SubElement(project_element, "Parts")
+        )  # TODOL Should name be set from the model and passed here?
+        # create parts element
+        parts_element = ET.SubElement(project_element, "Parts")
+        # create part elements
+        for i, beam in enumerate(model.beams):
+            part_element = cls._create_part(beam, i)
+            parts_element.append(part_element)
         return project_element
 
-    # @property
-    # def et_element(self):
-    #     if not self._et_element:
-    #         self._et_element = ET.Element("Part", self.attr)
-    #         self._shape_strings = None
-    #         self._et_element.append(self.et_transformations)
-    #         self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
-    #         self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
-    #         processings_et = ET.Element("Processings")
-    #         if self.processings:  # otherwise there will be an empty <Processings/> tag
-    #             for process in self.processings:
-    #                 processings_et.append(process.et_element)
-    #             self._et_element.append(processings_et)
-    #         self._et_element.append(self.et_shape)
-    #     return self._et_element
-
-    def _create_part(self, beam):
-        """Creates a part element.
+    @classmethod
+    def _create_part(cls, beam, order_num):
+        """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
         ----------
         beam : :class:`~compas_timber.elements.Beam`
             The beam object.
+        num : int
+            The order number of the part.
 
         Returns
         -------
@@ -150,129 +159,47 @@ class BTLx(object):
             The part element.
 
         """
-        part = BTLxPart(beam)
+        part = BTLxPart(beam, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
-        part_element.append(part.et_transformations)
-        part_element.append(part.et_grain_direction)
-        part_element.append(part.et_reference_side)
-        part_element.append(ET.Element("Processings"))
+        part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
+
+        processings_element = ET.Element("Processings")
         for feature in beam.features:
-            processing_element = self._create_processing(feature)
-            part_element.append(processing_element)
-        part_element.append(part.et_shape)
+            processing_element = cls._create_processing(feature)
+            processings_element.append(processing_element)
+        part_element.extend([processings_element, part.et_shape])
         return part_element
 
-    def _create_processing(self, processing):
-        """Generate XML element for the processing, including nested subprocessings."""
-        processing_element = ET.Element(
-            processing.PROCESS_NAME
-        )  # TODO: eventually could be passing the joint as information
-        for key, value in processing.params_dict.items():
-            child = ET.SubElement(processing_element, key)
-            child.text = str(value)
-        if processing.subprocesses:
-            for subprocess in processing.subprocesses:
-                processing_element.append(self._create_processing(subprocess))
-        return processing_element
-
-    @property
-    def history(self):
-        """Returns the file history of the BTLx file."""
-        return {
-            "CompanyName": "Gramazio Kohler Research",
-            "ProgramName": "COMPAS_Timber",
-            "ProgramVersion": "Compas: {}".format(compas.__version__),
-            "ComputerName": "{}".format(os.getenv("computername")),
-            "UserName": "{}".format(os.getenv("USERNAME")),
-            "FileName": "",
-            "Date": "{}".format(date.today()),
-            "Time": "{}".format(datetime.now().strftime("%H:%M:%S")),
-            "Comment": "",
-        }
-
-    @property
-    def file_history(self):
-        """Returns the file history element."""
-        file_history = ET.Element("FileHistory")
-        file_history.append(ET.Element("InitialExportProgram", self.history))
-        return file_history
-
-    def btlx_string(self):
-        """Returns a pretty XML string for visualization in GH, Terminal, etc."""
-        self.ET_element = ET.Element("BTLx", BTLx.FILE_ATTRIBUTES)
-        self.ET_element.append(self.file_history)
-        self.project_element = ET.SubElement(self.ET_element, "Project", Name="testProject")
-        self.parts_element = ET.SubElement(self.project_element, "Parts")
-
-        for part in self.parts.values():
-            self.parts_element.append(part.et_element)
-        return MD.parseString(ET.tostring(self.ET_element)).toprettyxml(indent="   ")
-
-    def process_model(self):
-        """Processes the model and generates BTLx parts."""
-        for index, beam in enumerate(self.model.beams):
-            self.parts[str(beam.guid)] = BTLxPart(beam, order_num=index)
-
-        for joint in self.joints:
-            factory_type = self.REGISTERED_JOINTS.get(str(type(joint)))
-            if factory_type is None:
-                continue  # that way we can just unregister factories that are replaced by the new features
-            factory_type.apply_processings(joint, self.parts)
-
-        # TODO: to slowly integrate the new system, iterate here once more, this time on beams and their features
-        # add processings from features that are part of the new system AKA have the attribute `PROCESS_NAME`
-        # joints that are already part of the new system should be skipped above (e.g. L-Miter)
-        for beam in self.model.beams:
-            features = list(filter(lambda feature: hasattr(feature, "PROCESS_NAME"), beam.features))
-            beam_part = self.parts[str(beam.guid)]
-            self._apply_process_features(beam_part, features)
-
-    def _apply_process_features(self, beam_part, features):
-        for feature in features:
-            # Create BTLXProcess instance from feature
-            header_dict, process_dict = self._split_params_dict(feature)
-            process = BTLxProcess(feature.PROCESS_NAME, header_dict, process_dict)
-            # append to beam_part.processings
-            beam_part.processings.append(process)
-
-    def _split_params_dict(self, feature):
-        whole_dict = feature.params_dict
-        header_keys = [
-            "Name",
-            "Process",
-            "Priority",
-            "ProcessID",
-            "ReferencePlaneID",
-        ]
-
-        header_only = OrderedDict()
-        process_only = OrderedDict()
-
-        for k, v in whole_dict.items():
-            if k in header_keys:
-                header_only[k] = v
-            else:
-                process_only[k] = v
-
-        return header_only, process_only
-
     @classmethod
-    def register_joint(cls, joint_type, joint_factory):
-        """Registers a joint type and its corresponding factory.
+    def _create_processing(cls, processing):
+        """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
 
         Parameters
         ----------
-        joint_type : type
-            The type of the joint.
-        joint_factory : : class:`~compas_timber.fabrication.joint_factories.joint_factory.JointFactory`
-            The factory for creating the joint.
+        processing : :class:`~compas_timber.fabrication.btlx_process.BTLxProcess`
+            The processing object.
 
         Returns
         -------
-        None
+        :class:`~xml.etree.ElementTree.Element`
+            The processing element.
 
         """
-        cls.REGISTERED_JOINTS[str(joint_type)] = joint_factory
+        # create processing element
+        processing_element = ET.Element(
+            processing.PROCESS_NAME,
+            processing.header_attributes,
+        )
+        # create parameter subelements
+        for key, value in processing.params_dict.items():
+            if key not in processing.header_attributes:
+                child = ET.SubElement(processing_element, key)
+                child.text = str(value)
+        # create subprocess elements
+        if processing.subprocesses:
+            for subprocess in processing.subprocesses:
+                processing_element.append(cls._create_processing(subprocess))
+        return processing_element
 
 
 class BTLxPart(object):
@@ -372,9 +299,9 @@ class BTLxPart(object):
             "TimberGrade": "",
             "QualityGrade": "",
             "Count": "1",
-            "Length": "{:.{prec}f}".format(self.blank_length, prec=BTLx.POINT_PRECISION),
-            "Height": "{:.{prec}f}".format(self.height, prec=BTLx.POINT_PRECISION),
-            "Width": "{:.{prec}f}".format(self.width, prec=BTLx.POINT_PRECISION),
+            "Length": "{:.{prec}f}".format(self.blank_length, prec=BTLxWriter.POINT_PRECISION),
+            "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
+            "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
             "Weight": "0",
             "ProcessingQuality": "automatic",
             "StoreyType": "",
@@ -398,9 +325,9 @@ class BTLxPart(object):
 
         """
         return {
-            "X": "{:.{prec}f}".format(point.x, prec=BTLx.POINT_PRECISION),
-            "Y": "{:.{prec}f}".format(point.y, prec=BTLx.POINT_PRECISION),
-            "Z": "{:.{prec}f}".format(point.z, prec=BTLx.POINT_PRECISION),
+            "X": "{:.{prec}f}".format(point.x, prec=BTLxWriter.POINT_PRECISION),
+            "Y": "{:.{prec}f}".format(point.y, prec=BTLxWriter.POINT_PRECISION),
+            "Z": "{:.{prec}f}".format(point.z, prec=BTLxWriter.POINT_PRECISION),
         }
 
     @property
@@ -468,63 +395,228 @@ class BTLxPart(object):
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
                 brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(
-                    point.x, point.y, point.z, prec=BTLx.POINT_PRECISION
+                    point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION
                 )
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
 
-class BTLxProcess(object):
-    """Generic class for BTLx processings.
-
-    This should be instantiated and appended to BTLxPart.processings in a specific btlx_process class (eg BTLxJackCut)
-
-    each specific btlx process class should have:
-    PROCESS_TYPE a class attribute which matches the btlx process name
-    self.header_attributes which matches as a dict,
-    self.process_parameters which describe the geometric parameters of the process
-
-    the joint factory calls instantiates a process or processes and appends it or them to the BTLxPart.processes list
-
-    each process will have specific inputs which are derived from the Joint instance and related BTLxParts
-
-    some joints will require combinations of multiple BTLx processes, and some processes will cover multiple joint types.
-
-    the factory module should call the BTLx.register_joint(joint type, joint factory) function so that the BTLx class can call specific factory types.
-
-    The factory will typically derive the needed parameters from the Joint instance and the joint_factory will apply them to the individual BTLxParts.
-
-
-    Parameters
-    ----------
-    name : str
-        The name of the processing.
-    attr : dict
-        The attributes of the processing.
-    params : dict
-        The parameters of the processing.
-
+class BTLxProcessing(Data):
+    """Base class for BTLx Processing.
 
     Attributes
     ----------
-    et_element : :class:`~xml.etree.ElementTree.Element`
-        The ET element of the BTLx processing.
+    ref_side_index : int
+        The reference side, zero-based, index of the beam to be cut. 0-5 correspond to RS1-RS6.
+    priority : int
+        The priority of the process.
+    process_id : int
+        The process ID.
+    PROCESS_NAME : str
+        The name of the process.
 
     """
 
-    def __init__(self, process_type, header_attributes, process_parameters):
-        self.process_type = process_type
-        self.header_attributes = header_attributes
-        self.process_parameters = process_parameters
+    @property
+    def __data__(self):
+        return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
+
+    def __init__(self, ref_side_index, priority=0, process_id=0):
+        super(BTLxProcessing, self).__init__()
+        self.ref_side_index = ref_side_index
+        self._priority = priority
+        self._process_id = process_id
+        self.subprocesses = None
 
     @property
-    def et_element(self):
-        element = ET.Element(self.process_type, self.header_attributes)
-        for key, value in self.process_parameters.items():
-            if isinstance(value, dict):
-                child = ET.Element(key, value)
-            else:
-                child = ET.Element(key)
-                child.text = value
-            element.append(child)
-        return element
+    def priority(self):
+        return self._priority
+
+    @property
+    def process_id(self):
+        return self._process_id
+
+    @property
+    def PROCESS_NAME(self):
+        raise NotImplementedError("PROCESS_NAME must be implemented as class attribute in subclasses!")
+
+    @property
+    def header_attributes(self):
+        """Return the attributes to be included in the XML element."""
+        return {
+            "Name": self.PROCESS_NAME,
+            "Priority": str(self.priority),
+            "Process": "yes",
+            "ProcessID": str(self.process_id),
+            "ReferencePlaneID": str(self.ref_side_index + 1),
+        }
+
+    def add_subprocess(self, subprocess):
+        """Add a nested subprocess."""
+        if not self.subprocesses:
+            self.subprocesses = []
+        self.subprocesses.append(subprocess)
+
+
+class BTLxProcessingParams(object):
+    """Base class for BTLx process parameters. This creates the dictionary of key-value pairs for the process as expected by the BTLx file format.
+
+    Parameters
+    ----------
+    instance : :class:`BTLxProcessing`
+        The instance of the process to create parameters for.
+
+    """
+
+    def __init__(self, instance):
+        self._instance = instance
+
+    def as_dict(self):
+        """Returns the process parameters as a dictionary.
+
+        Returns
+        -------
+        dict
+            The process parameters as a dictionary.
+        """
+        result = OrderedDict()
+        result["Name"] = self._instance.PROCESS_NAME
+        result["Process"] = "yes"
+        result["Priority"] = str(self._instance.priority)
+        result["ProcessID"] = str(self._instance.process_id)
+        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        return result
+
+
+class OrientationType(object):
+    """Enum for the orientation of the cut.
+
+    Attributes
+    ----------
+    START : literal("start")
+        The start of the beam is cut away.
+    END : literal("end")
+        The end of the beam is cut away.
+    """
+
+    START = "start"
+    END = "end"
+
+
+class StepShapeType(object):
+    """Enum for the step shape of the cut.
+
+    Attributes
+    ----------
+    STEP : literal("step")
+        A step shape.
+    HEEL : literal("heel")
+        A heel shape.
+    TAPERED_HEEL : literal("taperedheel")
+        A tapered heel shape.
+    DOUBLE : literal("double")
+        A double shape.
+    """
+
+    STEP = "step"
+    HEEL = "heel"
+    TAPERED_HEEL = "taperedheel"
+    DOUBLE = "double"
+
+
+class TenonShapeType(object):
+    """Enum for the tenon shape of the cut.
+
+    Attributes
+    ----------
+    AUTOMATIC : literal("automatic")
+        Automatic tenon shape.
+    SQUARE : literal("square")
+        Square tenon shape.
+    ROUND : literal("round")
+        Round tenon shape.
+    ROUNDED : literal("rounded")
+        Rounded tenon shape.
+    RADIUS : literal("radius")
+        Radius tenon shape.
+    """
+
+    AUTOMATIC = "automatic"
+    SQUARE = "square"
+    ROUND = "round"
+    ROUNDED = "rounded"
+    RADIUS = "radius"
+
+
+class LimitationTopType(object):
+    """Enum for the top limitation of the cut.
+
+    Attributes
+    ----------
+    LIMITED : literal("limited")
+        Limitation to the cut.
+    UNLIMITED : literal("unlimited")
+        No limit to the cut.
+    POCKET : literal("pocket")
+        Pocket like limitation to the cut.
+    """
+
+    LIMITED = "limited"
+    UNLIMITED = "unlimited"
+    POCKET = "pocket"
+
+
+class MachiningLimits(object):
+    """Configuration class for the machining limits of the cut.
+
+    Attributes
+    ----------
+    EXPECTED_KEYS : set
+        The expected keys for the limits dictionary.
+    face_limited_start : bool
+        Limit the start face.
+    face_limited_end : bool
+        Limit the end face.
+    face_limited_front : bool
+        Limit the front face.
+    face_limited_back : bool
+        Limit the back face.
+
+    Properties
+    ----------
+    limits : dict
+        The limits dictionary with values as a boolean.
+    """
+
+    EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]
+
+    def __init__(self):
+        self.face_limited_start = True
+        self.face_limited_end = True
+        self.face_limited_front = True
+        self.face_limited_back = True
+
+    @property
+    def limits(self):
+        """Dynamically generate the limits dictionary with boolean values from instance attributes."""
+        return {
+            "FaceLimitedStart": self.face_limited_start,
+            "FaceLimitedEnd": self.face_limited_end,
+            "FaceLimitedFront": self.face_limited_front,
+            "FaceLimitedBack": self.face_limited_back,
+        }
+
+
+class EdgePositionType(object):
+    """Enum for the edge position of the cut.
+
+    Attributes
+    ----------
+    REFEDGE : literal("refedge")
+        Reference edge.
+    OPPEDGE : literal("oppedge")
+        Opposite edge.
+    """
+
+    REFEDGE = "refedge"
+    OPPEDGE = "oppedge"
