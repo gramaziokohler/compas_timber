@@ -1,7 +1,9 @@
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane
@@ -9,6 +11,23 @@ from compas.itertools import pairwise
 
 from .joint import Joint
 from .joint import JointTopology
+
+
+class WallToWallInterface(object):
+    """
+    interface : :class:`compas.geometry.Polyline`
+        The outline of the interface area.
+    frame : :class:`compas.geometry.Frame`
+        The frame of the interface area.
+        xaxis : interface normal (towards other wall)
+        yaxis : up along the interface side
+        normal: width direction, perpendicular to the interface
+
+    """
+
+    def __init__(self, interface_polyline, frame):
+        self.interface_polyline = interface_polyline
+        self.frame = frame
 
 
 class WallJoint(Joint):
@@ -53,8 +72,8 @@ class WallJoint(Joint):
         self._cross_wall_guid = kwargs.get("cross_wall_guid", None) or str(cross_wall.guid)  # type: ignore
         self.topology = topology or JointTopology.TOPO_UNKNOWN
 
-        self.main_wall_interface = None, None
-        self.cross_wall_interface = None, None
+        self.main_wall_interface = None
+        self.cross_wall_interface = None
         if main_wall and cross_wall:
             self._calculate_interfaces()
 
@@ -71,8 +90,12 @@ class WallJoint(Joint):
 
     @property
     def geometry(self):
-        interface_polyline, _ = self.main_wall_interface
-        return interface_polyline
+        assert self.main_wall_interface
+        return self.main_wall_interface.interface_polyline
+
+    @property
+    def interfaces(self):
+        return self.main_wall_interface, self.cross_wall_interface
 
     def _calculate_interfaces(self):
         # from cross get the face that is closest to main with normal pointing towards main
@@ -80,7 +103,10 @@ class WallJoint(Joint):
         assert self.main_wall
         assert self.cross_wall
 
-        cross_face, dir_cross_to_main = self._find_intersecting_face(self.main_wall, self.cross_wall)
+        self.main_wall.attributes["category"] = "main"
+        self.cross_wall.attributes["category"] = "cross"
+
+        cross_face = self._find_intersecting_face(self.main_wall, self.cross_wall)
 
         # collect intersection lines bouding the interface area
         # these cannot be directly used as they are not segmented according to the interface area
@@ -102,8 +128,11 @@ class WallJoint(Joint):
 
         # connect the points to form the interface
         interface = Polyline(points + [points[0]])
-        self.main_wall_interface = interface, dir_cross_to_main.inverted()
-        self.cross_wall_interface = interface, dir_cross_to_main
+        interface_normal = cross_face.normal
+        up_vector = Vector.from_start_end(points[0], points[1])
+
+        self.main_wall_interface = WallToWallInterface(interface, Frame(interface[0], interface_normal, up_vector))
+        self.cross_wall_interface = WallToWallInterface(interface, Frame(interface[0], interface_normal.inverted(), up_vector))
 
     @staticmethod
     def _find_intersecting_face(main_wall, cross_wall):
@@ -126,7 +155,7 @@ class WallJoint(Joint):
             face_angles[ref_side_index] = angle_vectors(face.normal, baseline_direction)
 
         cross_face_index = min(face_angles, key=lambda k: face_angles[k])
-        return cross_wall.faces[cross_face_index], baseline_direction.inverted()
+        return cross_wall.faces[cross_face_index]  # TODO: remove baseline direction?
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
