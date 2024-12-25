@@ -128,7 +128,7 @@ class PlateFastener(Fastener):
     def set_default(self, joint):
         width_a = joint.beams[0].width
         width_b = joint.beams[1].width
-        if 3 in joint.SUPPORTED_TOPOLOGY:  # JointTopology.TOPO_T
+        if 3 in joint.SUPPORTED_TOPOLOGY:  # JointTopology.TOPO_T TODO: fix joint.SUPPORTED_TOPOLOGY import
             self.outline = [
                 Point(-width_b / 2, -width_b * 2.5, 0),
                 Point(-width_b / 2, width_b * 2.5, 0),
