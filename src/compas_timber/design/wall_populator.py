@@ -332,17 +332,22 @@ class LConnectionDetail(object):
     def create_elements_cross(self, interface, wall, config_set):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
-        polyline = interface.interface_polyline
-        left_edge = polyline.lines[0]
-        beam_zaxis = interface.frame.xaxis
-        edge_beam = BeamDefinition(left_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
+        # TODO: if beam_height < wall thickness, there needs to be an offset here
+        left_vertical = interface.interface_polyline.lines[0]
+        right_vertical = interface.interface_polyline.lines[2]
+        parallel_to_interface = interface.frame.normal
+        perpendicular_to_interface = interface.frame.xaxis
 
-        internal_edge = left_edge.translated(interface.frame.normal * config_set.wall_depth)
-        internal_edge = BeamDefinition(internal_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
+        edge_beam_line = right_vertical.translated(parallel_to_interface * config_set.beam_width * -0.5)
+        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, config_set.wall_depth, normal=perpendicular_to_interface)
 
-        inbetween_edge = left_edge.translated(interface.frame.normal * config_set.beam_width)
-        inbetween_edge = BeamDefinition(inbetween_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
-        return [edge_beam, internal_edge, inbetween_edge]
+        other_edge_line = edge_beam_line.translated(parallel_to_interface * -1.0 * (config_set.wall_depth + config_set.beam_width))
+        other_edge = BeamDefinition(other_edge_line, config_set.beam_width, config_set.wall_depth, normal=perpendicular_to_interface)
+
+        reference_edge = left_vertical.translated(interface.frame.xaxis * config_set.beam_width * 0.5)
+        between_edge = reference_edge.translated(interface.frame.normal * -1.0 * config_set.beam_width)
+        between_beam = BeamDefinition(between_edge, config_set.beam_width, config_set.wall_depth, normal=parallel_to_interface)
+        return [between_beam, edge_beam, other_edge]
 
     def create_elements_main(self, interface, wall, config_set):
         # create a beam (definition) as wide and as high as the wall
@@ -652,8 +657,8 @@ class WallPopulator(object):
             if connection_detail:
                 if self._wall.attributes["category"] == "main":
                     self._beam_definitions.extend(connection_detail.create_elements_main(interaction.main_wall_interface, self._wall, self._config_set))
-                # elif self._wall.attributes["category"] == "cross":
-                #     self._beam_definitions.extend(connection_detail.create_elements_cross(interaction.cross_wall_interface, self._wall, self._config_set))
+                elif self._wall.attributes["category"] == "cross":
+                    self._beam_definitions.extend(connection_detail.create_elements_cross(interaction.cross_wall_interface, self._wall, self._config_set))
 
         # interior_indices = self.get_interior_segment_indices(self.outer_polyline)
         # for i, segment in enumerate(self.outer_polyline.lines):
