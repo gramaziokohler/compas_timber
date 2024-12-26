@@ -106,13 +106,20 @@ class WallJoint(Joint):
         self.main_wall.attributes["category"] = "main"
         self.cross_wall.attributes["category"] = "cross"
 
-        cross_face = self._find_intersecting_face(self.main_wall, self.cross_wall)
+        cross_face, is_joint_at_main_end = self._find_intersecting_face(self.main_wall, self.cross_wall)
 
         # collect intersection lines bouding the interface area
         # these cannot be directly used as they are not segmented according to the interface area
         lines = []
         cross_face_plane = Plane.from_frame(cross_face)
-        for face in self.main_wall.envelope_faces:
+
+        # the order here should be in mirrored dependeing on the side of the wall where the joint is
+        # this will result in the interface being oriented consistently on either side
+        envelope_faces = self.main_wall.envelope_faces
+        if is_joint_at_main_end:
+            envelope_faces = [envelope_faces[0], envelope_faces[3], envelope_faces[2], envelope_faces[1]]
+
+        for face in envelope_faces:
             face_plane = Plane.from_frame(face)
             intersection = intersection_plane_plane(face_plane, cross_face_plane)
 
@@ -132,7 +139,7 @@ class WallJoint(Joint):
         up_vector = Vector.from_start_end(points[0], points[1])
 
         self.main_wall_interface = WallToWallInterface(interface, Frame(interface[0], interface_normal, up_vector))
-        self.cross_wall_interface = WallToWallInterface(interface, Frame(interface[0], interface_normal.inverted(), up_vector))
+        self.cross_wall_interface = WallToWallInterface(interface, Frame(interface[1], interface_normal.inverted(), up_vector.inverted()))
 
     @staticmethod
     def _find_intersecting_face(main_wall, cross_wall):
@@ -155,7 +162,7 @@ class WallJoint(Joint):
             face_angles[ref_side_index] = angle_vectors(face.normal, baseline_direction)
 
         cross_face_index = min(face_angles, key=lambda k: face_angles[k])
-        return cross_wall.faces[cross_face_index]  # TODO: remove baseline direction?
+        return cross_wall.faces[cross_face_index], is_joint_at_main_end  # TODO: remove baseline direction?
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
