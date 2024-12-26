@@ -11,6 +11,7 @@ from .wall_populator import WallPopulator
 from .wall_populator import WallPopulatorConfigurationSet
 from .wall_populator import WallSelector
 from .wall_populator import AnyWallSelector
+from .wall_populator import LConnectionDetail
 
 __all__ = [
     "CategoryRule",
@@ -25,4 +26,5 @@ __all__ = [
     "WallPopulatorConfigurationSet",
     "WallSelector",
     "AnyWallSelector",
+    "LConnectionDetail",
 ]

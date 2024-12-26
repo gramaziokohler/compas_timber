@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 120
+line-length = 170
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -13,7 +13,7 @@ doctest_optionflags= "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE
 filterwarnings = "ignore::DeprecationWarning"
 
 [tool.isort]
-line_length = 120
+line_length = 179
 multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0

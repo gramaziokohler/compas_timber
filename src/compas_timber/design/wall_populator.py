@@ -170,6 +170,7 @@ class BeamDefinition(object):
         self.centerline.transform(vector)
 
     def to_beam(self):
+        # TODO: this is quite stiff, if I know the corner, I can just create beam using Beam(...)
         centerline = Line(*self.centerline)
         centerline.translate(self.normal * 0.5 * self.height)
         beam = Beam.from_centerline(centerline, self.width, self.height, self.normal)
@@ -322,13 +323,53 @@ class Window(object):
                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
 
+class LConnectionDetail(object):
+    """
+    Parameters
+    ----------
+    interface : :class:`compas_timber.connections.WallToWallInterface`
+    """
+
+    def create_elements_cross(self, interface, wall, config_set):
+        # create a beam (definition) as wide and as high as the wall
+        # it should be flush agains the interface
+        polyline = interface.interface_polyline
+        left_edge = polyline.lines[0]
+        beam_zaxis = interface.frame.xaxis
+        edge_beam = BeamDefinition(left_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
+
+        internal_edge = left_edge.translated(interface.frame.normal * config_set.wall_depth)
+        internal_edge = BeamDefinition(internal_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
+
+        inbetween_edge = left_edge.translated(interface.frame.normal * config_set.beam_width)
+        inbetween_edge = BeamDefinition(inbetween_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
+        return [edge_beam, internal_edge, inbetween_edge]
+
+    def create_elements_main(self, interface, wall, config_set):
+        # create a beam (definition) as wide and as high as the wall
+        # it should be flush agains the interface
+        polyline = interface.interface_polyline
+        beam_zaxis = interface.frame.normal
+        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
+        # TODO: if beam_height < wall thickness, there needs to be an offset here
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
+        return [edge_beam]
+
+    # def create_elements(self, interface, wall, config_set):
+    #     if wall.attributes["category"] == "main":
+    #         return self._create_elements_main(interface, wall, config_set)
+    #     else:
+    #         return self._create_elements_cross(interface, wall, config_set)
+
+
 class WallPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
     wall_selector can be used to apply different configurations to different walls based on e.g. their name.
+
     Parameters
     ----------
-
+    connection_details : mapping topologies to a ConnectionDetail instances
 
     """
 
@@ -346,6 +387,7 @@ class WallPopulatorConfigurationSet(object):
         custom_dimensions=None,
         joint_overrides=None,
         wall_selector=None,
+        connection_details=None,
     ):
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
@@ -359,6 +401,7 @@ class WallPopulatorConfigurationSet(object):
         self.custom_dimensions = custom_dimensions
         self.joint_overrides = joint_overrides
         self.wall_selector = wall_selector or AnyWallSelector()
+        self.connection_details = connection_details or {}
 
     def __str__(self):
         return "WallPopulatorConfigurationSet({}, {}, {}, {})".format(self.stud_spacing, self.beam_width, self.wall_depth, self.z_axis)
@@ -579,7 +622,7 @@ class WallPopulator(object):
         self.generate_studs()
         self.generate_plates()
         elements = self.elements
-        return elements, self.create_joint_definitions(elements)
+        return elements
 
     def create_joint_definitions(self, elements):
         beams = [element for element in elements if element.is_beam]
@@ -601,55 +644,42 @@ class WallPopulator(object):
                     # break # ?
         return joint_definitions
 
-    def create_model(self):
-        model = TimberModel()
-        for element in self.elements:
-            model.add_element(element)
-        topologies = []
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True, max_distance=self.dist_tolerance)
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-                for rule in self.rules:
-                    if not rule.comply(pair):
-                        continue
-                    if rule.joint_type.SUPPORTED_TOPOLOGY != detected_topo:
-                        continue
-                    else:
-                        if rule.joint_type == LButtJoint:
-                            beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                        rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
-        model.set_topologies(topologies)  # TODO: this is literaly the graph, maybe add a topo attribute to `Joint`
-        return model
-
     def generate_perimeter_beams(self):
-        interior_indices = self.get_interior_segment_indices(self.outer_polyline)
-        for i, segment in enumerate(self.outer_polyline.lines):
-            beam_def = BeamDefinition(segment, parent=self)
-            if i in interior_indices:
-                if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-                    if self._config_set.lintel_posts:
-                        beam_def.type = "jack_stud"
-                    else:
-                        beam_def.type = "king_stud"
-                else:
-                    beam_def.type = "header"
-            else:
-                if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-                    beam_def.type = "edge_stud"
-                else:
-                    beam_def.type = "plate"
-            self._beam_definitions.append(beam_def)
-        self._beam_definitions = self.offset_elements(self._beam_definitions)
-        if self._config_set.lintel_posts:
-            for beam_def in self._beam_definitions:
-                if beam_def.type == "jack_stud":
-                    offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-                    king_line = offset_line(beam_def.centerline, offset, self.normal)
-                    self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+        # TODO: first iterate here on the any connection detail generators.
+        # TODO: then continne with sides that are not handled by the connection details
+        # for each interaction, find the appropriate connection detail (depending on the topology)
+        for interaction in self._interactions:
+            connection_detail = self._config_set.connection_details.get(interaction.topology, None)
+            if connection_detail:
+                if self._wall.attributes["category"] == "main":
+                    self._beam_definitions.extend(connection_detail.create_elements_main(interaction.main_wall_interface, self._wall, self._config_set))
+                # elif self._wall.attributes["category"] == "cross":
+                #     self._beam_definitions.extend(connection_detail.create_elements_cross(interaction.cross_wall_interface, self._wall, self._config_set))
+
+        # interior_indices = self.get_interior_segment_indices(self.outer_polyline)
+        # for i, segment in enumerate(self.outer_polyline.lines):
+        #     beam_def = BeamDefinition(segment, parent=self)
+        #     if i in interior_indices:
+        #         if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
+        #             if self._config_set.lintel_posts:
+        #                 beam_def.type = "jack_stud"
+        #             else:
+        #                 beam_def.type = "king_stud"
+        #         else:
+        #             beam_def.type = "header"
+        #     else:
+        #         if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
+        #             beam_def.type = "edge_stud"
+        #         else:
+        #             beam_def.type = "plate"
+        #     self._beam_definitions.append(beam_def)
+        # self._beam_definitions = self.offset_elements(self._beam_definitions)
+        # if self._config_set.lintel_posts:
+        #     for beam_def in self._beam_definitions:
+        #         if beam_def.type == "jack_stud":
+        #             offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
+        #             king_line = offset_line(beam_def.centerline, offset, self.normal)
+        #             self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
         points = polyline.points[0:-1]
