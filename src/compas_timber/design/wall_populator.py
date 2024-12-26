@@ -27,7 +27,6 @@ from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
-from compas_timber.model import TimberModel
 
 from .workflow import JointDefinition
 
