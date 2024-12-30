@@ -56,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.Tenon` and `compas_timber._fabrication.Mortise`.
 * Added new `compas_timber.connections.TTenonMortiseJoint`.
 * Added `create` override to `BallNodeJoint`.
+* Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
+* Added new `compas_timber.fabrication.House` and `compas_timber.fabrication.HouseMortise`.
 
 ### Changed
 
@@ -77,17 +79,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `model.process_joinery()`so that it calls `joint.check_elements_compatibility()` before adding extensions and features.
 * Fixed incorrect data keys for `beam_guid` in the `__data__` property for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`, `LFrenchRidgeLapJoint`.
 * Fixed `JointRuleFromList` GH component.
+* Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
+* Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
+* Adjusted `compas_timber.conntection.TDovetailJoint` and `compas_timber.fabrication.TenonMortisJoint` to allow Housing.
 
 ### Removed
 
 * Removed module `compas_timber.utils.compas_extra`.
 * Removed a bunch of spaghetti from `CT_model` GH component.
-* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
-* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
-* Removed module `compas_timber.connections.butt_joint`
-* Removed module `compas_timber.connections.french_ridge_lap`
-* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`
-* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`
+* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`.
+* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`.
+* Removed module `compas_timber.connections.butt_joint`.
+* Removed module `compas_timber.connections.french_ridge_lap`.
+* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
+* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
+* Removed package `compas_timber._fabrication`.
+* Removed `btlx_processes` anf `joint_factories` from `compas_timber.fabrication` package.
+* Removed `.btlx` files from `.gitignore`.
 
 
 
