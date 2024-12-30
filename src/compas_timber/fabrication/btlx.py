@@ -77,12 +77,12 @@ class BTLxWriter(object):
         """
         if not file_path.endswith(".btlx"):
             file_path += ".btlx"
-        btlx = cls._model_to_xml(model)
+        btlx = cls.model_to_xml(model)
         with open(file_path, "w") as file:
             file.write(btlx)
 
     @classmethod
-    def _model_to_xml(cls, model):
+    def model_to_xml(cls, model):
         """Converts the model to an XML string.
 
         Parameters
@@ -136,7 +136,7 @@ class BTLxWriter(object):
         )  # TODOL Should name be set from the model and passed here?
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
-        # create part elements
+        # create part elements for each beam
         for i, beam in enumerate(model.beams):
             part_element = cls._create_part(beam, i)
             parts_element.append(part_element)
@@ -159,10 +159,11 @@ class BTLxWriter(object):
             The part element.
 
         """
+        # create part element
         part = BTLxPart(beam, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
-
+        # create processings element for the part
         processings_element = ET.Element("Processings")
         for feature in beam.features:
             processing_element = cls._create_processing(feature)
