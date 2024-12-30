@@ -55,7 +55,7 @@ class Beam(TimberElement):
     blank : :class:`~compas.geometry.Box`
         A feature-less box representing the material stock geometry to produce this beam.
     ref_frame : :class:`~compas.geometry.Frame`
-        Reference frame for machining processes according to BTLx standard.
+        Reference frame for machining processings according to BTLx standard.
     ref_sides : tuple(:class:`~compas.geometry.Frame`)
         A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.
     ref_edges : tuple(:class:`~compas.geometry.Line`)

@@ -299,7 +299,7 @@ class Mortise(BTLxProcessing):
         width : float, optional
             The width of the mortise.
         depth : float, optional
-            The depth of the mortise. The equivalent value of the Tenon BTLxProcess is the height.
+            The depth of the mortise. The equivalent value of the Tenon BTLxProcessing is the height.
         shape : str, optional
             The shape of the mortise in regards to it's edges. Default is 'automatic'.
         shape_radius : float, optional

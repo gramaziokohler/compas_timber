@@ -355,7 +355,7 @@ class DovetailMortise(BTLxProcessing):
         width : float, optional
             The width of the mortise.
         depth : float, optional
-            The depth of the mortise. The equivalent value of the DovetailTenon BTLxProcess is the height.
+            The depth of the mortise. The equivalent value of the DovetailTenon BTLxProcessing is the height.
         cone_angle : float, optional
             The cone angle of the dovetail mortise.
         flank_angle : float, optional

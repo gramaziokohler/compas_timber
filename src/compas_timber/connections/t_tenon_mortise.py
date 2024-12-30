@@ -68,7 +68,7 @@ class TenonMortiseJoint(Joint):
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
     features : list
-        List of features or machining processes applied to the elements.
+        List of features or machining processings applied to the elements.
     """
 
     SUPPORTED_TOPOLOGY = [JointTopology.TOPO_T, JointTopology.TOPO_L]

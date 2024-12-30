@@ -177,7 +177,7 @@ class BTLxWriter(object):
 
         Parameters
         ----------
-        processing : :class:`~compas_timber.fabrication.btlx_process.BTLxProcess`
+        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
             The processing object.
 
         Returns

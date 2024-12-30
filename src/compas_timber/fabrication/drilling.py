@@ -24,7 +24,7 @@ from .btlx import BTLxProcessingParams
 
 
 class Drilling(BTLxProcessing):
-    """Represents a drilling process.
+    """Represents a drilling processing.
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ class Drilling(BTLxProcessing):
 
     @classmethod
     def from_line_and_beam(cls, line, diameter, beam):
-        """Construct a drilling process from a line and diameter.
+        """Construct a drilling processing from a line and diameter.
 
         # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
         # TODO: make a from point alt. constructor that takes a point and a reference side and makes a straight drilling through.
@@ -183,7 +183,7 @@ class Drilling(BTLxProcessing):
         Returns
         -------
         :class:`compas_timber.fabrication.Drilling`
-            The constructed drilling process.
+            The constructed drilling processing.
 
         """
         ref_side_index, xy_point = cls._calculate_ref_side_index(line, beam)

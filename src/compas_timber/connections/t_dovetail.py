@@ -81,7 +81,7 @@ class TDovetailJoint(Joint):
     shape_radius : float, optional
         The radius used to define the shape of the joint, if applicable.
     features : list
-        List of features or machining processes applied to the joint.
+        List of features or machining processings applied to the joint.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
