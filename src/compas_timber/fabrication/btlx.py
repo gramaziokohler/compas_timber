@@ -196,10 +196,10 @@ class BTLxWriter(object):
             if key not in processing.header_attributes:
                 child = ET.SubElement(processing_element, key)
                 child.text = str(value)
-        # create subprocess elements
-        if processing.subprocesses:
-            for subprocess in processing.subprocesses:
-                processing_element.append(cls._create_processing(subprocess))
+        # create subprocessing elements
+        if processing.subprocessings:
+            for subprocessing in processing.subprocessings:
+                processing_element.append(cls._create_processing(subprocessing))
         return processing_element
 
 
@@ -427,7 +427,7 @@ class BTLxProcessing(Data):
         self.ref_side_index = ref_side_index
         self._priority = priority
         self._process_id = process_id
-        self.subprocesses = None
+        self.subprocessings = None
 
     @property
     def priority(self):
@@ -452,20 +452,20 @@ class BTLxProcessing(Data):
             "ReferencePlaneID": str(self.ref_side_index + 1),
         }
 
-    def add_subprocess(self, subprocess):
-        """Add a nested subprocess."""
-        if not self.subprocesses:
-            self.subprocesses = []
-        self.subprocesses.append(subprocess)
+    def add_subprocessing(self, subprocessing):
+        """Add a nested subprocessing."""
+        if not self.subprocessings:
+            self.subprocessings = []
+        self.subprocessings.append(subprocessing)
 
 
 class BTLxProcessingParams(object):
-    """Base class for BTLx process parameters. This creates the dictionary of key-value pairs for the process as expected by the BTLx file format.
+    """Base class for BTLx processing parameters. This creates the dictionary of key-value pairs for the processing as expected by the BTLx file format.
 
     Parameters
     ----------
     instance : :class:`BTLxProcessing`
-        The instance of the process to create parameters for.
+        The instance of the processing to create parameters for.
 
     """
 
@@ -473,12 +473,12 @@ class BTLxProcessingParams(object):
         self._instance = instance
 
     def as_dict(self):
-        """Returns the process parameters as a dictionary.
+        """Returns the processing parameters as a dictionary.
 
         Returns
         -------
         dict
-            The process parameters as a dictionary.
+            The processing parameters as a dictionary.
         """
         result = OrderedDict()
         result["Name"] = self._instance.PROCESSING_NAME
