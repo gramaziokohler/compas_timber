@@ -1,9 +1,9 @@
-from compas_timber.fabrication import JackRafterCut
-from compas_timber.fabrication import Lap
 from compas_timber.connections import BeamJoinningError
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import Lap
 
 
 class TButtJoint(Joint):

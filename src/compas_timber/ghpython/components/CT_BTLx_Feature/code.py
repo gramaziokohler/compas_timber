@@ -5,8 +5,8 @@ from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.fabrication import BTLxProcessing
 from compas_timber.design import FeatureDefinition
+from compas_timber.fabrication import BTLxProcessing
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output

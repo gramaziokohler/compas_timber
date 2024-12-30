@@ -1,7 +1,7 @@
+from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import TenonShapeType
-from compas_timber.connections.utilities import beam_ref_side_incidence
 
 from .joint import BeamJoinningError
 from .joint import Joint
