@@ -46,7 +46,7 @@ class Drilling(BTLxProcessing):
 
     # TODO: add __data__
 
-    PROCESS_NAME = "Drilling"  # type: ignore
+    PROCESSING_NAME = "Drilling"  # type: ignore
 
     def __init__(
         self,

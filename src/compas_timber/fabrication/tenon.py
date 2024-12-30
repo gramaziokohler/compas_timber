@@ -59,7 +59,7 @@ class Tenon(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "Tenon"  # type: ignore
+    PROCESSING_NAME = "Tenon"  # type: ignore
 
     @property
     def __data__(self):

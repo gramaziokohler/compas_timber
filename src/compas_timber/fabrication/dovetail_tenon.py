@@ -64,7 +64,7 @@ class DovetailTenon(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "DovetailTenon"  # type: ignore
+    PROCESSING_NAME = "DovetailTenon"  # type: ignore
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}

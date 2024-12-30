@@ -57,7 +57,7 @@ class Lap(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "Lap"  # type: ignore
+    PROCESSING_NAME = "Lap"  # type: ignore
 
     @property
     def __data__(self):

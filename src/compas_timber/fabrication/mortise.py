@@ -54,7 +54,7 @@ class Mortise(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "Mortise"  # type: ignore
+    PROCESSING_NAME = "Mortise"  # type: ignore
 
     @property
     def __data__(self):

@@ -45,7 +45,7 @@ class DoubleCut(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "DoubleCut"  # type: ignore
+    PROCESSING_NAME = "DoubleCut"  # type: ignore
 
     @property
     def __data__(self):

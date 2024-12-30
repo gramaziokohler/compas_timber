@@ -62,7 +62,7 @@ class DovetailMortise(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "DovetailMortise"  # type: ignore
+    PROCESSING_NAME = "DovetailMortise"  # type: ignore
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}

@@ -43,7 +43,7 @@ class FrenchRidgeLap(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "FrenchRidgeLap"  # type: ignore
+    PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
 
     @property
     def __data__(self):

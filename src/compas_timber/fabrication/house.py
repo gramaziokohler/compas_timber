@@ -61,7 +61,7 @@ class House(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "House"  # type: ignore
+    PROCESSING_NAME = "House"  # type: ignore
 
     @property
     def __data__(self):

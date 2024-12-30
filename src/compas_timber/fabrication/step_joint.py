@@ -47,7 +47,7 @@ class StepJoint(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "StepJoint"  # type: ignore
+    PROCESSING_NAME = "StepJoint"  # type: ignore
 
     @property
     def __data__(self):

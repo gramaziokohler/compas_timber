@@ -188,7 +188,7 @@ class BTLxWriter(object):
         """
         # create processing element
         processing_element = ET.Element(
-            processing.PROCESS_NAME,
+            processing.PROCESSING_NAME,
             processing.header_attributes,
         )
         # create parameter subelements
@@ -413,7 +413,7 @@ class BTLxProcessing(Data):
         The priority of the process.
     process_id : int
         The process ID.
-    PROCESS_NAME : str
+    PROCESSING_NAME : str
         The name of the process.
 
     """
@@ -438,14 +438,14 @@ class BTLxProcessing(Data):
         return self._process_id
 
     @property
-    def PROCESS_NAME(self):
-        raise NotImplementedError("PROCESS_NAME must be implemented as class attribute in subclasses!")
+    def PROCESSING_NAME(self):
+        raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
     @property
     def header_attributes(self):
         """Return the attributes to be included in the XML element."""
         return {
-            "Name": self.PROCESS_NAME,
+            "Name": self.PROCESSING_NAME,
             "Priority": str(self.priority),
             "Process": "yes",
             "ProcessID": str(self.process_id),
@@ -481,7 +481,7 @@ class BTLxProcessingParams(object):
             The process parameters as a dictionary.
         """
         result = OrderedDict()
-        result["Name"] = self._instance.PROCESS_NAME
+        result["Name"] = self._instance.PROCESSING_NAME
         result["Process"] = "yes"
         result["Priority"] = str(self._instance.priority)
         result["ProcessID"] = str(self._instance.process_id)

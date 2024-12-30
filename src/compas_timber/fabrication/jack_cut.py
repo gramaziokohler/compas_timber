@@ -39,7 +39,7 @@ class JackRafterCut(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "JackRafterCut"  # type: ignore
+    PROCESSING_NAME = "JackRafterCut"  # type: ignore
 
     @property
     def __data__(self):

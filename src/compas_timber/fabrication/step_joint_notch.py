@@ -56,7 +56,7 @@ class StepJointNotch(BTLxProcessing):
 
     """
 
-    PROCESS_NAME = "StepJointNotch"  # type: ignore
+    PROCESSING_NAME = "StepJointNotch"  # type: ignore
 
     @property
     def __data__(self):
