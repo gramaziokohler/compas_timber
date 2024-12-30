@@ -133,7 +133,7 @@ class BTLxWriter(object):
         # create project element
         project_element = ET.Element(
             "Project", Name="testProject"
-        )  # TODO Should the name be set from the model and passed here?
+        )  # TODO: Should the name be set from the model and passed here?
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
