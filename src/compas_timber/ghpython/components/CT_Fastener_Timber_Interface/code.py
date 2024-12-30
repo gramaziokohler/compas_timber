@@ -1,6 +1,4 @@
 from compas.geometry import Brep
-from compas.scene import Scene
-from compas_rhino.conversions import curve_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
@@ -20,21 +18,13 @@ class FastenerTimberInterfaceComponent(component):
                     holes.append({"point": pt, "diameter": drill_diameters[0], "vector": None, "through": True})
             else:
                 raise Warning("Number of diameters must either match the number of points or be a single value")
-
         features = [feature.feature if isinstance(feature, FeatureDefinition) else feature for feature in features]
-        outline_curve = curve_to_compas(outline)
-        fast_int = FastenerTimberInterface(
-            outline_curve,
+        outline_points = [pt for pt in outline]
+        interface = FastenerTimberInterface(
+            outline_points,
             thickness,
             holes,
             shapes=[Brep.from_native(brep) for brep in extra_shapes],
             features=features,
         )
-
-        shape = None
-        if outline:
-            scene = Scene()
-            scene.add(fast_int.shape)
-            shape = scene.draw()
-
-        return fast_int, shape
+        return interface
