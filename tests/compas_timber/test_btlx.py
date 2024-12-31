@@ -53,8 +53,8 @@ def test_btlx_file_history(resulting_btlx, namespaces):
     assert initial_export_program.get("CompanyName") == "Gramazio Kohler Research"
     assert initial_export_program.get("ProgramName") == "COMPAS_Timber"
     assert initial_export_program.get("ProgramVersion") == "Compas: {}".format(compas.__version__)
-    assert initial_export_program.get("ComputerName") == os.getenv("computername")
-    assert initial_export_program.get("UserName") == os.getenv("USERNAME")
+    assert initial_export_program.get("ComputerName") == os.getenv("computername") or None
+    assert initial_export_program.get("UserName") == os.getenv("USERNAME") or None
 
 
 def test_btlx_parts(resulting_btlx, test_model, namespaces):
