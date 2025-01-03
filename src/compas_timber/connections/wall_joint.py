@@ -13,6 +13,47 @@ from .joint import Joint
 from .joint import JointTopology
 
 
+class InterfaceRole(object):
+    """
+    Enumeration of the possible interface roles.
+
+    Attributes
+    ----------
+    MAIN : literal(0)
+        The interface is the main interface.
+    CROSS : literal(1)
+        The interface is the cross interface.
+    """
+
+    MAIN = 0
+    CROSS = 1
+
+
+class InterfaceType(object):
+    """
+    Enumeration of the possible interface types.
+
+    Attributes
+    ----------
+    BACK : literal(0)
+        The interface is at the back of the wall.
+    FRONT : literal(1)
+        The interface is at the front of the wall.
+    TOP : literal(2)
+        The interface is at the top of the wall.
+    BOTTOM : literal(3)
+        The interface is at the bottom of the wall.
+    OTHER : literal(4)
+        The interface is at some other location.
+    """
+
+    BACK = 0
+    FRONT = 1
+    TOP = 2
+    BOTTOM = 3
+    OTHER = 4
+
+
 class WallToWallInterface(object):
     """
     interface : :class:`compas.geometry.Polyline`
@@ -25,9 +66,12 @@ class WallToWallInterface(object):
 
     """
 
-    def __init__(self, interface_polyline, frame):
+    def __init__(self, interface_polyline, frame, interface_type, interface_role, topology):
         self.interface_polyline = interface_polyline
         self.frame = frame
+        self.interface_type = interface_type
+        self.interface_role = interface_role
+        self.topology = topology  # TODO: don't like this here
 
 
 class WallJoint(Joint):
@@ -97,6 +141,14 @@ class WallJoint(Joint):
     def interfaces(self):
         return self.main_wall_interface, self.cross_wall_interface
 
+    def get_interface_for_wall(self, wall):
+        if wall is self.main_wall:
+            return self.main_wall_interface
+        elif wall is self.cross_wall:
+            return self.cross_wall_interface
+        else:
+            raise ValueError("Wall not part of this joint.")
+
     def _calculate_interfaces(self):
         # from cross get the face that is closest to main with normal pointing towards main
         # from main we then need the four envelope faces
@@ -106,7 +158,7 @@ class WallJoint(Joint):
         self.main_wall.attributes["category"] = "main"
         self.cross_wall.attributes["category"] = "cross"
 
-        cross_face, is_joint_at_main_end = self._find_intersecting_face(self.main_wall, self.cross_wall)
+        cross_face, is_joint_at_main_end, is_joint_at_cross_end = self._find_intersecting_face(self.main_wall, self.cross_wall)
 
         # collect intersection lines bouding the interface area
         # these cannot be directly used as they are not segmented according to the interface area
@@ -118,6 +170,9 @@ class WallJoint(Joint):
         envelope_faces = self.main_wall.envelope_faces
         if is_joint_at_main_end:
             envelope_faces = [envelope_faces[0], envelope_faces[3], envelope_faces[2], envelope_faces[1]]
+
+        main_interface_type = InterfaceType.FRONT if is_joint_at_main_end else InterfaceType.BACK
+        cross_interface_type = InterfaceType.FRONT if is_joint_at_cross_end else InterfaceType.BACK
 
         for face in envelope_faces:
             face_plane = Plane.from_frame(face)
@@ -138,8 +193,10 @@ class WallJoint(Joint):
         interface_normal = cross_face.normal
         up_vector = Vector.from_start_end(points[0], points[1])
 
-        self.main_wall_interface = WallToWallInterface(interface, Frame(interface[0], interface_normal, up_vector))
-        self.cross_wall_interface = WallToWallInterface(interface, Frame(interface[1], interface_normal.inverted(), up_vector.inverted()))
+        self.main_wall_interface = WallToWallInterface(interface, Frame(interface[0], interface_normal, up_vector), main_interface_type, InterfaceRole.MAIN, self.topology)
+        self.cross_wall_interface = WallToWallInterface(
+            interface, Frame(interface[1], interface_normal.inverted(), up_vector.inverted()), cross_interface_type, InterfaceRole.CROSS, self.topology
+        )
 
     @staticmethod
     def _find_intersecting_face(main_wall, cross_wall):
@@ -157,12 +214,14 @@ class WallJoint(Joint):
             # we always want the baseline direction the points away from the joint
             baseline_direction = baseline_direction.inverted()
 
+        is_joint_at_cross_end = p1.distance_to_point(cross_wall.baseline.start) > p1.distance_to_point(cross_wall.baseline.end)
+
         face_angles = {}
         for ref_side_index, face in enumerate(cross_wall.faces):
             face_angles[ref_side_index] = angle_vectors(face.normal, baseline_direction)
 
         cross_face_index = min(face_angles, key=lambda k: face_angles[k])
-        return cross_wall.faces[cross_face_index], is_joint_at_main_end  # TODO: remove baseline direction?
+        return cross_wall.faces[cross_face_index], is_joint_at_main_end, is_joint_at_cross_end
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.

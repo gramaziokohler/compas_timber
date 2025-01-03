@@ -15,8 +15,10 @@ from .t_birdsmouth import TBirdsmouthJoint
 from .t_halflap import THalfLapJoint
 from .x_halflap import XHalfLapJoint
 from .t_dovetail import TDovetailJoint
-from .wall_joint import WallJoint
 from .ball_node import BallNodeJoint
+from .wall_joint import WallJoint
+from .wall_joint import InterfaceType
+from .wall_joint import InterfaceRole
 
 __all__ = [
     "Joint",
@@ -37,6 +39,8 @@ __all__ = [
     "ConnectionSolver",
     "find_neighboring_elements",
     "TDovetailJoint",
-    "WallJoint",
     "BallNodeJoint",
+    "WallJoint",
+    "InterfaceType",
+    "InterfaceRole",
 ]
