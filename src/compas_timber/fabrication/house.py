@@ -3,14 +3,8 @@ import math
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Rotation
-from compas.geometry import Vector
-from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
-from compas.geometry import intersection_line_plane
-from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.elements import FeatureApplicationError
@@ -313,31 +307,32 @@ class House(BTLxProcessing):
         if tenon.__class__.__name__ not in ["Tenon", "DovetailTenon"]:
             raise ValueError("Tenon must be an instance of Tenon or DovetailTenon.")
         self._tenon = tenon
+        self.add_subprocessing(tenon)
 
     ########################################################################
     # Alternative constructors
     ########################################################################
 
     @classmethod
-    def from_tenon_and_beam(cls, tenon, beam, length, width, height):
+    def from_tenon(cls, tenon, length, width, height):
         """Create a House instance from a Tenon or DovetailTenon instance and the beam it should cut.
 
         Parameters
         ----------
+        tenon : :class:`~compas_timber.fabrication.Tenon` or :class:`~compas_timber.fabrication.DovetailTenon`
+            The tenon feature that is made in conjunction with this House feature.
         length : float
             The length of the house.
         width : float
             The width of the house.
         height : float
             The height of the house.
-        tenon : :class:`~compas_timber.fabrication.Tenon` or :class:`~compas_timber.fabrication.DovetailTenon`
-            The tenon feature that is made in conjunction with this House feature.
 
         Returns
         -------
         :class:`~compas_timber.fabrication.House`
         """
-        # type: (float, float, float, Tenon) -> House
+        # type: (Tenon, float, float, float) -> House
         return cls(
             tenon.orientation,
             tenon.start_x,
@@ -351,204 +346,12 @@ class House(BTLxProcessing):
             length,
             width,
             height,
-            tenon.shape,
+            TenonShapeType.SQUARE,
             tenon.shape_radius,
             tenon.chamfer,
             tenon=tenon,
             ref_side_index=tenon.ref_side_index,
         )
-
-    @classmethod
-    def from_plane_and_beam(
-        cls,
-        plane,
-        beam,
-        start_y=0.0,
-        start_depth=0.0,
-        rotation=0.0,
-        length_limited_top=True,
-        length_limited_bottom=True,
-        length=80.0,
-        width=40.0,
-        height=40.0,
-        shape=TenonShapeType.AUTOMATIC,
-        shape_radius=20.0,
-        chamfer=False,
-        ref_side_index=0,
-    ):
-        """Create a House instance from a cutting plane and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the main beam.
-
-        Parameters
-        ----------
-        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
-            The cutting plane.
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam that is cut by this instance.
-        start_y : float, optional
-            The start y-coordinate of the cut in parametric space of the reference side. Default is 0.0.
-        start_depth : float, optional
-            The start depth of the tenon, which is an offset along the normal of the reference side. Default is 50.0.
-        rotation : float, optional
-            The angle of rotation of the tenon. Default is 0.0.
-        length_limited_top : bool, optional
-            Whether the top length of the tenon is limited. Default is True.
-        length_limited_bottom : bool, optional
-            Whether the bottom length of the tenon is limited. Default is True.
-        length : float, optional
-            The length of the tenon. Default is 80.0.
-        width : float, optional
-            The width of the bottom edge of the tenon. Default is 40.0.
-        height : float, optional
-            The height of the tenon. Related to the dovetail tool and can be defined using the `DovetailTenon.define_dovetail_tool()` method. Default is 28.0.
-        shape : str, optional
-            The shape of the tenon. Default is 'automatic'.
-        shape_radius : float, optional
-            The radius of the shape of the tenon. Related to the dovetail tool and can be defined using the `DovetailTenon.define_dovetail_tool()` method. Default is 20.0.
-        chamfer : bool, optional
-            Whether the edges of the tenon are chamfered. Default is False.
-        ref_side_index : int, optional
-            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.House`
-
-        """
-        # type: (Plane|Frame, Beam, float, float, float, bool, bool, float, float, float, str, float, bool, int) -> House
-        if isinstance(plane, Frame):
-            plane = Plane.from_frame(plane)
-
-        # get ref_side & ref_edge
-        ref_side = beam.ref_sides[ref_side_index]
-        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-
-        # calculate orientation
-        orientation = cls._calculate_orientation(ref_side, plane)
-
-        # calculate angle
-        angle = cls._calculate_angle(ref_side, plane)
-
-        # calculate inclination
-        inclination = cls._calculate_inclination(ref_side, plane, orientation, angle)
-
-        # calculate rotation
-        rotation = cls._calculate_rotation(orientation, rotation) # TODO: calculate and include the rotation of the beam and the plane
-
-        # calculate start_y
-        start_y = cls._calculate_start_y(beam, orientation, start_y, ref_side_index)
-
-        # calculate start_depth
-        start_depth += cls._calculate_start_depth(beam, inclination, length, ref_side_index)
-
-        # override start_depth and length if not limited
-        if not length_limited_top:
-            start_depth = 0.0
-        if not length_limited_bottom:
-            beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
-            length = beam_height / math.sin(math.radians(inclination)) - start_depth
-
-        # calculate start_x
-        start_x = cls._calculate_start_x(
-            ref_side,
-            ref_edge,
-            plane,
-            orientation,
-            start_y,
-            start_depth,
-            angle,
-        )
-
-        # calculate radius based on shape
-        if shape == TenonShapeType.ROUND:
-            shape_radius = width / 2
-
-        return cls(
-            orientation,
-            start_x,
-            start_y,
-            start_depth,
-            angle,
-            inclination,
-            rotation,
-            length_limited_top,
-            length_limited_bottom,
-            length,
-            width,
-            height,
-            shape,
-            shape_radius,
-            chamfer,
-            ref_side_index=ref_side_index,
-        )
-
-    @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
-        # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
-        # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
-            return OrientationType.START
-        else:
-            return OrientationType.END
-
-    @staticmethod
-    def _calculate_start_x(ref_side, ref_edge, plane, orientation, start_y, start_depth, angle):
-        # calculate the start_x of the cut based on the ref_side, ref_edge, plane, start_y and angle
-        plane.translate(ref_side.normal * start_depth)
-        point_start_x = intersection_line_plane(ref_edge, plane)
-        if point_start_x is None:
-            raise ValueError("Plane does not intersect with beam.")
-        start_x = distance_point_point(ref_side.point, point_start_x)
-        # count for start_depth and start_y in the start_x
-        if orientation == OrientationType.END:
-            start_x -= start_y / math.tan(math.radians(angle))
-        else:
-            start_x += start_y / math.tan(math.radians(angle))
-        return start_x
-
-    @staticmethod
-    def _calculate_start_y(beam, orientation, start_y, ref_side_index):
-        # calculate the start_y of the cut based on the beam, orientation, start_y and ref_side_index
-        if orientation == OrientationType.END:
-            start_y = -start_y
-        beam_width = beam.width if ref_side_index % 2 == 0 else beam.height
-        return start_y + beam_width / 2
-
-    @staticmethod
-    def _calculate_start_depth(beam, inclination, length, ref_side_index):
-        # calculate the start_depth of the tenon from height of the beam and the projected length of the tenon
-        proj_length = (length * math.sin(math.radians(inclination)))
-        beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
-        return (beam_height  - proj_length)/2
-
-    @staticmethod
-    def _calculate_angle(ref_side, plane):
-        # vector rotation direction of the plane's normal in the vertical direction
-        angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
-        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-        return abs(angle)
-
-    @staticmethod
-    def _calculate_inclination(ref_side, plane, orientation, angle):
-        # calculate the inclination between the ref_side and the plane
-        if orientation == OrientationType.END:
-            angle = 180 - angle
-        rotation = Rotation.from_axis_and_angle(ref_side.normal, math.radians(angle))
-        rotated_axis = ref_side.xaxis.copy()
-        rotated_axis.transform(rotation)
-
-        cross_plane = Vector.cross(rotated_axis, plane.normal)
-        cross_ref_side = Vector.cross(rotated_axis, ref_side.normal)
-
-        inclination = angle_vectors_signed(cross_ref_side, cross_plane, rotated_axis, deg=True)
-        return abs(inclination)
-
-    @staticmethod
-    def _calculate_rotation(orientation, rotation):
-        # calculate rotation. Constrain the input (additional) rotation value to be between -90 and 90.
-        rotation = (rotation % 90) if rotation >= 0 else -(abs(rotation) % 90)
-        if orientation == OrientationType.END:
-            rotation = -rotation
-        return rotation + 90
 
     ########################################################################
     # Methods
@@ -591,36 +394,64 @@ class House(BTLxProcessing):
             raise FeatureApplicationError(
                 cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
             )
-        # get tenon volume from params and beam
+        # get house volume from params and beam
         try:
-            tenon_volume = self.volume_from_params_and_beam(beam)
+            house_volume = self.volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
+                None, geometry, "Failed to generate house volume from parameters and beam: {}".format(str(e))
             )
         # fillet the edges of the volume based on the shape
         if self.shape is not TenonShapeType.SQUARE:
             try:
+                edges = house_volume.edges[:8]
+                house_volume.fillet(self.shape_radius, edges)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    house_volume,
+                    geometry,
+                    "Failed to fillet the edges of the house volume based on the shape: {}".format(str(e)),
+                )
+        # get tenon volume
+        try:
+            tenon_volume = self.tenon.volume_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
+            )
+
+        # fillet the edges of the tenon volume based on the tenon shape
+        if self.tenon.shape is not TenonShapeType.SQUARE:
+            try:
                 edges = tenon_volume.edges[:8]
-                tenon_volume.fillet(self.shape_radius, edges)
+                tenon_volume.fillet(self.tenon.shape_radius, edges)
             except Exception as e:
                 raise FeatureApplicationError(
                     tenon_volume,
                     geometry,
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
-        # remove any parts of the volume that exceed the beam geometry. Fails silently.
-        for frame in beam.ref_sides[:4]:
-            try:
-                tenon_volume = tenon_volume.trimmed(frame)
-            except Exception:
-                pass # Fail silently since it won't be possible to trim the tenon if it doesn't exceed the beam geometry.
-        # add tenon volume to geometry
+        # add tenon volume to house volume
         try:
-            geometry += tenon_volume
+            house_volume += tenon_volume
         except Exception as e:
             raise FeatureApplicationError(
-                tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+                tenon_volume, house_volume, "Failed to add tenon volume to house volume: {}".format(str(e))
+            )
+
+        # remove any parts of the house volume that exceed the beam geometry. Fails silently.
+        for frame in beam.ref_sides[:4]:
+            try:
+                tenon_volume = house_volume.trimmed(frame)
+            except Exception:
+                pass # Fail silently since it won't be possible to trim the tenon if it doesn't exceed the beam geometry.
+
+        # add house volume to geometry
+        try:
+            geometry += house_volume
+        except Exception as e:
+            raise FeatureApplicationError(
+                house_volume, geometry, "Failed to add house/tenon volume to geometry: {}".format(str(e))
             )
         return geometry
 
@@ -710,8 +541,9 @@ class House(BTLxProcessing):
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
-        tenon_box = Box(self.width, self.length, self.height, cutting_frame)
-        return Brep.from_box(tenon_box)
+        house_box = Box(self.width, self.length, self.height, cutting_frame)
+
+        return Brep.from_box(house_box)
 
 
 class HouseParams(BTLxProcessingParams):

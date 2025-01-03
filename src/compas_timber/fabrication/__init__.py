@@ -26,6 +26,8 @@ from .mortise import Mortise
 from .mortise import MortiseParams
 from .house import House
 from .house import HouseParams
+from .house_mortise import HouseMortise
+from .house_mortise import HouseMortiseParams
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
 
@@ -58,6 +60,8 @@ __all__ = [
     "MortiseParams",
     "House",
     "HouseParams",
+    "HouseMortise",
+    "HouseMortiseParams",
     "TenonShapeType",
     "EdgePositionType",
 ]
