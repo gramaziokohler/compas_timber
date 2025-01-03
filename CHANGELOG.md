@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `create` override to `BallNodeJoint`.
 * Added `PlateFastener` class.
 * Added `errors` directory and `__init__.py` module.
+* Added new `compas_timber._fabrication.Slot`.
+* Added new `compas_timber._fabrication.SlotParams`.
 
 ### Changed
 
