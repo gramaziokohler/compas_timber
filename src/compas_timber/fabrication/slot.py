@@ -13,9 +13,9 @@ from .btlx import OrientationType
 
 
 class Slot(BTLxProcessing):
-
     PROCESSING_NAME = "Slot"  # type: ignore
 
+    # fmt: off
     def __init__(
         self,
         orientation,
