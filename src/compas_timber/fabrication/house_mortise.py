@@ -1,4 +1,3 @@
-
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
