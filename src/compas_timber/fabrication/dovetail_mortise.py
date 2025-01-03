@@ -502,7 +502,7 @@ class DovetailMortise(BTLxProcessing):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting planes do not create a volume that itersects with beam geometry or any step fails.
 
         Returns

@@ -7,7 +7,7 @@ from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -370,7 +370,7 @@ class House(BTLxProcessing):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting frames do not create a volume that itersects with beam geometry or any step fails.
 
         Returns

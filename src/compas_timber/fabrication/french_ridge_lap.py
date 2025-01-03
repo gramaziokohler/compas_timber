@@ -284,7 +284,7 @@ class FrenchRidgeLap(BTLxProcessing):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with beam geometry.
 
         Returns
