@@ -28,6 +28,8 @@ from .house import House
 from .house import HouseParams
 from .house_mortise import HouseMortise
 from .house_mortise import HouseMortiseParams
+from .slot import Slot
+from .slot import SlotParams
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
 
@@ -62,6 +64,8 @@ __all__ = [
     "HouseParams",
     "HouseMortise",
     "HouseMortiseParams",
+    "Slot",
+    "SlotParams",
     "TenonShapeType",
     "EdgePositionType",
 ]
