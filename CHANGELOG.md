@@ -61,7 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
 * Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
-* Added new `compas_timber.fabrication.House` and `compas_timber.fabrication.HouseMortise`.
 
 ### Changed
 
@@ -87,7 +86,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
 * Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
 * Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
-* Adjusted `compas_timber.conntection.TDovetailJoint` and `compas_timber.fabrication.TenonMortisJoint` to allow Housing.
 
 ### Removed
 

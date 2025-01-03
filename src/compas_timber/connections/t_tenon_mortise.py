@@ -1,7 +1,5 @@
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoinningError
-from compas_timber.fabrication import House
-from compas_timber.fabrication import HouseMortise
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import TenonShapeType
@@ -41,8 +39,6 @@ class TenonMortiseJoint(Joint):
         The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
-    house: float
-        The depth of the housing, if applicable.
 
 
     Attributes
@@ -71,8 +67,6 @@ class TenonMortiseJoint(Joint):
         The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
-    house: float
-        The depth of the housing, if applicable.
     features : list
         List of features or machining processings applied to the elements.
     """
@@ -92,7 +86,6 @@ class TenonMortiseJoint(Joint):
         data["height"] = self.height
         data["shape"] = self.shape
         data["shape_radius"] = self.shape_radius
-        data["house"] = self.house
         return data
 
     # fmt: off
@@ -108,7 +101,6 @@ class TenonMortiseJoint(Joint):
         height=None,
         shape=None,
         shape_radius=None,
-        house=None,
         **kwargs
     ):
         super(TenonMortiseJoint, self).__init__(**kwargs)
@@ -125,7 +117,6 @@ class TenonMortiseJoint(Joint):
         self.height = height
         self.shape = shape
         self.shape_radius = shape_radius
-        self.house = house
 
         # assign default values if not provided
         self.set_default_values()
@@ -256,13 +247,6 @@ class TenonMortiseJoint(Joint):
             shape_radius=main_feature.shape_radius,
             ref_side_index=self.cross_beam_ref_side_index,
         )
-
-        # convert to house and house mortise if tenon should be housed
-        if self.house:
-            length = self.main_beam.width if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.height
-            width = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
-            main_feature = House.from_tenon(main_feature, length, width, self.house)
-            cross_feature = HouseMortise.from_mortise(cross_feature, length, width, self.house)
 
         # add features to beams
         self.main_beam.add_features(main_feature)

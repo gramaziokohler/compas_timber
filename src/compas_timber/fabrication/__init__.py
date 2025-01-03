@@ -24,10 +24,6 @@ from .tenon import Tenon
 from .tenon import TenonParams
 from .mortise import Mortise
 from .mortise import MortiseParams
-from .house import House
-from .house import HouseParams
-from .house_mortise import HouseMortise
-from .house_mortise import HouseMortiseParams
 from .slot import Slot
 from .slot import SlotParams
 from .btlx import TenonShapeType
@@ -60,10 +56,6 @@ __all__ = [
     "TenonParams",
     "Mortise",
     "MortiseParams",
-    "House",
-    "HouseParams",
-    "HouseMortise",
-    "HouseMortiseParams",
     "Slot",
     "SlotParams",
     "TenonShapeType",
