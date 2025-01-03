@@ -396,7 +396,7 @@ class HouseMortise(BTLxProcessing):
 
         # remove tenon volume to geometry
         try:
-            return geometry - mortise_volume
+            return geometry - house_mortise_volume
         except Exception as e:
             raise FeatureApplicationError(
                 mortise_volume, geometry, "Failed to remove house mortise volume from geometry: {}".format(str(e))
@@ -424,12 +424,6 @@ class HouseMortise(BTLxProcessing):
         ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
         cutting_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
-
-        # rotate the cutting frame based on the angle
-        angle_rotation = Rotation.from_axis_and_angle(
-            cutting_frame.normal, math.radians(self.angle + 90), cutting_frame.point
-        )
-        cutting_frame.transform(angle_rotation)
         return cutting_frame
 
     def volume_from_params_and_beam(self, beam):
@@ -452,8 +446,8 @@ class HouseMortise(BTLxProcessing):
         assert self.depth is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
-        # translate the cutting frame to the center of the mortise
-        translation_vector = (-cutting_frame.normal * self.depth - cutting_frame.yaxis * self.length)
+
+        translation_vector = (-cutting_frame.normal * self.depth - cutting_frame.xaxis * self.length)
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
