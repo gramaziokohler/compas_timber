@@ -58,7 +58,7 @@ class CutFeature(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with the element geometry.
 
         Returns
@@ -113,7 +113,7 @@ class DrillFeature(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the drill volume is not contained in the element geometry.
 
         Returns
@@ -164,7 +164,7 @@ class MillVolume(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the volume does not intersect with the element geometry.
 
         Returns
@@ -216,7 +216,7 @@ class BrepSubtraction(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the volume does not intersect with the element geometry.
 
         Returns

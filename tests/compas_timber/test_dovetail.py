@@ -8,8 +8,8 @@ from compas.geometry import Frame
 from compas.geometry import Vector
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import DovetailMortise
-from compas_timber._fabrication import DovetailTenon
+from compas_timber.fabrication import DovetailMortise
+from compas_timber.fabrication import DovetailTenon
 
 from compas.tolerance import TOL
 

@@ -1,8 +1,8 @@
-from compas_timber._fabrication import Mortise
-from compas_timber._fabrication import Tenon
-from compas_timber._fabrication.btlx_process import TenonShapeType
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoinningError
+from compas_timber.fabrication import Mortise
+from compas_timber.fabrication import Tenon
+from compas_timber.fabrication import TenonShapeType
 
 from .joint import Joint
 from .solver import JointTopology
@@ -68,7 +68,7 @@ class TenonMortiseJoint(Joint):
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
     features : list
-        List of features or machining processes applied to the elements.
+        List of features or machining processings applied to the elements.
     """
 
     SUPPORTED_TOPOLOGY = [JointTopology.TOPO_T, JointTopology.TOPO_L]

@@ -6,8 +6,8 @@ from compas_viewer import Viewer
 from compas_timber.elements import Beam
 
 from compas_timber.model import TimberModel
-from compas_timber._fabrication import Drilling
-from compas_timber.fabrication import BTLx
+from compas_timber.fabrication import Drilling
+from compas_timber.fabrication import BTLxWriter
 
 HERE = os.path.dirname(__file__)
 
@@ -62,13 +62,9 @@ for d_line in drill_lines:
 
 beam.add_features(features)
 
-btlx = BTLx(model)
+btlx = BTLxWriter(model)
 PATH = os.path.join(HERE, "drilling.btlx")
-btlx_gen = BTLx(model)
-btlx_gen.process_model()
-with open(PATH, "w") as file:
-    file.write(btlx_gen.btlx_string())
-
+btlx.write(model, PATH)
 viewer = create_viewer()
 viewer.scene.add(beam.geometry)
 viewer.show()

@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `errors` directory and `__init__.py` module.
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
+* Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
 
 ### Changed
 
@@ -83,17 +84,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `JointRuleFromList` GH component.
 * Changed `TButtJoint` to take an optional `PlateFastener`.
 * Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
+* Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
+* Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
 
 ### Removed
 
 * Removed module `compas_timber.utils.compas_extra`.
 * Removed a bunch of spaghetti from `CT_model` GH component.
-* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
-* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
-* Removed module `compas_timber.connections.butt_joint`
-* Removed module `compas_timber.connections.french_ridge_lap`
-* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`
-* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`
+* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`.
+* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`.
+* Removed module `compas_timber.connections.butt_joint`.
+* Removed module `compas_timber.connections.french_ridge_lap`.
+* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
+* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
+* Removed package `compas_timber._fabrication`.
+* Removed `btlx_processes` anf `joint_factories` from `compas_timber.fabrication` package.
+* Removed `.btlx` files from `.gitignore`.
 
 
 

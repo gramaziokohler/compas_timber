@@ -123,4 +123,4 @@ docs/api/generated/
 conda.recipe/
 tests/temp/
 
-*.btlx
+src/*.btlx

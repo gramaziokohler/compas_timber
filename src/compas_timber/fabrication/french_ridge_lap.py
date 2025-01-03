@@ -17,13 +17,13 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import EdgePositionType
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import EdgePositionType
+from .btlx import OrientationType
 
 
-class FrenchRidgeLap(BTLxProcess):
+class FrenchRidgeLap(BTLxProcessing):
     """Represents a French Ridge Lap feature to be made on a beam.
 
     Parameters
@@ -43,7 +43,7 @@ class FrenchRidgeLap(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "FrenchRidgeLap"  # type: ignore
+    PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
 
     @property
     def __data__(self):
@@ -284,7 +284,7 @@ class FrenchRidgeLap(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with beam geometry.
 
         Returns
@@ -437,12 +437,12 @@ class FrenchRidgeLap(BTLxProcess):
         return subtraction_volume
 
 
-class FrenchRidgeLapParams(BTLxProcessParams):
+class FrenchRidgeLapParams(BTLxProcessingParams):
     """A class to store the parameters of a French Ridge Lap feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.FrenchRidgeLap`
+    instance : :class:`~compas_timber.fabrication.FrenchRidgeLap`
         The instance of the French Ridge Lap feature.
     """
 
