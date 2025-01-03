@@ -7,7 +7,7 @@ from compas.geometry import Line
 from compas.geometry import Vector
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import Slot
+from compas_timber.fabrication import Slot
 
 
 @pytest.fixture
