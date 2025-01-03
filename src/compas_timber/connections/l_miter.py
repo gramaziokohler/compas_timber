@@ -5,9 +5,9 @@ from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
 from compas_timber._fabrication import JackRafterCut
+from compas_timber.errors import BeamJoinningError
 from compas_timber.utils import intersection_line_line_param
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 

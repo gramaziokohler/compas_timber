@@ -67,19 +67,17 @@ class Fastener(TimberElement):
         # type: () -> int | None
         return self.graph_node
 
-    # TODO: implement Data instead of re-implementing
-    # def copy(self):
-    #     cls = type(self)
-    #     fast = cls(shape=self._shape, frame=self.frame)
-    #     fast.interfaces = [interface.copy() for interface in self.interfaces]
-    #     fast.debug_info = self.debug_info
-    #     return fast
+    @property
+    def __data__(self):
+        return {
+            "shape": self._shape,
+            "frame": self.frame,
+            "interfaces": self.interfaces,
+        }
 
-    # TODO: should implement compute_geometry instead
-    # @property
-    # def geometry(self):
-    #     """returns the geometry of the fastener in the model"""
-    #     return self.shape.transformed(Transformation.from_frame(self.frame))
+    def compute_geometry(self):
+        """returns the geometry of the fastener in the model"""
+        return self.shape.transformed(Transformation.from_frame(self.frame))
 
 
 class FastenerTimberInterface(Data):
@@ -134,13 +132,16 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(self, outline_points=None, thickness=None, holes=None, shapes=None, frame=None, features=None):
+    def __init__(
+        self, outline_points=None, thickness=None, holes=None, shapes=None, frame=None, element=None, features=None
+    ):
         super(FastenerTimberInterface, self).__init__()
         self.outline_points = outline_points
         self.thickness = thickness
         self.holes = holes or []
         self.frame = frame or Frame.worldXY()
-        self.shapes = shapes
+        self.element = element
+        self.shapes = shapes or []
         self.features = features or []  # TODO: what are these? FeatureDefinitions?
         self._shape = None
 
@@ -154,6 +155,7 @@ class FastenerTimberInterface(Data):
             "thickness": self.thickness,
             "holes": self.holes,
             "frame": self.frame,
+            "element": self.element,
             "shapes": self.shapes,
             "features": self.features,
         }
@@ -172,7 +174,7 @@ class FastenerTimberInterface(Data):
 
     def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element."""
-        vector = hole["vector"] or Vector(0.0, 0.0, 1.0)
+        vector = hole.get("vector", None) or Vector(0.0, 0.0, 1.0)
         length = vector.length
         point = hole["point"] - vector * length * 0.5
         drill_line = Line.from_point_direction_length(point, vector, length)
