@@ -6,26 +6,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
 
-
-class FeatureApplicationError(Exception):
-    """Raised when a feature cannot be applied to an element geometry.
-
-    Attributes
-    ----------
-    feature_geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the feature that could not be applied.
-    element_geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the element that could not be modified.
-    message : str
-        The error message.
-
-    """
-
-    def __init__(self, feature_geometry, element_geometry, message):
-        super(FeatureApplicationError, self).__init__(message)
-        self.feature_geometry = feature_geometry
-        self.element_geometry = element_geometry
-        self.message = message
+from compas_timber.errors import FeatureApplicationError
 
 
 class Feature(Data):
@@ -95,6 +76,9 @@ class CutFeature(Feature):
                 "The cutting plane does not intersect with element geometry.",
             )
 
+    def transform(self, transformation):
+        self.cutting_plane.transform(transformation)
+
 
 class DrillFeature(Feature):
     """Parametric drill hole to be made on an element.
@@ -138,7 +122,6 @@ class DrillFeature(Feature):
             The resulting geometry after processing.
 
         """
-        print("applying drill hole feature to element")
         plane = Plane(point=self.line.start, normal=self.line.vector)
         plane.point += plane.normal * 0.5 * self.length
         drill_volume = Cylinder(frame=Frame.from_plane(plane), radius=self.diameter / 2.0, height=self.length)
@@ -151,6 +134,9 @@ class DrillFeature(Feature):
                 element_geometry,
                 "The drill volume is not contained in the element geometry.",
             )
+
+    def transform(self, transformation):
+        self.line.transform(transformation)
 
 
 class MillVolume(Feature):
@@ -201,6 +187,9 @@ class MillVolume(Feature):
                 "The volume does not intersect with element geometry.",
             )
 
+    def transform(self, transformation):
+        self.mesh_volume.transform(transformation)
+
 
 class BrepSubtraction(Feature):
     """Generic volume subtraction from an element.
@@ -244,3 +233,6 @@ class BrepSubtraction(Feature):
                 element_geometry,
                 "The volume does not intersect with element geometry.",
             )
+
+    def transform(self, transformation):
+        self.volume.transform(transformation)

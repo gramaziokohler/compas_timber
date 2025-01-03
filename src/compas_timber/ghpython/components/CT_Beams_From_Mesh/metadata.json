@@ -1,0 +1,52 @@
+{
+    "name": "BeamsFromMeshEdges",
+    "nickname": "BeamsFromMesh",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Creates Beams and from mesh edges and maps them to the mesh vertexes.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Mesh",
+                "description": "Mesh whose edges are used to generate beams.",
+                "typeHintID": "mesh",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Width",
+                "description": "Width of beams",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Height",
+                "description": "Height of beams",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Category",
+                "description": "Category assigned to beams that can be used to define joint rules.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Beams",
+                "description": "List of compas_timber Beams."
+            },
+            {
+                "name": "Beam Map",
+                "description": "a Data Tree with the beams organized by connection to a mesh vertex. Used to define joint rules using the Joint_Rules_From_List component."
+            },
+            {
+                "name": "Blanks",
+                "description": "Base beam geometry before adding features or joining operations"
+            }
+        ]
+    }
+}

@@ -5,16 +5,16 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Polyline
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
 from .btlx_process import BTLxProcess
 from .btlx_process import BTLxProcessParams
@@ -76,6 +76,7 @@ class StepJointNotch(BTLxProcess):
         data["mortise_height"] = self.mortise_height
         return data
 
+    # fmt: off
     def __init__(
         self,
         orientation,
@@ -166,8 +167,8 @@ class StepJointNotch(BTLxProcess):
 
     @strut_inclination.setter
     def strut_inclination(self, strut_inclination):
-        if strut_inclination < 0.1 or strut_inclination > 179.9:
-            raise ValueError("StrutInclination must be between 0.1 and 179.9.")
+        if strut_inclination < 0.1 or strut_inclination > 179.9 or strut_inclination == 90.0:
+            raise ValueError("StrutInclination must be between 0.1 and 89.9 or 90.1 and 179.9.")
         self._strut_inclination = strut_inclination
 
     @property
@@ -340,21 +341,7 @@ class StepJointNotch(BTLxProcess):
             notch_width = notch_width if notch_width < beam.width else beam.width
         else:
             notch_width = beam.width
-
-        # restrain step_depth & heel_depth to beam's height
-        if step_depth > beam.height:
-            step_depth = beam.height
-            print("Step depth is too large for the beam's height. It has been adjusted to the beam's height.")
-
-        max_heel_depth = abs(beam.height / math.tan(math.radians(strut_inclination)))
-        if heel_depth > max_heel_depth and not tapered_heel:
-            heel_depth = max_heel_depth
-            print(
-                "Heel depth is too large for the given strut inclination. It has been adjusted to the maximum possible value."
-            )
-
-        if not tapered_heel:
-            heel_depth = max_heel_depth if heel_depth > max_heel_depth else heel_depth
+            start_y = 0.0
 
         # define step_shape
         step_shape = cls._define_step_shape(step_depth, heel_depth, tapered_heel)
@@ -525,20 +512,24 @@ class StepJointNotch(BTLxProcess):
             geometry -= subtraction_volume
 
         ## add mortise
-        if self.mortise and self.step_shape != StepShapeType.DOUBLE:
-            # TODO: check if mortise applies only to step in BTLx
-            # create mortise volume and subtract from brep
-            mortise_volume = self.mortise_volume_from_params_and_beam(beam)
-            # trim mortise volume with cutting plane
-            if self.step_shape == StepShapeType.STEP:
-                try:
-                    mortise_volume.trim(cutting_planes[0])
-                except Exception as e:
-                    raise FeatureApplicationError(
-                        cutting_planes[0],
-                        mortise_volume,
-                        "Failed to trim mortise volume with cutting plane: {}".format(str(e)),
-                    )
+        if self.mortise and self.step_shape != StepShapeType.DOUBLE: # TODO: check if mortise applies only to step in BTLx
+            # create mortise box and convert to Brep
+            mortise_box = self.mortise_volume_from_params_and_beam(beam)
+            mortise_volume = Brep.from_box(mortise_box)
+            # trim mortise volume at step
+            origin = intersection_plane_plane(cutting_planes[0], cutting_planes[1])[0]
+            normal = mortise_box.frame.xaxis
+            if self.step_shape != StepShapeType.STEP:
+                normal = -normal
+            cuttin_plane_step = Plane(origin, normal)
+            try:
+                mortise_volume.trim(cuttin_plane_step)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    cuttin_plane_step,
+                    mortise_volume,
+                    "Failed to trim mortise volume with step cutting plane: {}".format(str(e)),
+                )
             try:
                 geometry -= mortise_volume
             except Exception as e:
@@ -561,7 +552,6 @@ class StepJointNotch(BTLxProcess):
         """
         self.mortise = True
         self.mortise_width = mortise_width
-
         if mortise_height > beam.height:  # TODO: should this be constrained?
             self.mortise_height = beam.height
         elif mortise_height < self.step_depth:
@@ -774,77 +764,35 @@ class StepJointNotch(BTLxProcess):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas.geometry.Box`
             The mortise volume.
 
         """
-        # type: (Beam) -> Brep
+        # type: (Beam) -> Box
 
         assert self.strut_inclination is not None
         assert self.step_shape is not None
         assert self.strut_height is not None
         assert self.notch_width is not None
-        assert self.mortise
         assert self.mortise_width is not None
         assert self.mortise_height is not None
 
         # start with a plane aligned with the ref side but shifted to the start of the first cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        rot_axis = ref_side.frame.yaxis
+        ref_side.point -= ref_side.zaxis * (self.mortise_height / 2)
 
-        start_x = self.start_x
-        displacement_x = self.strut_height / math.sin(math.radians(self.strut_inclination))
-        start_y = self.start_y + (self.notch_width - self.mortise_width) / 2
-        displacement_y = self.mortise_width
+        dx = self.strut_height / math.sin(math.radians(self.strut_inclination))
+        dy = self.mortise_width
 
+        start_x = self.start_x + dx/2 if self.orientation == OrientationType.START else self.start_x - dx/2
+        start_y = ref_side.ysize / 2
+
+        box_origin = ref_side.point_at(start_x, start_y)
+        box_frame =  Frame(box_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
         if self.orientation == OrientationType.END:
-            displacement_x = -displacement_x  # negative displacement for the end cut
-            rot_axis = -rot_axis  # negative rotation axis for the end cut
+            box_frame.xaxis = -box_frame.xaxis
 
-        # find the points that create the top face of the mortise
-        p_1 = ref_side.point_at(start_x, start_y)
-        p_2 = ref_side.point_at(start_x + displacement_x, start_y)
-        p_3 = ref_side.point_at(start_x + displacement_x, start_y + displacement_y)
-        p_4 = ref_side.point_at(start_x, start_y + displacement_y)
-
-        # construct polyline for the top face of the mortise
-        mortise_polyline = Polyline([p_1, p_2, p_3, p_4, p_1])
-
-        # calcutate extrusion vector
-        extr_vector_length = self.mortise_height / math.sin(math.radians(self.strut_inclination))
-        extr_vector = ref_side.frame.xaxis * extr_vector_length
-        if self.strut_inclination > 90:
-            vector_angle = math.radians(180 - self.strut_inclination)
-            extr_vector = extr_vector * -1
-        else:
-            vector_angle = math.radians(self.strut_inclination)
-        rot_vect = Rotation.from_axis_and_angle(rot_axis, vector_angle)
-        extr_vector.transform(rot_vect)
-
-        # translate the polyline to create the bottom face of the mortise
-        mortise_polyline_extrusion = mortise_polyline.translated(extr_vector)
-
-        # create Box from mortise points  # TODO: should create Brep directly by extruding the polyline
-        mortise_points = mortise_polyline.points + mortise_polyline_extrusion.points
-        mortise_box = Box.from_points(mortise_points)
-
-        # convert to Brep and trim with cutting_planes
-        mortise_brep = Brep.from_box(mortise_box)
-        if self.strut_inclination > 90:
-            trimming_plane_start = Plane.from_point_and_two_vectors(p_1, extr_vector, ref_side.frame.yaxis)
-            trimming_plane_end = Plane.from_point_and_two_vectors(p_2, -extr_vector, ref_side.frame.yaxis)
-        else:
-            trimming_plane_start = Plane.from_point_and_two_vectors(p_1, -extr_vector, ref_side.frame.yaxis)
-            trimming_plane_end = Plane.from_point_and_two_vectors(p_2, extr_vector, ref_side.frame.yaxis)
-        try:
-            mortise_brep.trim(trimming_plane_start)
-            mortise_brep.trim(trimming_plane_end)
-        except Exception as e:
-            raise FeatureApplicationError(
-                mortise_brep, None, "Failed to trim mortise volume with cutting planes: {}".format(str(e))
-            )
-
-        return mortise_brep
+        return Box(dx, dy, self.mortise_height, box_frame)
 
 
 class StepJointNotchParams(BTLxProcessParams):

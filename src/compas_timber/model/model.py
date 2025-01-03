@@ -69,10 +69,19 @@ class TimberModel(Model):
 
     @property
     def joints(self):
-        # type: () -> Generator[Joint, None, None]
+        # type: () -> List[Joint, None, None]
+        joints = []
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
-                yield interaction  # TODO: consider if there are other interaction types...
+                joints.append(interaction)
+        return set(joints)  # remove duplicates
+
+    @property
+    def fasteners(self):
+        # type: () -> Generator[Fastener, None, None]
+        for element in self.elements():
+            if getattr(element, "is_fastener", False):
+                yield element
 
     @property
     def walls(self):
@@ -123,23 +132,118 @@ class TimberModel(Model):
         """
         return self._guid_element[guid]
 
-    def add_joint(self, joint, beams):
-        # type: (Joint, tuple[Beam]) -> None
+    def add_group_element(self, element, name=None):
+        """Add an element which shall contain other elements.
+
+        The container element is added to the group as well.
+
+        TODO: upstream this to compas_model, maybe?
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.TimberElement`
+            The element to add to the group.
+        name : str, optional
+            The name of the group to add the element to. If not provided, the element's name is used.
+
+        Returns
+        -------
+        :class:`~compas_model.models.GroupNode`
+            The group node containing the element.
+
+        Raises
+        ------
+        ValueError
+            If the group name is not provided and the element has no name.
+            If a group with same name already exists in the model.
+
+        Examples
+        --------
+        >>> from compas_timber.elements import Beam, Wall
+        >>> from compas_timber.model import TimberModel
+        >>> model = TimberModel()
+        >>> wall1_group = model.add_group_element(Wall(5000, 200, 3000, name="wall1"))
+        >>> beam_a = Beam(Frame.worldXY(), 100, 200, 300)
+        >>> model.add_element(beam_a, parent=wall1_group)
+        >>> model.has_group("wall1")
+        True
+
+        """
+        # type: (TimberElement, str) -> GroupNode
+        group_name = name or element.name
+
+        if not element.is_group_element:
+            raise ValueError("Element {} is not a group element.".format(element))
+
+        if not group_name:
+            raise ValueError("Group name must be provided or group element must have a name.")
+
+        if self.has_group(group_name):
+            raise ValueError("Group {} already exists in model.".format(group_name))
+
+        group_node = self.add_group(group_name)
+        self.add_element(element, parent=group_node)
+        return group_node
+
+    def has_group(self, group_name):
+        # type: (str) -> bool
+        """Check if a group with `group_name` exists in the model.
+
+        TODO: upstream this to compas_model
+
+        Parameters
+        ----------
+        group_name : str
+            The name of the group to query.
+
+        Returns
+        -------
+        bool
+            True if the group exists in the model.
+        """
+        return group_name in (group.name for group in self._tree.groups)
+
+    def get_elements_in_group(self, group_name, filter_=None):
+        """Get all elements in a group with `group_name`.
+
+        TODO: upstream this to compas_model
+
+        Parameters
+        ----------
+        group_name : str
+            The name of the group to query.
+        filter_ : callable, optional
+            A filter function to apply to the elements.
+
+        Returns
+        -------
+        Generator[:class:`~compas_model.elements.Element`]
+            A generator of elements in the group.
+
+        """
+        # type: (str, Optional[callable]) -> Generator[Element, None, None]
+        if not self.has_group(group_name):
+            raise ValueError("Group {} not found in model.".format(group_name))
+
+        filter_ = filter_ or (lambda _: True)
+
+        group = next((group for group in self._tree.groups if group.name == group_name))
+        elements = (node.element for node in group.children)
+        return filter(filter_, elements)
+
+    def add_joint(self, joint):
+        # type: (Joint) -> None
         """Add a joint object to the model.
 
         Parameters
         ----------
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
-
-        beams : tuple(:class:`~compas_timber.elements.Beam`)
-            The two beams that should be joined.
-
         """
-        if len(beams) != 2:
-            raise ValueError("Expected 2 parts. Got instead: {}".format(len(beams)))
-        a, b = beams
-        _ = self.add_interaction(a, b, interaction=joint)
+        self.add_elements(joint.generated_elements)
+        for interaction in joint.interactions:
+            element_a, element_b = interaction
+            _ = self.add_interaction(element_a, element_b, joint)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -151,21 +255,26 @@ class TimberModel(Model):
             The joint to remove.
 
         """
-        a, b = joint.beams  # TODO: make this generic elements not beams
-        super(TimberModel, self).remove_interaction(a, b)  # TODO: Can two elements share more than one interaction?
+        for interaction in joint.interactions:
+            element_a, element_b = interaction
+            self.remove_interaction(element_a, element_b)
+        for element in joint.generated_elements:
+            self.remove_element(element)
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
 
     def process_joinery(self):
-        """Process the joinery of the model. This methods instructs all joints to add their extensions and features.
+        """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
 
         The sequence is important here since the feature parameters must be calculated based on the extended blanks.
         For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
 
         """
+
         for joint in self.joints:
+            joint.check_elements_compatibility()
             joint.add_extensions()
 
         for joint in self.joints:

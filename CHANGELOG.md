@@ -24,8 +24,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.DrillingParams`.
 * Added new `compas_timber._fabrication.StepJoint`.
 * Added new `compas_timber._fabrication.StepJointNotch`.
+* Added new `compas_timber._fabrication.DovetailTenon`.
+* Added new `compas_timber._fabrication.DovetailMortise`.
 * Added new `compas_timber.connections.TStepJoint`.
+* Added new `compas_timber.connections.TDovetailJoint`.
 * Added new `utilities` module in `connections` package.
+* Added new `compas_timber._fabrication.DoubleCut`.
+* Added new `compas_timber.connections.TBirdsmouthJoint`.
+* Added new method `add_group_element` to `TimberModel`.
+* Added new method `has_group` to `TimberModel`.
+* Added new method `get_elements_in_group` to `TimberModel`.
+* Added attribute `is_group_element` to `TimberElement`.
+* Added `JointRule.joints_from_beams_and_rules()` static method 
+* Added `Element.reset()` method.
+* Added new `fasteners.py` module with new `Fastener` element type.
+* Added new `compas_timber._fabrication.Lap`.
+* Added `Joint_Rule_From_List` GH Component that takes lists of beams to create joints.
+* Added `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` class attributes to `Joint`.
+* Added `element_count_complies` class method to `Joint`.
+* Added `compas_timber.fasteners.FastenerTimberInterface`.
+* Added `compas_timber.connections.BallNodeJoint`.
+* Added `compas_timber.elements.BallNodeFastener`.
+* Added `transform()` method to `Feature` types.
+* Added `FastenerInterfaceComponent` GH component.
+* Added `ShowElementsByType` GH Component.
+* Added `fasteners` property to `TimberModel`.
+* Added `BTLx_Feature` GH component.
+* Added `CT_Beams_From_Mesh` GH component.
+* Added new `compas_timber._fabrication.FrenchRidgeLap`.
+* Added new `compas_timber.connections.LFrenchRidgeLapJoint`.
+* Added new `compas_timber._fabrication.Tenon` and `compas_timber._fabrication.Mortise`.
+* Added new `compas_timber.connections.TTenonMortiseJoint`.
+* Added `create` override to `BallNodeJoint`.
+* Added `PlateFastener` class.
+* Added `errors` directory and `__init__.py` module.
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
 
@@ -34,10 +66,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
 * Renamed `intersection_line_plane` to `intersection_line_plane_param`.
 * Renamed `intersection_line_line_3D` to `intersection_line_line_param`.
+* Adjusted functions in `compas_timber._fabrication.DovetailMortise` and `compas_timber.connections.TDovetailJoint`.
+* Added `conda-forge` channel to installation instructions.
+* Fixed `**kwargs` inheritance in `__init__` for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
+* Fixed GUID assignment logic from `**kwargs` to ensure correct fallback behavior for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
+* Changed `model.element_by_guid()` instead of direct `elementsdict[]` access for beam retrieval in joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`.
+* Reworked the model generation pipeline.
+* Reworked `comply` methods for `JointRule`s. 
+* Fixed error with angle and inclination calculation in `compas_timber._fabrication.JackRafterCut` 
+* Changed `compas_timber.connections.TButtJoint` and `compas_timber.connections.LButtJoint` by using the new implemented BTLx Processes to define the Joints
+* Changed `DirectJointRule` to allow for more than 2 elements per joint.
+* Changed `beam` objects get added to `Joint.elements` in `Joint.create()`.
+* Fixed bug in vizualization of tenon/mortise in `compas_timber._fabrication.StepJoint`and `compas_timber._fabrication.StepJointNotch`.
+* Changed `model.process_joinery()`so that it calls `joint.check_elements_compatibility()` before adding extensions and features.
+* Fixed incorrect data keys for `beam_guid` in the `__data__` property for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`, `LFrenchRidgeLapJoint`.
+* Fixed `JointRuleFromList` GH component.
+* Changed `TButtJoint` to take an optional `PlateFastener`.
+* Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
 
 ### Removed
 
 * Removed module `compas_timber.utils.compas_extra`.
+* Removed a bunch of spaghetti from `CT_model` GH component.
+* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
+* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
+* Removed module `compas_timber.connections.butt_joint`
+* Removed module `compas_timber.connections.french_ridge_lap`
+* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`
+* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`
+
+
 
 ## [0.11.0] 2024-09-17
 

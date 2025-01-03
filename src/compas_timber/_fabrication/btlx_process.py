@@ -106,3 +106,101 @@ class StepShapeType(object):
     HEEL = "heel"
     TAPERED_HEEL = "taperedheel"
     DOUBLE = "double"
+
+
+class TenonShapeType(object):
+    """Enum for the tenon shape of the cut.
+
+    Attributes
+    ----------
+    AUTOMATIC : literal("automatic")
+        Automatic tenon shape.
+    SQUARE : literal("square")
+        Square tenon shape.
+    ROUND : literal("round")
+        Round tenon shape.
+    ROUNDED : literal("rounded")
+        Rounded tenon shape.
+    RADIUS : literal("radius")
+        Radius tenon shape.
+    """
+
+    AUTOMATIC = "automatic"
+    SQUARE = "square"
+    ROUND = "round"
+    ROUNDED = "rounded"
+    RADIUS = "radius"
+
+
+class LimitationTopType(object):
+    """Enum for the top limitation of the cut.
+
+    Attributes
+    ----------
+    LIMITED : literal("limited")
+        Limitation to the cut.
+    UNLIMITED : literal("unlimited")
+        No limit to the cut.
+    POCKET : literal("pocket")
+        Pocket like limitation to the cut.
+    """
+
+    LIMITED = "limited"
+    UNLIMITED = "unlimited"
+    POCKET = "pocket"
+
+
+class MachiningLimits(object):
+    """Configuration class for the machining limits of the cut.
+
+    Attributes
+    ----------
+    EXPECTED_KEYS : set
+        The expected keys for the limits dictionary.
+    face_limited_start : bool
+        Limit the start face.
+    face_limited_end : bool
+        Limit the end face.
+    face_limited_front : bool
+        Limit the front face.
+    face_limited_back : bool
+        Limit the back face.
+
+    Properties
+    ----------
+    limits : dict
+        The limits dictionary with values as a boolean.
+    """
+
+    EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]
+
+    def __init__(self):
+        self.face_limited_start = True
+        self.face_limited_end = True
+        self.face_limited_front = True
+        self.face_limited_back = True
+
+    @property
+    def limits(self):
+        """Dynamically generate the limits dictionary with boolean values from instance attributes."""
+        return {
+            "FaceLimitedStart": self.face_limited_start,
+            "FaceLimitedEnd": self.face_limited_end,
+            "FaceLimitedFront": self.face_limited_front,
+            "FaceLimitedBack": self.face_limited_back,
+        }
+
+
+class EdgePositionType(object):
+    """Enum for the edge position of the cut.
+
+    Attributes
+    ----------
+    REFEDGE : literal("refedge")
+        Reference edge.
+    OPPEDGE : literal("oppedge")
+        Opposite edge.
+    """
+
+    REFEDGE = "refedge"
+    OPPEDGE = "oppedge"

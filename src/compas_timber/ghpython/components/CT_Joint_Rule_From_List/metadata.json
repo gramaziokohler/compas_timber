@@ -1,0 +1,26 @@
+{
+    "name": "Joint Rules From List",
+    "nickname": "JointsFromLists",
+    "category": "COMPAS Timber",
+    "subcategory": "Joint Rules",
+    "description": "Generates a joint between beams in a list. Use a list of lists(data tree) to define multiple joints. Has same priority as direct joints.",
+    "exposure": 8,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beams",
+                "description": "Beams to join.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Rule",
+                "description": "Joint Rules."
+            }
+        ]
+    }
+}

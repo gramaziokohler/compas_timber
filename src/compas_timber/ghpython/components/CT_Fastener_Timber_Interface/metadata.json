@@ -1,0 +1,56 @@
+{
+    "name": "Fastener Beam Interface",
+    "nickname": "Interface",
+    "category": "COMPAS Timber",
+    "subcategory": "design",
+    "description": "defines the interface between a fastener and a beam.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Outline",
+                "description": "Referenced curve or polyline, Guid of curve or polyline in the active Rhino document. Defines the polyline outline of the plate fastener.",
+                "typeHintID": "polyline",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Thickness",
+                "description": "Float defining the thickness of the plate fastener.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Drill Points",
+                "description": "points defining the center of the holes in the plate fastener and the drill holes in the beam.",
+                "typeHintID": "point",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Drill Diameters",
+                "description": "Float defining the diameter of the drill holes.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Extra Shapes",
+                "description": "Breps defining additional shapes to boolean union with the plate to define the fastener shape.",
+                "typeHintID": "brep",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Features",
+                "description": "Features defining operation to be applied to the beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Interface",
+                "description": "FastenerBeamInterface definition used in a fastener element."
+            }
+        ]
+    }
+}

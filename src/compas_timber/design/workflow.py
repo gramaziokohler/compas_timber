@@ -1,5 +1,8 @@
+from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import XHalfLapJoint
 from compas_timber.utils import intersection_line_line_param
 
 
@@ -20,12 +23,12 @@ class CollectionDef(object):
 
 
 class JointRule(object):
-    def comply(self, beams):
-        """Returns True if the provided beams comply with the rule defined by this instance. False otherwise.
+    def comply(self, elements):
+        """Returns True if the provided elements comply with the rule defined by this instance. False otherwise.
 
         Parameters
         ----------
-        beams : list(:class:`~compas_timber.parts.Beam`)
+        elements : list(:class:`~compas_timber.elements.TimberElement`)
 
         Returns
         -------
@@ -34,12 +37,90 @@ class JointRule(object):
         """
         raise NotImplementedError
 
+    @staticmethod
+    def get_direct_rules(rules):
+        return [rule for rule in rules if rule.__class__.__name__ == "DirectRule"]
+
+    @staticmethod
+    def get_category_rules(rules):
+        return [rule for rule in rules if rule.__class__.__name__ == "CategoryRule"]
+
+    @staticmethod
+    def get_topology_rules(rules, use_defaults=False):
+        topo_rules = {}
+        if use_defaults:
+            topo_rules = {
+                JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
+                JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
+                JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XHalfLapJoint),
+            }
+        for rule in rules:  # separate category and topo and direct joint rules
+            if rule.__class__.__name__ == "TopologyRule":
+                topo_rules[rule.topology_type] = TopologyRule(
+                    rule.topology_type, rule.joint_type, **rule.kwargs
+                )  # overwrites, meaning last rule wins
+        return [rule for rule in topo_rules.values() if rule is not None]
+
+    @staticmethod
+    def joints_from_beams_and_rules(elements, rules, max_distance=1e-6):
+        """processes joint rules into joint definitions.
+
+        Parameters
+        ----------
+        elements : list(:class:`~compas_timber.elements.TimberElement`)
+            A list of elements to be joined.
+        rules : list(:class:`~compas_timber.design.JointRule`)
+            A list of joint rules to be applied.
+        max_distance : float, optional
+            The maximum distance to consider two elements as intersecting.
+
+        Returns
+        -------
+        list(:class:`~compas_timber.design.JointDefinition`)
+            A list of joint definitions that can be applied to the given elements.
+
+        """
+        elements = elements if isinstance(elements, list) else list(elements)
+        direct_rules = JointRule.get_direct_rules(rules)
+        solver = ConnectionSolver()
+
+        element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
+        joint_defs = []
+        unmatched_pairs = []
+        for rule in direct_rules:
+            joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
+        while element_pairs:
+            pair = element_pairs.pop()
+            match_found = False
+            for rule in direct_rules:  # see if pair is used in a direct rule
+                if rule.comply(pair):
+                    match_found = True
+                    break
+
+            if not match_found:
+                for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
+                    if rule.comply(pair):
+                        match_found = True
+                        joint_defs.append(JointDefinition(rule.joint_type, rule.reorder(pair), **rule.kwargs))
+                        break
+
+            if not match_found:
+                for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
+                    comply, pair = rule.comply(pair)
+                    if comply:
+                        match_found = True
+                        joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
+                        break
+            if not match_found:
+                unmatched_pairs.append(pair)
+        return joint_defs, unmatched_pairs
+
 
 class DirectRule(JointRule):
-    """Creates a Joint Rule that directly joins two beams."""
+    """Creates a Joint Rule that directly joins multiple elements."""
 
-    def __init__(self, joint_type, beams, **kwargs):
-        self.beams = beams
+    def __init__(self, joint_type, elements, **kwargs):
+        self.elements = elements
         self.joint_type = joint_type
         self.kwargs = kwargs
 
@@ -48,18 +129,17 @@ class DirectRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {})".format(DirectRule, self.beams, self.joint_type)
+        return "{}({}, {})".format(DirectRule, self.elements, self.joint_type)
 
-    def comply(self, beams):
+    def comply(self, elements):
         try:
-            return set(self.beams) == set(beams)
+            return set(elements).issubset(set(self.elements))
         except TypeError:
-            print("unable to comply direct joint beam sets")
-            return False
+            raise UserWarning("unable to comply direct joint element sets")
 
 
 class CategoryRule(JointRule):
-    """Based on the category attribute attached to the beams, this rule assigns"""
+    """Based on the category attribute attached to the elements, this rule assigns"""
 
     def __init__(self, joint_type, category_a, category_b, topos=None, **kwargs):
         self.joint_type = joint_type
@@ -77,35 +157,45 @@ class CategoryRule(JointRule):
             CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos
         )
 
-    def comply(self, beams):
+    def comply(self, elements, max_distance=1e-6):
         try:
-            beam_cats = set([b.attributes["category"] for b in beams])
-            return beam_cats == set([self.category_a, self.category_b])
+            element_cats = set([e.attributes["category"] for e in elements])
+            comply = False
+            elements = list(elements)
+            if element_cats == set([self.category_a, self.category_b]):
+                solver = ConnectionSolver()
+                found_topology = solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
+                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
+                if not isinstance(supported_topo, list):
+                    supported_topo = [supported_topo]
+                if found_topology in supported_topo:
+                    comply = True
+            return comply
         except KeyError:
             return False
 
-    def reorder(self, beams):
-        """Returns the given beams in a sorted order.
+    def reorder(self, elements):
+        """Returns the given elements in a sorted order.
 
-        The beams are sorted according to their category attribute, first the beams with `catergory_a` and second the
+        The elements are sorted according to their category attribute, first the elements with `catergory_a` and second the
         one with `category_b`.
-        This allows using the category to determine the role of the beams.
+        This allows using the category to determine the role of the elements.
 
         Parameters
         ----------
-        beams : tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
-            A tuple containing two beams to sort.
+        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
+            A tuple containing two elements to sort.
 
         Returns
         -------
-        tuple(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+        tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
 
         """
-        beam_a, beam_b = beams
-        if beam_a.attributes["category"] == self.category_a:
-            return beam_a, beam_b
+        element_a, element_b = elements
+        if element_a.attributes["category"] == self.category_a:
+            return element_a, element_b
         else:
-            return beam_b, beam_a
+            return element_b, element_a
 
 
 class TopologyRule(JointRule):
@@ -133,55 +223,68 @@ class TopologyRule(JointRule):
     def __repr__(self):
         return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type)
 
+    def comply(self, elements, max_distance=1e-3):
+        try:
+            elements = list(elements)
+            solver = ConnectionSolver()
+            topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
+            return (
+                self.topology_type == topo_results[0],
+                [topo_results[1], topo_results[2]],
+            )  # comply, if topologies match, reverse if the element order should be switched
+        except KeyError:
+            return False
+
 
 class JointDefinition(object):
-    """Container for a joint type and the beam that shall be joined.
+    """Container for a joint type and the elements that shall be joined.
 
-    This allows delaying the actual joining of the beams to a downstream component.
+    This allows delaying the actual joining of the elements to a downstream component.
 
     """
 
-    def __init__(self, joint_type, beams, **kwargs):
+    def __init__(self, joint_type, elements, **kwargs):
         # if not issubclass(joint_type, Joint):
         #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-        if len(beams) != 2:
-            raise UserWarning("Expected to get two Beams, got {}.".format(len(beams)))
+
+        if len(elements) < 2:
+            raise UserWarning("Joint requires at least two Elements, got {}.".format(len(elements)))
 
         self.joint_type = joint_type
-        self.beams = beams
+        self.elements = elements
         self.kwargs = kwargs
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.beams, self.kwargs)
+        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.elements, self.kwargs)
 
     def ToString(self):
         return repr(self)
 
     def __hash__(self):
-        return hash((self.joint_type, self.beams))
+        return hash((self.joint_type, self.elements))
 
     def is_identical(self, other):
         return (
             isinstance(other, JointDefinition)
             and self.joint_type == other.joint_type
-            and set([b.key for b in self.beams]) == set([b.key for b in other.beams])
+            and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
         )
 
-    def match(self, beams):
-        """Returns True if beams are defined within this JointDefinition."""
-        set_a = set([id(b) for b in beams])
-        set_b = set([id(b) for b in self.beams])
+    def match(self, elements):
+        """Returns True if elements are defined within this JointDefinition."""
+        set_a = set([id(e) for e in elements])
+        set_b = set([id(e) for e in self.elements])
         return set_a == set_b
 
 
 class FeatureDefinition(object):
-    """Container linking a feature for the beams on which it should be applied.
+    """Container linking a feature to the elements on which it should be applied.
 
     This allows delaying the actual applying of features to a downstream component.
 
     """
 
-    def __init__(self, feature, elements):
+    def __init__(self, feature, elements=None):
         self.feature = feature
         self.elements = elements
 
@@ -236,7 +339,7 @@ def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=1e-6):
         return ["X", (beamA, beamB)]
 
 
-def set_defaul_joints(model, x_default="x-lap", t_default="t-butt", l_default="l-miter"):
+def set_default_joints(model, x_default="x-lap", t_default="t-butt", l_default="l-miter"):
     beams = list(model.beams)
     n = len(beams)
 
@@ -279,6 +382,7 @@ class DebugInfomation(object):
     """
 
     def __init__(self):
+        self.fastener_errors = []
         self.feature_errors = []
         self.joint_errors = []
 
@@ -293,6 +397,12 @@ class DebugInfomation(object):
     @property
     def has_errors(self):
         return self.feature_errors or self.joint_errors
+
+    def add_fastener_error(self, error):
+        if isinstance(error, list):
+            self.fastener_errors.extend(error)
+        else:
+            self.fastener_errors.append(error)
 
     def add_feature_error(self, error):
         if isinstance(error, list):

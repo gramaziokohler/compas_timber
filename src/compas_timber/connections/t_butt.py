@@ -1,12 +1,12 @@
-from compas_timber.connections.butt_joint import ButtJoint
-from compas_timber.elements import CutFeature
-from compas_timber.elements import MillVolume
+from compas_timber._fabrication import JackRafterCut
+from compas_timber._fabrication import Lap
+from compas_timber.connections import Joint
+from compas_timber.connections import JointTopology
+from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.errors import BeamJoinningError
 
-from .joint import BeamJoinningError
-from .solver import JointTopology
 
-
-class TButtJoint(ButtJoint):
+class TButtJoint(Joint):
     """Represents a T-Butt type joint which joins the end of a beam along the length of another beam,
     trimming the main beam.
 
@@ -20,6 +20,8 @@ class TButtJoint(ButtJoint):
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
+    mill_depth : float
+        The depth of the pocket to be milled in the cross beam.
 
     Attributes
     ----------
@@ -27,18 +29,76 @@ class TButtJoint(ButtJoint):
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
+    mill_depth : float
+        The depth of the pocket to be milled in the cross beam.
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=0, birdsmouth=False, **kwargs):
-        super(TButtJoint, self).__init__(main_beam, cross_beam, mill_depth, birdsmouth, **kwargs)
+    @property
+    def __data__(self):
+        data = super(TButtJoint, self).__data__
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
+        data["mill_depth"] = self.mill_depth
+        return data
 
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, **kwargs):
+        super(TButtJoint, self).__init__(**kwargs)
+        self.main_beam = main_beam
+        self.cross_beam = cross_beam
+        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.mill_depth = mill_depth
+        self.features = []
+        self.fasteners = []
+        if fastener:
+            if fastener.outline is None:
+                fastener = fastener.copy()  # make a copy to avoid modifying the original fastener
+                fastener.set_default(joint=self)
+            self.base_fastener = fastener
+            if self.base_fastener:
+                self.base_fastener.place_instances(self)
+
+    @property
+    def interactions(self):
+        """Returns interactions between elements used by this joint."""
+        interactions = []
+        interactions.append((self.main_beam, self.cross_beam))
+        for fastener in self.fasteners:
+            for interface in fastener.interfaces:
+                if interface is not None:
+                    interactions.append((interface.element, fastener))
+        return interactions
+
+    @property
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
+
+    @property
+    def elements(self):
+        return self.beams + self.fasteners
+
+    @property
+    def generated_elements(self):
+        return self.fasteners
+
+    @property
+    def cross_beam_ref_side_index(self):
+        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return ref_side_index
+
+    @property
+    def main_beam_ref_side_index(self):
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return ref_side_index
+
+    @property
+    def main_beam_opposing_side_index(self):
+        return self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -53,36 +113,68 @@ class TButtJoint(ButtJoint):
         """
         assert self.main_beam and self.cross_beam
         try:
-            cutting_plane = self.get_main_cutting_plane()[0]
+            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            if self.mill_depth:
+                cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoinningError(
+                beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane]
+            )
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-        self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
+        self.main_beam.add_blank_extension(
+            start_main + extension_tolerance,
+            end_main + extension_tolerance,
+            self.guid,
+        )
 
     def add_features(self):
-        """Adds the trimming plane to the main beam (no features for the cross beam).
+        """Adds the required extension and trimming features to both beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        assert self.main_beam and self.cross_beam  # should never happen
+        assert self.main_beam and self.cross_beam
 
         if self.features:
             self.main_beam.remove_features(self.features)
+            self.cross_beam.remove_features(self.features)
 
-        cutting_plane = None
-        try:
-            cutting_plane = self.get_main_cutting_plane()[0]
-        except AttributeError as ae:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
-        except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
-
-        trim_feature = CutFeature(cutting_plane)
+        # get the cutting plane for the main beam
+        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        cutting_plane.xaxis = -cutting_plane.xaxis
         if self.mill_depth:
-            self.cross_beam.add_features(MillVolume(self.subtraction_volume()))
-        self.main_beam.add_features(trim_feature)
-        self.features = [trim_feature]
+            cutting_plane.translate(cutting_plane.normal * self.mill_depth)
+
+        # apply the cut on the main beam
+        main_feature = JackRafterCut.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
+        self.main_beam.add_features(main_feature)
+        # store the feature
+        self.features = [main_feature]
+
+        # apply the pocket on the cross beam
+        if self.mill_depth:
+            cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
+            lap_width = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+            cross_feature = Lap.from_plane_and_beam(
+                cross_cutting_plane,
+                self.cross_beam,
+                lap_width,
+                self.mill_depth,
+                self.cross_beam_ref_side_index,
+            )
+            self.cross_beam.add_features(cross_feature)
+            self.features.append(cross_feature)
+
+        # add the features applied by the fastener.interfaces
+        for fastener in self.fasteners:
+            for interface in fastener.interfaces:
+                features = interface.get_features(interface.element)
+                interface.element.add_features(features)
+
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)

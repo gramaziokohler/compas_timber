@@ -1,0 +1,54 @@
+{
+    "name": "Plate Fastener",
+    "nickname": "PlateFastener",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Defines a plate fastener.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Outline",
+                "description": "Outline of the Plate Fastener.",
+                "typeHintID": "polyline",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Thickness",
+                "description": "Thickness of the Plate Fastener.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Cutouts",
+                "description": "Curves defining shapes to be cut out of the Plate Fastener outline.",
+                "typeHintID": "polyline",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "main_beam_interface",
+                "description": "Interface definition for the main beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "cross_beam_interface",
+                "description": "Interface definition for the cross beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Fastener",
+                "description": "Fastener definition to apply to a joint type."
+            },
+            {
+                "name": "Shape",
+                "description": "Shape of the Plate Fastener."
+            }
+        ]
+    }
+}
