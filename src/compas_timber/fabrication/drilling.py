@@ -17,7 +17,7 @@ from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams

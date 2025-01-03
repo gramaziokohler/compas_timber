@@ -3,9 +3,9 @@ from compas.geometry import distance_point_line
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.errors import BeamJoinningError
 from compas_timber.fabrication import DoubleCut
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 

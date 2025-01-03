@@ -15,7 +15,7 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams

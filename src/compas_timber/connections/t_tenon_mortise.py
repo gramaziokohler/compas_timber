@@ -1,11 +1,11 @@
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.errors import BeamJoinningError
 from compas_timber.fabrication import House
 from compas_timber.fabrication import HouseMortise
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import TenonShapeType
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 

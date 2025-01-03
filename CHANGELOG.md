@@ -56,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.Tenon` and `compas_timber._fabrication.Mortise`.
 * Added new `compas_timber.connections.TTenonMortiseJoint`.
 * Added `create` override to `BallNodeJoint`.
+* Added `PlateFastener` class.
+* Added `errors` directory and `__init__.py` module.
+* Added new `compas_timber._fabrication.Slot`.
+* Added new `compas_timber._fabrication.SlotParams`.
 * Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
 * Added new `compas_timber.fabrication.House` and `compas_timber.fabrication.HouseMortise`.
 
@@ -79,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `model.process_joinery()`so that it calls `joint.check_elements_compatibility()` before adding extensions and features.
 * Fixed incorrect data keys for `beam_guid` in the `__data__` property for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`, `LFrenchRidgeLapJoint`.
 * Fixed `JointRuleFromList` GH component.
+* Changed `TButtJoint` to take an optional `PlateFastener`.
+* Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
 * Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
 * Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
 * Adjusted `compas_timber.conntection.TDovetailJoint` and `compas_timber.fabrication.TenonMortisJoint` to allow Housing.
