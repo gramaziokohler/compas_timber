@@ -22,6 +22,8 @@ from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import InterfaceRole
+from compas_timber.connections import InterfaceType
 from compas_timber.design import CategoryRule
 from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
@@ -140,18 +142,21 @@ class BeamDefinition(object):
         self._height = height
         self._normal = normal
         self.type = type
-        self.parent = parent
+        self.parent = parent  # TODO: remove
 
     @property
     def width(self):
+        # TODO: provide this upon creation
         return self._width if self._width else self.parent.beam_dimensions[self.type][0]
 
     @property
     def height(self):
+        # TODO: provide this upon creation
         return self._height if self._height else self.parent.beam_dimensions[self.type][1]
 
     @property
     def z_aligned_centerline(self):
+        # TODO: provide this upon creation
         if dot_vectors(self.centerline.direction, self.parent.z_axis) < 0:
             return Line(self.centerline.end, self.centerline.start)
         else:
@@ -159,6 +164,7 @@ class BeamDefinition(object):
 
     @property
     def normal(self):
+        # TODO: provide this upon creation
         return self._normal if self._normal else self.parent.normal
 
     def offset(self, distance):
@@ -464,7 +470,7 @@ class WallPopulator(object):
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill"]
 
     # TODO: this takes interfaces! let's the populator know how this wall potentially interacts with other walls
-    def __init__(self, configuration_set, wall, interactions=None):
+    def __init__(self, configuration_set, wall, interfaces=None):
         self._wall = wall
         self._config_set = configuration_set
         self._z_axis = Vector.Zaxis()
@@ -486,7 +492,7 @@ class WallPopulator(object):
         self.panel_height = None
         self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
 
-        self._interactions = interactions or []
+        self._interfaces = interfaces or []
         # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
@@ -611,8 +617,8 @@ class WallPopulator(object):
         for wall in walls:
             for config_set in configuration_sets:
                 if config_set.wall_selector.select(wall):
-                    interactions = model.get_interactions_for_element(wall)
-                    wall_populators.append(cls(config_set, wall, interactions))
+                    interfaces = [interaction.get_interface_for_wall(wall) for interaction in model.get_interactions_for_element(wall)]
+                    wall_populators.append(cls(config_set, wall, interfaces))
                     break
         return wall_populators
 
@@ -623,7 +629,7 @@ class WallPopulator(object):
         """
         self.generate_perimeter_beams()
         self.generate_windows()
-        self.generate_studs()
+        # self.generate_studs()
         self.generate_plates()
         elements = self.elements
         return elements
@@ -652,38 +658,82 @@ class WallPopulator(object):
         # TODO: first iterate here on the any connection detail generators.
         # TODO: then continne with sides that are not handled by the connection details
         # for each interaction, find the appropriate connection detail (depending on the topology)
-        for interaction in self._interactions:
-            connection_detail = self._config_set.connection_details.get(interaction.topology, None)
-            if connection_detail:
-                if self._wall.attributes["category"] == "main":
-                    self._beam_definitions.extend(connection_detail.create_elements_main(interaction.main_wall_interface, self._wall, self._config_set))
-                elif self._wall.attributes["category"] == "cross":
-                    self._beam_definitions.extend(connection_detail.create_elements_cross(interaction.cross_wall_interface, self._wall, self._config_set))
+        # maybe all perimeter should be handled by connection details.
 
-        # interior_indices = self.get_interior_segment_indices(self.outer_polyline)
-        # for i, segment in enumerate(self.outer_polyline.lines):
-        #     beam_def = BeamDefinition(segment, parent=self)
-        #     if i in interior_indices:
-        #         if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-        #             if self._config_set.lintel_posts:
-        #                 beam_def.type = "jack_stud"
-        #             else:
-        #                 beam_def.type = "king_stud"
-        #         else:
-        #             beam_def.type = "header"
-        #     else:
-        #         if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-        #             beam_def.type = "edge_stud"
-        #         else:
-        #             beam_def.type = "plate"
-        #     self._beam_definitions.append(beam_def)
-        # self._beam_definitions = self.offset_elements(self._beam_definitions)
+        # IDEA: there a dict of default connection details for BACK, FRONT, TOP and BOTTOM.
+        # first the interfaces are analyzed, then the connection details are applied to the interfaces
+        # then the remaining sides are handled by the default connection details
+        handled_sides = set()
+
+        for interface in self._interfaces:
+            connection_detail = self._config_set.connection_details.get(interface.topology, None)
+
+            if connection_detail:
+                if interface.interface_role == InterfaceRole.MAIN:
+                    self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
+                elif interface.interface_role == InterfaceRole.CROSS:
+                    self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
+
+                handled_sides.add(interface.interface_type)
+
+        print("handled sides wall: {} - {}".format(self._wall, handled_sides))
+        # add any remaining sides if have not been handled by any of the connection details
+        stud_type = "edge_stud"
+        if InterfaceType.FRONT not in handled_sides:
+            print("front not handled")
+            self._beam_definitions.append(BeamDefinition(Line(self.points[1], self.points[2]), parent=self, type=stud_type))
+
+        if InterfaceType.BACK not in handled_sides:
+            print("back not handled")
+            self._beam_definitions.append(BeamDefinition(Line(self.points[0], self.points[3]), parent=self, type=stud_type))
+
+        if InterfaceType.TOP not in handled_sides:
+            print("top not handled")
+            self._beam_definitions.append(BeamDefinition(Line(self.points[2], self.points[3]), parent=self, type="plate"))
+
+        if InterfaceType.BOTTOM not in handled_sides:
+            print("bottom not handled")
+            self._beam_definitions.append(BeamDefinition(Line(self.points[0], self.points[1]), parent=self, type="plate"))
+
+        # add lintel posts if configured
         # if self._config_set.lintel_posts:
         #     for beam_def in self._beam_definitions:
         #         if beam_def.type == "jack_stud":
         #             offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
         #             king_line = offset_line(beam_def.centerline, offset, self.normal)
         #             self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+
+    # def generate_perimeter_beams(self):
+    #     interior_indices = self.get_interior_segment_indices(self.outer_polyline)
+    #     for i, segment in enumerate(self.outer_polyline.lines):
+    #         beam_def = BeamDefinition(segment, parent=self)
+    #         if i in interior_indices:
+    #             # the outline of openings (internal trims) are handled here
+    #             if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
+    #                 # these are the studs
+    #                 if self._config_set.lintel_posts:
+    #                     beam_def.type = "jack_stud"
+    #                 else:
+    #                     beam_def.type = "king_stud"
+    #             else:
+    #                 # these are the top beams of an opening
+    #                 beam_def.type = "header"
+    #         else:
+    #             # the outline of the wall is handled here (boundary)
+    #             if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
+    #                 # these are the edge studs
+    #                 beam_def.type = "edge_stud"
+    #             else:
+    #                 beam_def.type = "plate"
+    #         self._beam_definitions.append(beam_def)
+
+    #     self._beam_definitions = self.offset_elements(self._beam_definitions)
+    #     if self._config_set.lintel_posts:
+    #         for beam_def in self._beam_definitions:
+    #             if beam_def.type == "jack_stud":
+    #                 offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
+    #                 king_line = offset_line(beam_def.centerline, offset, self.normal)
+    #                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
     def get_interior_segment_indices(self, polyline):
         points = polyline.points[0:-1]
