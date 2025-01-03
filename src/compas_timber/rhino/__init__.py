@@ -44,3 +44,8 @@ def find_neighboring_beams(beams, inflate_by=0.0):
         rtree.Search(bb, found_handler, index)
 
     return neighbors
+
+
+__all__ = [
+    "find_neighboring_beams",
+]
