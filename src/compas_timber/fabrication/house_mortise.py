@@ -1,9 +1,7 @@
-import math
 
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import Rotation
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
