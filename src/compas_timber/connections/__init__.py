@@ -17,7 +17,7 @@ from .x_halflap import XHalfLapJoint
 from .t_dovetail import TDovetailJoint
 from .ball_node import BallNodeJoint
 from .wall_joint import WallJoint
-from .wall_joint import InterfaceType
+from .wall_joint import InterfaceLocation
 from .wall_joint import InterfaceRole
 
 __all__ = [
@@ -41,6 +41,6 @@ __all__ = [
     "TDovetailJoint",
     "BallNodeJoint",
     "WallJoint",
-    "InterfaceType",
+    "InterfaceLocation",
     "InterfaceRole",
 ]

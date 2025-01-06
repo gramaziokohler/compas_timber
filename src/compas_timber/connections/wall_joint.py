@@ -29,9 +29,9 @@ class InterfaceRole(object):
     CROSS = 1
 
 
-class InterfaceType(object):
+class InterfaceLocation(object):
     """
-    Enumeration of the possible interface types.
+    Enumeration of the possible interface location within the wall.
 
     Attributes
     ----------
@@ -171,8 +171,8 @@ class WallJoint(Joint):
         if is_joint_at_main_end:
             envelope_faces = [envelope_faces[0], envelope_faces[3], envelope_faces[2], envelope_faces[1]]
 
-        main_interface_type = InterfaceType.FRONT if is_joint_at_main_end else InterfaceType.BACK
-        cross_interface_type = InterfaceType.FRONT if is_joint_at_cross_end else InterfaceType.BACK
+        main_interface_type = InterfaceLocation.FRONT if is_joint_at_main_end else InterfaceLocation.BACK
+        cross_interface_type = InterfaceLocation.FRONT if is_joint_at_cross_end else InterfaceLocation.BACK
 
         for face in envelope_faces:
             face_plane = Plane.from_frame(face)
