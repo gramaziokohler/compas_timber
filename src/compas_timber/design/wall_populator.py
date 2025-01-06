@@ -5,6 +5,7 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import NurbsCurve
 from compas.geometry import Point
+from compas.geometry import Plane
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
@@ -15,6 +16,7 @@ from compas.geometry import distance_point_point_sqrd
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
+from compas.geometry import intersection_line_plane
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 
@@ -23,7 +25,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import InterfaceRole
-from compas_timber.connections import InterfaceType
+from compas_timber.connections import InterfaceLocation
 from compas_timber.design import CategoryRule
 from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
@@ -365,12 +367,6 @@ class LConnectionDetail(object):
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
         return [edge_beam]
 
-    # def create_elements(self, interface, wall, config_set):
-    #     if wall.attributes["category"] == "main":
-    #         return self._create_elements_main(interface, wall, config_set)
-    #     else:
-    #         return self._create_elements_cross(interface, wall, config_set)
-
 
 class WallPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
@@ -493,6 +489,7 @@ class WallPopulator(object):
         self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
 
         self._interfaces = interfaces or []
+        self._adjusted_segments = []
         # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
@@ -654,15 +651,42 @@ class WallPopulator(object):
                     # break # ?
         return joint_definitions
 
-    def generate_perimeter_beams(self):
-        # TODO: first iterate here on the any connection detail generators.
-        # TODO: then continne with sides that are not handled by the connection details
-        # for each interaction, find the appropriate connection detail (depending on the topology)
-        # maybe all perimeter should be handled by connection details.
+    def _adjust_segments_to_interfaces(self, front_segment, back_segment, top_segment, bottom_segment, interfaces):
+        # TODO: move front_segment and back_segment to the interface with the detail?
+        for interface in interfaces:
+            if interface.interface_role == InterfaceRole.MAIN:
+                # shorten top and bottom segments to the interface
+                interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])
+                if interface.interface_type == InterfaceLocation.BACK:
+                    new_top_end = intersection_line_plane(top_segment, interface_plane)
+                    new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
+                    if new_top_end:
+                        top_segment.end = new_top_end
+                    if new_bottom_end:
+                        bottom_segment.end = new_bottom_end
+                elif interface.interface_type == InterfaceLocation.FRONT:
+                    new_top_start = intersection_line_plane(top_segment, interface_plane)
+                    new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
+                    if new_top_start:
+                        top_segment.start = new_top_start
+                    if new_bottom_start:
+                        bottom_segment.start = new_bottom_start
 
-        # IDEA: there a dict of default connection details for BACK, FRONT, TOP and BOTTOM.
-        # first the interfaces are analyzed, then the connection details are applied to the interfaces
-        # then the remaining sides are handled by the default connection details
+            elif interface.interface_role == InterfaceRole.CROSS:
+                outer_point = interface.interface_polyline[2]
+                edge_plane = Plane(outer_point, self._wall.baseline.direction)
+                bottom_point = intersection_line_plane(bottom_segment, edge_plane)
+                top_point = intersection_line_plane(top_segment, edge_plane)
+                if interface.interface_type == InterfaceLocation.FRONT:
+                    bottom_segment.end = bottom_point
+                    top_segment.end = top_point
+                elif interface.interface_type == InterfaceLocation.BACK:
+                    bottom_segment.start = bottom_point
+                    top_segment.start = top_point
+
+    def generate_perimeter_beams(self):
+        # for each interface, find the appropriate connection detail (depending on the topology)
+        # first the interfaces are handled, then the remaining sides are handled by the default connection details
         handled_sides = set()
 
         for interface in self._interfaces:
@@ -676,24 +700,25 @@ class WallPopulator(object):
 
                 handled_sides.add(interface.interface_type)
 
-        print("handled sides wall: {} - {}".format(self._wall, handled_sides))
         # add any remaining sides if have not been handled by any of the connection details
-        stud_type = "edge_stud"
-        if InterfaceType.FRONT not in handled_sides:
-            print("front not handled")
-            self._beam_definitions.append(BeamDefinition(Line(self.points[1], self.points[2]), parent=self, type=stud_type))
+        front_segment = Line(self.points[1], self.points[2])
+        back_segment = Line(self.points[0], self.points[3])
+        top_segment = Line(self.points[3], self.points[2])
+        bottom_segment = Line(self.points[0], self.points[1])
+        self._adjusted_segments = [front_segment, back_segment, top_segment, bottom_segment]
+        self._adjust_segments_to_interfaces(front_segment, back_segment, top_segment, bottom_segment, self._interfaces)
 
-        if InterfaceType.BACK not in handled_sides:
-            print("back not handled")
-            self._beam_definitions.append(BeamDefinition(Line(self.points[0], self.points[3]), parent=self, type=stud_type))
+        if InterfaceLocation.FRONT not in handled_sides:
+            self._beam_definitions.append(BeamDefinition(front_segment, parent=self, type="edge_stud"))
 
-        if InterfaceType.TOP not in handled_sides:
-            print("top not handled")
-            self._beam_definitions.append(BeamDefinition(Line(self.points[2], self.points[3]), parent=self, type="plate"))
+        if InterfaceLocation.BACK not in handled_sides:
+            self._beam_definitions.append(BeamDefinition(back_segment, parent=self, type="edge_stud"))
 
-        if InterfaceType.BOTTOM not in handled_sides:
-            print("bottom not handled")
-            self._beam_definitions.append(BeamDefinition(Line(self.points[0], self.points[1]), parent=self, type="plate"))
+        if InterfaceLocation.TOP not in handled_sides:
+            self._beam_definitions.append(BeamDefinition(top_segment, parent=self, type="plate"))
+
+        if InterfaceLocation.BOTTOM not in handled_sides:
+            self._beam_definitions.append(BeamDefinition(bottom_segment, parent=self, type="plate"))
 
         # add lintel posts if configured
         # if self._config_set.lintel_posts:
