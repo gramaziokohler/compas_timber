@@ -19,6 +19,7 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import intersection_line_plane
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
+from compas.tolerance import TOL
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -330,44 +331,6 @@ class Window(object):
                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
 
-class LConnectionDetail(object):
-    """
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.WallToWallInterface`
-    """
-
-    def create_elements_cross(self, interface, wall, config_set):
-        # create a beam (definition) as wide and as high as the wall
-        # it should be flush agains the interface
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
-        left_vertical = interface.interface_polyline.lines[0]
-        right_vertical = interface.interface_polyline.lines[2]
-        parallel_to_interface = interface.frame.normal
-        perpendicular_to_interface = interface.frame.xaxis
-
-        edge_beam_line = right_vertical.translated(parallel_to_interface * config_set.beam_width * -0.5)
-        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, config_set.wall_depth, normal=perpendicular_to_interface)
-
-        other_edge_line = edge_beam_line.translated(parallel_to_interface * -1.0 * (config_set.wall_depth + config_set.beam_width))
-        other_edge = BeamDefinition(other_edge_line, config_set.beam_width, config_set.wall_depth, normal=perpendicular_to_interface)
-
-        reference_edge = left_vertical.translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        between_edge = reference_edge.translated(interface.frame.normal * -1.0 * config_set.beam_width)
-        between_beam = BeamDefinition(between_edge, config_set.beam_width, config_set.wall_depth, normal=parallel_to_interface)
-        return [between_beam, edge_beam, other_edge]
-
-    def create_elements_main(self, interface, wall, config_set):
-        # create a beam (definition) as wide and as high as the wall
-        # it should be flush agains the interface
-        polyline = interface.interface_polyline
-        beam_zaxis = interface.frame.normal
-        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
-        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
-        return [edge_beam]
-
-
 class WallPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
@@ -651,7 +614,7 @@ class WallPopulator(object):
                     # break # ?
         return joint_definitions
 
-    def _adjust_segments_to_interfaces(self, front_segment, back_segment, top_segment, bottom_segment, interfaces):
+    def _adjust_segments_to_interfaces(self, top_segment, bottom_segment, interfaces):
         # TODO: move front_segment and back_segment to the interface with the detail?
         # TODO: not very elegant, need to revise, how can the datails inform the populator regarding the rest of the wall?
         for interface in interfaces:
@@ -662,16 +625,16 @@ class WallPopulator(object):
                     new_top_end = intersection_line_plane(top_segment, interface_plane)
                     new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
                     if new_top_end:
-                        top_segment.end = new_top_end
+                        top_segment = Line(top_segment.start, new_top_end)
                     if new_bottom_end:
-                        bottom_segment.end = new_bottom_end
+                        bottom_segment = Line(bottom_segment.start, new_bottom_end)
                 elif interface.interface_type == InterfaceLocation.FRONT:
                     new_top_start = intersection_line_plane(top_segment, interface_plane)
                     new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
                     if new_top_start:
-                        top_segment.start = new_top_start
+                        top_segment = Line(new_top_start, top_segment.end)
                     if new_bottom_start:
-                        bottom_segment.start = new_bottom_start
+                        bottom_segment = Line(new_bottom_start, bottom_segment.end)
 
             elif interface.interface_role == InterfaceRole.CROSS:
                 outer_point = interface.interface_polyline[2]
@@ -679,11 +642,13 @@ class WallPopulator(object):
                 bottom_point = intersection_line_plane(bottom_segment, edge_plane)
                 top_point = intersection_line_plane(top_segment, edge_plane)
                 if interface.interface_type == InterfaceLocation.FRONT:
-                    bottom_segment.end = bottom_point
-                    top_segment.end = top_point
+                    bottom_segment = Line(bottom_point, bottom_segment.end)
+                    top_segment = Line(top_point, top_segment.end)
                 elif interface.interface_type == InterfaceLocation.BACK:
-                    bottom_segment.start = bottom_point
-                    top_segment.start = top_point
+                    bottom_segment = Line(bottom_point, bottom_segment.end)
+                    top_segment = Line(top_segment.start, top_point)
+
+        return top_segment, bottom_segment
 
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)
@@ -702,12 +667,19 @@ class WallPopulator(object):
                 handled_sides.add(interface.interface_type)
 
         # add any remaining sides if have not been handled by any of the connection details
+        # ^  3 ---- 2
+        # |  |      |
+        # z  0 ---- 1
+        #    x -->
         front_segment = Line(self.points[1], self.points[2])
-        back_segment = Line(self.points[0], self.points[3])
-        top_segment = Line(self.points[3], self.points[2])
+        back_segment = Line(self.points[3], self.points[0])
+        top_segment = Line(self.points[2], self.points[3])
         bottom_segment = Line(self.points[0], self.points[1])
         self._adjusted_segments = [front_segment, back_segment, top_segment, bottom_segment]
-        self._adjust_segments_to_interfaces(front_segment, back_segment, top_segment, bottom_segment, self._interfaces)
+        top_segment, bottom_segment = self._adjust_segments_to_interfaces(top_segment, bottom_segment, self._interfaces)
+
+        assert not TOL.is_zero(len(top_segment)), "top_segment is fucked"
+        assert not TOL.is_zero(len(bottom_segment)), "bottom_segment is fucked"
 
         if InterfaceLocation.FRONT not in handled_sides:
             self._beam_definitions.append(BeamDefinition(front_segment, parent=self, type="edge_stud"))
