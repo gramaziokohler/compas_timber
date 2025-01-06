@@ -112,12 +112,14 @@ class LHalfLapJoint(Joint):
         """
         assert self.beam_a and self.beam_b
         start_a, start_b = None, None
+        cutting_plane_a = self.cutting_plane_a.to_plane()
+        cutting_plane_b = self.cutting_plane_b.to_plane()
         try:
-            start_a, end_a = self.beam_a.extension_to_plane(self.cutting_plane_a.to_plane())
-            start_b, end_b = self.beam_b.extension_to_plane(self.cutting_plane_b.to_plane())
+            start_a, end_a = self.beam_a.extension_to_plane(cutting_plane_a)
+            start_b, end_b = self.beam_b.extension_to_plane(cutting_plane_b)
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            geometries = [self.cutting_plane_b] if start_a is not None else [self.cutting_plane_a]
+            geometries = [cutting_plane_b] if start_a is not None else [cutting_plane_a]
             raise BeamJoinningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoinningError(self.elements, self, debug_info=str(ex))
