@@ -14,6 +14,7 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
 
@@ -594,7 +595,8 @@ class Lap(BTLxProcess):
         list of :class:`compas.geometry.Frame`
             The updated frames of the cut.
         """
-        TOL.absolute=1e-3
+        tol = Tolerance()
+        tol.absolute=1e-3
 
         if not self.machining_limits["FaceLimitedStart"]:
             frames[0] = beam.ref_sides[4]
@@ -602,17 +604,17 @@ class Lap(BTLxProcess):
             frames[1] = beam.ref_sides[5]
         if not self.machining_limits["FaceLimitedTop"]:
             frames[2] = beam.ref_sides[self.ref_side_index]
-            frames[2].translate(frames[2].zaxis * TOL.absolute) # offset the top frame to avoid tolerance issues
+            frames[2].translate(frames[2].zaxis * tol.absolute) # offset the top frame to avoid tolerance issues
         if not self.machining_limits["FaceLimitedBottom"]:
             opp_ref_side_index = beam.opposing_side_index(self.ref_side_index)
             frames[3] = beam.ref_sides[opp_ref_side_index]
-            frames[3].translate(frames[3].zaxis * TOL.absolute) # offset the bottom frame to avoid tolerance issues
+            frames[3].translate(frames[3].zaxis * tol.absolute) # offset the bottom frame to avoid tolerance issues
         if not self.machining_limits["FaceLimitedFront"]:
             frames[4] = beam.ref_sides[(self.ref_side_index-1)%4]
-            frames[4].translate(frames[4].zaxis * TOL.absolute) # offset the front frame to avoid tolerance issues
+            frames[4].translate(frames[4].zaxis * tol.absolute) # offset the front frame to avoid tolerance issues
         if not self.machining_limits["FaceLimitedBack"]:
             frames[5] = beam.ref_sides[(self.ref_side_index+1)%4]
-            frames[5].translate(frames[5].zaxis * TOL.absolute) # offset the back frame to avoid tolerance issues
+            frames[5].translate(frames[5].zaxis * tol.absolute) # offset the back frame to avoid tolerance issues
 
         return frames
 
