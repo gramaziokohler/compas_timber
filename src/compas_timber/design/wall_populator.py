@@ -653,6 +653,7 @@ class WallPopulator(object):
 
     def _adjust_segments_to_interfaces(self, front_segment, back_segment, top_segment, bottom_segment, interfaces):
         # TODO: move front_segment and back_segment to the interface with the detail?
+        # TODO: not very elegant, need to revise, how can the datails inform the populator regarding the rest of the wall?
         for interface in interfaces:
             if interface.interface_role == InterfaceRole.MAIN:
                 # shorten top and bottom segments to the interface
