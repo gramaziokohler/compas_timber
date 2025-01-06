@@ -190,17 +190,16 @@ class THalfLapJoint(Joint):
         BeamJoinningError
             If the elements are not compatible for the creation of the joint.
         """
-        # check if the beams are aligned
-        for beam in self.elements:
-            cross_vector = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
-            beam_normal = beam.frame.normal.unitized()
-            dot = abs(beam_normal.dot(cross_vector.unitized()))
-            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoinningError(
-                    self.elements,
-                    self,
-                    debug_info="The two beams are not aligned to create a Half Lap joint.",
-                )
+        normal_a = self.beam_a.frame.normal.unitized()
+        normal_b = self.beam_b.frame.normal.unitized()
+        # calculate the dot product of the two normals
+        dot = abs(normal_a.dot(normal_b))
+        if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
+            raise BeamJoinningError(
+                self.elements,
+                self,
+                debug_info="The two beams are not aligned to create a Half Lap joint.",
+            )
 
     def _get_lap_lengths(self):
         cross_lap_length = self.main_beam.side_as_surface(self.main_ref_side_index).ysize
