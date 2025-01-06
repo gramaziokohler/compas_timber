@@ -204,3 +204,18 @@ class MachiningLimits(object):
             "FaceLimitedTop": self.face_limited_top,
             "FaceLimitedBottom": self.face_limited_bottom,
         }
+
+
+class EdgePositionType(object):
+    """Enum for the edge position of the cut.
+
+    Attributes
+    ----------
+    REFEDGE : literal("refedge")
+        Reference edge.
+    OPPEDGE : literal("oppedge")
+        Opposite edge.
+    """
+
+    REFEDGE = "refedge"
+    OPPEDGE = "oppedge"

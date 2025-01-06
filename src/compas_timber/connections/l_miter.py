@@ -5,9 +5,9 @@ from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
 from compas_timber._fabrication import JackRafterCut
+from compas_timber.errors import BeamJoinningError
 from compas_timber.utils import intersection_line_line_param
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -41,8 +41,8 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data = super(LMiterJoint, self).__data__
-        data["beam_a"] = self.beam_a_guid
-        data["beam_b"] = self.beam_b_guid
+        data["beam_a_guid"] = self.beam_a_guid
+        data["beam_b_guid"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
         return data
 
