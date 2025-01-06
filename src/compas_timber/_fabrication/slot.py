@@ -13,7 +13,6 @@ from .btlx_process import OrientationType
 
 
 class Slot(BTLxProcess):
-
     PROCESS_NAME = "Slot"  # type: ignore
 
     def __init__(
@@ -31,7 +30,7 @@ class Slot(BTLxProcess):
         angle_opp_point=90.0,
         add_angle_opp_point=0.0,
         machining_limits=None,
-        **kwargs
+        **kwargs,
     ):
         super(Slot, self).__init__(**kwargs)
         self._orientation = None

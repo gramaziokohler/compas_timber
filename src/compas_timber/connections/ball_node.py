@@ -122,7 +122,7 @@ class BallNodeJoint(Joint):
                 )  # TODO: include Tolerance check here.
                 if points[0][0] is not None and points[1][0] is not None:
                     cpt += points[1][0]
-                    count+=1
+                    count += 1
             self._node_point = cpt * (1.0 / count)
         return self._node_point
 
