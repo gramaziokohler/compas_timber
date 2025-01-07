@@ -5,9 +5,10 @@ from compas.geometry import Line
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.elements.features import DrillFeature
+
 from compas_timber.elements.timber import TimberElement
 from compas_timber.utils import intersection_line_box
+from compas_timber._fabrication import Drilling
 
 
 class Fastener(TimberElement):
@@ -185,4 +186,4 @@ class FastenerTimberInterface(Data):
                 drill_line = Line(*pts)
                 length = drill_line.length
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
-        return DrillFeature(drill_line, hole["diameter"], length)
+        return Drilling.from_line_and_beam(drill_line, hole.get("diameter", 10.0), element)
