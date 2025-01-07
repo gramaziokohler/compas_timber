@@ -22,7 +22,5 @@ __all__ = [
     "BrepSubtraction",
     "FeatureApplicationError",
     "BallNodeFastener",
-    "Fastener",
-    "FastenerTimberInterface",
     "PlateFastener",
 ]
