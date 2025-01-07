@@ -1,4 +1,3 @@
-from compas_timber.errors import BeamJoinningError
 from .joint import Joint
 from .l_butt import LButtJoint
 from .l_halflap import LHalfLapJoint
@@ -21,7 +20,6 @@ from .ball_node import BallNodeJoint
 __all__ = [
     "Joint",
     "LapJoint",
-    "BeamJoinningError",
     "TButtJoint",
     "LButtJoint",
     "TButtJoint",
