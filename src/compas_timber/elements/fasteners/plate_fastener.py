@@ -177,6 +177,8 @@ class PlateFastener(Fastener):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
+        if not self.outline:
+            self.set_default(joint)
         frames = self.get_fastener_frames(joint)
         for frame in frames:
             fastener = self.copy()

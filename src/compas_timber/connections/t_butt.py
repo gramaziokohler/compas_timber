@@ -54,12 +54,11 @@ class TButtJoint(Joint):
         self.features = []
         self.fasteners = []
         if fastener:
-            if fastener.outline is None:
-                fastener = fastener.copy()  # make a copy to avoid modifying the original fastener
-                fastener.set_default(joint=self)
+            print(fastener)
             self.base_fastener = fastener
-            if self.base_fastener:
-                self.base_fastener.place_instances(self)
+            self.base_fastener.place_instances(self)
+
+
 
     @property
     def interactions(self):
@@ -171,8 +170,9 @@ class TButtJoint(Joint):
         # add the features applied by the fastener.interfaces
         for fastener in self.fasteners:
             for interface in fastener.interfaces:
-                features = interface.get_features(interface.element)
-                interface.element.add_features(features)
+                if interface is not None:
+                    features = interface.get_features(interface.element)
+                    interface.element.add_features(features)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

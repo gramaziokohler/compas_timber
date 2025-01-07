@@ -4,11 +4,14 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import Point
+
+
 
 from compas_timber.elements.features import DrillFeature
 from compas_timber.elements.timber import TimberElement
 from compas_timber.utils import intersection_line_box
-
+from compas_timber.utils import intersection_line_line_param
 
 class Fastener(TimberElement):
     """
@@ -33,10 +36,10 @@ class Fastener(TimberElement):
 
     """
 
-    def __init__(self, shape=None, frame=None, **kwargs):
+    def __init__(self, shape=None, interfaces = None, frame=None, **kwargs):
         super(Fastener, self).__init__(**kwargs)
         self._shape = shape
-        self.interfaces = []
+        self.interfaces = interfaces or []
         self.frame = frame
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -49,6 +52,10 @@ class Fastener(TimberElement):
     def __str__(self):
         # type: () -> str
         return "<Fastener {}>".format(self.name)
+
+    @property
+    def shape(self):
+        return self._shape
 
     @property
     def frame(self):
@@ -74,6 +81,40 @@ class Fastener(TimberElement):
             "frame": self.frame,
             "interfaces": self.interfaces,
         }
+
+    def place_instances(self, joint):
+        frames = self.get_fastener_frames(joint)
+        for frame in frames:
+            fastener = self.copy()
+            fastener.frame = Frame(frame.point, frame.xaxis, frame.yaxis)
+            for i, interface in enumerate(fastener.interfaces):
+                if interface:
+                    interface.element = joint.elements[i]
+            joint.fasteners.append(fastener)
+
+    def get_fastener_frames(self, joint):
+        """Calculates the frames of the fasteners.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+            The frames of the fasteners with the x-axis along the elements[0].centerline and the y-axis along the elements[1].centerline.
+
+        """
+
+        beam_a, beam_b = joint.elements[0:2]
+        print(beam_a, beam_b)
+        (int_point, main_param), (_, _) = intersection_line_line_param(beam_a.centerline, beam_b.centerline)
+        print(int_point, main_param)
+
+        frame = Frame(
+            Point(*int_point),
+            beam_a.centerline.direction if main_param < 0.5 else -beam_a.centerline.direction,
+            beam_b.centerline.direction,
+        )
+        print(frame)
+        return [frame]
+
 
     def compute_geometry(self):
         """returns the geometry of the fastener in the model"""
