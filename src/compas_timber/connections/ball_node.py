@@ -2,6 +2,8 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 
+from compas_timber._fabrication.btlx_process import OrientationType
+from compas_timber._fabrication.slot import Slot, SlotParams
 from compas_timber.elements import BallNodeFastener
 from compas_timber.utils import intersection_line_line_param
 
@@ -136,15 +138,27 @@ class BallNodeJoint(Joint):
         for beam in self.beams:
             interface = self.fastener.base_interface.copy()
             pt = beam.centerline.closest_point(self._node_point)
-            print("joint point", self.node_point)
-            print("beam.key", beam.key)
-            print("pt", pt)
-            print("beam.midpoint", beam.midpoint)
-            print("beam.frame.zaxis", beam.frame.zaxis)
+            end, _ = beam.endpoint_closest_to_point(pt)
             interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
             self.fastener.interfaces.append(interface)
             beam.add_features(interface.get_features(beam))
+            slot = Slot(ref_side_index=0, orientation = end, **self.default_slot_feature(beam, end))
+            beam.add_features(slot)
 
     def restore_beams_from_keys(self, model):
         self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
         self.fastener = model.element_by_guid(self._fastener_guid)
+
+    def default_slot_feature(self, beam, end = "start"):
+        x = self.ball_diameter * 2.0 if end == "start" else beam.length - self.ball_diameter * 2.0
+
+
+        return {
+            "start_x": x,
+            "start_y": self.ball_diameter / 2.0,
+            "angle": 0.0,
+            "length": self.ball_diameter * 2.0,
+            "depth": self.ball_diameter,
+            "thickness": self.ball_diameter / 10.0,
+        }
+        return

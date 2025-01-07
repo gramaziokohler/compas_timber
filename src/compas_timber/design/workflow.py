@@ -93,7 +93,7 @@ class JointRule(object):
             pair = element_pairs.pop()
             match_found = False
             for rule in direct_rules:  # see if pair is used in a direct rule
-                if rule.comply(pair, max_distance=max_distance):
+                if rule.comply(pair):
                     match_found = True
                     break
 
@@ -439,11 +439,12 @@ class BTLxFeatureDefinition(object):
         instance = self.__class__(self.process_type, self.constructor, self.geometry.transformed(transformation))
         return instance
 
+    def transform(self, transformation):
+        self.geometry.transform(transformation)
 
+    # def get_feature(self, element):
+
+    #     return self.process_type.__call__(self.constructor(self.geometry, element))
 
     def get_feature(self, element):
-
-        return self.process_type.__call__(self.constructor(self.geometry, element))
-
-    def call_constructor(self, element):
         return self.constructor(self.geometry, element)

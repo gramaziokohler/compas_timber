@@ -9,9 +9,10 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 
-from compas_timber.elements import CutFeature
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
+from compas_timber.design import BTLxFeatureDefinition
+from compas_timber._fabrication.jack_cut import JackRafterCut
 
 
 class BallNodeFastener(Fastener):
@@ -82,7 +83,7 @@ class BallNodeFastener(Fastener):
         height = self.ball_diameter
         thickness = height / 10.0
         shape = Cylinder(height / 8.0, height * 2.0, Frame(Point(height * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))
-        cut_feature = CutFeature(Plane((height * 2.0, 0, 0), (-1, 0, 0)))
+        cut_feature = BTLxFeatureDefinition(JackRafterCut, JackRafterCut.from_plane_and_beam, Plane((height * 2.0, 0, 0), (-1, 0, 0)))
         outline_points = [
             Point(height * 2.0, -height / 2, -thickness / 2),
             Point(height * 2.0, height / 2, -thickness / 2),
