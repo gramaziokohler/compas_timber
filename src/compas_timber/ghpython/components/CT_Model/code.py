@@ -42,7 +42,7 @@ class ModelComponent(component):
             element.reset()
             Model.add_element(element)
 
-        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules)
+        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance)
 
         if unmatched_pairs:
             for pair in unmatched_pairs:
