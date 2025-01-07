@@ -93,23 +93,23 @@ class JointRule(object):
             pair = element_pairs.pop()
             match_found = False
             for rule in direct_rules:  # see if pair is used in a direct rule
-                if rule.comply(pair):
+                if rule.comply(pair, max_distance=max_distance):
                     match_found = True
                     break
 
             if not match_found:
                 for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
-                    if rule.comply(pair):
+                    if rule.comply(pair, max_distance=max_distance):
                         match_found = True
                         joint_defs.append(JointDefinition(rule.joint_type, rule.reorder(pair), **rule.kwargs))
                         break
 
             if not match_found:
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
-                    comply, pair = rule.comply(pair)
+                    comply, ordered_pair = rule.comply(pair, max_distance=max_distance)
                     if comply:
                         match_found = True
-                        joint_defs.append(JointDefinition(rule.joint_type, pair, **rule.kwargs))
+                        joint_defs.append(JointDefinition(rule.joint_type, ordered_pair, **rule.kwargs))
                         break
             if not match_found:
                 unmatched_pairs.append(pair)

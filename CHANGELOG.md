@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
+
+### Changed
+
+* Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
+* Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
+
+### Removed
+
+* Removed package `compas_timber._fabrication`.
+* Removed `btlx_processes` anf `joint_factories` from `compas_timber.fabrication` package.
+* Removed `.btlx` files from `.gitignore`.
+
+
+## [0.12.0] 2025-01-07
+
+### Added
+
 * Added new base class for timber elements `TimberElement`.
 * Added property `is_beam` to `Beam` class.
 * Added property `is_plate` to `Plate` class.
@@ -60,7 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `errors` directory and `__init__.py` module.
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
-* Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
 
 ### Changed
 
@@ -84,8 +101,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `JointRuleFromList` GH component.
 * Changed `TButtJoint` to take an optional `PlateFastener`.
 * Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
-* Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
-* Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
+* Fixed a bug that occured when parallel beams are joined in the BallNodeJoint.
+* Fixed `L_TopoJointRule`, `T_TopoJointRule` and `X_TopoJointRule` for cases where `Joint.SUPPORTED_TOPOLOGY` is a single value or a list.
+* Fixed bug in `JointRule.joints_from_beams_and_rules()` that caused failures when topology was not recognized.
+* Implemented `max_distance` parameter in `JointRule.joints_from_beams_and_rules()` and `JointRule.comply` methods.
 
 ### Removed
 
@@ -97,9 +116,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed module `compas_timber.connections.french_ridge_lap`.
 * Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
 * Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
-* Removed package `compas_timber._fabrication`.
-* Removed `btlx_processes` anf `joint_factories` from `compas_timber.fabrication` package.
-* Removed `.btlx` files from `.gitignore`.
 
 
 
