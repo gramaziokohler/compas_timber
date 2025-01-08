@@ -28,6 +28,9 @@ from .slot import Slot
 from .slot import SlotParams
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
+from .btlx import LimitationTopType
+from .btlx import MachiningLimits
+from .btlx import StepShapeType
 
 __all__ = [
     "BTLxWriter",
@@ -60,4 +63,7 @@ __all__ = [
     "SlotParams",
     "TenonShapeType",
     "EdgePositionType",
+    "LimitationTopType",
+    "MachiningLimits",
+    "StepShapeType",
 ]
