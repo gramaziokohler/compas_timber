@@ -19,3 +19,5 @@ Classes
     TButtFactory
     LMiterFactory
     FrenchRidgeFactory
+    House
+    HouseMortise
