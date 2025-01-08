@@ -4,7 +4,6 @@ from .workflow import JointRule
 from .workflow import TopologyRule
 from .workflow import JointDefinition
 from .workflow import FeatureDefinition
-from .workflow import BTLxFeatureDefinition
 from .workflow import DebugInfomation
 
 from .wall_from_surface import SurfaceModel
@@ -17,6 +16,5 @@ __all__ = [
     "JointDefinition",
     "FeatureDefinition",
     "DebugInfomation",
-    "BTLxFeatureDefinition",
     "SurfaceModel",
 ]
