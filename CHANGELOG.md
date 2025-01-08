@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed comma incompatible with py27 in `Slot` module.
+
 * Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
 * Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
 

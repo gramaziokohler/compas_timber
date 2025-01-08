@@ -31,7 +31,7 @@ class Slot(BTLxProcessing):
         angle_opp_point=90.0,
         add_angle_opp_point=0.0,
         machining_limits=None,
-        **kwargs,
+        **kwargs
     ):
         super(Slot, self).__init__(**kwargs)
         self._orientation = None
@@ -77,9 +77,7 @@ class Slot(BTLxProcessing):
     @orientation.setter
     def orientation(self, orientation):
         if orientation not in [OrientationType.START, OrientationType.END]:
-            raise ValueError(
-                "Orientation must be either OrientationType.START or OrientationType.END. Got: {}".format(orientation)
-            )
+            raise ValueError("Orientation must be either OrientationType.START or OrientationType.END. Got: {}".format(orientation))
         self._orientation = orientation
 
     @property
@@ -189,9 +187,7 @@ class Slot(BTLxProcessing):
     @add_angle_opp_point.setter
     def add_angle_opp_point(self, add_angle_opp_point):
         if add_angle_opp_point < -179.9 or add_angle_opp_point > 179.9:
-            raise ValueError(
-                "Add Angle Opp Point must be between -179.9 and 179.9. Got: {}".format(add_angle_opp_point)
-            )
+            raise ValueError("Add Angle Opp Point must be between -179.9 and 179.9. Got: {}".format(add_angle_opp_point))
         self._add_angle_opp_point = add_angle_opp_point
 
     @property
