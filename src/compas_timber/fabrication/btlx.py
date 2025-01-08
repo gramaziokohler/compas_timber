@@ -15,15 +15,16 @@ from compas.tolerance import TOL
 
 
 class BTLxWriter(object):
-    """Class representing a BTLx object.
+    """Class for writing BTLx files from a given model.
 
     BTLx is a format used for representing timber fabrication data.
 
+    Use BTLxWriter.write() to write a BTLx file from a model and a file path.
+
     Parameters
     ----------
-    model : :class:`~compas_timber.model.Model`
+    model : :class:`~compas_timber.model.TimberModel`
         The model object.
-
 
     """
 
