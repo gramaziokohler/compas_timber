@@ -5,7 +5,7 @@ compas_timber.ghpython
 .. currentmodule:: compas_timber.ghpython
 
 Functions
-=======
+=========
 
 .. autosummary::
     :toctree: generated/

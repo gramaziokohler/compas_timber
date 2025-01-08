@@ -12,7 +12,7 @@ Classes
     :nosignatures:
 
     Beam
-    Fastner
+    Fastener
     FastenerTimberInterface
     Plate
     TimberElement
