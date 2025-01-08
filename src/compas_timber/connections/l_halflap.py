@@ -14,7 +14,7 @@ class LHalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
