@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed comma incompatible with py27 in `Slot` module.
+
 * Updated the API documentation for `connections`, `elements`, `fabrication`, `ghpython`, `planning` packages.
 
 ### Removed
