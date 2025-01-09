@@ -9,12 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added API documentation for `design` and `error` packages.
+* Added `guess_joint_topology_2beams` and `set_default_joints` functions to `design.__init__.py`.
+* Added `list_input_valid`, `item_input_valid`, `get_leaf_subclasses`, `rename_gh_input` functions to `ghpython.__init__.py`.
+* Added `Instruction`, `Model3d`, `Text3d`, `LinearDimension`, `BuildingPlanParser` classes to `planning.__init__.py`.
+
 ### Changed
 
 * Fixed comma incompatible with py27 in `Slot` module.
 
+* Updated the API documentation for `connections`, `elements`, `fabrication`, `ghpython`, `planning` packages.
+
 ### Removed
 
+* Removed `BeamJoiningError` from `connections.__init__.py`.
+* Removed duplicate entries from the `__all__` list in the `elements.__init__.py` module.
 
 ## [0.12.0] 2025-01-07
 

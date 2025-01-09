@@ -1,8 +1,8 @@
 ********************************************************************************
-compas_timber.elements
+compas_timber.errors
 ********************************************************************************
 
-.. currentmodule:: compas_timber.elements
+.. currentmodule:: compas_timber.errors
 
 Classes
 =======
@@ -11,9 +11,6 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Beam
-    Fastener
-    FastenerTimberInterface
-    Plate
-    TimberElement
-    Wall
+    BeamJoinningError
+    FeatureApplicationError
+    FastenerApplicationError

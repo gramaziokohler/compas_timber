@@ -14,7 +14,7 @@ class THalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
