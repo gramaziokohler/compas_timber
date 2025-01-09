@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Actor" href="generated/compas_timber.planning.Actor.html" />
-    <link rel="prev" title="LMiterFactory.apply_processings" href="generated/compas_timber.fabrication.LMiterFactory.apply_processings.html" />
+    <link rel="prev" title="set_default_joints" href="generated/compas_timber.design.set_default_joints.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -498,9 +498,11 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compas_timber.connections.html">compas_timber.connections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compas_timber.fabrication.html">compas_timber.fabrication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_timber.design.html">compas_timber.design</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_timber.errors.html">compas_timber.errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compas_timber.ghpython.html">compas_timber.ghpython</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_timber.rhino.html">rhino</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_timber.rhino.html">compas_timber.rhino</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -599,11 +601,26 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.planning.BuildingPlan.html" title="compas_timber.planning.BuildingPlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildingPlan</span></code></a></p></td>
 <td><p>Container for building steps, each steps is a collection of instructions which can be visualized</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.planning.Step.html" title="compas_timber.planning.Step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Step</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.planning.BuildingPlanParser.html" title="compas_timber.planning.BuildingPlanParser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildingPlanParser</span></code></a></p></td>
+<td><p>Provides class methods to parse and serialize building plans from and to json files.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.planning.Instruction.html" title="compas_timber.planning.Instruction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Instruction</span></code></a></p></td>
+<td><p>Base class for instructions</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.planning.LinearDimension.html" title="compas_timber.planning.LinearDimension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LinearDimension</span></code></a></p></td>
+<td><p>3d linear dimension</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.planning.Model3d.html" title="compas_timber.planning.Model3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Model3d</span></code></a></p></td>
+<td><p>Instruction which incorporates a 3d model (beam, screw etc.)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.planning.SimpleSequenceGenerator.html" title="compas_timber.planning.SimpleSequenceGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SimpleSequenceGenerator</span></code></a></p></td>
+<td><p>Generates a simple sequence of steps, one step per element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.planning.Step.html" title="compas_timber.planning.Step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Step</span></code></a></p></td>
 <td><p>Container for building instructions which assemble a single element</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.planning.SimpleSequenceGenerator.html" title="compas_timber.planning.SimpleSequenceGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SimpleSequenceGenerator</span></code></a></p></td>
-<td><p>Generates a simple sequence of steps, one step per element.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.planning.Text3d.html" title="compas_timber.planning.Text3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Text3d</span></code></a></p></td>
+<td><p>Text overlay</p></td>
 </tr>
 </tbody>
 </table>
