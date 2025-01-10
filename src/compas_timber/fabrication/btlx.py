@@ -176,8 +176,11 @@ class BTLxWriter(object):
         # create processings element for the part
         processings_element = ET.Element("Processings")
         for feature in beam.features:
-            processing_element = cls._create_processing(feature)
-            processings_element.append(processing_element)
+            if (
+                feature.PROCESSING_NAME
+            ):  # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
+                processing_element = cls._create_processing(feature)
+                processings_element.append(processing_element)
         part_element.extend([processings_element, part.et_shape])
         return part_element
 
