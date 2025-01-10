@@ -51,8 +51,8 @@ class BTLxWriter(object):
             ("ComputerName", "{}".format(os.getenv("computername"))),
             ("UserName", "{}".format(os.getenv("USERNAME"))),
             ("FileName", ""),
-            ("Date", "{}".format(date.today())),
-            ("Time", "{}".format(datetime.now().strftime("%H:%M:%S"))),
+            ("Date", "{}"),
+            ("Time", "{}"),
             ("Comment", ""),
         ]
     )
@@ -73,7 +73,8 @@ class BTLxWriter(object):
 
         Returns
         -------
-        None
+        str
+            The XML string of the BTLx file.
 
         """
         if not file_path.endswith(".btlx"):
@@ -81,6 +82,7 @@ class BTLxWriter(object):
         btlx = cls.model_to_xml(model)
         with open(file_path, "w") as file:
             file.write(btlx)
+        return btlx
 
     @classmethod
     def model_to_xml(cls, model):
@@ -93,8 +95,8 @@ class BTLxWriter(object):
 
         Returns
         -------
-        :class:`~xml.etree.ElementTree.Element`
-            The XML element of the model.
+        str
+            The XML string of the BTLx file.
 
         """
         root_element = ET.Element("BTLx", cls.FILE_ATTRIBUTES)
@@ -118,8 +120,15 @@ class BTLxWriter(object):
         # create file history element
         file_history = ET.Element("FileHistory")
         # create initial export program element
+        cls._update_file_history_attributes()
         file_history.append(ET.Element("InitialExportProgram", cls.FILE_HISTORY_ATTRIBUTES))
         return file_history
+
+    @classmethod
+    def _update_file_history_attributes(cls):
+        """Updates the file history attributes with the current date and time."""
+        cls.FILE_HISTORY_ATTRIBUTES["Date"] = "{}".format(date.today())
+        cls.FILE_HISTORY_ATTRIBUTES["Time"] = "{}".format(datetime.now().strftime("%H:%M:%S"))
 
     @classmethod
     def _create_project_element(cls, model):
