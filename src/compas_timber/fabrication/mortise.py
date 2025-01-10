@@ -274,7 +274,6 @@ class Mortise(BTLxProcessing):
         cls,
         frame,
         beam,
-        start_depth=0.0,
         length=80.0,
         width=40.0,
         depth=28.0,
@@ -290,8 +289,6 @@ class Mortise(BTLxProcessing):
             The cutting frame.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
-        start_depth : float, optional
-            The start depth of the cut along the y-axis of the beam. This offset is to be used in case of housing. Default is 0.0.
         angle : float, optional
             The angle of the cut.
         length : float, optional
@@ -332,7 +329,8 @@ class Mortise(BTLxProcessing):
         angle = cls._calculate_angle(ref_side, frame, orientation)
 
         # define slope and inclination
-        # TODO: In which cases do you want indiferent slope and inclination?
+        # TODO: In which cases do you want indiferent slope and inclination or start_depth?
+        start_depth = 0.0
         slope = 90.0
         inclination = 90.0
 
