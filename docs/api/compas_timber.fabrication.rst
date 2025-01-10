@@ -12,10 +12,6 @@ Classes
     :nosignatures:
 
     BTLx
+    BTLxPart
     BTLxProcess
-    BTLxJackCut
-    BTLxFrenchRidgeLap
-    LButtFactory
-    TButtFactory
-    LMiterFactory
-    FrenchRidgeFactory
+

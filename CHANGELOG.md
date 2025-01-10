@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added API documentation for `design` and `error` packages.
+* Added `guess_joint_topology_2beams` and `set_default_joints` functions to `design.__init__.py`.
+* Added `list_input_valid`, `item_input_valid`, `get_leaf_subclasses`, `rename_gh_input` functions to `ghpython.__init__.py`.
+* Added `Instruction`, `Model3d`, `Text3d`, `LinearDimension`, `BuildingPlanParser` classes to `planning.__init__.py`.
+
+### Changed
+
+* Fixed comma incompatible with py27 in `Slot` module.
+
+* Updated the API documentation for `connections`, `elements`, `fabrication`, `ghpython`, `planning` packages.
+
+### Removed
+
+* Removed `BeamJoiningError` from `connections.__init__.py`.
+* Removed duplicate entries from the `__all__` list in the `elements.__init__.py` module.
+
+## [0.12.0] 2025-01-07
+
+### Added
+
 * Added new base class for timber elements `TimberElement`.
 * Added property `is_beam` to `Beam` class.
 * Added property `is_plate` to `Plate` class.
@@ -83,6 +103,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `JointRuleFromList` GH component.
 * Changed `TButtJoint` to take an optional `PlateFastener`.
 * Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
+* Fixed a bug that occured when parallel beams are joined in the BallNodeJoint.
+* Fixed `L_TopoJointRule`, `T_TopoJointRule` and `X_TopoJointRule` for cases where `Joint.SUPPORTED_TOPOLOGY` is a single value or a list.
+* Fixed bug in `JointRule.joints_from_beams_and_rules()` that caused failures when topology was not recognized.
+* Implemented `max_distance` parameter in `JointRule.joints_from_beams_and_rules()` and `JointRule.comply` methods.
 * Changed `compas_timber._fabrication.Lap` so that the volume is generated fully from the relevant BTLx params.
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the Lap process.
 
