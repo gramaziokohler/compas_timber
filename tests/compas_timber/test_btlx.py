@@ -12,12 +12,15 @@ import compas_timber
 from compas_timber.fabrication import BTLxWriter
 from compas_timber.elements import Beam
 from compas_timber.elements import CutFeature
+from compas_timber.model import TimberModel
 
 
 @pytest.fixture(scope="module")
 def test_model():
     model_path = os.path.join(compas_timber.DATA, "model_test.json")
-    return json_load(model_path)
+    model = json_load(model_path)
+    model.process_joinery()
+    return model
 
 
 @pytest.fixture(scope="module")
@@ -29,7 +32,8 @@ def expected_btlx():
 
 @pytest.fixture(scope="module")
 def resulting_btlx(test_model):
-    resulting_btlx_str = BTLxWriter.model_to_xml(test_model)
+    writer = BTLxWriter()
+    resulting_btlx_str = writer.model_to_xml(test_model)
     return ET.fromstring(resulting_btlx_str)
 
 
@@ -96,14 +100,8 @@ def test_btlx_processings(resulting_btlx, test_model, namespaces):
     # Validate the features and processings
     for part, beam in zip(part_elements, test_model.beams):
         beam_features = beam.features
-        processings = part.findall("d2m:Processings/d2m:Processing", namespaces)
+        processings = part.find("d2m:Processings", namespaces)
         assert len(processings) == len(beam_features)
-        for processing, feature in zip(processings, beam_features):
-            feature_params = feature.params_dict
-
-            # Validate the attributes of the Processing element
-            for key, value in feature_params.items():
-                assert processing.get(key) == value
 
 
 def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
@@ -156,11 +154,13 @@ def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
             assert resulting_processing.attrib == expected_processing.attrib
 
 
-def test_btlx_should_skip_feature(test_model):
+def test_btlx_should_skip_feature():
     writer = BTLxWriter()
+    model = TimberModel()
     beam = Beam(Frame.worldXY(), 1000, 100, 100)
     beam.add_features(CutFeature(Frame.worldXY()))
+    model.add_element(beam)
 
-    test_model.add_element(beam)
+    result = writer.model_to_xml(model)
 
-    writer.model_to_xml(test_model)
+    assert result is not None
