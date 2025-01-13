@@ -161,6 +161,7 @@ def test_btlx_should_skip_feature():
     beam.add_features(CutFeature(Frame.worldXY()))
     model.add_element(beam)
 
-    result = writer.model_to_xml(model)
+    with pytest.warns():
+        result = writer.model_to_xml(model)
 
     assert result is not None

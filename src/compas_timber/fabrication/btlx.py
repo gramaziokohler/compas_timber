@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import date
 from datetime import datetime
+from warnings import warn
 
 import compas
 from compas.data import Data
@@ -187,6 +188,8 @@ class BTLxWriter(object):
                 if hasattr(feature, "PROCESSING_NAME"):
                     processing_element = self._create_processing(feature)
                     processings_element.append(processing_element)
+                else:
+                    warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
         part_element.append(part.et_shape)
         return part_element
