@@ -48,10 +48,11 @@ class BTLxWriter(object):
         ]
     )
 
-    def __init__(self, company_name=None, file_name=None, comment=None):
+    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None):
         self.company_name = company_name
         self.file_name = file_name
         self.comment = comment
+        self._project_name = project_name or "COMPAS Timber Project"
 
     def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
@@ -75,10 +76,10 @@ class BTLxWriter(object):
         """
         if not file_path.endswith(".btlx"):
             file_path += ".btlx"
-        btlx = self.model_to_xml(model)
+        btlx_string = self.model_to_xml(model)
         with open(file_path, "w") as file:
-            file.write(btlx)
-        return btlx
+            file.write(btlx_string)
+        return btlx_string
 
     def model_to_xml(self, model):
         """Converts the model to an XML string.
@@ -149,7 +150,7 @@ class BTLxWriter(object):
 
         """
         # create project element
-        project_element = ET.Element("Project", Name="testProject")  # TODO: Should the name be set from the model and passed here?
+        project_element = ET.Element("Project", Name=self._project_name)
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
@@ -182,9 +183,8 @@ class BTLxWriter(object):
         if beam.features:
             processings_element = ET.Element("Processings")
             for feature in beam.features:
-                if (
-                    feature.PROCESSING_NAME
-                ):  # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
+                # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
+                if hasattr(feature, "PROCESSING_NAME"):
                     processing_element = self._create_processing(feature)
                     processings_element.append(processing_element)
             part_element.append(processings_element)

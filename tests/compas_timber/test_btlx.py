@@ -3,12 +3,15 @@ import pytest
 
 from compas.data import json_load
 from compas.tolerance import Tolerance
+from compas.geometry import Frame
 
 import xml.etree.ElementTree as ET
 
 import compas
 import compas_timber
 from compas_timber.fabrication import BTLxWriter
+from compas_timber.elements import Beam
+from compas_timber.elements import CutFeature
 
 
 @pytest.fixture(scope="module")
@@ -148,8 +151,16 @@ def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
         expected_processing_elements = expected_processings.findall("d2m:Processing", namespaces)
         assert len(resulting_processing_elements) == len(expected_processing_elements)
 
-        for resulting_processing, expected_processing in zip(
-            resulting_processing_elements, expected_processing_elements
-        ):
+        for resulting_processing, expected_processing in zip(resulting_processing_elements, expected_processing_elements):
             assert resulting_processing.tag == expected_processing.tag
             assert resulting_processing.attrib == expected_processing.attrib
+
+
+def test_btlx_should_skip_feature(test_model):
+    writer = BTLxWriter()
+    beam = Beam(Frame.worldXY(), 1000, 100, 100)
+    beam.add_features(CutFeature(Frame.worldXY()))
+
+    test_model.add_element(beam)
+
+    writer.model_to_xml(test_model)
