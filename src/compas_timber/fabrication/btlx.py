@@ -23,14 +23,18 @@ class BTLxWriter(object):
 
     Parameters
     ----------
-    model : :class:`~compas_timber.model.TimberModel`
-        The model object.
+    company_name : str, optional
+        The name of the company. Defaults to "Gramazio Kohler Research".
+    file_name : str, optional
+        The name of the file. Defaults to None.
+    comment : str, optional
+        A comment to be included in the file. Defaults to None.
+
 
     """
 
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
-    REGISTERED_JOINTS = {}
     FILE_ATTRIBUTES = OrderedDict(
         [
             ("xmlns", "https://www.design2machine.com"),
@@ -43,25 +47,13 @@ class BTLxWriter(object):
             ),
         ]
     )
-    FILE_HISTORY_ATTRIBUTES = OrderedDict(
-        [
-            ("CompanyName", "Gramazio Kohler Research"),
-            ("ProgramName", "COMPAS_Timber"),
-            ("ProgramVersion", "Compas: {}".format(compas.__version__)),
-            ("ComputerName", "{}".format(os.getenv("computername"))),
-            ("UserName", "{}".format(os.getenv("USERNAME"))),
-            ("FileName", ""),
-            ("Date", "{}"),
-            ("Time", "{}"),
-            ("Comment", ""),
-        ]
-    )
 
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, company_name=None, file_name=None, comment=None):
+        self.company_name = company_name
+        self.file_name = file_name
+        self.comment = comment
 
-    @classmethod
-    def write(cls, model, file_path):
+    def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
 
         Parameters
@@ -79,13 +71,12 @@ class BTLxWriter(object):
         """
         if not file_path.endswith(".btlx"):
             file_path += ".btlx"
-        btlx = cls.model_to_xml(model)
+        btlx = self.model_to_xml(model)
         with open(file_path, "w") as file:
             file.write(btlx)
         return btlx
 
-    @classmethod
-    def model_to_xml(cls, model):
+    def model_to_xml(self, model):
         """Converts the model to an XML string.
 
         Parameters
@@ -99,16 +90,15 @@ class BTLxWriter(object):
             The XML string of the BTLx file.
 
         """
-        root_element = ET.Element("BTLx", cls.FILE_ATTRIBUTES)
+        root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history
-        file_history_element = cls._create_file_history()
+        file_history_element = self._create_file_history()
         # second child -> project
-        project_element = cls._create_project_element(model)
+        project_element = self._create_project_element(model)
         root_element.extend([file_history_element, project_element])
         return MD.parseString(ET.tostring(root_element)).toprettyxml(indent="   ")
 
-    @classmethod
-    def _create_file_history(cls):
+    def _create_file_history(self):
         """Creates the file history element. This method creates the initial export program element and appends it to the file history element.
 
         Returns
@@ -120,18 +110,28 @@ class BTLxWriter(object):
         # create file history element
         file_history = ET.Element("FileHistory")
         # create initial export program element
-        cls._update_file_history_attributes()
-        file_history.append(ET.Element("InitialExportProgram", cls.FILE_HISTORY_ATTRIBUTES))
+        file_history_attibutes = self._get_file_history_attributes()
+        file_history.append(ET.Element("InitialExportProgram", file_history_attibutes))
         return file_history
 
-    @classmethod
-    def _update_file_history_attributes(cls):
-        """Updates the file history attributes with the current date and time."""
-        cls.FILE_HISTORY_ATTRIBUTES["Date"] = "{}".format(date.today())
-        cls.FILE_HISTORY_ATTRIBUTES["Time"] = "{}".format(datetime.now().strftime("%H:%M:%S"))
+    def _get_file_history_attributes(self):
+        """Generates the file history attributes with the current date and time."""
+        file_history_attributes = OrderedDict(
+            [
+                ("CompanyName", self.company_name or "Gramazio Kohler Research"),
+                ("ProgramName", "COMPAS_Timber"),
+                ("ProgramVersion", "Compas: {}".format(compas.__version__)),
+                ("ComputerName", "{}".format(os.getenv("computername"))),
+                ("UserName", "{}".format(os.getenv("USERNAME"))),
+                ("FileName", self.file_name or ""),
+                ("Date", "{}".format(date.today())),
+                ("Time", "{}".format(datetime.now().strftime("%H:%M:%S"))),
+                ("Comment", self.comment or ""),
+            ]
+        )
+        return file_history_attributes
 
-    @classmethod
-    def _create_project_element(cls, model):
+    def _create_project_element(self, model):
         """Creates the project element. This method creates the parts element and appends it to the project element.
 
         Returns
@@ -148,12 +148,11 @@ class BTLxWriter(object):
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
         for i, beam in enumerate(model.beams):
-            part_element = cls._create_part(beam, i)
+            part_element = self._create_part(beam, i)
             parts_element.append(part_element)
         return project_element
 
-    @classmethod
-    def _create_part(cls, beam, order_num):
+    def _create_part(self, beam, order_num):
         """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
@@ -180,14 +179,13 @@ class BTLxWriter(object):
                 if (
                     feature.PROCESSING_NAME
                 ):  # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
-                    processing_element = cls._create_processing(feature)
+                    processing_element = self._create_processing(feature)
                     processings_element.append(processing_element)
             part_element.append(processings_element)
         part_element.append(part.et_shape)
         return part_element
 
-    @classmethod
-    def _create_processing(cls, processing):
+    def _create_processing(self, processing):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
 
         Parameters
@@ -214,7 +212,7 @@ class BTLxWriter(object):
         # create subprocessing elements
         if processing.subprocessings:
             for subprocessing in processing.subprocessings:
-                processing_element.append(cls._create_processing(subprocessing))
+                processing_element.append(self._create_processing(subprocessing))
         return processing_element
 
 
