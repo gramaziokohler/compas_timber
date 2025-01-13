@@ -1,10 +1,10 @@
 from compas.tolerance import TOL
 
-from compas_timber._fabrication import StepJoint
-from compas_timber._fabrication import StepJointNotch
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.errors import BeamJoinningError
+from compas_timber.fabrication import StepJoint
+from compas_timber.fabrication import StepJointNotch
 
 from .joint import Joint
 from .solver import JointTopology
@@ -16,7 +16,7 @@ class TStepJoint(Joint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `TStepJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `TStepJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------

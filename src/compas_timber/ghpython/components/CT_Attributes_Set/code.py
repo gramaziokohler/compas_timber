@@ -18,9 +18,7 @@ class Attributes_Set(component):
         if z_vector or width or height or category:
             pass
         else:
-            self.AddRuntimeMessage(
-                Warning, "None of the input parameters 'ZVector', 'Width', 'Height', 'Category' collected any data."
-            )
+            self.AddRuntimeMessage(Warning, "None of the input parameters 'ZVector', 'Width', 'Height', 'Category' collected any data.")
 
         n = len(ref_obj)
 

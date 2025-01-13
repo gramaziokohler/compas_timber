@@ -56,9 +56,7 @@ class JointRule(object):
             }
         for rule in rules:  # separate category and topo and direct joint rules
             if rule.__class__.__name__ == "TopologyRule":
-                topo_rules[rule.topology_type] = TopologyRule(
-                    rule.topology_type, rule.joint_type, **rule.kwargs
-                )  # overwrites, meaning last rule wins
+                topo_rules[rule.topology_type] = TopologyRule(rule.topology_type, rule.joint_type, **rule.kwargs)  # overwrites, meaning last rule wins
         return [rule for rule in topo_rules.values() if rule is not None]
 
     @staticmethod
@@ -153,9 +151,7 @@ class CategoryRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
-            CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos
-        )
+        return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
     def comply(self, elements, max_distance=1e-6):
         try:
@@ -264,11 +260,7 @@ class JointDefinition(object):
         return hash((self.joint_type, self.elements))
 
     def is_identical(self, other):
-        return (
-            isinstance(other, JointDefinition)
-            and self.joint_type == other.joint_type
-            and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
-        )
+        return isinstance(other, JointDefinition) and self.joint_type == other.joint_type and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
 
     def match(self, elements):
         """Returns True if elements are defined within this JointDefinition."""
@@ -281,6 +273,10 @@ class FeatureDefinition(object):
     """Container linking a feature to the elements on which it should be applied.
 
     This allows delaying the actual applying of features to a downstream component.
+
+    TODO: this needs to be adapted to in order to create processings.
+    TODO: There needs to be a way for this to call a named alternative constructor with the required arguments.
+    TODO: There needs to be a possibility to transform the elements before converting this to a processing.
 
     """
 
@@ -387,9 +383,7 @@ class DebugInfomation(object):
         self.joint_errors = []
 
     def __repr__(self):
-        return "{}({} feature errors, {} joining errors)".format(
-            DebugInfomation.__name__, len(self.feature_errors), len(self.joint_errors)
-        )
+        return "{}({} feature errors, {} joining errors)".format(DebugInfomation.__name__, len(self.feature_errors), len(self.joint_errors))
 
     def ToString(self):
         return repr(self)

@@ -4,8 +4,8 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber._fabrication import JackRafterCut
 from compas_timber.errors import BeamJoinningError
+from compas_timber.fabrication import JackRafterCut
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
@@ -18,7 +18,7 @@ class LMiterJoint(Joint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------

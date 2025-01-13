@@ -58,9 +58,7 @@ class BeamTreeFromMesh(component):
             scene.add(beam.blank)
 
         beam_tree = []
-        for i in range(
-            len(points)
-        ):  # map the beams to the vertices. Each vertex will have a list of beams that are connected to it
+        for i in range(len(points)):  # map the beams to the vertices. Each vertex will have a list of beams that are connected to it
             joint_beams = []
             for j, pair in enumerate(edge_index_pairs):
                 if i in pair:

@@ -9,9 +9,9 @@ from compas.geometry import Vector
 from compas.geometry import is_point_on_plane
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import FrenchRidgeLap
-from compas_timber._fabrication import OrientationType
-from compas_timber._fabrication.btlx_process import EdgePositionType
+from compas_timber.fabrication import FrenchRidgeLap
+from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication import EdgePositionType
 
 from compas.tolerance import Tolerance
 
@@ -73,9 +73,7 @@ def test_ortho_french_ridge_lap_opp(tol):
 
 
 def test_french_ridge_lap_data(tol):
-    instance = FrenchRidgeLap(
-        OrientationType.START, 14.23, 31.24, EdgePositionType.REFEDGE, True, 11.0, ref_side_index=3
-    )
+    instance = FrenchRidgeLap(OrientationType.START, 14.23, 31.24, EdgePositionType.REFEDGE, True, 11.0, ref_side_index=3)
     copied_instance = json_loads(json_dumps(instance))
 
     assert copied_instance.orientation == instance.orientation
@@ -87,9 +85,7 @@ def test_french_ridge_lap_data(tol):
 
 
 def test_french_ridge_lap_params_obj():
-    instance = FrenchRidgeLap(
-        OrientationType.START, 14.23, 31.24, EdgePositionType.REFEDGE, True, 11.0, ref_side_index=3
-    )
+    instance = FrenchRidgeLap(OrientationType.START, 14.23, 31.24, EdgePositionType.REFEDGE, True, 11.0, ref_side_index=3)
     params = instance.params_dict
 
     assert params["Name"] == "FrenchRidgeLap"
