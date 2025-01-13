@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="BTLx" href="generated/compas_timber.fabrication.BTLx.html" />
+    <link rel="next" title="BTLxWriter" href="generated/compas_timber.fabrication.BTLxWriter.html" />
     <link rel="prev" title="find_neighboring_beams" href="generated/compas_timber.connections.find_neighboring_beams.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -595,14 +595,68 @@ document.write(`
 <h2>Classes</h2>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.BTLx.html" title="compas_timber.fabrication.BTLx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BTLx</span></code></a></p></td>
-<td><p>Class representing a BTLx object.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.BTLxWriter.html" title="compas_timber.fabrication.BTLxWriter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BTLxWriter</span></code></a></p></td>
+<td><p>Class for writing BTLx files from a given model.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.BTLxPart.html" title="compas_timber.fabrication.BTLxPart"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BTLxPart</span></code></a></p></td>
 <td><p>Class representing a BTLx part.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.BTLxProcess.html" title="compas_timber.fabrication.BTLxProcess"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BTLxProcess</span></code></a></p></td>
-<td><p>Generic class for BTLx processings.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.BTLxProcessing.html" title="compas_timber.fabrication.BTLxProcessing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BTLxProcessing</span></code></a></p></td>
+<td><p>Base class for BTLx Processing.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.DoubleCut.html" title="compas_timber.fabrication.DoubleCut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DoubleCut</span></code></a></p></td>
+<td><p>Represents a Double Cut feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.DovetailTenon.html" title="compas_timber.fabrication.DovetailTenon"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DovetailTenon</span></code></a></p></td>
+<td><p>Represents a Dovetail Tenon feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.DovetailMortise.html" title="compas_timber.fabrication.DovetailMortise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DovetailMortise</span></code></a></p></td>
+<td><p>Represents a Dovetail Mortise feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.Drilling.html" title="compas_timber.fabrication.Drilling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Drilling</span></code></a></p></td>
+<td><p>Represents a drilling processing.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.FrenchRidgeLap.html" title="compas_timber.fabrication.FrenchRidgeLap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FrenchRidgeLap</span></code></a></p></td>
+<td><p>Represents a French Ridge Lap feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.JackRafterCut.html" title="compas_timber.fabrication.JackRafterCut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JackRafterCut</span></code></a></p></td>
+<td><p>Represents a Jack Rafter Cut feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.Lap.html" title="compas_timber.fabrication.Lap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Lap</span></code></a></p></td>
+<td><p>Represents a Lap feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.Slot.html" title="compas_timber.fabrication.Slot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Slot</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.StepJoint.html" title="compas_timber.fabrication.StepJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StepJoint</span></code></a></p></td>
+<td><p>Represents a Step Joint feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.StepJointNotch.html" title="compas_timber.fabrication.StepJointNotch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StepJointNotch</span></code></a></p></td>
+<td><p>Represents a Step Joint Notch feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.Tenon.html" title="compas_timber.fabrication.Tenon"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Tenon</span></code></a></p></td>
+<td><p>Represents a Tenon feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.Mortise.html" title="compas_timber.fabrication.Mortise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Mortise</span></code></a></p></td>
+<td><p>Represents a Mortise feature to be made on a beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.EdgePositionType.html" title="compas_timber.fabrication.EdgePositionType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EdgePositionType</span></code></a></p></td>
+<td><p>Enum for the edge position of the cut.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.LimitationTopType.html" title="compas_timber.fabrication.LimitationTopType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LimitationTopType</span></code></a></p></td>
+<td><p>Enum for the top limitation of the cut.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.MachiningLimits.html" title="compas_timber.fabrication.MachiningLimits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachiningLimits</span></code></a></p></td>
+<td><p>Configuration class for the machining limits of the cut.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.OrientationType.html" title="compas_timber.fabrication.OrientationType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OrientationType</span></code></a></p></td>
+<td><p>Enum for the orientation of the cut.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.StepShapeType.html" title="compas_timber.fabrication.StepShapeType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StepShapeType</span></code></a></p></td>
+<td><p>Enum for the step shape of the cut.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.fabrication.TenonShapeType.html" title="compas_timber.fabrication.TenonShapeType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TenonShapeType</span></code></a></p></td>
+<td><p>Enum for the tenon shape of the cut.</p></td>
 </tr>
 </tbody>
 </table>
