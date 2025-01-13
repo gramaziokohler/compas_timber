@@ -16,9 +16,7 @@ from Rhino.RhinoDoc import ActiveDoc
 class BakePlateMap(component):
     def RunScript(self, model, map_size, swap_uv, bake):
         if map_size and len(map_size) != 3:
-            self.AddRuntimeMessage(
-                Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
-            )
+            self.AddRuntimeMessage(Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)")
             return
 
         if map_size:

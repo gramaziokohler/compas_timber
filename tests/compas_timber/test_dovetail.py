@@ -25,10 +25,7 @@ def cross_beams():
         Line(Point(x=30782.4296640, y=-3257.66821289, z=0.0), Point(x=33782.4296640, y=-3257.66821289, z=0.0)),
     ]
 
-    return [
-        Beam.from_centerline(centerline, width, height)
-        for centerline, width, height in zip(centerlines, widths, heights)
-    ]
+    return [Beam.from_centerline(centerline, width, height) for centerline, width, height in zip(centerlines, widths, heights)]
 
 
 @pytest.fixture
@@ -49,10 +46,7 @@ def main_beams():
         Line(Point(x=32730.7147438, y=-2542.14312510, z=-10.0), Point(x=32730.7147438, y=-3257.66821289, z=-10.0)),
     ]
 
-    return [
-        Beam.from_centerline(centerline, width, height, z_vector)
-        for centerline, width, height, z_vector in zip(centerlines, widths, heights, z_vectors)
-    ]
+    return [Beam.from_centerline(centerline, width, height, z_vector) for centerline, width, height, z_vector in zip(centerlines, widths, heights, z_vectors)]
 
 
 TENON_CUTTING_FRAMES = [

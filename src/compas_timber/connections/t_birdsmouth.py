@@ -68,9 +68,7 @@ class TBirdsmouthJoint(Joint):
         distance_dict = {}
         cutting_frames = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indices]
         for i, ref_side in enumerate(self.main_beam.ref_sides[0:4]):
-            intercection_pt = intersection_plane_plane_plane(
-                Plane.from_frame(cutting_frames[0]), Plane.from_frame(cutting_frames[1]), Plane.from_frame(ref_side)
-            )
+            intercection_pt = intersection_plane_plane_plane(Plane.from_frame(cutting_frames[0]), Plane.from_frame(cutting_frames[1]), Plane.from_frame(ref_side))
             distance_dict[i] = distance_point_line(intercection_pt, self.main_beam.centerline)
         return min(distance_dict.keys(), key=distance_dict.get)
 
@@ -113,9 +111,7 @@ class TBirdsmouthJoint(Joint):
         cross_beam_ref_sides = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indices]
 
         # generate step joint features
-        main_feature = DoubleCut.from_planes_and_beam(
-            cross_beam_ref_sides, self.main_beam, self.main_beam_ref_side_index
-        )
+        main_feature = DoubleCut.from_planes_and_beam(cross_beam_ref_sides, self.main_beam, self.main_beam_ref_side_index)
 
         # add features to beams
         self.main_beam.add_features(main_feature)

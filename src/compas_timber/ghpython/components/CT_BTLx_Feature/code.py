@@ -42,11 +42,7 @@ class BTLxFeature(component):
 
             line_scene = Scene()
             line_scene.add(Line.from_point_direction_length(face.point, face.xaxis, beam.length))
-            line_scene.add(
-                Line.from_point_direction_length(
-                    face.point, face.yaxis, beam.width if ref_side % 2 == 0 else beam.height
-                )
-            )
+            line_scene.add(Line.from_point_direction_length(face.point, face.yaxis, beam.width if ref_side % 2 == 0 else beam.height))
 
             return FeatureDefinition(processing, [beam]), line_scene.draw()
 

@@ -151,9 +151,7 @@ def intersection_line_box(line, box, ignore_ends=False):
         (6, 5, 2),
     ]  # corresponds to BTLx reference sides
     pts = []
-    sides = [
-        Frame.from_points(*(box.points[inds[0]], box.points[inds[1]], box.points[inds[2]])) for inds in frame_indices
-    ]
+    sides = [Frame.from_points(*(box.points[inds[0]], box.points[inds[1]], box.points[inds[2]])) for inds in frame_indices]
     sides = sides[:4] if ignore_ends else sides
     for i, face in enumerate(sides):
         intersection = intersection_line_plane(line, Plane.from_frame(face))
@@ -162,27 +160,12 @@ def intersection_line_box(line, box, ignore_ends=False):
             intersection_uv = int_pt.transformed(Transformation.from_frame_to_frame(face, Frame.worldXY()))
             if i < 4:
                 if i % 2 == 0:
-                    if (
-                        intersection_uv[0] >= 0
-                        and intersection_uv[0] < box.width
-                        and intersection_uv[1] > 0
-                        and intersection_uv[1] < box.depth
-                    ):
+                    if intersection_uv[0] >= 0 and intersection_uv[0] < box.width and intersection_uv[1] > 0 and intersection_uv[1] < box.depth:
                         pts.append(intersection)
                 else:
-                    if (
-                        intersection_uv[0] >= 0
-                        and intersection_uv[0] < box.width
-                        and intersection_uv[1] > 0
-                        and intersection_uv[1] < box.height
-                    ):
+                    if intersection_uv[0] >= 0 and intersection_uv[0] < box.width and intersection_uv[1] > 0 and intersection_uv[1] < box.height:
                         pts.append(intersection)
             else:
-                if (
-                    intersection_uv[0] >= 0
-                    and intersection_uv[0] < box.depth
-                    and intersection_uv[1] > 0
-                    and intersection_uv[1] < box.height
-                ):
+                if intersection_uv[0] >= 0 and intersection_uv[0] < box.depth and intersection_uv[1] > 0 and intersection_uv[1] < box.height:
                     pts.append(intersection)
     return [Point(*coords) for coords in pts]

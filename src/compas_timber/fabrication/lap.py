@@ -531,7 +531,5 @@ class LapParams(BTLxProcessingParams):
         result["LeadAngle"] = "{:.{prec}f}".format(self._instance.lead_angle, prec=TOL.precision)
         result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
         result["LeadInclination"] = "{:.{prec}f}".format(self._instance.lead_inclination, prec=TOL.precision)
-        result["MachiningLimits"] = {
-            key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()
-        }
+        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
         return result
