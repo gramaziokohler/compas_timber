@@ -28,9 +28,9 @@ class Wall(TimberElement):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, outline, thickness, openings=None, frame=None, **kwargs):
+    def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Wall, self).__init__(frame=frame or Frame.worldXY(), **kwargs)
+        super(Wall, self).__init__(frame=frame or Frame.worldXY(), name=name)
         self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
@@ -76,6 +76,10 @@ class Wall(TimberElement):
     @property
     def length(self):
         return self.baseline.length
+
+    @property
+    def height(self):
+        return self.outline.points[0].distance_to_point(self.outline.points[3])
 
     @property
     def corners(self):

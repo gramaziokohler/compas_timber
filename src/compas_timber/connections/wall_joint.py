@@ -193,9 +193,19 @@ class WallJoint(Joint):
         interface_normal = cross_face.normal
         up_vector = Vector.from_start_end(points[0], points[1])
 
-        self.main_wall_interface = WallToWallInterface(interface, Frame(interface[0], interface_normal, up_vector), main_interface_type, InterfaceRole.MAIN, self.topology)
+        self.main_wall_interface = WallToWallInterface(
+            interface,
+            Frame(interface[0], interface_normal, up_vector),
+            main_interface_type,
+            InterfaceRole.MAIN,
+            self.topology,
+        )
         self.cross_wall_interface = WallToWallInterface(
-            interface, Frame(interface[1], interface_normal.inverted(), up_vector.inverted()), cross_interface_type, InterfaceRole.CROSS, self.topology
+            interface,
+            Frame(interface[1], interface_normal.inverted(), up_vector.inverted()),
+            cross_interface_type,
+            InterfaceRole.CROSS,
+            self.topology,
         )
 
     @staticmethod

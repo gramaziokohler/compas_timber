@@ -72,3 +72,34 @@ class LConnectionDetailA(object):
         # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
         return [edge_beam]
+
+
+class TConnectionDetailA(object):
+    """
+    Parameters
+    ----------
+    interface : :class:`compas_timber.connections.WallToWallInterface`
+    """
+
+    def create_elements_cross(self, interface, _, config_set):
+        # create a beam (definition) as wide and as high as the wall
+        # it should be flush agains the interface
+        # TODO: if beam_height < wall thickness, there needs to be an offset here
+        right_vertical = interface.interface_polyline.lines[2]
+        parallel_to_interface = interface.frame.normal
+        perpendicular_to_interface = interface.frame.xaxis
+
+        edge_beam_line = right_vertical.translated(parallel_to_interface * config_set.beam_width * -0.5)
+        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, config_set.wall_depth, normal=perpendicular_to_interface)
+
+        return [edge_beam]
+
+    def create_elements_main(self, interface, _, config_set):
+        # create a beam (definition) as wide and as high as the wall
+        # it should be flush agains the interface
+        polyline = interface.interface_polyline
+        beam_zaxis = interface.frame.normal
+        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
+        # TODO: if beam_height < wall thickness, there needs to be an offset here
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, config_set.wall_depth, normal=beam_zaxis)
+        return [edge_beam]

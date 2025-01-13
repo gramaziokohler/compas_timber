@@ -328,7 +328,7 @@ class TimberModel(Model):
         pairs = solver.find_intersecting_pairs(list(self.walls), rtree=True)
         for pair in pairs:
             wall_a, wall_b = pair
-            result = solver.find_wall_wall_topology(wall_a, wall_b)
+            result = solver.find_wall_wall_topology(wall_a, wall_b, tol=1e-6)
 
             topology = result[0]
             if topology != JointTopology.TOPO_UNKNOWN:
@@ -336,8 +336,10 @@ class TimberModel(Model):
 
             assert wall_a and wall_b
 
-            joint = WallJoint(wall_a, wall_b, topology=topology)
-            self.add_interaction(wall_a, wall_b, interaction=joint)
+            if wall_a.attributes.get("role", "main") == "main":
+                WallJoint.create(self, wall_a, wall_b, topology=topology)
+            else:
+                WallJoint.create(self, wall_b, wall_a, topology=topology)
 
     def _clear_wall_joints(self):
         for joint in self.joints:

@@ -13,6 +13,7 @@ from .wall_populator import WallSelector
 from .wall_populator import AnyWallSelector
 from .wall_details import LConnectionDetailA
 from .wall_details import LConnectionDetailB
+from .wall_details import TConnectionDetailA
 
 __all__ = [
     "CategoryRule",
@@ -29,4 +30,5 @@ __all__ = [
     "AnyWallSelector",
     "LConnectionDetailA",
     "LConnectionDetailB",
+    "TConnectionDetailA",
 ]
