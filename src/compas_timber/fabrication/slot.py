@@ -7,13 +7,13 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 
 
-class Slot(BTLxProcess):
-    PROCESS_NAME = "Slot"  # type: ignore
+class Slot(BTLxProcessing):
+    PROCESSING_NAME = "Slot"  # type: ignore
 
     # fmt: off
     def __init__(
@@ -219,7 +219,7 @@ class Slot(BTLxProcess):
 
         Returns
         -------
-        :class:`~compas_timber._fabrication.Slot`
+        :class:`~compas_timber.fabrication.Slot`
             The constructed Slot feature.
 
         """
@@ -318,7 +318,7 @@ class Slot(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with beam geometry.
 
         Returns
@@ -331,13 +331,13 @@ class Slot(BTLxProcess):
         return geometry.copy()
 
 
-class SlotParams(BTLxProcessParams):
-    """A class to store the parameters of a Jack Rafter Cut feature.
+class SlotParams(BTLxProcessingParams):
+    """A class to store the parameters of a Slot feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.JackRafterCut`
-        The instance of the Jack Rafter Cut feature.
+    instance : :class:`~compas_timber.fabrication.Slot`
+        The instance of the Slot feature.
 
     """
 
@@ -346,12 +346,12 @@ class SlotParams(BTLxProcessParams):
         super(SlotParams, self).__init__(instance)
 
     def as_dict(self):
-        """Returns the parameters of the Jack Rafter Cut feature as a dictionary.
+        """Returns the parameters of the Slot feature as a dictionary.
 
         Returns
         -------
         dict
-            The parameters of the Jack Rafter Cut feature as a dictionary.
+            The parameters of the Slot feature as a dictionary.
         """
         # type: () -> OrderedDict
         result = super(SlotParams, self).as_dict()

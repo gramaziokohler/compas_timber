@@ -1,4 +1,10 @@
+import os
 from .__version__ import __version__
+
+
+HERE = os.path.dirname(__file__)
+DATA = os.path.abspath(os.path.join(HERE, "..", "..", "data"))
+
 
 __all_plugins__ = [
     "compas_timber.ghpython.install",
@@ -8,4 +14,4 @@ __all_plugins__ = [
 ]
 
 
-__all__ = ["__version__"]
+__all__ = ["__version__", "DATA"]

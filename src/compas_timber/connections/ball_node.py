@@ -117,9 +117,7 @@ class BallNodeJoint(Joint):
             cpt = Point(0, 0, 0)
             count = 0
             for i, beam in enumerate(beams):
-                points = intersection_line_line_param(
-                    beams[i - 1].centerline, beam.centerline
-                )  # TODO: include Tolerance check here.
+                points = intersection_line_line_param(beams[i - 1].centerline, beam.centerline)  # TODO: include Tolerance check here.
                 if points[0][0] is not None and points[1][0] is not None:
                     cpt += points[1][0]
                     count += 1

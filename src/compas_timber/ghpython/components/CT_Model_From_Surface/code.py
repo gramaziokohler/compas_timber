@@ -31,9 +31,7 @@ class SurfaceModelComponent(component):
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
         if not stud_spacing:
-            self.AddRuntimeMessage(
-                Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm"
-            )
+            self.AddRuntimeMessage(Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm")
             if tol.unit == "M":
                 stud_spacing = 0.625
             elif tol.unit == "MM":
@@ -44,9 +42,7 @@ class SurfaceModelComponent(component):
             raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
 
         if not beam_width:
-            self.AddRuntimeMessage(
-                Warning, "Input parameter 'beam_width' failed to collect data, using default value of 60mm"
-            )
+            self.AddRuntimeMessage(Warning, "Input parameter 'beam_width' failed to collect data, using default value of 60mm")
             if tol.unit == "M":
                 beam_width = 0.06
             elif tol.unit == "MM":
@@ -57,9 +53,7 @@ class SurfaceModelComponent(component):
             raise TypeError("beam_width expected a float, got: {}".format(type(beam_width)))
 
         if not frame_depth:
-            self.AddRuntimeMessage(
-                Warning, "Input parameter 'frame_depth' failed to collect data, using default value of 140mm"
-            )
+            self.AddRuntimeMessage(Warning, "Input parameter 'frame_depth' failed to collect data, using default value of 140mm")
             if tol.unit == "M":
                 frame_depth = 0.14
             elif tol.unit == "MM":
@@ -78,9 +72,7 @@ class SurfaceModelComponent(component):
         if not options:
             options = {}
 
-        surface_model = SurfaceModel(
-            Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, tol, **options
-        )
+        surface_model = SurfaceModel(Brep.from_native(surface), stud_spacing, beam_width, frame_depth, z_axis, tol, **options)
 
         debug_info = DebugInfomation()
         scene = Scene()

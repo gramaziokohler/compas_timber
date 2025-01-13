@@ -5,7 +5,7 @@ from collections import OrderedDict
 from compas.geometry import Point
 from compas.geometry import Line
 from compas_timber.elements import Beam
-from compas_timber._fabrication import Drilling
+from compas_timber.fabrication import Drilling
 
 
 @pytest.fixture
@@ -13,9 +13,7 @@ def beam():
     width = 60
     height = 120
 
-    centerline = Line(
-        Point(x=17.2361412989, y=36.4787607210, z=0.0), Point(x=1484.82372687, y=473.845866212, z=224.447551130)
-    )
+    centerline = Line(Point(x=17.2361412989, y=36.4787607210, z=0.0), Point(x=1484.82372687, y=473.845866212, z=224.447551130))
 
     return Beam.from_centerline(centerline, width, height)
 
