@@ -68,6 +68,10 @@ class BTLxWriter(object):
         str
             The XML string of the BTLx file.
 
+        See Also
+        --------
+        :meth:`~compas_timber.fabrication.btlx.BTLxWriter.model_to_xml`
+
         """
         if not file_path.endswith(".btlx"):
             file_path += ".btlx"
@@ -88,6 +92,10 @@ class BTLxWriter(object):
         -------
         str
             The XML string of the BTLx file.
+
+        See Also
+        --------
+        :meth:`~compas_timber.fabrication.btlx.BTLxWriter.write`
 
         """
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
@@ -141,9 +149,7 @@ class BTLxWriter(object):
 
         """
         # create project element
-        project_element = ET.Element(
-            "Project", Name="testProject"
-        )  # TODO: Should the name be set from the model and passed here?
+        project_element = ET.Element("Project", Name="testProject")  # TODO: Should the name be set from the model and passed here?
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
@@ -408,9 +414,7 @@ class BTLxPart(object):
             for point in brep_vertex_points:
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(
-                    point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION
-                )
+                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION)
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
