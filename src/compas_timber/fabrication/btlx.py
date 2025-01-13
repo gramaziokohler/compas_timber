@@ -288,12 +288,12 @@ class BTLxPart(object):
         This essentially translates between the beam face reference system to the BTLx side reference system.
 
         Parameters
-        -----------
+        ----------
         beam_face : :class:`~compas.geometry.Frame`
             The frame of a beam face from beam.faces.
 
         Returns
-        --------
+        -------
         key : str
             The key(index 1-6) of the reference surface.
 
@@ -352,7 +352,7 @@ class BTLxPart(object):
 
     @property
     def et_element(self):
-        if not self._et_element:
+        if self._et_element is None:
             self._et_element = ET.Element("Part", self.attr)
             self._shape_strings = None
             self._et_element.append(self.et_transformations)
@@ -600,10 +600,6 @@ class MachiningLimits(object):
     face_limited_back : bool
         Limit the back face.
 
-    Properties
-    ----------
-    limits : dict
-        The limits dictionary with values as a boolean.
     """
 
     EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]
