@@ -389,6 +389,7 @@ class BTLxPart(object):
 
     @property
     def shape_strings(self):
+        # TODO: this need some cleanup, potentially removal
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
