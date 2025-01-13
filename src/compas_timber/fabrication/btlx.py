@@ -70,7 +70,7 @@ class BTLxWriter(object):
 
         See Also
         --------
-        :meth:`~compas_timber.fabrication.btlx.BTLxWriter.model_to_xml`
+        :meth:`BTLxWriter.model_to_xml`
 
         """
         if not file_path.endswith(".btlx"):
@@ -95,7 +95,7 @@ class BTLxWriter(object):
 
         See Also
         --------
-        :meth:`~compas_timber.fabrication.btlx.BTLxWriter.write`
+        :meth:`BTLxWriter.write`
 
         """
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
