@@ -173,15 +173,17 @@ class BTLxWriter(object):
         part = BTLxPart(beam, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
-        # create processings element for the part
-        processings_element = ET.Element("Processings")
-        for feature in beam.features:
-            if (
-                feature.PROCESSING_NAME
-            ):  # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
-                processing_element = cls._create_processing(feature)
-                processings_element.append(processing_element)
-        part_element.extend([processings_element, part.et_shape])
+        # create processings element for the part if there are any
+        if beam.features:
+            processings_element = ET.Element("Processings")
+            for feature in beam.features:
+                if (
+                    feature.PROCESSING_NAME
+                ):  # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
+                    processing_element = cls._create_processing(feature)
+                    processings_element.append(processing_element)
+            part_element.append(processings_element)
+        part_element.append(part.et_shape)
         return part_element
 
     @classmethod
