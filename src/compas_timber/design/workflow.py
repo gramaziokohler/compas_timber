@@ -91,7 +91,7 @@ class JointRule(object):
             pair = element_pairs.pop()
             match_found = False
             for rule in direct_rules:  # see if pair is used in a direct rule
-                if rule.comply(pair, max_distance=max_distance):
+                if rule.comply(pair):
                     match_found = True
                     break
 
