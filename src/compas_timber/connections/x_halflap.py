@@ -1,6 +1,6 @@
 from compas.tolerance import TOL
 
-from compas_timber._fabrication import Lap
+from compas_timber.fabrication import Lap
 from compas_timber.errors import BeamJoinningError
 
 from .joint import Joint
