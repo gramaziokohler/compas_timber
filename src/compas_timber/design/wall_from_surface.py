@@ -146,11 +146,7 @@ class SurfaceModel(object):
     @property
     def default_rules(self):
         return [
-            (
-                CategoryRule(LButtJoint, "edge_stud", "plate")
-                if self.edge_stud_offset == 0
-                else CategoryRule(TButtJoint, "edge_stud", "plate")
-            ),
+            (CategoryRule(LButtJoint, "edge_stud", "plate") if self.edge_stud_offset == 0 else CategoryRule(TButtJoint, "edge_stud", "plate")),
             CategoryRule(TButtJoint, "stud", "plate"),
             CategoryRule(TButtJoint, "stud", "header"),
             CategoryRule(TButtJoint, "stud", "sill"),
@@ -326,10 +322,7 @@ class SurfaceModel(object):
         for i, segment in enumerate(self.outer_polyline.lines):
             beam_def = self.BeamDefinition(segment, parent=self)
             if i in interior_indices:
-                if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 45
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
-                ):
+                if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
                     if self.lintel_posts:
                         beam_def.type = "jack_stud"
                     else:
@@ -337,10 +330,7 @@ class SurfaceModel(object):
                 else:
                     beam_def.type = "header"
             else:
-                if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 45
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 135
-                ):
+                if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
                     beam_def.type = "edge_stud"
                 else:
                     beam_def.type = "plate"
@@ -362,9 +352,7 @@ class SurfaceModel(object):
             elif index == len(points) - 1:
                 angle = angle_vectors_signed(points[-2] - points[-1], points[0] - points[-1], self.normal, deg=True)
             else:
-                angle = angle_vectors_signed(
-                    points[index - 1] - points[index], points[index + 1] - points[index], self.normal, deg=True
-                )
+                angle = angle_vectors_signed(points[index - 1] - points[index], points[index + 1] - points[index], self.normal, deg=True)
             if angle > 0:
                 out.append(index)
         if len(out) > 0:
@@ -384,12 +372,8 @@ class SurfaceModel(object):
                 if beam_def.type != "plate":
                     element_before = offset_loop[i - 1]
                     element_after = offset_loop[(i + 1) % len(offset_loop)]
-                    start_point = intersection_line_line(
-                        beam_def.centerline, element_before.centerline, self.dist_tolerance
-                    )[0]
-                    end_point = intersection_line_line(
-                        beam_def.centerline, element_after.centerline, self.dist_tolerance
-                    )[0]
+                    start_point = intersection_line_line(beam_def.centerline, element_before.centerline, self.dist_tolerance)[0]
+                    end_point = intersection_line_line(beam_def.centerline, element_after.centerline, self.dist_tolerance)[0]
                     if start_point and end_point:
                         beam_def.centerline = Line(start_point, end_point)
                     else:
@@ -397,12 +381,8 @@ class SurfaceModel(object):
             else:
                 element_before = offset_loop[i - 1]
                 element_after = offset_loop[(i + 1) % len(offset_loop)]
-                start_point, _ = intersection_line_line(
-                    beam_def.centerline, element_before.centerline, self.dist_tolerance
-                )
-                end_point, _ = intersection_line_line(
-                    beam_def.centerline, element_after.centerline, self.dist_tolerance
-                )
+                start_point, _ = intersection_line_line(beam_def.centerline, element_before.centerline, self.dist_tolerance)
+                end_point, _ = intersection_line_line(beam_def.centerline, element_after.centerline, self.dist_tolerance)
                 if start_point and end_point:
                     beam_def.centerline = Line(start_point, end_point)
         return offset_loop
@@ -433,18 +413,12 @@ class SurfaceModel(object):
         dots = []
         for element_list in element_lists_to_intersect:
             for element_to_intersect in element_list:
-                point = intersection_line_segment(beam_def.z_aligned_centerline, element_to_intersect.centerline, 0.01)[
-                    0
-                ]
+                point = intersection_line_segment(beam_def.z_aligned_centerline, element_to_intersect.centerline, 0.01)[0]
                 if point:
                     intersections.append(point)
         if len(intersections) > 1:
             intersections.sort(key=lambda x: dot_vectors(x, self.z_axis))
-            dots = [
-                dot_vectors(Vector.from_start_end(beam_def.z_aligned_centerline.start, x), self.z_axis)
-                / beam_def.centerline.length
-                for x in intersections
-            ]
+            dots = [dot_vectors(Vector.from_start_end(beam_def.z_aligned_centerline.start, x), self.z_axis) / beam_def.centerline.length for x in intersections]
         return intersections, dots
 
     def trim_jack_studs(self):
@@ -493,10 +467,7 @@ class SurfaceModel(object):
     def cull_overlaps(self):
         for beam_def in self.studs:
             for other_element in self.king_studs + self.jack_studs + self.edge_studs:
-                if (
-                    self.distance_between_elements(beam_def, other_element)
-                    < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2
-                ):
+                if self.distance_between_elements(beam_def, other_element) < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2:
                     self._beam_definitions.remove(beam_def)
                     break
 
@@ -610,9 +581,7 @@ class SurfaceModel(object):
         @property
         def frame(self):
             if not self._frame:
-                self._frame, self._panel_length, self._panel_height = get_frame(
-                    self.points, self.parent.normal, self.zaxis
-                )
+                self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
             return self._frame
 
         @property
@@ -630,10 +599,7 @@ class SurfaceModel(object):
         def process_outlines(self):
             for i, segment in enumerate(self.outline.lines):
                 beam_def = SurfaceModel.BeamDefinition(segment, parent=self)
-                if (
-                    angle_vectors(segment.direction, self.z_axis, deg=True) < 1
-                    or angle_vectors(segment.direction, self.z_axis, deg=True) > 179
-                ):
+                if angle_vectors(segment.direction, self.z_axis, deg=True) < 1 or angle_vectors(segment.direction, self.z_axis, deg=True) > 179:
                     if self.parent.lintel_posts:
                         beam_def.type = "jack_stud"
                     else:
@@ -658,9 +624,7 @@ class SurfaceModel(object):
             self._beam_definitions = self.parent.offset_elements(self._beam_definitions)
             if self.parent.lintel_posts:
                 for beam_def in self.jack_studs:
-                    offset = (
-                        self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]
-                    ) / 2
+                    offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]) / 2
                     king_line = offset_line(beam_def.centerline, offset, self.normal)
                     self._beam_definitions.append(self.parent.BeamDefinition(king_line, type="king_stud", parent=self))
 

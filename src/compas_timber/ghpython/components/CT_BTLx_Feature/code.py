@@ -5,8 +5,8 @@ from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber._fabrication import BTLxProcess
 from compas_timber.design import FeatureDefinition
+from compas_timber.fabrication import BTLxProcessing
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
@@ -16,7 +16,7 @@ class BTLxFeature(component):
     def __init__(self):
         super(BTLxFeature, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(BTLxProcess):
+        for cls in get_leaf_subclasses(BTLxProcessing):
             self.classes[cls.__name__] = cls
 
         if ghenv.Component.Params.Output[0].NickName == "Process":
@@ -26,8 +26,8 @@ class BTLxFeature(component):
 
     def RunScript(self, beam, ref_side, *args):
         if not self.processing_type:
-            ghenv.Component.Message = "Select Process type from context menu (right click)"
-            self.AddRuntimeMessage(Warning, "Select Process type from context menu (right click)")
+            ghenv.Component.Message = "Select Processing type from context menu (right click)"
+            self.AddRuntimeMessage(Warning, "Select Processing type from context menu (right click)")
             return None
         else:
             ghenv.Component.Message = self.processing_type.__name__
@@ -37,18 +37,14 @@ class BTLxFeature(component):
                 if val is not None:
                     kwargs[arg] = val
 
-            process = self.processing_type(**kwargs)
+            processing = self.processing_type(**kwargs)
             face = beam.ref_sides[ref_side]
 
             line_scene = Scene()
             line_scene.add(Line.from_point_direction_length(face.point, face.xaxis, beam.length))
-            line_scene.add(
-                Line.from_point_direction_length(
-                    face.point, face.yaxis, beam.width if ref_side % 2 == 0 else beam.height
-                )
-            )
+            line_scene.add(Line.from_point_direction_length(face.point, face.yaxis, beam.width if ref_side % 2 == 0 else beam.height))
 
-            return FeatureDefinition(process, [beam]), line_scene.draw()
+            return FeatureDefinition(processing, [beam]), line_scene.draw()
 
     def arg_names(self):
         return inspect.getargspec(self.processing_type.__init__)[0][1:]

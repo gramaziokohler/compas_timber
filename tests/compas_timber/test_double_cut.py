@@ -10,7 +10,7 @@ from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import DoubleCut
+from compas_timber.fabrication import DoubleCut
 
 
 @pytest.fixture
@@ -30,18 +30,10 @@ def main_beams():
     normal = Vector(1, 1.5, 0)
 
     centerlines = [
-        Line(
-            Point(x=30499.6181909, y=-4472.85889623, z=-1495.56306376), Point(x=31205.1038160, y=-3257.66821289, z=0.0)
-        ),
-        Line(
-            Point(x=32075.5938981, y=-4033.05172213, z=175.130197043), Point(x=31955.6464870, y=-3257.66821289, z=0.0)
-        ),
-        Line(
-            Point(x=32525.3966898, y=-1527.48357877, z=-1380.20828658), Point(x=32425.4405138, y=-3257.66821289, z=0.0)
-        ),
-        Line(
-            Point(x=34264.6341510, y=-3873.12184064, z=752.091392287), Point(x=33288.3954994, y=-3257.66821289, z=0.0)
-        ),
+        Line(Point(x=30499.6181909, y=-4472.85889623, z=-1495.56306376), Point(x=31205.1038160, y=-3257.66821289, z=0.0)),
+        Line(Point(x=32075.5938981, y=-4033.05172213, z=175.130197043), Point(x=31955.6464870, y=-3257.66821289, z=0.0)),
+        Line(Point(x=32525.3966898, y=-1527.48357877, z=-1380.20828658), Point(x=32425.4405138, y=-3257.66821289, z=0.0)),
+        Line(Point(x=34264.6341510, y=-3873.12184064, z=752.091392287), Point(x=33288.3954994, y=-3257.66821289, z=0.0)),
     ]
 
     return [Beam.from_centerline(centerline, width, height, normal) for centerline in centerlines]

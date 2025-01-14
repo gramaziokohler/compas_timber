@@ -9,21 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.13.0] 2025-01-13
+
+### Added
+
 * Added API documentation for `design` and `error` packages.
 * Added `guess_joint_topology_2beams` and `set_default_joints` functions to `design.__init__.py`.
 * Added `list_input_valid`, `item_input_valid`, `get_leaf_subclasses`, `rename_gh_input` functions to `ghpython.__init__.py`.
 * Added `Instruction`, `Model3d`, `Text3d`, `LinearDimension`, `BuildingPlanParser` classes to `planning.__init__.py`.
+* Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
 
 ### Changed
 
 * Fixed comma incompatible with py27 in `Slot` module.
-
 * Updated the API documentation for `connections`, `elements`, `fabrication`, `ghpython`, `planning` packages.
+* Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
+* Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
 
 ### Removed
 
 * Removed `BeamJoiningError` from `connections.__init__.py`.
 * Removed duplicate entries from the `__all__` list in the `elements.__init__.py` module.
+* Removed package `compas_timber._fabrication`.
+* Removed `btlx_processes` anf `joint_factories` from `compas_timber.fabrication` package.
+* Removed `.btlx` files from `.gitignore`.
+
 
 ## [0.12.0] 2025-01-07
 
@@ -109,17 +124,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Implemented `max_distance` parameter in `JointRule.joints_from_beams_and_rules()` and `JointRule.comply` methods.
 * Changed `compas_timber._fabrication.Lap` so that the volume is generated fully from the relevant BTLx params.
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the Lap process.
+* Bux fixes from extra comma argument and `max_distance` not implemented in `DirectRule.comply`.
 
 ### Removed
 
 * Removed module `compas_timber.utils.compas_extra`.
 * Removed a bunch of spaghetti from `CT_model` GH component.
-* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`
-* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`
-* Removed module `compas_timber.connections.butt_joint`
-* Removed module `compas_timber.connections.french_ridge_lap`
-* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`
-* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`
+* Removed module `compas_timber.fabrication.joint_factories.t_butt_factory`.
+* Removed module `compas_timber.fabrication.joint_factories.l_butt_factory`.
+* Removed module `compas_timber.connections.butt_joint`.
+* Removed module `compas_timber.connections.french_ridge_lap`.
+* Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
+* Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
 
 
 

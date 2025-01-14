@@ -19,12 +19,12 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
 
 
-class Drilling(BTLxProcess):
-    """Represents a drilling process.
+class Drilling(BTLxProcessing):
+    """Represents a drilling processing.
 
     Parameters
     ----------
@@ -46,19 +46,9 @@ class Drilling(BTLxProcess):
 
     # TODO: add __data__
 
-    PROCESS_NAME = "Drilling"  # type: ignore
+    PROCESSING_NAME = "Drilling"  # type: ignore
 
-    def __init__(
-        self,
-        start_x=0.0,
-        start_y=0.0,
-        angle=0.0,
-        inclination=90.0,
-        depth_limited=False,
-        depth=50.0,
-        diameter=20.0,
-        **kwargs
-    ):
+    def __init__(self, start_x=0.0, start_y=0.0, angle=0.0, inclination=90.0, depth_limited=False, depth=50.0, diameter=20.0, **kwargs):
         super(Drilling, self).__init__(**kwargs)
         self._start_x = None
         self._start_y = None
@@ -164,7 +154,7 @@ class Drilling(BTLxProcess):
 
     @classmethod
     def from_line_and_beam(cls, line, diameter, beam):
-        """Construct a drilling process from a line and diameter.
+        """Construct a drilling processing from a line and diameter.
 
         # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
         # TODO: make a from point alt. constructor that takes a point and a reference side and makes a straight drilling through.
@@ -183,7 +173,7 @@ class Drilling(BTLxProcess):
         Returns
         -------
         :class:`compas_timber.fabrication.Drilling`
-            The constructed drilling process.
+            The constructed drilling processing.
 
         """
         ref_side_index, xy_point = cls._calculate_ref_side_index(line, beam)
@@ -195,9 +185,7 @@ class Drilling(BTLxProcess):
         angle = cls._calculate_angle(ref_surface, line, xy_point)
         inclination = cls._calculate_inclination(ref_surface.frame, line, angle, xy_point)
         try:
-            return cls(
-                x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index
-            )
+            return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index)
         except ValueError as e:
             raise FeatureApplicationError(
                 message=str(e),
@@ -292,7 +280,7 @@ class Drilling(BTLxProcess):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with the beam geometry.
 
         Returns
@@ -367,7 +355,7 @@ class Drilling(BTLxProcess):
         return Line(xy_world, intersection_point)
 
 
-class DrillingParams(BTLxProcessParams):
+class DrillingParams(BTLxProcessingParams):
     def __init__(self, instance):
         super(DrillingParams, self).__init__(instance)
 

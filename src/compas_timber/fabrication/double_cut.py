@@ -17,12 +17,12 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 
 
-class DoubleCut(BTLxProcess):
+class DoubleCut(BTLxProcessing):
     """Represents a Double Cut feature to be made on a beam.
 
     Parameters
@@ -45,7 +45,7 @@ class DoubleCut(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "DoubleCut"  # type: ignore
+    PROCESSING_NAME = "DoubleCut"  # type: ignore
 
     @property
     def __data__(self):
@@ -296,7 +296,7 @@ class DoubleCut(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with beam geometry.
 
         Returns
@@ -376,12 +376,12 @@ class DoubleCut(BTLxProcess):
         return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
 
-class DoubleCutParams(BTLxProcessParams):
+class DoubleCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Double Cut feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DoubleCut`
+    instance : :class:`~compas_timber.fabrication.DoubleCut`
         The instance of the Double Cut feature.
     """
 

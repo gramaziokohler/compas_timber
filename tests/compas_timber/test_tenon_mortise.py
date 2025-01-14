@@ -9,8 +9,8 @@ from compas.geometry import Vector
 from compas.geometry import distance_point_point
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import Mortise
-from compas_timber._fabrication import Tenon
+from compas_timber.fabrication import Mortise
+from compas_timber.fabrication import Tenon
 
 from compas.tolerance import Tolerance
 
@@ -33,17 +33,10 @@ def main_beams():
     heights = [100.0, 80.0]
 
     centerlines = [
-        Line(
-            Point(x=33300.5452394, y=-3257.66821289, z=0.0), Point(x=33607.9516217, y=-4000.58982486, z=156.858089632)
-        ),
-        Line(
-            Point(x=31995.4509589, y=-1725.41351885, z=-819.665898454), Point(x=32282.4296640, y=-3257.66821289, z=0.0)
-        ),
+        Line(Point(x=33300.5452394, y=-3257.66821289, z=0.0), Point(x=33607.9516217, y=-4000.58982486, z=156.858089632)),
+        Line(Point(x=31995.4509589, y=-1725.41351885, z=-819.665898454), Point(x=32282.4296640, y=-3257.66821289, z=0.0)),
     ]
-    return [
-        Beam.from_centerline(centerline, width, height)
-        for centerline, width, height in zip(centerlines, widths, heights)
-    ]
+    return [Beam.from_centerline(centerline, width, height) for centerline, width, height in zip(centerlines, widths, heights)]
 
 
 TENON_CUTTING_FRAMES = [

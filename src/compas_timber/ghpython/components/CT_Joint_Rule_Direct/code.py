@@ -41,13 +41,9 @@ class DirectJointRule(component):
                     kwargs[self.arg_names()[i + 2]] = val
 
             if not beam_a:
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
-                )
+                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0]))
             if not beam_b:
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1])
-                )
+                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1]))
             if not (args[0] and args[1]):
                 return
             if not isinstance(beam_a, list):
@@ -55,9 +51,7 @@ class DirectJointRule(component):
             if not isinstance(beam_b, list):
                 beam_b = [beam_b]
             if len(beam_a) != len(beam_b):
-                self.AddRuntimeMessage(
-                    Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1])
-                )
+                self.AddRuntimeMessage(Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1]))
                 return
             Rules = []
             for main, secondary in zip(beam_a, beam_b):
@@ -68,9 +62,7 @@ class DirectJointRule(component):
                 if topology not in supported_topo:
                     self.AddRuntimeMessage(
                         Warning,
-                        "Beams meet with topology: {} which does not agree with joint of type: {}".format(
-                            JointTopology.get_name(topology), self.joint_type.__name__
-                        ),
+                        "Beams meet with topology: {} which does not agree with joint of type: {}".format(JointTopology.get_name(topology), self.joint_type.__name__),
                     )
                 Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
             return Rules

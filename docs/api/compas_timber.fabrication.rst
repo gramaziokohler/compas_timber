@@ -11,7 +11,25 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    BTLx
+    BTLxWriter
     BTLxPart
-    BTLxProcess
+    BTLxProcessing
+    DoubleCut
+    DovetailTenon
+    DovetailMortise
+    Drilling
+    FrenchRidgeLap
+    JackRafterCut
+    Lap
+    Slot
+    StepJoint
+    StepJointNotch
+    Tenon
+    Mortise
+    EdgePositionType
+    LimitationTopType
+    MachiningLimits
+    OrientationType
+    StepShapeType
+    TenonShapeType
 

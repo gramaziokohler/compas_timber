@@ -1,12 +1,12 @@
 import math
 
-from compas_timber._fabrication import DovetailMortise
-from compas_timber._fabrication import DovetailTenon
-from compas_timber._fabrication.btlx_process import TenonShapeType
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.connections.utilities import point_centerline_towards_joint
 from compas_timber.errors import BeamJoinningError
+from compas_timber.fabrication import DovetailMortise
+from compas_timber.fabrication import DovetailTenon
+from compas_timber.fabrication import TenonShapeType
 
 from .joint import Joint
 from .solver import JointTopology
@@ -81,7 +81,7 @@ class TDovetailJoint(Joint):
     shape_radius : float, optional
         The radius used to define the shape of the joint, if applicable.
     features : list
-        List of features or machining processes applied to the joint.
+        List of features or machining processings applied to the joint.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
@@ -106,8 +106,8 @@ class TDovetailJoint(Joint):
     # fmt: off
     def __init__(
         self,
-        main_beam,
-        cross_beam,
+        main_beam=None,
+        cross_beam=None,
         start_y=None,
         start_depth=None,
         rotation=None,
