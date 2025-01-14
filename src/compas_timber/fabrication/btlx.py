@@ -217,7 +217,11 @@ class BTLxWriter(object):
         for key, value in processing.params_dict.items():
             if key not in processing.header_attributes:
                 child = ET.SubElement(processing_element, key)
-                child.text = str(value)
+                if isinstance(value, dict):
+                    for k, v in value.items():
+                        child.set(k, v)
+                else:
+                    child.text = str(value)
         # create subprocessing elements
         if processing.subprocessings:
             for subprocessing in processing.subprocessings:
