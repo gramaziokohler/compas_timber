@@ -169,7 +169,9 @@ class THalfLapJoint(Joint):
             ref_side_index=self.main_ref_side_index,
         )
         # cutoff feature for main beam
-        main_cutoff_feature = JackRafterCut.from_plane_and_beam(self.main_cutting_plane.to_plane(), self.main_beam, self.main_ref_side_index)
+        main_cutoff_feature = JackRafterCut.from_plane_and_beam(
+            self.main_cutting_plane.to_plane(), self.main_beam, self.main_ref_side_index
+        )
         # register features to the joint
         main_features = [main_lap_feature, main_cutoff_feature]
         self.main_beam.add_features(main_features)
@@ -188,8 +190,8 @@ class THalfLapJoint(Joint):
         BeamJoinningError
             If the elements are not compatible for the creation of the joint.
         """
-        normal_a = self.beam_a.frame.normal.unitized()
-        normal_b = self.beam_b.frame.normal.unitized()
+        normal_a = self.main_beam.frame.normal.unitized()
+        normal_b = self.cross_beam.frame.normal.unitized()
         # calculate the dot product of the two normals
         dot = abs(normal_a.dot(normal_b))
         if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
