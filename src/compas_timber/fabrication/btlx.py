@@ -418,7 +418,9 @@ class BTLxPart(object):
             for point in brep_vertex_points:
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION)
+                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(
+                    point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION
+                )
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
@@ -603,16 +605,29 @@ class MachiningLimits(object):
         Limit the front face.
     face_limited_back : bool
         Limit the back face.
+    face_limited_top : bool
+        Limit the top face.
+    face_limited_bottom : bool
+        Limit the bottom face.
 
     """
 
-    EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]
+    EXPECTED_KEYS = [
+        "FaceLimitedStart",
+        "FaceLimitedEnd",
+        "FaceLimitedFront",
+        "FaceLimitedBack",
+        "FaceLimitedTop",
+        "FaceLimitedBottom",
+    ]
 
     def __init__(self):
         self.face_limited_start = True
         self.face_limited_end = True
         self.face_limited_front = True
         self.face_limited_back = True
+        self.face_limited_top = True
+        self.face_limited_bottom = True
 
     @property
     def limits(self):
@@ -622,6 +637,8 @@ class MachiningLimits(object):
             "FaceLimitedEnd": self.face_limited_end,
             "FaceLimitedFront": self.face_limited_front,
             "FaceLimitedBack": self.face_limited_back,
+            "FaceLimitedTop": self.face_limited_top,
+            "FaceLimitedBottom": self.face_limited_bottom,
         }
 
 
