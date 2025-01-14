@@ -418,9 +418,7 @@ class BTLxPart(object):
             for point in brep_vertex_points:
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(
-                    point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION
-                )
+                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION)
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 

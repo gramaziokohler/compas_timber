@@ -1,8 +1,8 @@
 from compas.tolerance import TOL
 
+from compas_timber.errors import BeamJoinningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
-from compas_timber.errors import BeamJoinningError
 
 from .joint import Joint
 from .solver import JointTopology
@@ -152,9 +152,7 @@ class LHalfLapJoint(Joint):
             ref_side_index=self.beam_a_ref_side_index,
         )
         # cutoff feature for beam_a
-        cutoff_feature_a = JackRafterCut.from_plane_and_beam(
-            self.cutting_plane_a.to_plane(), self.beam_a, self.beam_a_ref_side_index
-        )
+        cutoff_feature_a = JackRafterCut.from_plane_and_beam(self.cutting_plane_a.to_plane(), self.beam_a, self.beam_a_ref_side_index)
         beam_a_features = [lap_feature_a, cutoff_feature_a]
         self.beam_a.add_features(beam_a_features)
         self.features.extend(beam_a_features)
@@ -169,9 +167,7 @@ class LHalfLapJoint(Joint):
             ref_side_index=self.beam_b_ref_side_index,
         )
         # cutoff feature for beam_b
-        cutoff_feature_b = JackRafterCut.from_plane_and_beam(
-            self.cutting_plane_b.to_plane(), self.beam_b, self.beam_b_ref_side_index
-        )
+        cutoff_feature_b = JackRafterCut.from_plane_and_beam(self.cutting_plane_b.to_plane(), self.beam_b, self.beam_b_ref_side_index)
         beam_b_features = [lap_feature_b, cutoff_feature_b]
         self.beam_b.add_features(beam_b_features)
         self.features.extend(beam_b_features)

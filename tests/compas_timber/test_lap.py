@@ -117,9 +117,7 @@ def test_lap_for_halflaps_from_plane(tol):
     ref_side_index = 2
 
     # Lap instance
-    instance = Lap.from_plane_and_beam(
-        cutting_plane, beam, lap_length, lap_depth, is_pocket=False, ref_side_index=ref_side_index
-    )
+    instance = Lap.from_plane_and_beam(cutting_plane, beam, lap_length, lap_depth, is_pocket=False, ref_side_index=ref_side_index)
 
     # attribute assertions
     assert instance.orientation == "start"

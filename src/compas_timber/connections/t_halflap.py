@@ -1,8 +1,8 @@
 from compas.tolerance import TOL
 
+from compas_timber.errors import BeamJoinningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
-from compas_timber.errors import BeamJoinningError
 
 from .joint import Joint
 from .solver import JointTopology
@@ -169,9 +169,7 @@ class THalfLapJoint(Joint):
             ref_side_index=self.main_ref_side_index,
         )
         # cutoff feature for main beam
-        main_cutoff_feature = JackRafterCut.from_plane_and_beam(
-            self.main_cutting_plane.to_plane(), self.main_beam, self.main_ref_side_index
-        )
+        main_cutoff_feature = JackRafterCut.from_plane_and_beam(self.main_cutting_plane.to_plane(), self.main_beam, self.main_ref_side_index)
         # register features to the joint
         main_features = [main_lap_feature, main_cutoff_feature]
         self.main_beam.add_features(main_features)
