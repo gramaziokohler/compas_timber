@@ -173,7 +173,7 @@ class DoubleCut(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, ref_side_index=None):                  #TODO: have this method set ref side index if not provided
+    def from_planes_and_beam(cls, planes, beam, ref_side_index=None):
         """Create a DoubleCut instance from two cutting planes and the beam they should cut.
 
         Parameters
