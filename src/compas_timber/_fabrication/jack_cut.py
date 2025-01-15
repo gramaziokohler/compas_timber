@@ -11,6 +11,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from sphinx import ret
 
 from compas_timber.errors import FeatureApplicationError
 
@@ -174,6 +175,25 @@ class JackRafterCut(BTLxProcess):
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
+
+    @classmethod
+    def from_shapes_and_beam(cls, plane, beam, **kwargs):
+        """Construct a drilling process from a shape and a beam.
+
+        Parameters
+        ----------
+        shape : :class:`compas.geometry.Shape`
+            The shape of the drilling.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam to drill.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.Drilling`
+            The constructed drilling process.
+
+        """
+        return cls.from_plane_and_beam(plane, beam, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):

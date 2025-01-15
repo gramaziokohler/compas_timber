@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+from importlib import import_module
 from compas.data import Data
 
 
@@ -204,3 +204,43 @@ class EdgePositionType(object):
 
     REFEDGE = "refedge"
     OPPEDGE = "oppedge"
+
+
+class BTLxFeatureDefinition(Data):
+    """Container linking a BTLx Process Type and generator function to an input geometry.
+
+    This allows delaying the actual applying of features to a downstream component.
+
+    """
+
+    def __init__(self, constructor, geometry, param_dict=None):
+        super(BTLxFeatureDefinition, self).__init__()
+        self.constructor_module = constructor.__module__
+        self.constructor = constructor
+        self.geometry = geometry
+        self.param_dict = param_dict or {}
+
+    @property
+    def __data__(self):
+        return {"constructor_module" : self.constructor.__module__, "constructor":  str(self.constructor.__qualname__), "geometry": self.geometry, "param_dict": self.param_dict}
+
+    def __from_data__(cls, data):
+        mod = import_module(data["constructor_module"])
+        class_name, constructor_name = data["constructor"].split(".")
+        constructor = getattr(getattr(mod, class_name), constructor_name)
+        geometry = data["geometry"]
+        param_dict = data["param_dict"]
+        return cls(constructor, geometry, param_dict)
+
+    def __repr__(self):
+        return "{}({}, {})".format(BTLxFeatureDefinition.__class__.__name__, self.constructor, self.geometry)
+
+    def ToString(self):
+        return repr(self)
+
+    def transformed(self, transformation):
+        instance = self.__class__(self.constructor, self.geometry.transformed(transformation), self.param_dict)
+        return instance
+
+    def generate_feature(self, element):
+        return self.constructor(self.geometry, element, **self.param_dict)

@@ -46,14 +46,6 @@ class BallNodeFastener(Fastener):
     # Computed attributes
     # ==========================================================================
 
-    @property
-    def is_fastener(self):
-        return True
-
-    # @property
-    # def shape(self):
-    #     # type: () -> Brep
-    #     return self.geometry
 
     @property
     def key(self):
@@ -73,7 +65,8 @@ class BallNodeFastener(Fastener):
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
         for interface in self.interfaces:
-            geometry += interface.geometry
+            if interface.geometry:
+                geometry += interface.geometry
         return geometry
 
     # TODO: implement compute_aabb()

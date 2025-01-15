@@ -163,7 +163,7 @@ class Drilling(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_line_and_beam(cls, line, diameter, beam):
+    def from_line_and_beam(cls, line, beam, diameter):
         """Construct a drilling process from a line and diameter.
 
         # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
@@ -173,12 +173,10 @@ class Drilling(BTLxProcess):
         ----------
         line : :class:`compas.geometry.Line`
             The line on which the drilling is to be made.
-        diameter : float
-            The diameter of the drilling.
-        length : float
-            The length (depth?) of the drilling.
         beam : :class:`compas_timber.elements.Beam`
             The beam to drill.
+        diameter : float
+            The diameter of the drilling.
 
         Returns
         -------
@@ -204,6 +202,26 @@ class Drilling(BTLxProcess):
                 feature_geometry=line,
                 element_geometry=beam.blank,
             )
+
+    @classmethod
+    def from_shapes_and_beam(cls, line, element, diameter, **kwargs):
+        """Construct a drilling process from a shape and a beam.
+
+        Parameters
+        ----------
+        shape : :class:`compas.geometry.Shape`
+            The shape of the drilling.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam to drill.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.Drilling`
+            The constructed drilling process.
+
+        """
+        return cls.from_line_and_beam(line, element, diameter, **kwargs)
+
 
     @staticmethod
     def _flip_line_if_start_inside(line, beam, ref_side_index):

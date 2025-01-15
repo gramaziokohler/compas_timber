@@ -152,14 +152,15 @@ class FastenerTimberInterface(Data):
 
     @property
     def __data__(self):
-        return {
-            "outline": self.outline,
-            "thickness": self.thickness,
-            "holes": self.holes,
-            "frame": self.frame,
-            "shapes": self.shapes,
-            "features": self.features,
-        }
+        data = {}
+        data["outline"] = self.outline
+        data["thickness"] = self.thickness
+        data["holes"] = self.holes
+        data["frame"] = self.frame
+        data["shapes"] = self.shapes
+        data["features"] = self.features
+        return data
+
 
     @property
     def plate(self):
@@ -189,15 +190,16 @@ class FastenerTimberInterface(Data):
                     geometries.append(shape)
                 elif isinstance(shape, Cylinder):
                     geometries.append(Brep.from_cylinder(shape))
-            self._shape = geometries[0]
-            for geometry in geometries[1:]:
-                self._shape += geometry
+            if geometries:
+                self._shape = geometries[0]
+                for geometry in geometries[1:]:
+                    self._shape += geometry
         return self._shape
 
     @property
     def geometry(self):
         """returns the geometry of the interface in the model (oriented on the timber element)"""
-        return self.shape.transformed(Transformation.from_frame(self.frame))
+        return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None
 
     def get_features(self, element):
         """Add a feature to the interface."""
@@ -207,7 +209,7 @@ class FastenerTimberInterface(Data):
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
             feat = feature.transformed(Transformation.from_frame(self.frame))
-            btlx_feature = feat.call_constructor(element)
+            btlx_feature = feat.generate_feature(element)
             features.append(btlx_feature)
         return features
 

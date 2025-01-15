@@ -5,6 +5,8 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import XHalfLapJoint
 from compas_timber.utils import intersection_line_line_param
 
+from compas.data import Data
+
 
 class CollectionDef(object):
     """TODO: this should be removed since it's essentially a list."""
@@ -405,37 +407,3 @@ class DebugInfomation(object):
         self.joint_errors.append(error)
 
 
-class BTLxFeatureDefinition(object):
-    """Container linking a BTLx Process Type and generator function to an input geometry.
-
-    This allows delaying the actual applying of features to a downstream component.
-
-    """
-
-    def __init__(self, process_type, constructor, geometry):
-        self.process_type = process_type
-        self.constructor = constructor
-        self.geometry = geometry
-
-    @property
-    def __data__(self):
-        return {"process_type": self.process_type, "constructor": self.constructor, "geometry": self.geometry}
-
-    def __repr__(self):
-        return "{}({}, {})".format(BTLxFeatureDefinition.__name__, self.process_type, self.geometry)
-
-    def ToString(self):
-        return repr(self)
-
-    def transformed(self, transformation):
-        instance = self.__class__(self.process_type, self.constructor, self.geometry.transformed(transformation))
-        return instance
-
-
-
-    def get_feature(self, element):
-
-        return self.process_type.__call__(self.constructor(self.geometry, element))
-
-    def call_constructor(self, element):
-        return self.constructor(self.geometry, element)

@@ -14,6 +14,7 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from sphinx import ret
 
 from compas_timber.errors import FeatureApplicationError
 
@@ -230,6 +231,27 @@ class DoubleCut(BTLxProcess):
         return cls(
             orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index
         )
+
+    @classmethod
+    def from_shapes_and_beam(cls, plane_a, plane_b, element, **kwargs):
+        """Construct a DoubleCut process from a two planes and an element.
+
+        Parameters
+        ----------
+        plane_a : :class:`compas.geometry.Plane`
+            The first cutting plane.
+        plane_b : :class:`compas.geometry.Plane`
+            The second cutting plane.
+        element : :class:`compas_timber.elements.Element`
+            The element to be cut.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.DoubleCut`
+            The constructed double cut process.
+
+        """
+        return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):

@@ -3,7 +3,11 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Line
 
+from compas_timber._fabrication import JackRafterCut
+from compas_timber._fabrication import Drilling
+from compas_timber.design.workflow import BTLxFeatureDefinition
 from compas_timber.elements import BallNodeFastener
 from compas_timber.elements import FastenerTimberInterface
 from compas_timber.elements.features import CutFeature
@@ -86,7 +90,8 @@ class BallNodeJoint(Joint):
         width = self.beams[0].width
         thickness = width / 5.0
         shape = Cylinder(height / 8.0, height * 2.0, Frame(Point(height * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))
-        cut_feature = CutFeature(Plane((height * 2.0, 0, 0), (-1, 0, 0)))
+        cut_feature = BTLxFeatureDefinition(JackRafterCut.from_plane_and_beam, Plane((height * 2.0, 0, 0), (-1, 0, 0)))
+        drill_feature = BTLxFeatureDefinition(Drilling.from_line_and_beam, Line(Point(height * 3.0, 0, -height), Line(Point(height * 3.0, 0, height))))
         outline = [
             Point(height * 2.0, -height / 2, -thickness / 2),
             Point(height * 2.0, height / 2, -thickness / 2),
@@ -95,7 +100,7 @@ class BallNodeJoint(Joint):
             Point(height * 2.0, -height / 2, -thickness / 2),
         ]
 
-        return FastenerTimberInterface(outline, thickness, shapes=[shape], features=[cut_feature])
+        return FastenerTimberInterface(outline, thickness, shapes=[shape], features=[cut_feature, drill_feature])
 
     @classmethod
     def create(cls, model, *elements, **kwargs):

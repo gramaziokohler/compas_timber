@@ -20,6 +20,7 @@ from .lap import Lap
 from .lap import LapParams
 from .french_ridge_lap import FrenchRidgeLap
 from .french_ridge_lap import FrenchRidgeLapParams
+from .btlx_process import BTLxFeatureDefinition
 
 
 __all__ = [
@@ -43,4 +44,5 @@ __all__ = [
     "LapParams",
     "FrenchRidgeLap",
     "FrenchRidgeLapParams",
+    "BTLxFeatureDefinition"
 ]
