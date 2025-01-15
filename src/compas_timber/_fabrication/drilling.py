@@ -204,7 +204,7 @@ class Drilling(BTLxProcess):
             )
 
     @classmethod
-    def from_shapes_and_beam(cls, line, element, diameter, **kwargs):
+    def from_shapes_and_element(cls, line, element, diameter, **kwargs):
         """Construct a drilling process from a shape and a beam.
 
         Parameters
@@ -220,6 +220,8 @@ class Drilling(BTLxProcess):
             The constructed drilling process.
 
         """
+        if isinstance(line, list):
+            line = line[0]
         return cls.from_line_and_beam(line, element, diameter, **kwargs)
 
 

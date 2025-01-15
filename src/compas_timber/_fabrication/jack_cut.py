@@ -11,7 +11,6 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-from sphinx import ret
 
 from compas_timber.errors import FeatureApplicationError
 
@@ -53,7 +52,7 @@ class JackRafterCut(BTLxProcess):
         data["inclination"] = self.inclination
         return data
 
-    def __init__(self, orientation, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
+    def __init__(self, orientation="start", start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None
@@ -177,7 +176,7 @@ class JackRafterCut(BTLxProcess):
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
 
     @classmethod
-    def from_shapes_and_beam(cls, plane, beam, **kwargs):
+    def from_shapes_and_element(cls, plane, element, **kwargs):
         """Construct a drilling process from a shape and a beam.
 
         Parameters
@@ -193,7 +192,9 @@ class JackRafterCut(BTLxProcess):
             The constructed drilling process.
 
         """
-        return cls.from_plane_and_beam(plane, beam, **kwargs)
+        if isinstance(plane, list):
+            plane = plane[0]
+        return cls.from_plane_and_beam(plane, element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):

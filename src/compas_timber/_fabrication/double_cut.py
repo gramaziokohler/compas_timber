@@ -1,4 +1,6 @@
 import math
+import re
+from weakref import ref
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
@@ -14,7 +16,6 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-from sphinx import ret
 
 from compas_timber.errors import FeatureApplicationError
 
@@ -63,7 +64,7 @@ class DoubleCut(BTLxProcess):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation = "start",
         start_x=0.0,
         start_y=50.0,
         angle_1=45.0,
@@ -172,7 +173,7 @@ class DoubleCut(BTLxProcess):
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, ref_side_index=0):
+    def from_planes_and_beam(cls, planes, beam, ref_side_index=None):                  #TODO: have this method set ref side index if not provided
         """Create a DoubleCut instance from two cutting planes and the beam they should cut.
 
         Parameters
@@ -195,25 +196,35 @@ class DoubleCut(BTLxProcess):
 
         # convert all frames to planes
         planes = [Plane.from_frame(plane) if isinstance(plane, Frame) else plane for plane in planes]
-
         # check if the normals are facing the same direction
         normals = [plane.normal for plane in planes]
         if dot_vectors(*normals) < 0:
             raise ValueError("The normals of the two planes are not aligned. Consider flipping one of them.")
 
         # define ref side and ref edge
-        ref_side = beam.ref_sides[ref_side_index]
-        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-
-        # calculate the average plane of the two planes
-        point_start_xy = Point(*intersection_plane_plane_plane(planes[0], planes[1], Plane.from_frame(ref_side)))
-        if point_start_xy is None:
-            raise ValueError("Planes do not intersect with beam.")
+        if not ref_side_index:
+            for i in range(4):
+                ref_side = beam.ref_sides[i]
+                ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
+                # calculate the average plane of the two planes
+                int = intersection_plane_plane_plane(planes[0], planes[1], Plane.from_frame(ref_side))
+                if int:
+                    point_start_xy = Point(*int)
+                    ref_side_index = i
+                    break
+            raise ValueError("Planes do not intersect with beam.")  # after trying all 4 sides
+        else:
+            ref_side = beam.ref_sides[i]
+            ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
+                # calculate the average plane of the two planes
+            int = intersection_plane_plane_plane(planes[0], planes[1], Plane.from_frame(ref_side))
+            if int:
+                point_start_xy = Point(*int)
+            else:
+                raise ValueError("Planes do not intersect with beam.")
         average_plane = Plane(point_start_xy, planes[0].normal + planes[1].normal)
-
         # calculate the orientation of the cut
         orientation = cls._calculate_orientation(ref_side, average_plane)
-
         # calculate the start_x and start_y of the cut
         start_x, start_y = cls._calculate_start_x_y(ref_edge, point_start_xy)
 
@@ -222,7 +233,6 @@ class DoubleCut(BTLxProcess):
 
         # calculate the inclinations of the cuts
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
-
         # flip the values if the first angle is larger than the second.
         if angle_1 > angle_2:
             angle_1, angle_2 = angle_2, angle_1
@@ -233,7 +243,7 @@ class DoubleCut(BTLxProcess):
         )
 
     @classmethod
-    def from_shapes_and_beam(cls, plane_a, plane_b, element, **kwargs):
+    def from_shapes_and_element(cls, plane_a, plane_b, element, ref_side_index=None, **kwargs):
         """Construct a DoubleCut process from a two planes and an element.
 
         Parameters
@@ -251,6 +261,9 @@ class DoubleCut(BTLxProcess):
             The constructed double cut process.
 
         """
+        if ref_side_index:
+            kwargs["ref_side_index"] = int(ref_side_index)
+
         return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
 
     @staticmethod

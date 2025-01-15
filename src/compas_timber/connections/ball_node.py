@@ -7,10 +7,9 @@ from compas.geometry import Line
 
 from compas_timber._fabrication import JackRafterCut
 from compas_timber._fabrication import Drilling
-from compas_timber.design.workflow import BTLxFeatureDefinition
+from compas_timber._fabrication import BTLxFeatureDefinition
 from compas_timber.elements import BallNodeFastener
 from compas_timber.elements import FastenerTimberInterface
-from compas_timber.elements.features import CutFeature
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint

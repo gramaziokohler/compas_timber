@@ -23,7 +23,7 @@ class BTLxProcess(Data):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index, priority=0, process_id=0):
+    def __init__(self, ref_side_index = 0, priority=0, process_id=0):
         super(BTLxProcess, self).__init__()
         self.ref_side_index = ref_side_index
         self._priority = priority
@@ -213,34 +213,25 @@ class BTLxFeatureDefinition(Data):
 
     """
 
-    def __init__(self, constructor, geometry, param_dict=None):
+    def __init__(self, process, geometry, **kwargs):
         super(BTLxFeatureDefinition, self).__init__()
-        self.constructor_module = constructor.__module__
-        self.constructor = constructor
-        self.geometry = geometry
-        self.param_dict = param_dict or {}
+        self.process = process
+        self.geometry = tuple(geometry)
+        self.kwargs = kwargs or {}
 
     @property
     def __data__(self):
-        return {"constructor_module" : self.constructor.__module__, "constructor":  str(self.constructor.__qualname__), "geometry": self.geometry, "param_dict": self.param_dict}
-
-    def __from_data__(cls, data):
-        mod = import_module(data["constructor_module"])
-        class_name, constructor_name = data["constructor"].split(".")
-        constructor = getattr(getattr(mod, class_name), constructor_name)
-        geometry = data["geometry"]
-        param_dict = data["param_dict"]
-        return cls(constructor, geometry, param_dict)
+        return {"process": self.process, "geometry": self.geometry, "param_dict": self.kwargs}
 
     def __repr__(self):
-        return "{}({}, {})".format(BTLxFeatureDefinition.__class__.__name__, self.constructor, self.geometry)
+        return "{}({}, {})".format(BTLxFeatureDefinition.__class__.__name__, self.process, self.geometry)
 
     def ToString(self):
         return repr(self)
 
     def transformed(self, transformation):
-        instance = self.__class__(self.constructor, self.geometry.transformed(transformation), self.param_dict)
-        return instance
+        geometry = [geo.transformed(transformation) for geo in self.geometry]
+        return self.__class__(self.process, geometry, **self.kwargs)
 
     def generate_feature(self, element):
-        return self.constructor(self.geometry, element, **self.param_dict)
+        return self.process.from_shapes_and_element(*self.geometry, element = element, **self.kwargs)
