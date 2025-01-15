@@ -173,8 +173,10 @@ def test_float_formatting_of_param_dicts():
     test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
     params_dict = test_processing.params_dict
 
-    assert params_dict["StartY"] == "{:.3f}".format(20)
-    assert params_dict["StartDepth"] == "{:.3f}".format(0.5)
-    assert params_dict["Angle"] == "{:.3f}".format(45)
-    assert params_dict["Inclination"] == "{:.3f}".format(90)
-    assert params_dict["ReferencePlaneID"] == "{:.0f}".format(2)
+    assert params_dict["Orientation"] == "end"
+    assert params_dict["StartX"] == "{:.3f}".format(test_processing.start_x)
+    assert params_dict["StartY"] == "{:.3f}".format(test_processing.start_y)
+    assert params_dict["StartDepth"] == "{:.3f}".format(test_processing.start_depth)
+    assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
+    assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
+    assert params_dict["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
