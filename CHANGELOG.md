@@ -116,9 +116,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `model.process_joinery()`so that it calls `joint.check_elements_compatibility()` before adding extensions and features.
 * Fixed incorrect data keys for `beam_guid` in the `__data__` property for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`, `LFrenchRidgeLapJoint`.
 * Fixed `JointRuleFromList` GH component.
-<<<<<<< HEAD
-* Moved `FeatureApplicationError` to new module `compas_timber.errors`.
-=======
 * Changed `TButtJoint` to take an optional `PlateFastener`.
 * Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
 * Fixed a bug that occured when parallel beams are joined in the BallNodeJoint.
@@ -126,7 +123,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in `JointRule.joints_from_beams_and_rules()` that caused failures when topology was not recognized.
 * Implemented `max_distance` parameter in `JointRule.joints_from_beams_and_rules()` and `JointRule.comply` methods.
 * Bux fixes from extra comma argument and `max_distance` not implemented in `DirectRule.comply`.
->>>>>>> main
 
 ### Removed
 
