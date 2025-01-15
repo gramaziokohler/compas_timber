@@ -243,7 +243,7 @@ class DoubleCut(BTLxProcessing):
         )
 
     @classmethod
-    def from_shapes_and_element(cls, plane_a, plane_b, element, ref_side_index=None, **kwargs):
+    def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
         """Construct a DoubleCut process from a two planes and an element.
 
         Parameters
@@ -261,9 +261,6 @@ class DoubleCut(BTLxProcessing):
             The constructed double cut process.
 
         """
-        if ref_side_index:
-            kwargs["ref_side_index"] = int(ref_side_index)
-
         return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
 
     @staticmethod

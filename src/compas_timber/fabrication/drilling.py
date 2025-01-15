@@ -153,13 +153,8 @@ class Drilling(BTLxProcessing):
     ########################################################################
 
     @classmethod
-<<<<<<< HEAD:src/compas_timber/_fabrication/drilling.py
     def from_line_and_beam(cls, line, beam, diameter):
         """Construct a drilling process from a line and diameter.
-=======
-    def from_line_and_beam(cls, line, diameter, beam):
-        """Construct a drilling processing from a line and diameter.
->>>>>>> main:src/compas_timber/fabrication/drilling.py
 
         # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
         # TODO: make a from point alt. constructor that takes a point and a reference side and makes a straight drilling through.
