@@ -90,9 +90,7 @@ def clear_gh_params(ghenv, permanent_param_count=1):
     """
     changed = False
     while len(ghenv.Component.Params.Input) > permanent_param_count:
-        ghenv.Component.Params.UnregisterInputParameter(
-            ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1], True
-        )
+        ghenv.Component.Params.UnregisterInputParameter(ghenv.Component.Params.Input[len(ghenv.Component.Params.Input) - 1], True)
         changed = True
     ghenv.Component.Params.OnParametersChanged()
     return changed
@@ -185,21 +183,15 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
 
         else:
             register_params = False
-            if (
-                len(ghenv.Component.Params.Input) == len(input_names) + permanent_param_count
-            ):  # if param count matches beam_names count
+            if len(ghenv.Component.Params.Input) == len(input_names) + permanent_param_count:  # if param count matches beam_names count
                 for i, name in enumerate(input_names):
-                    if (
-                        ghenv.Component.Params.Input[i + permanent_param_count].Name != name
-                    ):  # if param names don't match
+                    if ghenv.Component.Params.Input[i + permanent_param_count].Name != name:  # if param names don't match
                         register_params = True
                         break
             else:
                 register_params = True
             if register_params:
-                clear_gh_params(
-                    ghenv, permanent_param_count + rename_count
-                )  # we could consider renaming params if we don't want to disconnect GH component inputs
+                clear_gh_params(ghenv, permanent_param_count + rename_count)  # we could consider renaming params if we don't want to disconnect GH component inputs
                 for i, name in enumerate(input_names):
                     if i < permanent_param_count:
                         continue

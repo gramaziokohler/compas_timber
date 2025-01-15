@@ -33,17 +33,11 @@ class Plate(component):
             # check list lengths for consistency
             N = len(outline)
             if len(thickness) not in (1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'T' I need either one or the same number of inputs as the Crv parameter."
-                )
+                self.AddRuntimeMessage(Error, " In 'T' I need either one or the same number of inputs as the Crv parameter.")
             if len(category) not in (0, 1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
-                )
+                self.AddRuntimeMessage(Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter.")
             if len(vector) not in (0, 1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'Vector' I need either none, one or the same number of inputs as the Crv parameter."
-                )
+                self.AddRuntimeMessage(Error, " In 'Vector' I need either none, one or the same number of inputs as the Crv parameter.")
 
             # duplicate data if None or single value
             if len(thickness) != N:

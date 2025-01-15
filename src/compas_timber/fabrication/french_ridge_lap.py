@@ -17,13 +17,13 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import EdgePositionType
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import EdgePositionType
+from .btlx import OrientationType
 
 
-class FrenchRidgeLap(BTLxProcess):
+class FrenchRidgeLap(BTLxProcessing):
     """Represents a French Ridge Lap feature to be made on a beam.
 
     Parameters
@@ -43,7 +43,7 @@ class FrenchRidgeLap(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "FrenchRidgeLap"  # type: ignore
+    PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
 
     @property
     def __data__(self):
@@ -56,16 +56,7 @@ class FrenchRidgeLap(BTLxProcess):
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
-    def __init__(
-        self,
-        orientation,
-        start_x=0.0,
-        angle=90.0,
-        ref_position=EdgePositionType.REFEDGE,
-        drillhole=False,
-        drillhole_diam=0.0,
-        **kwargs
-    ):
+    def __init__(self, orientation, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0, **kwargs):
         super(FrenchRidgeLap, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None
@@ -437,12 +428,12 @@ class FrenchRidgeLap(BTLxProcess):
         return subtraction_volume
 
 
-class FrenchRidgeLapParams(BTLxProcessParams):
+class FrenchRidgeLapParams(BTLxProcessingParams):
     """A class to store the parameters of a French Ridge Lap feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.FrenchRidgeLap`
+    instance : :class:`~compas_timber.fabrication.FrenchRidgeLap`
         The instance of the French Ridge Lap feature.
     """
 

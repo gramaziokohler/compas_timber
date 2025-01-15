@@ -15,13 +15,13 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
-from .btlx_process import StepShapeType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
+from .btlx import StepShapeType
 
 
-class StepJoint(BTLxProcess):
+class StepJoint(BTLxProcessing):
     """Represents a Step Joint feature to be made on a beam.
 
     Parameters
@@ -47,7 +47,7 @@ class StepJoint(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "StepJoint"  # type: ignore
+    PROCESSING_NAME = "StepJoint"  # type: ignore
 
     @property
     def __data__(self):
@@ -680,12 +680,12 @@ class StepJoint(BTLxProcess):
         return tenon_brep
 
 
-class StepJointParams(BTLxProcessParams):
+class StepJointParams(BTLxProcessingParams):
     """A class to store the parameters of a Step Joint feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.StepJoint`
+    instance : :class:`~compas_timber.fabrication.StepJoint`
         The instance of the Step Joint feature.
     """
 

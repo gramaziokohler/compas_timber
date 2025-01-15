@@ -14,12 +14,12 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 
 
-class JackRafterCut(BTLxProcess):
+class JackRafterCut(BTLxProcessing):
     """Represents a Jack Rafter Cut feature to be made on a beam.
 
     Parameters
@@ -39,7 +39,7 @@ class JackRafterCut(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "JackRafterCut"  # type: ignore
+    PROCESSING_NAME = "JackRafterCut"  # type: ignore
 
     @property
     def __data__(self):
@@ -299,12 +299,12 @@ class JackRafterCut(BTLxProcess):
         return Plane(cutting_plane.point, plane_normal)
 
 
-class JackRafterCutParams(BTLxProcessParams):
+class JackRafterCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Jack Rafter Cut feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.JackRafterCut`
+    instance : :class:`~compas_timber.fabrication.JackRafterCut`
         The instance of the Jack Rafter Cut feature.
     """
 

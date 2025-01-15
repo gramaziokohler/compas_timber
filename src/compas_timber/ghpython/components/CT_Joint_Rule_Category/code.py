@@ -45,13 +45,9 @@ class CategoryJointRule(component):
                 if val is not None:
                     kwargs[self.arg_names()[i + 2]] = val
             if not cat_a:
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
-                )
+                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0]))
             if not cat_b:
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1])
-                )
+                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1]))
             if not (cat_a and cat_b):
                 return
 

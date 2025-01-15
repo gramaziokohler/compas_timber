@@ -17,7 +17,10 @@ class X_TopologyJointRule(component):
         super(X_TopologyJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            if cls.SUPPORTED_TOPOLOGY == JointTopology.TOPO_X:
+            supported_topo = cls.SUPPORTED_TOPOLOGY
+            if not isinstance(supported_topo, list):
+                supported_topo = [supported_topo]
+            if JointTopology.TOPO_X in supported_topo:
                 self.classes[cls.__name__] = cls
         if ghenv.Component.Params.Output[0].NickName == "Rule":
             self.joint_type = XHalfLapJoint
@@ -37,7 +40,10 @@ class X_TopologyJointRule(component):
             for i, val in enumerate(args):
                 if val is not None:
                     kwargs[self.arg_names()[i]] = val
-            if self.joint_type.SUPPORTED_TOPOLOGY != JointTopology.TOPO_X:
+            supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
+            if not isinstance(supported_topo, list):
+                supported_topo = [supported_topo]
+            if JointTopology.TOPO_X not in supported_topo:
                 self.AddRuntimeMessage(Warning, "Joint type does not match topology. Joint may not be generated.")
             return TopologyRule(JointTopology.TOPO_X, self.joint_type, **kwargs)
 

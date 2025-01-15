@@ -32,16 +32,12 @@ class JointRuleFromList(component):
             ghenv.Component.Message = self.joint_type.__name__
             elements = args[0]
             if not elements:
-                self.AddRuntimeMessage(
-                    Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0])
-                )
+                self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names[0]))
                 return
             if not self.joint_type.element_count_complies(elements):
                 self.AddRuntimeMessage(
                     Warning,
-                    "{} requires at least {} and at most {} elements.".format(
-                        self.joint_type.__name__, self.joint_type.MIN_ELEMENT_COUNT, self.joint_type.MAX_ELEMENT_COUNT
-                    ),
+                    "{} requires at least {} and at most {} elements.".format(self.joint_type.__name__, self.joint_type.MIN_ELEMENT_COUNT, self.joint_type.MAX_ELEMENT_COUNT),
                 )
                 return
             kwargs = {}

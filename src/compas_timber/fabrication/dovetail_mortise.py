@@ -15,14 +15,14 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import LimitationTopType
-from .btlx_process import OrientationType
-from .btlx_process import TenonShapeType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import LimitationTopType
+from .btlx import OrientationType
+from .btlx import TenonShapeType
 
 
-class DovetailMortise(BTLxProcess):
+class DovetailMortise(BTLxProcessing):
     """Represents a Dovetail Mortise feature to be made on a beam.
 
     Parameters
@@ -62,7 +62,7 @@ class DovetailMortise(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "DovetailMortise"  # type: ignore
+    PROCESSING_NAME = "DovetailMortise"  # type: ignore
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}
@@ -355,7 +355,7 @@ class DovetailMortise(BTLxProcess):
         width : float, optional
             The width of the mortise.
         depth : float, optional
-            The depth of the mortise. The equivalent value of the DovetailTenon BTLxProcess is the height.
+            The depth of the mortise. The equivalent value of the DovetailTenon BTLxProcessing is the height.
         cone_angle : float, optional
             The cone angle of the dovetail mortise.
         flank_angle : float, optional
@@ -699,12 +699,12 @@ class DovetailMortise(BTLxProcess):
         return dovetail_volume
 
 
-class DovetailMortiseParams(BTLxProcessParams):
+class DovetailMortiseParams(BTLxProcessingParams):
     """A class to store the parameters of a Dovetail Mortise feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DovetailMortise`
+    instance : :class:`~compas_timber.fabrication.DovetailMortise`
         The instance of the Dovetail Mortise feature.
     """
 

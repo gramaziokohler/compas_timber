@@ -1,6 +1,6 @@
 from compas_timber.elements import MillVolume
+from compas_timber.errors import BeamJoinningError
 
-from .joint import BeamJoinningError
 from .lap_joint import LapJoint
 from .solver import JointTopology
 
@@ -11,7 +11,7 @@ class XHalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------

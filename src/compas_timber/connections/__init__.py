@@ -1,4 +1,3 @@
-from .joint import BeamJoinningError
 from .joint import Joint
 from .l_butt import LButtJoint
 from .l_halflap import LHalfLapJoint
@@ -15,12 +14,12 @@ from .t_birdsmouth import TBirdsmouthJoint
 from .t_halflap import THalfLapJoint
 from .x_halflap import XHalfLapJoint
 from .t_dovetail import TDovetailJoint
+from .t_tenon_mortise import TenonMortiseJoint
 from .ball_node import BallNodeJoint
 
 __all__ = [
     "Joint",
     "LapJoint",
-    "BeamJoinningError",
     "TButtJoint",
     "LButtJoint",
     "TButtJoint",
@@ -37,4 +36,5 @@ __all__ = [
     "find_neighboring_beams",
     "TDovetailJoint",
     "BallNodeJoint",
+    "TenonMortiseJoint",
 ]

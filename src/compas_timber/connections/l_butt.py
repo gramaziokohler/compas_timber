@@ -1,8 +1,8 @@
-from compas_timber._fabrication import JackRafterCut
-from compas_timber._fabrication import Lap
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.errors import BeamJoinningError
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import Lap
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -12,7 +12,7 @@ class LButtJoint(Joint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LButtJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `LButtJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -59,16 +59,7 @@ class LButtJoint(Joint):
         data["reject_i"] = self.reject_i
         return data
 
-    def __init__(
-        self,
-        main_beam=None,
-        cross_beam=None,
-        mill_depth=None,
-        small_beam_butts=False,
-        modify_cross=True,
-        reject_i=False,
-        **kwargs
-    ):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs):
         super(LButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -99,9 +90,7 @@ class LButtJoint(Joint):
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
 
         if self.reject_i and ref_side_index in [4, 5]:
-            raise BeamJoinningError(
-                beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True"
-            )
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
         return ref_side_index
 
     @property
@@ -138,9 +127,7 @@ class LButtJoint(Joint):
                     cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
                 start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
             except AttributeError as ae:
-                raise BeamJoinningError(
-                    beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main]
-                )
+                raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main])
             except Exception as ex:
                 raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
             extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
@@ -154,9 +141,7 @@ class LButtJoint(Joint):
             cutting_plane_cross = self.main_beam.ref_sides[self.main_beam_opposing_side_index]
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
         except AttributeError as ae:
-            raise BeamJoinningError(
-                beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross]
-            )
+            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross])
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.cross_beam.add_blank_extension(
             start_cross + extension_tolerance,
@@ -192,18 +177,14 @@ class LButtJoint(Joint):
         if self.mill_depth:
             cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
             lap_width = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
-            cross_feature = Lap.from_plane_and_beam(
-                cross_cutting_plane, self.cross_beam, lap_width, self.mill_depth, self.cross_beam_ref_side_index
-            )
+            cross_feature = Lap.from_plane_and_beam(cross_cutting_plane, self.cross_beam, lap_width, self.mill_depth, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)
 
         # apply a refinement cut on the cross beam
         if self.modify_cross:
             modification_plane = self.main_beam.ref_sides[self.main_beam_opposing_side_index]
-            cross_refinement_feature = JackRafterCut.from_plane_and_beam(
-                modification_plane, self.cross_beam, self.cross_beam_ref_side_index
-            )
+            cross_refinement_feature = JackRafterCut.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
 

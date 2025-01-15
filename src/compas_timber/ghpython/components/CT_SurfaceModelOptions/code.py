@@ -2,9 +2,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 
 
 class SurfaceModelOptions(component):
-    def RunScript(
-        self, sheeting_outside, sheeting_inside, lintel_posts, edge_stud_offset, custom_dimensions, joint_overrides
-    ):
+    def RunScript(self, sheeting_outside, sheeting_inside, lintel_posts, edge_stud_offset, custom_dimensions, joint_overrides):
         if sheeting_outside is not None and not isinstance(sheeting_outside, float):
             raise TypeError("sheeting_outside expected a float, got: {}".format(type(sheeting_outside)))
         if sheeting_inside is not None and not isinstance(sheeting_inside, float):

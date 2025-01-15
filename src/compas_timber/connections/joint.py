@@ -9,33 +9,6 @@ from compas_model.interactions import Interaction
 from .solver import JointTopology
 
 
-class BeamJoinningError(Exception):
-    """Indicates that an error has occurred while trying to join two or more beams.
-
-    This error should indicate that an error has occurred while calculating the features which
-    should be applied by this joint.
-
-    Attributes
-    ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
-        The beams that were supposed to be joined.
-    debug_geometries : list(:class:`~compas.geometry.Geometry`)
-        A list of geometries that can be used to visualize the error.
-    debug_info : str
-        A string containing debug information about the error.
-    joint : :class:`~compas_timber.connections.Joint`
-        The joint that was supposed to join the beams.
-
-    """
-
-    def __init__(self, beams, joint, debug_info=None, debug_geometries=None):
-        super(BeamJoinningError, self).__init__()
-        self.beams = beams
-        self.joint = joint
-        self.debug_info = debug_info
-        self.debug_geometries = debug_geometries or []
-
-
 class Joint(Interaction):
     """Base class for a joint connecting two beams.
 
@@ -96,8 +69,8 @@ class Joint(Interaction):
         """Adds the extensions defined by this joint to affected beam(s).
         This is optional and should only be implemented by joints that require it.
 
-        Note
-        ----
+        Notes
+        -----
         Extensions are added to all beams before the features are added.
 
         Raises
@@ -173,9 +146,7 @@ class Joint(Interaction):
 
         self._ends = {}
         for index, beam in enumerate(self.elements):
-            if distance_point_line(beam.centerline.start, self.elements[index - 1].centerline) < distance_point_line(
-                beam.centerline.end, self.elements[index - 1].centerline
-            ):
+            if distance_point_line(beam.centerline.start, self.elements[index - 1].centerline) < distance_point_line(beam.centerline.end, self.elements[index - 1].centerline):
                 self._ends[str(beam.guid)] = "start"
             else:
                 self._ends[str(beam.guid)] = "end"

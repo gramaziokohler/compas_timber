@@ -15,13 +15,13 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import MachiningLimits
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import MachiningLimits
+from .btlx import OrientationType
 
 
-class Lap(BTLxProcess):
+class Lap(BTLxProcessing):
     """Represents a Lap feature to be made on a beam.
 
     Parameters
@@ -57,7 +57,7 @@ class Lap(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "Lap"  # type: ignore
+    PROCESSING_NAME = "Lap"  # type: ignore
 
     @property
     def __data__(self):
@@ -495,12 +495,12 @@ class Lap(BTLxProcess):
         return box
 
 
-class LapParams(BTLxProcessParams):
+class LapParams(BTLxProcessingParams):
     """A class to store the parameters of a Lap feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.Lap`
+    instance : :class:`~compas_timber.fabrication.Lap`
         The instance of the Lap feature.
     """
 
@@ -531,7 +531,5 @@ class LapParams(BTLxProcessParams):
         result["LeadAngle"] = "{:.{prec}f}".format(self._instance.lead_angle, prec=TOL.precision)
         result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
         result["LeadInclination"] = "{:.{prec}f}".format(self._instance.lead_inclination, prec=TOL.precision)
-        result["MachiningLimits"] = {
-            key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()
-        }
+        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
         return result

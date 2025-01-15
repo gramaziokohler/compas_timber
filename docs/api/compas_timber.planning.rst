@@ -13,5 +13,10 @@ Classes
 
     Actor
     BuildingPlan
-    Step
+    BuildingPlanParser
+    Instruction
+    LinearDimension
+    Model3d
     SimpleSequenceGenerator
+    Step
+    Text3d
