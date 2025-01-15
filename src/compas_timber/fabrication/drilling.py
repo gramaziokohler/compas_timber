@@ -153,7 +153,7 @@ class Drilling(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_line_and_beam(cls, line, beam, diameter):
+    def from_line_and_element(cls, line, beam, diameter):
         """Construct a drilling process from a line and diameter.
 
         # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
@@ -210,7 +210,7 @@ class Drilling(BTLxProcessing):
         """
         if isinstance(line, list):
             line = line[0]
-        return cls.from_line_and_beam(line, element, diameter, **kwargs)
+        return cls.from_line_and_element(line, element, diameter, **kwargs)
 
 
     @staticmethod

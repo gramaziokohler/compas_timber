@@ -24,6 +24,6 @@ class DrillHoleFeature(component):
         line = line_to_compas(line)
         features = []
         for beam in beam:
-            drilling = Drilling.from_line_and_beam(line, diameter, beam)
+            drilling = Drilling.from_line_and_element(line, diameter, beam)
             features.append(FeatureDefinition(drilling, beam))
         return features

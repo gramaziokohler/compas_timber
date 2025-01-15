@@ -1,6 +1,4 @@
 import math
-import re
-from weakref import ref
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
@@ -328,11 +326,7 @@ class DoubleCut(BTLxProcessing):
 
         Raises
         ------
-<<<<<<< HEAD:src/compas_timber/_fabrication/double_cut.py
-        :class:`~compas_timber.error.FeatureApplicationError`
-=======
         :class:`~compas_timber.errors.FeatureApplicationError`
->>>>>>> main:src/compas_timber/fabrication/double_cut.py
             If the cutting plane does not intersect with beam geometry.
 
         Returns

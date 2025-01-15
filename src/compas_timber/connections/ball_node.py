@@ -1,11 +1,8 @@
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import Line
 
-from compas_timber._fabrication import JackRafterCut
-from compas_timber._fabrication import Drilling
-from compas_timber._fabrication import BTLxFeatureDefinition
+from compas_timber.fabrication import BTLxFeatureDefinition
 from compas_timber.elements import BallNodeFastener
 from compas_timber.utils import intersection_line_line_param
 
