@@ -212,7 +212,6 @@ class Drilling(BTLxProcessing):
             line = line[0]
         return cls.from_line_and_element(line, element, diameter, **kwargs)
 
-
     @staticmethod
     def _flip_line_if_start_inside(line, beam, ref_side_index):
         side_plane = beam.side_as_surface(ref_side_index).to_plane()

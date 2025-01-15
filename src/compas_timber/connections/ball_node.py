@@ -2,7 +2,6 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 
-from compas_timber.fabrication import BTLxFeatureDefinition
 from compas_timber.elements import BallNodeFastener
 from compas_timber.utils import intersection_line_line_param
 

@@ -639,6 +639,7 @@ class EdgePositionType(object):
     REFEDGE = "refedge"
     OPPEDGE = "oppedge"
 
+
 class BTLxFeatureDefinition(Data):
     """Container linking a BTLx Process Type and generator function to an input geometry.
 
@@ -667,4 +668,4 @@ class BTLxFeatureDefinition(Data):
         return self.__class__(self.process, geometry, **self.kwargs)
 
     def generate_feature(self, element):
-        return self.process.from_shapes_and_element(*self.geometry, element = element, **self.kwargs)
+        return self.process.from_shapes_and_element(*self.geometry, element=element, **self.kwargs)
