@@ -1,10 +1,9 @@
-from compas.tolerance import TOL
-
 from compas_timber.errors import BeamJoinningError
 from compas_timber.fabrication import Lap
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import are_beams_coplanar
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 
@@ -152,15 +151,11 @@ class XHalfLapJoint(Joint):
         BeamJoinningError
             If the elements are not compatible for the creation of the joint.
         """
-        normal_a = self.beam_a.frame.normal.unitized()
-        normal_b = self.beam_b.frame.normal.unitized()
-        # calculate the dot product of the two normals
-        dot = abs(normal_a.dot(normal_b))
-        if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
+        if not are_beams_coplanar(self.beam_a, self.beam_b):
             raise BeamJoinningError(
-                self.elements,
-                self,
-                debug_info="The two beams are not aligned to create a Half Lap joint.",
+                beams=self.elements,
+                joint=self,
+                debug_info="The two beams are not coplanar to create a Half Lap joint.",
             )
 
     def _get_lap_lengths(self):
