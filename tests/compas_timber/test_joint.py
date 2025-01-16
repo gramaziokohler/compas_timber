@@ -9,10 +9,10 @@ from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.connections import LButtJoint
-from compas_timber.connections import LHalfLapJoint
+from compas_timber.connections import LLapJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import THalfLapJoint
-from compas_timber.connections import XHalfLapJoint
+from compas_timber.connections import TLapJoint
+from compas_timber.connections import XLapJoint
 from compas_timber.connections import find_neighboring_beams
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
@@ -123,7 +123,7 @@ def test_joint_create_x_half_lap(x_topo_beams):
     beam_a, beam_b = x_topo_beams
     model.add_element(beam_a)
     model.add_element(beam_b)
-    joint = XHalfLapJoint.create(model, beam_a, beam_b)
+    joint = XLapJoint.create(model, beam_a, beam_b)
 
     assert joint.beam_a is beam_a
     assert joint.beam_b is beam_b
@@ -135,7 +135,7 @@ def test_joint_create_t_lap(t_topo_beams):
     main_beam, cross_beam = t_topo_beams
     model.add_element(main_beam)
     model.add_element(cross_beam)
-    joint = THalfLapJoint.create(model, main_beam, cross_beam)
+    joint = TLapJoint.create(model, main_beam, cross_beam)
 
     assert joint.main_beam is main_beam
     assert joint.cross_beam is cross_beam
@@ -147,7 +147,7 @@ def test_joint_create_l_lap(l_topo_beams):
     beam_a, beam_b = l_topo_beams
     model.add_element(beam_a)
     model.add_element(beam_b)
-    joint = LHalfLapJoint.create(model, beam_a, beam_b)
+    joint = LLapJoint.create(model, beam_a, beam_b)
 
     assert joint.beam_a is beam_a
     assert joint.beam_b is beam_b
@@ -196,7 +196,7 @@ def test_joint_create_kwargs_passthrough_xhalflap():
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    joint = XHalfLapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.4)
+    joint = XLapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.4)
 
     assert joint.cut_plane_bias == 0.4
 

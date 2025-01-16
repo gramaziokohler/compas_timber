@@ -7,7 +7,7 @@ from compas_timber.model import TimberModel
 from compas_timber.elements import Beam
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import THalfLapJoint
+from compas_timber.connections import TLapJoint
 
 
 HERE = os.path.dirname(__file__)
@@ -43,7 +43,7 @@ LMiterJoint.create(model, beams[4], beams[0])
 LMiterJoint.create(model, beams[0], beams[5])
 
 # Assign joints - Inner - Inner
-THalfLapJoint.create(model, beams[2], beams[1])
+TLapJoint.create(model, beams[2], beams[1])
 
 
 # Assign joints - Frame - Inner

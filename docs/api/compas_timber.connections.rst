@@ -18,16 +18,16 @@ Classes
     LapJoint
     LButtJoint
     LFrenchRidgeLapJoint
-    LHalfLapJoint
+    LLapJoint
     LMiterJoint
     NullJoint
     TBirdsmouthJoint
     TButtJoint
     TDovetailJoint
-    THalfLapJoint
+    TLapJoint
     TStepJoint
     TenonMortiseJoint
-    XHalfLapJoint
+    XLapJoint
 
 Functions
 =========
