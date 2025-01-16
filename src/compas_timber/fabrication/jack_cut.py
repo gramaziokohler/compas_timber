@@ -52,7 +52,7 @@ class JackRafterCut(BTLxProcessing):
         data["inclination"] = self.inclination
         return data
 
-    def __init__(self, orientation="start", start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
+    def __init__(self, orientation=None, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None

@@ -65,7 +65,7 @@ class DoubleCut(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation = "start",
+        orientation = None,
         start_x=0.0,
         start_y=50.0,
         angle_1=45.0,
@@ -222,8 +222,6 @@ class DoubleCut(BTLxProcessing):
                 point_start_xy = Point(*int)
             else:
                 raise ValueError("nor do these Planes intersect with beam.")
-        print("ref_side", ref_side_index)
-        print(list(point_start_xy))
         average_plane = Plane(point_start_xy, planes[0].normal + planes[1].normal)
         # calculate the orientation of the cut
         orientation = cls._calculate_orientation(ref_side, average_plane)
@@ -240,7 +238,6 @@ class DoubleCut(BTLxProcessing):
             angle_1, angle_2 = angle_2, angle_1
             inclination_1, inclination_2 = inclination_2, inclination_1
 
-        print("orientation", orientation)
         return cls(
             orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index
         )

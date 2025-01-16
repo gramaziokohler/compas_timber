@@ -7,7 +7,7 @@ from compas.geometry import Vector
 
 from compas_timber.elements.timber import TimberElement
 from compas_timber.fabrication.drilling import Drilling
-from compas_timber.utils import intersection_line_box
+from compas_timber.utils import intersection_line_box_param
 
 
 class Fastener(TimberElement):
@@ -166,8 +166,7 @@ class FastenerTimberInterface(Data):
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
             feat = feature.transformed(Transformation.from_frame(self.frame))
-            btlx_feature = feat.feature_from_element(element)
-            features.append(btlx_feature)
+            features.append(feat.feature_from_element(element))
         return features
 
     def _get_hole_feature(self, hole, element):
@@ -178,7 +177,7 @@ class FastenerTimberInterface(Data):
         drill_line = Line.from_point_direction_length(point, vector, length)
         drill_line.transform(Transformation.from_frame(self.frame))
         if hole["through"]:
-            pts = intersection_line_box(drill_line, element.blank)[0]
+            pts = intersection_line_box_param(drill_line, element.blank)[0]
             if pts:
                 drill_line = Line(*pts)
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
