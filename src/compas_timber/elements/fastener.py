@@ -166,7 +166,7 @@ class FastenerTimberInterface(Data):
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
             feat = feature.transformed(Transformation.from_frame(self.frame))
-            btlx_feature = feat.generate_feature(element)
+            btlx_feature = feat.feature_from_element(element)
             features.append(btlx_feature)
         return features
 
@@ -178,7 +178,7 @@ class FastenerTimberInterface(Data):
         drill_line = Line.from_point_direction_length(point, vector, length)
         drill_line.transform(Transformation.from_frame(self.frame))
         if hole["through"]:
-            pts = intersection_line_box(drill_line, element.blank)
+            pts = intersection_line_box(drill_line, element.blank)[0]
             if pts:
                 drill_line = Line(*pts)
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx

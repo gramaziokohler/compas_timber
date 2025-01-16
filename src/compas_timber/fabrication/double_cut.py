@@ -7,15 +7,18 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Rotation
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
+from compas.geometry import intersection_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import intersection_line_box
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -201,25 +204,26 @@ class DoubleCut(BTLxProcessing):
 
         # define ref side and ref edge
         if not ref_side_index:
-            for i in range(4):
-                ref_side = beam.ref_sides[i]
-                ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-                # calculate the average plane of the two planes
-                int = intersection_plane_plane_plane(planes[0], planes[1], Plane.from_frame(ref_side))
-                if int:
-                    point_start_xy = Point(*int)
-                    ref_side_index = i
-                    break
-            raise ValueError("Planes do not intersect with beam.")  # after trying all 4 sides
+            line = intersection_plane_plane(planes[0], planes[1])
+            ints, faces = intersection_line_box(line, beam.blank)
+            if not ints:
+                raise ValueError("These Planes do not intersect with beam.")
+            ref_side_index = faces[0]
+            ref_side = beam.ref_sides[ref_side_index]
+            point_start_xy = ints[0]
+            ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
+
         else:
-            ref_side = beam.ref_sides[i]
+            ref_side = beam.ref_sides[ref_side_index]
             ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
                 # calculate the average plane of the two planes
             int = intersection_plane_plane_plane(planes[0], planes[1], Plane.from_frame(ref_side))
             if int:
                 point_start_xy = Point(*int)
             else:
-                raise ValueError("Planes do not intersect with beam.")
+                raise ValueError("nor do these Planes intersect with beam.")
+        print("ref_side", ref_side_index)
+        print(list(point_start_xy))
         average_plane = Plane(point_start_xy, planes[0].normal + planes[1].normal)
         # calculate the orientation of the cut
         orientation = cls._calculate_orientation(ref_side, average_plane)
@@ -236,6 +240,7 @@ class DoubleCut(BTLxProcessing):
             angle_1, angle_2 = angle_2, angle_1
             inclination_1, inclination_2 = inclination_2, inclination_1
 
+        print("orientation", orientation)
         return cls(
             orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index
         )

@@ -1,3 +1,4 @@
+import inspect
 import os
 import uuid
 import xml.dom.minidom as MD
@@ -443,7 +444,7 @@ class BTLxProcessing(Data):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index, priority=0, process_id=0):
+    def __init__(self, ref_side_index = None, priority=0, process_id=0):
         super(BTLxProcessing, self).__init__()
         self.ref_side_index = ref_side_index
         self._priority = priority
@@ -647,25 +648,29 @@ class BTLxFeatureDefinition(Data):
 
     """
 
-    def __init__(self, process, geometry, **kwargs):
+    def __init__(self, processing, geometries = None, elements = None, **kwargs):
         super(BTLxFeatureDefinition, self).__init__()
-        self.process = process
-        self.geometry = tuple(geometry)
+        self.processing = processing
+        if geometries:
+            self.geometries = geometries if isinstance(geometries, list) else [geometries]
+        else:
+            self.geometries = []
+        self.elements = elements or []
         self.kwargs = kwargs or {}
 
     @property
     def __data__(self):
-        return {"process": self.process, "geometry": self.geometry, "param_dict": self.kwargs}
+        return {"process": self.processing, "geometry": self.geometries, "elements": self.elements, "kwargs": self.kwargs}
 
     def __repr__(self):
-        return "{}({}, {})".format(BTLxFeatureDefinition.__class__.__name__, self.process, self.geometry)
+        return "{}({}, {})".format(BTLxFeatureDefinition.__class__.__name__, self.processing, self.geometries)
 
     def ToString(self):
         return repr(self)
 
     def transformed(self, transformation):
-        geometry = [geo.transformed(transformation) for geo in self.geometry]
-        return self.__class__(self.process, geometry, **self.kwargs)
+        geometries = [geo.transformed(transformation) for geo in self.geometries]
+        return self.__class__(self.processing, geometries, **self.kwargs)
 
-    def generate_feature(self, element):
-        return self.process.from_shapes_and_element(*self.geometry, element=element, **self.kwargs)
+    def feature_from_element(self, element):
+        return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
