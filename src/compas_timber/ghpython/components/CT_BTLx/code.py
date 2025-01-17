@@ -11,11 +11,14 @@ class WriteBTLx(component):
             self.AddRuntimeMessage(Warning, "Input parameter Model failed to collect data")
             return
 
-        btlx = BTLxWriter(model, file_name=str(Rhino.RhinoDoc.ActiveDoc.Name))
+        btlx = BTLxWriter(file_name=str(Rhino.RhinoDoc.ActiveDoc.Name))
 
         if write:
             if not path:
                 self.AddRuntimeMessage(Warning, "Input parameter Path failed to collect data")
                 return
             XML = btlx.write(model, path)
-            return XML
+        else:
+            XML = btlx.model_to_xml(model)
+
+        return XML
