@@ -82,7 +82,7 @@ class JackRafterCut(BTLxProcessing):
 
     @orientation.setter
     def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END]:
+        if orientation not in [OrientationType.START, OrientationType.END, None]:
             raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
         self._orientation = orientation
 

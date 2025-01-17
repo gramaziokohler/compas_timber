@@ -11,6 +11,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
+from compas.geometry import cross_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_plane_plane
@@ -18,7 +19,7 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import intersection_line_box
+from compas_timber.utils import intersection_line_box_param
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -105,7 +106,7 @@ class DoubleCut(BTLxProcessing):
 
     @orientation.setter
     def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END]:
+        if orientation not in [OrientationType.START, OrientationType.END, None]:
             raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
         self._orientation = orientation
 
@@ -199,13 +200,16 @@ class DoubleCut(BTLxProcessing):
         planes = [Plane.from_frame(plane) if isinstance(plane, Frame) else plane for plane in planes]
         # check if the normals are facing the same direction
         normals = [plane.normal for plane in planes]
-        if dot_vectors(*normals) < 0:
-            raise ValueError("The normals of the two planes are not aligned. Consider flipping one of them.")
+
+
+
+        # if dot_vectors(*normals) < 0:
+        #     raise ValueError("The normals of the two planes are not aligned. Consider flipping one of them.")
 
         # define ref side and ref edge
         if not ref_side_index:
             line = intersection_plane_plane(planes[0], planes[1])
-            ints, faces = intersection_line_box(line, beam.blank)
+            ints, faces = intersection_line_box_param(line, beam.blank)
             if not ints:
                 raise ValueError("These Planes do not intersect with beam.")
             ref_side_index = faces[0]
@@ -222,25 +226,72 @@ class DoubleCut(BTLxProcessing):
                 point_start_xy = Point(*int)
             else:
                 raise ValueError("nor do these Planes intersect with beam.")
+
         average_plane = Plane(point_start_xy, planes[0].normal + planes[1].normal)
         # calculate the orientation of the cut
-        orientation = cls._calculate_orientation(ref_side, average_plane)
+        orientation = cls._calculate_orientation(beam, average_plane)
         # calculate the start_x and start_y of the cut
         start_x, start_y = cls._calculate_start_x_y(ref_edge, point_start_xy)
-
+        print(orientation)
         # calculate the angles of the cuts
         angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
 
+        print(angle_1, angle_2)
+        print("Hello reorder")
+        planes, angle_1, angle_2 = cls.reorder_planes_and_angles(planes, [angle_1, angle_2], orientation, ref_side)
+        print("Gbye reorder")
         # calculate the inclinations of the cuts
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
         # flip the values if the first angle is larger than the second.
-        if angle_1 > angle_2:
-            angle_1, angle_2 = angle_2, angle_1
-            inclination_1, inclination_2 = inclination_2, inclination_1
+        # if angle_1 > angle_2:
+        #     angle_1, angle_2 = angle_2, angle_1
+        #     inclination_1, inclination_2 = inclination_2, inclination_1
 
         return cls(
             orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index
         )
+
+    @classmethod
+    def reorder_planes_and_angles(cls, planes, angles, orientation, ref_side):
+        """Reorder the planes and angles based on the orientation of the cut.
+
+        Parameters
+        ----------
+        planes : list of :class:`~compas.geometry.Plane`
+            The planes to be reordered.
+        angles : list of float
+            The angles to be reordered.
+        orientation : int
+            The orientation of the cut.
+        ref_side : :class:`~compas_timber.elements.BeamSide`
+            The reference side of the beam.
+
+        Returns
+        -------
+        list of :class:`~compas.geometry.Plane`
+            The reordered planes.
+
+        """
+        dot = dot_vectors(cross_vectors(*[pl.normal for pl in planes]), ref_side.normal)
+        if orientation == OrientationType.START:
+            if dot > 0 and angles[0] < angles[1]:
+                print("reorder 1")
+                return [planes[1], planes[0]], angles[1], angles[0]
+
+            elif dot < 0 and angles[0] > angles[1]:
+                print("reorder 2")
+                return [planes[1], planes[0]], angles[1], angles[0]
+
+        else:
+            if dot > 0 and angles[0] > angles[1]:
+                    print("reorder 3")
+                    return [planes[1], planes[0]], angles[1], angles[0]
+
+            elif dot < 0 and angles[0] < angles[1]:
+                print("reorder 4")
+                return [planes[1], planes[0]], angles[1], angles[0]
+
+        return planes, angles[0], angles[1]
 
     @classmethod
     def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
@@ -264,10 +315,10 @@ class DoubleCut(BTLxProcessing):
         return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
 
     @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
+    def _calculate_orientation(beam, cutting_plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
+        if dot_vectors(beam.centerline.direction, cutting_plane.normal) > 0:
             return OrientationType.START
         else:
             return OrientationType.END
@@ -287,14 +338,19 @@ class DoubleCut(BTLxProcessing):
     @staticmethod
     def _calculate_angle(ref_side, planes, orientation):
         # calculate the angles of the planes in the horizontal direction. (normal: ref_side.zaxis)
-        if orientation == OrientationType.END:
-            planes.reverse()
+        # if orientation == OrientationType.END:
+        #     planes.reverse()
 
         angles = []
         for plane in planes:
             angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
-            angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-            angles.append(abs(angle))
+            if cross_vectors(angle_vector, ref_side.yaxis)<0:
+                angle_vector = -angle_vector
+            if orientation == OrientationType.START:
+                angle = angle_vectors(ref_side.xaxis, angle_vector, deg=True)
+            else :
+                angle = angle_vectors(ref_side.xaxis, angle_vector, deg=True)
+            angles.append(angle)
 
         if sum(angle % 90 for angle in angles) > 180:
             raise ValueError(
@@ -307,8 +363,7 @@ class DoubleCut(BTLxProcessing):
         # calculate the inclinations of the planes in the vertical direction. (normal: ref_side.yaxis)
         inclinations = []
         for plane in planes:
-            ref_vect = Vector.cross(ref_side.normal, plane.normal)
-            inclination = angle_vectors_signed(ref_side.normal, plane.normal, ref_vect, deg=True)
+            inclination = angle_vectors(ref_side.normal, plane.normal, deg=True)
             inclinations.append(inclination)
         return inclinations
 

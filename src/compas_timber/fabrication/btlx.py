@@ -156,7 +156,7 @@ class BTLxWriter(object):
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
-        for i, beam in enumerate(model.beams):
+        for i, beam in enumerate(model.beams): #TODO: we need to add at least Plates to this too.
             part_element = self._create_part(beam, i)
             parts_element.append(part_element)
         return project_element
