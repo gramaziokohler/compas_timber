@@ -118,15 +118,15 @@ def test_joint_create_l_butt(l_topo_beams):
     assert joint.elements
 
 
-def test_joint_create_x_half_lap(x_topo_beams):
+def test_joint_create_x_lap(x_topo_beams):
     model = TimberModel()
-    beam_a, beam_b = x_topo_beams
-    model.add_element(beam_a)
-    model.add_element(beam_b)
-    joint = XLapJoint.create(model, beam_a, beam_b)
+    main_beam, cross_beam = x_topo_beams
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
+    joint = XLapJoint.create(model, main_beam, cross_beam)
 
-    assert joint.beam_a is beam_a
-    assert joint.beam_b is beam_b
+    assert joint.main_beam is main_beam
+    assert joint.cross_beam is cross_beam
     assert joint.elements
 
 
@@ -144,13 +144,13 @@ def test_joint_create_t_lap(t_topo_beams):
 
 def test_joint_create_l_lap(l_topo_beams):
     model = TimberModel()
-    beam_a, beam_b = l_topo_beams
-    model.add_element(beam_a)
-    model.add_element(beam_b)
-    joint = LLapJoint.create(model, beam_a, beam_b)
+    main_beam, cross_beam = l_topo_beams
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
+    joint = LLapJoint.create(model, main_beam, cross_beam)
 
-    assert joint.beam_a is beam_a
-    assert joint.beam_b is beam_b
+    assert joint.main_beam is main_beam
+    assert joint.cross_beam is cross_beam
     assert joint.elements
 
 
