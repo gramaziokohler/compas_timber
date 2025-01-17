@@ -81,7 +81,6 @@ class LapJoint(Joint):
         """The reference side index of the main beam."""
         if self._main_ref_side_index is None:
             self._main_ref_side_index = self._get_beam_ref_side_index(self.main_beam, self.cross_beam, self.flip_lap_side)
-            print(self._main_ref_side_index)
         return self._main_ref_side_index
 
     @property
@@ -89,7 +88,6 @@ class LapJoint(Joint):
         """The reference side index of the cross beam."""
         if self._cross_ref_side_index is None:
             self._cross_ref_side_index = self._get_beam_ref_side_index(self.cross_beam, self.main_beam, self.flip_lap_side)
-            print(self._cross_ref_side_index)
         return self._cross_ref_side_index
 
     @property
