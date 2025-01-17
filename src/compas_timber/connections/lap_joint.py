@@ -1,3 +1,5 @@
+import warnings
+
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -125,15 +127,11 @@ class LapJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        UserWarning
             If the elements are not compatible for the creation of the joint.
         """
         if not are_beams_coplanar(self.elements):
-            raise BeamJoinningError(
-                beams=self.elements,
-                joint=self,
-                debug_info="The two beams are not coplanar to create a Lap joint.",
-            )
+            warnings.warn("The beams are not coplanar, therefore BTLxProcessings will not be generated for this joint", UserWarning)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
