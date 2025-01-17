@@ -69,8 +69,8 @@ class Joint(Interaction):
         """Adds the extensions defined by this joint to affected beam(s).
         This is optional and should only be implemented by joints that require it.
 
-        Note
-        ----
+        Notes
+        -----
         Extensions are added to all beams before the features are added.
 
         Raises
@@ -146,9 +146,7 @@ class Joint(Interaction):
 
         self._ends = {}
         for index, beam in enumerate(self.elements):
-            if distance_point_line(beam.centerline.start, self.elements[index - 1].centerline) < distance_point_line(
-                beam.centerline.end, self.elements[index - 1].centerline
-            ):
+            if distance_point_line(beam.centerline.start, self.elements[index - 1].centerline) < distance_point_line(beam.centerline.end, self.elements[index - 1].centerline):
                 self._ends[str(beam.guid)] = "start"
             else:
                 self._ends[str(beam.guid)] = "end"

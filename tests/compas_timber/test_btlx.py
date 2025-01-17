@@ -3,18 +3,26 @@ import pytest
 
 from compas.data import json_load
 from compas.tolerance import Tolerance
+from compas.geometry import Frame
 
 import xml.etree.ElementTree as ET
 
 import compas
 import compas_timber
 from compas_timber.fabrication import BTLxWriter
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import OrientationType
+from compas_timber.elements import Beam
+from compas_timber.elements import CutFeature
+from compas_timber.model import TimberModel
 
 
 @pytest.fixture(scope="module")
 def test_model():
     model_path = os.path.join(compas_timber.DATA, "model_test.json")
-    return json_load(model_path)
+    model = json_load(model_path)
+    model.process_joinery()
+    return model
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +34,8 @@ def expected_btlx():
 
 @pytest.fixture(scope="module")
 def resulting_btlx(test_model):
-    resulting_btlx_str = BTLxWriter.model_to_xml(test_model)
+    writer = BTLxWriter()
+    resulting_btlx_str = writer.model_to_xml(test_model)
     return ET.fromstring(resulting_btlx_str)
 
 
@@ -93,14 +102,8 @@ def test_btlx_processings(resulting_btlx, test_model, namespaces):
     # Validate the features and processings
     for part, beam in zip(part_elements, test_model.beams):
         beam_features = beam.features
-        processings = part.findall("d2m:Processings/d2m:Processing", namespaces)
+        processings = part.find("d2m:Processings", namespaces)
         assert len(processings) == len(beam_features)
-        for processing, feature in zip(processings, beam_features):
-            feature_params = feature.params_dict
-
-            # Validate the attributes of the Processing element
-            for key, value in feature_params.items():
-                assert processing.get(key) == value
 
 
 def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
@@ -148,8 +151,60 @@ def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
         expected_processing_elements = expected_processings.findall("d2m:Processing", namespaces)
         assert len(resulting_processing_elements) == len(expected_processing_elements)
 
-        for resulting_processing, expected_processing in zip(
-            resulting_processing_elements, expected_processing_elements
-        ):
+        for resulting_processing, expected_processing in zip(resulting_processing_elements, expected_processing_elements):
             assert resulting_processing.tag == expected_processing.tag
             assert resulting_processing.attrib == expected_processing.attrib
+
+
+def test_btlx_should_skip_feature():
+    writer = BTLxWriter()
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), 1000, 100, 100)
+    beam.add_features(CutFeature(Frame.worldXY()))
+    model.add_element(beam)
+
+    with pytest.warns():
+        result = writer.model_to_xml(model)
+
+    assert result is not None
+
+
+def test_float_formatting_of_param_dicts():
+    test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
+    params_dict = test_processing.params_dict
+
+    assert params_dict["Orientation"] == "end"
+    assert params_dict["StartX"] == "{:.3f}".format(test_processing.start_x)
+    assert params_dict["StartY"] == "{:.3f}".format(test_processing.start_y)
+    assert params_dict["StartDepth"] == "{:.3f}".format(test_processing.start_depth)
+    assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
+    assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
+    assert params_dict["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
+
+
+def test_create_processing_with_dict_params():
+    class MockProcessing:
+        PROCESSING_NAME = "MockProcessing"
+        header_attributes = {"Name": "MockProcessing", "Priority": "1", "Process": "yes", "ProcessID": "1", "ReferencePlaneID": "1"}
+        params_dict = {"Param1": "Value1", "Param2": {"SubParam1": "SubValue1", "SubParam2": "SubValue2"}, "Param3": "Value3"}
+        subprocessings = []
+
+    writer = BTLxWriter()
+    processing = MockProcessing()
+    processing_element = writer._create_processing(processing)
+
+    assert processing_element.tag == "MockProcessing"
+    assert processing_element.attrib == processing.header_attributes
+
+    param1 = processing_element.find("Param1")
+    assert param1 is not None
+    assert param1.text == "Value1"
+
+    param2 = processing_element.find("Param2")
+    assert param2 is not None
+    assert param2.get("SubParam1") == "SubValue1"
+    assert param2.get("SubParam2") == "SubValue2"
+
+    param3 = processing_element.find("Param3")
+    assert param3 is not None
+    assert param3.text == "Value3"

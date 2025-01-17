@@ -15,7 +15,7 @@ class LFrenchRidgeLapJoint(Joint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LFrenchRidgeLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `LFrenchRidgeLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -138,12 +138,8 @@ class LFrenchRidgeLapJoint(Joint):
             self.beam_a.remove_features(self.features)
             self.beam_b.remove_features(self.features)
 
-        frl_a = FrenchRidgeLap.from_beam_beam_and_plane(
-            self.beam_a, self.beam_b, self.cutting_plane_b, self.drillhole_diam, self.beam_a_ref_side_index
-        )
-        frl_b = FrenchRidgeLap.from_beam_beam_and_plane(
-            self.beam_b, self.beam_a, self.cutting_plane_a, self.drillhole_diam, self.beam_b_ref_side_index
-        )
+        frl_a = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_a, self.beam_b, self.cutting_plane_b, self.drillhole_diam, self.beam_a_ref_side_index)
+        frl_b = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_b, self.beam_a, self.cutting_plane_a, self.drillhole_diam, self.beam_b_ref_side_index)
         self.beam_a.add_features(frl_a)
         self.beam_b.add_features(frl_b)
         self.features = [frl_a, frl_b]

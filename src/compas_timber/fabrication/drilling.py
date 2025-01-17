@@ -48,17 +48,7 @@ class Drilling(BTLxProcessing):
 
     PROCESSING_NAME = "Drilling"  # type: ignore
 
-    def __init__(
-        self,
-        start_x=0.0,
-        start_y=0.0,
-        angle=0.0,
-        inclination=90.0,
-        depth_limited=False,
-        depth=50.0,
-        diameter=20.0,
-        **kwargs
-    ):
+    def __init__(self, start_x=0.0, start_y=0.0, angle=0.0, inclination=90.0, depth_limited=False, depth=50.0, diameter=20.0, **kwargs):
         super(Drilling, self).__init__(**kwargs)
         self._start_x = None
         self._start_y = None
@@ -195,9 +185,7 @@ class Drilling(BTLxProcessing):
         angle = cls._calculate_angle(ref_surface, line, xy_point)
         inclination = cls._calculate_inclination(ref_surface.frame, line, angle, xy_point)
         try:
-            return cls(
-                x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index
-            )
+            return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index)
         except ValueError as e:
             raise FeatureApplicationError(
                 message=str(e),
@@ -373,11 +361,11 @@ class DrillingParams(BTLxProcessingParams):
 
     def as_dict(self):
         result = super(DrillingParams, self).as_dict()
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
+        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
         result["DepthLimited"] = "yes" if self._instance.depth_limited else "no"
-        result["Depth"] = "{:.{prec}f}".format(self._instance.depth, prec=TOL.precision)
-        result["Diameter"] = "{:.{prec}f}".format(self._instance.diameter, prec=TOL.precision)
+        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
+        result["Diameter"] = "{:.{prec}f}".format(float(self._instance.diameter), prec=TOL.precision)
         return result

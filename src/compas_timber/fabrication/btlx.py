@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import date
 from datetime import datetime
+from warnings import warn
 
 import compas
 from compas.data import Data
@@ -15,21 +16,26 @@ from compas.tolerance import TOL
 
 
 class BTLxWriter(object):
-    """Class representing a BTLx object.
+    """Class for writing BTLx files from a given model.
 
     BTLx is a format used for representing timber fabrication data.
 
+    Use BTLxWriter.write() to write a BTLx file from a model and a file path.
+
     Parameters
     ----------
-    model : :class:`~compas_timber.model.Model`
-        The model object.
+    company_name : str, optional
+        The name of the company. Defaults to "Gramazio Kohler Research".
+    file_name : str, optional
+        The name of the file. Defaults to None.
+    comment : str, optional
+        A comment to be included in the file. Defaults to None.
 
 
     """
 
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
-    REGISTERED_JOINTS = {}
     FILE_ATTRIBUTES = OrderedDict(
         [
             ("xmlns", "https://www.design2machine.com"),
@@ -42,25 +48,14 @@ class BTLxWriter(object):
             ),
         ]
     )
-    FILE_HISTORY_ATTRIBUTES = OrderedDict(
-        [
-            ("CompanyName", "Gramazio Kohler Research"),
-            ("ProgramName", "COMPAS_Timber"),
-            ("ProgramVersion", "Compas: {}".format(compas.__version__)),
-            ("ComputerName", "{}".format(os.getenv("computername"))),
-            ("UserName", "{}".format(os.getenv("USERNAME"))),
-            ("FileName", ""),
-            ("Date", "{}".format(date.today())),
-            ("Time", "{}".format(datetime.now().strftime("%H:%M:%S"))),
-            ("Comment", ""),
-        ]
-    )
 
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None):
+        self.company_name = company_name
+        self.file_name = file_name
+        self.comment = comment
+        self._project_name = project_name or "COMPAS Timber Project"
 
-    @classmethod
-    def write(cls, model, file_path):
+    def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
 
         Parameters
@@ -72,17 +67,22 @@ class BTLxWriter(object):
 
         Returns
         -------
-        None
+        str
+            The XML string of the BTLx file.
+
+        See Also
+        --------
+        :meth:`BTLxWriter.model_to_xml`
 
         """
         if not file_path.endswith(".btlx"):
             file_path += ".btlx"
-        btlx = cls.model_to_xml(model)
+        btlx_string = self.model_to_xml(model)
         with open(file_path, "w") as file:
-            file.write(btlx)
+            file.write(btlx_string)
+        return btlx_string
 
-    @classmethod
-    def model_to_xml(cls, model):
+    def model_to_xml(self, model):
         """Converts the model to an XML string.
 
         Parameters
@@ -92,20 +92,23 @@ class BTLxWriter(object):
 
         Returns
         -------
-        :class:`~xml.etree.ElementTree.Element`
-            The XML element of the model.
+        str
+            The XML string of the BTLx file.
+
+        See Also
+        --------
+        :meth:`BTLxWriter.write`
 
         """
-        root_element = ET.Element("BTLx", cls.FILE_ATTRIBUTES)
+        root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history
-        file_history_element = cls._create_file_history()
+        file_history_element = self._create_file_history()
         # second child -> project
-        project_element = cls._create_project_element(model)
+        project_element = self._create_project_element(model)
         root_element.extend([file_history_element, project_element])
         return MD.parseString(ET.tostring(root_element)).toprettyxml(indent="   ")
 
-    @classmethod
-    def _create_file_history(cls):
+    def _create_file_history(self):
         """Creates the file history element. This method creates the initial export program element and appends it to the file history element.
 
         Returns
@@ -117,11 +120,28 @@ class BTLxWriter(object):
         # create file history element
         file_history = ET.Element("FileHistory")
         # create initial export program element
-        file_history.append(ET.Element("InitialExportProgram", cls.FILE_HISTORY_ATTRIBUTES))
+        file_history_attibutes = self._get_file_history_attributes()
+        file_history.append(ET.Element("InitialExportProgram", file_history_attibutes))
         return file_history
 
-    @classmethod
-    def _create_project_element(cls, model):
+    def _get_file_history_attributes(self):
+        """Generates the file history attributes with the current date and time."""
+        file_history_attributes = OrderedDict(
+            [
+                ("CompanyName", self.company_name or "Gramazio Kohler Research"),
+                ("ProgramName", "COMPAS_Timber"),
+                ("ProgramVersion", "Compas: {}".format(compas.__version__)),
+                ("ComputerName", "{}".format(os.getenv("computername"))),
+                ("UserName", "{}".format(os.getenv("USERNAME"))),
+                ("FileName", self.file_name or ""),
+                ("Date", "{}".format(date.today())),
+                ("Time", "{}".format(datetime.now().strftime("%H:%M:%S"))),
+                ("Comment", self.comment or ""),
+            ]
+        )
+        return file_history_attributes
+
+    def _create_project_element(self, model):
         """Creates the project element. This method creates the parts element and appends it to the project element.
 
         Returns
@@ -131,19 +151,16 @@ class BTLxWriter(object):
 
         """
         # create project element
-        project_element = ET.Element(
-            "Project", Name="testProject"
-        )  # TODO: Should the name be set from the model and passed here?
+        project_element = ET.Element("Project", Name=self._project_name)
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
         for i, beam in enumerate(model.beams):
-            part_element = cls._create_part(beam, i)
+            part_element = self._create_part(beam, i)
             parts_element.append(part_element)
         return project_element
 
-    @classmethod
-    def _create_part(cls, beam, order_num):
+    def _create_part(self, beam, order_num):
         """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
@@ -163,16 +180,21 @@ class BTLxWriter(object):
         part = BTLxPart(beam, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
-        # create processings element for the part
-        processings_element = ET.Element("Processings")
-        for feature in beam.features:
-            processing_element = cls._create_processing(feature)
-            processings_element.append(processing_element)
-        part_element.extend([processings_element, part.et_shape])
+        # create processings element for the part if there are any
+        if beam.features:
+            processings_element = ET.Element("Processings")
+            for feature in beam.features:
+                # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
+                if hasattr(feature, "PROCESSING_NAME"):
+                    processing_element = self._create_processing(feature)
+                    processings_element.append(processing_element)
+                else:
+                    warn("Unsupported feature will be skipped: {}".format(feature))
+            part_element.append(processings_element)
+        part_element.append(part.et_shape)
         return part_element
 
-    @classmethod
-    def _create_processing(cls, processing):
+    def _create_processing(self, processing):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
 
         Parameters
@@ -195,11 +217,15 @@ class BTLxWriter(object):
         for key, value in processing.params_dict.items():
             if key not in processing.header_attributes:
                 child = ET.SubElement(processing_element, key)
-                child.text = str(value)
+                if isinstance(value, dict):
+                    for sub_key, sub_value in value.items():
+                        child.set(sub_key, sub_value)
+                else:
+                    child.text = str(value)
         # create subprocessing elements
         if processing.subprocessings:
             for subprocessing in processing.subprocessings:
-                processing_element.append(cls._create_processing(subprocessing))
+                processing_element.append(self._create_processing(subprocessing))
         return processing_element
 
 
@@ -269,12 +295,12 @@ class BTLxPart(object):
         This essentially translates between the beam face reference system to the BTLx side reference system.
 
         Parameters
-        -----------
+        ----------
         beam_face : :class:`~compas.geometry.Frame`
             The frame of a beam face from beam.faces.
 
         Returns
-        --------
+        -------
         key : str
             The key(index 1-6) of the reference surface.
 
@@ -333,7 +359,7 @@ class BTLxPart(object):
 
     @property
     def et_element(self):
-        if not self._et_element:
+        if self._et_element is None:
             self._et_element = ET.Element("Part", self.attr)
             self._shape_strings = None
             self._et_element.append(self.et_transformations)
@@ -370,6 +396,7 @@ class BTLxPart(object):
 
     @property
     def shape_strings(self):
+        # TODO: this need some cleanup, potentially removal
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
@@ -395,9 +422,7 @@ class BTLxPart(object):
             for point in brep_vertex_points:
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(
-                    point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION
-                )
+                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION)
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
@@ -583,10 +608,6 @@ class MachiningLimits(object):
     face_limited_back : bool
         Limit the back face.
 
-    Properties
-    ----------
-    limits : dict
-        The limits dictionary with values as a boolean.
     """
 
     EXPECTED_KEYS = ["FaceLimitedStart", "FaceLimitedEnd", "FaceLimitedFront", "FaceLimitedBack"]

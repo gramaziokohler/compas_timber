@@ -14,7 +14,7 @@ class THalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -52,9 +52,7 @@ class THalfLapJoint(LapJoint):
             main_cutting_frame = self.get_main_cutting_frame()
             start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
         except AttributeError as ae:
-            raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame]
-            )
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 
@@ -72,9 +70,7 @@ class THalfLapJoint(LapJoint):
             main_cutting_frame = self.get_main_cutting_frame()
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except AttributeError as ae:
-            raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame]
-            )
+            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
         except Exception as ex:
             raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
 

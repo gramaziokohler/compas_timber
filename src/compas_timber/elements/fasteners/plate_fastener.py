@@ -47,17 +47,7 @@ class PlateFastener(Fastener):
 
     """
 
-    def __init__(
-        self,
-        outline=None,
-        thickness=None,
-        interfaces=None,
-        frame=None,
-        angle=math.pi / 2,
-        topology=None,
-        cutouts=None,
-        **kwargs
-    ):
+    def __init__(self, outline=None, thickness=None, interfaces=None, frame=None, angle=math.pi / 2, topology=None, cutouts=None, **kwargs):
         super(PlateFastener, self).__init__(**kwargs)
         self.outline = outline
         self.thickness = thickness
@@ -230,9 +220,7 @@ class PlateFastener(Fastener):
         """
         beam_a, beam_b = joint.elements[0:2]
         if not TOL.is_zero(angle_vectors(beam_a.frame.xaxis, beam_b.frame.xaxis) - self.angle):
-            raise FastenerApplicationError(
-                elements=[beam_a, beam_b], fastener=self, message="Beams are not perpendicular"
-            )
+            raise FastenerApplicationError(elements=[beam_a, beam_b], fastener=self, message="Beams are not perpendicular")
 
         cross_vector = cross_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
         main_faces = beam_ref_side_incidence_with_vector(beam_a, cross_vector)
@@ -257,9 +245,7 @@ class PlateFastener(Fastener):
                 Plane.from_frame(beam_b.ref_sides[cross_face_index]),
             )
         ):
-            raise FastenerApplicationError(
-                elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar"
-            )
+            raise FastenerApplicationError(elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar")
         back_face_index = (front_face_index + 2) % 4
         cross_back_face_index = (cross_face_index + 2) % 4
         if not TOL.is_zero(
@@ -268,9 +254,7 @@ class PlateFastener(Fastener):
                 Plane.from_frame(beam_b.ref_sides[cross_back_face_index]),
             )
         ):
-            raise FastenerApplicationError(
-                elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar"
-            )
+            raise FastenerApplicationError(elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar")
         return front_face_index, back_face_index
 
     def add_features(self):

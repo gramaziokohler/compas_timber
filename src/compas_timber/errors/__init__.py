@@ -69,5 +69,6 @@ class FastenerApplicationError(Exception):
 
 __all__ = [
     "FeatureApplicationError",
-    "BeamJoinningError" "FeatureApplicationError",
+    "BeamJoinningError",
+    "FeatureApplicationError",
 ]

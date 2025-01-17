@@ -16,7 +16,7 @@ class TStepJoint(Joint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `TStepJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `TStepJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------

@@ -132,9 +132,7 @@ class FastenerTimberInterface(Data):
 
     """
 
-    def __init__(
-        self, outline_points=None, thickness=None, holes=None, shapes=None, frame=None, element=None, features=None
-    ):
+    def __init__(self, outline_points=None, thickness=None, holes=None, shapes=None, frame=None, element=None, features=None):
         super(FastenerTimberInterface, self).__init__()
         self.outline_points = outline_points
         self.thickness = thickness

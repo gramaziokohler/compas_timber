@@ -14,7 +14,7 @@ class LHalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -74,9 +74,7 @@ class LHalfLapJoint(LapJoint):
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
-        self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
-        )
+        self.cross_beam.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid)
 
     def add_features(self):
         assert self.main_beam and self.cross_beam

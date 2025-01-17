@@ -11,13 +11,26 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    BTLx
-    BTLxProcess
-    BTLxJackCut
-    BTLxFrenchRidgeLap
-    LButtFactory
-    TButtFactory
-    LMiterFactory
-    FrenchRidgeFactory
+    BTLxWriter
+    BTLxPart
+    BTLxProcessing
+    DoubleCut
+    DovetailTenon
+    DovetailMortise
+    Drilling
+    FrenchRidgeLap
     House
     HouseMortise
+    JackRafterCut
+    Lap
+    Slot
+    StepJoint
+    StepJointNotch
+    Tenon
+    Mortise
+    EdgePositionType
+    LimitationTopType
+    MachiningLimits
+    OrientationType
+    StepShapeType
+    TenonShapeType

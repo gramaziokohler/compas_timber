@@ -115,9 +115,7 @@ class Beam(TimberElement):
 
     def __repr__(self):
         # type: () -> str
-        return "Beam(frame={!r}, length={}, width={}, height={})".format(
-            self.frame, self.length, self.width, self.height
-        )
+        return "Beam(frame={!r}, length={}, width={}, height={})".format(self.frame, self.length, self.width, self.height)
 
     # ==========================================================================
     # Computed attributes

@@ -42,13 +42,11 @@ class ModelComponent(component):
             element.reset()
             Model.add_element(element)
 
-        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules)
+        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance)
 
         if unmatched_pairs:
             for pair in unmatched_pairs:
-                self.AddRuntimeMessage(
-                    Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key)
-                )  # TODO: add to debug_info
+                self.AddRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info
 
         if joints:
             # apply reversed. later joints in orginal list override ealier ones

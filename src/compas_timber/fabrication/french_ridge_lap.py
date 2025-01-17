@@ -56,16 +56,7 @@ class FrenchRidgeLap(BTLxProcessing):
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
-    def __init__(
-        self,
-        orientation,
-        start_x=0.0,
-        angle=90.0,
-        ref_position=EdgePositionType.REFEDGE,
-        drillhole=False,
-        drillhole_diam=0.0,
-        **kwargs
-    ):
+    def __init__(self, orientation, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0, **kwargs):
         super(FrenchRidgeLap, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None
@@ -461,9 +452,9 @@ class FrenchRidgeLapParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(FrenchRidgeLapParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
         result["RefPosition"] = self._instance.ref_position
         result["Drillhole"] = "yes" if self._instance.drillhole else "no"
-        result["DrillholeDiam"] = "{:.{prec}f}".format(self._instance.drillhole_diam, prec=TOL.precision)
+        result["DrillholeDiam"] = "{:.{prec}f}".format(float(self._instance.drillhole_diam), prec=TOL.precision)
         return result

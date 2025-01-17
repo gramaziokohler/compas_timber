@@ -5,7 +5,6 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
@@ -387,10 +386,7 @@ class StepJointNotch(BTLxProcessing):
         # vector rotation direction of the plane's normal in the vertical direction
         strut_inclination_vector = Vector.cross(ref_side.zaxis, plane.normal)
         strut_inclination = angle_vectors_signed(ref_side.zaxis, plane.normal, strut_inclination_vector, deg=True)
-        if orientation == OrientationType.END:
-            return abs(strut_inclination)
-        else:
-            return 180 - abs(strut_inclination)  # get the other side of the angle
+        return abs(strut_inclination)
 
     @staticmethod
     def _define_step_shape(step_depth, heel_depth, tapered_heel):
@@ -465,7 +461,7 @@ class StepJointNotch(BTLxProcessing):
         if self.step_shape == StepShapeType.DOUBLE:
             # trim geometry with first and last cutting plane
             try:
-                for cutting_plane in [cutting_planes[-1], cutting_planes[0]]:
+                for cutting_plane in [cutting_planes[1], cutting_planes[3]]:
                     cutting_plane.normal = cutting_plane.normal * -1
                     subtraction_volume.trim(cutting_plane)
             except Exception as e:
@@ -476,7 +472,7 @@ class StepJointNotch(BTLxProcessing):
                 )
             # trim geometry with two middle cutting planes
             trimmed_geometies = []
-            for cutting_plane in cutting_planes[1:-1]:
+            for cutting_plane in [cutting_planes[0], cutting_planes[2]]:
                 cutting_plane.normal = cutting_plane.normal * -1
                 try:
                     trimmed_geometies.append(subtraction_volume.trimmed(cutting_plane))
@@ -597,40 +593,21 @@ class StepJointNotch(BTLxProcessing):
         else:
             p_origin = ref_side.point_at(self.start_x + self.displacement_end, self.start_y)
             p_end = ref_side.point_at(self.start_x, self.start_y)
-
         cutting_plane_origin = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
         cutting_plane_end = Frame(p_end, ref_side.frame.xaxis, ref_side.frame.yaxis)
-
         # Calculate step cutting planes angles
-        if self.strut_inclination > 90:
-            # Rotate first cutting plane at the start of the notch (large side of the step)
-            angle_long_side = math.atan(
+        angle_origin = math.atan(
                 self.step_depth
                 / (abs(self.displacement_end) - self.step_depth / math.tan(math.radians((self.strut_inclination) / 2)))
             )
-            rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, -angle_long_side, point=p_origin)
-            cutting_plane_end.transform(rot_long_side)
-
-            # Rotate second cutting plane at the end of the notch (short side of the step)
-            angle_short_side = math.radians(self.strut_inclination / 2)
-            rot_short_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_short_side, point=p_end)
-            cutting_plane_origin.transform(rot_short_side)
-        else:
-            # Rotate first cutting plane at the start of the notch (short side of the step)
-            angle_short_side = math.radians((180 - self.strut_inclination) / 2)
-            rot_short_side = Rotation.from_axis_and_angle(-ref_side.frame.yaxis, angle_short_side, point=p_origin)
-            cutting_plane_origin.transform(rot_short_side)
-            # Rotate second cutting plane at the end of the notch (large side of the step)
-            angle_long_side = math.atan(
-                self.step_depth
-                / (
-                    abs(self.displacement_end)
-                    - (self.step_depth / math.tan(math.radians((180 - self.strut_inclination) / 2)))
-                )
-            )
-            rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_long_side, point=p_end)
-            cutting_plane_end.transform(rot_long_side)
-
+        angle_end = math.radians(self.strut_inclination / 2)
+        # Get the rotation axis
+        rot_axis = ref_side.frame.yaxis
+        if self.orientation == OrientationType.END:
+            rot_axis = -rot_axis
+        # Rotate the cutting planes
+        cutting_plane_end.rotate(angle_end, -rot_axis, p_end)
+        cutting_plane_origin.rotate(angle_origin, rot_axis, p_origin)
         return [Plane.from_frame(cutting_plane_origin), Plane.from_frame(cutting_plane_end)]
 
     def _calculate_heel_planes(self, ref_side):
@@ -640,21 +617,13 @@ class StepJointNotch(BTLxProcessing):
         p_heel = ref_side.point_at(self.start_x + self.displacement_heel, self.start_y)
         cutting_plane_end = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         cutting_plane_heel = Frame(p_heel, ref_side.frame.xaxis, -ref_side.frame.yaxis)
-
         # Calculate heel cutting planes angles
-        # Rotate first cutting plane at the start of the notch (short side of the heel)
-        if self.strut_inclination < 90:
-            angle_short_side = math.radians(180 + self.strut_inclination)
-        else:
-            angle_short_side = math.radians(self.strut_inclination)
-        rot_short_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_short_side, point=p_origin)
-        cutting_plane_end.transform(rot_short_side)
-
-        # Rotate second cutting plane at the end of the notch (long side of the heel)
-        angle_long_side = math.radians(90 + self.strut_inclination)
-        rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_long_side, point=p_heel)
-        cutting_plane_heel.transform(rot_long_side)
-
+        rot_axis = ref_side.frame.yaxis
+        if self.orientation == OrientationType.START:
+            rot_axis = -rot_axis
+        # Rotate the cutting planes
+        cutting_plane_end.rotate(math.radians(self.strut_inclination), rot_axis, p_origin)
+        cutting_plane_heel.rotate(math.radians(self.strut_inclination + 90), rot_axis, p_heel)
         return [Plane.from_frame(cutting_plane_heel), Plane.from_frame(cutting_plane_end)]
 
     def _calculate_tapered_heel_planes(self, ref_side):
@@ -662,97 +631,39 @@ class StepJointNotch(BTLxProcessing):
         # Move the frames to the start and end of the notch to create the cuts
         p_origin = ref_side.point_at(self.start_x, self.start_y)
         p_end = ref_side.point_at(self.start_x + self.displacement_end, self.start_y)
-        cutting_plane_origin = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+        cutting_plane_origin = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         cutting_plane_end = Frame(p_end, ref_side.frame.xaxis, ref_side.frame.yaxis)
-
-        # Rotate first cutting plane at the start of the notch (short side of the heel)
-        if self.strut_inclination > 90:
-            angle_short_side = math.radians(180 + self.strut_inclination)
-        else:
-            angle_short_side = math.radians(self.strut_inclination)
-        rot_short_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_short_side, point=p_origin)
-        cutting_plane_origin.transform(rot_short_side)
-
-        # Rotate second cutting plane at the end of the notch (long side of the heel)
-        angle_long_side = math.atan(
+        # Calculate heel cutting planes angles
+        angle_origin = math.radians(self.strut_inclination)
+        angle_end = math.atan(
             self.heel_depth
             / (abs(self.displacement_end) - abs(self.heel_depth / math.tan(math.radians(self.strut_inclination))))
         )
-
-        if self.strut_inclination > 90:
-            angle_long_side = angle_long_side
-        else:
-            angle_long_side = -angle_long_side
-
-        rot_long_side = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_long_side, point=p_end)
-        cutting_plane_end.transform(rot_long_side)
-
+        rot_axis = ref_side.frame.yaxis
+        if self.orientation == OrientationType.START:
+            rot_axis = -rot_axis
+        # Rotate the cutting planes
+        cutting_plane_origin.rotate(angle_origin, rot_axis, p_origin)
+        cutting_plane_end.rotate(angle_end, rot_axis, p_end)
         return [Plane.from_frame(cutting_plane_origin), Plane.from_frame(cutting_plane_end)]
 
     def _calculate_double_planes(self, ref_side):
         """Calculate cutting planes for a double notch."""
-        # if self.strut_inclination > 90:
-        # Move the frames to the start and end of the notch to create the cuts
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        # Move the frames to the start and end of the notch to create the cutsy
         p_heel = ref_side.point_at(self.start_x + self.displacement_heel, self.start_y)
-        p_end = ref_side.point_at(self.start_x + self.displacement_end, self.start_y)
-        cutting_plane_origin = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
-        cutting_plane_heel_heel = Frame(p_heel, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         cutting_plane_heel_step = Frame(p_heel, ref_side.frame.xaxis, ref_side.frame.yaxis)
-        cutting_plane_end = Frame(p_end, ref_side.frame.xaxis, -ref_side.frame.yaxis)
-
-        # Calculate heel cutting planes angles
-        # Rotate first cutting plane at the start of the notch (short side of the heel)
-        angle_short_side_heel = math.radians(self.strut_inclination)
-        if self.strut_inclination < 90:
-            angle_short_side_heel = math.radians(180) + angle_short_side_heel
-        rot_short_side_heel = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_short_side_heel, point=p_origin)
-        cutting_plane_origin.transform(rot_short_side_heel)
-
-        # Rotate second cutting plane at the end of the notch (long side of the heel)
-        angle_long_side_heel = math.radians(90 + self.strut_inclination)
-        rot_long_side_heel = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_long_side_heel, point=p_heel)
-        cutting_plane_heel_heel.transform(rot_long_side_heel)
-
         # Calculate step cutting planes angles
-        # Rotate first cutting plane at the end of the heel of the notch (long side of the step)
-        if self.strut_inclination < 90:
-            angle_long_side_step = math.atan(
-                self.step_depth
-                / (
-                    self.displacement_end
-                    - self.displacement_heel
-                    + (self.step_depth / math.tan(math.radians(90 + self.strut_inclination / 2)))
-                )
-            )
-        else:
-            angle_long_side_step = math.atan(
-                self.step_depth
-                / (
-                    self.displacement_end
-                    - self.displacement_heel
-                    - self.step_depth / math.tan(math.radians(180 - self.strut_inclination / 2))
-                )
-            )
-
-        rot_long_side_step = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_long_side_step, point=p_heel)
-        cutting_plane_heel_step.transform(rot_long_side_step)
-
-        # Rotate second cutting plane at the end of the notch (short side of the step)
-        angle_short_side_step = math.radians(self.strut_inclination / 2)
-        if self.strut_inclination > 90:
-            angle_short_side_step = math.radians(180) + angle_short_side_step
-        else:
-            angle_short_side_step = math.radians(90) + angle_short_side_step
-        rot_short_side_step = Rotation.from_axis_and_angle(ref_side.frame.yaxis, angle_short_side_step, point=p_end)
-        cutting_plane_end.transform(rot_short_side_step)
-
-        return [
-            Plane.from_frame(cutting_plane_origin),
-            Plane.from_frame(cutting_plane_heel_heel),
-            Plane.from_frame(cutting_plane_heel_step),
-            Plane.from_frame(cutting_plane_end),
-        ]
+        dx = self.step_depth / math.tan(math.radians(180 - self.strut_inclination / 2))
+        if self.orientation == OrientationType.START:
+            dx = -dx
+        angle_long_side_step = math.atan(self.step_depth / (self.displacement_end - self.displacement_heel - dx))
+        # Rotate the cutting planes
+        cutting_plane_heel_step.rotate(angle_long_side_step, ref_side.frame.yaxis, p_heel)
+        # Get the heel and step cutting planes
+        heel_planes = self._calculate_heel_planes(ref_side)
+        step_planes = self._calculate_step_planes(ref_side)
+        step_planes[0] = Plane.from_frame(cutting_plane_heel_step) # replace the first step plane with the heel-step plane
+        return heel_planes + step_planes
 
     def mortise_volume_from_params_and_beam(self, beam):
         """Calculates the mortise volume from the machining parameters in this instance and the given beam
@@ -819,16 +730,16 @@ class StepJointNotchParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(StepJointNotchParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["StrutInclination"] = "{:.{prec}f}".format(float(self._instance.strut_inclination), prec=TOL.precision)
         result["NotchLimited"] = "yes" if self._instance.notch_limited else "no"
-        result["NotchWidth"] = "{:.{prec}f}".format(self._instance.notch_width, prec=TOL.precision)
-        result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
-        result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
-        result["StrutHeight"] = "{:.{prec}f}".format(self._instance.strut_height, prec=TOL.precision)
+        result["NotchWidth"] = "{:.{prec}f}".format(float(self._instance.notch_width), prec=TOL.precision)
+        result["StepDepth"] = "{:.{prec}f}".format(float(self._instance.step_depth), prec=TOL.precision)
+        result["HeelDepth"] = "{:.{prec}f}".format(float(self._instance.heel_depth), prec=TOL.precision)
+        result["StrutHeight"] = "{:.{prec}f}".format(float(self._instance.strut_height), prec=TOL.precision)
         result["StepShape"] = self._instance.step_shape
         result["Mortise"] = "yes" if self._instance.mortise else "no"
-        result["MortiseWidth"] = "{:.{prec}f}".format(self._instance.mortise_width, prec=TOL.precision)
-        result["MortiseHeight"] = "{:.{prec}f}".format(self._instance.mortise_height, prec=TOL.precision)
+        result["MortiseWidth"] = "{:.{prec}f}".format(float(self._instance.mortise_width), prec=TOL.precision)
+        result["MortiseHeight"] = "{:.{prec}f}".format(float(self._instance.mortise_height), prec=TOL.precision)
         return result

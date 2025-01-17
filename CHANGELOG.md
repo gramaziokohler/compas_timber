@@ -9,6 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+* Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
+
+### Removed
+
+
+## [0.13.0] 2025-01-13
+
+### Added
+
+* Added API documentation for `design` and `error` packages.
+* Added `guess_joint_topology_2beams` and `set_default_joints` functions to `design.__init__.py`.
+* Added `list_input_valid`, `item_input_valid`, `get_leaf_subclasses`, `rename_gh_input` functions to `ghpython.__init__.py`.
+* Added `Instruction`, `Model3d`, `Text3d`, `LinearDimension`, `BuildingPlanParser` classes to `planning.__init__.py`.
+* Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
+
+### Changed
+
+* Fixed comma incompatible with py27 in `Slot` module.
+* Updated the API documentation for `connections`, `elements`, `fabrication`, `ghpython`, `planning` packages.
+* Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
+* Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
+* Removed model argument from `BTLxWriter` in the GH component and updated it to always return the BTLx string.
+* Fixed a bug in `compas_timber.Fabrication.StepJointNotch` related to the `orientation` and `strut_inclination` parameters.
+
+### Removed
+
+* Removed `BeamJoiningError` from `connections.__init__.py`.
+* Removed duplicate entries from the `__all__` list in the `elements.__init__.py` module.
+* Removed package `compas_timber._fabrication`.
+* Removed `btlx_processes` anf `joint_factories` from `compas_timber.fabrication` package.
+* Removed `.btlx` files from `.gitignore`.
+
+
+## [0.12.0] 2025-01-07
+
+### Added
+
 * Added new base class for timber elements `TimberElement`.
 * Added property `is_beam` to `Beam` class.
 * Added property `is_plate` to `Plate` class.
@@ -60,8 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `errors` directory and `__init__.py` module.
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
-* Added `subprocessings` property to `BTLxProcessing` to allow nesting of processings.
-* Added new `compas_timber.fabrication.House` and `compas_timber.fabrication.HouseMortise`.
 
 ### Changed
 
@@ -85,9 +122,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `JointRuleFromList` GH component.
 * Changed `TButtJoint` to take an optional `PlateFastener`.
 * Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
-* Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
-* Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
-* Adjusted `compas_timber.conntection.TDovetailJoint` and `compas_timber.fabrication.TenonMortisJoint` to allow Housing.
+* Fixed a bug that occured when parallel beams are joined in the BallNodeJoint.
+* Fixed `L_TopoJointRule`, `T_TopoJointRule` and `X_TopoJointRule` for cases where `Joint.SUPPORTED_TOPOLOGY` is a single value or a list.
+* Fixed bug in `JointRule.joints_from_beams_and_rules()` that caused failures when topology was not recognized.
+* Implemented `max_distance` parameter in `JointRule.joints_from_beams_and_rules()` and `JointRule.comply` methods.
+* Bux fixes from extra comma argument and `max_distance` not implemented in `DirectRule.comply`.
 
 ### Removed
 
@@ -99,9 +138,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed module `compas_timber.connections.french_ridge_lap`.
 * Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
 * Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
-* Removed package `compas_timber._fabrication`.
-* Removed `btlx_processes` anf `joint_factories` from `compas_timber.fabrication` package.
-* Removed `.btlx` files from `.gitignore`.
 
 
 

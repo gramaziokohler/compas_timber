@@ -77,9 +77,7 @@ class Slot(BTLxProcessing):
     @orientation.setter
     def orientation(self, orientation):
         if orientation not in [OrientationType.START, OrientationType.END]:
-            raise ValueError(
-                "Orientation must be either OrientationType.START or OrientationType.END. Got: {}".format(orientation)
-            )
+            raise ValueError("Orientation must be either OrientationType.START or OrientationType.END. Got: {}".format(orientation))
         self._orientation = orientation
 
     @property
@@ -189,9 +187,7 @@ class Slot(BTLxProcessing):
     @add_angle_opp_point.setter
     def add_angle_opp_point(self, add_angle_opp_point):
         if add_angle_opp_point < -179.9 or add_angle_opp_point > 179.9:
-            raise ValueError(
-                "Add Angle Opp Point must be between -179.9 and 179.9. Got: {}".format(add_angle_opp_point)
-            )
+            raise ValueError("Add Angle Opp Point must be between -179.9 and 179.9. Got: {}".format(add_angle_opp_point))
         self._add_angle_opp_point = add_angle_opp_point
 
     @property
@@ -360,16 +356,16 @@ class SlotParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(SlotParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(self._instance.depth, prec=TOL.precision)
-        result["Thickness"] = "{:.{prec}f}".format(self._instance.thickness, prec=TOL.precision)
-        result["AngleRefPoint"] = "{:.{prec}f}".format(self._instance.angle_ref_point, prec=TOL.precision)
-        result["AngleOppPoint"] = "{:.{prec}f}".format(self._instance.angle_opp_point, prec=TOL.precision)
-        result["AddAngleOppPoint"] = "{:.{prec}f}".format(self._instance.add_angle_opp_point, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
+        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
+        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
+        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
+        result["Thickness"] = "{:.{prec}f}".format(float(self._instance.thickness), prec=TOL.precision)
+        result["AngleRefPoint"] = "{:.{prec}f}".format(float(self._instance.angle_ref_point), prec=TOL.precision)
+        result["AngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.angle_opp_point), prec=TOL.precision)
+        result["AddAngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.add_angle_opp_point), prec=TOL.precision)
         result["MachiningLimits"] = {"FaceLimitedStart": "no", "FaceLimitedEnd": "no"}
         return result

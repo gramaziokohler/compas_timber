@@ -47,9 +47,7 @@ class TimberModel(Model):
 
     def __str__(self):
         # type: () -> str
-        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(
-            str(self.guid), len(list(self.elements())), len(list(self.joints))
-        )
+        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
 
     @property
     def beams(self):
@@ -101,9 +99,7 @@ class TimberModel(Model):
         total_position = Point(0, 0, 0)
 
         for element in self.elements():
-            vol = (
-                element.obb.volume
-            )  # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
+            vol = element.obb.volume  # TODO: include material density...? this uses volume as proxy for mass, which assumes all parts have equal density
             point = element.obb.frame.point
             total_vol += vol
             total_position += point * vol

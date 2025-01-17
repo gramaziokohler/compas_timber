@@ -20,7 +20,7 @@ class X_TopologyJointRule(component):
             supported_topo = cls.SUPPORTED_TOPOLOGY
             if not isinstance(supported_topo, list):
                 supported_topo = [supported_topo]
-            if JointTopology.TOPO_X in cls.SUPPORTED_TOPOLOGY:
+            if JointTopology.TOPO_X in supported_topo:
                 self.classes[cls.__name__] = cls
         if ghenv.Component.Params.Output[0].NickName == "Rule":
             self.joint_type = XHalfLapJoint
