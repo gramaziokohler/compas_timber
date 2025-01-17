@@ -149,7 +149,9 @@ class LapJoint(Joint):
         cross_frame = self.cross_beam.ref_sides[self.cross_ref_side_index]
 
         vect = main_frame.point - cross_frame.point
-        lap_depth = abs(main_frame.normal.dot(vect))
+        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
+        cross_vect.unitize()
+        lap_depth = abs(cross_vect.dot(vect))
 
         main_lap_depth = lap_depth * self.cut_plane_bias
         cross_lap_depth = lap_depth * (1 - self.cut_plane_bias)
