@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
+* Removed model argument from `BTLxWriter` in the GH component and updated it to always return the BTLx string.
+* Fixed a bug in `compas_timber.Fabrication.StepJointNotch` related to the `orientation` and `strut_inclination` parameters.
+* Changed `compas_timber._fabrication.Lap` so that the volume is generated fully from the relevant BTLx params.
+* Refactored `compas_timber.connections.LapJoint` to comply with the new system.
+* Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
+* Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
 
 ### Removed
 
@@ -32,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Updated the API documentation for `connections`, `elements`, `fabrication`, `ghpython`, `planning` packages.
 * Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
 * Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
-* Removed model argument from `BTLxWriter` in the GH component and updated it to always return the BTLx string.
-* Fixed a bug in `compas_timber.Fabrication.StepJointNotch` related to the `orientation` and `strut_inclination` parameters.
 
 ### Removed
 
@@ -126,8 +130,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `L_TopoJointRule`, `T_TopoJointRule` and `X_TopoJointRule` for cases where `Joint.SUPPORTED_TOPOLOGY` is a single value or a list.
 * Fixed bug in `JointRule.joints_from_beams_and_rules()` that caused failures when topology was not recognized.
 * Implemented `max_distance` parameter in `JointRule.joints_from_beams_and_rules()` and `JointRule.comply` methods.
-* Changed `compas_timber._fabrication.Lap` so that the volume is generated fully from the relevant BTLx params.
-* Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the Lap process.
 * Bux fixes from extra comma argument and `max_distance` not implemented in `DirectRule.comply`.
 
 ### Removed
