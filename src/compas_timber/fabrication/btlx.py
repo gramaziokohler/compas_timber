@@ -655,7 +655,8 @@ class BTLxFeatureDefinition(Data):
             self.geometries = geometries if isinstance(geometries, list) else [geometries]
         else:
             self.geometries = []
-        self.elements = elements or []
+        if elements:
+            self.elements = elements if isinstance(elements, list) else [elements]
         self.kwargs = kwargs or {}
 
     @property
