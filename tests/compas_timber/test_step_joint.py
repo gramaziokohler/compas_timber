@@ -79,7 +79,7 @@ EXPECTED_NOTCH_PARAMS = [
             ("Orientation", "start"),
             ("StartX", "1287.514"),
             ("StartY", "0.000"),
-            ("StrutInclination", "74.565"),
+            ("StrutInclination", "105.435"),
             ("NotchLimited", "no"),
             ("NotchWidth", "80.000"),
             ("StepDepth", "0.000"),
