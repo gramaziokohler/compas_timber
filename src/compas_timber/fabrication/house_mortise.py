@@ -1,3 +1,4 @@
+import math
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -296,8 +297,9 @@ class HouseMortise(BTLxProcessing):
         :class:`~compas_timber.fabrication.HouseMortise`
         """
         # type: (Mortise, float, float, float) -> HouseMortise
+        start_x = mortise.start_x + (length - mortise.length) / 2
         return cls(
-            mortise.start_x,
+            start_x,
             mortise.start_y,
             mortise.start_depth,
             mortise.angle,
@@ -313,7 +315,6 @@ class HouseMortise(BTLxProcessing):
             mortise=mortise,
             ref_side_index=mortise.ref_side_index,
         )
-
 
     ########################################################################
     # Methods
@@ -448,7 +449,7 @@ class HouseMortise(BTLxProcessing):
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
-        house_mortise_box = Box(self.width, self.length, self.depth, cutting_frame)
+        house_mortise_box = Box(self.length, self.width, self.depth, cutting_frame)
         return Brep.from_box(house_mortise_box)
 
 

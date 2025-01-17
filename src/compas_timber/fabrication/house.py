@@ -314,7 +314,7 @@ class House(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_tenon(cls, tenon, length, width, height):
+    def from_tenon(cls, tenon, length, width, height, start_depth):
         """Create a House instance from a Tenon or DovetailTenon instance and the beam it should cut.
 
         Parameters
@@ -333,11 +333,13 @@ class House(BTLxProcessing):
         :class:`~compas_timber.fabrication.House`
         """
         # type: (Tenon, float, float, float) -> House
+        # start_depth = height/2
+        start_x = cls._calculate_start_x(tenon, height/2)
         return cls(
             tenon.orientation,
-            tenon.start_x,
+            start_x,
             tenon.start_y,
-            tenon.start_depth,
+            start_depth,
             tenon.angle,
             tenon.inclination,
             tenon.rotation,
@@ -352,6 +354,14 @@ class House(BTLxProcessing):
             tenon=tenon,
             ref_side_index=tenon.ref_side_index,
         )
+
+    @staticmethod
+    def _calculate_start_x(tenon, start_depth):
+        # Calculate the start_x for the House with a start_depth of 0 from the Tenon params.
+        dx = (tenon.start_depth-start_depth) / math.tan(math.radians(tenon.inclination))
+        if tenon.orientation == OrientationType.START:
+            dx = -dx
+        return tenon.start_x + dx
 
     ########################################################################
     # Methods
@@ -442,7 +452,7 @@ class House(BTLxProcessing):
         # remove any parts of the house volume that exceed the beam geometry. Fails silently.
         for frame in beam.ref_sides[:4]:
             try:
-                tenon_volume = house_volume.trimmed(frame)
+                house_volume = house_volume.trimmed(frame)
             except Exception:
                 pass # Fail silently since it won't be possible to trim the tenon if it doesn't exceed the beam geometry.
 

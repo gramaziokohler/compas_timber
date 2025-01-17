@@ -1,3 +1,4 @@
+import math
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoinningError
 from compas_timber.fabrication import House
@@ -173,10 +174,19 @@ class TenonMortiseJoint(Joint):
         self.start_depth = self.start_depth or 0.0
         self.rotation = self.rotation or 0.0
         self.length = self.length or height
-        self.width = self.width or width / 2
+        self.width = self.width or self.length / 3
         self.height = self.height or width / 2
         self.shape = self.shape or 2  # Default shape: ROUND
         self.shape_radius = self.shape_radius or width / 4
+
+    def get_house_dimensions(self, tenon):
+        beam_width = self.main_beam.width if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.height
+        beam_height = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+
+        offset = tenon.start_depth*2
+        length = (beam_height - offset) / math.sin(math.radians(tenon.inclination))
+        width = (beam_width - offset) / math.sin(math.radians(tenon.angle))
+        return length, width, offset
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -248,7 +258,6 @@ class TenonMortiseJoint(Joint):
         cross_feature = Mortise.from_frame_and_beam(
             frame=main_feature.frame_from_params_and_beam(self.main_beam),
             beam=self.cross_beam,
-            start_depth=0.0,  # TODO: to be updated once housing is implemented
             length=main_feature.length,
             width=main_feature.width,
             depth=main_feature.height,
@@ -259,9 +268,8 @@ class TenonMortiseJoint(Joint):
 
         # convert to house and house mortise if tenon should be housed
         if self.house:
-            length = self.main_beam.width if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.height
-            width = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
-            main_feature = House.from_tenon(main_feature, length, width, self.house)
+            length, width, offset = self.get_house_dimensions(main_feature)
+            main_feature = House.from_tenon(main_feature, length, width, self.house, offset)
             cross_feature = HouseMortise.from_mortise(cross_feature, length, width, self.house)
 
         # add features to beams
