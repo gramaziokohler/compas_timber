@@ -704,12 +704,12 @@ class StepJointParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(StepJointParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
-        result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
-        result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StrutInclination"] = "{:.{prec}f}".format(float(self._instance.strut_inclination), prec=TOL.precision)
+        result["StepDepth"] = "{:.{prec}f}".format(float(self._instance.step_depth), prec=TOL.precision)
+        result["HeelDepth"] = "{:.{prec}f}".format(float(self._instance.heel_depth), prec=TOL.precision)
         result["StepShape"] = self._instance.step_shape
         result["Tenon"] = "yes" if self._instance.tenon else "no"
-        result["TenonWidth"] = "{:.{prec}f}".format(self._instance.tenon_width, prec=TOL.precision)
-        result["TenonHeight"] = "{:.{prec}f}".format(self._instance.tenon_height, prec=TOL.precision)
+        result["TenonWidth"] = "{:.{prec}f}".format(float(self._instance.tenon_width), prec=TOL.precision)
+        result["TenonHeight"] = "{:.{prec}f}".format(float(self._instance.tenon_height), prec=TOL.precision)
         return result
