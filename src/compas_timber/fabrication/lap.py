@@ -519,17 +519,17 @@ class LapParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(LapParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(self._instance.slope, prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(self._instance.width, prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(self._instance.depth, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
+        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
+        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
+        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
+        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
+        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
         result["LeadAngleParallel"] = "yes" if self._instance.lead_angle_parallel else "no"
-        result["LeadAngle"] = "{:.{prec}f}".format(self._instance.lead_angle, prec=TOL.precision)
+        result["LeadAngle"] = "{:.{prec}f}".format(float(self._instance.lead_angle), prec=TOL.precision)
         result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
-        result["LeadInclination"] = "{:.{prec}f}".format(self._instance.lead_inclination, prec=TOL.precision)
+        result["LeadInclination"] = "{:.{prec}f}".format(float(self._instance.lead_inclination), prec=TOL.precision)
         result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
         return result

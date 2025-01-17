@@ -819,16 +819,16 @@ class StepJointNotchParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(StepJointNotchParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["StrutInclination"] = "{:.{prec}f}".format(float(self._instance.strut_inclination), prec=TOL.precision)
         result["NotchLimited"] = "yes" if self._instance.notch_limited else "no"
-        result["NotchWidth"] = "{:.{prec}f}".format(self._instance.notch_width, prec=TOL.precision)
-        result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
-        result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
-        result["StrutHeight"] = "{:.{prec}f}".format(self._instance.strut_height, prec=TOL.precision)
+        result["NotchWidth"] = "{:.{prec}f}".format(float(self._instance.notch_width), prec=TOL.precision)
+        result["StepDepth"] = "{:.{prec}f}".format(float(self._instance.step_depth), prec=TOL.precision)
+        result["HeelDepth"] = "{:.{prec}f}".format(float(self._instance.heel_depth), prec=TOL.precision)
+        result["StrutHeight"] = "{:.{prec}f}".format(float(self._instance.strut_height), prec=TOL.precision)
         result["StepShape"] = self._instance.step_shape
         result["Mortise"] = "yes" if self._instance.mortise else "no"
-        result["MortiseWidth"] = "{:.{prec}f}".format(self._instance.mortise_width, prec=TOL.precision)
-        result["MortiseHeight"] = "{:.{prec}f}".format(self._instance.mortise_height, prec=TOL.precision)
+        result["MortiseWidth"] = "{:.{prec}f}".format(float(self._instance.mortise_width), prec=TOL.precision)
+        result["MortiseHeight"] = "{:.{prec}f}".format(float(self._instance.mortise_height), prec=TOL.precision)
         return result

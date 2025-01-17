@@ -10,6 +10,8 @@ import xml.etree.ElementTree as ET
 import compas
 import compas_timber
 from compas_timber.fabrication import BTLxWriter
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
 from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
@@ -165,3 +167,16 @@ def test_btlx_should_skip_feature():
         result = writer.model_to_xml(model)
 
     assert result is not None
+
+
+def test_float_formatting_of_param_dicts():
+    test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
+    params_dict = test_processing.params_dict
+
+    assert params_dict["Orientation"] == "end"
+    assert params_dict["StartX"] == "{:.3f}".format(test_processing.start_x)
+    assert params_dict["StartY"] == "{:.3f}".format(test_processing.start_y)
+    assert params_dict["StartDepth"] == "{:.3f}".format(test_processing.start_depth)
+    assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
+    assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
+    assert params_dict["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
