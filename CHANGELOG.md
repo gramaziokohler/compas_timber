@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
+* Fixed spelling of `BeamJoinningError` to `BeamJoiningError`.
 
 ### Removed
 
@@ -121,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect data keys for `beam_guid` in the `__data__` property for joint modules: `LMiterJoint`, `TStepJoint`, `TDovetailJoint`, `TBirdsmouthJoint`, `LFrenchRidgeLapJoint`.
 * Fixed `JointRuleFromList` GH component.
 * Changed `TButtJoint` to take an optional `PlateFastener`.
-* Moved `FeatureApplicationError`, `BeamJoinningError`, and `FastenerApplicationError` to `errors.__init__.py`.
+* Moved `FeatureApplicationError`, `BeamJoiningError`, and `FastenerApplicationError` to `errors.__init__.py`.
 * Fixed a bug that occured when parallel beams are joined in the BallNodeJoint.
 * Fixed `L_TopoJointRule`, `T_TopoJointRule` and `X_TopoJointRule` for cases where `Joint.SUPPORTED_TOPOLOGY` is a single value or a list.
 * Fixed bug in `JointRule.joints_from_beams_and_rules()` that caused failures when topology was not recognized.
