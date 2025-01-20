@@ -8,7 +8,7 @@ class ShowFeatureErrors(component):
     def RunScript(self, debug_info, index):
         if index is None:
             self.AddRuntimeMessage(Warning, "Input parameter 'i' failed to collect data")
-            return
+            index = 0
         if not debug_info:
             self.AddRuntimeMessage(Warning, "Input parameter 'DebugInfo' failed to collect data")
             return
