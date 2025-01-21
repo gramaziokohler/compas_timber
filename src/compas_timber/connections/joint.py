@@ -59,7 +59,7 @@ class Joint(Interaction):
 
         Raises
         ------
-        :class:`~compas_timber.connections.BeamJoinningError`
+        :class:`~compas_timber.connections.BeamJoiningError`
             Should be raised whenever the joint was not able to calculate the features to be applied to the beams.
 
         """
@@ -75,7 +75,7 @@ class Joint(Interaction):
 
         Raises
         ------
-        :class:`~compas_timber.connections.BeamJoinningError`
+        :class:`~compas_timber.connections.BeamJoiningError`
             Should be raised whenever the joint was not able to calculate the extensions to be applied to the beams.
 
         """
@@ -87,7 +87,7 @@ class Joint(Interaction):
 
         Raises
         ------
-        :class:`~compas_timber.connections.BeamJoinningError`
+        :class:`~compas_timber.connections.BeamJoiningError`
             Should be raised whenever the elements did not comply with the requirements of the joint.
 
         """

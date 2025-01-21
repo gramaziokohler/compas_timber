@@ -11,7 +11,6 @@ from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.errors import BeamJoinningError
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {

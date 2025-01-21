@@ -19,7 +19,7 @@ class FeatureApplicationError(Exception):
         self.message = message
 
 
-class BeamJoinningError(Exception):
+class BeamJoiningError(Exception):
     """Indicates that an error has occurred while trying to join two or more beams.
 
     This error should indicate that an error has occurred while calculating the features which
@@ -39,7 +39,7 @@ class BeamJoinningError(Exception):
     """
 
     def __init__(self, beams, joint, debug_info=None, debug_geometries=None):
-        super(BeamJoinningError, self).__init__()
+        super(BeamJoiningError, self).__init__()
         self.beams = beams
         self.joint = joint
         self.debug_info = debug_info
@@ -69,6 +69,6 @@ class FastenerApplicationError(Exception):
 
 __all__ = [
     "FeatureApplicationError",
-    "BeamJoinningError",
+    "BeamJoiningError",
     "FeatureApplicationError",
 ]
