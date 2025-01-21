@@ -23,7 +23,7 @@ class BTLxFromGeometry(component):
             if "from_shapes_and_element" in [func[0] for func in functions]:
                 self.classes[cls.__name__] = cls
 
-        if ghenv.Component.Params.Output[0].NickName == "Feature":
+        if ghenv.Component.Params.Output[0].NickName == "Features":
             self.processing_type = None
         else:
             self.processing_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
