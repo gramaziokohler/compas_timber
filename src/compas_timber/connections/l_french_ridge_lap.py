@@ -159,11 +159,8 @@ class LFrenchRidgeLapJoint(Joint):
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vect.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoinningError(
-                    self.beam_a,
-                    self.beam_b,
-                    debug_info="The the two beams are not aligned to create a French Ridge Lap joint.",
-                )
+                raise BeamJoinningError(self.elements, self, debug_info="The two beams are not aligned to create a French Ridge Lap joint.")
+
         # calculate widths and heights of the beams
         dimensions = []
         ref_side_indices = [self.beam_a_ref_side_index, self.beam_b_ref_side_index]
@@ -173,7 +170,7 @@ class LFrenchRidgeLapJoint(Joint):
             dimensions.append((width, height))
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
-            raise BeamJoinningError(self.beam_a, self.beam_b, debug_info="The beams have different dimensions.")
+            raise BeamJoinningError(self.elements, self, debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.")
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
