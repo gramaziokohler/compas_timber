@@ -7,6 +7,7 @@ from compas.geometry import Point
 from compas_model.models import Model
 
 from compas_timber.connections import Joint
+from compas_timber.errors import BeamJoinningError
 
 
 class TimberModel(Model):
@@ -261,17 +262,38 @@ class TimberModel(Model):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
 
-    def process_joinery(self):
+    def process_joinery(self, stop_on_first_error=False):
         """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
 
         The sequence is important here since the feature parameters must be calculated based on the extended blanks.
         For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
 
+        Parameters
+        ----------
+        stop_on_first_error : bool, optional
+            If True, the method will raise an exception on the first error it encounters. Default is False.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.errors.BeamJoinningError`]
+            A list of errors that occurred during the joinery process.
+
         """
+        errors = []
+        for joint in self.joints:
+            try:
+                joint.check_elements_compatibility()
+                joint.add_extensions()
+            except BeamJoinningError as bje:
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
 
         for joint in self.joints:
-            joint.check_elements_compatibility()
-            joint.add_extensions()
-
-        for joint in self.joints:
-            joint.add_features()
+            try:
+                joint.add_features()
+            except BeamJoinningError as bje:
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+        return errors
