@@ -2,7 +2,7 @@ from compas.tolerance import TOL
 
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import FrenchRidgeLap
 
 from .joint import Joint
@@ -105,7 +105,7 @@ class LFrenchRidgeLapJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -118,9 +118,9 @@ class LFrenchRidgeLapJoint(Joint):
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [self.cutting_plane_a] if start_a is not None else [self.cutting_plane_b]
-            raise BeamJoinningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
+            raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
-            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex))
         self.beam_a.add_blank_extension(start_a, end_a, self.guid)
         self.beam_b.add_blank_extension(start_b, end_b, self.guid)
 
@@ -149,7 +149,7 @@ class LFrenchRidgeLapJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the elements are not compatible for the creation of the joint.
 
         """
@@ -159,7 +159,7 @@ class LFrenchRidgeLapJoint(Joint):
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vect.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoinningError(
+                raise BeamJoiningError(
                     self.beam_a,
                     self.beam_b,
                     debug_info="The the two beams are not aligned to create a French Ridge Lap joint.",
@@ -173,7 +173,7 @@ class LFrenchRidgeLapJoint(Joint):
             dimensions.append((width, height))
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
-            raise BeamJoinningError(self.beam_a, self.beam_b, debug_info="The beams have different dimensions.")
+            raise BeamJoiningError(self.beam_a, self.beam_b, debug_info="The beams have different dimensions.")
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

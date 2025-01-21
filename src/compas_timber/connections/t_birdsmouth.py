@@ -3,7 +3,7 @@ from compas.geometry import distance_point_line
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DoubleCut
 
 from .joint import Joint
@@ -79,7 +79,7 @@ class TBirdsmouthJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -92,7 +92,7 @@ class TBirdsmouthJoint(Joint):
         try:
             start_a, end_a = self.main_beam.extension_to_plane(plane)
         except Exception as ex:
-            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex))
         self.main_beam.add_blank_extension(start_a, end_a, self.guid)
 
     def add_features(self):

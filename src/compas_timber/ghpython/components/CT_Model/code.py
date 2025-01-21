@@ -11,7 +11,7 @@ from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
@@ -53,7 +53,7 @@ class ModelComponent(component):
             for joint in joints[::-1]:
                 try:
                     joint.joint_type.create(Model, *joint.elements, **joint.kwargs)
-                except BeamJoinningError as bje:
+                except BeamJoiningError as bje:
                     debug_info.add_joint_error(bje)
 
         # applies extensions and features resulting from joints
