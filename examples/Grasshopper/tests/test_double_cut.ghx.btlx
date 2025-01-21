@@ -1,0 +1,354 @@
+<?xml version="1.0" ?>
+<BTLx Language="en" Version="2.0.0" xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
+   <FileHistory>
+      <InitialExportProgram Comment="" CompanyName="Gramazio Kohler Research" ComputerName="ITA-GRAM-W-98" Date="2025-01-21" FileName="btlx_feature_def_test.3dm" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.8.1" Time="12:01:55" UserName="obucklin"/>
+   </FileHistory>
+   <Project Name="COMPAS Timber Project">
+      <Parts>
+         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="120.000" Layer="0" Length="3768.048" Material="" ModuleNumber="" OrderNumber="0" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="0" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="120.000">
+            <Transformations>
+               <Transformation GUID="{66f6d791-9224-4332-bce2-32135237a79d}">
+                  <Position>
+                     <ReferencePoint X="876.814" Y="-3174.828" Z="-188.689"/>
+                     <XVector X="0.320" Y="0.947" Z="0.000"/>
+                     <YVector X="-0.000" Y="0.000" Z="1.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
+            <ReferenceSide Align="no" Side="1"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>3569.734</StartX>
+                  <StartY>55.021</StartY>
+                  <Angle1>60.000</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>110.000</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>3642.784</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>65.000</Inclination>
+               </JackRafterCut>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3523.048</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3438.048</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3523.048</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3438.048</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <DoubleCut Name="DoubleCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>2405.831</StartX>
+                  <StartY>60.000</StartY>
+                  <Angle1>21.543</Angle1>
+                  <Inclination1>123.754</Inclination1>
+                  <Angle2>160.664</Angle2>
+                  <Inclination2>121.074</Inclination2>
+               </DoubleCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="true" coordIndex=" ">
+                  <Coordinate/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="120.000" Layer="0" Length="4149.109" Material="" ModuleNumber="" OrderNumber="1" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="1" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="120.000">
+            <Transformations>
+               <Transformation GUID="{adb2c374-a29c-440a-ab33-6beeacf282fb}">
+                  <Position>
+                     <ReferencePoint X="2196.700" Y="320.036" Z="-155.628"/>
+                     <XVector X="-0.018" Y="-0.449" Z="0.894"/>
+                     <YVector X="0.037" Y="0.893" Z="0.449"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
+            <ReferenceSide Align="no" Side="1"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>198.314</StartX>
+                  <StartY>55.021</StartY>
+                  <Angle1>60.000</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>110.000</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>125.265</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>65.000</Inclination>
+               </JackRafterCut>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>245.000</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>330.000</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>245.000</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>330.000</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <JackRafterCut Name="JackRafterCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>3162.204</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>166.762</Angle>
+                  <Inclination>114.501</Inclination>
+               </JackRafterCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="true" coordIndex=" ">
+                  <Coordinate/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="120.000" Layer="0" Length="3467.046" Material="" ModuleNumber="" OrderNumber="2" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="2" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="120.000">
+            <Transformations>
+               <Transformation GUID="{c1806ce2-ec15-458e-8c44-4a50c8fc68e0}">
+                  <Position>
+                     <ReferencePoint X="50.261" Y="3143.985" Z="-188.689"/>
+                     <XVector X="0.616" Y="-0.788" Z="0.000"/>
+                     <YVector X="0.000" Y="0.000" Z="1.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
+            <ReferenceSide Align="no" Side="1"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>3268.731</StartX>
+                  <StartY>55.021</StartY>
+                  <Angle1>60.000</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>110.000</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>3341.781</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>65.000</Inclination>
+               </JackRafterCut>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3222.046</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3137.046</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3222.046</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>3137.046</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>2456.105</StartX>
+                  <StartY>95.563</StartY>
+                  <Angle>342.103</Angle>
+                  <Inclination>27.405</Inclination>
+                  <DepthLimited>yes</DepthLimited>
+                  <Depth>60.000</Depth>
+                  <Diameter>40.000</Diameter>
+               </Drilling>
+               <DoubleCut Name="DoubleCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>1839.320</StartX>
+                  <StartY>60.000</StartY>
+                  <Angle1>20.985</Angle1>
+                  <Inclination1>55.923</Inclination1>
+                  <Angle2>161.173</Angle2>
+                  <Inclination2>58.636</Inclination2>
+               </DoubleCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="true" coordIndex=" ">
+                  <Coordinate/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="120.000" Layer="0" Length="3384.284" Material="" ModuleNumber="" OrderNumber="3" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="3" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="120.000">
+            <Transformations>
+               <Transformation GUID="{e85d27c2-cef8-48d4-9092-abffdb77fe83}">
+                  <Position>
+                     <ReferencePoint X="2079.390" Y="407.483" Z="-180.320"/>
+                     <XVector X="0.703" Y="0.496" Z="-0.509"/>
+                     <YVector X="0.416" Y="0.294" Z="0.861"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
+            <ReferenceSide Align="no" Side="1"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>198.314</StartX>
+                  <StartY>55.021</StartY>
+                  <Angle1>60.000</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>110.000</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>125.265</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>65.000</Inclination>
+               </JackRafterCut>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>245.000</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>330.000</StartX>
+                  <StartY>90.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>245.000</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>330.000</StartX>
+                  <StartY>30.000</StartY>
+                  <Angle>0.000</Angle>
+                  <Inclination>90.000</Inclination>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <Diameter>15.000</Diameter>
+               </Drilling>
+               <Drilling Name="Drilling" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
+                  <StartX>688.717</StartX>
+                  <StartY>61.517</StartY>
+                  <Angle>182.083</Angle>
+                  <Inclination>55.181</Inclination>
+                  <DepthLimited>yes</DepthLimited>
+                  <Depth>60.000</Depth>
+                  <Diameter>40.000</Diameter>
+               </Drilling>
+               <JackRafterCut Name="JackRafterCut" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>2227.255</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>21.694</Angle>
+                  <Inclination>77.657</Inclination>
+               </JackRafterCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="true" coordIndex=" ">
+                  <Coordinate/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+      </Parts>
+   </Project>
+</BTLx>

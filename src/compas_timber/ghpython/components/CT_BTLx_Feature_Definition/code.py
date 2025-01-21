@@ -13,9 +13,9 @@ from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
 
-class BTLxFeature(component):
+class BTLxFromGeometry(component):
     def __init__(self):
-        super(BTLxFeature, self).__init__()
+        super(BTLxFromGeometry, self).__init__()
         self.classes = {}
         self.geometry_count = 0
         for cls in get_leaf_subclasses(BTLxProcessing):
@@ -23,7 +23,7 @@ class BTLxFeature(component):
             if "from_shapes_and_element" in [func[0] for func in functions]:
                 self.classes[cls.__name__] = cls
 
-        if ghenv.Component.Params.Output[0].NickName == "Process":
+        if ghenv.Component.Params.Output[0].NickName == "Feature":
             self.processing_type = None
         else:
             self.processing_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)

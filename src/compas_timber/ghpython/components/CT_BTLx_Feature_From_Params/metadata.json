@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "Feature",
+                "name": "Processing",
                 "description": "Feature Definition. Should connect to CT_Model features input."
             },
             {

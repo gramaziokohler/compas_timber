@@ -66,7 +66,7 @@ class ModelComponent(component):
                     self.AddRuntimeMessage(Warning, "features input into the timber model must be defined with at least one element")
                 else:
                     for element in f_def.elements:
-                        element.add_features(f_def.feature_from_element(element))
+                        element.add_features(f_def.processing) #this is the BTLxProcessing object from parameters.
 
         Geometry = None
         scene = Scene()
