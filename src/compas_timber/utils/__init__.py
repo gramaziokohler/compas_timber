@@ -159,7 +159,6 @@ def intersection_line_box_param(line, box, ignore_ends=False):
         intersection = intersection_line_plane(line, Plane.from_frame(face))
         if intersection:
             int_pt = Point(*intersection)
-            print(int_pt)
             intersection_uv = int_pt.transformed(Transformation.from_frame_to_frame(face, Frame.worldXY()))
             if i < 4:
                 if i % 2 == 0:
@@ -174,6 +173,5 @@ def intersection_line_box_param(line, box, ignore_ends=False):
                 if intersection_uv[0] >= 0 and intersection_uv[0] < box.depth and intersection_uv[1] > 0 and intersection_uv[1] < box.height:
                     pts.append(intersection)
                     ref_side_indices.append(i)
-    print("ref_side_indices", ref_side_indices)
     return [Point(*coords) for coords in pts], ref_side_indices
 
