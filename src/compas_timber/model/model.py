@@ -7,7 +7,7 @@ from compas.geometry import Point
 from compas_model.models import Model
 
 from compas_timber.connections import Joint
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 
 
 class TimberModel(Model):
@@ -275,7 +275,7 @@ class TimberModel(Model):
 
         Returns
         -------
-        list[:class:`~compas_timber.errors.BeamJoinningError`]
+        list[:class:`~compas_timber.errors.BeamJoiningError`]
             A list of errors that occurred during the joinery process.
 
         """
@@ -284,7 +284,7 @@ class TimberModel(Model):
             try:
                 joint.check_elements_compatibility()
                 joint.add_extensions()
-            except BeamJoinningError as bje:
+            except BeamJoiningError as bje:
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje
@@ -292,7 +292,7 @@ class TimberModel(Model):
         for joint in self.joints:
             try:
                 joint.add_features()
-            except BeamJoinningError as bje:
+            except BeamJoiningError as bje:
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje
