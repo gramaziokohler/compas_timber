@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the error message when beam endpoints coincide, e.g. when a closed polyline is used as input. 
 * Changed `index` input of `ShowFeatureErrors` and `ShowJoiningErrors` do have default value of 0.
 * Fixed spelling of `BeamJoinningError` to `BeamJoiningError`.
+* Changed `process_joinery()` method to handle `BeamJoiningError` exceptions and return them. Also updated `Model` GH component.
 
 ### Removed
 
