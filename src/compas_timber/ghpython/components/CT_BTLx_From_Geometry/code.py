@@ -45,7 +45,7 @@ class BTLxFromGeometry(component):
             for geo, arg_name in zip(args, self.arg_names())[0:self.geometry_count]:
                 if isinstance(geo, rg.Curve):
                     geometries.append(Line(geo.PointAtStart, geo.PointAtEnd))
-                if isinstance(geo, rg.Plane):
+                elif isinstance(geo, rg.Plane):
                     geometries.append(plane_to_compas(geo))
                 else:
                     self.AddRuntimeMessage(Error, "Input parameter {} collect unusable data".format(arg_name))
