@@ -89,7 +89,7 @@ class TLapJoint(LapJoint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        if are_beams_coplanar(self.elements):  # TODO: this is a temporal solution to allow the vizualization of non-coplanar lap joints.
+        if are_beams_coplanar(*self.elements):  # TODO: this is a temporal solution to allow the vizualization of non-coplanar lap joints.
             # calculate the lap length and depth for each beam
             main_lap_length, cross_lap_length = self._get_lap_lengths()
             main_lap_depth, cross_lap_depth = self._get_lap_depths()

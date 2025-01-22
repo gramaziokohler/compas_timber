@@ -25,9 +25,9 @@ class LapJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -36,11 +36,11 @@ class LapJoint(Joint):
 
     Attributes
     ----------
-    elements : list of :class:`~compas_timber.parts.Beam`
+    elements : list of :class:`~compas_timber.elements.Beam`
         The beams to be joined.
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -130,7 +130,8 @@ class LapJoint(Joint):
         UserWarning
             If the elements are not compatible for the creation of the joint.
         """
-        if not are_beams_coplanar(self.elements):
+        # TODO: This warning should be providing more information to the caller in regards to the affected beams and joints.
+        if not are_beams_coplanar(*self.elements):
             warnings.warn("The beams are not coplanar, therefore BTLxProcessings will not be generated for this joint", UserWarning)
 
     def restore_beams_from_keys(self, model):

@@ -16,10 +16,10 @@ class LFrenchRidgeLapJoint(LapJoint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
-        First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
-        Second beam to be joined.
+    main_beam : :class:`~compas_timber.elements.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
     drillhole_diam : float
@@ -27,10 +27,10 @@ class LFrenchRidgeLapJoint(LapJoint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
-        First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
-        Second beam to be joined.
+    main_beam : :class:`~compas_timber.elements.Beam`
+        The main beam to be joined.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
     drillhole_diam : float
@@ -103,7 +103,7 @@ class LFrenchRidgeLapJoint(LapJoint):
         BeamJoinningError
             If the elements are not compatible for the creation of the joint.
         """
-        if not are_beams_coplanar(self.elements):
+        if not are_beams_coplanar(*self.elements):
             raise BeamJoinningError(
                 beams=self.elements,
                 joint=self,

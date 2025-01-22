@@ -146,14 +146,16 @@ def beam_ref_side_incidence_with_vector(beam_a, vector, ignore_ends=True):
     return ref_side_angles
 
 
-def are_beams_coplanar(beams, tol=TOL):
+def are_beams_coplanar(beam_a, beam_b, tol=TOL):
     """
     Checks if two beams are coplanar based on the cross product of their centerline directions.
 
     Parameters
     ----------
-    beams : list of :class:`~compas_timber.parts.Beam`
-        The beams to check for coplanarity.
+    beam_a : :class:`~compas_timber.parts.Beam`
+        The first beam.
+    beam_b : :class:`~compas_timber.parts.Beam`
+        The second beam.
     tol : :class:`compas.tolerance.Tolerance`, optional
         The tolerance for the dot product comparison.
 
@@ -162,14 +164,11 @@ def are_beams_coplanar(beams, tol=TOL):
     bool
         True if the beams are coplanar, False otherwise.
     """
-    if len(beams) != 2:
-        raise ValueError("This function only supports beams in pairs")
-
     # Compute the cross product of the centerline directions of the two beams
-    cross_vector = beams[0].centerline.direction.cross(beams[1].centerline.direction)
+    cross_vector = beam_a.centerline.direction.cross(beam_b.centerline.direction)
     cross_vector.unitize()
 
-    for beam in beams:
+    for beam in [beam_a, beam_b]:
         # Check if the cross product is parallel to the normal of the beam's frame
         dot_with_beam_normal = abs(cross_vector.dot(beam.frame.normal))
         is_beam_normal_coplanar = tol.is_close(dot_with_beam_normal, 1.0) or tol.is_zero(dot_with_beam_normal)
