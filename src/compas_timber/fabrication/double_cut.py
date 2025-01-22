@@ -246,17 +246,6 @@ class DoubleCut(BTLxProcessing):
             orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index, planes = planes
         )
 
-
-    @classmethod
-    def reorder_planes(cls, planes, intersection_line, ref_side):
-        lines = [Line.from_point_and_vector(plane.point, intersection_line.direction) for plane in planes]
-        points = [Point(*intersection_line_plane(line, Plane.from_frame(ref_side))) for line in lines]
-        dots = [dot_vectors(point, ref_side.yaxis) for point in points]
-        if dots[0] > dots[1]:
-            return [planes[1],planes[0]]
-        else:
-            return planes
-
     @classmethod
     def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
         """Construct a DoubleCut process from a two planes and an element.
@@ -277,6 +266,16 @@ class DoubleCut(BTLxProcessing):
 
         """
         return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
+
+    @staticmethod
+    def reorder_planes(planes, intersection_line, ref_side):
+        lines = [Line.from_point_and_vector(plane.point, intersection_line.direction) for plane in planes]
+        points = [Point(*intersection_line_plane(line, Plane.from_frame(ref_side))) for line in lines]
+        dots = [dot_vectors(point, ref_side.yaxis) for point in points]
+        if dots[0] > dots[1]:
+            return [planes[1],planes[0]]
+        else:
+            return planes
 
     @staticmethod
     def _calculate_orientation(beam, cutting_planes):
