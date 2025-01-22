@@ -214,7 +214,7 @@ class PlateFastener(Fastener):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the beams are not compatible.
 
         """

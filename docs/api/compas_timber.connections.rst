@@ -43,6 +43,6 @@ Exceptions
 
 The following exceptions may be raised by this module. See the :mod:`compas_timber.errors` module for details.
 
-- :class:`compas_timber.errors.BeamJoinningError`
+- :class:`compas_timber.errors.BeamJoiningError`
 - :class:`compas_timber.errors.FeatureApplicationError`
 - :class:`compas_timber.errors.FastenerApplicationError`

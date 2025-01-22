@@ -388,6 +388,8 @@ class Beam(TimberElement):
         :class:`~compas_timber.parts.Beam`
 
         """
+        if centerline.length < TOL.absolute:
+            raise ValueError("The given centerline has zero length. Check your endpoints.")
         x_vector = centerline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0

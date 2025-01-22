@@ -405,4 +405,7 @@ class DebugInfomation(object):
             self.feature_errors.append(error)
 
     def add_joint_error(self, error):
-        self.joint_errors.append(error)
+        if isinstance(error, list):
+            self.joint_errors.extend(error)
+        else:
+            self.joint_errors.append(error)

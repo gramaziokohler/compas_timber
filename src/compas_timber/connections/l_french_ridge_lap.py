@@ -1,4 +1,4 @@
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import FrenchRidgeLap
 
 from .lap_joint import LapJoint
@@ -52,7 +52,7 @@ class LFrenchRidgeLapJoint(LapJoint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -65,9 +65,9 @@ class LFrenchRidgeLapJoint(LapJoint):
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [self.cross_cutting_plane] if start_main is not None else [self.main_cutting_plane]
-            raise BeamJoinningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
+            raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
-            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex))
         self.main_beam.add_blank_extension(start_main, end_main, self.main_beam_guid)
         self.cross_beam.add_blank_extension(start_cross, end_cross, self.cross_beam_guid)
 
@@ -100,11 +100,11 @@ class LFrenchRidgeLapJoint(LapJoint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the elements are not compatible for the creation of the joint.
         """
         if not are_beams_coplanar(*self.elements):
-            raise BeamJoinningError(
+            raise BeamJoiningError(
                 beams=self.elements,
                 joint=self,
                 debug_info="The two beams are not coplanar to create a Lap joint.",
@@ -118,4 +118,9 @@ class LFrenchRidgeLapJoint(LapJoint):
             dimensions.append((width, height))
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
-            raise BeamJoinningError(self.main_beam, self.cross_beam, debug_info="The beams have different dimensions.")
+            raise BeamJoiningError(self.elements, self, debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.")
+
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.beam_a = model.element_by_guid(self.beam_a_guid)
+        self.beam_b = model.element_by_guid(self.beam_b_guid)

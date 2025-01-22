@@ -1,7 +1,7 @@
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 
@@ -107,7 +107,7 @@ class TButtJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -118,9 +118,9 @@ class TButtJoint(Joint):
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,

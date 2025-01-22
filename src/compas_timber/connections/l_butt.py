@@ -1,5 +1,5 @@
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 
@@ -90,7 +90,7 @@ class LButtJoint(Joint):
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
 
         if self.reject_i and ref_side_index in [4, 5]:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
         return ref_side_index
 
     @property
@@ -113,7 +113,7 @@ class LButtJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -127,9 +127,9 @@ class LButtJoint(Joint):
                     cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
                 start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
             except AttributeError as ae:
-                raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main])
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main])
             except Exception as ex:
-                raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
             extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
             self.main_beam.add_blank_extension(
                 start_main + extension_tolerance,
@@ -141,7 +141,7 @@ class LButtJoint(Joint):
             cutting_plane_cross = self.main_beam.ref_sides[self.main_beam_opposing_side_index]
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross])
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.cross_beam.add_blank_extension(
             start_cross + extension_tolerance,

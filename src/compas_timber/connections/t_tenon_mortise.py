@@ -1,5 +1,5 @@
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import TenonShapeType
@@ -175,7 +175,7 @@ class TenonMortiseJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -188,7 +188,7 @@ class TenonMortiseJoint(Joint):
             cutting_plane = self.main_beam.ref_sides[opposing_ref_side]
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         self.cross_beam.add_blank_extension(
             start_cross + extension_tolerance,
             end_cross + extension_tolerance,
@@ -200,7 +200,7 @@ class TenonMortiseJoint(Joint):
             cutting_plane.translate(-cutting_plane.normal * self.height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
             end_main + extension_tolerance,
