@@ -4,10 +4,10 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber._fabrication import JackRafterCut
+from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import JackRafterCut
 from compas_timber.utils import intersection_line_line_param
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -18,7 +18,7 @@ class LMiterJoint(Joint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -41,8 +41,8 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data = super(LMiterJoint, self).__data__
-        data["beam_a"] = self.beam_a_guid
-        data["beam_b"] = self.beam_b_guid
+        data["beam_a_guid"] = self.beam_a_guid
+        data["beam_b_guid"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
         return data
 
@@ -104,7 +104,7 @@ class LMiterJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -117,9 +117,9 @@ class LMiterJoint(Joint):
         except AttributeError as ae:
             # I want here just the plane that caused the error
             geometries = [plane_b] if start_a is not None else [plane_a]
-            raise BeamJoinningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
+            raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
-            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex))
         self.beam_a.add_blank_extension(start_a, end_a, self.guid)
         self.beam_b.add_blank_extension(start_b, end_b, self.guid)
 
@@ -138,7 +138,7 @@ class LMiterJoint(Joint):
         try:
             plane_a, plane_b = self.get_cutting_planes()
         except Exception as ex:
-            raise BeamJoinningError(self.elements, self, debug_info=str(ex))
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex))
 
         cut1 = JackRafterCut.from_plane_and_beam(plane_a, self.beam_a)
         cut2 = JackRafterCut.from_plane_and_beam(plane_b, self.beam_b)

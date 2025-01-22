@@ -12,14 +12,14 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 
 
-class JackRafterCut(BTLxProcess):
+class JackRafterCut(BTLxProcessing):
     """Represents a Jack Rafter Cut feature to be made on a beam.
 
     Parameters
@@ -39,7 +39,7 @@ class JackRafterCut(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "JackRafterCut"  # type: ignore
+    PROCESSING_NAME = "JackRafterCut"  # type: ignore
 
     @property
     def __data__(self):
@@ -214,7 +214,7 @@ class JackRafterCut(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with beam geometry.
 
         Returns
@@ -278,12 +278,12 @@ class JackRafterCut(BTLxProcess):
         return Plane(cutting_plane.point, plane_normal)
 
 
-class JackRafterCutParams(BTLxProcessParams):
+class JackRafterCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Jack Rafter Cut feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.JackRafterCut`
+    instance : :class:`~compas_timber.fabrication.JackRafterCut`
         The instance of the Jack Rafter Cut feature.
     """
 
@@ -302,9 +302,9 @@ class JackRafterCutParams(BTLxProcessParams):
         # type: () -> OrderedDict
         result = super(JackRafterCutParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
+        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
         return result

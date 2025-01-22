@@ -1,6 +1,6 @@
 from compas_timber.elements import MillVolume
+from compas_timber.errors import BeamJoiningError
 
-from .joint import BeamJoinningError
 from .lap_joint import LapJoint
 from .solver import JointTopology
 
@@ -11,7 +11,7 @@ class XHalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `XHalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -37,7 +37,7 @@ class XHalfLapJoint(LapJoint):
         try:
             negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ex))
         volume_a = MillVolume(negative_brep_beam_a)
         volume_b = MillVolume(negative_brep_beam_b)
         self.main_beam.add_features(volume_a)

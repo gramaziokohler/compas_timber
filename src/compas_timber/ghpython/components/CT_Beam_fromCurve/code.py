@@ -39,21 +39,13 @@ class Beam_fromCurve(component):
             # check list lengths for consistency
             N = len(centerline)
             if len(z_vector) not in (0, 1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter."
-                )
+                self.AddRuntimeMessage(Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter.")
             if len(width) not in (1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'W' I need either one or the same number of inputs as the Crv parameter."
-                )
+                self.AddRuntimeMessage(Error, " In 'W' I need either one or the same number of inputs as the Crv parameter.")
             if len(height) not in (1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'H' I need either one or the same number of inputs as the Crv parameter."
-                )
+                self.AddRuntimeMessage(Error, " In 'H' I need either one or the same number of inputs as the Crv parameter.")
             if len(category) not in (0, 1, N):
-                self.AddRuntimeMessage(
-                    Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
-                )
+                self.AddRuntimeMessage(Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter.")
 
             # duplicate data if None or single value
             if len(z_vector) != N:

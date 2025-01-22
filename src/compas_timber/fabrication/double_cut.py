@@ -15,14 +15,14 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 
 
-class DoubleCut(BTLxProcess):
+class DoubleCut(BTLxProcessing):
     """Represents a Double Cut feature to be made on a beam.
 
     Parameters
@@ -45,7 +45,7 @@ class DoubleCut(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "DoubleCut"  # type: ignore
+    PROCESSING_NAME = "DoubleCut"  # type: ignore
 
     @property
     def __data__(self):
@@ -296,7 +296,7 @@ class DoubleCut(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with beam geometry.
 
         Returns
@@ -376,12 +376,12 @@ class DoubleCut(BTLxProcess):
         return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
 
-class DoubleCutParams(BTLxProcessParams):
+class DoubleCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Double Cut feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DoubleCut`
+    instance : :class:`~compas_timber.fabrication.DoubleCut`
         The instance of the Double Cut feature.
     """
 
@@ -400,10 +400,10 @@ class DoubleCutParams(BTLxProcessParams):
         # type: () -> OrderedDict
         result = super(DoubleCutParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["Angle1"] = "{:.{prec}f}".format(self._instance.angle_1, prec=TOL.precision)
-        result["Inclination1"] = "{:.{prec}f}".format(self._instance.inclination_1, prec=TOL.precision)
-        result["Angle2"] = "{:.{prec}f}".format(self._instance.angle_2, prec=TOL.precision)
-        result["Inclination2"] = "{:.{prec}f}".format(self._instance.inclination_2, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["Angle1"] = "{:.{prec}f}".format(float(self._instance.angle_1), prec=TOL.precision)
+        result["Inclination1"] = "{:.{prec}f}".format(float(self._instance.inclination_1), prec=TOL.precision)
+        result["Angle2"] = "{:.{prec}f}".format(float(self._instance.angle_2), prec=TOL.precision)
+        result["Inclination2"] = "{:.{prec}f}".format(float(self._instance.inclination_2), prec=TOL.precision)
         return result

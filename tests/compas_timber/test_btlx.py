@@ -1,19 +1,47 @@
+import os
 import pytest
 
-from compas.geometry import Line
-from compas.geometry import Point
-from compas.geometry import Frame
-from compas.geometry import Vector
+from compas.data import json_load
 from compas.tolerance import Tolerance
+from compas.geometry import Frame
 
+import xml.etree.ElementTree as ET
+
+import compas
+import compas_timber
+from compas_timber.fabrication import BTLxWriter
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
-from compas_timber.fabrication import BTLxPart
+from compas_timber.elements import CutFeature
+from compas_timber.model import TimberModel
+
+
+@pytest.fixture(scope="module")
+def test_model():
+    model_path = os.path.join(compas_timber.DATA, "model_test.json")
+    model = json_load(model_path)
+    model.process_joinery()
+    return model
+
+
+@pytest.fixture(scope="module")
+def expected_btlx():
+    btlx_path = os.path.join(compas_timber.DATA, "model_test.btlx")
+    with open(btlx_path, "r", encoding="utf-8") as btlx:
+        return ET.fromstring(btlx.read())
+
+
+@pytest.fixture(scope="module")
+def resulting_btlx(test_model):
+    writer = BTLxWriter()
+    resulting_btlx_str = writer.model_to_xml(test_model)
+    return ET.fromstring(resulting_btlx_str)
 
 
 @pytest.fixture
-def mock_beam():
-    centerline = Line(Point(x=-48.5210457646, y=19.8797883531, z=0.5), Point(x=-38.4606473128, y=23.5837423825, z=1.0))
-    return Beam.from_centerline(centerline, width=1.0, height=1.0)
+def namespaces():
+    return {"d2m": "https://www.design2machine.com"}
 
 
 @pytest.fixture
@@ -21,119 +49,162 @@ def tol():
     return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
 
-def test_beam_ref_faces(mock_beam):
-    # https://www.design2machine.com/btlx/btlx_20.pdf page 5
-    btlx_part = BTLxPart(mock_beam, 0)
+def test_btlx_file_history(resulting_btlx, namespaces):
+    # Validate the FileHistory element
+    file_history = resulting_btlx.find("d2m:FileHistory", namespaces)
+    assert file_history is not None
 
-    assert btlx_part.ref_side_from_face(mock_beam.faces[0]) == 2
-    assert btlx_part.ref_side_from_face(mock_beam.faces[1]) == 1
-    assert btlx_part.ref_side_from_face(mock_beam.faces[2]) == 4
-    assert btlx_part.ref_side_from_face(mock_beam.faces[3]) == 3
-    assert btlx_part.ref_side_from_face(mock_beam.faces[4]) == 5
-    assert btlx_part.ref_side_from_face(mock_beam.faces[5]) == 6
+    # Validate the InitialExportProgram element within FileHistory
+    initial_export_program = file_history.find("d2m:InitialExportProgram", namespaces)
+    assert initial_export_program is not None
 
-
-def test_beam_ref_faces_attribute(mock_beam):
-    ref_side_frames_expected = (
-        Frame(
-            point=Point(x=-48.67193560518159, y=20.35704602012424, z=0.0005429194857271558),
-            xaxis=Vector(x=0.9374000278319115, y=0.3451241645032913, z=0.04658861337963174),
-            yaxis=Vector(x=0.3454993211307862, y=-0.9384189997533969, z=-1.734723475976807e-18),
-        ),
-        Frame(
-            point=Point(x=-48.7156552451492, y=20.340949685829152, z=0.9994570805142728),
-            xaxis=Vector(x=0.9374000278319115, y=0.3451241645032913, z=0.04658861337963174),
-            yaxis=Vector(x=0.04371963996761174, y=0.016096334295087427, z=-0.9989141610285457),
-        ),
-        Frame(
-            point=Point(x=-48.37015592401841, y=19.402530686075757, z=0.9994570805142728),
-            xaxis=Vector(x=0.9374000278319115, y=0.3451241645032913, z=0.04658861337963174),
-            yaxis=Vector(x=-0.3454993211307862, y=0.9384189997533969, z=1.734723475976807e-18),
-        ),
-        Frame(
-            point=Point(x=-48.3264362840508, y=19.41862702037084, z=0.000542919485727154),
-            xaxis=Vector(x=0.9374000278319115, y=0.3451241645032913, z=0.04658861337963174),
-            yaxis=Vector(x=-0.04371963996761174, y=-0.016096334295087427, z=0.9989141610285457),
-        ),
-        Frame(
-            point=Point(x=-48.67193560518159, y=20.35704602012424, z=0.0005429194857271558),
-            xaxis=Vector(x=0.3454993211307862, y=-0.9384189997533969, z=-1.734723475976807e-18),
-            yaxis=Vector(x=-0.04371963996761173, y=-0.016096334295087424, z=0.9989141610285456),
-        ),
-        Frame(
-            point=Point(x=-38.6552567933492, y=24.04490371522915, z=1.499457080514273),
-            xaxis=Vector(x=0.3454993211307862, y=-0.9384189997533969, z=-1.734723475976807e-18),
-            yaxis=Vector(x=0.04371963996761173, y=0.016096334295087424, z=-0.9989141610285456),
-        ),
-    )
-
-    for index in range(6):
-        ref_side = mock_beam.ref_sides[index]
-        assert ref_side_frames_expected[index] == ref_side
-        assert ref_side.name == "RS_{}".format(index + 1)
+    # Validate the attributes of InitialExportProgram
+    assert initial_export_program.get("CompanyName") == "Gramazio Kohler Research"
+    assert initial_export_program.get("ProgramName") == "COMPAS_Timber"
+    assert initial_export_program.get("ProgramVersion") == "Compas: {}".format(compas.__version__)
+    assert initial_export_program.get("ComputerName") == (os.getenv("computername") or "None")
+    assert initial_export_program.get("UserName") == (os.getenv("USERNAME") or "None")
 
 
-def test_beam_ref_edges(mock_beam):
-    ref_edges_expected = (
-        Line(
-            Point(x=-48.67193560518159, y=20.35704602012424, z=0.0005429194857271558),
-            Point(x=-38.61153715338159, y=24.06100004952424, z=0.5005429194857273),
-        ),
-        Line(
-            Point(x=-48.7156552451492, y=20.340949685829152, z=0.9994570805142728),
-            Point(x=-38.6552567933492, y=24.04490371522915, z=1.499457080514273),
-        ),
-        Line(
-            Point(x=-48.37015592401841, y=19.402530686075757, z=0.9994570805142728),
-            Point(x=-38.309757472218415, y=23.106484715475755, z=1.499457080514273),
-        ),
-        Line(
-            Point(x=-48.3264362840508, y=19.41862702037084, z=0.000542919485727154),
-            Point(x=-38.2660378322508, y=23.12258104977084, z=0.5005429194857273),
-        ),
-    )
-    assert len(mock_beam.ref_edges) == 4
+def test_btlx_parts(resulting_btlx, test_model, namespaces):
+    # Find the Project element
+    project = resulting_btlx.find("d2m:Project", namespaces)
+    assert project is not None
 
-    for index in range(4):
-        ref_edge = mock_beam.ref_edges[index]
-        assert ref_edges_expected[index] == ref_edge
-        assert ref_edge.name == "RE_{}".format(index + 1)
+    # Find the Parts element within the Project element
+    parts = project.find("d2m:Parts", namespaces)
+    assert parts is not None
+
+    # Find all Part elements within the Parts element
+    part_elements = parts.findall("d2m:Part", namespaces)
+    assert len(part_elements) == len(list(test_model.beams))
+
+    # Validate each Part element
+    for part, beam in zip(part_elements, test_model.beams):
+        assert part.get("Length") == "{:.3f}".format(beam.blank_length)
+        assert part.get("Height") == "{:.3f}".format(beam.height)
+        assert part.get("Width") == "{:.3f}".format(beam.width)
 
 
-def test_are_these_faces_correct(tol):
-    centerline = Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1000.0, y=0.0, z=0.0))
-    width = 60
-    height = 120
+def test_btlx_processings(resulting_btlx, test_model, namespaces):
+    # Find the Project element
+    project = resulting_btlx.find("d2m:Project", namespaces)
+    assert project is not None
 
-    beam = Beam.from_centerline(centerline, width, height)
+    # Find the Parts element within the Project element
+    parts = project.find("d2m:Parts", namespaces)
+    assert parts is not None
 
-    rs_1 = beam.ref_sides[0]
-    rs_2 = beam.ref_sides[1]
-    rs_3 = beam.ref_sides[2]
-    rs_4 = beam.ref_sides[3]
-    rs_5 = beam.ref_sides[4]
-    rs_6 = beam.ref_sides[5]
+    # Find all Part elements within the Parts element
+    part_elements = parts.findall("d2m:Part", namespaces)
+    assert len(part_elements) == len(list(test_model.beams))
 
-    assert tol.is_allclose(rs_1.xaxis, Vector.Xaxis())
-    assert tol.is_allclose(rs_1.yaxis, -Vector.Yaxis())
-    assert tol.is_allclose(rs_1.zaxis, -Vector.Zaxis())
+    # Validate the features and processings
+    for part, beam in zip(part_elements, test_model.beams):
+        beam_features = beam.features
+        processings = part.find("d2m:Processings", namespaces)
+        assert len(processings) == len(beam_features)
 
-    assert tol.is_allclose(rs_2.xaxis, Vector.Xaxis())
-    assert tol.is_allclose(rs_2.yaxis, -Vector.Zaxis())
-    assert tol.is_allclose(rs_2.zaxis, Vector.Yaxis())
 
-    assert tol.is_allclose(rs_3.xaxis, Vector.Xaxis())
-    assert tol.is_allclose(rs_3.yaxis, Vector.Yaxis())
-    assert tol.is_allclose(rs_3.zaxis, Vector.Zaxis())
+def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
+    # Validate the root element
+    assert resulting_btlx.tag == expected_btlx.tag
 
-    assert tol.is_allclose(rs_4.xaxis, Vector.Xaxis())
-    assert tol.is_allclose(rs_4.yaxis, Vector.Zaxis())
-    assert tol.is_allclose(rs_4.zaxis, -Vector.Yaxis())
+    # Validate the FileHistory element
+    resulting_file_history = resulting_btlx.find("d2m:FileHistory", namespaces)
+    expected_file_history = expected_btlx.find("d2m:FileHistory", namespaces)
+    assert resulting_file_history is not None
+    assert expected_file_history is not None
+    assert resulting_file_history.tag == expected_file_history.tag
 
-    assert tol.is_allclose(rs_5.xaxis, -Vector.Yaxis())
-    assert tol.is_allclose(rs_5.yaxis, Vector.Zaxis())
-    assert tol.is_allclose(rs_5.zaxis, -Vector.Xaxis())
+    # Validate the Project element
+    resulting_project = resulting_btlx.find("d2m:Project", namespaces)
+    expected_project = expected_btlx.find("d2m:Project", namespaces)
+    assert resulting_project is not None
+    assert expected_project is not None
+    assert resulting_project.tag == expected_project.tag
 
-    assert tol.is_allclose(rs_6.xaxis, -Vector.Yaxis())
-    assert tol.is_allclose(rs_6.yaxis, -Vector.Zaxis())
-    assert tol.is_allclose(rs_6.zaxis, Vector.Xaxis())
+    # Validate the Parts element within the Project element
+    resulting_parts = resulting_project.find("d2m:Parts", namespaces)
+    expected_parts = expected_project.find("d2m:Parts", namespaces)
+    assert resulting_parts is not None
+    assert expected_parts is not None
+    assert resulting_parts.tag == expected_parts.tag
+
+    # Validate all Part elements within the Parts element
+    resulting_part_elements = resulting_parts.findall("d2m:Part", namespaces)
+    expected_part_elements = expected_parts.findall("d2m:Part", namespaces)
+    assert len(resulting_part_elements) == len(expected_part_elements)
+
+    for resulting_part, expected_part in zip(resulting_part_elements, expected_part_elements):
+        assert resulting_part.tag == expected_part.tag
+
+        # Validate the Processings element within each Part element
+        resulting_processings = resulting_part.find("d2m:Processings", namespaces)
+        expected_processings = expected_part.find("d2m:Processings", namespaces)
+        assert resulting_processings is not None
+        assert expected_processings is not None
+        assert resulting_processings.tag == expected_processings.tag
+
+        # Validate all Processing elements within the Processings element
+        resulting_processing_elements = resulting_processings.findall("d2m:Processing", namespaces)
+        expected_processing_elements = expected_processings.findall("d2m:Processing", namespaces)
+        assert len(resulting_processing_elements) == len(expected_processing_elements)
+
+        for resulting_processing, expected_processing in zip(resulting_processing_elements, expected_processing_elements):
+            assert resulting_processing.tag == expected_processing.tag
+            assert resulting_processing.attrib == expected_processing.attrib
+
+
+def test_btlx_should_skip_feature():
+    writer = BTLxWriter()
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), 1000, 100, 100)
+    beam.add_features(CutFeature(Frame.worldXY()))
+    model.add_element(beam)
+
+    with pytest.warns():
+        result = writer.model_to_xml(model)
+
+    assert result is not None
+
+
+def test_float_formatting_of_param_dicts():
+    test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
+    params_dict = test_processing.params_dict
+
+    assert params_dict["Orientation"] == "end"
+    assert params_dict["StartX"] == "{:.3f}".format(test_processing.start_x)
+    assert params_dict["StartY"] == "{:.3f}".format(test_processing.start_y)
+    assert params_dict["StartDepth"] == "{:.3f}".format(test_processing.start_depth)
+    assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
+    assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
+    assert params_dict["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
+
+
+def test_create_processing_with_dict_params():
+    class MockProcessing:
+        PROCESSING_NAME = "MockProcessing"
+        header_attributes = {"Name": "MockProcessing", "Priority": "1", "Process": "yes", "ProcessID": "1", "ReferencePlaneID": "1"}
+        params_dict = {"Param1": "Value1", "Param2": {"SubParam1": "SubValue1", "SubParam2": "SubValue2"}, "Param3": "Value3"}
+        subprocessings = []
+
+    writer = BTLxWriter()
+    processing = MockProcessing()
+    processing_element = writer._create_processing(processing)
+
+    assert processing_element.tag == "MockProcessing"
+    assert processing_element.attrib == processing.header_attributes
+
+    param1 = processing_element.find("Param1")
+    assert param1 is not None
+    assert param1.text == "Value1"
+
+    param2 = processing_element.find("Param2")
+    assert param2 is not None
+    assert param2.get("SubParam1") == "SubValue1"
+    assert param2.get("SubParam2") == "SubValue2"
+
+    param3 = processing_element.find("Param3")
+    assert param3 is not None
+    assert param3.text == "Value3"

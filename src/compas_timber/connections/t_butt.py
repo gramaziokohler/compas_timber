@@ -1,9 +1,9 @@
-from compas_timber._fabrication import JackRafterCut
-from compas_timber._fabrication import Lap
-from compas_timber.connections import BeamJoinningError
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import Lap
 
 
 class TButtJoint(Joint):
@@ -12,7 +12,7 @@ class TButtJoint(Joint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `TButtJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `TButtJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ class TButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, **kwargs):
         super(TButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -52,10 +52,37 @@ class TButtJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.mill_depth = mill_depth
         self.features = []
+        self.fasteners = []
+        if fastener:
+            if fastener.outline is None:
+                fastener = fastener.copy()  # make a copy to avoid modifying the original fastener
+                fastener.set_default(joint=self)
+            self.base_fastener = fastener
+            if self.base_fastener:
+                self.base_fastener.place_instances(self)
+
+    @property
+    def interactions(self):
+        """Returns interactions between elements used by this joint."""
+        interactions = []
+        interactions.append((self.main_beam, self.cross_beam))
+        for fastener in self.fasteners:
+            for interface in fastener.interfaces:
+                if interface is not None:
+                    interactions.append((interface.element, fastener))
+        return interactions
+
+    @property
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
 
     @property
     def elements(self):
-        return [self.main_beam, self.cross_beam]
+        return self.beams + self.fasteners
+
+    @property
+    def generated_elements(self):
+        return self.fasteners
 
     @property
     def cross_beam_ref_side_index(self):
@@ -80,7 +107,7 @@ class TButtJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -91,11 +118,9 @@ class TButtJoint(Joint):
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(
-                beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane]
-            )
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
@@ -140,6 +165,12 @@ class TButtJoint(Joint):
             )
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)
+
+        # add the features applied by the fastener.interfaces
+        for fastener in self.fasteners:
+            for interface in fastener.interfaces:
+                features = interface.get_features(interface.element)
+                interface.element.add_features(features)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

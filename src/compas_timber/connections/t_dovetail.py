@@ -1,13 +1,13 @@
 import math
 
-from compas_timber._fabrication import DovetailMortise
-from compas_timber._fabrication import DovetailTenon
-from compas_timber._fabrication.btlx_process import TenonShapeType
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.connections.utilities import point_centerline_towards_joint
+from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import DovetailMortise
+from compas_timber.fabrication import DovetailTenon
+from compas_timber.fabrication import TenonShapeType
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -81,7 +81,7 @@ class TDovetailJoint(Joint):
     shape_radius : float, optional
         The radius used to define the shape of the joint, if applicable.
     features : list
-        List of features or machining processes applied to the joint.
+        List of features or machining processings applied to the joint.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
@@ -89,8 +89,8 @@ class TDovetailJoint(Joint):
     @property
     def __data__(self):
         data = super(TDovetailJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
@@ -106,8 +106,8 @@ class TDovetailJoint(Joint):
     # fmt: off
     def __init__(
         self,
-        main_beam,
-        cross_beam,
+        main_beam=None,
+        cross_beam=None,
         start_y=None,
         start_depth=None,
         rotation=None,
@@ -190,7 +190,7 @@ class TDovetailJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -200,9 +200,9 @@ class TDovetailJoint(Joint):
             cutting_plane.translate(-cutting_plane.normal * self.tool_height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         except Exception as ex:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,

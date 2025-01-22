@@ -13,15 +13,15 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import OrientationType
-from .btlx_process import StepShapeType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
+from .btlx import StepShapeType
 
 
-class StepJoint(BTLxProcess):
+class StepJoint(BTLxProcessing):
     """Represents a Step Joint feature to be made on a beam.
 
     Parameters
@@ -47,7 +47,7 @@ class StepJoint(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "StepJoint"  # type: ignore
+    PROCESSING_NAME = "StepJoint"  # type: ignore
 
     @property
     def __data__(self):
@@ -339,7 +339,7 @@ class StepJoint(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting planes do not create a volume that itersects with beam geometry or any step fails.
 
         Returns
@@ -680,12 +680,12 @@ class StepJoint(BTLxProcess):
         return tenon_brep
 
 
-class StepJointParams(BTLxProcessParams):
+class StepJointParams(BTLxProcessingParams):
     """A class to store the parameters of a Step Joint feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.StepJoint`
+    instance : :class:`~compas_timber.fabrication.StepJoint`
         The instance of the Step Joint feature.
     """
 
@@ -704,12 +704,12 @@ class StepJointParams(BTLxProcessParams):
         # type: () -> OrderedDict
         result = super(StepJointParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StrutInclination"] = "{:.{prec}f}".format(self._instance.strut_inclination, prec=TOL.precision)
-        result["StepDepth"] = "{:.{prec}f}".format(self._instance.step_depth, prec=TOL.precision)
-        result["HeelDepth"] = "{:.{prec}f}".format(self._instance.heel_depth, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StrutInclination"] = "{:.{prec}f}".format(float(self._instance.strut_inclination), prec=TOL.precision)
+        result["StepDepth"] = "{:.{prec}f}".format(float(self._instance.step_depth), prec=TOL.precision)
+        result["HeelDepth"] = "{:.{prec}f}".format(float(self._instance.heel_depth), prec=TOL.precision)
         result["StepShape"] = self._instance.step_shape
         result["Tenon"] = "yes" if self._instance.tenon else "no"
-        result["TenonWidth"] = "{:.{prec}f}".format(self._instance.tenon_width, prec=TOL.precision)
-        result["TenonHeight"] = "{:.{prec}f}".format(self._instance.tenon_height, prec=TOL.precision)
+        result["TenonWidth"] = "{:.{prec}f}".format(float(self._instance.tenon_width), prec=TOL.precision)
+        result["TenonHeight"] = "{:.{prec}f}".format(float(self._instance.tenon_height), prec=TOL.precision)
         return result

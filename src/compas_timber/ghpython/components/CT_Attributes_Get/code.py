@@ -41,9 +41,7 @@ class Attributes_Get(component):
             if gl:
                 gl = list(gl)
                 if len(gl) > 1:
-                    self.AddRuntimeMessage(
-                        Remark, "Some objects belong to more than one group! (I will pick the first group I find.)"
-                    )
+                    self.AddRuntimeMessage(Remark, "Some objects belong to more than one group! (I will pick the first group I find.)")
                 group = gl[0]
 
             else:

@@ -2,8 +2,8 @@ from compas.geometry import Frame
 
 from compas_timber.elements import CutFeature
 from compas_timber.elements import MillVolume
+from compas_timber.errors import BeamJoiningError
 
-from .joint import BeamJoinningError
 from .lap_joint import LapJoint
 from .solver import JointTopology
 
@@ -14,7 +14,7 @@ class LHalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in L topology.
 
-    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `LHalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -58,7 +58,7 @@ class LHalfLapJoint(LapJoint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -67,16 +67,14 @@ class LHalfLapJoint(LapJoint):
             main_cutting_frame = self.get_main_cutting_frame()
             cross_cutting_frame = self.get_cross_cutting_frame()
         except Exception as ex:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
 
         start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
         start_cross, end_cross = self.cross_beam.extension_to_plane(cross_cutting_frame)
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
-        self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid
-        )
+        self.cross_beam.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid)
 
     def add_features(self):
         assert self.main_beam and self.cross_beam
@@ -86,7 +84,7 @@ class LHalfLapJoint(LapJoint):
             cross_cutting_frame = self.get_cross_cutting_frame()
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except Exception as ex:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)

@@ -1921,17 +1921,17 @@ ref_side_cross = frame_to_rhino(cross_beam.ref_sides[cross_ref_side_index])
 #create dovetail_tenon
 DovetailTenon.define_dovetail_tool(15.0, 60.034, 28.0)
 dovetail_tenon = DovetailTenon.from_plane_and_beam(
-            cross_beam.ref_sides[cross_ref_side_index], 
-            main_beam, 
-            start_y=start_y, 
-            rotation=rotation, 
-            start_depth=start_depth, 
-            width=width, 
-            length=length, 
-            cone_angle=cone_angle, 
+            cross_beam.ref_sides[cross_ref_side_index],
+            main_beam,
+            start_y=start_y,
+            rotation=rotation,
+            start_depth=start_depth,
+            width=width,
+            length=length,
+            cone_angle=cone_angle,
             ref_side_index=main_ref_side_index,
         )
-        
+
 #cutting_frame
 cutting_plane_tenon= dovetail_tenon.frame_from_params_and_beam(main_beam)
 #tenon cutting planes
@@ -4115,7 +4115,7 @@ from compas.tolerance import TOL
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
@@ -4273,7 +4273,7 @@ class ModelComponent(component):
                     continue
                 try:
                     joint.joint_type.create(Model, *beams_to_pair, **joint.kwargs)
-                except BeamJoinningError as bje:
+                except BeamJoiningError as bje:
                     debug_info.add_joint_error(bje)
                 else:
                     handled_beams.append(beam_pair_ids)

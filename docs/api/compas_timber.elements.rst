@@ -12,3 +12,8 @@ Classes
     :nosignatures:
 
     Beam
+    Fastener
+    FastenerTimberInterface
+    Plate
+    TimberElement
+    Wall

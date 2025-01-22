@@ -5,6 +5,8 @@ from .workflow import TopologyRule
 from .workflow import JointDefinition
 from .workflow import FeatureDefinition
 from .workflow import DebugInfomation
+from .workflow import guess_joint_topology_2beams
+from .workflow import set_default_joints
 
 from .wall_from_surface import SurfaceModel
 from .wall_populator import WallPopulator
@@ -31,4 +33,6 @@ __all__ = [
     "LConnectionDetailA",
     "LConnectionDetailB",
     "TConnectionDetailA",
+    "guess_joint_topology_2beams",
+    "set_default_joints",
 ]

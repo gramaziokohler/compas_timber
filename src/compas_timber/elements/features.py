@@ -6,26 +6,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
 
-
-class FeatureApplicationError(Exception):
-    """Raised when a feature cannot be applied to an element geometry.
-
-    Attributes
-    ----------
-    feature_geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the feature that could not be applied.
-    element_geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the element that could not be modified.
-    message : str
-        The error message.
-
-    """
-
-    def __init__(self, feature_geometry, element_geometry, message):
-        super(FeatureApplicationError, self).__init__(message)
-        self.feature_geometry = feature_geometry
-        self.element_geometry = element_geometry
-        self.message = message
+from compas_timber.errors import FeatureApplicationError
 
 
 class Feature(Data):
@@ -77,7 +58,7 @@ class CutFeature(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with the element geometry.
 
         Returns
@@ -132,7 +113,7 @@ class DrillFeature(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the drill volume is not contained in the element geometry.
 
         Returns
@@ -183,7 +164,7 @@ class MillVolume(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the volume does not intersect with the element geometry.
 
         Returns
@@ -235,7 +216,7 @@ class BrepSubtraction(Feature):
 
         Raises
         ------
-        :class:`compas_timber.elements.FeatureApplicationError`
+        :class:`compas_timber.errors.FeatureApplicationError`
             If the volume does not intersect with the element geometry.
 
         Returns

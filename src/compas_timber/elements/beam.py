@@ -15,9 +15,9 @@ from compas.geometry import cross_vectors
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
 
-from .features import FeatureApplicationError
 from .timber import TimberElement
 
 
@@ -55,7 +55,7 @@ class Beam(TimberElement):
     blank : :class:`~compas.geometry.Box`
         A feature-less box representing the material stock geometry to produce this beam.
     ref_frame : :class:`~compas.geometry.Frame`
-        Reference frame for machining processes according to BTLx standard.
+        Reference frame for machining processings according to BTLx standard.
     ref_sides : tuple(:class:`~compas.geometry.Frame`)
         A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.
     ref_edges : tuple(:class:`~compas.geometry.Line`)
@@ -115,9 +115,7 @@ class Beam(TimberElement):
 
     def __repr__(self):
         # type: () -> str
-        return "Beam(frame={!r}, length={}, width={}, height={})".format(
-            self.frame, self.length, self.width, self.height
-        )
+        return "Beam(frame={!r}, length={}, width={}, height={})".format(self.frame, self.length, self.width, self.height)
 
     # ==========================================================================
     # Computed attributes
@@ -390,6 +388,8 @@ class Beam(TimberElement):
         :class:`~compas_timber.parts.Beam`
 
         """
+        if centerline.length < TOL.absolute:
+            raise ValueError("The given centerline has zero length. Check your endpoints.")
         x_vector = centerline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0

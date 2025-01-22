@@ -15,15 +15,15 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import EdgePositionType
-from .btlx_process import OrientationType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import EdgePositionType
+from .btlx import OrientationType
 
 
-class FrenchRidgeLap(BTLxProcess):
+class FrenchRidgeLap(BTLxProcessing):
     """Represents a French Ridge Lap feature to be made on a beam.
 
     Parameters
@@ -43,7 +43,7 @@ class FrenchRidgeLap(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "FrenchRidgeLap"  # type: ignore
+    PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
 
     @property
     def __data__(self):
@@ -56,16 +56,7 @@ class FrenchRidgeLap(BTLxProcess):
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
-    def __init__(
-        self,
-        orientation,
-        start_x=0.0,
-        angle=90.0,
-        ref_position=EdgePositionType.REFEDGE,
-        drillhole=False,
-        drillhole_diam=0.0,
-        **kwargs
-    ):
+    def __init__(self, orientation, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0, **kwargs):
         super(FrenchRidgeLap, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None
@@ -284,7 +275,7 @@ class FrenchRidgeLap(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting plane does not intersect with beam geometry.
 
         Returns
@@ -437,12 +428,12 @@ class FrenchRidgeLap(BTLxProcess):
         return subtraction_volume
 
 
-class FrenchRidgeLapParams(BTLxProcessParams):
+class FrenchRidgeLapParams(BTLxProcessingParams):
     """A class to store the parameters of a French Ridge Lap feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.FrenchRidgeLap`
+    instance : :class:`~compas_timber.fabrication.FrenchRidgeLap`
         The instance of the French Ridge Lap feature.
     """
 
@@ -461,9 +452,9 @@ class FrenchRidgeLapParams(BTLxProcessParams):
         # type: () -> OrderedDict
         result = super(FrenchRidgeLapParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
         result["RefPosition"] = self._instance.ref_position
         result["Drillhole"] = "yes" if self._instance.drillhole else "no"
-        result["DrillholeDiam"] = "{:.{prec}f}".format(self._instance.drillhole_diam, prec=TOL.precision)
+        result["DrillholeDiam"] = "{:.{prec}f}".format(float(self._instance.drillhole_diam), prec=TOL.precision)
         return result

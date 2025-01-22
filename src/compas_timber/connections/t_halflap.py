@@ -3,8 +3,8 @@ from compas.geometry import Frame
 from compas_timber.connections.lap_joint import LapJoint
 from compas_timber.elements import CutFeature
 from compas_timber.elements import MillVolume
+from compas_timber.errors import BeamJoiningError
 
-from .joint import BeamJoinningError
 from .solver import JointTopology
 
 
@@ -14,7 +14,7 @@ class THalfLapJoint(LapJoint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `THalfLapJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -41,7 +41,7 @@ class THalfLapJoint(LapJoint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -52,11 +52,9 @@ class THalfLapJoint(LapJoint):
             main_cutting_frame = self.get_main_cutting_frame()
             start_main, end_main = self.main_beam.extension_to_plane(main_cutting_frame)
         except AttributeError as ae:
-            raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame]
-            )
+            raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance, self.guid)
@@ -72,11 +70,9 @@ class THalfLapJoint(LapJoint):
             main_cutting_frame = self.get_main_cutting_frame()
             negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
         except AttributeError as ae:
-            raise BeamJoinningError(
-                beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame]
-            )
+            raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
         except Exception as ex:
-            raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ex))
 
         main_volume = MillVolume(negative_brep_main_beam)
         cross_volume = MillVolume(negative_brep_cross_beam)

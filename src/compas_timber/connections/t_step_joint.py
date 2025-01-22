@@ -1,11 +1,11 @@
 from compas.tolerance import TOL
 
-from compas_timber._fabrication import StepJoint
-from compas_timber._fabrication import StepJointNotch
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
+from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import StepJoint
+from compas_timber.fabrication import StepJointNotch
 
-from .joint import BeamJoinningError
 from .joint import Joint
 from .solver import JointTopology
 
@@ -16,7 +16,7 @@ class TStepJoint(Joint):
 
     This joint type is compatible with beams in T topology.
 
-    Please use `TStepJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `TStepJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -59,8 +59,8 @@ class TStepJoint(Joint):
     @property
     def __data__(self):
         data = super(TStepJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["step_shape"] = self.step_shape
         data["step_depth"] = self.step_depth
         data["heel_depth"] = self.heel_depth
@@ -156,7 +156,7 @@ class TStepJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -167,9 +167,9 @@ class TStepJoint(Joint):
             start_a, end_a = self.main_beam.extension_to_plane(plane_a)
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            raise BeamJoinningError(self.main_beam, self, debug_info=str(ae), debug_geometries=plane_a)
+            raise BeamJoiningError(self.main_beam, self, debug_info=str(ae), debug_geometries=plane_a)
         except Exception as ex:
-            raise BeamJoinningError(self.main_beam, self, debug_info=str(ex))
+            raise BeamJoiningError(self.main_beam, self, debug_info=str(ex))
         self.main_beam.add_blank_extension(start_a, end_a, self.main_beam_guid)
 
     def add_features(self):
@@ -226,7 +226,7 @@ class TStepJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the elements are not compatible for the creation of the joint.
 
         """
@@ -236,7 +236,7 @@ class TStepJoint(Joint):
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vect.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoinningError(
+                raise BeamJoiningError(
                     self.main_beam,
                     self.cross_beam,
                     debug_info="The the two beams are not aligned to create a Step joint.")

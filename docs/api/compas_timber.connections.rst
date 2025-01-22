@@ -11,16 +11,22 @@ Classes
     :toctree: generated/
     :nosignatures:
 
+    BallNodeJoint
     ConnectionSolver
-    FrenchRidgeLapJoint
     Joint
     JointTopology
     LapJoint
     LButtJoint
+    LFrenchRidgeLapJoint
     LHalfLapJoint
     LMiterJoint
+    NullJoint
+    TBirdsmouthJoint
     TButtJoint
+    TDovetailJoint
     THalfLapJoint
+    TStepJoint
+    TenonMortiseJoint
     XHalfLapJoint
 
 Functions
@@ -34,8 +40,9 @@ Functions
 
 Exceptions
 ==========
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
 
-    BeamJoinningError
+The following exceptions may be raised by this module. See the :mod:`compas_timber.errors` module for details.
+
+- :class:`compas_timber.errors.BeamJoiningError`
+- :class:`compas_timber.errors.FeatureApplicationError`
+- :class:`compas_timber.errors.FastenerApplicationError`

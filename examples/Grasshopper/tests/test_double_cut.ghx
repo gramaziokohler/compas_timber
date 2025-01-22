@@ -745,7 +745,7 @@ from compas.tolerance import TOL
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
@@ -903,7 +903,7 @@ class ModelComponent(component):
                     continue
                 try:
                     joint.joint_type.create(Model, *beams_to_pair, **joint.kwargs)
-                except BeamJoinningError as bje:
+                except BeamJoiningError as bje:
                     debug_info.add_joint_error(bje)
                 else:
                     handled_beams.append(beam_pair_ids)

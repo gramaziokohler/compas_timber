@@ -6,8 +6,8 @@ from compas.geometry import Point
 from compas.geometry import Line
 
 from compas_timber.elements import Beam
-from compas_timber._fabrication import StepJointNotch
-from compas_timber._fabrication import StepJoint
+from compas_timber.fabrication import StepJointNotch
+from compas_timber.fabrication import StepJoint
 
 
 @pytest.fixture
@@ -79,7 +79,7 @@ EXPECTED_NOTCH_PARAMS = [
             ("Orientation", "start"),
             ("StartX", "1287.514"),
             ("StartY", "0.000"),
-            ("StrutInclination", "74.565"),
+            ("StrutInclination", "105.435"),
             ("NotchLimited", "no"),
             ("NotchWidth", "80.000"),
             ("StepDepth", "0.000"),

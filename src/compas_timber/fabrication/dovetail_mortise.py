@@ -13,16 +13,16 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import FeatureApplicationError
+from compas_timber.errors import FeatureApplicationError
 
-from .btlx_process import BTLxProcess
-from .btlx_process import BTLxProcessParams
-from .btlx_process import LimitationTopType
-from .btlx_process import OrientationType
-from .btlx_process import TenonShapeType
+from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
+from .btlx import LimitationTopType
+from .btlx import OrientationType
+from .btlx import TenonShapeType
 
 
-class DovetailMortise(BTLxProcess):
+class DovetailMortise(BTLxProcessing):
     """Represents a Dovetail Mortise feature to be made on a beam.
 
     Parameters
@@ -62,7 +62,7 @@ class DovetailMortise(BTLxProcess):
 
     """
 
-    PROCESS_NAME = "DovetailMortise"  # type: ignore
+    PROCESSING_NAME = "DovetailMortise"  # type: ignore
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}
@@ -355,7 +355,7 @@ class DovetailMortise(BTLxProcess):
         width : float, optional
             The width of the mortise.
         depth : float, optional
-            The depth of the mortise. The equivalent value of the DovetailTenon BTLxProcess is the height.
+            The depth of the mortise. The equivalent value of the DovetailTenon BTLxProcessing is the height.
         cone_angle : float, optional
             The cone angle of the dovetail mortise.
         flank_angle : float, optional
@@ -502,7 +502,7 @@ class DovetailMortise(BTLxProcess):
 
         Raises
         ------
-        :class:`~compas_timber.elements.FeatureApplicationError`
+        :class:`~compas_timber.errors.FeatureApplicationError`
             If the cutting planes do not create a volume that itersects with beam geometry or any step fails.
 
         Returns
@@ -699,12 +699,12 @@ class DovetailMortise(BTLxProcess):
         return dovetail_volume
 
 
-class DovetailMortiseParams(BTLxProcessParams):
+class DovetailMortiseParams(BTLxProcessingParams):
     """A class to store the parameters of a Dovetail Mortise feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber._fabrication.DovetailMortise`
+    instance : :class:`~compas_timber.fabrication.DovetailMortise`
         The instance of the Dovetail Mortise feature.
     """
 
@@ -723,21 +723,21 @@ class DovetailMortiseParams(BTLxProcessParams):
         # type: () -> OrderedDict
 
         result = super(DovetailMortiseParams, self).as_dict()
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(self._instance.slope, prec=TOL.precision)
-        # result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
+        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
+        # result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
         #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
         result["LimitationTop"] = self._instance.limitation_top
         result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(self._instance.width, prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(self._instance.depth, prec=TOL.precision)
-        result["ConeAngle"] = "{:.{prec}f}".format(self._instance.cone_angle, prec=TOL.precision)
+        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
+        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
+        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
+        result["ConeAngle"] = "{:.{prec}f}".format(float(self._instance.cone_angle), prec=TOL.precision)
         result["UseFlankAngle"] = "yes" if self._instance.use_flank_angle else "no"
-        result["FlankAngle"] = "{:.{prec}f}".format(self._instance.flank_angle, prec=TOL.precision)
+        result["FlankAngle"] = "{:.{prec}f}".format(float(self._instance.flank_angle), prec=TOL.precision)
         result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(self._instance.shape_radius, prec=TOL.precision)
+        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
         return result

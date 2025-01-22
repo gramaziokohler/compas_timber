@@ -12,13 +12,19 @@
             {
                 "name": "Outline",
                 "description": "Outline of the Plate Fastener.",
-                "typeHintID": "curve",
+                "typeHintID": "polyline",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Thickness",
+                "description": "Thickness of the Plate Fastener.",
+                "typeHintID": "float",
                 "scriptParamAccess": 0
             },
             {
                 "name": "Cutouts",
                 "description": "Curves defining shapes to be cut out of the Plate Fastener outline.",
-                "typeHintID": "curve",
+                "typeHintID": "polyline",
                 "scriptParamAccess": 1
             },
             {

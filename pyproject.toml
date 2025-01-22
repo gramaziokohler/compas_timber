@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 170
+line-length = 179
 
 [tool.pytest.ini_options]
 minversion = "6.0"
