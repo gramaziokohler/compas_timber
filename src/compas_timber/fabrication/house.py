@@ -3,8 +3,11 @@ import math
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Rotation
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -314,13 +317,17 @@ class House(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_tenon(cls, tenon, length, width, height, start_depth):
+    def from_tenon_and_beam(cls, tenon, beam, start_depth, length, width, height):
         """Create a House instance from a Tenon or DovetailTenon instance and the beam it should cut.
 
         Parameters
         ----------
         tenon : :class:`~compas_timber.fabrication.Tenon` or :class:`~compas_timber.fabrication.DovetailTenon`
             The tenon feature that is made in conjunction with this House feature.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        start_depth : float
+            The start depth of the house.
         length : float
             The length of the house.
         width : float
@@ -332,9 +339,17 @@ class House(BTLxProcessing):
         -------
         :class:`~compas_timber.fabrication.House`
         """
-        # type: (Tenon, float, float, float) -> House
-        # start_depth = height/2
-        start_x = cls._calculate_start_x(tenon, height/2)
+        # type: (Tenon, Beam, float, float, float, float) -> House
+        # get ref_side & ref_edge
+        ref_side = beam.ref_sides[tenon.ref_side_index]
+        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
+        # get cutting_plane from tenon
+        cutting_plane = tenon.frame_from_params_and_beam(beam)
+        if isinstance(cutting_plane, Frame):
+            cutting_plane = Plane(cutting_plane.point, cutting_plane.normal)
+        # calculate House start_x
+        start_x = cls._calculate_start_x(ref_side, ref_edge, cutting_plane, tenon, start_depth)
+
         return cls(
             tenon.orientation,
             start_x,
@@ -354,14 +369,20 @@ class House(BTLxProcessing):
             tenon=tenon,
             ref_side_index=tenon.ref_side_index,
         )
-
     @staticmethod
-    def _calculate_start_x(tenon, start_depth):
-        # Calculate the start_x for the House with a start_depth of 0 from the Tenon params.
-        dx = (tenon.start_depth-start_depth) / math.tan(math.radians(tenon.inclination))
-        if tenon.orientation == OrientationType.START:
-            dx = -dx
-        return tenon.start_x + dx
+    def _calculate_start_x(ref_side, ref_edge, plane, tenon, start_depth):
+        # calculate the start_x of the cut based on the ref_side, ref_edge, plane, start_y and angle
+        plane.translate(ref_side.normal * start_depth)
+        point_start_x = intersection_line_plane(ref_edge, plane)
+        if point_start_x is None:
+            raise ValueError("Plane does not intersect with beam.")
+        start_x = distance_point_point(ref_side.point, point_start_x)
+        # count for start_depth and start_y in the start_x
+        if tenon.orientation == OrientationType.END:
+            start_x -= tenon.start_y / math.tan(math.radians(tenon.angle))
+        else:
+            start_x += tenon.start_y / math.tan(math.radians(tenon.angle))
+        return start_x
 
     ########################################################################
     # Methods

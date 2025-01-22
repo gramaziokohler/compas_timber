@@ -1,13 +1,17 @@
 import math
+
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import Plane
+from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 from .btlx import TenonShapeType
 
 
@@ -278,26 +282,39 @@ class HouseMortise(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_mortise(cls, mortise, length, width, depth):
+    def from_mortise_and_beam(cls, mortise, beam, offset, length, width, depth):
         """Create a House instance from a Mortise or DovetailMortise instance.
 
         Parameters
         ----------
         mortise : :class:`~compas_timber.fabrication.Mortise` or :class:`~compas_timber.fabrication.DovetailMortise`
             The mortise feature that is made in conjunction with this HouseMortise feature.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        offset : float
+            The offset from the start of the mortise to the start of the house mortise.
         length : float
             The length of the house mortise.
         width : float
             The width of the house mortise.
-        height : float
-            The height of the house mortise.
+        depth : float
+            The depth of the house mortise.
 
         Returns
         -------
         :class:`~compas_timber.fabrication.HouseMortise`
         """
         # type: (Mortise, float, float, float) -> HouseMortise
-        start_x = mortise.start_x + (length - mortise.length) / 2
+        # get the ref_side from the mortise
+        ref_side = beam.ref_sides[mortise.ref_side_index]
+        # get the cutting_frame from the mortise and beam
+        cutting_frame = mortise.frame_from_params_and_beam(beam)
+
+        orientation = cls._calculate_orientation(ref_side, cutting_frame)
+        if orientation == OrientationType.END:
+            offset = -offset
+        start_x = mortise.start_x + offset
+
         return cls(
             start_x,
             mortise.start_y,
@@ -315,6 +332,16 @@ class HouseMortise(BTLxProcessing):
             mortise=mortise,
             ref_side_index=mortise.ref_side_index,
         )
+
+    @staticmethod
+    def _calculate_orientation(ref_side, cutting_frame):
+        # calculate the orientation of the beam by comparing the xaxis's direction of the ref_side and the plane.
+        # Orientation is not set as a param for the BTLxMortise processing but its essential for the definition of the rest of the params.
+        perp_plane = Plane(cutting_frame.point, cutting_frame.xaxis)
+        if is_point_behind_plane(ref_side.point, perp_plane):
+            return OrientationType.END
+        else:
+            return OrientationType.START
 
     ########################################################################
     # Methods
@@ -422,6 +449,7 @@ class HouseMortise(BTLxProcessing):
         ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
         cutting_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+        cutting_frame.rotate(math.radians(self.angle), cutting_frame.normal, point=cutting_frame.point)
         return cutting_frame
 
     def volume_from_params_and_beam(self, beam):
@@ -445,7 +473,7 @@ class HouseMortise(BTLxProcessing):
 
         cutting_frame = self.frame_from_params_and_beam(beam)
 
-        translation_vector = (-cutting_frame.normal * self.depth - cutting_frame.xaxis * self.length)
+        translation_vector = (-cutting_frame.normal * self.depth + cutting_frame.xaxis * self.length)
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
