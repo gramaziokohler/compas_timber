@@ -331,16 +331,16 @@ class Lap(BTLxProcessing):
         planes.sort(key=lambda plane: abs(angle_vectors_signed(ref_side.normal, plane.normal, ref_side.yaxis, deg=True)))
 
         # calculate the orientation of the lap
-        orientation = cls._calculate_orientation(ref_side, planes)
+        orientation = cls._calculate_orientation(ref_side, planes[0])
 
         # calculate the start_x of the lap
         start_x = cls._calculate_start_x(ref_side, ref_edge, planes, orientation, depth, is_pocket)
 
         # calculate the angle of the lap
-        angle = cls._calculate_angle(ref_side, planes)
+        angle = cls._calculate_angle(ref_side, planes[0])
 
         # calculate the inclination of the lap
-        inclination = cls._calculate_inclination(ref_side, planes, is_pocket)
+        inclination = cls._calculate_inclination(ref_side, planes[0], is_pocket)
 
         # calculate the slope of the lap
         slope = 0.0 # TODO: implement slope calculation
@@ -369,9 +369,9 @@ class Lap(BTLxProcessing):
                    ref_side_index=ref_side_index)
 
     @staticmethod
-    def _calculate_orientation(ref_side, planes):
+    def _calculate_orientation(ref_side, plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
-        if is_point_behind_plane(ref_side.point, planes[0]):
+        if is_point_behind_plane(ref_side.point, plane):
             return OrientationType.END
         else:
             return OrientationType.START
@@ -394,18 +394,18 @@ class Lap(BTLxProcessing):
         return max(x_distances) if orientation == OrientationType.END else min(x_distances)
 
     @staticmethod
-    def _calculate_angle(ref_side, planes):
+    def _calculate_angle(ref_side, plane):
         # vector rotation direction of the plane's normal in the vertical direction
-        angle_vector = Vector.cross(ref_side.normal, planes[0].normal)
+        angle_vector = Vector.cross(ref_side.normal, plane.normal)
         return abs(angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True))
 
     @staticmethod
-    def _calculate_inclination(ref_side, planes, is_pocket):
+    def _calculate_inclination(ref_side, plane, is_pocket):
         # vector rotation direction of the plane's normal in the vertical direction
         if is_pocket:
             return 90.0
         else:
-            return abs(angle_vectors_signed(ref_side.normal, planes[0].normal, ref_side.normal, deg=True))
+            return abs(angle_vectors_signed(ref_side.normal, plane.normal, ref_side.normal, deg=True))
 
     @staticmethod
     def _calculate_length(planes, ref_side, ref_edge, depth, angle):
