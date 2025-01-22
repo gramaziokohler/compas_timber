@@ -299,13 +299,13 @@ class DoubleCut(BTLxProcessing):
         for plane in planes:
             angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
             if dot_vectors(angle_vector, ref_side.yaxis)<0:
-                angle_vector = -angle_vector
+                angle_vector = -angle_vector    # make sure the angle vector is pointing in the same direction as the yaxis
             if orientation == OrientationType.START:
                 angle = angle_vectors(ref_side.xaxis, angle_vector, deg=True)
             else:
                 angle = angle_vectors(ref_side.xaxis, -angle_vector, deg=True)
             angles.append(angle)
-        if sum(angle % 90 for angle in angles) > 180:
+        if sum(angle % 90 for angle in angles) > 180:   # TODO check if this is necessary and correct. I never encountered this error
             raise ValueError(
                 "The angles do not satisfy the required condition: one angle must be < 90 and another > 90."
             )
