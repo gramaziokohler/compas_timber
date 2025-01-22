@@ -18,8 +18,8 @@ class FastenerTimberInterfaceComponent(component):
                     holes.append({"point": pt, "diameter": drill_diameters[0], "vector": None, "through": True})
             else:
                 raise Warning("Number of diameters must either match the number of points or be a single value")
-        features = [feature.feature if isinstance(feature, FeatureDefinition) else feature for feature in features]
-        outline_points = [pt for pt in outline]
+        features = [feature for feature in features if feature]
+        outline_points = [pt for pt in outline] if outline else None
         interface = FastenerTimberInterface(
             outline_points,
             thickness,

@@ -42,13 +42,11 @@ class BallNodeFastener(Fastener):
 
     def __init__(self, node_point, ball_diameter=100, base_interface=None, **kwargs):
         super(BallNodeFastener, self).__init__(**kwargs)
-        print("creating bnf")
         self.node_point = node_point
         self.ball_diameter = ball_diameter
         self._base_interface = None
         if base_interface:
             self.base_interface = base_interface
-        print("base_interfae",self.base_interface)
         self._interface_shape = None
         self.interfaces = []
         self.attributes = {}

@@ -649,13 +649,10 @@ class BTLxFromGeometryDefinition(Data):
 
     """
 
-    def __init__(self, processing, geometries = None, elements = None, params_set = False, **kwargs):
+    def __init__(self, processing, geometries, elements = None, params_set = False, **kwargs):
         super(BTLxFromGeometryDefinition, self).__init__()
         self.processing = processing
-        if geometries:
-            self.geometries = geometries if isinstance(geometries, list) else [geometries]
-        else:
-            self.geometries = []
+        self.geometries = geometries if isinstance(geometries, list) else [geometries]
         if elements:
             self.elements = elements if isinstance(elements, list) else [elements]
         else:

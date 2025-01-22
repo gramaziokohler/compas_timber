@@ -59,11 +59,8 @@ class BallNodeJoint(Joint):
         self._node_point = None
         self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
         self._fastener_guid = kwargs.get("fastener_guid", None)
-        print("fast_guid", self._fastener_guid)
         if not self._fastener_guid:
-            print("creating fastener")
             self.fastener = BallNodeFastener(self.node_point, self.ball_diameter, base_interface)
-            print("fastener", self.fastener)
             self._fastener_guid = str(self.fastener.guid)
 
     @property

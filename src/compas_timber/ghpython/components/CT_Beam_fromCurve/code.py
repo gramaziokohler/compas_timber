@@ -24,7 +24,6 @@ class Beam_fromCurve(component):
         if not height:
             length = self._get_centerline_length(centerline)
             height = [length / 10]
-        print(BTLx)
         # reformat unset parameters for consistency
         if not z_vector:
             z_vector = [None]
@@ -73,8 +72,7 @@ class Beam_fromCurve(component):
             if len(category) != N:
                 category = [category[0] for _ in range(N)]
             if len(BTLx) != N:
-                BTLx = [BTLx[0] for _ in range(N)]
-            print(BTLx)
+                BTLx = [BTLx for _ in range(N)]
 
 
             for line, z, w, h, c, b in zip(centerline, z_vector, width, height, category, BTLx):
