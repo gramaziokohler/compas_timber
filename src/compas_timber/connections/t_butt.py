@@ -155,7 +155,7 @@ class TButtJoint(Joint):
         # apply the pocket on the cross beam
         if self.mill_depth:
             cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
-            lap_length = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+            lap_length = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
 
             cross_feature = Lap.from_plane_and_beam(
                 cross_cutting_plane,

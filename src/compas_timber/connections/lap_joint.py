@@ -157,8 +157,8 @@ class LapJoint(Joint):
         main_lap_depth = lap_depth * self.cut_plane_bias
         cross_lap_depth = lap_depth * (1 - self.cut_plane_bias)
 
-        main_height = self.main_beam.height if self.main_ref_side_index % 2 == 0 else self.main_beam.width
-        cross_height = self.cross_beam.height if self.cross_ref_side_index % 2 == 0 else self.cross_beam.width
+        main_height = self.main_beam.get_dimensions_relative_to_side(self.main_ref_side_index)[1]
+        cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_ref_side_index)[1]
 
         if main_lap_depth >= main_height or cross_lap_depth >= cross_height:  # TODO: should we instead bypass the bias and use the max. possible depth?
             raise BeamJoinningError(beams=self.elements, joint=self, debug_info="Lap depth is bigger than the beam's height. Consider revising the bias.")

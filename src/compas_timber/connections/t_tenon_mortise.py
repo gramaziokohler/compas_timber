@@ -157,8 +157,7 @@ class TenonMortiseJoint(Joint):
 
     def set_default_values(self):
         """Sets default values for attributes if they are not provided."""
-        width = self.main_beam.width if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.height
-        height = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+        width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
         # assign default values
         self.start_y = self.start_y or 0.0
         self.start_depth = self.start_depth or 0.0

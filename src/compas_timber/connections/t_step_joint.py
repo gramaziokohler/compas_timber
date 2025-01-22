@@ -97,7 +97,7 @@ class TStepJoint(Joint):
         main_width = self.main_beam.width if swap_main_dimensions else self.main_beam.height
         main_height = self.main_beam.height if swap_main_dimensions else self.main_beam.width
         # For the cross beam, use width or height based on the alignment
-        cross_width = self.cross_beam.width if self.cross_beam_ref_side_index % 2 == 0 else self.cross_beam.height
+        cross_width = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)[0]
 
         self.start_y = (cross_width - main_width) / 2 if cross_width > main_width else 0.0
         self.notch_limited = False
