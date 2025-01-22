@@ -388,7 +388,7 @@ class Tenon(BTLxProcessing):
         if not length_limited_top:
             start_depth = 0.0
         if not length_limited_bottom:
-            beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
+            beam_height = beam.get_dimensions_relative_to_side(ref_side_index)[1]
             length = beam_height / math.sin(math.radians(inclination)) - start_depth
 
         # calculate start_x
@@ -454,14 +454,14 @@ class Tenon(BTLxProcessing):
         # calculate the start_y of the cut based on the beam, orientation, start_y and ref_side_index
         if orientation == OrientationType.END:
             start_y = -start_y
-        beam_width = beam.width if ref_side_index % 2 == 0 else beam.height
+        beam_width= beam.get_dimensions_relative_to_side(ref_side_index)[0]
         return start_y + beam_width / 2
 
     @staticmethod
     def _calculate_start_depth(beam, inclination, length, ref_side_index):
         # calculate the start_depth of the tenon from height of the beam and the projected length of the tenon
         proj_length = (length * math.sin(math.radians(inclination)))
-        beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
+        beam_height = beam.get_dimensions_relative_to_side(ref_side_index)[1]
         return (beam_height  - proj_length)/2
 
     @staticmethod
@@ -682,18 +682,18 @@ class TenonParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(TenonParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
-        result["Rotation"] = "{:.{prec}f}".format(self._instance.rotation, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
+        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
+        result["Rotation"] = "{:.{prec}f}".format(float(self._instance.rotation), prec=TOL.precision)
         result["LengthLimitedTop"] = "yes" if self._instance.length_limited_top else "no"
         result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(self._instance.width, prec=TOL.precision)
-        result["Height"] = "{:.{prec}f}".format(self._instance.height, prec=TOL.precision)
+        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
+        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
+        result["Height"] = "{:.{prec}f}".format(float(self._instance.height), prec=TOL.precision)
         result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(self._instance.shape_radius, prec=TOL.precision)
+        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
         result["Chamfer"] = "yes" if self._instance.chamfer else "no"
         return result

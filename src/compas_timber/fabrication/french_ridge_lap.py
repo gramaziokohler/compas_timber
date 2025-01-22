@@ -373,7 +373,7 @@ class FrenchRidgeLap(BTLxProcessing):
         opp_edge = ref_edge.translated(ref_side.yaxis * ref_side.ysize)
 
         # get the height of the beam and the edge length of the lap
-        height = beam.height if self.ref_side_index % 2 == 0 else beam.width
+        height = beam.get_dimensions_relative_to_side(self.ref_side_index)[1]
         edge_length = ref_side.ysize / math.sin(math.radians(self.angle))
         if self.orientation == OrientationType.END:
             edge_length = -edge_length
@@ -452,9 +452,9 @@ class FrenchRidgeLapParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(FrenchRidgeLapParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
         result["RefPosition"] = self._instance.ref_position
         result["Drillhole"] = "yes" if self._instance.drillhole else "no"
-        result["DrillholeDiam"] = "{:.{prec}f}".format(self._instance.drillhole_diam, prec=TOL.precision)
+        result["DrillholeDiam"] = "{:.{prec}f}".format(float(self._instance.drillhole_diam), prec=TOL.precision)
         return result

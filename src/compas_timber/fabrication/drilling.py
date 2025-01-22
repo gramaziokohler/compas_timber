@@ -380,11 +380,11 @@ class DrillingParams(BTLxProcessingParams):
 
     def as_dict(self):
         result = super(DrillingParams, self).as_dict()
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
+        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
         result["DepthLimited"] = "yes" if self._instance.depth_limited else "no"
-        result["Depth"] = "{:.{prec}f}".format(self._instance.depth, prec=TOL.precision)
-        result["Diameter"] = "{:.{prec}f}".format(self._instance.diameter, prec=TOL.precision)
+        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
+        result["Diameter"] = "{:.{prec}f}".format(float(self._instance.diameter), prec=TOL.precision)
         return result

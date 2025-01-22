@@ -455,10 +455,10 @@ class DoubleCutParams(BTLxProcessingParams):
         # type: () -> OrderedDict
         result = super(DoubleCutParams, self).as_dict()
         result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
-        result["Angle1"] = "{:.{prec}f}".format(self._instance.angle_1, prec=TOL.precision)
-        result["Inclination1"] = "{:.{prec}f}".format(self._instance.inclination_1, prec=TOL.precision)
-        result["Angle2"] = "{:.{prec}f}".format(self._instance.angle_2, prec=TOL.precision)
-        result["Inclination2"] = "{:.{prec}f}".format(self._instance.inclination_2, prec=TOL.precision)
+        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
+        result["Angle1"] = "{:.{prec}f}".format(float(self._instance.angle_1), prec=TOL.precision)
+        result["Inclination1"] = "{:.{prec}f}".format(float(self._instance.inclination_1), prec=TOL.precision)
+        result["Angle2"] = "{:.{prec}f}".format(float(self._instance.angle_2), prec=TOL.precision)
+        result["Inclination2"] = "{:.{prec}f}".format(float(self._instance.inclination_2), prec=TOL.precision)
         return result
