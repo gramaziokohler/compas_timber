@@ -19,6 +19,8 @@ from .btlx import EdgePositionType
 from .btlx import LimitationTopType
 from .btlx import MachiningLimits
 from .btlx import StepShapeType
+from .house import House
+from .house_mortise import HouseMortise
 
 __all__ = [
     "BTLxWriter",
@@ -42,4 +44,6 @@ __all__ = [
     "LimitationTopType",
     "MachiningLimits",
     "StepShapeType",
+    "House",
+    "HouseMortise",
 ]
