@@ -1,11 +1,8 @@
 import inspect
 
-from compas.geometry import Line
-from compas.scene import Scene
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.fabrication import BTLxFromGeometryDefinition
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
@@ -43,7 +40,6 @@ class BTLxFromParams(component):
             processing.is_joinery_feature = False
             return processing
 
-
     def arg_names(self):
         return inspect.getargspec(self.processing_type.__init__)[0][1:]
 
@@ -58,4 +54,3 @@ class BTLxFromParams(component):
         rename_gh_output(self.processing_type.__name__, 0, ghenv)
         manage_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=1)
         ghenv.Component.ExpireSolution(True)
-

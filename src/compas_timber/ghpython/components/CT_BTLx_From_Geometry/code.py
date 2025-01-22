@@ -1,12 +1,11 @@
 import inspect
 
-from ghpythonlib.componentbase import executingcomponent as component
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
-
 import Rhino.Geometry as rg
-from compas_rhino.conversions import plane_to_compas
 from compas.geometry import Line
+from compas_rhino.conversions import plane_to_compas
+from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.fabrication import BTLxFromGeometryDefinition
 from compas_timber.fabrication import BTLxProcessing
@@ -42,7 +41,7 @@ class BTLxFromGeometry(component):
                     self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data".format(arg_name))
                     return
             geometries = []
-            for geo, arg_name in zip(args, self.arg_names())[0:self.geometry_count]:
+            for geo, arg_name in zip(args, self.arg_names())[0 : self.geometry_count]:
                 if isinstance(geo, rg.Curve):
                     geometries.append(Line(geo.PointAtStart, geo.PointAtEnd))
                 elif isinstance(geo, rg.Plane):
@@ -55,7 +54,7 @@ class BTLxFromGeometry(component):
             kwargs = {"geometries": geometries}
             if elements:
                 kwargs["elements"] = elements
-            for key, val in zip(self.arg_names()[self.geometry_count:], args[self.geometry_count:]):
+            for key, val in zip(self.arg_names()[self.geometry_count :], args[self.geometry_count :]):
                 if val is not None:
                     kwargs[key] = val
             return BTLxFromGeometryDefinition(self.processing_type(), **kwargs)
@@ -67,7 +66,7 @@ class BTLxFromGeometry(component):
             if name == "element":
                 break
             else:
-                count +=1
+                count += 1
         self.geometry_count = count
         return [name for name in names if name != "element"]
 

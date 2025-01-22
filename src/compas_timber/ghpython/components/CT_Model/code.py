@@ -9,7 +9,6 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
-
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
 TOL.absolute = 1e-6
 
@@ -29,16 +28,16 @@ class ModelComponent(component):
         debug_info = DebugInfomation()
         for element in Elements:
             # prepare elements for downstream processing
-            element.reset(only_joinery_features = True)
+            element.reset(only_joinery_features=True)
             Model.add_element(element)
 
-        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance) #TODO this is giving strange pairs that should not actually be joined. check.
+        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(
+            Model.beams, JointRules, MaxDistance
+        )  # TODO this is giving strange pairs that should not actually be joined. check.
 
         if unmatched_pairs:
             for pair in unmatched_pairs:
-                self.AddRuntimeMessage(
-                    Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key)
-                )  # TODO: add to debug_info
+                self.AddRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info
 
         if joints:
             # apply reversed. later joints in orginal list override ealier ones

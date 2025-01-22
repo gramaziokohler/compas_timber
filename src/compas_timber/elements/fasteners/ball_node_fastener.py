@@ -73,12 +73,11 @@ class BallNodeFastener(Fastener):
 
     @base_interface.setter
     def base_interface(self, base_interface):
-            outline_points = base_interface.outline_points or self._default_outline_points
-            thickness = base_interface.thickness or self._default_thickness
-            shapes = base_interface.shapes or self._default_shapes
-            features = base_interface.features or self._default_features
-            self._base_interface = FastenerTimberInterface(outline_points, thickness, shapes=shapes, features=features)
-
+        outline_points = base_interface.outline_points or self._default_outline_points
+        thickness = base_interface.thickness or self._default_thickness
+        shapes = base_interface.shapes or self._default_shapes
+        features = base_interface.features or self._default_features
+        self._base_interface = FastenerTimberInterface(outline_points, thickness, shapes=shapes, features=features)
 
     @property
     def key(self):
@@ -87,7 +86,6 @@ class BallNodeFastener(Fastener):
 
     def __str__(self):
         return "Ball Node Fastener"
-
 
     # ==========================================================================
     # Default Values for Fastener Interface

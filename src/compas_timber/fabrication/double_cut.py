@@ -1,5 +1,4 @@
 import math
-from weakref import ref
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
@@ -7,17 +6,12 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Rotation
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
-from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
-from compas.geometry import cross_vectors
 from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_plane_plane
-from compas.geometry import is_point_behind_plane
-from compas.geometry import Transformation
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError

@@ -1,4 +1,3 @@
-import inspect
 import os
 import uuid
 import xml.dom.minidom as MD
@@ -156,7 +155,7 @@ class BTLxWriter(object):
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
-        for i, beam in enumerate(model.beams): #TODO: we need to add at least Plates to this too.
+        for i, beam in enumerate(model.beams):  # TODO: we need to add at least Plates to this too.
             part_element = self._create_part(beam, i)
             parts_element.append(part_element)
         return project_element
@@ -448,7 +447,7 @@ class BTLxProcessing(Data):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index = None, priority=0, process_id=0):
+    def __init__(self, ref_side_index=None, priority=0, process_id=0):
         super(BTLxProcessing, self).__init__()
         self.ref_side_index = ref_side_index
         self._priority = priority
@@ -668,7 +667,7 @@ class BTLxFromGeometryDefinition(Data):
 
     """
 
-    def __init__(self, processing, geometries, elements = None, params_set = False, **kwargs):
+    def __init__(self, processing, geometries, elements=None, params_set=False, **kwargs):
         super(BTLxFromGeometryDefinition, self).__init__()
         self.processing = processing
         self.geometries = geometries if isinstance(geometries, list) else [geometries]
@@ -681,7 +680,7 @@ class BTLxFromGeometryDefinition(Data):
 
     @property
     def __data__(self):
-        return {"process": self.processing, "geometry": self.geometries, "elements": self.elements, "params_set": self.params_set, "kwargs": self.kwargs}
+        return {"processing": self.processing, "geometries": self.geometries, "elements": self.elements, "params_set": self.params_set, "kwargs": self.kwargs}
 
     def __repr__(self):
         return "{}({}, {})".format(BTLxFromGeometryDefinition.__class__.__name__, self.processing, self.geometries)
@@ -696,4 +695,3 @@ class BTLxFromGeometryDefinition(Data):
     def feature_from_element(self, element):
         self.params_set = True
         return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
-

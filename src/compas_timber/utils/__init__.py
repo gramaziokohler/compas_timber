@@ -174,4 +174,3 @@ def intersection_line_box_param(line, box, ignore_ends=False):
                     pts.append(intersection)
                     ref_side_indices.append(i)
     return [Point(*coords) for coords in pts], ref_side_indices
-
