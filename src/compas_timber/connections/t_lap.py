@@ -2,7 +2,7 @@ from compas.geometry import Frame
 
 from compas_timber.elements.features import CutFeature
 from compas_timber.elements.features import MillVolume
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 
@@ -54,7 +54,7 @@ class TLapJoint(LapJoint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -62,14 +62,14 @@ class TLapJoint(LapJoint):
         try:
             start_main, end_main = self.main_beam.extension_to_plane(self.main_cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(
+            raise BeamJoiningError(
                 beams=self.elements,
                 joint=self,
                 debug_info=str(ae),
                 debug_geometries=[self.main_cutting_plane],
             )
         except Exception as ex:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ex))
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
@@ -132,9 +132,9 @@ class TLapJoint(LapJoint):
                 main_cutting_frame = self.get_main_cutting_frame()
                 negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
             except AttributeError as ae:
-                raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
+                raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
             except Exception as ex:
-                raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+                raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ex))
 
             main_volume = MillVolume(negative_brep_main_beam)
             cross_volume = MillVolume(negative_brep_cross_beam)

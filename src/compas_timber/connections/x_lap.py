@@ -1,5 +1,5 @@
 from compas_timber.elements.features import MillVolume
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import Lap
 
 from .lap_joint import LapJoint
@@ -93,7 +93,7 @@ class XLapJoint(LapJoint):
             try:
                 negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
             except Exception as ex:
-                raise BeamJoinningError(beams=self.beams, joint=self, debug_info=str(ex))
+                raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ex))
             volume_a = MillVolume(negative_brep_beam_a)
             volume_b = MillVolume(negative_brep_beam_b)
             self.main_beam.add_features(volume_a)

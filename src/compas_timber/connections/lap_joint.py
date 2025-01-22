@@ -10,7 +10,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 
 from .joint import Joint
 from .utilities import are_beams_coplanar
@@ -161,7 +161,7 @@ class LapJoint(Joint):
         cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_ref_side_index)[1]
 
         if main_lap_depth >= main_height or cross_lap_depth >= cross_height:  # TODO: should we instead bypass the bias and use the max. possible depth?
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info="Lap depth is bigger than the beam's height. Consider revising the bias.")
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Lap depth is bigger than the beam's height. Consider revising the bias.")
         return main_lap_depth, cross_lap_depth
 
     def get_main_cutting_frame(self):
