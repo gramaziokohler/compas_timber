@@ -6,7 +6,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import XHalfLapJoint
+from compas_timber.connections import XLapJoint
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
 from compas_timber.elements import Beam
@@ -14,7 +14,7 @@ from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
-    JointTopology.TOPO_X: XHalfLapJoint,
+    JointTopology.TOPO_X: XLapJoint,
     JointTopology.TOPO_T: TButtJoint,
     JointTopology.TOPO_L: LMiterJoint,
 }

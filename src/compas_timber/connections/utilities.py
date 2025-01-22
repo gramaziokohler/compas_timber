@@ -168,16 +168,13 @@ def are_beams_coplanar(beam_a, beam_b, tol=TOL):
     cross_vector = beam_a.centerline.direction.cross(beam_b.centerline.direction)
     cross_vector.unitize()
 
-    # Check dot products of the cross product with the normals of both beams' frames
-    dot_with_beam_b_normal = abs(cross_vector.dot(beam_b.frame.normal))
-    dot_with_beam_a_normal = abs(cross_vector.dot(beam_a.frame.normal))
-
-    # Check if both dot products are close to 0 or 1 (indicating coplanarity)
-    is_beam_a_normal_coplanar = tol.is_close(dot_with_beam_a_normal, 1.0) or tol.is_zero(dot_with_beam_a_normal)
-    is_beam_b_normal_coplanar = tol.is_close(dot_with_beam_b_normal, 1.0) or tol.is_zero(dot_with_beam_b_normal)
-
-    # Return True if both beams are coplanar
-    return is_beam_a_normal_coplanar and is_beam_b_normal_coplanar
+    for beam in [beam_a, beam_b]:
+        # Check if the cross product is parallel to the normal of the beam's frame
+        dot_with_beam_normal = abs(cross_vector.dot(beam.frame.normal))
+        is_beam_normal_coplanar = tol.is_close(dot_with_beam_normal, 1.0) or tol.is_zero(dot_with_beam_normal)
+        if not is_beam_normal_coplanar:
+            return False
+    return True
 
 
 def point_centerline_towards_joint(beam_a, beam_b):
