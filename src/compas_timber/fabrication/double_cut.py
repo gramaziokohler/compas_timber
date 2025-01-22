@@ -427,8 +427,8 @@ class DoubleCut(BTLxProcessing):
             ref_frame.xaxis, math.radians(inclination_2), point=p_origin
         )
         cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
-
-        return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
+        self.planes = [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
+        return self.planes
 
 
 class DoubleCutParams(BTLxProcessingParams):
