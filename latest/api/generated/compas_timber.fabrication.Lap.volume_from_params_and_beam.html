@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Lap.ToString" href="compas_timber.fabrication.Lap.ToString.html" />
-    <link rel="prev" title="Lap.from_plane_and_beam" href="compas_timber.fabrication.Lap.from_plane_and_beam.html" />
+    <link rel="prev" title="Lap.planes_from_params_and_beam" href="compas_timber.fabrication.Lap.planes_from_params_and_beam.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -601,8 +601,9 @@ document.write(`
 <h1>Lap.volume_from_params_and_beam</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.fabrication.Lap.volume_from_params_and_beam">
-<span class="sig-prename descclassname"><span class="pre">Lap.</span></span><span class="sig-name descname"><span class="pre">volume_from_params_and_beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/077e047/src/compas_timber/fabrication/lap.py#L463"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Calculates the volume of the cut from the machining parameters in this instance and the given beam</p>
+<span class="sig-prename descclassname"><span class="pre">Lap.</span></span><span class="sig-name descname"><span class="pre">volume_from_params_and_beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d9459ba/src/compas_timber/fabrication/lap.py#L537"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Calculates the trimming volume from the machining parameters in this instance and the given beam,
+ensuring correct face orientation.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -612,7 +613,7 @@ document.write(`
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Box</span></code></a></dt><dd><p>The boxvolume of the cut as a box.</p>
+<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Mesh</span></code></dt><dd><p>The correctly oriented trimming volume of the cut.</p>
 </dd>
 </dl>
 </dd>
