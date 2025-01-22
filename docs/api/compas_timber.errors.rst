@@ -11,6 +11,6 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    BeamJoinningError
+    BeamJoiningError
     FeatureApplicationError
     FastenerApplicationError

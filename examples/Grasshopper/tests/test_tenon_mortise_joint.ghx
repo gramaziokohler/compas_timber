@@ -1705,19 +1705,19 @@ ref_side_cross = frame_to_rhino(cross_beam.ref_sides[cross_ref_side_index])
 
 #create dovetail_tenon
 tenon = Tenon.from_plane_and_beam(
-            cross_beam.ref_sides[cross_ref_side_index], 
-            main_beam, 
-            start_y=start_y, 
-            rotation=rotation, 
-            start_depth=start_depth, 
-            width=width, 
+            cross_beam.ref_sides[cross_ref_side_index],
+            main_beam,
+            start_y=start_y,
+            rotation=rotation,
+            start_depth=start_depth,
+            width=width,
             length=length,
             height=height,
             shape = shape,
             shape_radius = shape_radius,
             ref_side_index=main_ref_side_index,
         )
-        
+
 #print(tenon.ref_side_index)
 #house = House.from_tenon(tenon, length, width, height)
 #print(house.subprocessings)
@@ -1728,7 +1728,7 @@ tenon = Tenon.from_plane_and_beam(
 #main_beam.add_features(house)
 ##model = TimberModel()
 ##model.add_elements(main_beam)
-##        
+##
 ###cutting_frame
 #cutting_plane_tenon= tenon.frame_from_params_and_beam(main_beam)
 ###tenon volume

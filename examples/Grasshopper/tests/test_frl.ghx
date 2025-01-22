@@ -1133,7 +1133,7 @@ cross_vector = main_beam.centerline.direction.cross(cross_beam.centerline.direct
 #cross
 cross_ref_side_dict = beam_ref_side_incidence_with_vector(cross_beam, cross_vector, ignore_ends=True)
 cross_ref_side_index = max(cross_ref_side_dict, key=cross_ref_side_dict.get)
-# main 
+# main
 main_ref_side_dict = beam_ref_side_incidence_with_vector(main_beam, cross_vector, ignore_ends=True)
 main_ref_side_index = min(main_ref_side_dict, key=main_ref_side_dict.get)
 
@@ -1463,7 +1463,7 @@ from compas.tolerance import TOL
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
@@ -1621,7 +1621,7 @@ class ModelComponent(component):
                     continue
                 try:
                     joint.joint_type.create(Model, *beams_to_pair, **joint.kwargs)
-                except BeamJoinningError as bje:
+                except BeamJoiningError as bje:
                     debug_info.add_joint_error(bje)
                 else:
                     handled_beams.append(beam_pair_ids)

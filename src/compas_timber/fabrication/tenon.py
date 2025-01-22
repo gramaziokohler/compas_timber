@@ -388,7 +388,7 @@ class Tenon(BTLxProcessing):
         if not length_limited_top:
             start_depth = 0.0
         if not length_limited_bottom:
-            beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
+            beam_height = beam.get_dimensions_relative_to_side(ref_side_index)[1]
             length = beam_height / math.sin(math.radians(inclination)) - start_depth
 
         # calculate start_x
@@ -454,14 +454,14 @@ class Tenon(BTLxProcessing):
         # calculate the start_y of the cut based on the beam, orientation, start_y and ref_side_index
         if orientation == OrientationType.END:
             start_y = -start_y
-        beam_width = beam.width if ref_side_index % 2 == 0 else beam.height
+        beam_width= beam.get_dimensions_relative_to_side(ref_side_index)[0]
         return start_y + beam_width / 2
 
     @staticmethod
     def _calculate_start_depth(beam, inclination, length, ref_side_index):
         # calculate the start_depth of the tenon from height of the beam and the projected length of the tenon
         proj_length = (length * math.sin(math.radians(inclination)))
-        beam_height = beam.height if ref_side_index % 2 == 0 else beam.width
+        beam_height = beam.get_dimensions_relative_to_side(ref_side_index)[1]
         return (beam_height  - proj_length)/2
 
     @staticmethod

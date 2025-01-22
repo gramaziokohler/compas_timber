@@ -1,7 +1,7 @@
 import math
 
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.errors import BeamJoinningError
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import House
 from compas_timber.fabrication import HouseMortise
 from compas_timber.fabrication import Mortise
@@ -174,8 +174,7 @@ class TenonMortiseJoint(Joint):
 
     def set_default_values(self):
         """Sets default values for attributes if they are not provided."""
-        width = self.main_beam.width if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.height
-        height = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+        width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
         # assign default values
         self.start_y = self.start_y or 0.0
         self.start_depth = self.start_depth or 0.0
@@ -215,7 +214,7 @@ class TenonMortiseJoint(Joint):
 
         Raises
         ------
-        BeamJoinningError
+        BeamJoiningError
             If the extension could not be calculated.
 
         """
@@ -228,7 +227,7 @@ class TenonMortiseJoint(Joint):
             cutting_plane = self.main_beam.ref_sides[opposing_ref_side]
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         self.cross_beam.add_blank_extension(
             start_cross + extension_tolerance,
             end_cross + extension_tolerance,
@@ -240,7 +239,7 @@ class TenonMortiseJoint(Joint):
             cutting_plane.translate(-cutting_plane.normal * self.height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
-            raise BeamJoinningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
             end_main + extension_tolerance,
