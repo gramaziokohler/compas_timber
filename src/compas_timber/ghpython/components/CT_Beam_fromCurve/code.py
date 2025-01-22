@@ -72,8 +72,7 @@ class Beam_fromCurve(component):
             if len(category) != N:
                 category = [category[0] for _ in range(N)]
             if len(BTLx) != N:
-                BTLx = [BTLx for _ in range(N)]
-
+                BTLx = [BTLx[0] for _ in range(N)]
 
             for line, z, w, h, c, b in zip(centerline, z_vector, width, height, category, BTLx):
                 guid, geometry = self._get_guid_and_geometry(line)
