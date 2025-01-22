@@ -25,8 +25,8 @@ def test_lap_for_pocket_from_frame(tol):
         Point(x=30396.1444398, y=-3257.66821289, z=73.5839565671),
         Point(x=34824.6096086, y=-3257.66821289, z=73.5839565671),
     )
-    cross_cection = [60, 120]
-    beam = Beam.from_centerline(centerline, cross_cection[0], cross_cection[1])
+    cross_section = [60, 120]
+    beam = Beam.from_centerline(centerline, cross_section[0], cross_section[1])
 
     cutting_frame = Frame(
         point=Point(x=31108.527, y=-2416.770, z=123.584),
