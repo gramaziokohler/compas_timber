@@ -450,6 +450,7 @@ class BTLxProcessing(Data):
         self._priority = priority
         self._process_id = process_id
         self.subprocessings = None
+        self.is_joinery_feature = True
 
     @property
     def priority(self):
@@ -641,15 +642,15 @@ class EdgePositionType(object):
     OPPEDGE = "oppedge"
 
 
-class BTLxFeatureDefinition(Data):
+class BTLxFromGeometryDefinition(Data):
     """Container linking a BTLx Process Type and generator function to an input geometry.
 
     This allows delaying the actual applying of features to a downstream component.
 
     """
 
-    def __init__(self, processing, geometries = None, elements = None, **kwargs):
-        super(BTLxFeatureDefinition, self).__init__()
+    def __init__(self, processing, geometries = None, elements = None, params_set = False, **kwargs):
+        super(BTLxFromGeometryDefinition, self).__init__()
         self.processing = processing
         if geometries:
             self.geometries = geometries if isinstance(geometries, list) else [geometries]
@@ -659,15 +660,15 @@ class BTLxFeatureDefinition(Data):
             self.elements = elements if isinstance(elements, list) else [elements]
         else:
             self.elements = []
-
+        self.params_set = params_set
         self.kwargs = kwargs or {}
 
     @property
     def __data__(self):
-        return {"process": self.processing, "geometry": self.geometries, "elements": self.elements, "kwargs": self.kwargs}
+        return {"process": self.processing, "geometry": self.geometries, "elements": self.elements, "params_set": self.params_set, "kwargs": self.kwargs}
 
     def __repr__(self):
-        return "{}({}, {})".format(BTLxFeatureDefinition.__class__.__name__, self.processing, self.geometries)
+        return "{}({}, {})".format(BTLxFromGeometryDefinition.__class__.__name__, self.processing, self.geometries)
 
     def ToString(self):
         return repr(self)
@@ -677,4 +678,6 @@ class BTLxFeatureDefinition(Data):
         return self.__class__(self.processing, geometries, **self.kwargs)
 
     def feature_from_element(self, element):
+        self.params_set = True
         return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
+

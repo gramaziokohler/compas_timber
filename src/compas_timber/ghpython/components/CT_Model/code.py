@@ -11,8 +11,9 @@ from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.errors import BeamJoinningError
 from compas_timber.model import TimberModel
+from compas_timber.fabrication import DoubleCut
+
 
 JOINT_DEFAULTS = {
     JointTopology.TOPO_X: XHalfLapJoint,
@@ -39,22 +40,24 @@ class ModelComponent(component):
         debug_info = DebugInfomation()
         for element in Elements:
             # prepare elements for downstream processing
-            element.reset()
+            element.reset(only_joinery_features = True)
             Model.add_element(element)
 
         joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance)
 
         if unmatched_pairs:
             for pair in unmatched_pairs:
-                self.AddRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info
+                self.AddRuntimeMessage(
+                    Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key)
+                )  # TODO: add to debug_info
 
         if joints:
             # apply reversed. later joints in orginal list override ealier ones
             for joint in joints[::-1]:
                 try:
                     joint.joint_type.create(Model, *joint.elements, **joint.kwargs)
-                except BeamJoinningError as bje:
-                    debug_info.add_joint_error(bje)
+                except :
+                    pass
 
         # applies extensions and features resulting from joints
         Model.process_joinery()
@@ -63,14 +66,16 @@ class ModelComponent(component):
             features = [f for f in Features if f is not None]
             for f_def in features:
                 if not f_def.elements:
-                    self.AddRuntimeMessage(Warning, "features input into the timber model must be defined with at least one element")
-                else:
+                    self.AddRuntimeMessage(Warning, "Features defined in model must have elements defined. Features without elements will be ignored")
+                elif f_def.geometries:
                     for element in f_def.elements:
-                        element.add_features(f_def.processing) #this is the BTLxProcessing object from parameters.
+                        element.add_features(f_def.feature_from_element(element))
 
-        Geometry = None
         scene = Scene()
         for element in Model.elements():
+            direct_feats = element.attributes.get("BTLx", None)
+            if direct_feats:
+                element.add_features(direct_feats)
             if CreateGeometry:
                 scene.add(element.geometry)
                 if element.debug_info:

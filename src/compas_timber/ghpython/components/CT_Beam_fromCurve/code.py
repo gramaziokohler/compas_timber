@@ -14,7 +14,7 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 
 class Beam_fromCurve(component):
-    def RunScript(self, centerline, z_vector, width, height, category, updateRefObj):
+    def RunScript(self, centerline, z_vector, width, height, category, BTLx, updateRefObj):
         # minimum inputs required
         if not centerline:
             self.AddRuntimeMessage(Warning, "Input parameter 'Centerline' failed to collect data")
@@ -24,12 +24,14 @@ class Beam_fromCurve(component):
         if not height:
             length = self._get_centerline_length(centerline)
             height = [length / 10]
-
+        print(BTLx)
         # reformat unset parameters for consistency
         if not z_vector:
             z_vector = [None]
         if not category:
             category = [None]
+        if not BTLx:
+            BTLx = [None]
 
         beams = []
         blanks = []
@@ -39,13 +41,27 @@ class Beam_fromCurve(component):
             # check list lengths for consistency
             N = len(centerline)
             if len(z_vector) not in (0, 1, N):
-                self.AddRuntimeMessage(Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter.")
+                self.AddRuntimeMessage(
+                    Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter."
+                )
             if len(width) not in (1, N):
-                self.AddRuntimeMessage(Error, " In 'W' I need either one or the same number of inputs as the Crv parameter.")
+                self.AddRuntimeMessage(
+                    Error, " In 'W' I need either one or the same number of inputs as the Crv parameter."
+                )
             if len(height) not in (1, N):
-                self.AddRuntimeMessage(Error, " In 'H' I need either one or the same number of inputs as the Crv parameter.")
+                self.AddRuntimeMessage(
+                    Error, " In 'H' I need either one or the same number of inputs as the Crv parameter."
+                )
             if len(category) not in (0, 1, N):
-                self.AddRuntimeMessage(Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter.")
+                self.AddRuntimeMessage(
+                    Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
+                )
+            if BTLx.BranchCount not in (0, 1, N):
+                if BTLx.BranchCount not in (0, 1, N):
+                    self.AddRuntimeMessage(
+                        Error, " In 'BTLx' I need either none, one or the same number of tree branches as the Crv parameter."
+                    )
+            BTLx = [[b for b in BTLx.Branch(i)] for i in range(BTLx.BranchCount)]
 
             # duplicate data if None or single value
             if len(z_vector) != N:
@@ -56,8 +72,12 @@ class Beam_fromCurve(component):
                 height = [height[0] for _ in range(N)]
             if len(category) != N:
                 category = [category[0] for _ in range(N)]
+            if len(BTLx) != N:
+                BTLx = [BTLx[0] for _ in range(N)]
+            print(BTLx)
 
-            for line, z, w, h, c in zip(centerline, z_vector, width, height, category):
+
+            for line, z, w, h, c, b in zip(centerline, z_vector, width, height, category, BTLx):
                 guid, geometry = self._get_guid_and_geometry(line)
                 rhino_line = rs.coerceline(geometry)
                 line = line_to_compas(rhino_line)
@@ -66,6 +86,7 @@ class Beam_fromCurve(component):
                 beam = CTBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
                 beam.attributes["rhino_guid"] = str(guid) if guid else None
                 beam.attributes["category"] = c
+                beam.add_features(b)
                 if updateRefObj and guid:
                     update_rhobj_attributes_name(guid, "width", str(w))
                     update_rhobj_attributes_name(guid, "height", str(h))

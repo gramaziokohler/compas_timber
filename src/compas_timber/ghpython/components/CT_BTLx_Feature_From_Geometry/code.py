@@ -2,11 +2,13 @@ import inspect
 
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
+
 import Rhino.Geometry as rg
 from compas_rhino.conversions import plane_to_compas
 from compas.geometry import Line
 
-from compas_timber.fabrication import BTLxFeatureDefinition
+from compas_timber.fabrication import BTLxFromGeometryDefinition
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
@@ -35,18 +37,18 @@ class BTLxFromGeometry(component):
             return None
         else:
             ghenv.Component.Message = self.processing_type.__name__
-            for geo, arg_name in zip(args, self.arg_names()):
-                if not geo:
+            for arg, arg_name in zip(args, self.arg_names()):
+                if not arg:
                     self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data".format(arg_name))
                     return
             geometries = []
             for geo, arg_name in zip(args, self.arg_names())[0:self.geometry_count]:
-                if not geo:
-                    self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data".format(arg_name))
                 if isinstance(geo, rg.Curve):
                     geometries.append(Line(geo.PointAtStart, geo.PointAtEnd))
                 if isinstance(geo, rg.Plane):
                     geometries.append(plane_to_compas(geo))
+                else:
+                    self.AddRuntimeMessage(Error, "Input parameter {} collect unusable data".format(arg_name))
             if not geometries:
                 self.AddRuntimeMessage(Warning, "no valid geometry collected")
                 return
@@ -56,8 +58,7 @@ class BTLxFromGeometry(component):
             for key, val in zip(self.arg_names()[self.geometry_count:], args[self.geometry_count:]):
                 if val is not None:
                     kwargs[key] = val
-            process = self.processing_type()
-            return BTLxFeatureDefinition(process, **kwargs)
+            return BTLxFromGeometryDefinition(self.processing_type(), **kwargs)
 
     def arg_names(self):
         names = inspect.getargspec(self.processing_type.from_shapes_and_element)[0][1:]
