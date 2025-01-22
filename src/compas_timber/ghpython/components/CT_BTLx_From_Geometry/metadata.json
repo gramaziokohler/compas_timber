@@ -19,7 +19,7 @@
         "outputParameters": [
             {
                 "name": "Feature",
-                "description": "Feature Definition. Should connect to CT_Model features input."
+                "description": "Feature Definition. Should connect to CT_Model features input or a Fastener Timber Interface features input."
             }
         ]
     }

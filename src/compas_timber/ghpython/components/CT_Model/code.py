@@ -3,23 +3,12 @@ from compas.tolerance import TOL
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import JointTopology
-from compas_timber.connections import LMiterJoint
-from compas_timber.connections import TButtJoint
-from compas_timber.connections import XLapJoint
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
-from compas_timber.fabrication import DoubleCut
 
-
-JOINT_DEFAULTS = {
-    JointTopology.TOPO_X: XLapJoint,
-    JointTopology.TOPO_T: TButtJoint,
-    JointTopology.TOPO_L: LMiterJoint,
-}
 
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
 TOL.absolute = 1e-6
@@ -43,7 +32,7 @@ class ModelComponent(component):
             element.reset(only_joinery_features = True)
             Model.add_element(element)
 
-        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance)
+        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance) #TODO this is giving strange pairs that should not actually be joined. check.
 
         if unmatched_pairs:
             for pair in unmatched_pairs:
