@@ -170,7 +170,7 @@ def test_double_cut_params(
 ):
     # Create the DoubleCut object
     cutting_planes = [cross_beam.ref_sides[index] for index in cutting_plane_indexes]
-    double_cut = DoubleCut.from_planes_and_beam(cutting_planes, main_beams[test_index], ref_side_index)
+    double_cut = DoubleCut.from_planes_and_beam(cutting_planes, main_beams[test_index])
 
     # Validate generated parameters
     generated_params = double_cut.params_dict

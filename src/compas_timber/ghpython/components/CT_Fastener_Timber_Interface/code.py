@@ -22,12 +22,9 @@ class FastenerTimberInterfaceComponent(component):
         feat_list = []
         for feature in features:
             if feature:
-                feat = feature
                 if feature.elements:
                     self.AddRuntimeMessage( Warning, "Features in the Fastener Timber Interface are applied by joints. Elements in feature definitions will be ignored")
-                    feat = feat.copy()
-                    feat.elements = None
-                feat_list.append(feat)
+                feat_list.append(feature)
         outline_points = [pt for pt in outline] if outline else None
         interface = FastenerTimberInterface(
             outline_points,

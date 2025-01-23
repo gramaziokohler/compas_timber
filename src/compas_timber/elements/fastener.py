@@ -140,7 +140,14 @@ class FastenerTimberInterface(Data):
         self.frame = frame or Frame.worldXY()
         self.element = element
         self.shapes = shapes or []
-        self.features = features or []  # TODO: what are these? FeatureDefinitions?
+        self.features = []
+        for feat in features:
+            if feat.elements:
+                fc = feat.copy()
+                fc.elements = None
+                self.features.append(fc)
+            else:
+                self.features.append(feat)
         self._shape = None
 
     def __str__(self):
