@@ -8,6 +8,8 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.RhinoDoc import ActiveDoc
+from Grasshopper.Kernel.Data import GH_Path
+
 
 from compas_timber.elements import Beam as CTBeam
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
@@ -29,8 +31,8 @@ class Beam_fromCurve(component):
             z_vector = [None]
         if not category:
             category = [None]
-        if not BTLx:
-            BTLx = [None]
+        if BTLx.BranchCount == 0:
+                BTLx.Add(None, GH_Path(0))
 
         beams = []
         blanks = []
@@ -73,7 +75,7 @@ class Beam_fromCurve(component):
                 beam = CTBeam.from_centerline(centerline=line, width=w, height=h, z_vector=z)
                 beam.attributes["rhino_guid"] = str(guid) if guid else None
                 beam.attributes["category"] = c
-                beam.add_features(b)
+                beam.add_features([feat for feat in b if feat])
                 if updateRefObj and guid:
                     update_rhobj_attributes_name(guid, "width", str(w))
                     update_rhobj_attributes_name(guid, "height", str(h))

@@ -110,42 +110,42 @@ EXPECTED_DOUBLE_CUT_PARAMS = [
 EXPECTED_CUTTING_PLANES = [
     [
         Plane(
-            point=Point(x=31224.1239747, y=-3307.66821289, z=-59.9999999995),
-            normal=Vector(x=-1.01893407715e-16, y=6.79289384764e-17, z=-1.0),
+            point=Point(x=31224.1239747, y=-3307.66821289, z=-60.0),
+            normal=Vector(x=0.0, y=0.0, z=-1.0),
         ),
         Plane(
-            point=Point(x=31224.1239747, y=-3307.66821289, z=-59.9999999995),
-            normal=Vector(x=5.24602991441e-15, y=-1.0, z=6.24198463444e-16),
-        ),
-    ],
-    [
-        Plane(
-            point=Point(x=31987.3059470, y=-3307.66821289, z=59.9999999999),
-            normal=Vector(x=-9.2376139442e-17, y=6.15840929613e-17, z=1.0),
-        ),
-        Plane(
-            point=Point(x=31987.3059470, y=-3307.66821289, z=59.9999999999),
-            normal=Vector(x=-1.38695476766e-16, y=-1.0, z=5.90388154506e-17),
+            point=Point(x=31224.1239747, y=-3307.66821289, z=-50.0),
+            normal=Vector(x=0.0, y=-1.0, z=0.0),
         ),
     ],
     [
         Plane(
-            point=Point(x=32469.9263052, y=-3207.66821289, z=-60.0000000004),
-            normal=Vector(x=-1.02714686652e-16, y=1.0, z=1.71874245103e-16),
+            point=Point(x=31987.3059470, y=-3307.66821289, z=60.0),
+            normal=Vector(x=0.0, y=0.0, z=1.0),
         ),
         Plane(
-            point=Point(x=32469.9263052, y=-3207.66821289, z=-60.0000000004),
-            normal=Vector(x=1.63477500676e-16, y=2.44472009656e-17, z=-1.0),
+            point=Point(x=31987.3059470, y=-3307.66821289, z=50.0),
+            normal=Vector(x=0.0, y=-1.0, z=0.0),
         ),
     ],
     [
         Plane(
-            point=Point(x=33453.7063922, y=-3307.66821289, z=60.0000000000),
-            normal=Vector(x=-3.02234139005e-16, y=-1.0, z=-1.41357928117e-16),
+            point=Point(x=32469.9263052, y=-3207.66821289, z=-50.0),
+            normal=Vector(x=0.0, y=1.0, z=0.0),
         ),
         Plane(
-            point=Point(x=33453.7063922, y=-3307.66821289, z=60.0000000000),
-            normal=Vector(x=-6.92821045815e-17, y=2.46336371845e-16, z=1.0),
+            point=Point(x=32469.9263052, y=-3207.66821289, z=-60.0),
+            normal=Vector(x=0.0, y=0.0, z=-1.0),
+        ),
+    ],
+    [
+        Plane(
+            point=Point(x=33453.7063922, y=-3307.66821289, z=60.0),
+            normal=Vector(x=0.0, y=-1.0, z=0.0),
+        ),
+        Plane(
+            point=Point(x=33453.7063922, y=-3300.66821289, z=60.0),
+            normal=Vector(x=0.0, y=0.0, z=1.0),
         ),
     ],
 ]
@@ -156,8 +156,8 @@ EXPECTED_CUTTING_PLANES = [
     [
         (0, EXPECTED_DOUBLE_CUT_PARAMS[0], [0, 1], 1),  # main_beam_a
         (1, EXPECTED_DOUBLE_CUT_PARAMS[1], [1, 2], 1),  # main_beam_b
-        (2, EXPECTED_DOUBLE_CUT_PARAMS[2], [3, 0], 1),  # main_beam_c
-        (3, EXPECTED_DOUBLE_CUT_PARAMS[3], [2, 1], 3),  # main_beam_d
+        (2, EXPECTED_DOUBLE_CUT_PARAMS[2], [3, 0], 0),  # main_beam_c
+        (3, EXPECTED_DOUBLE_CUT_PARAMS[3], [2, 1], 1),  # main_beam_d
     ],
 )
 def test_double_cut_params(

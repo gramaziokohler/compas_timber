@@ -301,7 +301,7 @@ class Beam(TimberElement):
         if include_features:
             for feature in self.features:
                 try:
-                    blank_geo = feature.apply(blank_geo, beam=self)
+                    blank_geo = feature.apply(blank_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return blank_geo  # type: ignore

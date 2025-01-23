@@ -60,9 +60,6 @@ class ModelComponent(component):
 
         scene = Scene()
         for element in Model.elements():
-            direct_feats = element.attributes.get("BTLx", None)
-            if direct_feats:
-                element.add_features(direct_feats)
             if CreateGeometry:
                 scene.add(element.geometry)
                 if element.debug_info:
