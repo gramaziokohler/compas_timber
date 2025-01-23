@@ -31,8 +31,8 @@ class Beam_fromCurve(component):
             z_vector = [None]
         if not category:
             category = [None]
-        if BTLx.BranchCount == 0:
-                BTLx.Add(None, GH_Path(0))
+        if BTLx.BranchCount == 0:   # if no BTLx input, add an empty branch
+            BTLx.Add(None, GH_Path(0))
 
         beams = []
         blanks = []
@@ -50,8 +50,7 @@ class Beam_fromCurve(component):
             if len(category) not in (0, 1, N):
                 self.AddRuntimeMessage(Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter.")
             if BTLx.BranchCount not in (0, 1, N):
-                if BTLx.BranchCount not in (0, 1, N):
-                    self.AddRuntimeMessage(Error, " In 'BTLx' I need either none, one or the same number of tree branches as the Crv parameter.")
+                self.AddRuntimeMessage(Error, " In 'BTLx' I need either none, one or the same number of tree branches as the Crv parameter.")
             BTLx = [[b for b in BTLx.Branch(i)] for i in range(BTLx.BranchCount)]
 
             # duplicate data if None or single value

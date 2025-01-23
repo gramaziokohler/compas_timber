@@ -221,6 +221,7 @@ class Drilling(BTLxProcessing):
 
     @staticmethod
     def _calculate_ref_side_index(line, element):
+        # TODO: this can also be done with compas_timber.utils.intersection_line_box_param() instead
         # TODO: upstream this to compas.geometry
         def is_point_on_surface(point, surface):
             point = Point(*point)
