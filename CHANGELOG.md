@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `is_joinery_feature` to `BTLxProcessing` so that `Model.reset()` can optionally only remove features created by joinery.
 
 ### Changed
 
@@ -23,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored `compas_timber.connections.LapJoint` to comply with the new system.
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
 * Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
+* Changed `Beam_fromCurve` GH component to accept `BTLxProcessings` directly for machinings that are not related to joinery. 
+* Changed `BTLxFeatureDefinition` GH component to directly output a `BTLxProcessing` because this does not need a deferred application.
+* `Model.reset()` now has a `only_joinery_features = False` argument.
 
 ### Removed
 

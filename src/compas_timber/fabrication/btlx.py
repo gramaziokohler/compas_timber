@@ -453,6 +453,7 @@ class BTLxProcessing(Data):
         self._priority = priority
         self._process_id = process_id
         self.subprocessings = None
+        self.is_joinery_feature = True
 
     @property
     def priority(self):

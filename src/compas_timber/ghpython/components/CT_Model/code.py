@@ -38,7 +38,7 @@ class ModelComponent(component):
         debug_info = DebugInfomation()
         for element in Elements:
             # prepare elements for downstream processing
-            element.reset()
+            element.reset(only_joinery_features=True)
             Model.add_element(element)
 
         joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance)

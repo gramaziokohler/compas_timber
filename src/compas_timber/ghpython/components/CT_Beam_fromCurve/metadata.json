@@ -40,6 +40,12 @@
                 "scriptParamAccess": 1
             },
             {
+                "name": "BTLx",
+                "description": "BTLx processings to apply directly to the beam. A single list will be applied to all beams and a DataTree will be applied with each branch applied to a single beam.",
+                "typeHintID": "none",
+                "scriptParamAccess": 2
+            },
+            {
                 "name": "updateRefObj",
                 "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
                 "typeHintID": "bool",
