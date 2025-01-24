@@ -7,7 +7,7 @@ from compas.geometry import Vector
 
 from compas_timber.elements.features import DrillFeature
 from compas_timber.elements.timber import TimberElement
-from compas_timber.utils import intersection_line_box
+from compas_timber.utils import intersection_line_box_param
 
 
 class Fastener(TimberElement):
@@ -178,7 +178,7 @@ class FastenerTimberInterface(Data):
         drill_line = Line.from_point_direction_length(point, vector, length)
         drill_line.transform(Transformation.from_frame(self.frame))
         if hole["through"]:
-            pts = intersection_line_box(drill_line, element.blank)
+            pts, _ = intersection_line_box_param(drill_line, element.blank)
             if pts:
                 drill_line = Line(*pts)
                 length = drill_line.length

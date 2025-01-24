@@ -139,7 +139,7 @@ def intersection_line_plane_param(line, plane, tol=1e-6):
 __all__ = ["intersection_line_line_param", "intersection_line_plane_param"]
 
 
-def intersection_line_box(line, box, ignore_ends=False):
+def intersection_line_box_param(line, box, ignore_ends=False):
     """Get the intersection of a line with a box in the XY plane."""
     # TODO: can we not use `compas.geometry.intersection_line_box_xy()`?
     frame_indices = [
@@ -153,6 +153,8 @@ def intersection_line_box(line, box, ignore_ends=False):
     pts = []
     sides = [Frame.from_points(*(box.points[inds[0]], box.points[inds[1]], box.points[inds[2]])) for inds in frame_indices]
     sides = sides[:4] if ignore_ends else sides
+    ref_side_indices = []
+
     for i, face in enumerate(sides):
         intersection = intersection_line_plane(line, Plane.from_frame(face))
         if intersection:
@@ -162,10 +164,13 @@ def intersection_line_box(line, box, ignore_ends=False):
                 if i % 2 == 0:
                     if intersection_uv[0] >= 0 and intersection_uv[0] < box.width and intersection_uv[1] > 0 and intersection_uv[1] < box.depth:
                         pts.append(intersection)
+                        ref_side_indices.append(i)
                 else:
                     if intersection_uv[0] >= 0 and intersection_uv[0] < box.width and intersection_uv[1] > 0 and intersection_uv[1] < box.height:
                         pts.append(intersection)
+                        ref_side_indices.append(i)
             else:
                 if intersection_uv[0] >= 0 and intersection_uv[0] < box.depth and intersection_uv[1] > 0 and intersection_uv[1] < box.height:
                     pts.append(intersection)
-    return [Point(*coords) for coords in pts]
+                    ref_side_indices.append(i)
+    return [Point(*coords) for coords in pts], ref_side_indices
