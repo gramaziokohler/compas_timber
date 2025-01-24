@@ -592,6 +592,41 @@ class LimitationTopType(object):
     POCKET = "pocket"
 
 
+class AlignmentVerticalType(object):
+    """Enum for the top limitation of the cut.
+
+    Attributes
+    ----------
+    BOTTOM : literal("bottom")
+        Align to the bottom.
+    MIDDLE : literal("middle")
+        Align to the middle.
+    TOP : literal("top")
+        Align to the top.
+    """
+
+    BOTTOM = "bottom"
+    CENTER = "center"
+    TOP = "top"
+
+class AlignmentHorizontalType(object):
+    """Enum for the top limitation of the cut.
+
+    Attributes
+    ----------
+    LEFT : literal("left")
+        Align to the left.
+    CENTER : literal("center")
+        Align to the center.
+    RIGHT : literal("right")
+        Align to the right.
+    """
+
+    LEFT = "left"
+    CENTER = "center"
+    RIGHT = "right"
+
+
 class MachiningLimits(object):
     """Configuration class for the machining limits of the cut.
 
