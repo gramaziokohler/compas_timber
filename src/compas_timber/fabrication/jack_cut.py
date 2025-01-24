@@ -52,7 +52,7 @@ class JackRafterCut(BTLxProcessing):
         data["inclination"] = self.inclination
         return data
 
-    def __init__(self, orientation, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
+    def __init__(self, orientation=None, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None
@@ -82,7 +82,7 @@ class JackRafterCut(BTLxProcessing):
 
     @orientation.setter
     def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END]:
+        if orientation not in [OrientationType.START, OrientationType.END, None]:
             raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
         self._orientation = orientation
 
@@ -174,6 +174,27 @@ class JackRafterCut(BTLxProcessing):
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
+
+    @classmethod
+    def from_shapes_and_element(cls, plane, element, **kwargs):
+        """Construct a drilling process from a shape and a beam.
+
+        Parameters
+        ----------
+        shape : :class:`compas.geometry.Shape`
+            The shape of the drilling.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam to drill.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.Drilling`
+            The constructed drilling process.
+
+        """
+        if isinstance(plane, list):
+            plane = plane[0]
+        return cls.from_plane_and_beam(plane, element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):

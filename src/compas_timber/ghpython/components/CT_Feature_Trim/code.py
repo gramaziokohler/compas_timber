@@ -1,9 +1,9 @@
-from compas_rhino.conversions import plane_to_compas_frame
+from compas_rhino.conversions import plane_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.design import FeatureDefinition
-from compas_timber.elements import CutFeature
+from compas_timber.fabrication import BTLxFromGeometryDefinition
+from compas_timber.fabrication import JackRafterCut
 
 
 class TrimmingFeature(component):
@@ -14,5 +14,4 @@ class TrimmingFeature(component):
         if not isinstance(beam, list):
             beam = [beam]
 
-        feature = CutFeature(plane_to_compas_frame(plane))
-        return FeatureDefinition(feature, beam)
+        return BTLxFromGeometryDefinition(JackRafterCut, plane_to_compas(plane), beam)
