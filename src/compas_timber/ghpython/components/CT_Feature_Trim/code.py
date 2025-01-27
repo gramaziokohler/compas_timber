@@ -7,11 +7,11 @@ from compas_timber.fabrication import JackRafterCut
 
 
 class TrimmingFeature(component):
-    def RunScript(self, beam, plane):
+    def RunScript(self, element, plane):
         if not plane:
             self.AddRuntimeMessage(Warning, "Input parameter Plane failed to collect data")
 
-        if not isinstance(beam, list):
-            beam = [beam]
+        if not isinstance(element, list):
+            element = [element]
 
-        return BTLxFromGeometryDefinition(JackRafterCut, plane_to_compas(plane), beam)
+        return BTLxFromGeometryDefinition(JackRafterCut, plane_to_compas(plane), element)
