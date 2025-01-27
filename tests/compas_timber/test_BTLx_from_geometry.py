@@ -1,4 +1,3 @@
-
 from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Frame
