@@ -181,15 +181,15 @@ class JackRafterCut(BTLxProcessing):
 
         Parameters
         ----------
-        shape : :class:`compas.geometry.Shape`
-            The shape of the drilling.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam to drill.
+        plane : :class:`compas.geometry.Plane` or :class:`compas.geometry.Frame`
+            The cutting plane.
+        element : :class:`compas_timber.elements.Element`
+            The element to be cut.
 
         Returns
         -------
-        :class:`compas_timber.fabrication.Drilling`
-            The constructed drilling process.
+        :class:`compas_timber.fabrication.JackRafterCut`
+            The constructed Jack Rafter Cut process.
 
         """
         if isinstance(plane, list):

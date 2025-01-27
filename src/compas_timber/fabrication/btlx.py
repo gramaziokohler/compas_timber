@@ -661,12 +661,27 @@ class EdgePositionType(object):
 
 class BTLxFromGeometryDefinition(Data):
     """Container linking a BTLx Process Type and generator function to an input geometry.
-
     This allows delaying the actual applying of features to a downstream component.
 
+    Parameters
+    ----------
+    processing : class
+        The BTLx Processing class.
+    geometries : list of :class:`~compas.geometry.Geometry`
+        The geometries to be used as input for the processing.
+    elements : list of :class:`~compas_timber.elements.Element`
+        The elements to be used as input for the processing.
+
+    Attributes
+    processing : class
+        The BTLx Processing class.
+    geometries : list of :class:`~compas.geometry.Geometry`
+        The geometries to be used as input for the processing.
+    elements : list of :class:`~compas_timber.elements.Element`
+        The elements to be used as input for the processing.
     """
 
-    def __init__(self, processing, geometries, elements=None, params_set=False, **kwargs):
+    def __init__(self, processing, geometries, elements=None, **kwargs):
         super(BTLxFromGeometryDefinition, self).__init__()
         self.processing = processing
         self.geometries = geometries if isinstance(geometries, list) else [geometries]
@@ -674,12 +689,11 @@ class BTLxFromGeometryDefinition(Data):
             self.elements = elements if isinstance(elements, list) else [elements]
         else:
             self.elements = []
-        self.params_set = params_set
         self.kwargs = kwargs or {}
 
     @property
     def __data__(self):
-        return {"processing": self.processing, "geometries": self.geometries, "elements": self.elements, "params_set": self.params_set, "kwargs": self.kwargs}
+        return {"processing": self.processing, "geometries": self.geometries, "elements": self.elements, "kwargs": self.kwargs}
 
     def __repr__(self):
         return "{}({}, {})".format(BTLxFromGeometryDefinition.__class__.__name__, self.processing, self.geometries)
@@ -692,5 +706,4 @@ class BTLxFromGeometryDefinition(Data):
         return self.__class__(self.processing, geometries, **self.kwargs)
 
     def feature_from_element(self, element):
-        self.params_set = True
         return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)

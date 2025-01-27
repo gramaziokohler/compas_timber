@@ -193,14 +193,16 @@ class Drilling(BTLxProcessing):
 
     @classmethod
     def from_shapes_and_element(cls, line, element, diameter, **kwargs):
-        """Construct a drilling process from a shape and a element.
+        """Construct a drilling process from a line, element and diameter.
 
         Parameters
         ----------
-        shape : :class:`compas.geometry.Shape`
-            The shape of the drilling.
+        line : :class:`compas.geometry.Line`
+            The line on which the drilling is to be made.
         element : :class:`compas_timber.elements.Element`
             The element to drill.
+        diameter : float
+            The diameter of the drilling.
 
         Returns
         -------
