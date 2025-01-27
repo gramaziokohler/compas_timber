@@ -1,4 +1,3 @@
-import pytest
 
 from compas.geometry import Point
 from compas.geometry import Plane
@@ -14,14 +13,13 @@ from compas_timber.fabrication.jack_cut import JackRafterCut
 
 
 def test_deferred_drilling():
-
     width = 60
     height = 120
     centerline = Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1000.0, y=0.0, z=0.0))
 
     beam = Beam.from_centerline(centerline, width, height)
 
-    test_frame = Frame(Point(500, 0, 0), [-1, 0, 0], [0,0 , -1])
+    test_frame = Frame(Point(500, 0, 0), [-1, 0, 0], [0, 0, -1])
     drill_line = Line(Point(x=0.0, y=0.0, z=-100.0), Point(x=200.0, y=0.0, z=100.0))
     xform = Transformation.from_frame_to_frame(Frame.worldXY(), test_frame)
     t_line = drill_line.transformed(xform)
@@ -29,26 +27,23 @@ def test_deferred_drilling():
     diameter = 10.0
 
     drilling = Drilling.from_line_and_element(drill_line, beam, diameter)
-    drilling_def = BTLxFromGeometryDefinition(Drilling, drill_line, beam, diameter = diameter)
+    drilling_def = BTLxFromGeometryDefinition(Drilling, drill_line, beam, diameter=diameter)
 
     t_drilling = Drilling.from_line_and_element(t_line, beam, diameter)
     t_def = drilling_def.transformed(xform)
-
 
     assert drilling_def.feature_from_element(beam).params_dict == drilling.params_dict
     assert t_def.feature_from_element(beam).params_dict == t_drilling.params_dict
 
 
 def test_deferred_jack_cut():
-
     width = 60
     height = 120
     centerline = Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1000.0, y=0.0, z=0.0))
     beam = Beam.from_centerline(centerline, width, height)
 
-
-    test_frame = Frame(Point(500, 0, 0), [-1, 0, 0], [0,0 , -1])
-    test_plane = Plane(Point(500, 0, 0), Vector(-1,0,1))
+    test_frame = Frame(Point(500, 0, 0), [-1, 0, 0], [0, 0, -1])
+    test_plane = Plane(Point(500, 0, 0), Vector(-1, 0, 1))
     xform = Transformation.from_frame_to_frame(Frame.worldXY(), test_frame)
     t_plane = test_plane.transformed(xform)
 
@@ -58,21 +53,18 @@ def test_deferred_jack_cut():
     t_jack_cut = JackRafterCut.from_plane_and_beam(t_plane, beam)
     t_def = jack_cut_def.transformed(xform)
 
-
     assert jack_cut_def.feature_from_element(beam).params_dict == jack_cut.params_dict
     assert t_def.feature_from_element(beam).params_dict == t_jack_cut.params_dict
 
 
-
 def test_deferred_double_cut():
-
     width = 60
     height = 120
     centerline = Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1000.0, y=0.0, z=0.0))
     beam = Beam.from_centerline(centerline, width, height)
 
-    test_frame = Frame(Point(500, 0, 0), [-1, 0, 0], [0,0 , -1])
-    test_planes = [Plane(Point(500, 0, 0), Vector(-1,0,1)), Plane(Point(500, 0, 0), Vector(-1,0,-1))]
+    test_frame = Frame(Point(500, 0, 0), [-1, 0, 0], [0, 0, -1])
+    test_planes = [Plane(Point(500, 0, 0), Vector(-1, 0, 1)), Plane(Point(500, 0, 0), Vector(-1, 0, -1))]
     print(test_planes)
     xform = Transformation.from_frame_to_frame(Frame.worldXY(), test_frame)
     t_planes = [plane.transformed(xform) for plane in test_planes]
@@ -84,10 +76,5 @@ def test_deferred_double_cut():
     double_cut_def_a = BTLxFromGeometryDefinition(DoubleCut, test_planes, beam, ref_side_index=0)
     t_def = double_cut_def_a.transformed(xform)
 
-
-
     assert double_cut_def.feature_from_element(beam).params_dict == double_cut.params_dict
     assert t_def.feature_from_element(beam).params_dict == t_double_cut.params_dict
-
-
-

@@ -21,4 +21,4 @@ class DrillHoleFeature(component):
         if not isinstance(element, list):
             element = [element]
 
-        return BTLxFromGeometryDefinition(Drilling, line_to_compas(line), element, diameter = diameter)
+        return BTLxFromGeometryDefinition(Drilling, line_to_compas(line), element, diameter=diameter)
