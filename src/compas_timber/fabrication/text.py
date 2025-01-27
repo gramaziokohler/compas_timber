@@ -1,54 +1,77 @@
+from operator import is_
 import os
 
 from compas.data import json_load
 from compas.geometry import Transformation
 from compas.geometry import Scale
 from compas.geometry import Frame
-
 from compas.tolerance import TOL
 
-import compas_timber
-
+from .btlx import AlignmentType
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 
+
 class Text(BTLxProcessing):
-    """Represents a drilling processing.
+    """Represents a Text feature to be made on a beam.
 
     Parameters
     ----------
     start_x : float
-        The x-coordinate of the start point of the drilling. In the local coordinate system of the reference side.
+        The start x-coordinate of the cut in parametric space of the reference side. -100000.0 < start_x < 100000.0.
     start_y : float
-        The y-coordinate of the start point of the drilling. In the local coordinate system of the reference side.
+        The start y-coordinate of the cut in parametric space of the reference side. 0.0 < start_y < 50000.0.
     angle : float
-        The rotation angle of the drilling. In degrees. Around the z-axis of the reference side.
-    inclination : float
-        The inclination angle of the drilling. In degrees. Around the y-axis of the reference side.
-    depth_limited : bool, default True
-        If True, the drilling depth is limited to `depth`. Otherwise, drilling will go through the element.
-    depth : float, default 50.0
-        The depth of the drilling. In mm.
-    diameter : float, default 20.0
-        The diameter of the drilling. In mm.
+        The horizontal angle of the first cut. -179.9 < angle < 179.9.
+    alignment_vertical : int
+        The vertical alignment of the text. Should be either AlignmentType.TOP, AlignmentType.CENTER ot AlignmentType.BOTTOM.
+    alignment_horizontal : int
+        The horizontal alignment of the text. Should be either AlignmentType.LEFT, AlignmentType.CENTER or AlignmentType.RIGHT.
+    alignment_multiline : int
+        The alignment of the text in multiline mode. Should be either AlignmentType.LEFT, AlignmentType.CENTER or AlignmentType.RIGHT.
+    stacked_marking : bool
+        If the text is a stacked marking.
+    text_height_auto : bool
+        If the text height is automatically calculated.
+    text_height : float
+        The height of the text. 0.1 < text_height < 5000.0.
+    text : str
+        The text to be engraved on the beam.
 
-StartX LengthPosType 0 -100000 100000
-StartY WidthNType 0 -50000 50000
-Angle Angle2NType 0 -180 180
-AlignmentVertical AlignmentVerticalType bottom
-AlignmentHorizontal AlignmentHorizontalType left
-AlignmentMultiline AlignmentHorizontalType left
-StackedMarking BooleanType no no yes
-TextHeightAuto BooleanType yes no yes
-TextHeight WidthType 20 0 50000
-Text xs:string
     """
-
-    # TODO: add __data__
 
     PROCESSING_NAME = "Text"  # type: ignore
 
-    def __init__(self, start_x=0.0, start_y=0.0, angle=0.0, alignment_vertical="bottom", alignment_horizontal="left", alignment_multiline="left", stacked_marking=False, text_height_auto=True, text_height=20.0, text="", **kwargs):
+    @property
+    def __data__(self):
+        data = super(Text, self).__data__
+        data["start_x"] = self.start_x
+        data["start_y"] = self.start_y
+        data["angle"] = self.angle
+        data["alignment_vertical"] = self.alignment_vertical
+        data["alignment_horizontal"] = self.alignment_horizontal
+        data["alignment_multiline"] = self.alignment_multiline
+        data["stacked_marking"] = self.stacked_marking
+        data["text_height_auto"] = self.text_height_auto
+        data["text_height"] = self.text_height
+        data["text"] = self.text
+        return data
+
+    # fmt: off
+    def __init__(
+        self,
+        start_x=0.0,
+        start_y=0.0,
+        angle=0.0,
+        alignment_vertical=AlignmentType.BOTTOM,
+        alignment_horizontal=AlignmentType.LEFT,
+        alignment_multiline=AlignmentType.LEFT,
+        stacked_marking=False,
+        text_height_auto=True,
+        text_height=20.0,
+        text="",
+        **kwargs
+    ):
         super(Text, self).__init__(**kwargs)
         self._start_x = None
         self._start_y = None
@@ -61,7 +84,6 @@ Text xs:string
         self._text_height = None
         self._text = None
 
-
         self.start_x = start_x
         self.start_y = start_y
         self.angle = angle
@@ -72,6 +94,7 @@ Text xs:string
         self.text_height_auto = text_height_auto
         self.text_height = text_height
         self.text = text
+
 
     ########################################################################
     # Properties
@@ -222,6 +245,28 @@ Text xs:string
                 pt.translate([self.start_x, self.start_y, 0])
                 pt.transform(Transformation.from_frame_to_frame(Frame.worldXY(), face))
         return string_curves
+
+    @classmethod
+    def label_element(cls, element):
+        if element.is_beam:
+            str = "G{}_B{}".format(element.group, element.key)
+            x_positions = []
+            for feat in element.features:
+                if getattr(feat, "start_x", None):
+                    x_positions.append(feat.start_x)
+            if x_positions:
+                x_positions.sort()
+            gaps = [x_positions[i+1] - x_positions[i] for i in range(len(x_positions)-1)]
+            if gaps:
+                max_gap = max(gaps)
+                max_gap_index = gaps.index(max_gap)
+                return max_gap, max_gap_index
+            else:
+                return None, None
+
+
+
+
 
 class TextParams(BTLxProcessingParams):
     def __init__(self, instance):
