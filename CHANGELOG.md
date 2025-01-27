@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `BTLxFromGeometryDefinition` class to replace the depricated `FeatureDefinition`. This allows deferred calculation of BTLx processings.
+* Added `from_shapes_and_element` class method to `Drilling`, `JackRafterCut`, and `DoubleCut` as a wrapper for their geometry based constructors for use with `BTLxFromGeometryDefinition`.
 
 ### Changed
 
@@ -23,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored `compas_timber.connections.LapJoint` to comply with the new system.
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
 * Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
+* Changed referenced to `beam` in `Drilling` to `element`. 
+
 
 ### Removed
 
