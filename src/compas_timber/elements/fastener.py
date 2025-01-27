@@ -5,8 +5,8 @@ from compas.geometry import Line
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.fabrication import Drilling
 from compas_timber.elements.timber import TimberElement
+from compas_timber.fabrication import Drilling
 from compas_timber.utils import intersection_line_box
 
 
