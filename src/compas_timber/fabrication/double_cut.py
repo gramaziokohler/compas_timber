@@ -62,7 +62,7 @@ class DoubleCut(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation = None,
         start_x=0.0,
         start_y=50.0,
         angle_1=45.0,
@@ -102,7 +102,7 @@ class DoubleCut(BTLxProcessing):
 
     @orientation.setter
     def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END]:
+        if orientation not in [OrientationType.START, OrientationType.END, None]:
             raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
         self._orientation = orientation
 
