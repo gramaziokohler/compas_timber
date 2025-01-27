@@ -1,4 +1,3 @@
-from operator import is_
 import os
 
 from compas.data import json_load
@@ -6,6 +5,7 @@ from compas.geometry import Transformation
 from compas.geometry import Scale
 from compas.geometry import Frame
 from compas.tolerance import TOL
+
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
@@ -239,33 +239,51 @@ class Text(BTLxProcessing):
                 translated_crvs.append(crv.translated([x_pos+spacing,0,0]))
             string_curves.extend(translated_crvs)
             x_pos += spacing + character_dict[char]["width"]
+        x_pos *= self.text_height
+
+        if self.alignment_vertical == AlignmentType.BOTTOM:
+            y_offset = 0
+        elif self.alignment_vertical == AlignmentType.CENTER:
+            y_offset = -self.text_height/2
+        elif self.alignment_vertical == AlignmentType.TOP:
+            y_offset = -self.text_height
+
+        if self.alignment_horizontal == AlignmentType.LEFT:
+            x_offset = 0
+        elif self.alignment_horizontal == AlignmentType.CENTER:
+            x_offset = -x_pos/2
+        elif self.alignment_horizontal == AlignmentType.RIGHT:
+            x_offset = -x_pos
+
+
         for crv in string_curves:
             for pt in crv.points:
                 pt.transform(Scale.from_factors([self.text_height]*3))
-                pt.translate([self.start_x, self.start_y, 0])
+                pt.translate([self.start_x+x_offset, self.start_y+y_offset, 0])
                 pt.transform(Transformation.from_frame_to_frame(Frame.worldXY(), face))
         return string_curves
 
     @classmethod
-    def label_element(cls, element):
+    def label_element(cls, element, string = None, text_height = None):
         if element.is_beam:
-            str = "G{}_B{}".format(element.group, element.key)
-            x_positions = []
+            text_height = text_height if text_height else min(element.width, element.height) / 2
+            x_positions = [0.0, element.length]
             for feat in element.features:
                 if getattr(feat, "start_x", None):
                     x_positions.append(feat.start_x)
             if x_positions:
                 x_positions.sort()
-            gaps = [x_positions[i+1] - x_positions[i] for i in range(len(x_positions)-1)]
-            if gaps:
-                max_gap = max(gaps)
-                max_gap_index = gaps.index(max_gap)
-                return max_gap, max_gap_index
-            else:
-                return None, None
-
-
-
+                biggest_gap = (0,0)
+            for i in range(len(x_positions)-1):
+                if x_positions[i+1] - x_positions[i] > biggest_gap[1]-biggest_gap[0]:
+                    biggest_gap = (x_positions[i], x_positions[i+1])
+            x_pos = (biggest_gap[0] + biggest_gap[1]) / 2
+            string = string if string else "G{}_B{}".format(element.attributes["category"], element.key)
+            text = cls( ref_side_index = 1, start_x=x_pos, start_y=text_height, alignment_horizontal = AlignmentType.CENTER, alignment_vertical = AlignmentType.CENTER, text_height = text_height, text = string)
+            element.add_feature(text)
+            return text
+        else:
+            raise ValueError("Only beams can be labeled.")
 
 
 class TextParams(BTLxProcessingParams):

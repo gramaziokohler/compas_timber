@@ -14,7 +14,7 @@ from .french_ridge_lap import FrenchRidgeLap
 from .tenon import Tenon
 from .mortise import Mortise
 from .slot import Slot
-
+from .text import Text
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
 from .btlx import LimitationTopType
@@ -38,7 +38,7 @@ __all__ = [
     "Tenon",
     "Mortise",
     "Slot",
-
+    "Text",
     "TenonShapeType",
     "EdgePositionType",
     "LimitationTopType",
