@@ -1,10 +1,6 @@
-from compas.geometry import Vector
-from compas.geometry import Point
 from compas.geometry import Plane
-from compas.geometry import Frame
+from compas.geometry import Vector
 
-from compas_timber.elements import beam
-from compas_timber.utils import intersection_line_line_param
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence
@@ -12,6 +8,7 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication.double_cut import DoubleCut
+from compas_timber.utils import intersection_line_line_param
 
 
 class YButtJoint(Joint):
@@ -55,8 +52,6 @@ class YButtJoint(Joint):
     def __init__(self, main_beam=None, cross_beam_a=None, cross_beam_b=None, mill_depth=None, **kwargs):
         super(YButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
-        print("cross_beam_a", cross_beam_a)
-        print("cross_beam_b", cross_beam_b)
         self.cross_beams = [cross_beam_a, cross_beam_b]
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
         self.cross_beam_guids = kwargs.get("cross_beam_guids", None) or [str(beam.guid) for beam in self.cross_beams]
@@ -103,7 +98,6 @@ class YButtJoint(Joint):
         model.add_joint(joint)
         return joint
 
-
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
@@ -123,26 +117,20 @@ class YButtJoint(Joint):
             limit_to_segments=False,
         )
         # TODO: add error-trap + solution for I-miter joints
-
         p = (pxA + pxB) * 0.5
-        print(beam_a.endpoint_closest_to_point(p)[1], beam_a.midpoint)
         # makes sure they point outward of a joint point
         va = Vector.from_start_end(beam_a.endpoint_closest_to_point(p)[1], beam_a.midpoint)
         vb = Vector.from_start_end(beam_b.endpoint_closest_to_point(p)[1], beam_b.midpoint)
 
-        print("va", va)
-        print("vb", vb)
         va.unitize()
         vb.unitize()
         v_bisector = va + vb
         # get frame
         v_perp = Vector(*v_bisector.cross(va))
         v_normal = Vector(*v_bisector.cross(v_perp))
-        print("v_normal", v_normal)
 
         plnA = Plane(p, v_normal)
         plnB = Plane(p, v_normal * -1.0)
-        print("plnA", plnA)
         return plnA, plnB
 
     def add_extensions(self):
@@ -176,7 +164,6 @@ class YButtJoint(Joint):
             self.guid,
         )
 
-
         start_a, start_b = None, None
         plane_a, plane_b, start_a, end_a, start_b, end_b = None, None, None, None, None, None
         try:
@@ -192,14 +179,13 @@ class YButtJoint(Joint):
         self.cross_beams[0].add_blank_extension(start_a, end_a, self.guid)
         self.cross_beams[1].add_blank_extension(start_b, end_b, self.guid)
 
-
-
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
+
         assert self.main_beam and self.cross_beams[0] and self.cross_beams[1]
         if self.features:
             self.main_beam.remove_features(self.features)
@@ -213,7 +199,7 @@ class YButtJoint(Joint):
             if self.mill_depth:
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             planes.append(cutting_plane)
-        for pl,b in zip(planes, self.cross_beams):
+        for pl, b in zip(planes, self.cross_beams):
             pl.point = pl.closest_point(b.midpoint)
         main_feature = DoubleCut.from_planes_and_beam(planes, self.main_beam)
         self.main_beam.add_features(main_feature)
@@ -222,9 +208,9 @@ class YButtJoint(Joint):
         """apply the pockets on the cross beams"""
         if self.mill_depth:
             for beam in self.cross_beams:
-                cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index(beam)]
-                lap_length = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index(beam))[1]
-
+                ref_side_index = self.main_beam_ref_side_index(beam)
+                cross_cutting_plane = self.main_beam.ref_sides[ref_side_index]
+                lap_length = self.main_beam.get_dimensions_relative_to_side(ref_side_index)[1]
                 cross_feature = Lap.from_plane_and_beam(
                     cross_cutting_plane,
                     beam,
@@ -241,13 +227,11 @@ class YButtJoint(Joint):
             plane_a, plane_b = self.get_miter_planes(*self.cross_beams)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
-        print("Here1")
         cut1 = JackRafterCut.from_plane_and_beam(plane_a, self.cross_beams[0])
         cut2 = JackRafterCut.from_plane_and_beam(plane_b, self.cross_beams[1])
         self.cross_beams[0].add_features(cut1)
         self.cross_beams[1].add_features(cut2)
         self.features = [cut1, cut2]
-
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
