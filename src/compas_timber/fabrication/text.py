@@ -1,11 +1,10 @@
 import os
 
 from compas.data import json_load
-from compas.geometry import Transformation
-from compas.geometry import Scale
 from compas.geometry import Frame
+from compas.geometry import Scale
+from compas.geometry import Transformation
 from compas.tolerance import TOL
-
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
@@ -280,7 +279,14 @@ class Text(BTLxProcessing):
                     biggest_gap = (x_positions[i], x_positions[i+1])
             x_pos = (biggest_gap[0] + biggest_gap[1]) / 2
             string = string if string else "G{}_B{}".format(element.attributes["category"], element.key)
-            text = cls( ref_side_index = 1, start_x=x_pos, start_y=text_height, alignment_horizontal = AlignmentType.CENTER, alignment_vertical = AlignmentType.CENTER, text_height = text_height, text = string)
+            text = cls(
+                ref_side_index = 1,
+                start_x=x_pos,
+                start_y=text_height,
+                alignment_horizontal = AlignmentType.CENTER,
+                alignment_vertical = AlignmentType.CENTER,
+                text_height = text_height,
+                text = string)
             element.add_feature(text)
             return text
         else:
@@ -304,5 +310,3 @@ class TextParams(BTLxProcessingParams):
         result["TextHeight"] = "{:.{prec}f}".format(float(self._instance.text_height), prec=TOL.precision)
         result["Text"] = self._instance.text
         return result
-
-

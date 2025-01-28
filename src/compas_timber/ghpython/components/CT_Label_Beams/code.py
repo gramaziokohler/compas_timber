@@ -1,9 +1,11 @@
-from ghpythonlib.componentbase import executingcomponent as component
-from compas_timber.fabrication import Text
 from compas.scene import Scene
+from ghpythonlib.componentbase import executingcomponent as component
+
+from compas_timber.fabrication import Text
+
 
 class MyComponent(component):
-    def RunScript(self, model, base_string = None, char_to_replace = None, attributes = None, text_size = None):
+    def RunScript(self, model, base_string=None, char_to_replace=None, attributes=None, text_size=None):
         scene = Scene()
         self.clear_labels(model)
         for element in model.beams:

@@ -44,5 +44,4 @@ __all__ = [
     "LimitationTopType",
     "MachiningLimits",
     "StepShapeType",
-
 ]
