@@ -141,13 +141,14 @@ class FastenerTimberInterface(Data):
         self.element = element
         self.shapes = shapes or []
         self.features = []
-        for feat in features:
-            if feat.elements:
-                fc = feat.copy()
-                fc.elements = None
-                self.features.append(fc)
-            else:
-                self.features.append(feat)
+        if features:
+            for feat in features:
+                if feat.elements:
+                    fc = feat.copy()
+                    fc.elements = None
+                    self.features.append(fc)
+                else:
+                    self.features.append(feat)
         self._shape = None
 
     def __str__(self):
