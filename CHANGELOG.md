@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored `compas_timber.connections.LapJoint` to comply with the new system.
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
 * Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
+* Enhanced lap behavior for optimal beam orientation in `LapJoint` class.
+* Fixed `restore_beams_from_keys` in `LMiterJoint` to use the correct variable names.
+* Reworked `DoubleCut` to more reliably produce the feature and geometry with the `from_planes_and_element` class method.
+* Renamed `intersection_box_line()` to `intersection_beam_line_param()`, which now take a beam input and outputs the intersecting ref_face_index.
 
 ### Removed
 
