@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
 * Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
 * Enhanced lap behavior for optimal beam orientation in `LapJoint` class.
+* Fixed `restore_beams_from_keys` in `LMiterJoint` to use the correct variable names.
 
 ### Removed
 
