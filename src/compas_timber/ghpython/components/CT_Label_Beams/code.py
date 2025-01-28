@@ -2,39 +2,32 @@ from ghpythonlib.componentbase import executingcomponent as component
 from compas_timber.fabrication import Text
 from compas.scene import Scene
 
-labels = []
-
 class MyComponent(component):
-    def RunScript(self, model, base_string, char_to_replace, attributes, text_size):
-        model = model.copy()
-        if labels:
-            for element in model.beams:
-                for label in labels:
-                    if label in element.features:
-                        print("removing text")
-                        element.remove_features(label)
-                        labels.remove(label)
+    def RunScript(self, model, base_string = None, char_to_replace = None, attributes = None, text_size = None):
         scene = Scene()
+        self.clear_labels(model)
         for element in model.beams:
-            if char_to_replace and attributes:
-                text = base_string
-                frags = text.split(char_to_replace)
-
-                if text[0] == char_to_replace:
-                    new_text = getattr(element, attributes[0])
-                    for frag, attribute in zip(frags, attributes[1:]):
-                        new_text += [frag, getattr(element, attribute)]
-                else:
-                    new_text = frags[0]
-                    for attribute, frag in zip(attributes, frags[1:]):
-                        new_text += str(getattr(element, attribute)) + frag
-
-                tp = Text.label_element(element, new_text, text_size)
-
+            for feature in element.features:
+                if getattr(feature, "is_label", None):
+                    element.remove_features(feature)
+            attribute_names = [attr for attr in attributes]
+            if base_string and char_to_replace and attributes:
+                string_out = ""
+                for char in base_string:
+                    if char != char_to_replace:
+                        string_out += char
+                    else:
+                        string_out += str(getattr(element, attribute_names.pop()))
+                tp = Text.label_element(element, string_out, text_size)
             else:
                 tp = Text.label_element(element, base_string, text_size)
-            labels.append(tp)
-
+            tp.is_label = True
             for crv in tp.draw_string_on_element(element):
                 scene.add(crv)
         return scene.draw()
+
+    def clear_labels(self, model):
+        for element in model.beams:
+            for feature in element.features:
+                if getattr(feature, "is_label", None):
+                    element.remove_features(feature)

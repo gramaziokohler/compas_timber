@@ -94,6 +94,7 @@ class Text(BTLxProcessing):
         self.text_height_auto = text_height_auto
         self.text_height = text_height
         self.text = text
+        self.is_label = False
 
 
     ########################################################################
