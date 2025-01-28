@@ -41,7 +41,7 @@ class JointRuleFromList(component):
                 )
                 return
             kwargs = {}
-            for i, val in enumerate(args[self.arg_start_index - 1 :]):
+            for i, val in enumerate(args[1:]):
                 if val is not None:
                     kwargs[self.arg_names[i]] = val
 

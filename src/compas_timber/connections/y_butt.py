@@ -52,12 +52,14 @@ class YButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, main_beam=None, cross_beams=None, mill_depth=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam_a=None, cross_beam_b=None, mill_depth=None, **kwargs):
         super(YButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
-        self.cross_beams = cross_beams
+        print("cross_beam_a", cross_beam_a)
+        print("cross_beam_b", cross_beam_b)
+        self.cross_beams = [cross_beam_a, cross_beam_b]
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guids = kwargs.get("cross_beam_guids", None) or [str(beam.guid) for beam in cross_beams]
+        self.cross_beam_guids = kwargs.get("cross_beam_guids", None) or [str(beam.guid) for beam in self.cross_beams]
         self.mill_depth = mill_depth
         self.features = []
 
@@ -97,7 +99,7 @@ class YButtJoint(Joint):
 
         """
         elements = list(elements)
-        joint = cls(elements[0], elements[1:], **kwargs)
+        joint = cls(*elements, **kwargs)
         model.add_joint(joint)
         return joint
 
@@ -207,11 +209,12 @@ class YButtJoint(Joint):
         """get the cutting planes for the main beam"""
         planes = []
         for beam in self.cross_beams:
-            cutting_plane = beam.ref_sides[self.cross_beam_ref_side_index(beam)]
+            cutting_plane = Plane.from_frame(beam.ref_sides[self.cross_beam_ref_side_index(beam)])
             if self.mill_depth:
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             planes.append(cutting_plane)
-        print("planes", planes)
+        for pl,b in zip(planes, self.cross_beams):
+            pl.point = pl.closest_point(b.midpoint)
         main_feature = DoubleCut.from_planes_and_beam(planes, self.main_beam)
         self.main_beam.add_features(main_feature)
         self.features = [main_feature]
