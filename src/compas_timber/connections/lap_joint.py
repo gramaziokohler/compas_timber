@@ -7,6 +7,7 @@ from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 
@@ -109,7 +110,12 @@ class LapJoint(Joint):
     @staticmethod
     def _get_beam_ref_side_index(beam_a, beam_b, flip):
         """Returns the reference side index of beam_a with respect to beam_b."""
+        # get the offset vector of the two centerlines, if any
+        offset_vector = Vector.from_start_end(*intersection_line_line(beam_a.centerline, beam_b.centerline))
         cross_vector = beam_a.centerline.direction.cross(beam_b.centerline.direction)
+        # flip the cross_vector if it is pointing in the opposite direction of the offset_vector
+        if cross_vector.dot(offset_vector) < 0:
+            cross_vector = -cross_vector
         ref_side_dict = beam_ref_side_incidence_with_vector(beam_a, cross_vector, ignore_ends=True)
         if flip:
             return max(ref_side_dict, key=ref_side_dict.get)
