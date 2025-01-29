@@ -95,11 +95,11 @@ class Plate(TimberElement):
 
     @property
     def width(self):
-        return self.obb.ysize
+        return self.obb.zsize
 
     @property
     def height(self):
-        return self.obb.zsize
+        return self.obb.ysize
 
     @property
     def vector(self):
@@ -146,7 +146,6 @@ class Plate(TimberElement):
             frame = Frame(frame.point, frame.yaxis, frame.xaxis)
             self.outline.reverse()
             # flips the frame if the frame.point is at an exterior corner
-
         self.frame = frame
 
     def compute_geometry(self, include_features=True):
@@ -212,19 +211,18 @@ class Plate(TimberElement):
             The OBB of the element.
 
         """
-        vertices = [point for point in self.outline.points]
+        vertices = []
         for point in self.outline.points:
-            vertices.append(point + self.vector)
-        for point in vertices:
-            point.transform(Transformation.from_change_of_basis(Frame.worldXY(), self.frame))
+            vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
         obb = Box.from_points(vertices)
         obb.xsize += inflate
         obb.ysize += inflate
-        obb.zsize += inflate
+        obb.zsize = self.thickness
+        obb.translate([0, 0, self.thickness / 2])
         self._ref_frame = Frame([obb.xmin, obb.ymin, obb.zmin], Vector.Xaxis(), Vector.Yaxis())
-
-        obb.transform(Transformation.from_change_of_basis(self.frame, Frame.worldXY()))
-        self._ref_frame.transform(Transformation.from_change_of_basis(self.frame, Frame.worldXY()))
+        xform_back = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
+        obb.transform(xform_back)
+        self._ref_frame.transform(xform_back)
         return obb
 
     def compute_collision_mesh(self):

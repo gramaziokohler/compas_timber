@@ -2,6 +2,7 @@ import math
 
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Line
 from compas.geometry import NurbsCurve
 from compas.geometry import Point
@@ -11,6 +12,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import bounding_box_xy
 from compas.geometry import closest_point_on_segment
+from compas.geometry import closest_point_on_plane
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point_sqrd
 from compas.geometry import dot_vectors
@@ -20,6 +22,7 @@ from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.geometry import offset_polyline
 from compas.tolerance import Tolerance
+from compas_timber.fabrication import FreeContour
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -483,12 +486,15 @@ class SurfaceModel(object):
 
     def generate_plates(self):
         if self.sheeting_inside:
+
             self._elements.append(Plate(self.outer_polyline, self.sheeting_inside))
         if self.sheeting_outside:
             pline = self.outer_polyline.copy()
             pline.translate(self.frame.zaxis * (self.frame_depth + self.sheeting_outside))
             self._elements.append(Plate(pline, self.sheeting_outside))
         for window in self.windows:
+            for plate in self.plate_elements:
+                window.apply_contour_to_plate(plate)
             self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
 
     class Window(object):
@@ -595,6 +601,14 @@ class SurfaceModel(object):
 
             vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
             return BrepSubtraction(vol)
+
+
+        def apply_contour_to_plate(self, plate):
+            projected_points = []
+            for point in self.outline.points:
+                projected_points.append(closest_point_on_plane(point, Plane.from_frame(plate.frame)))
+            feature = FreeContour.from_polyline_and_element(Polyline(projected_points), plate)
+            plate.add_feature(feature)
 
         def process_outlines(self):
             for i, segment in enumerate(self.outline.lines):

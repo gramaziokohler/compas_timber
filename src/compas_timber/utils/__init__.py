@@ -154,4 +154,28 @@ def intersection_line_beam_param(line, beam, ignore_ends=False):
     return [Point(*coords) for coords in pts], ref_side_indices
 
 
-__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param"]
+def correct_polyline_direction(polyline, normal_vector):
+    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to correct.
+
+    Returns
+    -------
+    :class:`compas.geometry.Polyline`
+        The corrected polyline.
+
+    """
+    angle_sum = 0
+    for i in range(len(polyline) - 1):
+        u = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+        angle = angle_vectors_signed(u, v, normal_vector)
+        angle_sum += angle
+    if angle_sum > 0:
+        polyline = polyline[::-1]
+    return polyline
+
+__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "correct_polyline_direction"]
