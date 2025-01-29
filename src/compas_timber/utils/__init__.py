@@ -137,8 +137,25 @@ def intersection_line_plane_param(line, plane, tol=1e-6):
 
 
 def intersection_line_beam_param(line, beam, ignore_ends=False):
-    """Get the intersection of a line with a beam in the XY plane and the corresponding ref_face_indices."""
-    # TODO: can we not use `compas.geometry.intersection_line_box_xy()`?
+    """Get the intersection of a line with a beam in the XY plane and the corresponding ref_face_indices.
+
+    Parameters
+    ----------
+    line : :class:`~compas.geometry.Line`
+        The line to intersect with the beam.
+    beam : :class:`~compas_timber.geometry.Beam`
+        The beam to intersect with the line.
+    ignore_ends : bool, optional
+        If True, the intersection with the beam ends is ignored. Default is False.
+
+    Returns
+    -------
+    list of :class:`~compas.geometry.Point`
+        list of intersection points.
+    list of int
+        list of indices of the reference faces of the beam that the intersection points lie on.
+
+    """
 
     sides = beam.ref_sides[:4] if ignore_ends else beam.ref_sides
     pts = []
