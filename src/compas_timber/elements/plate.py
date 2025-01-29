@@ -1,4 +1,5 @@
 from compas.geometry import Box
+from compas.geometry import Point
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -62,6 +63,7 @@ class Plate(TimberElement):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+        self._ref_frame = None
 
     def __repr__(self):
         # type: () -> str
@@ -88,8 +90,26 @@ class Plate(TimberElement):
         return self.obb
 
     @property
+    def blank_length(self):
+        return self.obb.xsize
+
+    @property
+    def width(self):
+        return self.obb.ysize
+
+    @property
+    def height(self):
+        return self.obb.zsize
+
+    @property
     def vector(self):
         return self.frame.zaxis * self.thickness
+
+    @property
+    def ref_frame(self):
+        if not self._ref_frame:
+            self.compute_obb()
+        return self._ref_frame
 
     @property
     def shape(self):
@@ -148,7 +168,7 @@ class Plate(TimberElement):
         if include_features:
             for feature in self.features:
                 try:
-                    plate_geo = feature.apply(plate_geo)
+                    plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return plate_geo
@@ -201,9 +221,10 @@ class Plate(TimberElement):
         obb.xsize += inflate
         obb.ysize += inflate
         obb.zsize += inflate
+        self._ref_frame = Frame([obb.xmin, obb.ymin, obb.zmin], Vector.Xaxis(), Vector.Yaxis())
 
         obb.transform(Transformation.from_change_of_basis(self.frame, Frame.worldXY()))
-
+        self._ref_frame.transform(Transformation.from_change_of_basis(self.frame, Frame.worldXY()))
         return obb
 
     def compute_collision_mesh(self):

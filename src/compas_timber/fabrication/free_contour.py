@@ -1,5 +1,5 @@
 import math
-from re import L
+import xml.etree.ElementTree as ET
 
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -49,41 +49,21 @@ class FreeContour(BTLxProcessing):
 
     # TODO: add __data__
 
-    PROCESSING_NAME = "Drilling"  # type: ignore
+    PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(self, start_point, contours, **kwargs):
+    def __init__(self, contour_points, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
-        self._start_point = None
-        self._contours = None
 
-        self.start_point = start_point
-        self.contours = contours
+        self.contour_points = contour_points
 
     ########################################################################
     # Properties
     ########################################################################
 
-    @property
-    def start_point(self):
-        return self._start_point
-
-    @start_point.setter
-    def start_point(self, value):
-        self._start_point = Point(*value)
-
-    @property
-    def contours(self):
-        return self._contours
-
-    @contours.setter
-    def contours(self, value):
-        self._contours = value
-
 
     @property
     def header_attributes(self):
-        """Return the attributes to be included in the XML element.
-        CounterSink="yes" ToolID="0" ToolPosition="left" Process="yes" ReferencePlaneID="101" Name="Contour""""
+        """Return the attributes to be included in the XML element."""
         return {
             "Name": self.PROCESSING_NAME,
             "ToolID":"0",
@@ -94,9 +74,9 @@ class FreeContour(BTLxProcessing):
 
 
     @property
-    def simple_contour_dict(self):
-        return SimpleCountourParams(self).as_dict()
-
+    def params_dict(self):
+        print("params_dict", FreeCountourParams(self).as_dict())
+        return FreeCountourParams(self).as_dict()
 
 
     ########################################################################
@@ -127,17 +107,17 @@ class FreeContour(BTLxProcessing):
             The constructed drilling processing.
 
         """
-        frame = element.ref_sides[ref_side_index]
+        frame = element.ref_frame
         xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         points = [pt.transformed(xform) for pt in polyline]
-        return cls(points[0], polyline[1:], ref_side_index=ref_side_index)
+        return cls(points, ref_side_index=ref_side_index)
 
 
     ########################################################################
     # Methods
     ########################################################################
 
-    def apply(self, geometry, beam):
+    def apply(self, geometry, element):
         """Apply the feature to the beam geometry.
 
         Raises
@@ -151,15 +131,7 @@ class FreeContour(BTLxProcessing):
             The resulting geometry after processing.
 
         """
-        drill_geometry = Brep.from_cylinder(self.cylinder_from_params_and_beam(beam))
-        try:
-            return geometry - drill_geometry
-        except IndexError:
-            raise FeatureApplicationError(
-                drill_geometry,
-                geometry,
-                "The drill geometry does not intersect with beam geometry.",
-            )
+        return geometry
 
 
     @staticmethod
@@ -167,15 +139,44 @@ class FreeContour(BTLxProcessing):
         result = [{"StartPoint": BTLxPart.et_point_vals(polyline[0])}]
         for point in polyline[1:]:
             result.append({"Line": {"EndPoint": BTLxPart.et_point_vals(point)}})
+        print("polyline_to_contour", result)
+        return result
+
+    def create_processing(self):
+        """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
+        moved to BTLxProcessing because some processings are significantly different and need to be overridden.
+
+        Parameters
+        ----------
+        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
+            The processing object.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The processing element.
+
+        """
+        # create processing element
+        processing_element = ET.Element(
+            self.PROCESSING_NAME,
+            self.header_attributes,
+        )
+        # create parameter subelements
+        contour_element = ET.SubElement(processing_element, "Contour")
+        ET.SubElement(contour_element, "StartPoint", BTLxPart.et_point_vals(self.contour_points[0]))
+        for pt in self.contour_points[1:]:
+            point_element = ET.SubElement(contour_element, "Line")
+            point_element.append(ET.Element("EndPoint", BTLxPart.et_point_vals(pt)))
+        return processing_element
 
 
 
-class SimpleCountourParams(BTLxProcessingParams):
+class FreeCountourParams(BTLxProcessingParams):
     def __init__(self, instance):
-        super(SimpleCountourParams, self).__init__(instance)
+        super(FreeCountourParams, self).__init__(instance)
 
     def as_dict(self):
-        result = super(SimpleCountourParams, self).as_dict()
-        result["StartPoint"] = "{:.{prec}f}".format(float(self._instance.start_point), prec=TOL.precision)
-        result["Contour"] = self._instance.polyline_to_contour(self._instance.contours)
+        result = {}
+        result["Contour"] = FreeContour.polyline_to_contour(self._instance.contour)
         return result

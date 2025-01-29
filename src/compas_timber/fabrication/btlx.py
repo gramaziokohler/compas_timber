@@ -13,6 +13,8 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
+from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 
 
 class BTLxWriter(object):
@@ -155,12 +157,13 @@ class BTLxWriter(object):
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
-        for i, beam in enumerate(model.beams):
-            part_element = self._create_part(beam, i)
-            parts_element.append(part_element)
+        for i, element in enumerate(model.elements()):
+            if isinstance(element, Beam) or isinstance(element, Plate):
+                part_element = self._create_part(element, i)
+                parts_element.append(part_element)
         return project_element
 
-    def _create_part(self, beam, order_num):
+    def _create_part(self, element, order_num):
         """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
@@ -177,16 +180,16 @@ class BTLxWriter(object):
 
         """
         # create part element
-        part = BTLxPart(beam, order_num=order_num)
+        part = BTLxPart(element, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # create processings element for the part if there are any
-        if beam.features:
+        if element.features:
             processings_element = ET.Element("Processings")
-            for feature in beam.features:
+            for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = self._create_processing(feature)
+                    processing_element = feature.create_processing()
                     processings_element.append(processing_element)
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
@@ -215,6 +218,7 @@ class BTLxWriter(object):
         )
         # create parameter subelements
         for key, value in processing.params_dict.items():
+            print(key, value)
             if key not in processing.header_attributes:
                 child = ET.SubElement(processing_element, key)
                 if isinstance(value, dict):
@@ -257,8 +261,6 @@ class BTLxPart(object):
         The blank of the beam.
     blank_frame : :class:`~compas.geometry.Frame`
         The frame of the blank.
-    blank_length : float
-        The blank length of the beam.
     processings : list
         A list of the processings applied to the beam.
     et_element : :class:`~xml.etree.ElementTree.Element`
@@ -266,14 +268,13 @@ class BTLxPart(object):
 
     """
 
-    def __init__(self, beam, order_num):
-        self.beam = beam
+    def __init__(self, element, order_num):
+        self.element = element
         self.order_num = order_num
-        self.length = beam.blank_length
-        self.width = beam.width
-        self.height = beam.height
-        self.frame = beam.ref_frame
-        self.blank_length = beam.blank_length
+        self.length = element.blank_length
+        self.width = element.width
+        self.height = element.height
+        self.frame = element.ref_frame
         self.processings = []
         self._et_element = None
 
@@ -326,7 +327,7 @@ class BTLxPart(object):
             "TimberGrade": "",
             "QualityGrade": "",
             "Count": "1",
-            "Length": "{:.{prec}f}".format(self.blank_length, prec=BTLxWriter.POINT_PRECISION),
+            "Length": "{:.{prec}f}".format(self.length, prec=BTLxWriter.POINT_PRECISION),
             "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
             "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
             "Weight": "0",
@@ -337,7 +338,8 @@ class BTLxPart(object):
             "ModuleNumber": "",
         }
 
-    def et_point_vals(self, point):
+    @staticmethod
+    def et_point_vals(point):
         """Returns the ET point values for a given point.
 
         Parameters
@@ -482,6 +484,43 @@ class BTLxProcessing(Data):
         if not self.subprocessings:
             self.subprocessings = []
         self.subprocessings.append(subprocessing)
+
+
+    def create_processing(self):
+        """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
+        moved to BTLxProcessing because some processings are significantly different and need to be overridden.
+
+        Parameters
+        ----------
+        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
+            The processing object.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The processing element.
+
+        """
+        # create processing element
+        processing_element = ET.Element(
+            self.PROCESSING_NAME,
+            self.header_attributes,
+        )
+        # create parameter subelements
+        for key, value in self.params_dict.items():
+            print(key, value)
+            if key not in self.header_attributes:
+                child = ET.SubElement(processing_element, key)
+                if isinstance(value, dict):
+                    for sub_key, sub_value in value.items():
+                        child.set(sub_key, sub_value)
+                else:
+                    child.text = str(value)
+        # create subprocessing elements
+        if self.subprocessings:
+            for subprocessing in self.subprocessings:
+                processing_element.append(self._create_processing(subprocessing))
+        return processing_element
 
 
 class BTLxProcessingParams(object):
