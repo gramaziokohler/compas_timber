@@ -657,3 +657,26 @@ class EdgePositionType(object):
 
     REFEDGE = "refedge"
     OPPEDGE = "oppedge"
+
+
+class AlignmentType(object):
+    """Enum for the alignment of the cut.
+    Attributes
+    ----------
+    TOP : literal("top")
+        Top alignment.
+    BOTTOM : literal("bottom")
+        Bottom alignment.
+    LEFT : literal("left")
+        Left alignment.
+    RIGHT : literal("right")
+        Right alignment.
+    CENTER : literal("center")
+        Center alignment.
+    """
+
+    TOP = "top"
+    BOTTOM = "bottom"
+    LEFT = "left"
+    RIGHT = "right"
+    CENTER = "center"
