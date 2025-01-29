@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `YButtJoint` which joins the ends of three joints where the `cross_beams` get a miter cut and the `main_beam` gets a double cut.
 
 ### Changed
 

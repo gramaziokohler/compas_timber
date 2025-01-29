@@ -1,5 +1,9 @@
+import math
+
 from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.tolerance import TOL
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
@@ -24,7 +28,7 @@ class YButtJoint(Joint):
     cross_beams : list of :class:`~compas_timber.parts.Beam`
         The cross beams to be joined.
     mill_depth : float
-        The depth of the pocket to be milled in the cross beam.
+        The depth of the pocket to be milled in the cross beams.
 
     Attributes
     ----------
@@ -33,7 +37,7 @@ class YButtJoint(Joint):
     cross_beams : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
     mill_depth : float
-        The depth of the pocket to be milled in the cross beam.
+        The depth of the pocket to be milled in the cross beams.
 
     """
 
@@ -57,6 +61,7 @@ class YButtJoint(Joint):
         self.cross_beam_guids = kwargs.get("cross_beam_guids", None) or [str(beam.guid) for beam in self.cross_beams]
         self.mill_depth = mill_depth
         self.features = []
+        self.check_beam_compatibility()
 
     @property
     def beams(self):
@@ -66,37 +71,23 @@ class YButtJoint(Joint):
     def elements(self):
         return self.beams
 
-    @classmethod
-    def create(cls, model, *elements, **kwargs):
-        """Creates an instance of the BallNodeJoint and creates the new connection in `model`.
+    def check_beam_compatibility(self):
+        """Checks if the beams are compatible for the joint.
 
-        This differs fom the generic `Joint.create()` method in that it passes the `beams` to
-        the constructor of the BallNodeJoint as a list instead of as separate arguments.
+        This method checks if miter plane of the cross beams is perpendicular to the cross product of their centerlines.
 
-        `beams` are expected to have been added to `model` before calling this method.
+        Raises
 
-        This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
-        them. This is the responsibility of the calling code.
-
-        A `ValueError` is raised if `beams` contains less than two `Beam` objects.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joing belong.
-        beams : list(:class:`~compas_timber.parts.Beam`)
-            A list containing beams that whould be joined together
-
-        Returns
-        -------
-        :class:`compas_timber.connections.Joint`
-            The instance of the created joint.
-
+        BeamJoiningError
+            If the beams are not compatible.
         """
-        elements = list(elements)
-        joint = cls(*elements, **kwargs)
-        model.add_joint(joint)
-        return joint
+        if not TOL.is_zero(angle_vectors(self.cross_beams[0].frame.zaxis, self.cross_beams[1].frame.zaxis) % math.pi):
+            raise BeamJoiningError(
+                beams=self.elements,
+                joint=self,
+                debug_info="The miter plane of the cross beams is not perpendicular to the cross product of their centerlines.",
+                debug_geometries=[beam.blank for beam in self.cross_beams],
+            )
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
@@ -110,7 +101,7 @@ class YButtJoint(Joint):
 
     def get_miter_planes(self, beam_a, beam_b):
         # intersection point (average) of both centrelines
-        [pxA, tA], [pxB, tB] = intersection_line_line_param(
+        [pxA, _], [pxB, _] = intersection_line_line_param(
             beam_a.centerline,
             beam_b.centerline,
             max_distance=float("inf"),
@@ -237,3 +228,4 @@ class YButtJoint(Joint):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
         self.cross_beams = [model.element_by_guid(guid) for guid in self.cross_beam_guids]
+        print("restored beams", self.main_beam, self.cross_beams)
