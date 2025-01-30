@@ -2,6 +2,8 @@ from math import fabs
 
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import angle_vectors_signed
 from compas.geometry import add_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point

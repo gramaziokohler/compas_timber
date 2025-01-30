@@ -486,7 +486,6 @@ class SurfaceModel(object):
 
     def generate_plates(self):
         if self.sheeting_inside:
-
             self._elements.append(Plate(self.outer_polyline, self.sheeting_inside))
         if self.sheeting_outside:
             pline = self.outer_polyline.copy()

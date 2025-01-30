@@ -9,11 +9,12 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas_model.elements import reset_computed
 
-from compas_timber.errors import FeatureApplicationError
+
 
 from .timber import TimberElement
 
-
+from compas_timber.errors import FeatureApplicationError
+from compas_timber.fabrication import FreeContour
 class Plate(TimberElement):
     """
     A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
@@ -64,6 +65,9 @@ class Plate(TimberElement):
         self.attributes.update(kwargs)
         self.debug_info = []
         self._ref_frame = None
+        self._blank = None
+        contour_feature = FreeContour.from_polyline_and_element(self.outline.points, self, interior = False)
+        self.add_feature(contour_feature)
 
     def __repr__(self):
         # type: () -> str
@@ -87,19 +91,19 @@ class Plate(TimberElement):
 
     @property
     def blank(self):
-        return self.obb
+        return self._blank
 
     @property
     def blank_length(self):
-        return self.obb.xsize
+        return self._blank.xsize
 
     @property
     def width(self):
-        return self.obb.zsize
+        return self._blank.zsize
 
     @property
     def height(self):
-        return self.obb.ysize
+        return self._blank.ysize
 
     @property
     def vector(self):
@@ -110,11 +114,6 @@ class Plate(TimberElement):
         if not self._ref_frame:
             self.compute_obb()
         return self._ref_frame
-
-    @property
-    def shape(self):
-        brep = Brep.from_extrusion(NurbsCurve.from_points(self.outline.points, degree=1), self.vector)
-        return brep
 
     @property
     def has_features(self):
@@ -163,13 +162,12 @@ class Plate(TimberElement):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        plate_geo = self.shape
-        if include_features:
-            for feature in self.features:
-                try:
-                    plate_geo = feature.apply(plate_geo, self)
-                except FeatureApplicationError as error:
-                    self.debug_info.append(error)
+        plate_geo = Brep.from_box(self.blank)
+        for feature in self.features:
+            try:
+                plate_geo = feature.apply(plate_geo, self)
+            except FeatureApplicationError as error:
+                self.debug_info.append(error)
         return plate_geo
 
     def compute_aabb(self, inflate=0.0):
@@ -196,7 +194,7 @@ class Plate(TimberElement):
         box.zsize += inflate
         return box
 
-    def compute_obb(self, inflate=0.0):
+    def compute_obb(self):
         # type: (float | None) -> compas.geometry.Box
         """Computes the Oriented Bounding Box (OBB) of the element.
 
@@ -215,13 +213,15 @@ class Plate(TimberElement):
         for point in self.outline.points:
             vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
         obb = Box.from_points(vertices)
-        obb.xsize += inflate
-        obb.ysize += inflate
         obb.zsize = self.thickness
         obb.translate([0, 0, self.thickness / 2])
-        self._ref_frame = Frame([obb.xmin, obb.ymin, obb.zmin], Vector.Xaxis(), Vector.Yaxis())
+        self._blank = obb.copy()
+        self._blank.xsize += self.thickness
+        self._blank.ysize += self.thickness
+        self._ref_frame = Frame([self._blank.xmin, self._blank.ymin, self._blank.zmin], Vector.Xaxis(), Vector.Yaxis())
         xform_back = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
         obb.transform(xform_back)
+        self._blank.transform(xform_back)
         self._ref_frame.transform(xform_back)
         return obb
 

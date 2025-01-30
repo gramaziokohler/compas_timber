@@ -13,8 +13,6 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
-from compas_timber.elements import Beam
-from compas_timber.elements import Plate
 
 
 class BTLxWriter(object):
@@ -157,10 +155,9 @@ class BTLxWriter(object):
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
-        for i, element in enumerate(model.elements()):
-            if isinstance(element, Beam) or isinstance(element, Plate):
-                part_element = self._create_part(element, i)
-                parts_element.append(part_element)
+        for i, element in enumerate(list(model.beams) + list(model.plates)):
+            part_element = self._create_part(element, i)
+            parts_element.append(part_element)
         return project_element
 
     def _create_part(self, element, order_num):
@@ -288,7 +285,6 @@ class BTLxPart(object):
 
     @property
     def et_reference_side(self):
-        side = "1" if isinstance(self.element, Beam) else "2"
         return ET.Element("ReferenceSide", Side="1", Align="no")
 
     def ref_side_from_face(self, beam_face):
