@@ -494,7 +494,7 @@ class SurfaceModel(object):
         for window in self.windows:
             for plate in self.plate_elements:
                 window.apply_contour_to_plate(plate)
-            self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
+
 
     class Window(object):
         """
@@ -588,19 +588,6 @@ class SurfaceModel(object):
             if not self._frame:
                 self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
             return self._frame
-
-        @property
-        def boolean_feature(self):
-            offset = self.parent.sheeting_inside if self.parent.sheeting_inside else 0
-            so = self.parent.sheeting_outside if self.parent.sheeting_outside else 0
-            thickness = offset + so + self.parent.frame_depth
-
-            crv = self.outline.copy()
-            crv.translate(self.normal * -offset)
-
-            vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
-            return BrepSubtraction(vol)
-
 
         def apply_contour_to_plate(self, plate):
             projected_points = []
