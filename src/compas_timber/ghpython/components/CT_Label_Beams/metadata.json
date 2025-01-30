@@ -1,0 +1,50 @@
+{
+    "name": "LabelBeams",
+    "nickname": "LabelBeams",
+    "category": "COMPAS Timber",
+    "subcategory": "Features",
+    "description": "Labels Beams with a Text processing with an optional custom string input",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Model",
+                "description": "Model whose beams should be labeled.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "BaseString",
+                "description": "String to be applied to each Beam. If none is given, a standard identifier will be used.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "CharToReplace",
+                "description": "Optional character in the BaseString to be replaced by Beam.attributes. This only works if Attributes is not empty and a single BaseString is given.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Attributes",
+                "description": "Beam attribute names to substitute into the BaseString.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "TextHeight",
+                "description": "Height of the Text.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "TextCurves",
+                "description": "Polyline representations of the Text."
+            }
+        ]
+    }
+}
