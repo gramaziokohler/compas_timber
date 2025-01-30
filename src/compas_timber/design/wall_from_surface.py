@@ -18,8 +18,8 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
-from compas.geometry import offset_polyline
 from compas.tolerance import Tolerance
+
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -30,6 +30,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.fabrication import FreeContour
 from compas_timber.model import TimberModel
+from compas_timber.utils import correct_polyline_direction
 
 
 class SurfaceModel(object):
@@ -86,8 +87,10 @@ class SurfaceModel(object):
 
     def __init__(
         self,
-        surface,
-        stud_spacing,
+        outer_polyline,
+        normal,
+        inner_polylines = [],
+        stud_spacing = None,
         beam_width=None,
         frame_depth=None,
         z_axis=None,
@@ -99,7 +102,12 @@ class SurfaceModel(object):
         custom_dimensions=None,
         joint_overrides=None,
     ):
-        self.surface = surface
+
+        self.outer_polyline = Polyline(correct_polyline_direction(Polyline(outer_polyline), normal))
+
+        self.inner_polylines = [Polyline(correct_polyline_direction(Polyline(pline), normal, clockwise = True)) for pline in inner_polylines]
+
+        self.normal = normal
         self.beam_width = beam_width
         self.frame_depth = frame_depth
         self.stud_spacing = stud_spacing
@@ -108,9 +116,6 @@ class SurfaceModel(object):
         self.sheeting_inside = sheeting_inside
         self.edge_stud_offset = edge_stud_offset or 0.0
         self.lintel_posts = lintel_posts
-        self._normal = None
-        self.outer_polyline = None
-        self.inner_polylines = []
         self.edges = []
         self._frame = None
         self._panel_length = None
@@ -133,7 +138,6 @@ class SurfaceModel(object):
                         self.beam_dimensions[key][0] = value[0]
                     if value[1] != 0:
                         self.beam_dimensions[key][1] = value[1]
-        self.parse_loops()
         self.generate_frame()
         self.generate_plates()
 
@@ -202,11 +206,6 @@ class SurfaceModel(object):
     def points(self):
         return self.outer_polyline.points
 
-    @property
-    def normal(self):
-        if not self._normal:
-            self._normal = self.surface.native_brep.Faces[0].NormalAt(0.5, 0.5)
-        return self._normal
 
     @property
     def panel_length(self):
@@ -258,6 +257,24 @@ class SurfaceModel(object):
     def beam_category_names(cls):
         return SurfaceModel.BEAM_CATEGORY_NAMES
 
+    @classmethod
+    def from_surface(cls, surface, stud_spacing, beam_width=None, frame_depth=None, z_axis=None, **kwargs):
+        outer_polyline = None
+        inner_polylines = []
+        for loop in surface.loops:
+            polyline_points = []
+            for _, edge in enumerate(loop.edges):
+                polyline_points.append(edge.start_vertex.point)
+            polyline_points.append(loop.edges[-1].end_vertex.point)
+            if loop.is_outer:
+                outer_polyline = Polyline(polyline_points)
+            else:
+                inner_polylines.append(Polyline(polyline_points))
+        normal = surface.native_brep.Faces[0].NormalAt(0.5, 0.5)
+        return cls(outer_polyline, normal, inner_polylines, stud_spacing, beam_width, frame_depth, z_axis, **kwargs)
+
+
+
     def generate_frame(self):
         self.generate_perimeter_beams()
         self.generate_windows()
@@ -286,35 +303,6 @@ class SurfaceModel(object):
                         rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
         model.set_topologies(topologies)
         return model
-
-    def parse_loops(self):
-        for loop in self.surface.loops:
-            polyline_points = []
-            polyline_length = 0.0
-            for i, edge in enumerate(loop.edges):
-                if not edge.is_line:
-                    raise ValueError("function only supprorts polyline edges")
-                if edge.start_vertex.point in [
-                    loop.edges[i - 1].start_vertex.point,
-                    loop.edges[i - 1].end_vertex.point,
-                ]:
-                    polyline_points.append(edge.start_vertex.point)
-                else:
-                    polyline_points.append(edge.end_vertex.point)
-                polyline_length += edge.length
-            polyline_points.append(polyline_points[0])
-            loop_polyline = Polyline(polyline_points)
-            offset_dist = self.dist_tolerance * 1000
-            if loop.is_outer:
-                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
-                if offset_loop.length > loop_polyline.length:
-                    polyline_points.reverse()
-                self.outer_polyline = Polyline(polyline_points)
-            else:
-                offset_loop = Polyline(offset_polyline(loop_polyline, offset_dist, self.normal))
-                if offset_loop.length < loop_polyline.length:
-                    polyline_points.reverse()
-                self.inner_polylines.append(Polyline(polyline_points))
 
     def generate_perimeter_beams(self):
         interior_indices = self.get_interior_segment_indices(self.outer_polyline)

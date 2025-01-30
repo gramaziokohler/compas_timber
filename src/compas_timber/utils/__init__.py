@@ -193,7 +193,7 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
         v = Vector.from_start_end(polyline[i], polyline[i + 1])
         angle = angle_vectors_signed(u, v, normal_vector)
         angle_sum += angle
-    if angle_sum > 0 and not clockwise or angle_sum < 0 and clockwise:
+    if angle_sum > 0 and clockwise or angle_sum < 0 and not clockwise:
         polyline = polyline[::-1]
 
     return polyline
