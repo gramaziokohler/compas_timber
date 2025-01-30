@@ -156,7 +156,7 @@ def intersection_line_beam_param(line, beam, ignore_ends=False):
     return [Point(*coords) for coords in pts], ref_side_indices
 
 
-def correct_polyline_direction(polyline, normal_vector):
+def correct_polyline_direction(polyline, normal_vector, clockwise=False):
     """Corrects the direction of a polyline to be counter-clockwise around a given vector.
 
     Parameters
@@ -176,8 +176,10 @@ def correct_polyline_direction(polyline, normal_vector):
         v = Vector.from_start_end(polyline[i], polyline[i + 1])
         angle = angle_vectors_signed(u, v, normal_vector)
         angle_sum += angle
-    if angle_sum > 0:
+    if angle_sum > 0 and not clockwise or angle_sum < 0 and clockwise:
         polyline = polyline[::-1]
+
     return polyline
+
 
 __all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "correct_polyline_direction"]

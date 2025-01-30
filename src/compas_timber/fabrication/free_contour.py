@@ -1,30 +1,16 @@
-import math
 import xml.etree.ElementTree as ET
 
 from compas.geometry import Brep
-from compas.geometry import NurbsCurve
 from compas.geometry import Frame
-from compas.geometry import Line
-from compas.geometry import Plane
-from compas.geometry import Point
+from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
-from compas.geometry import Vector
-from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_plane
-from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_segment_plane
-from compas.geometry import is_point_behind_plane
-from compas.geometry import is_point_in_polyhedron
-from compas.geometry import project_point_plane
-from compas.tolerance import TOL
 
-from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
+from .btlx import AlignmentType
+from .btlx import BTLxPart
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
-from .btlx import BTLxPart
-from .btlx import AlignmentType
 
 
 class FreeContour(BTLxProcessing):
@@ -52,7 +38,7 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(self, contour_points, depth, couter_sink = False, tool_position = AlignmentType.LEFT, depth_bounded = False, inclination = 0, **kwargs):
+    def __init__(self, contour_points, depth, couter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=False, inclination=0, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
         self.contour_points = contour_points
         self.depth = depth
@@ -61,37 +47,26 @@ class FreeContour(BTLxProcessing):
         self.depth_bounded = depth_bounded
         self.inclination = inclination
 
-
     ########################################################################
     # Properties
     ########################################################################
 
-
     @property
     def header_attributes(self):
         """Return the attributes to be included in the XML element."""
-        return {
-            "Name": self.PROCESSING_NAME,
-            "CounterSink": "no",
-            "ToolID":"0",
-            "Process": "yes",
-            "ToolPosition":self.tool_position,
-            "ReferencePlaneID": "4"
-        }
-
+        return {"Name": self.PROCESSING_NAME, "CounterSink": "no", "ToolID": "0", "Process": "yes", "ToolPosition": self.tool_position, "ReferencePlaneID": "4"}
 
     @property
     def params_dict(self):
         print("params_dict", FreeCountourParams(self).as_dict())
         return FreeCountourParams(self).as_dict()
 
-
     ########################################################################
     # Alternative constructors
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline, element, depth = None, interior=True, ref_side_index=4):
+    def from_polyline_and_element(cls, polyline, element, depth=None, interior=True, ref_side_index=4):
         """Construct a Contour processing from a polyline and element.
 
         Parameters
@@ -116,8 +91,7 @@ class FreeContour(BTLxProcessing):
         frame = element.ref_frame
         xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         points = [pt.transformed(xform) for pt in pline]
-        return cls(points, depth, tool_position = tool_position, couter_sink = couter_sink, ref_side_index=ref_side_index)
-
+        return cls(points, depth, tool_position=tool_position, couter_sink=couter_sink, ref_side_index=ref_side_index)
 
     ########################################################################
     # Methods
@@ -137,19 +111,18 @@ class FreeContour(BTLxProcessing):
             The resulting geometry after processing.
 
         """
-        if self.tool_position == AlignmentType.LEFT: # contour should remove material inside of the contour
+        if self.tool_position == AlignmentType.LEFT:  # contour should remove material inside of the contour
             xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_frame)
             pts = [pt.transformed(xform) for pt in self.contour_points]
             vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth)
             return geometry - vol
-        else:
+        else:  # TODO: see if we can use the extrusion directly instead of using a heavy BrepSubtraction.
             volume = Brep.from_box(element.blank)
             xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_frame)
             pts = [pt.transformed(xform) for pt in self.contour_points]
             vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth)
             volume = volume - vol
             return geometry - volume
-
 
     @staticmethod
     def polyline_to_contour(polyline):
@@ -180,11 +153,7 @@ class FreeContour(BTLxProcessing):
             self.header_attributes,
         )
         # create parameter subelements
-        contour_params = {
-            "Depth": str(self.depth),
-            "DepthBounded": "yes" if self.depth_bounded else "no",
-            "Inclination": str(self.inclination)
-        }
+        contour_params = {"Depth": str(self.depth), "DepthBounded": "yes" if self.depth_bounded else "no", "Inclination": str(self.inclination)}
 
         contour_element = ET.SubElement(processing_element, "Contour", contour_params)
         ET.SubElement(contour_element, "StartPoint", BTLxPart.et_point_vals(self.contour_points[0]))
@@ -192,7 +161,6 @@ class FreeContour(BTLxProcessing):
             point_element = ET.SubElement(contour_element, "Line")
             point_element.append(ET.Element("EndPoint", BTLxPart.et_point_vals(pt)))
         return processing_element
-
 
 
 class FreeCountourParams(BTLxProcessingParams):

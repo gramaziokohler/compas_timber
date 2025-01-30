@@ -482,7 +482,6 @@ class BTLxProcessing(Data):
             self.subprocessings = []
         self.subprocessings.append(subprocessing)
 
-
     def create_processing(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
         moved to BTLxProcessing because some processings are significantly different and need to be overridden.

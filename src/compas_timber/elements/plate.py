@@ -1,20 +1,18 @@
 from compas.geometry import Box
-from compas.geometry import Point
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas_model.elements import reset_computed
 
-
+from compas_timber.errors import FeatureApplicationError
+from compas_timber.fabrication import FreeContour
 
 from .timber import TimberElement
 
-from compas_timber.errors import FeatureApplicationError
-from compas_timber.fabrication import FreeContour
+
 class Plate(TimberElement):
     """
     A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
@@ -66,7 +64,7 @@ class Plate(TimberElement):
         self.debug_info = []
         self._ref_frame = None
         self._blank = None
-        contour_feature = FreeContour.from_polyline_and_element(self.outline.points, self, interior = False)
+        contour_feature = FreeContour.from_polyline_and_element(self.outline.points, self, interior=False)
         self.add_feature(contour_feature)
 
     def __repr__(self):

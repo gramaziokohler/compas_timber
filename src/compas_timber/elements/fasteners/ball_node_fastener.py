@@ -7,10 +7,11 @@ from compas.geometry import Point
 from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas_timber.utils import correct_polyline_direction
+
 from compas_timber.elements import CutFeature
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
+from compas_timber.utils import correct_polyline_direction
 
 
 class BallNodeFastener(Fastener):
@@ -154,4 +155,3 @@ class BallNodeFastener(Fastener):
                 for geometry in geometries[1:]:
                     self._interface_shape += geometry
         return self._interface_shape
-
