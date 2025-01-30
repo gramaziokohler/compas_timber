@@ -288,6 +288,7 @@ class BTLxPart(object):
 
     @property
     def et_reference_side(self):
+        side = "1" if isinstance(self.element, Beam) else "2"
         return ET.Element("ReferenceSide", Side="1", Align="no")
 
     def ref_side_from_face(self, beam_face):

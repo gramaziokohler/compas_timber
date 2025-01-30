@@ -51,10 +51,15 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(self, contour_points, **kwargs):
+    def __init__(self, contour_points, depth, couter_sink = True, tool_position = AlignmentType.LEFT, depth_bounded = False, inclination = 0, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
-
         self.contour_points = contour_points
+        self.depth = depth
+        self.couter_sink = couter_sink
+        self.tool_position = tool_position
+        self.depth_bounded = depth_bounded
+        self.inclination = inclination
+
 
     ########################################################################
     # Properties
@@ -66,10 +71,11 @@ class FreeContour(BTLxProcessing):
         """Return the attributes to be included in the XML element."""
         return {
             "Name": self.PROCESSING_NAME,
+            "CounterSink": "yes" if self.couter_sink else "no",
             "ToolID":"0",
             "Process": "yes",
-            "ToolPosition":AlignmentType.LEFT,
-            "ReferencePlaneID": str(self.ref_side_index + 1),
+            "ToolPosition":self.tool_position,
+            "ReferencePlaneID": "3"
         }
 
 
@@ -84,7 +90,7 @@ class FreeContour(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline, element, ref_side_index=0):
+    def from_polyline_and_element(cls, polyline, element, depth = None, ref_side_index=4):
         """Construct a drilling processing from a line and diameter.
 
         # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
@@ -107,10 +113,11 @@ class FreeContour(BTLxProcessing):
             The constructed drilling processing.
 
         """
+        depth = depth or element.width
         frame = element.ref_frame
         xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         points = [pt.transformed(xform) for pt in polyline]
-        return cls(points, ref_side_index=ref_side_index)
+        return cls(points, depth, ref_side_index=ref_side_index)
 
 
     ########################################################################
@@ -163,7 +170,13 @@ class FreeContour(BTLxProcessing):
             self.header_attributes,
         )
         # create parameter subelements
-        contour_element = ET.SubElement(processing_element, "Contour")
+        contour_params = {
+            "Depth": str(self.depth),
+            "DepthBounded": "yes" if self.depth_bounded else "no",
+            "Inclination": str(self.inclination)
+        }
+
+        contour_element = ET.SubElement(processing_element, "Contour", contour_params)
         ET.SubElement(contour_element, "StartPoint", BTLxPart.et_point_vals(self.contour_points[0]))
         for pt in self.contour_points[1:]:
             point_element = ET.SubElement(contour_element, "Line")
