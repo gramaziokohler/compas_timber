@@ -278,11 +278,11 @@ class Text(BTLxProcessing):
                 if x_positions[i+1] - x_positions[i] > biggest_gap[1]-biggest_gap[0]:
                     biggest_gap = (x_positions[i], x_positions[i+1])
             x_pos = (biggest_gap[0] + biggest_gap[1]) / 2
-            string = string if string else "G{}_B{}".format(element.attributes["category"], element.key)
+            string = string if string else "C{}_B{}".format(element.attributes.get("category"), element.key)
             text = cls(
                 ref_side_index = 1,
                 start_x=x_pos,
-                start_y=text_height,
+                start_y=element.side_as_surface(1).ysize / 2.0,
                 alignment_horizontal = AlignmentType.CENTER,
                 alignment_vertical = AlignmentType.CENTER,
                 text_height = text_height,

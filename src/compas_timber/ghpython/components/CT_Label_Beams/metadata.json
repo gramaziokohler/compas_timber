@@ -1,53 +1,49 @@
 {
-    "name": "Plate",
-    "nickname": "Plate",
+    "name": "LabelBeams",
+    "nickname": "LabelBeams",
     "category": "COMPAS Timber",
-    "subcategory": "Plates",
-    "description": "Creates a Plate from a Polyline.",
+    "subcategory": "Features",
+    "description": "Labels Beams with a Text processing with an optional custom string input",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Outline",
-                "description": "Referenced polyline, Guid of polyline in the active Rhino document.",
+                "name": "Model",
+                "description": "Model whose beams should be labeled.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
-                "name": "Thickness",
-                "description": "Thickness of the plate material.",
-                "typeHintID": "float",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "Vector",
-                "description": "Determines direction of the plate extrusion",
-                "typeHintID": "vector",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "Category",
-                "description": "Category of a beam.",
+                "name": "BaseString",
+                "description": "String to be applied to each Beam. If none is given, a standard identifier will be used.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             },
             {
-                "name": "updateRefObj",
-                "description": "(optional) If True, the attributes in the referenced object will be updated/overwritten with the new values given here.",
-                "typeHintID": "bool",
+                "name": "CharToReplace",
+                "description": "Optional character in the BaseString to be replaced by Beam.attributes. This only works if Attributes is not empty and a single BaseString is given.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "Attributes",
+                "description": "Beam attribute names to substitute into the BaseString.",
+                "typeHintID": "str",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "TextHeight",
+                "description": "Height of the Text.",
+                "typeHintID": "float",
                 "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
-                "name": "Plate",
-                "description": "Plate object(s)."
-            },
-            {
-                "name": "Geometry",
-                "description": "Shape of the plate."
+                "name": "TextCurves",
+                "description": "Polyline representations of the Text."
             }
         ]
     }
