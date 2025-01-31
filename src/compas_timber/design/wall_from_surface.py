@@ -1,5 +1,6 @@
 import math
 
+from compas import get
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -141,6 +142,7 @@ class SurfaceModel(object):
         self.generate_frame()
         self.generate_plates()
 
+
     @property
     def z_axis(self):
         cross = cross_vectors(self.normal, self._z_axis)
@@ -185,8 +187,6 @@ class SurfaceModel(object):
     @property
     def elements(self):
         elements = []
-        for window in self.windows:
-            self._beam_definitions.extend(window._beam_definitions)
         for beam_def in self._beam_definitions:
             elements.append(beam_def.to_beam())
         elements.extend(self._elements)
@@ -279,6 +279,7 @@ class SurfaceModel(object):
         self.generate_perimeter_beams()
         self.generate_windows()
         self.generate_studs()
+
 
     def create_model(self):
         model = TimberModel()
@@ -610,6 +611,7 @@ class SurfaceModel(object):
                     offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]) / 2
                     king_line = offset_line(beam_def.centerline, offset, self.normal)
                     self._beam_definitions.append(self.parent.BeamDefinition(king_line, type="king_stud", parent=self))
+
 
     class BeamDefinition(object):
         """

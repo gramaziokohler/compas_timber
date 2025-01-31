@@ -3,9 +3,12 @@ from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Vector
+from numpy import long
 
 from compas_timber.utils import intersection_line_line_param
 from compas_timber.utils import intersection_line_plane_param
+from compas_timber.utils import intersection_line_beam_param
+from compas_timber.elements import Beam
 
 
 def test_intersection_line_line_param():
@@ -40,3 +43,4 @@ def test_intersection_line_plane_param():
 
     assert TOL.is_allclose(expected_point, intersection_point)
     assert TOL.is_close(expected_t, t)
+
