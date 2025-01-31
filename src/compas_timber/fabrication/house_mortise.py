@@ -322,7 +322,7 @@ class HouseMortise(BTLxProcessing):
             mortise.angle,
             mortise.slope,
             mortise.inclination,
-            mortise.length_limited_top,
+            True,
             mortise.length_limited_bottom,
             length,
             width,

@@ -365,7 +365,7 @@ class House(BTLxProcessing):
             height,
             TenonShapeType.SQUARE,
             tenon.shape_radius,
-            tenon.chamfer,
+            False,
             tenon=tenon,
             ref_side_index=tenon.ref_side_index,
         )
