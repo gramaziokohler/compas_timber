@@ -6,6 +6,8 @@ from compas.geometry import Vector
 
 from compas_timber.utils import intersection_line_line_param
 from compas_timber.utils import intersection_line_plane_param
+from compas_timber.utils import intersection_line_beam_param
+from compas_timber.elements import Beam
 
 
 def test_intersection_line_line_param():
@@ -40,3 +42,35 @@ def test_intersection_line_plane_param():
 
     assert TOL.is_allclose(expected_point, intersection_point)
     assert TOL.is_close(expected_t, t)
+
+def test_intersection_line_beam_param():
+    horizontal_expected_pts = [Point(x=291.666666667, y=50.0, z=0.0), Point(x=208.333333333, y=-50.0, z=0.0)]
+    horizontal_expected_inds =  [1,3]
+    hor_ln = Line([0,-300, 0],[500,300,0])
+    cl = Line([0,0,0],[1000,0,0])
+    beam = Beam.from_centerline(cl, 100, 200)
+
+    pts, inds = intersection_line_beam_param(hor_ln,beam)
+    assert TOL.is_zero(pts[0].distance_to_point(horizontal_expected_pts[0]))
+    assert TOL.is_zero(pts[1].distance_to_point(horizontal_expected_pts[1]))
+    assert inds == horizontal_expected_inds
+
+    vert_ln = Line([100,0,-200],[250,0,200])
+    vertical_expected_pts = [Point(x=137.5, y=0.0, z=-100.0), Point(x=212.5, y=0.0, z=100.0)]
+    vertical_expected_inds = [0,2]
+    pts, inds = intersection_line_beam_param(vert_ln,beam)
+    assert TOL.is_zero(pts[0].distance_to_point(vertical_expected_pts[0]))
+    assert TOL.is_zero(pts[1].distance_to_point(vertical_expected_pts[1]))
+    assert inds == vertical_expected_inds
+
+    long_ln = Line([-100,-20,-50],[1100,20,50])
+    long_expected_pts = [Point(x=0.0, y=-16.6666666667, z=-41.6666666667), Point(x=1000.0, y=16.6666666667, z=41.6666666667)]
+    long_expected_inds = [4, 5]
+    pts, inds = intersection_line_beam_param(long_ln,beam)
+    assert TOL.is_zero(pts[0].distance_to_point(long_expected_pts[0]))
+    assert TOL.is_zero(pts[1].distance_to_point(long_expected_pts[1]))
+    assert inds == long_expected_inds
+
+    pts, inds = intersection_line_beam_param(long_ln,beam, ignore_ends=True)
+    assert pts == []
+    assert inds == []
