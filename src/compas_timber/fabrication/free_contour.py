@@ -54,7 +54,14 @@ class FreeContour(BTLxProcessing):
     @property
     def header_attributes(self):
         """Return the attributes to be included in the XML element."""
-        return {"Name": self.PROCESSING_NAME, "CounterSink": "yes" if self.couter_sink else "no", "ToolID": "0", "Process": "yes", "ToolPosition": self.tool_position, "ReferencePlaneID": "4"}
+        return {
+            "Name": self.PROCESSING_NAME,
+            "CounterSink": "yes" if self.couter_sink else "no",
+            "ToolID": "0",
+            "Process": "yes",
+            "ToolPosition": self.tool_position,
+            "ReferencePlaneID": "4",
+        }
 
     @property
     def contour_attributes(self):
@@ -87,7 +94,7 @@ class FreeContour(BTLxProcessing):
         """
         pline = [pt.copy() for pt in polyline]
         pline = correct_polyline_direction(pline, element.ref_frame.normal, clockwise=True)
-        tool_position = AlignmentType.RIGHT if interior else AlignmentType.LEFT # TODO: see if we can have CCW contours. for now only CW.
+        tool_position = AlignmentType.RIGHT if interior else AlignmentType.LEFT  # TODO: see if we can have CCW contours. for now only CW.
         couter_sink = True if interior else False
 
         depth = depth or element.width
@@ -118,7 +125,7 @@ class FreeContour(BTLxProcessing):
             xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_frame)
             pts = [pt.transformed(xform) for pt in self.contour_points]
             pts = correct_polyline_direction(pts, element.ref_frame.normal, clockwise=True)
-            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth* 2.0)
+            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth * 2.0)
             vol.translate(element.ref_frame.normal * -self.depth)
             return geometry - vol
         else:

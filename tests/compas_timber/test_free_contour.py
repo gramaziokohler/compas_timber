@@ -1,10 +1,7 @@
 import pytest
-from collections import OrderedDict
 
-from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.elements import Plate
@@ -39,7 +36,6 @@ def test_plate_blank_reversed():
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
-
 def test_plate_contour():
     pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     thickness = 10.0
@@ -60,13 +56,14 @@ def test_plate_contour():
     assert plate.features[0].header_attributes == expected["header_attributes"]
     assert plate.features[0].contour_attributes["Depth"] == str(thickness)
 
-def test_plate_contour():
+
+def test_plate_aperture_contour():
     plate_pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     thickness = 10.0
     depth = 5.0
     plate = Plate(plate_pline, thickness)
-    contour_pline = Polyline([Point(25, 50, 0), Point(25, 150, 0), Point(75, 150, 0), Point(75, 50, 0), Point(25, 50, 0)])
-    contour = FreeContour.from_polyline_and_element(contour_pline, plate, depth=depth)
+    aperture_pline = Polyline([Point(25, 50, 0), Point(25, 150, 0), Point(75, 150, 0), Point(75, 50, 0), Point(25, 50, 0)])
+    contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth)
     plate.add_feature(contour)
 
     assert len(plate.features) == 2

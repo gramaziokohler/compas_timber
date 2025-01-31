@@ -199,4 +199,5 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
 
     return polyline
 
+
 __all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "correct_polyline_direction"]
