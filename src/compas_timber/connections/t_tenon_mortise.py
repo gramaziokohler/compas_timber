@@ -31,8 +31,6 @@ class TenonMortiseJoint(Joint):
         Start position of the tenon along the y-axis of the main beam.
     start_depth : float
         Depth of the tenon from the surface of the main beam.
-    rotation : float
-        Rotation of the tenon around the main beam's axis.
     length : float
         Length of the tenon along the main beam.
     width : float
@@ -63,8 +61,6 @@ class TenonMortiseJoint(Joint):
         Start position of the tenon along the y-axis of the main beam.
     start_depth : float
         Depth of the tenon from the surface of the main beam.
-    rotation : float
-        Rotation of the tenon around the main beam's axis.
     length : float
         Length of the tenon along the main beam.
     width : float
@@ -90,7 +86,6 @@ class TenonMortiseJoint(Joint):
         data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
-        data["rotation"] = self.rotation
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
@@ -107,7 +102,6 @@ class TenonMortiseJoint(Joint):
         cross_beam,
         start_y=None,
         start_depth=None,
-        rotation=None,
         length=None,
         width=None,
         height=None,
@@ -125,7 +119,6 @@ class TenonMortiseJoint(Joint):
 
         self.start_y = start_y
         self.start_depth = start_depth
-        self.rotation = rotation
         self.length = length
         self.width = width
         self.height = height
@@ -152,7 +145,7 @@ class TenonMortiseJoint(Joint):
     @property
     def main_beam_ref_side_index(self):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     @property
@@ -178,31 +171,30 @@ class TenonMortiseJoint(Joint):
         # assign default values
         self.start_y = self.start_y or 0.0
         self.start_depth = self.start_depth or 0.0
-        self.rotation = self.rotation or 0.0
-        self.length = self.length or height
-        self.width = self.width or self.length / 3
-        self.height = self.height or width / 2
+        self.length = self.length or height * 0.75
+        self.width = self.width or self.length * 0.33
+        self.height = self.height or width * 0.5
         self.shape = self.shape or 2  # Default shape: ROUND
-        self.shape_radius = self.shape_radius or width / 4
+        self.shape_radius = self.shape_radius or width * 0.25
 
     def get_house_dimensions(self, tenon):
-        beam_width = self.main_beam.width if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.height
-        beam_height = self.main_beam.height if self.main_beam_ref_side_index % 2 == 0 else self.main_beam.width
+        """Calculates the dimensions of the house and house mortise from the tenon."""
+        beam_width, beam_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
 
-        # default values # FULL
+        # default values # HouseType: FULL
         tenon_offset = 0.0
         mortise_offset = tenon.start_depth / math.sin(math.radians(tenon.inclination))
         length = beam_height / math.sin(math.radians(tenon.inclination))
-        width = beam_width / math.sin(math.radians(tenon.angle))
+        width = beam_width / math.sin(math.radians(tenon.angle)) + tenon.start_y
 
-        if self.house_type == 1: # OFFSET
+        if self.house_type == 1: # HouseType: OFFSET
             tenon_offset_top = tenon.start_depth/2
             tenon_offset_bottom = (length - tenon.start_depth - tenon.length)/2
             tenon_offset = min(tenon_offset_top, tenon_offset_bottom)
             mortise_offset -= tenon_offset / math.sin(math.radians(tenon.inclination))
             length -= (tenon_offset*2 / math.sin(math.radians(tenon.inclination)))
             width = (beam_width - abs(tenon_offset) * 2) / math.sin(math.radians(tenon.angle))
-        elif self.house_type == 2: # SHOULDER
+        elif self.house_type == 2: # HouseType: SHOULDER
             length = tenon.length + tenon.start_depth/math.sin(math.radians(tenon.inclination))
 
         return tenon_offset, mortise_offset, length, width
@@ -259,12 +251,11 @@ class TenonMortiseJoint(Joint):
             self.cross_beam.remove_features(self.features)
 
         # generate  tenon features
-        main_feature = Tenon.from_plane_and_beam(
-            plane=self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
+        main_feature = Tenon.from_frame_and_beam(
+            frame=self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
             beam=self.main_beam,
             start_y=self.start_y,
             start_depth=self.start_depth,
-            rotation=self.rotation,
             length=self.length,
             width=self.width,
             height=self.height,
@@ -286,7 +277,7 @@ class TenonMortiseJoint(Joint):
         )
 
         # convert to house and house mortise if tenon should be housed
-        if self.house_type is not None:
+        if self.house_depth:
             # get house dimensions
             tenon_offset, mortise_offset, length, width = self.get_house_dimensions(main_feature)
             # create house features
