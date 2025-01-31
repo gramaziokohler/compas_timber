@@ -192,7 +192,7 @@ class TenonMortiseJoint(Joint):
             tenon_offset_bottom = (length - tenon.start_depth - tenon.length)/2
             tenon_offset = min(tenon_offset_top, tenon_offset_bottom)
             mortise_offset -= tenon_offset / math.sin(math.radians(tenon.inclination))
-            length -= (tenon_offset*2 / math.sin(math.radians(tenon.inclination)))
+            length -= (tenon_offset * 2 / math.sin(math.radians(tenon.inclination)))
             width = (beam_width - abs(tenon_offset) * 2) / math.sin(math.radians(tenon.angle))
         elif self.house_type == 2: # HouseType: SHOULDER
             length = tenon.length + tenon.start_depth/math.sin(math.radians(tenon.inclination))
