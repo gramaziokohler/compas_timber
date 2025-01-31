@@ -303,13 +303,12 @@ class Tenon(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(
+    def from_frame_and_beam(
         cls,
-        plane,
+        frame,
         beam,
         start_y=0.0,
         start_depth=0.0,
-        rotation=0.0,
         length_limited_top=True,
         length_limited_bottom=True,
         length=80.0,
@@ -320,12 +319,12 @@ class Tenon(BTLxProcessing):
         chamfer=False,
         ref_side_index=0,
     ):
-        """Create a Tenon instance from a cutting plane and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the main beam.
+        """Create a Tenon instance from a cutting frame and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the main beam.
 
         Parameters
         ----------
-        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
-            The cutting plane.
+        frame : :class:`~compas.geometry.Frame` or :class:`~compas.geometry.Plane`
+            The cutting frame.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
         start_y : float, optional
@@ -359,24 +358,24 @@ class Tenon(BTLxProcessing):
 
         """
         # type: (Plane|Frame, Beam, float, float, float, bool, bool, float, float, float, str, float, bool, int) -> Tenon
-        if isinstance(plane, Frame):
-            plane = Plane.from_frame(plane)
+        if isinstance(frame, Plane):
+            frame = Frame.from_plane(frame)
 
         # get ref_side & ref_edge
         ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
 
         # calculate orientation
-        orientation = cls._calculate_orientation(ref_side, plane)
+        orientation = cls._calculate_orientation(ref_side, frame)
 
         # calculate angle
-        angle = cls._calculate_angle(ref_side, plane)
+        angle = cls._calculate_angle(ref_side, frame)
 
         # calculate inclination
-        inclination = cls._calculate_inclination(ref_side, plane, orientation, angle)
+        inclination = cls._calculate_inclination(ref_side, frame, orientation, angle)
 
         # calculate rotation
-        rotation = cls._calculate_rotation(orientation, rotation) # TODO: calculate and include the rotation of the beam and the plane
+        rotation = cls._calculate_rotation(orientation, ref_side, frame)
 
         # calculate start_y
         start_y = cls._calculate_start_y(beam, orientation, start_y, ref_side_index)
@@ -395,7 +394,7 @@ class Tenon(BTLxProcessing):
         start_x = cls._calculate_start_x(
             ref_side,
             ref_edge,
-            plane,
+            frame,
             orientation,
             start_y,
             start_depth,
@@ -426,21 +425,22 @@ class Tenon(BTLxProcessing):
         )
 
     @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
-        # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
+    def _calculate_orientation(ref_side, frame):
+        # orientation is START if cutting frame normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
+        if is_point_behind_plane(ref_side.point, Plane.from_frame(frame)):
             return OrientationType.START
         else:
             return OrientationType.END
 
     @staticmethod
-    def _calculate_start_x(ref_side, ref_edge, plane, orientation, start_y, start_depth, angle):
-        # calculate the start_x of the cut based on the ref_side, ref_edge, plane, start_y and angle
+    def _calculate_start_x(ref_side, ref_edge, frame, orientation, start_y, start_depth, angle):
+        # calculate the start_x of the cut based on the ref_side, ref_edge, frame, start_y and angle
+        plane = Plane.from_frame(frame)
         plane.translate(ref_side.normal * start_depth)
         point_start_x = intersection_line_plane(ref_edge, plane)
         if point_start_x is None:
-            raise ValueError("Plane does not intersect with beam.")
+            raise ValueError("Frame does not intersect with beam.")
         start_x = distance_point_point(ref_side.point, point_start_x)
         # count for start_depth and start_y in the start_x
         if orientation == OrientationType.END:
@@ -465,34 +465,37 @@ class Tenon(BTLxProcessing):
         return (beam_height  - proj_length)/2
 
     @staticmethod
-    def _calculate_angle(ref_side, plane):
-        # vector rotation direction of the plane's normal in the vertical direction
-        angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
+    def _calculate_angle(ref_side, frame):
+        # vector rotation direction of the frame's normal in the vertical direction
+        angle_vector = Vector.cross(ref_side.zaxis, frame.normal)
         angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
         return abs(angle)
 
     @staticmethod
-    def _calculate_inclination(ref_side, plane, orientation, angle):
-        # calculate the inclination between the ref_side and the plane
+    def _calculate_inclination(ref_side, frame, orientation, angle):
+        # calculate the inclination between the ref_side and the frame
         if orientation == OrientationType.END:
             angle = 180 - angle
         rotation = Rotation.from_axis_and_angle(ref_side.normal, math.radians(angle))
         rotated_axis = ref_side.xaxis.copy()
         rotated_axis.transform(rotation)
 
-        cross_plane = Vector.cross(rotated_axis, plane.normal)
+        cross_vect = Vector.cross(rotated_axis, frame.normal)
         cross_ref_side = Vector.cross(rotated_axis, ref_side.normal)
 
-        inclination = angle_vectors_signed(cross_ref_side, cross_plane, rotated_axis, deg=True)
+        inclination = angle_vectors_signed(cross_ref_side, cross_vect, rotated_axis, deg=True)
         return abs(inclination)
 
     @staticmethod
-    def _calculate_rotation(orientation, rotation):
-        # calculate rotation. Constrain the input (additional) rotation value to be between -90 and 90.
-        rotation = (rotation % 90) if rotation >= 0 else -(abs(rotation) % 90)
+    def _calculate_rotation(orientation, ref_side, frame):
+        # calculate the rotation of the tenon based on the ref_side and the frame
+        vector = ref_side.normal
+        project_vect = vector - frame.normal * vector.dot(frame.normal) # project ref_side normal onto
+        rotation_angle = angle_vectors_signed(project_vect, frame.yaxis, frame.normal, deg=True)
+
         if orientation == OrientationType.END:
-            rotation = -rotation
-        return rotation + 90
+            rotation_angle = 180 - rotation_angle
+        return rotation_angle % 180
 
     ########################################################################
     # Methods
