@@ -545,17 +545,6 @@ class Tenon(BTLxProcessing):
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
-        # fillet the edges of the volume based on the shape
-        if self.shape is not TenonShapeType.SQUARE:
-            try:
-                edges = tenon_volume.edges[:8]
-                tenon_volume.fillet(self.shape_radius, edges)
-            except Exception as e:
-                raise FeatureApplicationError(
-                    tenon_volume,
-                    geometry,
-                    "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
-                )
         # remove any parts of the volume that exceed the beam geometry. Fails silently.
         for frame in beam.ref_sides[:4]:
             try:
@@ -658,7 +647,19 @@ class Tenon(BTLxProcessing):
 
         # get the tenon as a box
         tenon_box = Box(self.width, self.length, self.height, cutting_frame)
-        return Brep.from_box(tenon_box)
+        tenon_volume = Brep.from_box(tenon_box)
+        # fillet the edges of the volume based on the shape
+        if self.shape is not TenonShapeType.SQUARE:
+            try:
+                edges = tenon_volume.edges[:8]
+                tenon_volume.fillet(self.shape_radius, edges)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    tenon_volume,
+                    edges,
+                    "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
+                )
+        return tenon_volume
 
 
 class TenonParams(BTLxProcessingParams):
