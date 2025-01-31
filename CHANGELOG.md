@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored `compas_timber.connections.LapJoint` to comply with the new system.
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
 * Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
+* Renamed `dovetail_volume_from_params_and_beam` to `volume_from_params_and_beam` in `DovetailTenon` and `DovetailMortise`.
+* Renamed `from_plane_and_beam` method in `compas_timber.fabrication.Tenon` to `from_frame_and_beam`.
+* Updated the alternative constructor of`compas_timber.fabrication.Tenon` so that the rotation parameter is calculated automatically.
+* Updated `TDovetailJoint` and `TenonMortiseJoint` from `compas_timber.connections` so that they use `House` and `HouseMortise`if needed.
 
 ### Removed
 
