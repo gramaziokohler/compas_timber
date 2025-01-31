@@ -628,27 +628,11 @@ class DovetailTenon(BTLxProcessing):
 
         # get dovetail volume from params and beam
         try:
-            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
+            dovetail_volume = self.volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
             )
-
-        # fillet the edges of the dovetail volume based on the shape
-        if (
-            self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
-        ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_indices = [4, 7] if self.length_limited_top else [5, 8]
-            try:
-                dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
-                )  # TODO: NotImplementedError
-            except Exception as e:
-                raise FeatureApplicationError(
-                    dovetail_volume,
-                    geometry,
-                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
-                )
 
         # trim geometry with cutting planes
         try:
@@ -777,7 +761,7 @@ class DovetailTenon(BTLxProcessing):
         trimming_frames.extend([cutting_frame, offseted_cutting_frame])
         return trimming_frames
 
-    def dovetail_volume_from_params_and_beam(self, beam):
+    def volume_from_params_and_beam(self, beam):
         """Calculates the dovetail tenon volume from the machining parameters in this instance and the given beam.
 
         Parameters
@@ -825,6 +809,22 @@ class DovetailTenon(BTLxProcessing):
             except Exception as e:
                 raise FeatureApplicationError(
                     frame, dovetail_volume, "Failed to trim tenon volume with cutting frame: {}".format(str(e))
+                )
+
+
+                # fillet the edges of the dovetail volume based on the shape
+        if self.shape is not TenonShapeType.SQUARE and self.length_limited_bottom:
+            # edge_indices = [4, 7] if self.length_limited_top else [5, 8]
+            edges = dovetail_volume.edges[-2:]
+            try:
+                dovetail_volume.fillet(
+                    self.shape_radius, edges
+                )  # TODO: NotImplementedError
+            except Exception as e:
+                raise FeatureApplicationError(
+                    dovetail_volume,
+                    beam.geometry,
+                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
                 )
 
         return dovetail_volume

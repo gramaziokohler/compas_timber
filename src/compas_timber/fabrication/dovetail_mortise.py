@@ -515,7 +515,7 @@ class DovetailMortise(BTLxProcessing):
 
         # get dovetail volume from params and beam
         try:
-            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
+            dovetail_volume = self.volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate dovetail mortise volume from parameters and beam: {}".format(str(e))
@@ -650,7 +650,7 @@ class DovetailMortise(BTLxProcessing):
         trimming_frames.append(cutting_frame)
         return trimming_frames
 
-    def dovetail_volume_from_params_and_beam(self, beam):
+    def volume_from_params_and_beam(self, beam):
         """Calculates the dovetail mortise volume from the machining parameters in this instance and the given beam.
 
         Parameters

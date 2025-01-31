@@ -19,6 +19,8 @@ Classes
     DovetailMortise
     Drilling
     FrenchRidgeLap
+    House
+    HouseMortise
     JackRafterCut
     Lap
     Slot
@@ -32,4 +34,3 @@ Classes
     OrientationType
     StepShapeType
     TenonShapeType
-
