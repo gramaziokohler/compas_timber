@@ -14,24 +14,23 @@ from .btlx import BTLxProcessingParams
 
 
 class FreeContour(BTLxProcessing):
-    """Represents a drilling processing.
+    """Represents a free contour processing.
 
     Parameters
     ----------
-    start_x : float
-        The x-coordinate of the start point of the drilling. In the local coordinate system of the reference side.
-    start_y : float
-        The y-coordinate of the start point of the drilling. In the local coordinate system of the reference side.
-    angle : float
-        The rotation angle of the drilling. In degrees. Around the z-axis of the reference side.
-    inclination : float
-        The inclination angle of the drilling. In degrees. Around the y-axis of the reference side.
-    depth_limited : bool, default True
-        If True, the drilling depth is limited to `depth`. Otherwise, drilling will go through the element.
-    depth : float, default 50.0
-        The depth of the drilling. In mm.
-    diameter : float, default 20.0
-        The diameter of the drilling. In mm.
+    contour_points : list of :class:`compas.geometry.Point`
+        The points of the contour.
+    depth : float
+        The depth of the contour.
+    couter_sink : bool, optional
+        If True, the contour is a counter sink. Default is False.
+    tool_position : str, optional
+        The position of the tool. Default is "left".
+    depth_bounded : bool, optional
+        If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.
+    inclination : float, optional
+        The inclination of the contour. Default is 0. This is not yet implemented.
+
     """
 
     # TODO: add __data__
@@ -45,7 +44,8 @@ class FreeContour(BTLxProcessing):
         self.couter_sink = couter_sink
         self.tool_position = tool_position
         self.depth_bounded = depth_bounded
-        self.inclination = inclination
+        if inclination != 0:
+            raise NotImplementedError("Inclination is not yet implemented.")
 
     ########################################################################
     # Properties
@@ -90,7 +90,7 @@ class FreeContour(BTLxProcessing):
         interior : bool, optional
             If True, the contour is an interior contour. Default is True.
         ref_side_index : int, optional
-
+            The reference side index. Default is 4.
         """
         pline = [pt.copy() for pt in polyline]
         pline = correct_polyline_direction(pline, element.ref_frame.normal, clockwise=True)
