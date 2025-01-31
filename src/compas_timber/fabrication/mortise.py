@@ -310,7 +310,6 @@ class Mortise(BTLxProcessing):
 
         """
         # type: (Frame|Plane, Beam, float, float, float, float, float, str, float, int) -> Mortise
-
         if isinstance(frame, Plane):
             frame = Frame.from_plane(frame)
 
@@ -387,10 +386,10 @@ class Mortise(BTLxProcessing):
         # calculate the angle of the cut based on the ref_side and cutting_frame
         if orientation == OrientationType.START:
             angle = angle_vectors_signed(ref_side.xaxis, -cutting_frame.xaxis, ref_side.normal, deg=True)
-            return angle - 90.0
+            return (angle - 90.0) % 180
         else:
             angle = angle_vectors_signed(ref_side.xaxis, cutting_frame.xaxis, ref_side.normal, deg=True)
-            return angle + 90.0
+            return (angle + 90.0) % 180
 
     ########################################################################
     # Methods
