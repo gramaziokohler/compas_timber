@@ -1,0 +1,76 @@
+import pytest
+from collections import OrderedDict
+
+from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Polyline
+from compas.geometry import Vector
+from compas.tolerance import TOL
+
+from compas_timber.elements import Plate
+from compas_timber.fabrication import FreeContour
+
+
+@pytest.fixture
+def plate():
+    pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    return Plate(pline, 10.0)
+
+
+def test_plate_blank():
+    pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    plate = Plate(pline, 10.0)
+
+    assert len(plate.features) == 1
+    assert isinstance(plate.features[0], FreeContour)
+    assert TOL.is_zero(plate.blank.xsize - 210.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
+    assert TOL.is_zero(plate.blank.ysize - 110.0)
+    assert TOL.is_zero(plate.blank.zsize - 10.0)
+
+
+def test_plate_blank_reversed():
+    pline = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 200, 0), Point(0, 200, 0), Point(0, 0, 0)])
+    plate = Plate(pline, 10.0)
+
+    assert len(plate.features) == 1
+    assert isinstance(plate.features[0], FreeContour)
+    assert TOL.is_zero(plate.blank.xsize - 110.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
+    assert TOL.is_zero(plate.blank.ysize - 210.0)
+    assert TOL.is_zero(plate.blank.zsize - 10.0)
+
+
+
+def test_plate_contour():
+    pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    thickness = 10.0
+    plate = Plate(pline, thickness)
+
+    expected = {
+        "header_attributes": {"ToolID": "0", "Name": "FreeContour", "ToolPosition": "left", "ReferencePlaneID": "4", "CounterSink": "no", "Process": "yes"},
+        "contour_attributes": {"Inclination": "0", "DepthBounded": "no", "Depth": "10.0"},
+        "contour_points": [
+            {"StartPoint": {"Y": "105.000", "X": "5.000", "Z": "0.000"}},
+            {"Line": {"EndPoint": {"Y": "105.000", "X": "205.000", "Z": "0.000"}}},
+            {"Line": {"EndPoint": {"Y": "5.000", "X": "205.000", "Z": "0.000"}}},
+            {"Line": {"EndPoint": {"Y": "5.000", "X": "5.000", "Z": "0.000"}}},
+            {"Line": {"EndPoint": {"Y": "105.000", "X": "5.000", "Z": "0.000"}}},
+        ],
+    }
+
+    assert plate.features[0].header_attributes == expected["header_attributes"]
+    assert plate.features[0].contour_attributes["Depth"] == str(thickness)
+
+def test_plate_contour():
+    plate_pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    thickness = 10.0
+    depth = 5.0
+    plate = Plate(plate_pline, thickness)
+    contour_pline = Polyline([Point(25, 50, 0), Point(25, 150, 0), Point(75, 150, 0), Point(75, 50, 0), Point(25, 50, 0)])
+    contour = FreeContour.from_polyline_and_element(contour_pline, plate, depth=depth)
+    plate.add_feature(contour)
+
+    assert len(plate.features) == 2
+    assert plate.features[1] == contour
+    assert contour.header_attributes["ToolPosition"] == "right"
+    assert contour.header_attributes["CounterSink"] == "yes"
+    assert contour.contour_attributes["Depth"] == str(depth)

@@ -54,11 +54,14 @@ class FreeContour(BTLxProcessing):
     @property
     def header_attributes(self):
         """Return the attributes to be included in the XML element."""
-        return {"Name": self.PROCESSING_NAME, "CounterSink": "no", "ToolID": "0", "Process": "yes", "ToolPosition": self.tool_position, "ReferencePlaneID": "4"}
+        return {"Name": self.PROCESSING_NAME, "CounterSink": "yes" if self.couter_sink else "no", "ToolID": "0", "Process": "yes", "ToolPosition": self.tool_position, "ReferencePlaneID": "4"}
+
+    @property
+    def contour_attributes(self):
+        return {"Depth": str(self.depth), "DepthBounded": "yes" if self.depth_bounded else "no", "Inclination": str(self.inclination)}
 
     @property
     def params_dict(self):
-        print("params_dict", FreeCountourParams(self).as_dict())
         return FreeCountourParams(self).as_dict()
 
     ########################################################################
@@ -83,8 +86,8 @@ class FreeContour(BTLxProcessing):
 
         """
         pline = [pt.copy() for pt in polyline]
-        pline = correct_polyline_direction(pline, element.ref_frame.normal)
-        tool_position = AlignmentType.LEFT if interior else AlignmentType.RIGHT
+        pline = correct_polyline_direction(pline, element.ref_frame.normal, clockwise=True)
+        tool_position = AlignmentType.RIGHT if interior else AlignmentType.LEFT # TODO: see if we can have CCW contours. for now only CW.
         couter_sink = True if interior else False
 
         depth = depth or element.width
@@ -111,30 +114,30 @@ class FreeContour(BTLxProcessing):
             The resulting geometry after processing.
 
         """
-        if self.tool_position == AlignmentType.LEFT:  # contour should remove material inside of the contour
+        if self.tool_position == AlignmentType.RIGHT:  # contour should remove material inside of the contour
             xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_frame)
             pts = [pt.transformed(xform) for pt in self.contour_points]
-            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth)
+            pts = correct_polyline_direction(pts, element.ref_frame.normal, clockwise=True)
+            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth* 2.0)
+            vol.translate(element.ref_frame.normal * -self.depth)
             return geometry - vol
-        else:  # TODO: see if we can use the extrusion directly instead of using a heavy BrepSubtraction.
-            volume = Brep.from_box(element.blank)
+        else:
             xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_frame)
             pts = [pt.transformed(xform) for pt in self.contour_points]
+            pts = correct_polyline_direction(pts, element.ref_frame.normal, clockwise=True)
             vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth)
-            volume = volume - vol
-            return geometry - volume
+            return geometry & vol
 
     @staticmethod
     def polyline_to_contour(polyline):
         result = [{"StartPoint": BTLxPart.et_point_vals(polyline[0])}]
         for point in polyline[1:]:
             result.append({"Line": {"EndPoint": BTLxPart.et_point_vals(point)}})
-        print("polyline_to_contour", result)
         return result
 
     def create_processing(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
-        moved to BTLxProcessing because some processings are significantly different and need to be overridden.
+        NOTE: moved to BTLxProcessing because some processings are significantly different and need to be overridden.
 
         Parameters
         ----------
@@ -152,13 +155,10 @@ class FreeContour(BTLxProcessing):
             self.PROCESSING_NAME,
             self.header_attributes,
         )
-        # create parameter subelements
-        contour_params = {"Depth": str(self.depth), "DepthBounded": "yes" if self.depth_bounded else "no", "Inclination": str(self.inclination)}
-
-        contour_element = ET.SubElement(processing_element, "Contour", contour_params)
+        contour_element = ET.SubElement(processing_element, "Contour", self.contour_attributes)
         ET.SubElement(contour_element, "StartPoint", BTLxPart.et_point_vals(self.contour_points[0]))
         for pt in self.contour_points[1:]:
-            point_element = ET.SubElement(contour_element, "Line")
+            point_element = ET.SubElement(contour_element, "Line")  # TODO: consider implementing arcs. maybe as tuple? (Point,Point)
             point_element.append(ET.Element("EndPoint", BTLxPart.et_point_vals(pt)))
         return processing_element
 
@@ -167,7 +167,9 @@ class FreeCountourParams(BTLxProcessingParams):
     def __init__(self, instance):
         super(FreeCountourParams, self).__init__(instance)
 
-    def as_dict(self):
+    def as_dict(self):  # don't run super().as_dict() because it will return the default values
         result = {}
-        result["Contour"] = FreeContour.polyline_to_contour(self._instance.contour)
+        result["header_attributes"] = self._instance.header_attributes
+        result["contour_attributes"] = self._instance.contour_attributes
+        result["contour_points"] = FreeContour.polyline_to_contour(self._instance.contour_points)
         return result

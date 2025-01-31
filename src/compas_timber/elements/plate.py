@@ -3,6 +3,7 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import Polyline
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas_model.elements import reset_computed
@@ -141,7 +142,7 @@ class Plate(TimberElement):
         if vector is not None and dot_vectors(frame.zaxis, vector) < 0:
             # if the vector is pointing in the opposite direction from self.frame.normal
             frame = Frame(frame.point, frame.yaxis, frame.xaxis)
-            self.outline.reverse()
+            self.outline = Polyline(self.outline[::-1])
             # flips the frame if the frame.point is at an exterior corner
         self.frame = frame
 
