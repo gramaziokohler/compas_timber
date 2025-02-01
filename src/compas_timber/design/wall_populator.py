@@ -331,6 +331,21 @@ class Window(object):
                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
 
+class InternalSegment(object):
+    """Internal segment of a wall, filled with studs.
+
+    `start` and `end` are floats along xaxis (length) in local space of the wall.
+
+    """
+
+    def __init__(self, start, end):
+        self.start = None
+        self.end = None
+
+    def is_param_in_segment(self, param):
+        return self.start <= param <= self.end
+
+
 class WallPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
@@ -452,7 +467,11 @@ class WallPopulator(object):
         self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
 
         self._interfaces = interfaces or []
-        self._adjusted_segments = []
+        self._adjusted_segments = {}
+
+        # the entire wall is the initial segment
+        default_segment = InternalSegment(self._config_set.stud_spacing, self.panel_length - self._config_set.beam_width)
+        self._stud_segments = [default_segment]
         # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
@@ -614,58 +633,49 @@ class WallPopulator(object):
                     # break # ?
         return joint_definitions
 
-    def _adjust_segments_to_interfaces(self, top_segment, bottom_segment, interfaces):
-        # TODO: move front_segment and back_segment to the interface with the detail?
-        # TODO: not very elegant, need to revise, how can the datails inform the populator regarding the rest of the wall?
-        for interface in interfaces:
-            if interface.interface_role == InterfaceRole.MAIN:
-                # shorten top and bottom segments to the interface
-                interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])
-                if interface.interface_type == InterfaceLocation.BACK:
-                    new_top_end = intersection_line_plane(top_segment, interface_plane)
-                    new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
-                    if new_top_end:
-                        top_segment = Line(top_segment.start, new_top_end)
-                    if new_bottom_end:
-                        bottom_segment = Line(bottom_segment.start, new_bottom_end)
-                elif interface.interface_type == InterfaceLocation.FRONT:
-                    new_top_start = intersection_line_plane(top_segment, interface_plane)
-                    new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
-                    if new_top_start:
-                        top_segment = Line(new_top_start, top_segment.end)
-                    if new_bottom_start:
-                        bottom_segment = Line(new_bottom_start, bottom_segment.end)
+    # def _adjust_segments_to_interfaces(self, top_segment, bottom_segment, interfaces):
+    #     # TODO: move front_segment and back_segment to the interface with the detail?
+    #     # TODO: not very elegant, need to revise, how can the datails inform the populator regarding the rest of the wall?
+    #     for interface in interfaces:
+    #         #
+    #         if interface.interface_role == InterfaceRole.MAIN:
+    #             # shorten top and bottom segments to the interface
+    #             interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])
+    #             if interface.interface_type == InterfaceLocation.BACK:
+    #                 new_top_end = intersection_line_plane(top_segment, interface_plane)
+    #                 new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
+    #                 if new_top_end:
+    #                     top_segment = Line(top_segment.start, new_top_end)
+    #                 if new_bottom_end:
+    #                     bottom_segment = Line(bottom_segment.start, new_bottom_end)
+    #             elif interface.interface_type == InterfaceLocation.FRONT:
+    #                 new_top_start = intersection_line_plane(top_segment, interface_plane)
+    #                 new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
+    #                 if new_top_start:
+    #                     top_segment = Line(new_top_start, top_segment.end)
+    #                 if new_bottom_start:
+    #                     bottom_segment = Line(new_bottom_start, bottom_segment.end)
 
-            elif interface.interface_role == InterfaceRole.CROSS:
-                outer_point = interface.interface_polyline[2]
-                edge_plane = Plane(outer_point, self._wall.baseline.direction)
-                bottom_point = intersection_line_plane(bottom_segment, edge_plane)
-                top_point = intersection_line_plane(top_segment, edge_plane)
-                if interface.interface_type == InterfaceLocation.FRONT:
-                    bottom_segment = Line(bottom_point, bottom_segment.end)
-                    top_segment = Line(top_point, top_segment.end)
-                elif interface.interface_type == InterfaceLocation.BACK:
-                    bottom_segment = Line(bottom_point, bottom_segment.end)
-                    top_segment = Line(top_segment.start, top_point)
+    #         elif interface.interface_role == InterfaceRole.CROSS:
+    #             outer_point = interface.interface_polyline[2]
+    #             edge_plane = Plane(outer_point, self._wall.baseline.direction)
+    #             bottom_point = intersection_line_plane(bottom_segment, edge_plane)
+    #             top_point = intersection_line_plane(top_segment, edge_plane)
+    #             if interface.interface_type == InterfaceLocation.FRONT:
+    #                 bottom_segment = Line(bottom_point, bottom_segment.end)
+    #                 top_segment = Line(top_point, top_segment.end)
+    #             elif interface.interface_type == InterfaceLocation.BACK:
+    #                 bottom_segment = Line(bottom_point, bottom_segment.end)
+    #                 top_segment = Line(top_segment.start, top_point)
 
-        return top_segment, bottom_segment
+    #     return top_segment, bottom_segment
 
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)
         # first the interfaces are handled, then the remaining sides are handled by the default connection details
         handled_sides = set()
 
-        for interface in self._interfaces:
-            connection_detail = self._config_set.connection_details.get(interface.topology, None)
-
-            if connection_detail:
-                if interface.interface_role == InterfaceRole.MAIN:
-                    self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
-                elif interface.interface_role == InterfaceRole.CROSS:
-                    self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
-
-                handled_sides.add(interface.interface_type)
-
+        # TODO: move to init
         # add any remaining sides if have not been handled by any of the connection details
         # ^  3 ---- 2
         # |  |      |
@@ -675,8 +685,26 @@ class WallPopulator(object):
         back_segment = Line(self.points[3], self.points[0])
         top_segment = Line(self.points[2], self.points[3])
         bottom_segment = Line(self.points[0], self.points[1])
-        self._adjusted_segments = [front_segment, back_segment, top_segment, bottom_segment]
-        top_segment, bottom_segment = self._adjust_segments_to_interfaces(top_segment, bottom_segment, self._interfaces)
+        self._adjusted_segments = {"front": front_segment, "back": back_segment, "top": top_segment, "bottom": bottom_segment}
+
+        for interface in self._interfaces:
+            connection_detail = self._config_set.connection_details.get(interface.topology, None)
+
+            if connection_detail:
+                if interface.interface_role == InterfaceRole.MAIN:
+                    self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
+                    connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments, self._stud_segments)
+                elif interface.interface_role == InterfaceRole.CROSS:
+                    connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments, self._stud_segments)
+                    self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
+
+                handled_sides.add(interface.interface_type)
+
+        # top_segment, bottom_segment = self._adjust_segments_to_interfaces(top_segment, bottom_segment, self._interfaces)
+        top_segment = self._adjusted_segments["top"]
+        bottom_segment = self._adjusted_segments["bottom"]
+        front_segment = self._adjusted_segments["front"]
+        back_segment = self._adjusted_segments["back"]
 
         assert not TOL.is_zero(len(top_segment)), "top_segment is fucked"
         assert not TOL.is_zero(len(bottom_segment)), "bottom_segment is fucked"
@@ -790,6 +818,7 @@ class WallPopulator(object):
         self.cull_overlaps()
 
     def generate_stud_lines(self):
+        # TODO: do this segment-wise. start at modified back segment + stud_spacing, end at
         x_position = self._config_set.stud_spacing
         while x_position < self.panel_length - self._config_set.beam_width:
             start_point = Point(x_position, 0, 0)

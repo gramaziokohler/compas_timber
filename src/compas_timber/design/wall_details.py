@@ -1,7 +1,71 @@
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import intersection_line_plane
+
+from compas_timber.connections import InterfaceLocation
+
 from .wall_populator import BeamDefinition
 
 
-class LConnectionDetailB(object):
+class LDetailBase(object):
+    def adjust_segments_main(self, interface, wall, config_set, perimeter_segments, internal_segments):
+        # top and bottom segments are shortened/extended to the intersection plane
+        # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
+        # shorten top and bottom segments to the interface
+        interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])
+        top_segment = perimeter_segments["top"]
+        bottom_segment = perimeter_segments["bottom"]
+        if interface.interface_type == InterfaceLocation.BACK:
+            new_top_end = intersection_line_plane(top_segment, interface_plane)
+            new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
+            if new_top_end:
+                top_segment = Line(top_segment.start, new_top_end)
+            if new_bottom_end:
+                bottom_segment = Line(bottom_segment.start, new_bottom_end)
+        elif interface.interface_type == InterfaceLocation.FRONT:
+            new_top_start = intersection_line_plane(top_segment, interface_plane)
+            new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
+            if new_top_start:
+                top_segment = Line(new_top_start, top_segment.end)
+            if new_bottom_start:
+                bottom_segment = Line(new_bottom_start, bottom_segment.end)
+
+        perimeter_segments["top"] = top_segment
+        perimeter_segments["bottom"] = bottom_segment
+
+    def adjust_segments_cross(self, interface, wall, config_set, perimeter_segments, internal_segments):
+        # top and bottom are extended to meet the other end of the main wall
+        # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
+        outer_point = interface.interface_polyline[2]
+        edge_plane = Plane(outer_point, wall.baseline.direction)
+        top_segment = perimeter_segments["top"]
+        bottom_segment = perimeter_segments["bottom"]
+        bottom_point = intersection_line_plane(bottom_segment, edge_plane)
+        top_point = intersection_line_plane(top_segment, edge_plane)
+        if interface.interface_type == InterfaceLocation.FRONT:
+            bottom_segment = Line(bottom_point, bottom_segment.end)
+            top_segment = Line(top_point, top_segment.end)
+        elif interface.interface_type == InterfaceLocation.BACK:
+            bottom_segment = Line(bottom_point, bottom_segment.end)
+            top_segment = Line(top_segment.start, top_point)
+
+        perimeter_segments["top"] = top_segment
+        perimeter_segments["bottom"] = bottom_segment
+
+
+class TDetailBase(object):
+    def adjust_segments_main(self, interface, config_set, perimeter_segments, internal_segments):
+        # top and bottom segments are shortened/extended to the intersection plane
+        # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
+        pass
+
+    def adjust_segments_cross(self, interface, config_set, perimeter_segments, internal_segments):
+        # top and bottom are not modified
+        # internal segments are created on either side of the interface
+        pass
+
+
+class LConnectionDetailB(LDetailBase):
     """
     Parameters
     ----------
@@ -36,7 +100,7 @@ class LConnectionDetailB(object):
         return [edge_beam]
 
 
-class LConnectionDetailA(object):
+class LConnectionDetailA(LDetailBase):
     """
     Parameters
     ----------
@@ -74,7 +138,7 @@ class LConnectionDetailA(object):
         return [edge_beam]
 
 
-class TConnectionDetailA(object):
+class TConnectionDetailA(TDetailBase):
     """
     Parameters
     ----------
