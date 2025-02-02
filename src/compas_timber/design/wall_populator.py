@@ -468,7 +468,7 @@ class WallPopulator(object):
 
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
-
+        self._detail_obbs = []
         # the entire wall is the initial segment
         default_segment = InternalSegment(self._config_set.stud_spacing, self.panel_length - self._config_set.beam_width)
         self._stud_segments = [default_segment]  # list of non-overlapping, ordered segments where studs should be placed
@@ -694,7 +694,9 @@ class WallPopulator(object):
                 if interface.interface_role == InterfaceRole.MAIN:
                     self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
                     connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments, self._stud_segments)
+                    self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set))
                 elif interface.interface_role == InterfaceRole.CROSS:
+                    self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set))
                     connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments, self._stud_segments)
                     self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
@@ -884,9 +886,26 @@ class WallPopulator(object):
         self._beam_definitions.extend(stud_elements)
 
     def cull_overlaps(self):
-        for beam_def in self.studs:
+        studs = self.studs
+        for beam_def in studs:
             for other_element in self.king_studs + self.jack_studs + self.edge_studs:
                 if self.distance_between_elements(beam_def, other_element) < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2:
+                    self._beam_definitions.remove(beam_def)
+                    break
+
+        # removed studs that are inside details
+        for beam_def in studs:
+            for interface in self._interfaces:
+                detail = self._config_set.connection_details.get(interface.topology, None)
+                if not detail:
+                    continue
+
+                if interface.interface_role == InterfaceRole.MAIN:
+                    detail_obb = detail.get_detail_obb_main(interface, self._config_set)
+                else:
+                    detail_obb = detail.get_detail_obb_cross(interface, self._config_set)
+
+                if detail_obb.contains_point(beam_def.centerline.midpoint):
                     self._beam_definitions.remove(beam_def)
                     break
 

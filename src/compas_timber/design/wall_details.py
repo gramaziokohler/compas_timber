@@ -1,3 +1,4 @@
+from compas.geometry import Box
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import intersection_line_plane
@@ -12,9 +13,10 @@ class LDetailBase(object):
         # top and bottom segments are shortened/extended to the intersection plane
         # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
         # shorten top and bottom segments to the interface
-        interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])
+        interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])  # TODO: Interface.as_plane()
         top_segment = perimeter_segments["top"]
         bottom_segment = perimeter_segments["bottom"]
+
         if interface.interface_type == InterfaceLocation.BACK:
             new_top_end = intersection_line_plane(top_segment, interface_plane)
             new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
@@ -22,6 +24,7 @@ class LDetailBase(object):
                 top_segment = Line(top_segment.start, new_top_end)
             if new_bottom_end:
                 bottom_segment = Line(bottom_segment.start, new_bottom_end)
+
         elif interface.interface_type == InterfaceLocation.FRONT:
             new_top_start = intersection_line_plane(top_segment, interface_plane)
             new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
@@ -72,6 +75,27 @@ class LConnectionDetailB(LDetailBase):
     interface : :class:`compas_timber.connections.WallToWallInterface`
     """
 
+    def get_detail_obb_main(self, interface, config_set):
+        xsize = config_set.beam_width  # xsize
+        ysize = interface.interface_polyline.lines[0].length
+        zsize = config_set.wall_depth
+        box_frame = interface.frame.copy()
+        box_frame.point += interface.frame.xaxis * xsize * 0.5
+        box_frame.point += interface.frame.yaxis * ysize * 0.5
+        box_frame.point += interface.frame.zaxis * zsize * 0.5
+        return Box(xsize, ysize, zsize, frame=box_frame)
+
+    def get_detail_obb_cross(self, interface, config_set):
+        xsize = config_set.wall_depth
+        ysize = interface.interface_polyline.lines[0].length
+        zsize = config_set.beam_width + config_set.wall_depth
+        box_frame = interface.frame.copy()
+        box_frame.point += interface.frame.xaxis * xsize * 0.5
+        box_frame.point += interface.frame.yaxis * ysize * 0.5
+        # TODO: this isn't quite right, fix
+        # box_frame.point += interface.frame.zaxis * interface.interface_polyline.lines[1].length * 0.5
+        return Box(xsize, ysize, zsize, frame=box_frame)
+
     def create_elements_cross(self, interface, _, config_set):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
@@ -106,6 +130,27 @@ class LConnectionDetailA(LDetailBase):
     ----------
     interface : :class:`compas_timber.connections.WallToWallInterface`
     """
+
+    def get_detail_obb_main(self, interface, config_set):
+        xsize = config_set.beam_width  # xsize
+        ysize = interface.interface_polyline.lines[0].length
+        zsize = config_set.wall_depth
+        box_frame = interface.frame.copy()
+        box_frame.point += interface.frame.xaxis * xsize * 0.5
+        box_frame.point += interface.frame.yaxis * ysize * 0.5
+        box_frame.point += interface.frame.zaxis * zsize * 0.5
+        return Box(xsize, ysize, zsize, frame=box_frame)
+
+    def get_detail_obb_cross(self, interface, config_set):
+        xsize = config_set.wall_depth
+        ysize = interface.interface_polyline.lines[0].length
+        zsize = 2 * config_set.beam_width + config_set.wall_depth
+        box_frame = interface.frame.copy()
+        box_frame.point += interface.frame.xaxis * xsize * 0.5
+        box_frame.point += interface.frame.yaxis * ysize * 0.5
+        # TODO: this isn't quite right, fix
+        # box_frame.point += interface.frame.zaxis * interface.interface_polyline.lines[1].length * 0.5
+        return Box(xsize, ysize, zsize, frame=box_frame)
 
     def create_elements_cross(self, interface, _, config_set):
         # create a beam (definition) as wide and as high as the wall
