@@ -57,12 +57,12 @@ class LDetailBase(object):
 
 
 class TDetailBase(object):
-    def adjust_segments_main(self, interface, config_set, perimeter_segments, internal_segments):
+    def adjust_segments_main(self, *args, **kwargs):
         # top and bottom segments are shortened/extended to the intersection plane
         # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
         pass
 
-    def adjust_segments_cross(self, interface, config_set, perimeter_segments, internal_segments):
+    def adjust_segments_cross(self, *args, **kwargs):
         # top and bottom are not modified
         # internal segments are created on either side of the interface
         pass
@@ -190,6 +190,26 @@ class TConnectionDetailA(TDetailBase):
     interface : :class:`compas_timber.connections.WallToWallInterface`
     """
 
+    def get_detail_obb_main(self, interface, config_set):
+        xsize = config_set.beam_width  # xsize
+        ysize = interface.interface_polyline.lines[0].length
+        zsize = config_set.wall_depth
+        box_frame = interface.frame.copy()
+        box_frame.point += interface.frame.xaxis * xsize * 0.5
+        box_frame.point += interface.frame.yaxis * ysize * 0.5
+        box_frame.point += interface.frame.zaxis * zsize * 0.5
+        return Box(xsize, ysize, zsize, frame=box_frame)
+
+    def get_detail_obb_cross(self, interface, config_set):
+        xsize = config_set.wall_depth  # xsize
+        ysize = interface.interface_polyline.lines[0].length
+        zsize = config_set.wall_depth
+        box_frame = interface.frame.copy()
+        box_frame.point += interface.frame.xaxis * xsize * 0.5
+        box_frame.point += interface.frame.yaxis * ysize * 0.5
+        box_frame.point += interface.frame.zaxis * zsize * 0.5
+        return Box(xsize, ysize, zsize, frame=box_frame)
+
     def create_elements_cross(self, interface, _, config_set):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
@@ -198,7 +218,8 @@ class TConnectionDetailA(TDetailBase):
         parallel_to_interface = interface.frame.normal
         perpendicular_to_interface = interface.frame.xaxis
 
-        edge_beam_line = right_vertical.translated(parallel_to_interface * config_set.beam_width * -0.5)
+        interface_width = interface.interface_polyline.lines[1].length
+        edge_beam_line = right_vertical.translated(parallel_to_interface * interface_width * -0.5)
         edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, config_set.wall_depth, normal=perpendicular_to_interface)
 
         return [edge_beam]
