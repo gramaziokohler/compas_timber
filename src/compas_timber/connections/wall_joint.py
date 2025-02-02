@@ -174,6 +174,9 @@ class WallJoint(Joint):
         main_interface_type = InterfaceLocation.FRONT if is_joint_at_main_end else InterfaceLocation.BACK
         cross_interface_type = InterfaceLocation.FRONT if is_joint_at_cross_end else InterfaceLocation.BACK
 
+        if self.topology == JointTopology.TOPO_T:
+            cross_interface_type = InterfaceLocation.OTHER
+
         for face in envelope_faces:
             face_plane = Plane.from_frame(face)
             intersection = intersection_plane_plane(face_plane, cross_face_plane)
