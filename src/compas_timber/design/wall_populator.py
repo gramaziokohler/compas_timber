@@ -339,8 +339,8 @@ class InternalSegment(object):
     """
 
     def __init__(self, start, end):
-        self.start = None
-        self.end = None
+        self.start = start
+        self.end = end
 
     def is_param_in_segment(self, param):
         return self.start <= param <= self.end
@@ -471,7 +471,7 @@ class WallPopulator(object):
 
         # the entire wall is the initial segment
         default_segment = InternalSegment(self._config_set.stud_spacing, self.panel_length - self._config_set.beam_width)
-        self._stud_segments = [default_segment]
+        self._stud_segments = [default_segment]  # list of non-overlapping, ordered segments where studs should be placed
         # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
@@ -818,14 +818,14 @@ class WallPopulator(object):
         self.cull_overlaps()
 
     def generate_stud_lines(self):
-        # TODO: do this segment-wise. start at modified back segment + stud_spacing, end at
-        x_position = self._config_set.stud_spacing
-        while x_position < self.panel_length - self._config_set.beam_width:
-            start_point = Point(x_position, 0, 0)
-            start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
-            line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
-            self._beam_definitions.append(BeamDefinition(line, type="stud", parent=self))
-            x_position += self._config_set.stud_spacing
+        for segment in self._stud_segments:
+            x_position = segment.start
+            while x_position < segment.end:
+                start_point = Point(x_position, 0, 0)
+                start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
+                line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
+                self._beam_definitions.append(BeamDefinition(line, type="stud", parent=self))
+                x_position += self._config_set.stud_spacing
 
     def get_beam_intersections(self, beam_def, *element_lists_to_intersect):
         intersections = []
