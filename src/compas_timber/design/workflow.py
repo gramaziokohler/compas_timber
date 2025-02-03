@@ -82,29 +82,36 @@ class JointRule(object):
             A list of joint definitions that can be applied to the given elements.
 
         """
+        print("elements", elements)
         elements = elements if isinstance(elements, list) else list(elements)
+        print("elements list", elements)
         direct_rules = JointRule.get_direct_rules(rules)
         solver = ConnectionSolver()
-        max_rule_distance = max([rule.max_distance for rule in rules if rule.max_distance])
+        print("max_distance in", max_distance)
+        max_distances = [rule.max_distance for rule in rules if rule.max_distance]
+        max_rule_distance = max(max_distances) if max_distances else max_distance
         print("max_rule_distance", max_rule_distance)
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_rule_distance)
-        print("element_pairs", [[beam.key for beam in pair]for pair in element_pairs])
         joint_defs = []
         unmatched_pairs = []
+        print("element_pairs", element_pairs)
         for rule in direct_rules:
-            if rule.comply(element_pairs, max_distance=max_distance):
+            print("direct rule", rule)
+            if rule.comply(element_pairs, model_max_distance=max_distance):
                 joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
         while element_pairs:
             pair = element_pairs.pop()
+            print(pair)
             match_found = False
             for rule in direct_rules:  # see if pair is used in a direct rule
+                print("direct rule", rule)
                 if rule.contains(pair):
                     match_found = True
                     break
 
             if not match_found:
                 for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
-                    if rule.comply(pair, max_distance=max_distance):
+                    if rule.comply(pair, model_max_distance=max_distance):
                         match_found = True
                         joint_defs.append(JointDefinition(rule.joint_type, rule.reorder(pair), **rule.kwargs))
                         break
@@ -113,13 +120,14 @@ class JointRule(object):
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
                     print("topo rule", rule, rule.max_distance)
                     print([beam.key for beam in pair])
-                    comply, ordered_pair = rule.comply(pair, max_distance=max_distance)
+                    comply, ordered_pair = rule.comply(pair, model_max_distance=max_distance)
                     if comply:
                         match_found = True
                         joint_defs.append(JointDefinition(rule.joint_type, ordered_pair, **rule.kwargs))
                         break
             if not match_found:
                 unmatched_pairs.append(pair)
+            print("jdefs", joint_defs)
         return joint_defs, unmatched_pairs
 
 
@@ -146,12 +154,18 @@ class DirectRule(JointRule):
         except TypeError:
             raise UserWarning("unable to comply direct joint element sets")
 
-    def comply(self, elements, max_distance=1e-6):
-        if not self.max_distance:
-            self.max_distance = max_distance
+    def comply(self, elements, model_max_distance=1e-6):
+
+        if self.max_distance:
+            max_distance = self.max_distance
+        else:
+            max_distance = model_max_distance
+        print("element count", len(elements))
+        print("pairs", list(combinations(list(elements), 2)))
         try:
-            for pair in combinations(elements, 2):
-                if distance_line_line(pair[0].centerline, pair[1].centerline) > self.max_distance:
+            for pair in combinations(list(elements), 2):
+                print("pair", pair)
+                if distance_line_line(pair[0].centerline, pair[1].centerline) > max_distance:
                     return False
         except TypeError:
             raise UserWarning("unable to comply direct joint element sets")
@@ -175,16 +189,18 @@ class CategoryRule(JointRule):
     def __repr__(self):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
-    def comply(self, elements, max_distance=1e-6):
-        if not self.max_distance:
-            self.max_distance = max_distance
+    def comply(self, elements, model_max_distance=1e-6):
+        if self.max_distance:
+            max_distance = self.max_distance
+        else:
+            max_distance = model_max_distance
         try:
             element_cats = set([e.attributes["category"] for e in elements])
             comply = False
             elements = list(elements)
             if element_cats == set([self.category_a, self.category_b]):
                 solver = ConnectionSolver()
-                found_topology = solver.find_topology(elements[0], elements[1], max_distance=self.max_distance)[0]
+                found_topology = solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
                 supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
                 if not isinstance(supported_topo, list):
                     supported_topo = [supported_topo]
@@ -246,15 +262,15 @@ class TopologyRule(JointRule):
     def __repr__(self):
         return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type, self.max_distance)
 
-    def comply(self, elements, max_distance=1e-6):
-        print("before topo max_distance", self.max_distance)
-        if not self.max_distance:
-            self.max_distance = max_distance
-        print("topo max_distance", self.max_distance)
+    def comply(self, elements, model_max_distance=1e-6):
+        if self.max_distance:
+            max_distance = self.max_distance
+        else:
+            max_distance = model_max_distance
         try:
             elements = list(elements)
             solver = ConnectionSolver()
-            topo_results = solver.find_topology(elements[0], elements[1], max_distance=self.max_distance)
+            topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
             return (
                 self.topology_type == topo_results[0],
                 [topo_results[1], topo_results[2]],
