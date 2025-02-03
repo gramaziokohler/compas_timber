@@ -9,7 +9,7 @@ from .wall_populator import BeamDefinition
 
 
 class LDetailBase(object):
-    def adjust_segments_main(self, interface, wall, config_set, perimeter_segments, internal_segments):
+    def adjust_segments_main(self, interface, wall, config_set, perimeter_segments):
         # top and bottom segments are shortened/extended to the intersection plane
         # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
         # shorten top and bottom segments to the interface
@@ -36,7 +36,7 @@ class LDetailBase(object):
         perimeter_segments["top"] = top_segment
         perimeter_segments["bottom"] = bottom_segment
 
-    def adjust_segments_cross(self, interface, wall, config_set, perimeter_segments, internal_segments):
+    def adjust_segments_cross(self, interface, wall, config_set, perimeter_segments):
         # top and bottom are extended to meet the other end of the main wall
         # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
         outer_point = interface.interface_polyline[2]
