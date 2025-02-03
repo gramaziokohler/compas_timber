@@ -1,12 +1,13 @@
 from itertools import combinations
-from compas.geometry import distance_line_line
+from compas.geometry import distance_point_point
+from compas.geometry import intersection_line_line
+from compas.geometry import closest_point_on_segment
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.elements import beam
 from compas_timber.utils import intersection_line_line_param
 
 
@@ -82,32 +83,23 @@ class JointRule(object):
             A list of joint definitions that can be applied to the given elements.
 
         """
-        print("elements", elements)
         elements = elements if isinstance(elements, list) else list(elements)
-        print("elements list", elements)
         direct_rules = JointRule.get_direct_rules(rules)
         solver = ConnectionSolver()
-        print("max_distance in", max_distance)
         max_distances = [rule.max_distance for rule in rules if rule.max_distance]
         max_rule_distance = max(max_distances) if max_distances else max_distance
-        print("max_rule_distance", max_rule_distance)
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_rule_distance)
         joint_defs = []
         unmatched_pairs = []
-        print("element_pairs", element_pairs)
-        for rule in direct_rules:
-            print("direct rule", rule)
-            if rule.comply(element_pairs, model_max_distance=max_distance):
-                joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
         while element_pairs:
             pair = element_pairs.pop()
-            print(pair)
             match_found = False
-            for rule in direct_rules:  # see if pair is used in a direct rule
-                print("direct rule", rule)
-                if rule.contains(pair):
-                    match_found = True
-                    break
+            for rule in direct_rules:
+                if rule.contains(pair): # see if pair is used in a direct rule
+                    if rule.comply(pair, model_max_distance=max_distance): # see if pair complies with max distance
+                        joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
+                        match_found = True
+                        break
 
             if not match_found:
                 for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
@@ -118,8 +110,6 @@ class JointRule(object):
 
             if not match_found:
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
-                    print("topo rule", rule, rule.max_distance)
-                    print([beam.key for beam in pair])
                     comply, ordered_pair = rule.comply(pair, model_max_distance=max_distance)
                     if comply:
                         match_found = True
@@ -127,7 +117,6 @@ class JointRule(object):
                         break
             if not match_found:
                 unmatched_pairs.append(pair)
-            print("jdefs", joint_defs)
         return joint_defs, unmatched_pairs
 
 
@@ -160,13 +149,10 @@ class DirectRule(JointRule):
             max_distance = self.max_distance
         else:
             max_distance = model_max_distance
-        print("element count", len(elements))
-        print("pairs", list(combinations(list(elements), 2)))
+
         try:
             for pair in combinations(list(elements), 2):
-                print("pair", pair)
-                if distance_line_line(pair[0].centerline, pair[1].centerline) > max_distance:
-                    return False
+                return distance_segment_segment(pair[0].centerline, pair[1].centerline) <= max_distance
         except TypeError:
             raise UserWarning("unable to comply direct joint element sets")
 
@@ -251,8 +237,6 @@ class TopologyRule(JointRule):
         self.topology_type = topology_type
         self.joint_type = joint_type
         self.max_distance = max_distance
-        print("topo __init__ max_distance", self.max_distance)
-        print(kwargs)
         self.kwargs = kwargs
 
     def ToString(self):
@@ -456,3 +440,26 @@ class DebugInfomation(object):
             self.joint_errors.extend(error)
         else:
             self.joint_errors.append(error)
+
+
+def distance_segment_segment(segment_a, segment_b):
+    """Computes the distance between two segments.
+
+    Parameters
+    ----------
+    segment_a : tuple(tuple(float, float, float), tuple(float, float, float))
+        The first segment, defined by two points.
+    segment_b : tuple(tuple(float, float, float), tuple(float, float, float))
+        The second segment, defined by two points.
+
+    Returns
+    -------
+    float
+        The distance between the two segments.
+
+    """
+    pta, ptb = intersection_line_line(segment_a, segment_b)
+    pt_seg_a = closest_point_on_segment(pta, segment_a)
+    pt_seg_b = closest_point_on_segment(ptb, segment_b)
+
+    return distance_point_point(pt_seg_a, pt_seg_b)
