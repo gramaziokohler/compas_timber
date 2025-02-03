@@ -5,7 +5,7 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
-from compas_timber.connections import XHalfLapJoint
+from compas_timber.connections import XLapJoint
 from compas_timber.design import TopologyRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
@@ -23,7 +23,7 @@ class X_TopologyJointRule(component):
             if JointTopology.TOPO_X in supported_topo:
                 self.classes[cls.__name__] = cls
         if ghenv.Component.Params.Output[0].NickName == "Rule":
-            self.joint_type = XHalfLapJoint
+            self.joint_type = XLapJoint
             self.clicked = False
         else:
             self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
@@ -31,9 +31,9 @@ class X_TopologyJointRule(component):
 
     def RunScript(self, *args):
         if not self.clicked:
-            ghenv.Component.Message = "Default: XHalfLapJoint"
-            self.AddRuntimeMessage(Warning, "XHalfLapJoint is default, change in context menu (right click)")
-            return TopologyRule(JointTopology.TOPO_X, XHalfLapJoint)
+            ghenv.Component.Message = "Default: XLapJoint"
+            self.AddRuntimeMessage(Warning, "XLapJoint is default, change in context menu (right click)")
+            return TopologyRule(JointTopology.TOPO_X, XLapJoint)
         else:
             ghenv.Component.Message = self.joint_type.__name__
             kwargs = {}

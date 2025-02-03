@@ -388,6 +388,8 @@ class Beam(TimberElement):
         :class:`~compas_timber.parts.Beam`
 
         """
+        if centerline.length < TOL.absolute:
+            raise ValueError("The given centerline has zero length. Check your endpoints.")
         x_vector = centerline.vector
         z_vector = z_vector or cls._calculate_z_vector_from_centerline(x_vector)
         y_vector = Vector(*cross_vectors(x_vector, z_vector)) * -1.0
@@ -627,3 +629,22 @@ class Beam(TimberElement):
             return "start", ps
         else:
             return "end", pe
+
+    def get_dimensions_relative_to_side(self, ref_side_index):
+        """Returns the perpendicular and parallel dimensions of the beam to the given reference side.
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the dimensions should be calculated.
+
+        Returns
+        -------
+        tuple(float, float)
+            The perpendicular and parallel dimensions of the beam to the reference side.
+                - Perpendicular dimension: The measurement at a right angle to the reference side.
+                - Parallel dimension: The measurement along the same direction as the reference side.
+        """
+        if ref_side_index in [1, 3]:
+            return self.height, self.width
+        return self.width, self.height

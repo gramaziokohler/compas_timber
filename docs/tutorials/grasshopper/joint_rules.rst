@@ -7,7 +7,7 @@ The Joints between :doc:`beams` are defined by Joint Rules. There are four kinds
 .. note::
 
     **Joint Topologies**
-    
+
     There are three main topologies of how beams can connect to each other: **L**, **T** and **X**.
 
     .. image:: ../images/joint_topologies_diagramm.png
@@ -23,7 +23,7 @@ Joint Rules Components
     **Dynamic Components**
 
     Joint Rules Components are dynamic: First place them on the Grasshopper Canvas. Now you can define the Joint they should apply by Right-Click & Selection from the Drop-Down List. The Inputs might change because every Joint has its own specific settings.
-    
+
     .. image:: ../images/joint_rules_dynamic.gif
       :width: 55%
 
@@ -32,11 +32,11 @@ Joint Rules Components
 Default Joint Rules
 ^^^^^^^^^^^^^^^^^^^
 
-This Component applies a L-Miter to all L-Topologies, a T-Butt to all T-Topologies and a X-HalfLap to all X-Topologies. 
+This Component applies a L-Miter to all L-Topologies, a T-Butt to all T-Topologies and a X-HalfLap to all X-Topologies.
 
 .. image:: ../images/gh_joint_rules_default.png
     :width: 20%
-    
+
 |
 
 Topological Joint Rules
@@ -57,7 +57,7 @@ These Joint Rules are more specific and will overwrite the Default Joint Rules. 
 Category Joint Rules
 ^^^^^^^^^^^^^^^^^^^^
 
-This Joint Rule will overwrite all Topological Joint Rules. The Component defines a Joint type for all Joints between two beam Categories. The Categories are assigned through the string-input `Category` in the component :code:`Beam`. The inputs are variable and depend on the joint type. 
+This Joint Rule will overwrite all Topological Joint Rules. The Component defines a Joint type for all Joints between two beam Categories. The Categories are assigned through the string-input `Category` in the component :code:`Beam`. The inputs are variable and depend on the joint type.
 
 .. image:: ../images/gh_joint_rules_category.png
     :width: 40%
@@ -104,7 +104,7 @@ Inputs:
 
 |
 
-L-HalfLap
+L-Lap
 ^^^^^^^^^
 
 The *L-Half Lap* topology is when two beams meet at their ends at an angle. An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.
@@ -166,7 +166,7 @@ Inputs:
 
 |
 
-T-HalfLap
+T-Lap
 ^^^^^^^^^
 
 A T-Half Lap joint crates an overlap between the *main beam* and the *cross beam*. The *cross beam* is extended to the opposite face of the *main beam* and cut flush with it to create a planar surface.
@@ -182,7 +182,7 @@ Inputs:
 
 |
 
-X-HalfLap
+X-Lap
 ^^^^^^^^^
 
 The X-Half Lap joint removes the upper half of the overlap from one beam and the lower half from the other.
@@ -207,7 +207,7 @@ Joint          L Topology  T Topology  X Topology
 ============   =========== =========== ===========
 Butt           X           X
 Miter          x
-HalfLap        X           X           X
+Lap        X           X           X
 French Ridge   X
 ============   =========== =========== ===========
 

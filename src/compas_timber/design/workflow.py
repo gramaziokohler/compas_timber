@@ -5,7 +5,7 @@ from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import XHalfLapJoint
+from compas_timber.connections import XLapJoint
 from compas_timber.elements import beam
 from compas_timber.utils import intersection_line_line_param
 
@@ -56,7 +56,7 @@ class JointRule(object):
             topo_rules = {
                 JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
                 JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
-                JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XHalfLapJoint),
+                JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XLapJoint),
             }
         for rule in rules:  # separate category and topo and direct joint rules
             if rule.__class__.__name__ == "TopologyRule":
@@ -452,4 +452,7 @@ class DebugInfomation(object):
             self.feature_errors.append(error)
 
     def add_joint_error(self, error):
-        self.joint_errors.append(error)
+        if isinstance(error, list):
+            self.joint_errors.extend(error)
+        else:
+            self.joint_errors.append(error)
