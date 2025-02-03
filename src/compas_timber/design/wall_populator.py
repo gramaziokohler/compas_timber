@@ -4,7 +4,6 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import NurbsCurve
-from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
@@ -15,7 +14,6 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point_sqrd
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
-from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
@@ -331,21 +329,6 @@ class Window(object):
                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
 
 
-class InternalSegment(object):
-    """Internal segment of a wall, filled with studs.
-
-    `start` and `end` are floats along xaxis (length) in local space of the wall.
-
-    """
-
-    def __init__(self, start, end):
-        self.start = start
-        self.end = end
-
-    def is_param_in_segment(self, param):
-        return self.start <= param <= self.end
-
-
 class WallPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
@@ -469,9 +452,6 @@ class WallPopulator(object):
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
         self._detail_obbs = []
-        # the entire wall is the initial segment
-        default_segment = InternalSegment(self._config_set.stud_spacing, self.panel_length - self._config_set.beam_width)
-        self._stud_segments = [default_segment]  # list of non-overlapping, ordered segments where studs should be placed
         # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
@@ -693,11 +673,11 @@ class WallPopulator(object):
             if connection_detail:
                 if interface.interface_role == InterfaceRole.MAIN:
                     self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
-                    connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments, self._stud_segments)
+                    connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
                     self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set))
                 elif interface.interface_role == InterfaceRole.CROSS:
                     self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set))
-                    connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments, self._stud_segments)
+                    connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
                     self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
                 handled_sides.add(interface.interface_type)
@@ -820,14 +800,13 @@ class WallPopulator(object):
         self.cull_overlaps()
 
     def generate_stud_lines(self):
-        for segment in self._stud_segments:
-            x_position = segment.start
-            while x_position < segment.end:
-                start_point = Point(x_position, 0, 0)
-                start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
-                line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
-                self._beam_definitions.append(BeamDefinition(line, type="stud", parent=self))
-                x_position += self._config_set.stud_spacing
+        x_position = self._config_set.stud_spacing
+        while x_position < self.panel_length - self._config_set.beam_width:
+            start_point = Point(x_position, 0, 0)
+            start_point.transform(matrix_from_frame_to_frame(Frame.worldXY(), self.frame))
+            line = Line.from_point_and_vector(start_point, self.z_axis * self.panel_height)
+            self._beam_definitions.append(BeamDefinition(line, type="stud", parent=self))
+            x_position += self._config_set.stud_spacing
 
     def get_beam_intersections(self, beam_def, *element_lists_to_intersect):
         intersections = []
