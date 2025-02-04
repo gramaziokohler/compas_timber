@@ -3,6 +3,8 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polyline
+from compas.geometry import Vector
+from compas.geometry import angle_vectors_signed
 from compas.geometry import bounding_box
 
 from .timber import TimberElement
@@ -172,15 +174,115 @@ class Wall(TimberElement):
 
     @classmethod
     def from_polyline(cls, polyline, normal, thickness, openings=None, **kwargs):
+        # TODO: rename to from_boundary
         """Use this to make sure the polyline is oriented correctly."""
         oriented_polyline = cls._oriented_polyline(polyline, normal)
         wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
         return cls(oriented_polyline, thickness, openings, wall_frame, **kwargs)
 
+    @staticmethod
+    def _split_into_consecutive_sequences(source, wrap_on):
+        # type: (list[int], int) -> list[list[int]]
+        if not source:
+            return []
+
+        sequences = []
+        current_sequence = [source[0]]
+
+        for i in range(1, len(source)):
+            curr_val = source[i]
+            prev_incremented = (source[i - 1] + 1) % wrap_on
+            if curr_val == prev_incremented:
+                current_sequence.append(curr_val)
+            else:
+                sequences.append(current_sequence)
+                current_sequence = [curr_val]
+
+        sequences.append(current_sequence)  # add the last sequence
+        return sequences
+
+    @staticmethod
+    def classify_polyline_segments(polyline, normal, direction="cw"):
+        """Classify polyline segments as external or part of a cutout based on turning angles.
+
+        TODO: maybe move this outside of this module, it's quite generic.
+
+        Parameters
+        ----------
+        polyline : :class:`compas.geometry.Polyline`
+            The polyline to classify.
+        normal : :class:`compas.geometry.Vector`
+            The normal vector of the wall. Used as reference palne for turning angles calculation.
+
+        Returns
+        -------
+        tuple(list[int], list[list[int]])
+            A tuple containing two lists:
+            - the first list contains the indices of outline vertices
+            - the second list contains the indices of internal vertices grouped in sequences
+        """
+        if direction not in ("cw", "ccw"):
+            raise ValueError("Direction must be either 'cw' or 'ccw'.")
+
+        # iterate on polyline without p[0] == p[-1]
+        if polyline[0] == polyline[-1]:
+            polyline = polyline[:-1]
+
+        outline_vertices = []
+        internal_vertices = []
+
+        num_points = len(polyline)
+
+        for i in range(num_points):
+            p_prev = polyline[i]
+            p_curr = polyline[(i + 1) % num_points]
+            p_next = polyline[(i + 2) % num_points]
+
+            v1 = Vector.from_start_end(p_prev, p_curr)
+            v2 = Vector.from_start_end(p_curr, p_next)
+
+            angle = angle_vectors_signed(v1, v2, normal, deg=True)
+
+            if direction == "ccw":
+                angle = -angle
+
+            if angle < 0:
+                outline_vertices.append((i + 1) % num_points)
+            else:
+                internal_vertices.append((i + 1) % num_points)
+
+        # vertices that lie on the outline but are at openings count as internal
+        # they are removed from the outline list and added to the internal list
+        internal_groups = Wall._split_into_consecutive_sequences(internal_vertices, wrap_on=num_points)
+        polyline_indices = list(range(num_points))
+        for group in internal_groups:
+            prev_value = polyline_indices[group[0] - 1]
+            next_value = polyline_indices[(group[1] + 1) % num_points]
+            group.insert(0, prev_value)
+            group.append(next_value)
+            outline_vertices.remove(prev_value)
+            outline_vertices.remove(next_value)
+
+        return outline_vertices, internal_groups
+
     @classmethod
     def from_brep(cls, brep, thickness, **kwargs):
         """Creates a wall from a brep with a single planar face."""
-        # TODO: grab normal, outline and openings from brep
-        # orient polylines
-        # return cls.from_polyline(outline, normal, thickness, **kwargs)
-        raise NotImplementedError
+        if len(brep.faces) > 1:
+            raise ValueError("Can only single-face breps to create a Wall. This brep has {}".format(len(brep.faces)))
+
+        # trims are oriented consistently, depending on the face orientation
+        face = brep.faces[0]
+        trims = face.boundary.trims
+        winding_direction = "cw" if face.is_reversed else "ccw"
+
+        boundary = Polyline([t.start_vertex.point for t in trims] + [trims[-1].end_vertex.point])
+        face_frame = face.frame_at(0, 0)
+        outline_vertices, internal_groups = Wall.classify_polyline_segments(boundary, normal=face_frame.normal, direction=winding_direction)
+        outline = Polyline([boundary[i] for i in outline_vertices])
+
+        openings = []
+        for group in internal_groups:
+            openings.append(Polyline([boundary[i] for i in group]))
+
+        return Wall.from_polyline(outline, face_frame.normal, thickness, openings, **kwargs)
