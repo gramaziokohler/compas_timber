@@ -25,8 +25,8 @@ class InterfaceRole(object):
         The interface is the cross interface.
     """
 
-    MAIN = 0
-    CROSS = 1
+    MAIN = "MAIN"
+    CROSS = "CROSS"
 
 
 class InterfaceLocation(object):
@@ -47,11 +47,11 @@ class InterfaceLocation(object):
         The interface is at some other location.
     """
 
-    BACK = 0
-    FRONT = 1
-    TOP = 2
-    BOTTOM = 3
-    OTHER = 4
+    BACK = "BACK"
+    FRONT = "FRONT"
+    TOP = "TOP"
+    BOTTOM = "BOTTOM"
+    OTHER = "OTHER"
 
 
 class WallToWallInterface(object):
@@ -72,6 +72,13 @@ class WallToWallInterface(object):
         self.interface_type = interface_type
         self.interface_role = interface_role
         self.topology = topology  # TODO: don't like this here
+
+    def __repr__(self):
+        return "WallToWallInterface({0}, {1}, {2})".format(
+            self.interface_type,
+            self.interface_role,
+            JointTopology.get_name(self.topology),
+        )
 
 
 class WallJoint(Joint):
