@@ -587,7 +587,7 @@ class WallPopulator(object):
         creates and returns all the elements in the wall, returns also the joint definitions
         """
         self.generate_perimeter_beams()
-        self.generate_windows()
+        # self.generate_windows()
         self.generate_studs()
         self.generate_plates()
         elements = self.elements
