@@ -373,7 +373,7 @@ class FrenchRidgeLap(BTLxProcessing):
         opp_edge = ref_edge.translated(ref_side.yaxis * ref_side.ysize)
 
         # get the height of the beam and the edge length of the lap
-        height = beam.height if self.ref_side_index % 2 == 0 else beam.width
+        height = beam.get_dimensions_relative_to_side(self.ref_side_index)[1]
         edge_length = ref_side.ysize / math.sin(math.radians(self.angle))
         if self.orientation == OrientationType.END:
             edge_length = -edge_length

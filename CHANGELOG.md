@@ -12,9 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
+* Removed model argument from `BTLxWriter` in the GH component and updated it to always return the BTLx string.
+* Fixed a bug in `compas_timber.Fabrication.StepJointNotch` related to the `orientation` and `strut_inclination` parameters.
 * Fixed the error message when beam endpoints coincide, e.g. when a closed polyline is used as input. 
 * Changed `index` input of `ShowFeatureErrors` and `ShowJoiningErrors` do have default value of 0.
 * Fixed spelling of `BeamJoinningError` to `BeamJoiningError`.
+* Changed `process_joinery()` method to handle `BeamJoiningError` exceptions and return them. Also updated `Model` GH component.
+* Updated `add_joint_error()` method in `DebugInformation` class to handle lists.
+* Changed `compas_timber.fabrication.Lap` so that the volume is generated fully from the relevant BTLx params.
+* Refactored `compas_timber.connections.LapJoint` to comply with the new system.
+* Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
+* Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
+* Enhanced lap behavior for optimal beam orientation in `LapJoint` class.
+* Fixed `restore_beams_from_keys` in `LMiterJoint` to use the correct variable names.
+* Reworked `DoubleCut` to more reliably produce the feature and geometry with the `from_planes_and_element` class method.
+* Renamed `intersection_box_line()` to `intersection_beam_line_param()`, which now take a beam input and outputs the intersecting ref_face_index.
 
 ### Removed
 
@@ -35,8 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Updated the API documentation for `connections`, `elements`, `fabrication`, `ghpython`, `planning` packages.
 * Refactored all btlx `process` references to `processing`, including base classes, properties, variables, and docstrings.
 * Refactored `BTLx` to `BTLxWriter` in the `compas_timber.Fabrication` package.
-* Removed model argument from `BTLxWriter` in the GH component and updated it to always return the BTLx string.
-* Fixed a bug in `compas_timber.Fabrication.StepJointNotch` related to the `orientation` and `strut_inclination` parameters.
 
 ### Removed
 

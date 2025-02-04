@@ -6,16 +6,15 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import XHalfLapJoint
+from compas_timber.connections import XLapJoint
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.errors import BeamJoiningError
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
-    JointTopology.TOPO_X: XHalfLapJoint,
+    JointTopology.TOPO_X: XLapJoint,
     JointTopology.TOPO_T: TButtJoint,
     JointTopology.TOPO_L: LMiterJoint,
 }
@@ -51,13 +50,12 @@ class ModelComponent(component):
         if joints:
             # apply reversed. later joints in orginal list override ealier ones
             for joint in joints[::-1]:
-                try:
-                    joint.joint_type.create(Model, *joint.elements, **joint.kwargs)
-                except BeamJoiningError as bje:
-                    debug_info.add_joint_error(bje)
+                joint.joint_type.create(Model, *joint.elements, **joint.kwargs)
 
-        # applies extensions and features resulting from joints
-        Model.process_joinery()
+        # checks elements compatibility and applies extensions and features resulting from joints
+        bje = Model.process_joinery()
+        if bje:
+            debug_info.add_joint_error(bje)
 
         if Features:
             features = [f for f in Features if f is not None]
