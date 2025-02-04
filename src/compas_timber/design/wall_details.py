@@ -16,25 +16,16 @@ class LDetailBase(object):
         interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])  # TODO: Interface.as_plane()
         top_segment = perimeter_segments["top"]
         bottom_segment = perimeter_segments["bottom"]
+        intersection_top = intersection_line_plane(top_segment, interface_plane)
+        intersection_bottom = intersection_line_plane(bottom_segment, interface_plane)
 
         if interface.interface_type == InterfaceLocation.BACK:
-            new_top_end = intersection_line_plane(top_segment, interface_plane)
-            new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
-            if new_top_end:
-                top_segment = Line(top_segment.start, new_top_end)
-            if new_bottom_end:
-                bottom_segment = Line(bottom_segment.start, new_bottom_end)
+            perimeter_segments["top"] = Line(top_segment.start, intersection_top)
+            perimeter_segments["bottom"] = Line(intersection_bottom, bottom_segment.end)
 
         elif interface.interface_type == InterfaceLocation.FRONT:
-            new_top_start = intersection_line_plane(top_segment, interface_plane)
-            new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
-            if new_top_start:
-                top_segment = Line(new_top_start, top_segment.end)
-            if new_bottom_start:
-                bottom_segment = Line(new_bottom_start, bottom_segment.end)
-
-        perimeter_segments["top"] = top_segment
-        perimeter_segments["bottom"] = bottom_segment
+            perimeter_segments["top"] = Line(intersection_top, top_segment.end)
+            perimeter_segments["bottom"] = Line(bottom_segment.start, intersection_bottom)
 
     def adjust_segments_cross(self, interface, wall, config_set, perimeter_segments):
         # top and bottom are extended to meet the other end of the main wall
@@ -57,10 +48,23 @@ class LDetailBase(object):
 
 
 class TDetailBase(object):
-    def adjust_segments_main(self, *args, **kwargs):
+    def adjust_segments_main(self, interface, wall, config_set, perimeter_segments):
         # top and bottom segments are shortened/extended to the intersection plane
-        # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
-        pass
+        interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])  # TODO: Interface.as_plane()
+        top_segment = perimeter_segments["top"]
+        bottom_segment = perimeter_segments["bottom"]
+        intersection_top = intersection_line_plane(top_segment, interface_plane)
+        intersection_bottom = intersection_line_plane(bottom_segment, interface_plane)
+
+        if interface.interface_type == InterfaceLocation.BACK:
+            print("shortening top and bottom back")
+            perimeter_segments["top"] = Line(top_segment.start, intersection_top)
+            perimeter_segments["bottom"] = Line(intersection_bottom, bottom_segment.end)
+
+        elif interface.interface_type == InterfaceLocation.FRONT:
+            print("shortening top and bottom front")
+            perimeter_segments["top"] = Line(intersection_top, top_segment.end)
+            perimeter_segments["bottom"] = Line(bottom_segment.start, intersection_bottom)
 
     def adjust_segments_cross(self, *args, **kwargs):
         # top and bottom are not modified
