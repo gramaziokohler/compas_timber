@@ -358,10 +358,11 @@ class TimberModel(Model):
 
             assert wall_a and wall_b
 
-            if wall_a.attributes.get("role", "main") == "main":
-                WallJoint.create(self, wall_a, wall_b, topology=topology)
-            else:
+            # assume wall_a is the main, unless wall_b is explicitly marked as main
+            if wall_b.attributes.get("role", "cross") == "main":
                 WallJoint.create(self, wall_b, wall_a, topology=topology)
+            else:
+                WallJoint.create(self, wall_a, wall_b, topology=topology)
 
     def _clear_wall_joints(self):
         for joint in self.joints:
