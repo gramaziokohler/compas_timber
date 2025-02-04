@@ -208,6 +208,7 @@ class Wall(TimberElement):
 
         # internal cuts (windows) are not part of the outline and can be fetched from the loops that are not boundary
         for hole in face.holes:
-            boundary = Polyline([t.start_vertex.point for t in hole.trims] + [hole.trims[-1].end_vertex.point])
+            points = [t.start_vertex.point for t in hole.trims] + [hole.trims[-1].end_vertex.point]
+            openings.append(Polyline(points))
 
         return Wall.from_boundary(outline, face_frame.normal, thickness, openings, **kwargs)
