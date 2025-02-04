@@ -173,8 +173,7 @@ class Wall(TimberElement):
         return Polyline(bottom_points + top_points + [bottom_points[0]])
 
     @classmethod
-    def from_polyline(cls, polyline, normal, thickness, openings=None, **kwargs):
-        # TODO: rename to from_boundary
+    def from_boundary(cls, polyline, normal, thickness, openings=None, **kwargs):
         """Use this to make sure the polyline is oriented correctly."""
         oriented_polyline = cls._oriented_polyline(polyline, normal)
         wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
@@ -285,4 +284,4 @@ class Wall(TimberElement):
         for group in internal_groups:
             openings.append(Polyline([boundary[i] for i in group]))
 
-        return Wall.from_polyline(outline, face_frame.normal, thickness, openings, **kwargs)
+        return Wall.from_boundary(outline, face_frame.normal, thickness, openings, **kwargs)
