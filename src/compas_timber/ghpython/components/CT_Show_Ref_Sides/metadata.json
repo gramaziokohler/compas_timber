@@ -1,9 +1,9 @@
 {
-    "name": "Show Reference Side",
-    "nickname": "ShowRefSide",
+    "name": "Show Beam Reference Side",
+    "nickname": "ShowBeamSides",
     "category": "COMPAS Timber",
     "subcategory": "Show",
-    "description": "Shows the element side based on BTLx ref_side_index.",
+    "description": "Shows the element side based on ref_side_index. Text labels are located at the reference side origins and oriented to the reference side frame.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -13,19 +13,19 @@
                 "name": "Element",
                 "description": "Element",
                 "typeHintID": "none",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             },
             {
-                "name": "Reference Side",
-                "description": "integer 1-6 corresponding to BTLx reference side.",
+                "name": "Reference Side Index",
+                "description": "integer 0-5 corresponding to reference side.",
                 "typeHintID": "int",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
             {
                 "name": "Reference Side",
-                "description": "Surface and Line showing Reference Side and orientation(triangle at origin corner)."
+                "description": "Reference Side as surface."
             }
         ]
     }
