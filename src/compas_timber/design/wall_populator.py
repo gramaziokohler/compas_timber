@@ -145,6 +145,9 @@ class BeamDefinition(object):
         self.type = type
         self.parent = parent  # TODO: remove
 
+    def __repr__(self):
+        return "BeamDefinition({}, {}, {}, {})".format(self.centerline, self.width, self.height, self.type)
+
     @property
     def width(self):
         # TODO: provide this upon creation
@@ -233,26 +236,35 @@ class Window(object):
 
     """
 
-    def __init__(self, outline, sill_height=None, header_height=None, parent=None):
+    def __init__(
+        self,
+        outline,
+        beam_dimensions,
+        wall_frame,
+        wall_thickness,
+        tolerance,
+        sheeting_inside=None,
+        sheeting_outside=None,
+        lintel_posts=None,
+        parent=None,
+    ):
+        self.beam_dimensions = beam_dimensions
+        self._wall_frame = wall_frame
+        self._sheeting_inside = sheeting_inside
+        self._sheeting_outside = sheeting_outside
+        self._lintel_posts = lintel_posts
+        self._wall_thickness = wall_thickness
         self.outline = outline
-        if sill_height:
-            self.sill_height = sill_height
-        else:
-            self.sill_height = parent.beam_dimensions["sill"][0]
-        if header_height:
-            self.header_height = header_height
-        else:
-            self.header_height = parent.beam_dimensions["header"][0]
+        self.sill_height = self.beam_dimensions["sill"][0]
+        self.header_height = self.beam_dimensions["header"][0]
         self.parent = parent
-        self.z_axis = parent.frame.yaxis
-        self.normal = parent.frame.zaxis
-        self.beam_dimensions = parent.beam_dimensions
+        self.z_axis = self._wall_frame.yaxis
+        self.normal = self._wall_frame.zaxis
         self._beam_definitions = []
         self._length = None
         self._height = None
         self._frame = None
-        self.dist_tolerance = parent.dist_tolerance
-        self.process_outlines()
+        self.dist_tolerance = tolerance
 
     @property
     def jack_studs(self):
@@ -280,15 +292,15 @@ class Window(object):
 
     @property
     def frame(self):
-        if not self._frame:
-            self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
+        # if not self._frame:
+        #     self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
         return self._frame
 
     @property
     def boolean_feature(self):
-        offset = self.parent.sheeting_inside if self.parent.sheeting_inside else 0
-        so = self.parent.sheeting_outside if self.parent.sheeting_outside else 0
-        thickness = offset + so + self.parent.frame_depth
+        offset = self._sheeting_inside if self._sheeting_inside else 0
+        so = self._sheeting_outside if self._sheeting_outside else 0
+        thickness = offset + so + self._wall_thickness
 
         crv = self.outline.copy()
         crv.translate(self.normal * -offset)
@@ -296,37 +308,51 @@ class Window(object):
         vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
         return BrepSubtraction(vol)
 
-    def process_outlines(self):
-        for i, segment in enumerate(self.outline.lines):
-            beam_def = BeamDefinition(segment, parent=self)
-            if angle_vectors(segment.direction, self.z_axis, deg=True) < 1 or angle_vectors(segment.direction, self.z_axis, deg=True) > 179:
-                if self.parent.lintel_posts:
-                    beam_def.type = "jack_stud"
-                else:
-                    beam_def.type = "king_stud"
-            else:
-                ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
-                pts = []
-                for seg in self.outline.lines:
-                    if seg != segment:
-                        pt = intersection_line_segment(ray, seg, self.dist_tolerance)[0]
-                        if pt:
-                            pts.append(Point(*pt))
-                if len(pts) > 1:
-                    raise ValueError("Window outline is wonky")
-                elif len(pts) == 1:
-                    vector = Vector.from_start_end(ray.start, pts[0])
-                    if dot_vectors(vector, self.z_axis) < 0:
-                        beam_def.type = "header"
-                    else:
-                        beam_def.type = "sill"
-            self._beam_definitions.append(beam_def)
-        self._beam_definitions = self.parent.offset_elements(self._beam_definitions)
-        if self.parent.lintel_posts:
-            for beam_def in self.jack_studs:
-                offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]) / 2
-                king_line = offset_line(beam_def.centerline, offset, self.normal)
-                self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+    def create_elements(self):
+        beam_definitions = []
+        # ^  3 ---- 2
+        # |  |      |
+        # z  0 ---- 1
+        #    x -->
+        top_segment = self.outline.lines[2]
+        bottom_segment = self.outline.lines[0]
+        left_segment = self.outline.lines[3]
+        right_segment = self.outline.lines[1]
+
+        beam_definitions.append(BeamDefinition(top_segment, parent=self, type="header"))
+        beam_definitions.append(BeamDefinition(bottom_segment, parent=self, type="sill"))
+
+        stud_roles = "king_stud" if self._lintel_posts else "jack_stud"
+        beam_definitions.append(BeamDefinition(left_segment, parent=self, type=stud_roles))
+        beam_definitions.append(BeamDefinition(right_segment, parent=self, type=stud_roles))
+        # if angle_vectors(segment.direction, self.z_axis, deg=True) < 1 or angle_vectors(segment.direction, self.z_axis, deg=True) > 179:
+        #     if self._lintel_posts:
+        #         beam_def.type = "jack_stud"
+        #     else:
+        #         beam_def.type = "king_stud"
+        # else:
+        #     ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
+        #     pts = []
+        #     for seg in self.outline.lines:
+        #         if seg != segment:
+        #             pt = intersection_line_segment(ray, seg, self.dist_tolerance)[0]
+        #             if pt:
+        #                 pts.append(Point(*pt))
+        #     if len(pts) > 1:
+        #         raise ValueError("Window outline is wonky")
+        #     elif len(pts) == 1:
+        #         vector = Vector.from_start_end(ray.start, pts[0])
+        #         if dot_vectors(vector, self.z_axis) < 0:
+        #             beam_def.type = "header"
+        #         else:
+        #             beam_def.type = "sill"
+        beam_definitions = self.parent.offset_elements(beam_definitions)
+        # if self._lintel_posts:
+        #     for beam_def in self.jack_studs:
+        #         offset = (self._beam_dimensions["jack_stud"][0] + self._beam_dimensions["king_stud"][0]) / 2
+        #         king_line = offset_line(beam_def.centerline, offset, self.normal)
+        #         beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+        return beam_definitions
 
 
 class WallPopulatorConfigurationSet(object):
@@ -509,8 +535,8 @@ class WallPopulator(object):
     @property
     def elements(self):
         elements = []
-        for window in self.windows:
-            self._beam_definitions.extend(window._beam_definitions)
+        # for window in self.windows:
+        #     self._beam_definitions.extend(window.create_elements())
         for beam_def in self._beam_definitions:
             try:
                 elements.append(beam_def.to_beam())
@@ -590,7 +616,7 @@ class WallPopulator(object):
         creates and returns all the elements in the wall, returns also the joint definitions
         """
         self.generate_perimeter_beams()
-        # self.generate_windows()
+        self.generate_windows()
         self.generate_studs()
         self.generate_plates()
         elements = self.elements
@@ -616,49 +642,12 @@ class WallPopulator(object):
                     # break # ?
         return joint_definitions
 
-    # def _adjust_segments_to_interfaces(self, top_segment, bottom_segment, interfaces):
-    #     # TODO: move front_segment and back_segment to the interface with the detail?
-    #     # TODO: not very elegant, need to revise, how can the datails inform the populator regarding the rest of the wall?
-    #     for interface in interfaces:
-    #         #
-    #         if interface.interface_role == InterfaceRole.MAIN:
-    #             # shorten top and bottom segments to the interface
-    #             interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])
-    #             if interface.interface_type == InterfaceLocation.BACK:
-    #                 new_top_end = intersection_line_plane(top_segment, interface_plane)
-    #                 new_bottom_end = intersection_line_plane(bottom_segment, interface_plane)
-    #                 if new_top_end:
-    #                     top_segment = Line(top_segment.start, new_top_end)
-    #                 if new_bottom_end:
-    #                     bottom_segment = Line(bottom_segment.start, new_bottom_end)
-    #             elif interface.interface_type == InterfaceLocation.FRONT:
-    #                 new_top_start = intersection_line_plane(top_segment, interface_plane)
-    #                 new_bottom_start = intersection_line_plane(bottom_segment, interface_plane)
-    #                 if new_top_start:
-    #                     top_segment = Line(new_top_start, top_segment.end)
-    #                 if new_bottom_start:
-    #                     bottom_segment = Line(new_bottom_start, bottom_segment.end)
-
-    #         elif interface.interface_role == InterfaceRole.CROSS:
-    #             outer_point = interface.interface_polyline[2]
-    #             edge_plane = Plane(outer_point, self._wall.baseline.direction)
-    #             bottom_point = intersection_line_plane(bottom_segment, edge_plane)
-    #             top_point = intersection_line_plane(top_segment, edge_plane)
-    #             if interface.interface_type == InterfaceLocation.FRONT:
-    #                 bottom_segment = Line(bottom_point, bottom_segment.end)
-    #                 top_segment = Line(top_point, top_segment.end)
-    #             elif interface.interface_type == InterfaceLocation.BACK:
-    #                 bottom_segment = Line(bottom_point, bottom_segment.end)
-    #                 top_segment = Line(top_segment.start, top_point)
-
-    #     return top_segment, bottom_segment
-
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)
         # first the interfaces are handled, then the remaining sides are handled by the default connection details
         handled_sides = set()
 
-        # TODO: move to init
+        # TODO: move to Wall
         # add any remaining sides if have not been handled by any of the connection details
         # ^  3 ---- 2
         # |  |      |
@@ -677,15 +666,14 @@ class WallPopulator(object):
                 if interface.interface_role == InterfaceRole.MAIN:
                     self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
                     connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
-                    self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set, self._wall))
+                    self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set, self._wall))  # DEBUG
                 elif interface.interface_role == InterfaceRole.CROSS:
-                    self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set, self._wall))
+                    self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set, self._wall))  # DEBUG
                     connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
                     self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
                 handled_sides.add(interface.interface_type)
 
-        # top_segment, bottom_segment = self._adjust_segments_to_interfaces(top_segment, bottom_segment, self._interfaces)
         top_segment = self._adjusted_segments["top"]
         bottom_segment = self._adjusted_segments["bottom"]
         front_segment = self._adjusted_segments["front"]
@@ -787,8 +775,9 @@ class WallPopulator(object):
 
     def generate_windows(self):
         for polyline in self.inner_polylines:
-            self.windows.append(Window(polyline, parent=self))
-            self._beam_definitions.extend(self.windows[-1]._beam_definitions)
+            window = Window(polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance, parent=self)
+            # self.windows.append(window)
+            self._beam_definitions.extend(window.create_elements())
 
     def generate_studs(self):
         self.generate_stud_lines()
@@ -867,6 +856,7 @@ class WallPopulator(object):
         for beam_def in studs:
             for other_element in self.king_studs + self.jack_studs + self.edge_studs:
                 if self.distance_between_elements(beam_def, other_element) < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2:
+                    print("removing beam_def: {}".format(beam_def))
                     self._beam_definitions.remove(beam_def)
                     break
 
@@ -903,5 +893,5 @@ class WallPopulator(object):
             pline = self.outer_polyline.copy()
             pline.translate(self.frame.zaxis * (self._wall.thickness + self._config_set.sheeting_outside))
             self._elements.append(Plate(pline, self._config_set.sheeting_outside))
-        for window in self.windows:
-            self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
+        # for window in self.windows:
+        #     self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
