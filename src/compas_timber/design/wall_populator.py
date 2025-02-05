@@ -513,7 +513,11 @@ class WallPopulator(object):
         for window in self.windows:
             self._beam_definitions.extend(window._beam_definitions)
         for beam_def in self._beam_definitions:
-            elements.append(beam_def.to_beam())
+            try:
+                elements.append(beam_def.to_beam())
+            except Exception:
+                print("Error creating beam from centerline: {}".format(beam_def.centerline))
+                print("Beam role is: {}".format(beam_def.type))
         elements.extend(self._elements)
         return elements
 
