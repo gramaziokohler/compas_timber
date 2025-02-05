@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added class "WallPopulator" to `compas_timber.design`.
+* Added class "WallPopulatorConfigurationSet" to `compas_timber.design`.
+* Added class "WallSelector" to `compas_timber.design`.
+* Added class "AnyWallSelector" to `compas_timber.design`.
+* Added class "LConnectionDetailA" to `compas_timber.design`.
+* Added class "LConnectionDetailB" to `compas_timber.design`.
+* Added class "TConnectionDetailA" to `compas_timber.design`.
+* Added `from_brep` to `compas_timber.elements.Wall.
+* Added `from_polyline` to `compas_timber.elements.Wall.
+* Added `WallJoint` to `compas_timber.connections`.
+
 ### Changed
 
 * Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
@@ -27,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `restore_beams_from_keys` in `LMiterJoint` to use the correct variable names.
 * Reworked `DoubleCut` to more reliably produce the feature and geometry with the `from_planes_and_element` class method.
 * Renamed `intersection_box_line()` to `intersection_beam_line_param()`, which now take a beam input and outputs the intersecting ref_face_index.
+* Reworked `Wall` class to be defined with a standard polyline, frame and thickness.
 
 ### Removed
 
