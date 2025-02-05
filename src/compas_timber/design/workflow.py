@@ -119,7 +119,19 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """Creates a Joint Rule that directly joins multiple elements."""
+    """Creates a Joint Rule that directly joins multiple elements.
+
+    Parameters
+    ----------
+    joint_type : cls(:class:`~compas_timber.connections.Joint`)
+        The joint type to be applied to the elements.
+    elements : list(:class:`~compas_timber.elements.TimberElement`)
+        The elements to be joined.
+    max_distance : float, optional
+        The maximum distance to consider two elements as intersecting.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+    """
 
     def __init__(self, joint_type, elements, max_distance=None, **kwargs):
         self.elements = elements
@@ -159,7 +171,23 @@ class DirectRule(JointRule):
 
 
 class CategoryRule(JointRule):
-    """Based on the category attribute attached to the elements, this rule assigns"""
+    """Based on the category attribute attached to the elements, this rule assigns
+
+    Parameters
+    ----------
+    joint_type : cls(:class:`~compas_timber.connections.Joint`)
+        The joint type to be applied to the elements.
+    category_a : str
+        The category of the first element.
+    category_b : str
+        The category of the second element.
+    topos : list(:class:`~compas_timber.connections.JointTopology`), optional
+        The topologies that are supported by this rule.
+    max_distance : float, optional
+        The maximum distance to consider two elements as intersecting.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+    """
 
     def __init__(self, joint_type, category_a, category_b, topos=None, max_distance=None, **kwargs):
         self.joint_type = joint_type
