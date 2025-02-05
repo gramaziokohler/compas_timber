@@ -1,7 +1,8 @@
 from itertools import combinations
+
+from compas.geometry import closest_point_on_segment
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
-from compas.geometry import closest_point_on_segment
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -95,8 +96,8 @@ class JointRule(object):
             pair = element_pairs.pop()
             match_found = False
             for rule in direct_rules:
-                if rule.contains(pair): # see if pair is used in a direct rule
-                    if rule.comply(pair, model_max_distance=max_distance): # see if pair complies with max distance
+                if rule.contains(pair):  # see if pair is used in a direct rule
+                    if rule.comply(pair, model_max_distance=max_distance):  # see if pair complies with max distance
                         joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
                         match_found = True
                         break
@@ -123,7 +124,7 @@ class JointRule(object):
 class DirectRule(JointRule):
     """Creates a Joint Rule that directly joins multiple elements."""
 
-    def __init__(self, joint_type, elements, max_distance = None, **kwargs):
+    def __init__(self, joint_type, elements, max_distance=None, **kwargs):
         self.elements = elements
         self.joint_type = joint_type
         self.max_distance = max_distance
@@ -163,7 +164,7 @@ class DirectRule(JointRule):
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the elements, this rule assigns"""
 
-    def __init__(self, joint_type, category_a, category_b, topos=None, max_distance = None, **kwargs):
+    def __init__(self, joint_type, category_a, category_b, topos=None, max_distance=None, **kwargs):
         self.joint_type = joint_type
         self.category_a = category_a
         self.category_b = category_b
@@ -236,7 +237,7 @@ class TopologyRule(JointRule):
         The keyword arguments to be passed to the joint.
     """
 
-    def __init__(self, topology_type, joint_type, max_distance = None, **kwargs):
+    def __init__(self, topology_type, joint_type, max_distance=None, **kwargs):
         self.topology_type = topology_type
         self.joint_type = joint_type
         self.max_distance = max_distance
@@ -247,7 +248,11 @@ class TopologyRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type, self.max_distance)
+        return "{}({}, {})".format(
+            TopologyRule,
+            self.topology_type,
+            self.joint_type,
+        )
 
     def comply(self, elements, model_max_distance=1e-6):
         if self.max_distance:

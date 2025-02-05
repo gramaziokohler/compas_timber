@@ -62,7 +62,7 @@ class CategoryJointRule(component):
         names = inspect.getargspec(self.joint_type.__init__)[0][1:]
         for i in range(2):
             names[i] += " category"
-        return [name for name in names if (name != "key") and (name != "frame")]+["max_distance"]
+        return [name for name in names if (name != "key") and (name != "frame")] + ["max_distance"]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():

@@ -49,7 +49,7 @@ class L_TopologyJointRule(component):
 
     def arg_names(self):
         names = inspect.getargspec(self.joint_type.__init__)[0][3:]
-        return [name for name in names if (name != "key") and (name != "frame")]+["max_distance"]
+        return [name for name in names if (name != "key") and (name != "frame")] + ["max_distance"]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():

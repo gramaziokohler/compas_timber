@@ -1,31 +1,19 @@
-import os
-
-import compas
 import pytest
-from compas.data import json_load
-from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
-from compas.geometry import Vector
-
 
 from compas_timber.connections import JointTopology
-from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
 from compas_timber.connections import TButtJoint
-from compas_timber.connections import TLapJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections import find_neighboring_beams
+from compas_timber.connections import LMiterJoint
 from compas_timber.elements import Beam
-from compas_timber.model import TimberModel
+from compas_timber.design import JointRule
+from compas_timber.design import DirectRule
+from compas_timber.design import CategoryRule
+from compas_timber.design import TopologyRule
 
-
-import pytest
-from compas.geometry import Line, Point
-from compas_timber.elements import Beam
-from compas_timber.connections import LMiterJoint, TButtJoint, XLapJoint
-from compas_timber.design import JointRule, DirectRule, CategoryRule, TopologyRule
 
 @pytest.fixture
 def beams():
@@ -66,6 +54,7 @@ def separated_beams():
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
 
+
 @pytest.fixture
 def L_beams():
     """
@@ -84,6 +73,7 @@ def L_beams():
         Line(Point(0, 1, 0), Point(0, -1, 0)),
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
+
 
 @pytest.fixture
 def L_beams_separated():
@@ -152,7 +142,8 @@ def test_direct_rule_contains(beams):
     assert rule.contains(beams[:2]) is True
     assert rule.contains(beams[1:3]) is False
     assert rule.contains(beams[2:]) is False
-    assert rule.contains([beams[0],beams[3]]) is False
+    assert rule.contains([beams[0], beams[3]]) is False
+
 
 def test_direct_rule_comply(beams):
     rule = DirectRule(LMiterJoint, [beams[0], beams[1]])
@@ -161,12 +152,14 @@ def test_direct_rule_comply(beams):
     assert rule.comply([beams[1], beams[2]]) is True
     assert rule.comply([beams[3], beams[0]]) is True
 
+
 def test_direct_rule_comply_max_distance(separated_beams):
     rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.05)
     assert rule.comply([separated_beams[0], separated_beams[1]]) is False
     assert rule.comply([separated_beams[2], separated_beams[3]]) is False
     assert rule.comply([separated_beams[1], separated_beams[2]]) is False
     assert rule.comply([separated_beams[3], separated_beams[0]]) is False
+
 
 def test_category_rule_comply(beams):
     for beam in beams:
@@ -175,6 +168,7 @@ def test_category_rule_comply(beams):
     rule = CategoryRule(LMiterJoint, "A", "B")
     assert rule.comply(beams[:2]) is True
     assert rule.comply(beams[2:]) is False
+
 
 def test_topology_rule_comply(beams):
     rule = TopologyRule(JointTopology.TOPO_L, LMiterJoint)
@@ -188,35 +182,24 @@ def test_different_rules(L_beams):
     for beam in L_beams:
         beam.attributes["category"] = "A"
     L_beams[1].attributes["category"] = "B"
-    rules = [
-        DirectRule(LLapJoint, L_beams[:2]),
-        CategoryRule(LButtJoint, "A", "B"),
-        TopologyRule(JointTopology.TOPO_L, LMiterJoint)
-    ]
+    rules = [DirectRule(LLapJoint, L_beams[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
     joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(L_beams, rules)
-    joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs]) 
+    joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs])
     assert joints_names == set(["LLapJoint", "LButtJoint", "LMiterJoint"])
     assert len(joint_defs) == 3
+
 
 def test_different_rules_max_distance(L_beams_separated):
     for beam in L_beams_separated:
         beam.attributes["category"] = "A"
     L_beams_separated[1].attributes["category"] = "B"
-    rules = [
-        DirectRule(LLapJoint, L_beams_separated[:2]),
-        CategoryRule(LButtJoint, "A", "B"),
-        TopologyRule(JointTopology.TOPO_L, LMiterJoint)
-    ]
+    rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
     joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(L_beams_separated, rules)
-    joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs]) 
+    joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs])
     assert len(joint_defs) == 0
 
-    rules = [
-        DirectRule(LLapJoint, L_beams_separated[:2]),
-        CategoryRule(LButtJoint, "A", "B"),
-        TopologyRule(JointTopology.TOPO_L, LMiterJoint, max_distance=0.15)
-    ]
+    rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint, max_distance=0.15)]
     joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(L_beams_separated, rules)
-    joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs]) 
+    joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs])
     assert joints_names == set(["LMiterJoint"])
     assert len(joint_defs) == 3
