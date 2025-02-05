@@ -6,7 +6,6 @@ from compas.geometry import Line
 from compas.geometry import NurbsCurve
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import bounding_box_xy
 from compas.geometry import closest_point_on_segment
@@ -26,7 +25,6 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
