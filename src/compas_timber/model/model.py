@@ -359,6 +359,7 @@ class TimberModel(Model):
             assert wall_a and wall_b
 
             # assume wall_a is the main, unless wall_b is explicitly marked as main
+            # TODO: use the Rule system? this isn't good enough, a wall can totally be main and cross at the same time (in two different interactions)
             if wall_b.attributes.get("role", "cross") == "main":
                 WallJoint.create(self, wall_b, wall_a, topology=topology)
             else:
