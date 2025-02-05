@@ -7,6 +7,7 @@ from compas.geometry import Vector
 from compas_timber.elements import Wall
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
+from compas_timber.utils import classify_polyline_segments
 
 
 @pytest.fixture
@@ -118,7 +119,7 @@ def test_wall_with_door_openings():
     )
     normal = Vector.Yaxis()
 
-    outline_vertices, internal_vertex_groups = Wall.classify_polyline_segments(outline, normal)
+    outline_vertices, internal_vertex_groups = classify_polyline_segments(outline, normal)
 
     assert outline_vertices == [2, 3, 8, 9]
     assert internal_vertex_groups == [[4, 5, 6, 7], [10, 11, 0, 1]]
@@ -143,7 +144,7 @@ def test_wall_with_door_openings_ccw():
     )
     normal = Vector.Yaxis() * -1.0
 
-    outline_vertices, internal_vertex_groups = Wall.classify_polyline_segments(outline, normal, direction="ccw")
+    outline_vertices, internal_vertex_groups = classify_polyline_segments(outline, normal, direction="ccw")
 
     assert outline_vertices == [2, 3, 8, 9]
     assert internal_vertex_groups == [[4, 5, 6, 7], [10, 11, 0, 1]]
@@ -166,4 +167,4 @@ def test_fu():
 
     normal = Vector(x=1.000, y=-0.000, z=0.000)
 
-    external, internal = Wall.classify_polyline_segments(polyline, normal, direction="ccw")
+    external, internal = classify_polyline_segments(polyline, normal, direction="ccw")
