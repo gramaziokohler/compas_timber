@@ -344,7 +344,6 @@ class WallPopulatorConfigurationSet(object):
         self,
         stud_spacing,
         beam_width,
-        wall_depth,
         z_axis=None,
         tolerance=None,
         sheeting_outside=None,
@@ -358,7 +357,6 @@ class WallPopulatorConfigurationSet(object):
     ):
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
-        self.wall_depth = wall_depth
         self.z_axis = z_axis or Vector.Zaxis()
         self.tolerance = tolerance
         self.sheeting_outside = sheeting_outside
@@ -371,7 +369,7 @@ class WallPopulatorConfigurationSet(object):
         self.connection_details = connection_details or {}
 
     def __str__(self):
-        return "WallPopulatorConfigurationSet({}, {}, {}, {})".format(self.stud_spacing, self.beam_width, self.wall_depth, self.z_axis)
+        return "WallPopulatorConfigurationSet({}, {}, {})".format(self.stud_spacing, self.beam_width, self.z_axis)
 
 
 class WallPopulator(object):
@@ -424,14 +422,14 @@ class WallPopulator(object):
 
     """
 
-    BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill"]
+    BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill", "detail"]
 
     # TODO: this takes interfaces! let's the populator know how this wall potentially interacts with other walls
     def __init__(self, configuration_set, wall, interfaces=None):
         self._wall = wall
         self._config_set = configuration_set
-        self._z_axis = Vector.Zaxis()
-        self.normal = wall.frame.zaxis
+        self._z_axis = wall.frame.yaxis  # up
+        self.normal = wall.frame.zaxis  # out
         self.outer_polyline = wall.outline
         self.inner_polylines = wall.openings
         self.edges = []
@@ -444,17 +442,17 @@ class WallPopulator(object):
         self.dist_tolerance = configuration_set.tolerance.relative
 
         # these should just be properties of the wall
-        self.frame = None
-        self.panel_length = None
-        self.panel_height = None
-        self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
+        self.frame = wall.frame
+        self.panel_length = wall.length
+        self.panel_height = wall.height
+        # self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
 
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
         self._detail_obbs = []
         # TODO: get this mapping from the config set
         for key in self.BEAM_CATEGORY_NAMES:
-            self.beam_dimensions[key] = [configuration_set.beam_width, configuration_set.wall_depth]
+            self.beam_dimensions[key] = [configuration_set.beam_width, wall.thickness]
         # if custom_dimensions:
         #     for key, value in custom_dimensions.items():
         #         if value:
@@ -473,8 +471,9 @@ class WallPopulator(object):
 
     @property
     def default_rules(self):
+        edge_plate_joint = LButtJoint if TOL.is_zero(self._config_set.edge_stud_offset) else TButtJoint
         return [
-            (CategoryRule(LButtJoint, "edge_stud", "plate") if self._config_set.edge_stud_offset == 0 else CategoryRule(TButtJoint, "edge_stud", "plate")),
+            CategoryRule(edge_plate_joint, "edge_stud", "plate"),
             CategoryRule(TButtJoint, "stud", "plate"),
             CategoryRule(TButtJoint, "stud", "header"),
             CategoryRule(TButtJoint, "stud", "sill"),
@@ -678,9 +677,9 @@ class WallPopulator(object):
                 if interface.interface_role == InterfaceRole.MAIN:
                     self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
                     connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
-                    self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set))
+                    self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set, self._wall))
                 elif interface.interface_role == InterfaceRole.CROSS:
-                    self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set))
+                    self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set, self._wall))
                     connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
                     self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
@@ -707,13 +706,7 @@ class WallPopulator(object):
         if InterfaceLocation.BOTTOM not in handled_sides:
             self._beam_definitions.append(BeamDefinition(bottom_segment, parent=self, type="plate"))
 
-        # add lintel posts if configured
-        # if self._config_set.lintel_posts:
-        #     for beam_def in self._beam_definitions:
-        #         if beam_def.type == "jack_stud":
-        #             offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-        #             king_line = offset_line(beam_def.centerline, offset, self.normal)
-        #             self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+        self._beam_definitions = self.offset_elements(self._beam_definitions)
 
     # def generate_perimeter_beams(self):
     #     interior_indices = self.get_interior_segment_indices(self.outer_polyline)
@@ -764,6 +757,7 @@ class WallPopulator(object):
         return set(out)
 
     def offset_elements(self, element_loop):
+        # TODO: seems this aligns the elements to the edges of the surface, why not create them like that to begin with?
         offset_loop = []
         for beam_def in element_loop:
             beam_def.offset(self.beam_dimensions[beam_def.type][0] / 2)
@@ -884,9 +878,9 @@ class WallPopulator(object):
                     continue
 
                 if interface.interface_role == InterfaceRole.MAIN:
-                    detail_obb = detail.get_detail_obb_main(interface, self._config_set)
+                    detail_obb = detail.get_detail_obb_main(interface, self._config_set, self._wall)
                 else:
-                    detail_obb = detail.get_detail_obb_cross(interface, self._config_set)
+                    detail_obb = detail.get_detail_obb_cross(interface, self._config_set, self._wall)
 
                 if detail_obb.contains_point(beam_def.centerline.midpoint):
                     self._beam_definitions.remove(beam_def)
@@ -907,7 +901,7 @@ class WallPopulator(object):
             self._elements.append(Plate(self.outer_polyline, self._config_set.sheeting_inside))
         if self._config_set.sheeting_outside:
             pline = self.outer_polyline.copy()
-            pline.translate(self.frame.zaxis * (self._config_set.wall_depth + self._config_set.sheeting_outside))
+            pline.translate(self.frame.zaxis * (self._wall.thickness + self._config_set.sheeting_outside))
             self._elements.append(Plate(pline, self._config_set.sheeting_outside))
         for window in self.windows:
             self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
