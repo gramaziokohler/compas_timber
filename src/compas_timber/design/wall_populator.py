@@ -322,7 +322,7 @@ class Window(object):
         beam_definitions.append(BeamDefinition(top_segment, parent=self, type="header"))
         beam_definitions.append(BeamDefinition(bottom_segment, parent=self, type="sill"))
 
-        stud_roles = "king_stud" if self._lintel_posts else "jack_stud"
+        stud_roles = "jack_stud" if self._lintel_posts else "king_stud"
         beam_definitions.append(BeamDefinition(left_segment, parent=self, type=stud_roles))
         beam_definitions.append(BeamDefinition(right_segment, parent=self, type=stud_roles))
         # if angle_vectors(segment.direction, self.z_axis, deg=True) < 1 or angle_vectors(segment.direction, self.z_axis, deg=True) > 179:
@@ -347,11 +347,11 @@ class Window(object):
         #         else:
         #             beam_def.type = "sill"
         beam_definitions = self.parent.offset_elements(beam_definitions)
-        # if self._lintel_posts:
-        #     for beam_def in self.jack_studs:
-        #         offset = (self._beam_dimensions["jack_stud"][0] + self._beam_dimensions["king_stud"][0]) / 2
-        #         king_line = offset_line(beam_def.centerline, offset, self.normal)
-        #         beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+        if self._lintel_posts:
+            for beam_def in self.jack_studs:
+                offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
+                king_line = offset_line(beam_def.centerline, offset, self.normal)
+                beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
         return beam_definitions
 
 
@@ -500,6 +500,7 @@ class WallPopulator(object):
         edge_plate_joint = LButtJoint if TOL.is_zero(self._config_set.edge_stud_offset) else TButtJoint
         return [
             CategoryRule(edge_plate_joint, "edge_stud", "plate"),
+            CategoryRule(TButtJoint, "detail", "plate"),  # TODO: have the details define this
             CategoryRule(TButtJoint, "stud", "plate"),
             CategoryRule(TButtJoint, "stud", "header"),
             CategoryRule(TButtJoint, "stud", "sill"),
@@ -628,14 +629,15 @@ class WallPopulator(object):
         found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
 
         joint_definitions = []
+        max_distance = self._config_set.beam_width  # oterwise L's become X's
         for pair in found_pairs:
             beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
             if detected_topo == JointTopology.TOPO_UNKNOWN:
                 continue
 
             for rule in self.rules:
-                if rule.comply(pair) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
+                if rule.comply(pair, max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
                     if rule.joint_type == LButtJoint:
                         beam_a, beam_b = rule.reorder([beam_a, beam_b])
                     joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
