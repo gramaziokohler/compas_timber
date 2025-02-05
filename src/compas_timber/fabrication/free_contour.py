@@ -46,6 +46,7 @@ class FreeContour(BTLxProcessing):
         self.depth_bounded = depth_bounded
         if inclination != 0:
             raise NotImplementedError("Inclination is not yet implemented.")
+        self.inclination = inclination
 
     ########################################################################
     # Properties
