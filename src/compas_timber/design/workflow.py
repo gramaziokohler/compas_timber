@@ -1,14 +1,11 @@
 from itertools import combinations
 
-from compas.geometry import closest_point_on_segment
-from compas.geometry import distance_point_point
-from compas.geometry import intersection_line_line
-
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
+from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import intersection_line_line_param
 
 
@@ -448,26 +445,3 @@ class DebugInfomation(object):
             self.joint_errors.extend(error)
         else:
             self.joint_errors.append(error)
-
-
-def distance_segment_segment(segment_a, segment_b):
-    """Computes the distance between two segments.
-
-    Parameters
-    ----------
-    segment_a : tuple(tuple(float, float, float), tuple(float, float, float))
-        The first segment, defined by two points.
-    segment_b : tuple(tuple(float, float, float), tuple(float, float, float))
-        The second segment, defined by two points.
-
-    Returns
-    -------
-    float
-        The distance between the two segments.
-
-    """
-    pta, ptb = intersection_line_line(segment_a, segment_b)
-    pt_seg_a = closest_point_on_segment(pta, segment_a)
-    pt_seg_b = closest_point_on_segment(ptb, segment_b)
-
-    return distance_point_point(pt_seg_a, pt_seg_b)
