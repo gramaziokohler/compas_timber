@@ -37,7 +37,7 @@ class LDetailBase(object):
         bottom_point = intersection_line_plane(bottom_segment, edge_plane)
         top_point = intersection_line_plane(top_segment, edge_plane)
         if interface.interface_type == InterfaceLocation.FRONT:
-            bottom_segment = Line(bottom_point, bottom_segment.end)
+            bottom_segment = Line(bottom_segment.start, bottom_point)
             top_segment = Line(top_point, top_segment.end)
         elif interface.interface_type == InterfaceLocation.BACK:
             bottom_segment = Line(bottom_point, bottom_segment.end)
