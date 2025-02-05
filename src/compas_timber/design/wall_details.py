@@ -223,6 +223,7 @@ class TConnectionDetailA(TDetailBase):
 
         interface_width = interface.interface_polyline.lines[1].length
         edge_beam_line = right_vertical.translated(parallel_to_interface * interface_width * -0.5)
+        edge_beam_line.translate(parallel_to_interface * config_set.beam_width * -0.5)
         edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
 
         return [edge_beam]
@@ -232,7 +233,7 @@ class TConnectionDetailA(TDetailBase):
         # it should be flush agains the interface
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
-        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
+        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width)
         # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="edge_stud")
         return [edge_beam]
