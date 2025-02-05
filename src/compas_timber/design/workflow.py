@@ -144,7 +144,10 @@ class DirectRule(JointRule):
             raise UserWarning("unable to comply direct joint element sets")
 
     def comply(self, elements, model_max_distance=1e-6):
-
+        """Returns True if the given elements comply with this DirectRule.
+        only checks if the distance between the centerlines of the elements is less than the max_distance.
+        allows joint topology overrides.
+        """
         if self.max_distance:
             max_distance = self.max_distance
         else:
