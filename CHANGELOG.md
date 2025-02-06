@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added properties `width`, `length`, `height`, `corners`, `faces`, `end_faces` and `envelope_faces` to `Wall` class.
+* Added `from_boundary` class method to `Wall` class.
+* Added `from_brep` class method to `Wall` class.
+* Added `classify_polyline_segments` method to `compas_timber.util`.
+
 ### Changed
 
 * Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
@@ -27,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `restore_beams_from_keys` in `LMiterJoint` to use the correct variable names.
 * Reworked `DoubleCut` to more reliably produce the feature and geometry with the `from_planes_and_element` class method.
 * Renamed `intersection_box_line()` to `intersection_beam_line_param()`, which now take a beam input and outputs the intersecting ref_face_index.
+* Reworked Wall class to be defined with a standard polyline, frame and thickness.
 
 ### Removed
 
