@@ -41,6 +41,7 @@ class YButtJoint(Joint):
 
     """
 
+    # TODO: implement Y and K topologies
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
     MIN_ELEMENT_COUNT = 3
     MAX_ELEMENT_COUNT = 3
@@ -49,7 +50,8 @@ class YButtJoint(Joint):
     def __data__(self):
         data = super(YButtJoint, self).__data__
         data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guids"] = self.cross_beam_guids
+        data["cross_beam_a_guid"] = self.cross_beam_a_guid
+        data["cross_beam_b_guid"] = self.cross_beam_b_guid
         data["mill_depth"] = self.mill_depth
         return data
 
@@ -58,10 +60,12 @@ class YButtJoint(Joint):
         self.main_beam = main_beam
         self.cross_beams = [cross_beam_a, cross_beam_b]
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guids = kwargs.get("cross_beam_guids", None) or [str(beam.guid) for beam in self.cross_beams]
+        self.cross_beam_a_guid = kwargs.get("cross_beam_a_guid", None) or str(cross_beam_a.guid)
+        self.cross_beam_b_guid = kwargs.get("cross_beam_b_guid", None) or str(cross_beam_b.guid)
         self.mill_depth = mill_depth
         self.features = []
-        self.check_beam_compatibility()
+        if self.main_beam and self.cross_beams:
+            self.check_beam_compatibility()
 
     @property
     def beams(self):
@@ -101,14 +105,14 @@ class YButtJoint(Joint):
 
     def get_miter_planes(self, beam_a, beam_b):
         # intersection point (average) of both centrelines
-        [pxA, _], [pxB, _] = intersection_line_line_param(
+        [px_a, _], [px_b, _] = intersection_line_line_param(
             beam_a.centerline,
             beam_b.centerline,
             max_distance=float("inf"),
             limit_to_segments=False,
         )
-        # TODO: add error-trap + solution for I-miter joints
-        p = (pxA + pxB) * 0.5
+
+        p = (px_a + px_b) * 0.5
         # makes sure they point outward of a joint point
         va = Vector.from_start_end(beam_a.endpoint_closest_to_point(p)[1], beam_a.midpoint)
         vb = Vector.from_start_end(beam_b.endpoint_closest_to_point(p)[1], beam_b.midpoint)
@@ -120,9 +124,9 @@ class YButtJoint(Joint):
         v_perp = Vector(*v_bisector.cross(va))
         v_normal = Vector(*v_bisector.cross(v_perp))
 
-        plnA = Plane(p, v_normal)
-        plnB = Plane(p, v_normal * -1.0)
-        return plnA, plnB
+        pln_a = Plane(p, v_normal)
+        pln_b = Plane(p, v_normal * -1.0)
+        return pln_a, pln_b
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -227,5 +231,4 @@ class YButtJoint(Joint):
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beams = [model.element_by_guid(guid) for guid in self.cross_beam_guids]
-        print("restored beams", self.main_beam, self.cross_beams)
+        self.cross_beams = [model.element_by_guid(self.cross_beam_a_guid), model.element_by_guid(self.cross_beam_b_guid)]

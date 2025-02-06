@@ -8,9 +8,10 @@ from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.elements import CutFeature
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
+from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
+from compas_timber.fabrication.jack_cut import JackRafterCut
 from compas_timber.utils import correct_polyline_direction
 
 
@@ -43,7 +44,9 @@ class BallNodeFastener(Fastener):
         super(BallNodeFastener, self).__init__(**kwargs)
         self.node_point = node_point
         self.ball_diameter = ball_diameter
-        self._base_interface = base_interface
+        self._base_interface = None
+        if base_interface:
+            self.base_interface = base_interface
         self._interface_shape = None
         self.interfaces = []
         self.attributes = {}
@@ -64,7 +67,9 @@ class BallNodeFastener(Fastener):
 
     @property
     def base_interface(self):
-        return self._base_interface if self._base_interface else self._default_interface()
+        if not self._base_interface:
+            self._base_interface = self.default_fastener_interface
+        return self._base_interface
 
     @base_interface.setter
     def base_interface(self, base_interface):
@@ -78,24 +83,44 @@ class BallNodeFastener(Fastener):
     def __str__(self):
         return "Ball Node Fastener"
 
-    def _default_interface(self):
-        height = self.ball_diameter
-        thickness = height / 10.0
-        shape = Cylinder(height / 8.0, height * 2.0, Frame(Point(height * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))
-        cut_feature = CutFeature(Plane((height * 2.0, 0, 0), (-1, 0, 0)))
-        outline_points = [
-            Point(height * 2.0, -height / 2, -thickness / 2),
-            Point(height * 2.0, height / 2, -thickness / 2),
-            Point(height * 4.0, height / 2, -thickness / 2),
-            Point(height * 4.0, -height / 2, -thickness / 2),
-            Point(height * 2.0, -height / 2, -thickness / 2),
+    # ==========================================================================
+    # Default Values for Fastener Interface
+    # ==========================================================================
+
+    @property
+    def default_fastener_interface(self):
+        return FastenerTimberInterface(self._default_outline_points, self._default_thickness, shapes=self._default_shapes, features=self._default_features)
+
+    @property
+    def _default_outline_points(self):
+        return [
+            Point(self.ball_diameter * 2.0, -self.ball_diameter / 2, -self._default_thickness / 2),
+            Point(self.ball_diameter * 2.0, self.ball_diameter / 2, -self._default_thickness / 2),
+            Point(self.ball_diameter * 4.0, self.ball_diameter / 2, -self._default_thickness / 2),
+            Point(self.ball_diameter * 4.0, -self.ball_diameter / 2, -self._default_thickness / 2),
+            Point(self.ball_diameter * 2.0, -self.ball_diameter / 2, -self._default_thickness / 2),
         ]
 
-        return FastenerTimberInterface(outline_points, thickness, shapes=[shape], features=[cut_feature])
+    @property
+    def _default_thickness(self):
+        return self.ball_diameter / 10.0
+
+    @property
+    def _default_shapes(self):
+        return [Cylinder(self.ball_diameter / 8.0, self.ball_diameter * 2.0, Frame(Point(self.ball_diameter * 1.0, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)))]
+
+    @property
+    def _default_features(self):
+        return [BTLxFromGeometryDefinition(JackRafterCut, Plane((self.ball_diameter * 2.0, 0, 0), (-1, 0, 0)))]
 
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
+
+    def update_interface(self, interface):
+        for key, value in interface.__data__.items():
+            if value:
+                setattr(self.base_interface, key, value)
 
     def compute_geometry(self):
         # type: () -> compas.geometry.Geometry
@@ -103,8 +128,9 @@ class BallNodeFastener(Fastener):
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
         for interface in self.interfaces:
-            interface_geometry = self.interface_shape.transformed(Transformation.from_frame(interface.frame))
-            geometry += interface_geometry
+            if self.interface_shape:
+                interface_geometry = self.interface_shape.transformed(Transformation.from_frame(interface.frame))
+                geometry += interface_geometry
         return geometry
 
     # TODO: implement compute_aabb()
@@ -125,6 +151,8 @@ class BallNodeFastener(Fastener):
     @property
     def interface_plate(self):
         """Generate a plate from outline_points, thickness, and holes."""
+        if not self.base_interface.outline_points:
+            return None
         outline_points = correct_polyline_direction(self.base_interface.outline_points, Vector(0, 0, 1))
         outline = NurbsCurve.from_points(outline_points, degree=1)
         holes = self.base_interface.holes

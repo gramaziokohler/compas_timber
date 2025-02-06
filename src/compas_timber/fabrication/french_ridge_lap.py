@@ -56,7 +56,7 @@ class FrenchRidgeLap(BTLxProcessing):
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
-    def __init__(self, orientation, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0, **kwargs):
+    def __init__(self, orientation=OrientationType.START, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0, **kwargs):
         super(FrenchRidgeLap, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None

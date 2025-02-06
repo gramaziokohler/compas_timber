@@ -2,6 +2,8 @@ import os
 
 from compas.data import json_load
 from compas.geometry import Vector
+from compas.data import json_dumps
+from compas.data import json_loads
 
 from compas_timber.connections import YButtJoint
 from compas_timber.elements import Beam
@@ -20,6 +22,7 @@ def test_create():
         model.add_element(b)
     instance = YButtJoint.create(model, *beams, mill_depth=10.0)
     model.process_joinery()
+    model_copy = json_loads(json_dumps(model))
 
     assert len(instance.elements) == 3
     assert isinstance(instance, YButtJoint)
@@ -30,3 +33,5 @@ def test_create():
     assert isinstance(instance.main_beam.features[0], DoubleCut)
     assert len(instance.cross_beams[0].features) == 2
     assert set([f.__class__ for f in instance.cross_beams[0].features]) == set([JackRafterCut, Lap])
+    assert len(list(model_copy.elements())) == 3
+    assert set([b.guid for b in model.beams]) == set([b.guid for b in model_copy.beams])
