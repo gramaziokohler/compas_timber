@@ -101,7 +101,7 @@ class DoubleCut(BTLxProcessing):
 
     @orientation.setter
     def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END, None]:
+        if orientation not in [OrientationType.START, OrientationType.END]:
             raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
         self._orientation = orientation
 
@@ -238,6 +238,27 @@ class DoubleCut(BTLxProcessing):
             return [planes[1],planes[0]]
         else:
             return planes
+
+    @classmethod
+    def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
+        """Construct a DoubleCut process from a two planes and an element.
+
+        Parameters
+        ----------
+        plane_a : :class:`compas.geometry.Plane`
+            The first cutting plane.
+        plane_b : :class:`compas.geometry.Plane`
+            The second cutting plane.
+        element : :class:`compas_timber.elements.Element`
+            The element to be cut.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.DoubleCut`
+            The constructed double cut process.
+
+        """
+        return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(beam, cutting_planes):

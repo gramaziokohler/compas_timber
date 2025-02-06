@@ -233,7 +233,7 @@ PROCESS_PARAMS_DICT = [
 def test_drilling(beam, drill_line, process_params_dict):
     diameter = 10.0
 
-    drilling = Drilling.from_line_and_beam(drill_line, diameter, beam)
+    drilling = Drilling.from_line_and_element(drill_line, beam, diameter)
 
     for key, value in process_params_dict.items():
         assert drilling.params_dict[key] == value

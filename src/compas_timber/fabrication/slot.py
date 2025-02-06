@@ -18,7 +18,7 @@ class Slot(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation=OrientationType.START,
         start_x=0.0,
         start_y=0.0,
         start_depth=0.0,
