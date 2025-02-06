@@ -62,7 +62,7 @@ class ModelComponent(component):
             for f_def in features:
                 if not f_def.elements:
                     self.AddRuntimeMessage(Warning, "Features defined in model must have elements defined. Features without elements will be ignored")
-                elif f_def.geometries:
+                else:
                     for element in f_def.elements:
                         element.add_features(f_def.feature_from_element(element))
 

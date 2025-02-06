@@ -71,7 +71,7 @@ class DoubleCut(BTLxProcessing):
         **kwargs
     ):
         super(DoubleCut, self).__init__(**kwargs)
-        self._orientation = OrientationType.START
+        self._orientation = None
         self._start_x = None
         self._start_y = None
         self._angle_1 = None
@@ -101,7 +101,7 @@ class DoubleCut(BTLxProcessing):
 
     @orientation.setter
     def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END, None]:
+        if orientation not in [OrientationType.START, OrientationType.END]:
             raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
         self._orientation = orientation
 

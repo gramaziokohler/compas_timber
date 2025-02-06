@@ -695,15 +695,25 @@ class BTLxFromGeometryDefinition(Data):
     def __data__(self):
         return {"processing": self.processing, "geometries": self.geometries, "elements": self.elements, "kwargs": self.kwargs}
 
+    @classmethod
+    def __from_data__(cls, data):
+        return cls(data["processing"], data["geometries"], data["elements"], **data["kwargs"])
+
     def __repr__(self):
         return "{}({}, {})".format(BTLxFromGeometryDefinition.__class__.__name__, self.processing, self.geometries)
 
     def ToString(self):
         return repr(self)
 
+    def transform(self, transformation):
+        for geo in self.geometries:
+            geo.transform(transformation)
+
     def transformed(self, transformation):
-        geometries = [geo.transformed(transformation) for geo in self.geometries]
-        return self.__class__(self.processing, geometries, **self.kwargs)
+        copy = self.copy()
+        copy.transform(transformation)
+        return copy
 
     def feature_from_element(self, element):
+        print(self.kwargs)
         return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)

@@ -52,9 +52,9 @@ class JackRafterCut(BTLxProcessing):
         data["inclination"] = self.inclination
         return data
 
-    def __init__(self, orientation=None, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
+    def __init__(self, orientation=OrientationType.START, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
-        self._orientation = None
+        self._orientation = orientation
         self._start_x = None
         self._start_y = None
         self._start_depth = None
@@ -82,7 +82,7 @@ class JackRafterCut(BTLxProcessing):
 
     @orientation.setter
     def orientation(self, orientation):
-        if orientation not in [OrientationType.START, OrientationType.END, None]:
+        if orientation not in [OrientationType.START, OrientationType.END]:
             raise ValueError("Orientation must be either OrientationType.START or OrientationType.END.")
         self._orientation = orientation
 
