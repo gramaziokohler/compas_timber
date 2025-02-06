@@ -10,6 +10,7 @@ from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import is_point_behind_plane
@@ -390,7 +391,8 @@ class Lap(BTLxProcessing):
             if intersection_line_plane(edge, plane) is None:
                 raise ValueError("One of the planes does not intersect with the beam.")
             intersection_point = Point(*intersection_line_plane(edge, plane))
-            x_distances.append(distance_point_point(edge.start, intersection_point))
+            distance_vector = (Vector.from_start_end(edge.start, intersection_point))
+            x_distances.append(dot_vectors(distance_vector, edge.direction))
         return max(x_distances) if orientation == OrientationType.END else min(x_distances)
 
     @staticmethod
