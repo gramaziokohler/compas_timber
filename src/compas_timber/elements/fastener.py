@@ -5,8 +5,8 @@ from compas.geometry import Line
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.elements.features import DrillFeature
 from compas_timber.elements.timber import TimberElement
+from compas_timber.fabrication import Drilling
 from compas_timber.utils import intersection_line_beam_param
 
 
@@ -107,8 +107,8 @@ class FastenerTimberInterface(Data):
         The frame of the instance of the fastener that is applied to the model.
     shapes : :class:`~compas.geometry.Geometry`
         Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.
-    feature : list of compas_timber.elements.Feature
-        A list of user defined features that are applied to the timber element.
+    features : list of :class:`~compas_timber.fabrication.BTLxFromGeometryDefinition
+        The features that are applied by this interface to the timber element. The features are defined in world coordinates.
 
     Attributes
     ----------
@@ -126,7 +126,7 @@ class FastenerTimberInterface(Data):
         }
     frame : :class:`~compas.geometry.Frame`
         The frame of the instance of the fastener that is applied to the model.
-    features : list of :class:`~compas_timber.parts.Feature`
+    features : list of :class:`~compas_timber.fabrication.BTLxFromGeometryDefinition
         The features that are applied by this interface to the timber element. This returns the features in world coordinates.
 
 
@@ -140,7 +140,15 @@ class FastenerTimberInterface(Data):
         self.frame = frame or Frame.worldXY()
         self.element = element
         self.shapes = shapes or []
-        self.features = features or []  # TODO: what are these? FeatureDefinitions?
+        self.features = []
+        if features:
+            for feat in features:
+                if feat.elements:
+                    fc = feat.copy()
+                    fc.elements = None
+                    self.features.append(fc)
+                else:
+                    self.features.append(feat)
         self._shape = None
 
     def __str__(self):
@@ -165,9 +173,8 @@ class FastenerTimberInterface(Data):
             features.append(self._get_hole_feature(hole, element))
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
         for feature in self.features:
-            feat = feature.copy()
-            feat.transform(Transformation.from_frame(self.frame))
-            features.append(feat)
+            feat = feature.transformed(Transformation.from_frame(self.frame))
+            features.append(feat.feature_from_element(element))
         return features
 
     def _get_hole_feature(self, hole, element):
@@ -181,6 +188,5 @@ class FastenerTimberInterface(Data):
             pts, _ = intersection_line_beam_param(drill_line, element)
             if pts:
                 drill_line = Line(*pts)
-                length = drill_line.length
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
-        return DrillFeature(drill_line, hole["diameter"], length)
+        return Drilling.from_line_and_element(drill_line, hole["diameter"], element)

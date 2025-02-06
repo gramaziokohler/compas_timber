@@ -84,7 +84,7 @@ class Lap(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation=OrientationType.START,
         start_x=0.0,
         start_y=0.0,
         angle=90.0,
