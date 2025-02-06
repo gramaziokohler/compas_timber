@@ -66,7 +66,7 @@ class StepJoint(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation=OrientationType.START,
         start_x=0.0,
         strut_inclination=90.0,
         step_depth=20.0,
