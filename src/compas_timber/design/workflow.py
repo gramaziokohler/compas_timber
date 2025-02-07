@@ -1,13 +1,11 @@
 from itertools import combinations
-from compas.geometry import distance_point_point
-from compas.geometry import intersection_line_line
-from compas.geometry import closest_point_on_segment
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
+from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import intersection_line_line_param
 
 
@@ -95,8 +93,8 @@ class JointRule(object):
             pair = element_pairs.pop()
             match_found = False
             for rule in direct_rules:
-                if rule.contains(pair): # see if pair is used in a direct rule
-                    if rule.comply(pair, model_max_distance=max_distance): # see if pair complies with max distance
+                if rule.contains(pair):  # see if pair is used in a direct rule
+                    if rule.comply(pair, model_max_distance=max_distance):  # see if pair complies with max distance
                         joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
                         match_found = True
                         break
@@ -121,9 +119,21 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """Creates a Joint Rule that directly joins multiple elements."""
+    """Creates a Joint Rule that directly joins multiple elements.
 
-    def __init__(self, joint_type, elements, max_distance = None, **kwargs):
+    Parameters
+    ----------
+    joint_type : cls(:class:`~compas_timber.connections.Joint`)
+        The joint type to be applied to the elements.
+    elements : list(:class:`~compas_timber.elements.TimberElement`)
+        The elements to be joined.
+    max_distance : float, optional
+        The maximum distance to consider two elements as intersecting.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+    """
+
+    def __init__(self, joint_type, elements, max_distance=None, **kwargs):
         self.elements = elements
         self.joint_type = joint_type
         self.max_distance = max_distance
@@ -144,7 +154,10 @@ class DirectRule(JointRule):
             raise UserWarning("unable to comply direct joint element sets")
 
     def comply(self, elements, model_max_distance=1e-6):
-
+        """Returns True if the given elements comply with this DirectRule.
+        only checks if the distance between the centerlines of the elements is less than the max_distance.
+        allows joint topology overrides.
+        """
         if self.max_distance:
             max_distance = self.max_distance
         else:
@@ -158,9 +171,25 @@ class DirectRule(JointRule):
 
 
 class CategoryRule(JointRule):
-    """Based on the category attribute attached to the elements, this rule assigns"""
+    """Based on the category attribute attached to the elements, this rule assigns
 
-    def __init__(self, joint_type, category_a, category_b, topos=None, max_distance = None, **kwargs):
+    Parameters
+    ----------
+    joint_type : cls(:class:`~compas_timber.connections.Joint`)
+        The joint type to be applied to the elements.
+    category_a : str
+        The category of the first element.
+    category_b : str
+        The category of the second element.
+    topos : list(:class:`~compas_timber.connections.JointTopology`), optional
+        The topologies that are supported by this rule.
+    max_distance : float, optional
+        The maximum distance to consider two elements as intersecting.
+    kwargs : dict
+        The keyword arguments to be passed to the joint.
+    """
+
+    def __init__(self, joint_type, category_a, category_b, topos=None, max_distance=None, **kwargs):
         self.joint_type = joint_type
         self.category_a = category_a
         self.category_b = category_b
@@ -233,7 +262,7 @@ class TopologyRule(JointRule):
         The keyword arguments to be passed to the joint.
     """
 
-    def __init__(self, topology_type, joint_type, max_distance = None, **kwargs):
+    def __init__(self, topology_type, joint_type, max_distance=None, **kwargs):
         self.topology_type = topology_type
         self.joint_type = joint_type
         self.max_distance = max_distance
@@ -244,7 +273,11 @@ class TopologyRule(JointRule):
         return repr(self)
 
     def __repr__(self):
-        return "{}({}, {})".format(TopologyRule, self.topology_type, self.joint_type, self.max_distance)
+        return "{}({}, {})".format(
+            TopologyRule,
+            self.topology_type,
+            self.joint_type,
+        )
 
     def comply(self, elements, model_max_distance=1e-6):
         if self.max_distance:
@@ -440,26 +473,3 @@ class DebugInfomation(object):
             self.joint_errors.extend(error)
         else:
             self.joint_errors.append(error)
-
-
-def distance_segment_segment(segment_a, segment_b):
-    """Computes the distance between two segments.
-
-    Parameters
-    ----------
-    segment_a : tuple(tuple(float, float, float), tuple(float, float, float))
-        The first segment, defined by two points.
-    segment_b : tuple(tuple(float, float, float), tuple(float, float, float))
-        The second segment, defined by two points.
-
-    Returns
-    -------
-    float
-        The distance between the two segments.
-
-    """
-    pta, ptb = intersection_line_line(segment_a, segment_b)
-    pt_seg_a = closest_point_on_segment(pta, segment_a)
-    pt_seg_b = closest_point_on_segment(ptb, segment_b)
-
-    return distance_point_point(pt_seg_a, pt_seg_b)
