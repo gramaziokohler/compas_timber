@@ -7,6 +7,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import intersection_line_line_param
+from compas.tolerance import TOL
 
 
 class CollectionDef(object):
@@ -63,7 +64,7 @@ class JointRule(object):
         return [rule for rule in topo_rules.values() if rule is not None]
 
     @staticmethod
-    def joints_from_beams_and_rules(elements, rules, max_distance=1e-6):
+    def joints_from_beams_and_rules(elements, rules, max_distance=TOL.absolute):
         """processes joint rules into joint definitions.
 
         Parameters
@@ -153,12 +154,12 @@ class DirectRule(JointRule):
         except TypeError:
             raise UserWarning("unable to comply direct joint element sets")
 
-    def comply(self, elements, model_max_distance=1e-6):
+    def comply(self, elements, model_max_distance=TOL.absolute):
         """Returns True if the given elements comply with this DirectRule.
         only checks if the distance between the centerlines of the elements is less than the max_distance.
         allows joint topology overrides.
         """
-        if self.max_distance:
+        if self.max_distance is not None:
             max_distance = self.max_distance
         else:
             max_distance = model_max_distance
@@ -204,7 +205,7 @@ class CategoryRule(JointRule):
     def __repr__(self):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
-    def comply(self, elements, model_max_distance=1e-6):
+    def comply(self, elements, model_max_distance=TOL.absolute):
         if self.max_distance:
             max_distance = self.max_distance
         else:
@@ -279,7 +280,7 @@ class TopologyRule(JointRule):
             self.joint_type,
         )
 
-    def comply(self, elements, model_max_distance=1e-6):
+    def comply(self, elements, model_max_distance=TOL.absolute):
         if self.max_distance:
             max_distance = self.max_distance
         else:
