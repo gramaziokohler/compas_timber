@@ -48,9 +48,21 @@ class FreeContour(BTLxProcessing):
             raise NotImplementedError("Inclination is not yet implemented.")
         self.inclination = inclination
 
+
     ########################################################################
     # Properties
     ########################################################################
+
+    @property
+    def __data__(self):
+        data = super(FreeContour, self).__data__
+        data["contour_points"] = self.contour_points
+        data["depth"] = self.depth
+        data["couter_sink"] = self.couter_sink
+        data["tool_position"] = self.tool_position
+        data["depth_bounded"] = self.depth_bounded
+        data["inclination"] = self.inclination
+        return data
 
     @property
     def header_attributes(self):

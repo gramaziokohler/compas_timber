@@ -160,75 +160,6 @@ class BTLxWriter(object):
             parts_element.append(part_element)
         return project_element
 
-    def _create_part(self, element, order_num):
-        """Creates a part element. This method creates the processing elements and appends them to the part element.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam object.
-        num : int
-            The order number of the part.
-
-        Returns
-        -------
-        :class:`~xml.etree.ElementTree.Element`
-            The part element.
-
-        """
-        # create part element
-        part = BTLxPart(element, order_num=order_num)
-        part_element = ET.Element("Part", part.attr)
-        part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
-        # create processings element for the part if there are any
-        if element.features:
-            processings_element = ET.Element("Processings")
-            for feature in element.features:
-                # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
-                if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = feature.create_processing()
-                    processings_element.append(processing_element)
-                else:
-                    warn("Unsupported feature will be skipped: {}".format(feature))
-            part_element.append(processings_element)
-        part_element.append(part.et_shape)
-        return part_element
-
-    def _create_processing(self, processing):
-        """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
-
-        Parameters
-        ----------
-        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
-            The processing object.
-
-        Returns
-        -------
-        :class:`~xml.etree.ElementTree.Element`
-            The processing element.
-
-        """
-        # create processing element
-        processing_element = ET.Element(
-            processing.PROCESSING_NAME,
-            processing.header_attributes,
-        )
-        # create parameter subelements
-        for key, value in processing.params_dict.items():
-            print(key, value)
-            if key not in processing.header_attributes:
-                child = ET.SubElement(processing_element, key)
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        child.set(sub_key, sub_value)
-                else:
-                    child.text = str(value)
-        # create subprocessing elements
-        if processing.subprocessings:
-            for subprocessing in processing.subprocessings:
-                processing_element.append(self._create_processing(subprocessing))
-        return processing_element
-
 
 class BTLxPart(object):
     """Class representing a BTLx part. This acts as a wrapper for a Beam object.
@@ -515,7 +446,7 @@ class BTLxProcessing(Data):
         # create subprocessing elements
         if self.subprocessings:
             for subprocessing in self.subprocessings:
-                processing_element.append(self._create_processing(subprocessing))
+                processing_element.append(self.create_processing(subprocessing))
         return processing_element
 
 

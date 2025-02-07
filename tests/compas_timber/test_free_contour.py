@@ -6,6 +6,8 @@ from compas.tolerance import TOL
 
 from compas_timber.elements import Plate
 from compas_timber.fabrication import FreeContour
+from compas.data import json_loads
+from compas.data import json_dumps
 
 
 @pytest.fixture
@@ -71,3 +73,21 @@ def test_plate_aperture_contour():
     assert contour.header_attributes["ToolPosition"] == "right"
     assert contour.header_attributes["CounterSink"] == "yes"
     assert contour.contour_attributes["Depth"] == str(depth)
+
+
+def test_plate_aperture_contour_serialization():
+    plate_pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    thickness = 10.0
+    depth = 5.0
+    plate = Plate(plate_pline, thickness)
+    aperture_pline = Polyline([Point(25, 50, 0), Point(25, 150, 0), Point(75, 150, 0), Point(75, 50, 0), Point(25, 50, 0)])
+    contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth)
+
+    contour_copy = json_loads(json_dumps(contour))
+    plate.add_feature(contour_copy)
+
+    assert len(plate.features) == 2
+    assert plate.features[1] == contour_copy
+    assert contour_copy.header_attributes["ToolPosition"] == "right"
+    assert contour_copy.header_attributes["CounterSink"] == "yes"
+    assert contour_copy.contour_attributes["Depth"] == str(depth)
