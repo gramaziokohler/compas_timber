@@ -480,7 +480,7 @@ class BTLxProcessing(Data):
         # create subprocessing elements
         if self.subprocessings:
             for subprocessing in self.subprocessings:
-                processing_element.append(self.create_processing(subprocessing))
+                processing_element.append(subprocessing.create_processing())
         return processing_element
 
 
