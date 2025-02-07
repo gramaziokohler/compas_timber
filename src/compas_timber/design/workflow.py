@@ -1,5 +1,7 @@
 from itertools import combinations
 
+from compas.tolerance import TOL
+
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
@@ -7,7 +9,6 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import intersection_line_line_param
-from compas.tolerance import TOL
 
 
 class CollectionDef(object):
