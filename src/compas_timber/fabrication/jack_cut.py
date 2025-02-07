@@ -52,9 +52,9 @@ class JackRafterCut(BTLxProcessing):
         data["inclination"] = self.inclination
         return data
 
-    def __init__(self, orientation, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
+    def __init__(self, orientation=OrientationType.START, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
-        self._orientation = None
+        self._orientation = orientation
         self._start_x = None
         self._start_y = None
         self._start_depth = None
@@ -174,6 +174,27 @@ class JackRafterCut(BTLxProcessing):
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
+
+    @classmethod
+    def from_shapes_and_element(cls, plane, element, **kwargs):
+        """Construct a drilling process from a shape and a beam.
+
+        Parameters
+        ----------
+        plane : :class:`compas.geometry.Plane` or :class:`compas.geometry.Frame`
+            The cutting plane.
+        element : :class:`compas_timber.elements.Element`
+            The element to be cut.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.JackRafterCut`
+            The constructed Jack Rafter Cut process.
+
+        """
+        if isinstance(plane, list):
+            plane = plane[0]
+        return cls.from_plane_and_beam(plane, element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):
