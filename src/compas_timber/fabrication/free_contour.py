@@ -48,7 +48,6 @@ class FreeContour(BTLxProcessing):
             raise NotImplementedError("Inclination is not yet implemented.")
         self.inclination = inclination
 
-
     ########################################################################
     # Properties
     ########################################################################

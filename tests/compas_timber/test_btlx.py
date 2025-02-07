@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 import compas
 import compas_timber
 from compas_timber.fabrication import BTLxWriter
+from compas_timber.fabrication import BTLxProcessing
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
@@ -183,15 +184,14 @@ def test_float_formatting_of_param_dicts():
 
 
 def test_create_processing_with_dict_params():
-    class MockProcessing:
+    class MockProcessing(BTLxProcessing):
         PROCESSING_NAME = "MockProcessing"
         header_attributes = {"Name": "MockProcessing", "Priority": "1", "Process": "yes", "ProcessID": "1", "ReferencePlaneID": "1"}
         params_dict = {"Param1": "Value1", "Param2": {"SubParam1": "SubValue1", "SubParam2": "SubValue2"}, "Param3": "Value3"}
         subprocessings = []
 
-    writer = BTLxWriter()
     processing = MockProcessing()
-    processing_element = writer._create_processing(processing)
+    processing_element = processing.create_processing()
 
     assert processing_element.tag == "MockProcessing"
     assert processing_element.attrib == processing.header_attributes
