@@ -156,8 +156,22 @@ class DirectRule(JointRule):
 
     def comply(self, elements, model_max_distance=TOL.absolute):
         """Returns True if the given elements comply with this DirectRule.
-        only checks if the distance between the centerlines of the elements is less than the max_distance.
-        allows joint topology overrides.
+        Checks if the distance between the centerlines of the elements is less than the max_distance.
+        Does not check for JointTopology compliance.
+
+        Parameters
+        ----------
+        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
+            A tuple containing two elements to check.
+        model_max_distance : float, optional
+            The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
+            This is only used if the rule does not already have a max_distance set.
+
+        Returns
+        -------
+        bool
+            True if the elements comply with the rule, False otherwise.
+
         """
         if self.max_distance is not None:
             max_distance = self.max_distance
@@ -206,7 +220,28 @@ class CategoryRule(JointRule):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
     def comply(self, elements, model_max_distance=TOL.absolute):
-        if self.max_distance:
+        """Checks if the given elements comply with this CategoryRule.
+        It checks:
+            that the elements have the expected category attribute,
+            that the max_distance is not exceeded,
+            that the joint supports the topology of the elements.
+
+
+        Parameters
+        ----------
+        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
+            A tuple containing two elements to check.
+        model_max_distance : float, optional
+            The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
+            This is only used if the rule does not already have a max_distance set.
+
+        Returns
+        -------
+        bool
+            True if the elements comply with the rule, False otherwise.
+
+        """
+        if self.max_distance is not None:
             max_distance = self.max_distance
         else:
             max_distance = model_max_distance
@@ -259,6 +294,9 @@ class TopologyRule(JointRule):
         The topology type to which the rule is applied.
     joint_type : cls(:class:`compas_timber.connections.Joint`)
         The joint type to be applied to this topology.
+    max_distance : float, optional
+        The maximum distance to consider two elements as intersecting.
+        This will override a global max_distance if set.
     kwargs : dict
         The keyword arguments to be passed to the joint.
     """
@@ -281,7 +319,27 @@ class TopologyRule(JointRule):
         )
 
     def comply(self, elements, model_max_distance=TOL.absolute):
-        if self.max_distance:
+        """Checks if the given elements comply with this TopologyRule.
+        It checks that the max_distance is not exceeded and that the topology of the elements matches the rule.
+        If the elements are not in the correct order, they are reversed.
+
+        Parameters
+        ----------
+        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
+            A tuple containing two elements to check.
+        model_max_distance : float, optional
+            The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
+            This is only used if the rule does not already have a max_distance set.
+
+        Returns
+        -------
+        bool
+            True if the elements comply with the rule, False otherwise.
+        list(:class:`~compas_timber.elements.TimberElement`)
+            The elements in the correct order.
+
+        """
+        if self.max_distance is not None:
             max_distance = self.max_distance
         else:
             max_distance = model_max_distance
