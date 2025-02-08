@@ -7,7 +7,7 @@ from .lap_joint import LapJoint
 from .null_joint import NullJoint
 from .solver import ConnectionSolver
 from .solver import JointTopology
-from .solver import find_neighboring_beams
+from .solver import find_neighboring_elements
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
@@ -18,6 +18,9 @@ from .t_tenon_mortise import TenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
+from .wall_joint import WallJoint
+from .wall_joint import InterfaceLocation
+from .wall_joint import InterfaceRole
 
 __all__ = [
     "Joint",
@@ -35,10 +38,13 @@ __all__ = [
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
-    "find_neighboring_beams",
+    "find_neighboring_elements",
     "TDovetailJoint",
     "BallNodeJoint",
     "TenonMortiseJoint",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
+    "WallJoint",
+    "InterfaceLocation",
+    "InterfaceRole",
 ]
