@@ -596,9 +596,23 @@ document.write(`
 <h1>DirectRule</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.design.DirectRule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">DirectRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/aea6c47/src/compas_timber/design/workflow.py#L117"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">DirectRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3844dd/src/compas_timber/design/workflow.py#L123"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.design.JointRule.html#compas_timber.design.JointRule" title="compas_timber.design.workflow.JointRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointRule</span></code></a></p>
 <p>Creates a Joint Rule that directly joins multiple elements.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>joint_type</strong><span class="classifier">cls(<a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a>)</span></dt><dd><p>The joint type to be applied to the elements.</p>
+</dd>
+<dt><strong>elements</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a>)</span></dt><dd><p>The elements to be joined.</p>
+</dd>
+<dt><strong>max_distance</strong><span class="classifier">float, optional</span></dt><dd><p>The maximum distance to consider two elements as intersecting.</p>
+</dd>
+<dt><strong>kwargs</strong><span class="classifier">dict</span></dt><dd><p>The keyword arguments to be passed to the joint.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
@@ -606,7 +620,10 @@ document.write(`
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.DirectRule.comply.html#compas_timber.design.DirectRule.comply" title="compas_timber.design.DirectRule.comply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comply</span></code></a></p></td>
-<td><p>Returns True if the provided elements comply with the rule defined by this instance.</p></td>
+<td><p>Returns True if the given elements comply with this DirectRule.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.DirectRule.contains.html#compas_timber.design.DirectRule.contains" title="compas_timber.design.DirectRule.contains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contains</span></code></a></p></td>
+<td><p>Returns True if the given elements are defined within this DirectRule.</p></td>
 </tr>
 </tbody>
 </table>

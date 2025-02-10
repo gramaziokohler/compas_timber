@@ -596,9 +596,27 @@ document.write(`
 <h1>CategoryRule</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.design.CategoryRule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">CategoryRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/aea6c47/src/compas_timber/design/workflow.py#L139"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">CategoryRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3844dd/src/compas_timber/design/workflow.py#L189"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.design.JointRule.html#compas_timber.design.JointRule" title="compas_timber.design.workflow.JointRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointRule</span></code></a></p>
 <p>Based on the category attribute attached to the elements, this rule assigns</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>joint_type</strong><span class="classifier">cls(<a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a>)</span></dt><dd><p>The joint type to be applied to the elements.</p>
+</dd>
+<dt><strong>category_a</strong><span class="classifier">str</span></dt><dd><p>The category of the first element.</p>
+</dd>
+<dt><strong>category_b</strong><span class="classifier">str</span></dt><dd><p>The category of the second element.</p>
+</dd>
+<dt><strong>topos</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.connections.JointTopology.html#compas_timber.connections.JointTopology" title="compas_timber.connections.JointTopology"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointTopology</span></code></a>), optional</span></dt><dd><p>The topologies that are supported by this rule.</p>
+</dd>
+<dt><strong>max_distance</strong><span class="classifier">float, optional</span></dt><dd><p>The maximum distance to consider two elements as intersecting.</p>
+</dd>
+<dt><strong>kwargs</strong><span class="classifier">dict</span></dt><dd><p>The keyword arguments to be passed to the joint.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
@@ -606,7 +624,7 @@ document.write(`
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.comply.html#compas_timber.design.CategoryRule.comply" title="compas_timber.design.CategoryRule.comply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comply</span></code></a></p></td>
-<td><p>Returns True if the provided elements comply with the rule defined by this instance.</p></td>
+<td><p>Checks if the given elements comply with this CategoryRule. It checks:     that the elements have the expected category attribute,     that the max_distance is not exceeded,     that the joint supports the topology of the elements.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.reorder.html#compas_timber.design.CategoryRule.reorder" title="compas_timber.design.CategoryRule.reorder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder</span></code></a></p></td>
 <td><p>Returns the given elements in a sorted order.</p></td>

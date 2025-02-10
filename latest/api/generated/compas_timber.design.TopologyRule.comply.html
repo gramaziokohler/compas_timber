@@ -601,17 +601,26 @@ document.write(`
 <h1>TopologyRule.comply</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.design.TopologyRule.comply">
-<span class="sig-prename descclassname"><span class="pre">TopologyRule.</span></span><span class="sig-name descname"><span class="pre">comply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/aea6c47/src/compas_timber/design/workflow.py#L222"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Returns True if the provided elements comply with the rule defined by this instance. False otherwise.</p>
+<span class="sig-prename descclassname"><span class="pre">TopologyRule.</span></span><span class="sig-name descname"><span class="pre">comply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-09</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3844dd/src/compas_timber/design/workflow.py#L322"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Checks if the given elements comply with this TopologyRule.
+It checks that the max_distance is not exceeded and that the topology of the elements matches the rule.
+If the elements are not in the correct order, they are reversed.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>elements</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a>)</span></dt><dd></dd>
+<dt><strong>elements</strong><span class="classifier">tuple(<a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a>, <a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a>)</span></dt><dd><p>A tuple containing two elements to check.</p>
+</dd>
+<dt><strong>model_max_distance</strong><span class="classifier">float, optional</span></dt><dd><p>The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
+This is only used if the rule does not already have a max_distance set.</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool</dt><dd></dd>
+<dt>bool</dt><dd><p>True if the elements comply with the rule, False otherwise.</p>
+</dd>
+<dt>list(<a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a>)</dt><dd><p>The elements in the correct order.</p>
+</dd>
 </dl>
 </dd>
 </dl>
