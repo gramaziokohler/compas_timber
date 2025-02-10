@@ -382,7 +382,7 @@ class WallPopulatorConfigurationSet(object):
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
         self.z_axis = z_axis or Vector.Zaxis()
-        self.tolerance = tolerance
+        self.tolerance = tolerance or TOL
         self.sheeting_outside = sheeting_outside
         self.sheeting_inside = sheeting_inside
         self.lintel_posts = lintel_posts
