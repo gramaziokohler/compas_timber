@@ -13,6 +13,8 @@ from compas.geometry import subtract_vectors
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
+from compas.geometry import closest_point_on_segment
+from compas.geometry import intersection_line_line
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
@@ -136,36 +138,61 @@ def intersection_line_plane_param(line, plane, tol=1e-6):
     return Point(*add_vectors(a, ab)), t
 
 
-__all__ = ["intersection_line_line_param", "intersection_line_plane_param"]
+def intersection_line_beam_param(line, beam, ignore_ends=False):
+    """Get the intersection of a line with a beam in the XY plane and the corresponding ref_face_indices.
 
+    Parameters
+    ----------
+    line : :class:`~compas.geometry.Line`
+        The line to intersect with the beam.
+    beam : :class:`~compas_timber.geometry.Beam`
+        The beam to intersect with the line.
+    ignore_ends : bool, optional
+        If True, the intersection with the beam ends is ignored. Default is False.
 
-def intersection_line_box(line, box, ignore_ends=False):
-    """Get the intersection of a line with a box in the XY plane."""
-    # TODO: can we not use `compas.geometry.intersection_line_box_xy()`?
-    frame_indices = [
-        (1, 2, 0),
-        (7, 6, 1),
-        (4, 5, 7),
-        (0, 3, 4),
-        (1, 0, 7),
-        (6, 5, 2),
-    ]  # corresponds to BTLx reference sides
+    Returns
+    -------
+    list of :class:`~compas.geometry.Point`
+        list of intersection points.
+    list of int
+        list of indices of the reference faces of the beam that the intersection points lie on.
+
+    """
+
+    sides = beam.ref_sides[:4] if ignore_ends else beam.ref_sides
     pts = []
-    sides = [Frame.from_points(*(box.points[inds[0]], box.points[inds[1]], box.points[inds[2]])) for inds in frame_indices]
-    sides = sides[:4] if ignore_ends else sides
+    ref_side_indices = []
     for i, face in enumerate(sides):
         intersection = intersection_line_plane(line, Plane.from_frame(face))
         if intersection:
             int_pt = Point(*intersection)
             intersection_uv = int_pt.transformed(Transformation.from_frame_to_frame(face, Frame.worldXY()))
-            if i < 4:
-                if i % 2 == 0:
-                    if intersection_uv[0] >= 0 and intersection_uv[0] < box.width and intersection_uv[1] > 0 and intersection_uv[1] < box.depth:
-                        pts.append(intersection)
-                else:
-                    if intersection_uv[0] >= 0 and intersection_uv[0] < box.width and intersection_uv[1] > 0 and intersection_uv[1] < box.height:
-                        pts.append(intersection)
-            else:
-                if intersection_uv[0] >= 0 and intersection_uv[0] < box.depth and intersection_uv[1] > 0 and intersection_uv[1] < box.height:
-                    pts.append(intersection)
-    return [Point(*coords) for coords in pts]
+            if intersection_uv[0] >= 0 and intersection_uv[0] < beam.side_as_surface(i).xsize and intersection_uv[1] > 0 and intersection_uv[1] < beam.side_as_surface(i).ysize:
+                pts.append(intersection)
+                ref_side_indices.append(i)
+    return [Point(*coords) for coords in pts], ref_side_indices
+
+
+def distance_segment_segment(segment_a, segment_b):
+    """Computes the distance between two segments.
+
+    Parameters
+    ----------
+    segment_a : tuple(tuple(float, float, float), tuple(float, float, float))
+        The first segment, defined by two points.
+    segment_b : tuple(tuple(float, float, float), tuple(float, float, float))
+        The second segment, defined by two points.
+
+    Returns
+    -------
+    float
+        The distance between the two segments.
+
+    """
+    pta, ptb = intersection_line_line(segment_a, segment_b)
+    pt_seg_a = closest_point_on_segment(pta, segment_a)
+    pt_seg_b = closest_point_on_segment(ptb, segment_b)
+    return distance_point_point(pt_seg_a, pt_seg_b)
+
+
+__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "distance_segment_segment"]

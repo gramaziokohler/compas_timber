@@ -155,7 +155,7 @@ class BTLxWriter(object):
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
-        for i, beam in enumerate(model.beams):
+        for i, beam in enumerate(model.beams):  # TODO: we need to add at least Plates to this too.
             part_element = self._create_part(beam, i)
             parts_element.append(part_element)
         return project_element
@@ -447,7 +447,7 @@ class BTLxProcessing(Data):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index, priority=0, process_id=0):
+    def __init__(self, ref_side_index=None, priority=0, process_id=0):
         super(BTLxProcessing, self).__init__()
         self.ref_side_index = ref_side_index
         self._priority = priority
@@ -658,3 +658,63 @@ class EdgePositionType(object):
 
     REFEDGE = "refedge"
     OPPEDGE = "oppedge"
+
+
+class BTLxFromGeometryDefinition(Data):
+    """Container linking a BTLx Process Type and generator function to an input geometry.
+    This allows delaying the actual applying of features to a downstream component.
+
+    Parameters
+    ----------
+    processing : class
+        The BTLx Processing class.
+    geometries : list of :class:`~compas.geometry.Geometry`
+        The geometries to be used as input for the processing.
+    elements : list of :class:`~compas_timber.elements.Element`
+        The elements to be used as input for the processing.
+
+    Attributes
+    processing : class
+        The BTLx Processing class.
+    geometries : list of :class:`~compas.geometry.Geometry`
+        The geometries to be used as input for the processing.
+    elements : list of :class:`~compas_timber.elements.Element`
+        The elements to be used as input for the processing.
+    """
+
+    def __init__(self, processing, geometries, elements=None, **kwargs):
+        super(BTLxFromGeometryDefinition, self).__init__()
+        self.processing = processing
+        self.geometries = geometries if isinstance(geometries, list) else [geometries]
+        if elements:
+            self.elements = elements if isinstance(elements, list) else [elements]
+        else:
+            self.elements = []
+        self.kwargs = kwargs or {}
+
+    @property
+    def __data__(self):
+        return {"processing": self.processing, "geometries": self.geometries, "elements": self.elements, "kwargs": self.kwargs}
+
+    @classmethod
+    def __from_data__(cls, data):
+        return cls(data["processing"], data["geometries"], data["elements"], **data["kwargs"])
+
+    def __repr__(self):
+        return "{}({}, {})".format(BTLxFromGeometryDefinition.__class__.__name__, self.processing, self.geometries)
+
+    def ToString(self):
+        return repr(self)
+
+    def transform(self, transformation):
+        for geo in self.geometries:
+            geo.transform(transformation)
+
+    def transformed(self, transformation):
+        copy = self.copy()
+        copy.transform(transformation)
+        return copy
+
+    def feature_from_element(self, element):
+        print(self.kwargs)
+        return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
