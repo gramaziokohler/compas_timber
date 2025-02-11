@@ -160,6 +160,7 @@ class LConnectionDetailA(LDetailBase):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
         # TODO: if beam_height < wall thickness, there needs to be an offset here
+
         left_vertical = interface.interface_polyline.lines[0]
         right_vertical = interface.interface_polyline.lines[2]
         parallel_to_interface = interface.frame.normal
@@ -174,6 +175,7 @@ class LConnectionDetailA(LDetailBase):
         between_edge = left_vertical.translated(interface.frame.normal * -1.0 * config_set.beam_width)
         between_beam = BeamDefinition(between_edge, config_set.beam_width, wall.thickness, normal=parallel_to_interface, type="detail")
         return [between_beam, edge_beam, other_edge]
+        # return [edge_beam]
 
     def create_elements_main(self, interface, wall, config_set):
         # create a beam (definition) as wide and as high as the wall

@@ -5,6 +5,7 @@ from .workflow import TopologyRule
 from .workflow import JointDefinition
 from .workflow import FeatureDefinition
 from .workflow import DebugInfomation
+from .workflow import ContainerDefinition
 from .workflow import guess_joint_topology_2beams
 from .workflow import set_default_joints
 
@@ -35,4 +36,5 @@ __all__ = [
     "TConnectionDetailA",
     "guess_joint_topology_2beams",
     "set_default_joints",
+    "ContainerDefinition",
 ]
