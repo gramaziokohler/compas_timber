@@ -12,8 +12,8 @@ from compas.geometry import closest_point_on_segment
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point_sqrd
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
+from compas.geometry import intersection_segment_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.tolerance import TOL
@@ -307,7 +307,6 @@ class Window(object):
         return BrepSubtraction(vol)
 
     def create_elements(self):
-        beam_definitions = []
         # ^  3 ---- 2
         # |  |      |
         # z  0 ---- 1
@@ -317,34 +316,20 @@ class Window(object):
         left_segment = self.outline.lines[3]
         right_segment = self.outline.lines[1]
 
-        beam_definitions.append(BeamDefinition(top_segment, parent=self, type="header"))
-        beam_definitions.append(BeamDefinition(bottom_segment, parent=self, type="sill"))
+        header = BeamDefinition(top_segment, parent=self, type="header")
+        sill = BeamDefinition(bottom_segment, parent=self, type="sill")
 
         stud_roles = "jack_stud" if self._lintel_posts else "king_stud"
-        beam_definitions.append(BeamDefinition(left_segment, parent=self, type=stud_roles))
-        beam_definitions.append(BeamDefinition(right_segment, parent=self, type=stud_roles))
-        # if angle_vectors(segment.direction, self.z_axis, deg=True) < 1 or angle_vectors(segment.direction, self.z_axis, deg=True) > 179:
-        #     if self._lintel_posts:
-        #         beam_def.type = "jack_stud"
-        #     else:
-        #         beam_def.type = "king_stud"
-        # else:
-        #     ray = Line.from_point_and_vector(segment.point_at(0.5), self.z_axis)
-        #     pts = []
-        #     for seg in self.outline.lines:
-        #         if seg != segment:
-        #             pt = intersection_line_segment(ray, seg, self.dist_tolerance)[0]
-        #             if pt:
-        #                 pts.append(Point(*pt))
-        #     if len(pts) > 1:
-        #         raise ValueError("Window outline is wonky")
-        #     elif len(pts) == 1:
-        #         vector = Vector.from_start_end(ray.start, pts[0])
-        #         if dot_vectors(vector, self.z_axis) < 0:
-        #             beam_def.type = "header"
-        #         else:
-        #             beam_def.type = "sill"
-        beam_definitions = self.parent.offset_elements(beam_definitions)
+        studs = []
+        studs.append(BeamDefinition(left_segment, parent=self, type=stud_roles))
+        studs.append(BeamDefinition(right_segment, parent=self, type=stud_roles))
+
+        beam_definitions = [header, sill] + studs
+
+        offset_elements(beam_definitions)
+
+        shorten_edges_to_fit_between_plates(studs, [header, sill])
+
         if self._lintel_posts:
             for beam_def in self.jack_studs:
                 offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
@@ -659,18 +644,19 @@ class WallPopulator(object):
         bottom_segment = Line(self.points[0], self.points[1])
         self._adjusted_segments = {"front": front_segment, "back": back_segment, "top": top_segment, "bottom": bottom_segment}
 
+        perimeter_beams = []
         for interface in self._interfaces:
             connection_detail = self._config_set.connection_details.get(interface.topology, None)
 
             if connection_detail:
                 if interface.interface_role == InterfaceRole.MAIN:
-                    self._beam_definitions.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
+                    perimeter_beams.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
                     connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
                     self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set, self._wall))  # DEBUG
                 elif interface.interface_role == InterfaceRole.CROSS:
                     self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set, self._wall))  # DEBUG
                     connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
-                    self._beam_definitions.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
+                    perimeter_beams.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
                 handled_sides.add(interface.interface_type)
 
@@ -683,18 +669,24 @@ class WallPopulator(object):
         assert not TOL.is_zero(len(bottom_segment)), "bottom_segment is fucked"
 
         if InterfaceLocation.FRONT not in handled_sides:
-            self._beam_definitions.append(BeamDefinition(front_segment, parent=self, type="edge_stud"))
+            perimeter_beams.append(BeamDefinition(front_segment, parent=self, type="edge_stud"))
 
         if InterfaceLocation.BACK not in handled_sides:
-            self._beam_definitions.append(BeamDefinition(back_segment, parent=self, type="edge_stud"))
+            perimeter_beams.append(BeamDefinition(back_segment, parent=self, type="edge_stud"))
 
         if InterfaceLocation.TOP not in handled_sides:
-            self._beam_definitions.append(BeamDefinition(top_segment, parent=self, type="plate"))
+            perimeter_beams.append(BeamDefinition(top_segment, parent=self, type="plate"))
 
         if InterfaceLocation.BOTTOM not in handled_sides:
-            self._beam_definitions.append(BeamDefinition(bottom_segment, parent=self, type="plate"))
+            perimeter_beams.append(BeamDefinition(bottom_segment, parent=self, type="plate"))
 
-        self._beam_definitions = self.offset_elements(self._beam_definitions)
+        offset_elements(perimeter_beams)
+
+        edgs_studs = [beam_def for beam_def in perimeter_beams if beam_def.type == "edge_stud"]
+        plate_beams = [beam_def for beam_def in perimeter_beams if beam_def.type == "plate"]
+        shorten_edges_to_fit_between_plates(edgs_studs, plate_beams, self.dist_tolerance)
+
+        self._beam_definitions.extend(perimeter_beams)
 
     # def generate_perimeter_beams(self):
     #     interior_indices = self.get_interior_segment_indices(self.outer_polyline)
@@ -743,35 +735,6 @@ class WallPopulator(object):
         if len(out) > 0:
             out.insert(0, out[0] - 1)
         return set(out)
-
-    def offset_elements(self, element_loop):
-        # TODO: seems this aligns the elements to the edges of the surface, why not create them like that to begin with?
-        offset_loop = []
-        for beam_def in element_loop:
-            beam_def.offset(self.beam_dimensions[beam_def.type][0] / 2)
-            if beam_def.type == "edge_stud":
-                beam_def.offset(self._config_set.edge_stud_offset)
-            offset_loop.append(beam_def)
-
-        for i, beam_def in enumerate(offset_loop):
-            if self._config_set.edge_stud_offset > 0:
-                if beam_def.type != "plate":
-                    element_before = offset_loop[i - 1]
-                    element_after = offset_loop[(i + 1) % len(offset_loop)]
-                    start_point = intersection_line_line(beam_def.centerline, element_before.centerline, self.dist_tolerance)[0]
-                    end_point = intersection_line_line(beam_def.centerline, element_after.centerline, self.dist_tolerance)[0]
-                    if start_point and end_point:
-                        beam_def.centerline = Line(start_point, end_point)
-                    else:
-                        raise ValueError("edges are parallel, no intersection found")
-            else:
-                element_before = offset_loop[i - 1]
-                element_after = offset_loop[(i + 1) % len(offset_loop)]
-                start_point, _ = intersection_line_line(beam_def.centerline, element_before.centerline, self.dist_tolerance)
-                end_point, _ = intersection_line_line(beam_def.centerline, element_after.centerline, self.dist_tolerance)
-                if start_point and end_point:
-                    beam_def.centerline = Line(start_point, end_point)
-        return offset_loop
 
     def generate_windows(self):
         for polyline in self.inner_polylines:
@@ -895,3 +858,49 @@ class WallPopulator(object):
             self._elements.append(Plate(pline, self._config_set.sheeting_outside))
         # for window in self.windows:
         #     self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
+
+
+def shorten_edges_to_fit_between_plates(beams_to_fit, beams_to_fit_between, dist_tolerance=None):
+    """Shorten the beams to fit between the plates. The given beam definitions are modified in-place.
+
+    Parameters
+    ----------
+    beams_to_fit : list of :class:`BeamDefinition`
+        The beams to fit between the plates.
+    beams_to_fit_between : list of :class:`BeamDefinition`
+        The plates to fit between.
+    dist_tolerance : float, optional
+        The distance tolerance for the intersection check.
+        Default is ``TOL.absolute``.
+
+    """
+    plate_a, plate_b = beams_to_fit_between  # one is top, one is bottom, might be important to distinguish at some point.
+    dist_tolerance = dist_tolerance or TOL.absolute
+    for stud in beams_to_fit:
+        start_point, _ = intersection_segment_segment(stud.centerline, plate_a.centerline, dist_tolerance)
+        end_point, _ = intersection_segment_segment(stud.centerline, plate_b.centerline, dist_tolerance)
+        if start_point and end_point:
+            stud.centerline = Line(start_point, end_point)
+
+
+def offset_elements(element_loop, edge_stud_offset=None):
+    """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
+
+    Parameters
+    ----------
+    element_loop : list of :class:`BeamDefinition`
+        The elements to offset.
+    edge_stud_offset : float, optional
+        The additional offset for edge studs towards the inside of the wall to account for bending.
+        Default is ``0.0``.
+    """
+    # TODO: rename to offset_perimeter_elements
+    edge_studs = [beam_def for beam_def in element_loop if beam_def.type in "edge_stud"]
+    edge_stud_offset = edge_stud_offset or 0.0
+    for beam_def in element_loop:
+        # polyline is at the center of the beam's face, push it towards the inside
+        beam_def.offset(beam_def.width / 2)
+
+    for stud in edge_studs:
+        # configurable additional offset for edge studs towards the inside of the wall to account for bending
+        stud.offset(edge_stud_offset)
