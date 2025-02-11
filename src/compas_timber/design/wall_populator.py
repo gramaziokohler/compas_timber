@@ -321,7 +321,6 @@ class Window(object):
         shorten_edges_to_fit_between_plates(studs, [header, sill])
 
         if self._lintel_posts:
-            print("Window, doing lintel posts!")
             for beam_def in self.jack_studs:
                 offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
                 king_line = offset_line(beam_def.centerline, offset, self.normal)
@@ -824,7 +823,6 @@ class WallPopulator(object):
         for beam_def in studs:
             for other_element in self.king_studs + self.jack_studs + self.edge_studs:
                 if self.distance_between_elements(beam_def, other_element) < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2:
-                    print("removing beam_def: {}".format(beam_def))
                     self._beam_definitions.remove(beam_def)
                     break
 
