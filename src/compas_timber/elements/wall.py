@@ -1,3 +1,4 @@
+from compas.data import Data
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -8,6 +9,31 @@ from compas.geometry import bounding_box
 from compas_timber.utils import classify_polyline_segments
 
 from .timber import TimberElement
+
+
+class OpeningType(object):
+    DOOR = "door"
+    WINDOW = "window"
+
+
+class Opening(Data):
+    @property
+    def __data__(self):
+        return {
+            "polyline": self.polyline,
+            "opening_type": self.opening_type,
+        }
+
+    def __init__(self, polyline, opening_type, **kwargs):
+        super(Opening, self).__init__(**kwargs)
+        self.polyline = polyline
+        self.opening_type = opening_type
+
+    def __repr__(self):
+        return "Opening(type={})".format(self.opening_type)
+
+    def orient_polyline(self, normal):
+        self.polyline = _oriented_polyline(self.polyline, normal)
 
 
 class Wall(TimberElement):
@@ -152,36 +178,15 @@ class Wall(TimberElement):
         yaxis = normal.cross(xaxis)
         return Frame(points[0], xaxis, yaxis)
 
-    @staticmethod
-    def _oriented_polyline(polyline, normal):
-        # returns a polyline that is oriented consistently ccw around the normal
-        # ^  3 ---- 2
-        # |  |      |
-        # z  0 ---- 1
-        #    x -->
-        sorted_points = sorted(polyline.points[:4], key=lambda pt: pt.z)
-        bottom_points = sorted_points[:2]
-        top_points = sorted_points[2:]
-
-        # Ensure counterclockwise order
-        if normal.cross(bottom_points[1] - bottom_points[0]).z < 0:
-            bottom_points.reverse()
-
-        if normal.cross(top_points[1] - top_points[0]).z > 0:
-            top_points.reverse()
-
-        return Polyline(bottom_points + top_points + [bottom_points[0]])
-
     @classmethod
     def from_boundary(cls, polyline, normal, thickness, openings=None, **kwargs):
         """Use this to make sure the polyline is oriented correctly."""
-        oriented_polyline = cls._oriented_polyline(polyline, normal)
-        oriented_openings = []
-        if openings:
-            # TODO: already make Window objects here?
-            oriented_openings = [cls._oriented_polyline(opening, normal) for opening in openings]
+        oriented_polyline = _oriented_polyline(polyline, normal)
+        openings = openings or []
+        for opening in openings:
+            opening.orient_polyline(normal)
         wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
-        return cls(oriented_polyline, thickness, oriented_openings, wall_frame, **kwargs)
+        return cls(oriented_polyline, thickness, openings, wall_frame, **kwargs)
 
     @classmethod
     def from_brep(cls, brep, thickness, **kwargs):
@@ -204,11 +209,31 @@ class Wall(TimberElement):
         openings = []
         for group in internal_groups:
             points = [boundary[i] for i in group]
-            openings.append(Polyline(points))
+            openings.append(Opening(Polyline(points), OpeningType.DOOR))
 
         # internal cuts (windows) are not part of the outline and can be fetched from the loops that are not boundary
         for hole in face.holes:
             points = [t.start_vertex.point for t in hole.trims] + [hole.trims[-1].end_vertex.point]
-            openings.append(Polyline(points))
+            openings.append(Opening(Polyline(points), OpeningType.WINDOW))
 
         return Wall.from_boundary(outline, face_frame.normal, thickness, openings, **kwargs)
+
+
+def _oriented_polyline(polyline, normal):
+    # returns a polyline that is oriented consistently ccw around the normal
+    # ^  3 ---- 2
+    # |  |      |
+    # z  0 ---- 1
+    #    x -->
+    sorted_points = sorted(polyline.points[:4], key=lambda pt: pt.z)
+    bottom_points = sorted_points[:2]
+    top_points = sorted_points[2:]
+
+    # Ensure counterclockwise order
+    if normal.cross(bottom_points[1] - bottom_points[0]).z < 0:
+        bottom_points.reverse()
+
+    if normal.cross(top_points[1] - top_points[0]).z > 0:
+        top_points.reverse()
+
+    return Polyline(bottom_points + top_points + [bottom_points[0]])

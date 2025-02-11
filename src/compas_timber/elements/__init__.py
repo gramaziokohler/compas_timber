@@ -1,6 +1,8 @@
 from .beam import Beam
 from .plate import Plate
 from .wall import Wall
+from .wall import Opening
+from .wall import OpeningType
 from .fastener import Fastener
 from .fastener import FastenerTimberInterface
 from .features import BrepSubtraction
@@ -21,8 +23,9 @@ __all__ = [
     "DrillFeature",
     "MillVolume",
     "BrepSubtraction",
-    "FeatureApplicationError",
     "BallNodeFastener",
     "PlateFastener",
     "TimberElement",
+    "Opening",
+    "OpeningType",
 ]
