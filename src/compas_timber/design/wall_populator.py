@@ -26,6 +26,7 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
+from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
 
@@ -235,18 +236,7 @@ class Window(object):
 
     """
 
-    def __init__(
-        self,
-        outline,
-        beam_dimensions,
-        wall_frame,
-        wall_thickness,
-        tolerance,
-        sheeting_inside=None,
-        sheeting_outside=None,
-        lintel_posts=None,
-        parent=None,
-    ):
+    def __init__(self, outline, beam_dimensions, wall_frame, wall_thickness, tolerance, sheeting_inside=None, sheeting_outside=None, lintel_posts=None):
         self.beam_dimensions = beam_dimensions
         self._wall_frame = wall_frame
         self._sheeting_inside = sheeting_inside
@@ -256,7 +246,6 @@ class Window(object):
         self.outline = outline
         self.sill_height = self.beam_dimensions["sill"][0]
         self.header_height = self.beam_dimensions["header"][0]
-        self.parent = parent
         self.z_axis = self._wall_frame.yaxis
         self.normal = self._wall_frame.zaxis
         self._beam_definitions = []
@@ -332,11 +321,23 @@ class Window(object):
         shorten_edges_to_fit_between_plates(studs, [header, sill])
 
         if self._lintel_posts:
+            print("Window, doing lintel posts!")
             for beam_def in self.jack_studs:
                 offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
                 king_line = offset_line(beam_def.centerline, offset, self.normal)
                 beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
         return beam_definitions
+
+
+class Door(Window):
+    """TODO: revise when we know where this is going, maybe no need for classes here beyond Opening"""
+
+    def __init__(self, outline, beam_dimensions, wall_frame, wall_thickness, tolerance, sheeting_inside=None, sheeting_outside=None, lintel_posts=None):
+        super(Door, self).__init__(outline, beam_dimensions, wall_frame, wall_thickness, tolerance, sheeting_inside, sheeting_outside, lintel_posts)
+
+    def create_elements(self):
+        elements = super(Door, self).create_elements()
+        return [e for e in elements if e.type != "sill"]
 
 
 class WallPopulatorConfigurationSet(object):
@@ -738,10 +739,13 @@ class WallPopulator(object):
         return set(out)
 
     def generate_windows(self):
-        for polyline in self.inner_polylines:
-            window = Window(polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance, parent=self)
-            # self.windows.append(window)
-            self._beam_definitions.extend(window.create_elements())
+        for opening in self.inner_polylines:
+            if opening.opening_type == OpeningType.DOOR:
+                element = Door(opening.polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance)
+            else:
+                element = Window(opening.polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance)
+            # self.windows.append(element)
+            self._beam_definitions.extend(element.create_elements())
 
     def generate_studs(self):
         self.generate_stud_lines()
