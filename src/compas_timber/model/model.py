@@ -48,7 +48,7 @@ class TimberModel(Model):
 
     def __str__(self):
         # type: () -> str
-        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
+        return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
 
     @property
     def beams(self):
