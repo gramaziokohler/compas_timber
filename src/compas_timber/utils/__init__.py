@@ -190,7 +190,7 @@ def distance_segment_segment(segment_a, segment_b):
 
     """
     pta, ptb = intersection_line_line(segment_a, segment_b)
-    if not pta: # segments are parallel
+    if not pta:  # segments are parallel
         dists = []
         for pair in [(segment_a[0], segment_b[0]), (segment_a[1], segment_b[0]), (segment_b[0], segment_a[1]), (segment_b[1], segment_a[1])]:
             """gets shortest distance between all 4 possible pairs of endpoints. only for L/I_Topo. T_Topology cannot have paralell segments"""

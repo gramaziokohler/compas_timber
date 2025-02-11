@@ -3,7 +3,6 @@ from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Transformation
-from compas.geometry import Scale
 from compas.geometry import Vector
 
 from compas_timber.elements.timber import TimberElement
@@ -179,19 +178,13 @@ class FastenerTimberInterface(Data):
         return features
 
     def _get_hole_feature(self, hole, element):
-        """Get the line that goes through the timber element."""
+        """Get the line that goes through the timber element. Goes through the element.
+        If depth is required, holes should be added as Drilling features to the interface."""
         vector = hole.get("vector", None) or Vector(0.0, 0.0, 1.0)
-        length = vector.length
-        point = hole["point"] - vector * length * 0.5
-        drill_line = Line.from_point_direction_length(point, vector, length)
-        midpt = (drill_line.start + drill_line.end) * 0.5
-        scale = Scale.from_factors([1000.0, 1000.0, 1000.0], Frame(midpt, Vector(1, 0, 0), Vector(0, 1, 0))) # TODO: find beam intersections
-        drill_line.transform(scale)
+        drill_line = Line.from_point_and_vector(hole["point"], vector)
         drill_line.transform(Transformation.from_frame(self.frame))
-        print (drill_line)
-        if hole["through"]:
-            pts, _ = intersection_line_beam_param(drill_line, element)
-            if pts:
-                drill_line = Line(*pts)
+        pts, _ = intersection_line_beam_param(drill_line, element)
+        if pts:
+            drill_line = Line(*pts)
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
-        return Drilling.from_line_and_element(drill_line, element,  hole["diameter"])
+        return Drilling.from_line_and_element(drill_line, element, hole["diameter"])
