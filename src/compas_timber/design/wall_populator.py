@@ -169,8 +169,9 @@ class BeamDefinition(object):
         # TODO: provide this upon creation
         return self._normal if self._normal else self.parent.normal
 
-    def offset(self, distance):
-        line = offset_line(self.centerline, distance, self.normal)
+    def offset(self, distance, reverse_dir=False):
+        normal = self.normal if not reverse_dir else -self.normal
+        line = offset_line(self.centerline, distance, normal)
         self.centerline = Line(line[0], line[1])
 
     def translate(self, vector):
@@ -326,7 +327,7 @@ class Window(object):
 
         beam_definitions = [header, sill] + studs
 
-        offset_elements(beam_definitions)
+        offset_elements(beam_definitions, offset_inside=False)
 
         shorten_edges_to_fit_between_plates(studs, [header, sill])
 
@@ -883,7 +884,7 @@ def shorten_edges_to_fit_between_plates(beams_to_fit, beams_to_fit_between, dist
             stud.centerline = Line(start_point, end_point)
 
 
-def offset_elements(element_loop, edge_stud_offset=None):
+def offset_elements(element_loop, edge_stud_offset=None, offset_inside=True):
     """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
 
     Parameters
@@ -893,13 +894,17 @@ def offset_elements(element_loop, edge_stud_offset=None):
     edge_stud_offset : float, optional
         The additional offset for edge studs towards the inside of the wall to account for bending.
         Default is ``0.0``.
+    offset_inside : bool, optional
+        Offset the elements towards the inside of the wall.
+        Default is ``True``. If ``False``, the elements are offset towards the outside.
+
     """
     # TODO: rename to offset_perimeter_elements
     edge_studs = [beam_def for beam_def in element_loop if beam_def.type in "edge_stud"]
     edge_stud_offset = edge_stud_offset or 0.0
     for beam_def in element_loop:
         # polyline is at the center of the beam's face, push it towards the inside
-        beam_def.offset(beam_def.width / 2)
+        beam_def.offset(beam_def.width / 2, reverse_dir=not offset_inside)
 
     for stud in edge_studs:
         # configurable additional offset for edge studs towards the inside of the wall to account for bending
