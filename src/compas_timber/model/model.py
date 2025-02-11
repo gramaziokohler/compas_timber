@@ -94,6 +94,13 @@ class TimberModel(Model):
                 yield element
 
     @property
+    def slabs(self):
+        # type: () -> Generator[Slab, None, None]
+        for element in self.elements():
+            if getattr(element, "is_slab", False):
+                yield element
+
+    @property
     def topologies(self):
         return self._topologies
 

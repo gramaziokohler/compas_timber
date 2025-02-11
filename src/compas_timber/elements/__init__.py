@@ -1,8 +1,9 @@
 from .beam import Beam
 from .plate import Plate
+from .slab import Opening
+from .slab import OpeningType
+from .slab import Slab
 from .wall import Wall
-from .wall import Opening
-from .wall import OpeningType
 from .fastener import Fastener
 from .fastener import FastenerTimberInterface
 from .features import BrepSubtraction
@@ -14,7 +15,6 @@ from .fasteners.plate_fastener import PlateFastener
 from .timber import TimberElement
 
 __all__ = [
-    "Wall",
     "Beam",
     "Plate",
     "Fastener",
@@ -28,4 +28,6 @@ __all__ = [
     "TimberElement",
     "Opening",
     "OpeningType",
+    "Slab",
+    "Wall",
 ]
