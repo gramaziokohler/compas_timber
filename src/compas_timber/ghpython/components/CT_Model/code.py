@@ -9,6 +9,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
+from compas_timber.design import WallPopulator
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
@@ -24,7 +25,7 @@ TOL.absolute = 1e-6
 
 
 class ModelComponent(component):
-    def RunScript(self, Elements, JointRules, Features, MaxDistance, CreateGeometry):
+    def RunScript(self, Elements, Containers, JointRules, Features, MaxDistance, CreateGeometry):
         if not Elements:
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
         if not JointRules:
@@ -41,16 +42,40 @@ class ModelComponent(component):
             element.reset()
             Model.add_element(element)
 
-        joints, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance)
+        for index, c_def in enumerate(Containers):
+            slab = c_def.slab
+            Model.add_group_element(slab, name=slab.name + str(index))
 
+        Model.connect_adjacent_walls()
+
+        config_sets = [c_def.config_set for c_def in Containers]
+        populators = []
+        if any(config_sets):
+            populators = WallPopulator.from_model(Model, config_sets)
+
+        handled_pairs = []
+        wall_joint_definitions = []
+        slabs = list(Model.slabs)
+        for populator, slab in zip(populators, slabs):
+            elements = populator.create_elements()
+            Model.add_elements(elements, parent=slab.name)
+            joint_definitions = populator.create_joint_definitions(elements)
+            wall_joint_definitions.extend(joint_definitions)
+            for j_def in joint_definitions:
+                element_a, element_b = j_def.elements
+                handled_pairs.append({element_a, element_b})
+
+        joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
         if unmatched_pairs:
             for pair in unmatched_pairs:
                 self.AddRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info
 
-        if joints:
+        if joint_defs:
+            if wall_joint_definitions:
+                joint_defs += wall_joint_definitions
             # apply reversed. later joints in orginal list override ealier ones
-            for joint in joints[::-1]:
-                joint.joint_type.create(Model, *joint.elements, **joint.kwargs)
+            for joint_def in joint_defs[::-1]:
+                joint_def.joint_type.create(Model, *joint_def.elements, **joint_def.kwargs)
 
         # checks elements compatibility and applies extensions and features resulting from joints
         bje = Model.process_joinery()
@@ -68,7 +93,7 @@ class ModelComponent(component):
         for element in Model.elements():
             if CreateGeometry:
                 scene.add(element.geometry)
-                if element.debug_info:
+                if getattr(element, "debug_info", False):
                     debug_info.add_feature_error(element.debug_info)
             else:
                 if isinstance(element, Beam) or isinstance(element, Plate):

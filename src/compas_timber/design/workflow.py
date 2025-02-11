@@ -22,6 +22,14 @@ class CollectionDef(object):
         return "Collection with %s items." % len(self.objs)
 
 
+class ContainerDefinition(object):
+    """Holds a pair of slab and its configuration set if available."""
+
+    def __init__(self, slab, config_set=None):
+        self.slab = slab
+        self.config_set = config_set
+
+
 class JointRule(object):
     def comply(self, elements):
         """Returns True if the provided elements comply with the rule defined by this instance. False otherwise.
@@ -60,7 +68,7 @@ class JointRule(object):
         return [rule for rule in topo_rules.values() if rule is not None]
 
     @staticmethod
-    def joints_from_beams_and_rules(elements, rules, max_distance=1e-6):
+    def joints_from_beams_and_rules(elements, rules, max_distance=1e-6, handled_pairs=None):
         """processes joint rules into joint definitions.
 
         Parameters
@@ -78,11 +86,19 @@ class JointRule(object):
             A list of joint definitions that can be applied to the given elements.
 
         """
+        handled_pairs = handled_pairs or []
         elements = elements if isinstance(elements, list) else list(elements)
         direct_rules = JointRule.get_direct_rules(rules)
         solver = ConnectionSolver()
 
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
+
+        for pair in handled_pairs:
+            print("checking if pair:{} is in element pairs".format(pair))
+            if pair in element_pairs:
+                print("removing handled pair from found pairs")
+                element_pairs.remove(pair)
+
         joint_defs = []
         unmatched_pairs = []
         for rule in direct_rules:
