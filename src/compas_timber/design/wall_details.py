@@ -217,7 +217,7 @@ class TConnectionDetailA(TDetailBase):
     """
 
     def get_detail_obb_main(self, interface, config_set, wall):
-        xsize = config_set.beam_width  # xsize
+        xsize = config_set.beam_width * 2.0  # xsize
         ysize = interface.interface_polyline.lines[0].length
         zsize = wall.thickness
         box_frame = interface.frame.copy()
@@ -234,20 +234,18 @@ class TConnectionDetailA(TDetailBase):
         box_frame.point += interface.frame.xaxis * xsize * 0.5
         box_frame.point += interface.frame.yaxis * ysize * 0.5
         box_frame.point += interface.frame.zaxis * zsize * 0.5
-        return Box(xsize, ysize, zsize, frame=box_frame)
+        return Box(xsize, ysize, zsize * 1.5, frame=box_frame)
 
     def create_elements_cross(self, interface, wall, config_set):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
         # TODO: if beam_height < wall thickness, there needs to be an offset here
-        right_vertical = interface.interface_polyline.lines[2]
-        parallel_to_interface = interface.frame.normal
+        polyline = interface.interface_polyline
+        top_midpoint = polyline.lines[1].midpoint
+        bottom_midpoint = polyline.lines[3].midpoint
+        axis = Line(top_midpoint, bottom_midpoint)
         perpendicular_to_interface = interface.frame.xaxis
-
-        interface_width = interface.interface_polyline.lines[1].length
-        edge_beam_line = right_vertical.translated(parallel_to_interface * interface_width * -0.5)
-        edge_beam_line.translate(parallel_to_interface * config_set.beam_width * -0.5)
-        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
+        edge_beam = BeamDefinition(axis, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
 
         return [edge_beam]
 
@@ -256,7 +254,7 @@ class TConnectionDetailA(TDetailBase):
         # it should be flush agains the interface
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
-        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width)
+        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
         # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
