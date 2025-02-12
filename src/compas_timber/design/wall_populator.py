@@ -7,7 +7,6 @@ from compas.geometry import NurbsCurve
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
-from compas.geometry import bounding_box_xy
 from compas.geometry import closest_point_on_segment
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point_sqrd
@@ -32,19 +31,18 @@ from compas_timber.elements.features import BrepSubtraction
 
 from .workflow import JointDefinition
 
-
-def get_frame(points, normal, z_axis):
-    frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
-    pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
-    for point in pts_on_xy:
-        point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
-    box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
-    pt = Point(box_min[0], box_min[1], box_min[2])
-    box_length = box_max[0] - box_min[0]
-    box_height = box_max[1] - box_min[1]
-    pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
-    frame.point = pt
-    return frame, box_length, box_height
+# def get_frame(points, normal, z_axis):
+#     frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
+#     pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
+#     for point in pts_on_xy:
+#         point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
+#     box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
+#     pt = Point(box_min[0], box_min[1], box_min[2])
+#     box_length = box_max[0] - box_min[0]
+#     box_height = box_max[1] - box_min[1]
+#     pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
+#     frame.point = pt
+#     return frame, box_length, box_height
 
 
 class WallSelector(object):
@@ -381,24 +379,22 @@ class WallPopulatorConfigurationSet(object):
     def __str__(self):
         return "WallPopulatorConfigurationSet({}, {}, {})".format(self.stud_spacing, self.beam_width, self.z_axis)
 
+    @classmethod
+    def default(cls, stud_spacing, beam_width):
+        return cls(stud_spacing, beam_width)
+
 
 class WallPopulator(object):
     """Create a timber assembly from a surface.
 
     Parameters
     ----------
-    surface : :class:`compas.geometry.Surface`
-        The surface to create the assembly from. must be planar.
-    beam_width : float
-        The height of the beams aka thickness of wall cavity normal to the surface.
-    frame_depth : float
-        The width of the beams.
-    stud_spacing : float
-        The spacing between the studs.
-    z_axis : :class:`compas.geometry.Vector`, optional
-        Determines the orientation of the posts inside the frame.
-        Default is ``Vector.Zaxis``.
-
+    configuration_set : :class:`WallPopulatorConfigurationSet`
+        The configuration for this wall populator.
+    wall : :class:`compas_timber.elements.Wall`
+        The wall for this populater to fill with beams.
+    interfaces : optional, list of :class:`WallToWallInterface`
+        The interfaces of the wall.
 
     Attributes
     ----------
@@ -681,11 +677,11 @@ class WallPopulator(object):
         if InterfaceLocation.BOTTOM not in handled_sides:
             perimeter_beams.append(BeamDefinition(bottom_segment, parent=self, type="plate"))
 
-        offset_elements(perimeter_beams)
-
-        edgs_studs = [beam_def for beam_def in perimeter_beams if beam_def.type == "edge_stud"]
+        edge_studs = [beam_def for beam_def in perimeter_beams if beam_def.type == "edge_stud"]
         plate_beams = [beam_def for beam_def in perimeter_beams if beam_def.type == "plate"]
-        shorten_edges_to_fit_between_plates(edgs_studs, plate_beams, self.dist_tolerance)
+
+        offset_elements(edge_studs + plate_beams)
+        shorten_edges_to_fit_between_plates(edge_studs, plate_beams, self.dist_tolerance)
 
         self._beam_definitions.extend(perimeter_beams)
 
