@@ -30,7 +30,10 @@ class LDetailBase(object):
     def adjust_segments_cross(self, interface, wall, config_set, perimeter_segments):
         # top and bottom are extended to meet the other end of the main wall
         # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
-        outer_point = interface.interface_polyline[2]
+        if interface.interface_type == InterfaceLocation.FRONT:
+            outer_point = interface.interface_polyline[0]
+        else:
+            outer_point = interface.interface_polyline[2]
         edge_plane = Plane(outer_point, wall.baseline.direction)  # TODO: using interface.frame.zaxis instead
         top_segment = perimeter_segments["top"]
         bottom_segment = perimeter_segments["bottom"]
@@ -80,7 +83,7 @@ class LConnectionDetailB(LDetailBase):
     """
 
     def get_detail_obb_main(self, interface, config_set, wall):
-        xsize = config_set.beam_width  # xsize
+        xsize = config_set.beam_width * 2.0  # xsize
         ysize = interface.interface_polyline.lines[0].length
         zsize = wall.thickness
         box_frame = interface.frame.copy()
@@ -90,30 +93,39 @@ class LConnectionDetailB(LDetailBase):
         return Box(xsize, ysize, zsize, frame=box_frame)
 
     def get_detail_obb_cross(self, interface, config_set, wall):
+        if interface.interface_type == InterfaceLocation.FRONT:
+            parallel_to_interface = wall.baseline.direction * -1.0
+        else:
+            parallel_to_interface = wall.baseline.direction
         xsize = wall.thickness
         ysize = interface.interface_polyline.lines[0].length
-        zsize = config_set.beam_width + wall.thickness
+        zsize = 2 * config_set.beam_width + wall.thickness  # a bit bigger than needs to be
         box_frame = interface.frame.copy()
         box_frame.point += interface.frame.xaxis * xsize * 0.5
         box_frame.point += interface.frame.yaxis * ysize * 0.5
-        # TODO: this isn't quite right, fix
-        # box_frame.point += interface.frame.zaxis * interface.interface_polyline.lines[1].length * 0.5
+        box_frame.point += parallel_to_interface * zsize * 0.5
         return Box(xsize, ysize, zsize, frame=box_frame)
 
     def create_elements_cross(self, interface, wall, config_set):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
         # TODO: if beam_height < wall thickness, there needs to be an offset here
-        left_vertical = interface.interface_polyline.lines[0]
-        right_vertical = interface.interface_polyline.lines[2]
-        parallel_to_interface = interface.frame.normal
+
+        if interface.interface_type == InterfaceLocation.FRONT:
+            left_vertical = interface.interface_polyline.lines[0]
+            parallel_to_interface = wall.baseline.direction * -1.0
+        else:
+            left_vertical = interface.interface_polyline.lines[2]
+            parallel_to_interface = wall.baseline.direction
+
         perpendicular_to_interface = interface.frame.xaxis
 
-        edge_beam_line = right_vertical.translated(parallel_to_interface * config_set.beam_width * -0.5)
-        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="edge_stud")
+        edge_offset = config_set.beam_width * 0.5 + config_set.edge_stud_offset
+        edge_beam_line = left_vertical.translated(parallel_to_interface * edge_offset)
+        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
 
-        reference_edge = left_vertical.translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        between_edge = reference_edge.translated(interface.frame.normal * -1.0 * config_set.beam_width)
+        between_edge = edge_beam_line.translated(perpendicular_to_interface * 0.5 * config_set.beam_width)
+        between_edge.translate(parallel_to_interface * 0.5 * config_set.beam_width)
         between_beam = BeamDefinition(between_edge, config_set.beam_width, wall.thickness, normal=parallel_to_interface, type="detail")
         return [between_beam, edge_beam]
 
@@ -124,7 +136,7 @@ class LConnectionDetailB(LDetailBase):
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
         # TODO: if beam_height < wall thickness, there needs to be an offset here
-        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="edge_stud")
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
 
 
@@ -136,7 +148,7 @@ class LConnectionDetailA(LDetailBase):
     """
 
     def get_detail_obb_main(self, interface, config_set, wall):
-        xsize = config_set.beam_width  # xsize
+        xsize = config_set.beam_width * 2.0  # xsize
         ysize = interface.interface_polyline.lines[0].length
         zsize = wall.thickness
         box_frame = interface.frame.copy()
@@ -146,14 +158,17 @@ class LConnectionDetailA(LDetailBase):
         return Box(xsize, ysize, zsize, frame=box_frame)
 
     def get_detail_obb_cross(self, interface, config_set, wall):
+        if interface.interface_type == InterfaceLocation.FRONT:
+            parallel_to_interface = wall.baseline.direction * -1.0
+        else:
+            parallel_to_interface = wall.baseline.direction
         xsize = wall.thickness
         ysize = interface.interface_polyline.lines[0].length
-        zsize = 2 * config_set.beam_width + wall.thickness
+        zsize = 3 * config_set.beam_width + wall.thickness  # a bit bigger than needs to be
         box_frame = interface.frame.copy()
         box_frame.point += interface.frame.xaxis * xsize * 0.5
         box_frame.point += interface.frame.yaxis * ysize * 0.5
-        # TODO: this isn't quite right, fix
-        # box_frame.point += interface.frame.zaxis * interface.interface_polyline.lines[1].length * 0.5
+        box_frame.point += parallel_to_interface * zsize * 0.5
         return Box(xsize, ysize, zsize, frame=box_frame)
 
     def create_elements_cross(self, interface, wall, config_set):
@@ -161,30 +176,36 @@ class LConnectionDetailA(LDetailBase):
         # it should be flush agains the interface
         # TODO: if beam_height < wall thickness, there needs to be an offset here
 
-        left_vertical = interface.interface_polyline.lines[0]
-        right_vertical = interface.interface_polyline.lines[2]
-        parallel_to_interface = interface.frame.normal
+        if interface.interface_type == InterfaceLocation.FRONT:
+            left_vertical = interface.interface_polyline.lines[0]
+            parallel_to_interface = wall.baseline.direction * -1.0
+        else:
+            left_vertical = interface.interface_polyline.lines[2]
+            parallel_to_interface = wall.baseline.direction
+
         perpendicular_to_interface = interface.frame.xaxis
 
-        edge_beam_line = right_vertical.translated(parallel_to_interface * -config_set.beam_width)
-        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="edge_stud")
+        edge_offset = config_set.beam_width * 0.5 + config_set.edge_stud_offset
+        edge_beam_line = left_vertical.translated(parallel_to_interface * edge_offset)
+        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
 
-        other_edge_line = edge_beam_line.translated(parallel_to_interface * -1.0 * (wall.thickness + config_set.beam_width))
-        other_edge = BeamDefinition(other_edge_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
+        other_edge_line = edge_beam_line.translated(parallel_to_interface * 1.0 * (wall.thickness + config_set.beam_width))
+        other_beam = BeamDefinition(other_edge_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
 
-        between_edge = left_vertical.translated(interface.frame.normal * -1.0 * config_set.beam_width)
+        between_edge = edge_beam_line.translated(perpendicular_to_interface * 0.5 * config_set.beam_width)
+        between_edge.translate(parallel_to_interface * 0.5 * config_set.beam_width)
         between_beam = BeamDefinition(between_edge, config_set.beam_width, wall.thickness, normal=parallel_to_interface, type="detail")
-        return [between_beam, edge_beam, other_edge]
-        # return [edge_beam]
+        # return [between_beam, edge_beam, other_edge]
+        return [between_beam, edge_beam, other_beam]
 
     def create_elements_main(self, interface, wall, config_set):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
-        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width)
+        reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
         # TODO: if beam_height < wall thickness, there needs to be an offset here
-        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="edge_stud")
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
 
 
@@ -237,5 +258,5 @@ class TConnectionDetailA(TDetailBase):
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width)
         # TODO: if beam_height < wall thickness, there needs to be an offset here
-        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="edge_stud")
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
