@@ -20,7 +20,7 @@ class TimberElement(Element):
     """
 
     def __init__(self, *args, **kwargs):
-        super(TimberElement).__init__(*args, **kwargs)
+        super(TimberElement, self).__init__(*args, **kwargs)
         self.debug_info = []
 
     @property
