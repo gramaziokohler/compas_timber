@@ -12,7 +12,7 @@
             {
                 "name": "Surface",
                 "description": "Referenced surface, Guid of surface in the active Rhino document.",
-                "typeHintID": "surface",
+                "typeHintID": "brep",
                 "scriptParamAccess": 1
             },
             {

@@ -43,9 +43,7 @@ class WallComponent(component):
             config_set = [config_set[0] for _ in range(N)]
 
         for srf, t, c_s in zip(surface, thickness, config_set):
-            brep = srf.ToBrep()
-            print(brep)
-            wall = Wall.from_brep(Brep.from_native(brep), t)
+            wall = Wall.from_brep(Brep.from_native(srf), t)
 
             containers.append(ContainerDefinition(wall, c_s))
             scene.add(wall.geometry)
