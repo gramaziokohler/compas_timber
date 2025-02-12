@@ -94,9 +94,7 @@ class JointRule(object):
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
 
         for pair in handled_pairs:
-            print("checking if pair:{} is in element pairs".format(pair))
             if pair in element_pairs:
-                print("removing handled pair from found pairs")
                 element_pairs.remove(pair)
 
         joint_defs = []
