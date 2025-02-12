@@ -36,9 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `max_distance` argument to `JointRule` subclasses and GH components so that max_distance can be set for each joint rule individually.
 * Changed referenced to `beam` in `Drilling` to `element`. 
 * Changed `Drill Hole` and `Trim Feature` GH components to generate the relevant `BTLxProcessing` type rather than the deprecated `FeatureDefinition` type.
-
-* Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face
-  including origin corner.
+* Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face including origin corner.
+* Using new `JackRafterCutProxy` in LMiterJoint, LButtJoint and TButtJoint.
 
 ### Removed
 
