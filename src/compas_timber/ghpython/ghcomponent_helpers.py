@@ -65,7 +65,7 @@ def add_gh_param(
         param.Description = name
         param.Access = Grasshopper.Kernel.GH_ParamAccess.item
         param.Optional = True
-        if not index:
+        if index is None:
             index = getattr(ghenv.Component.Params, io).Count
 
         registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")

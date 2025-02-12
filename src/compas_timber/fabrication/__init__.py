@@ -20,6 +20,7 @@ from .btlx import LimitationTopType
 from .btlx import MachiningLimits
 from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
+from .btlx import DeferredBTLxProcessing
 
 __all__ = [
     "BTLxWriter",
@@ -44,4 +45,5 @@ __all__ = [
     "MachiningLimits",
     "StepShapeType",
     "BTLxFromGeometryDefinition",
+    "DeferredBTLxProcessing",
 ]

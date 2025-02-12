@@ -21,6 +21,7 @@ from compas_timber.errors import FeatureApplicationError
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
+from .btlx import DeferredBTLxProcessing
 
 
 class Drilling(BTLxProcessing):
@@ -391,3 +392,36 @@ class DrillingParams(BTLxProcessingParams):
         result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
         result["Diameter"] = "{:.{prec}f}".format(float(self._instance.diameter), prec=TOL.precision)
         return result
+
+class DeferredDrilling(DeferredBTLxProcessing):
+
+    TYPE_NAME = "Drilling"
+    GEOMETRY_COUNT = 1
+
+    def __init__(self, elements = None, **params):   #direct definition of BTLx Parameters
+        super(DeferredDrilling, self).__init__(elements= elements, **params)
+
+
+    @classmethod
+    def from_shapes(cls, line, diameter, elements = None, **kwargs): #alternative constructor using shapes
+        assert isinstance(line, Line)
+        assert isinstance(diameter, float)
+        instance = cls(elements= elements, **kwargs)
+        instance.geometries = [line]
+        instance.diameter = diameter
+        return instance
+
+    def feature_from_element(self, element):
+        """Add the Double Cut feature to the given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.Element`
+            The element to which the Double Cut feature should be added.
+
+        """
+
+        if self.geometries:
+            return Drilling.from_line_and_element(self.geometries[0], element, self.diameter, **self.params)
+        else:
+            return Drilling(**self.params)

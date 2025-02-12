@@ -447,7 +447,7 @@ class BTLxProcessing(Data):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index=None, priority=0, process_id=0):
+    def __init__(self, ref_side_index=0, priority=0, process_id=0):
         super(BTLxProcessing, self).__init__()
         self.ref_side_index = ref_side_index
         self._priority = priority
@@ -717,3 +717,59 @@ class BTLxFromGeometryDefinition(Data):
     def feature_from_element(self, element):
         print(self.kwargs)
         return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
+
+class DeferredBTLxProcessing(Data):
+    """Deferred BTLx Processing class for delayed processing of geometry.
+
+    Parameters
+    ----------
+    processing : class
+        The BTLx Processing class.
+    geometries : list of :class:`~compas.geometry.Geometry`
+        The geometries to be used as input for the processing.
+    elements : list of :class:`~compas_timber.elements.Element`
+        The elements to be used as input for the processing.
+
+    """
+
+    def __init__(self, processing_type = None, elements = None, **params):   #direct definition of BTLx Parameters
+        if elements is None:
+            elements = []
+        else:
+            self.elements = elements if isinstance(elements, list) else [elements]
+        self.params = params
+        self.geometries = []
+        self.processing_type = processing_type
+
+    @classmethod
+    def from_shapes(cls, shapes, **kwargs):
+        raise NotImplementedError("Processing from geometry should be implemented on specific DeferredBTLxProcessing classes.")
+
+    @property
+    def __data__(self):
+        return {"geometries": self.geometries, "elements": self.elements, "kwargs": self.params}
+
+    def transform(self, transformation):
+        for geo in self.geometries:
+            geo.transform(transformation)
+
+    def transformed(self, transformation):
+        copy = self.copy()
+        copy.transform(transformation)
+
+    def feature_from_element(self, element):
+        if self.geometries:
+            raise NotImplementedError("Processing from geometry should be implemented on specific Processing classes.")
+        else:
+            return self.processing_type
+
+    def __repr__(self):
+        return "{}({}, {})".format(self.__class__.__name__, self.geometries, self.elements)
+
+    def __str__(self):
+        print(self.elements)
+        return ("DeferredBTLxProcessing of type {} with geometries {} and elements {}".format(
+            self.__class__,
+            [geo.__class__ for geo in self.geometries],
+            [el.__class__ for el in self.elements]
+            ))

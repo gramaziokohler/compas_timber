@@ -16,7 +16,7 @@ from compas.tolerance import TOL
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_beam_param
 
-from .btlx import BTLxProcessing
+from .btlx import BTLxProcessing, DeferredBTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
@@ -426,3 +426,35 @@ class DoubleCutParams(BTLxProcessingParams):
         result["Angle2"] = "{:.{prec}f}".format(float(self._instance.angle_2), prec=TOL.precision)
         result["Inclination2"] = "{:.{prec}f}".format(float(self._instance.inclination_2), prec=TOL.precision)
         return result
+
+class DeferredDoubleCut(DeferredBTLxProcessing):
+
+    TYPE_NAME = "DoubleCut"
+    GEOMETRY_COUNT = 2
+
+    def __init__(self, elements = None, **params):   #direct definition of BTLx Parameters
+        super(DeferredDoubleCut, self).__init__(elements= elements, **params)
+
+
+    @classmethod
+    def from_shapes(cls, plane_a, plane_b, elements = None, **kwargs): #alternative constructor using shapes
+        assert isinstance(plane_a, Plane)
+        assert isinstance(plane_b, Plane)
+        instance = cls(elements= elements, **kwargs)
+        instance.geometries = [plane_a, plane_b]
+        return instance
+
+    def feature_from_element(self, element):
+        """Add the Double Cut feature to the given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.Element`
+            The element to which the Double Cut feature should be added.
+
+        """
+
+        if self.geometries:
+            return  DoubleCut.from_planes_and_beam([self.geometries[0], self.geometries[1]], element, **self.params)
+        else:
+            return DoubleCut(**self.params)
