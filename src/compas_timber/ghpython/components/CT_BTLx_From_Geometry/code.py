@@ -7,7 +7,7 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.fabrication import BTLxFromGeometryDefinition
+
 from compas_timber.fabrication import DeferredBTLxProcessing
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
@@ -22,7 +22,7 @@ class BTLxFromGeometry(component):
         for cls in get_leaf_subclasses(DeferredBTLxProcessing):
             self.classes[cls.TYPE_NAME] = cls
 
-        if ghenv.Component.Params.Output[0].NickName == "Features":
+        if ghenv.Component.Params.Output[0].NickName == "Feature":
             self.processing_type = None
         else:
             self.processing_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)

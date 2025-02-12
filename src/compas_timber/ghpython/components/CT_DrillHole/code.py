@@ -2,8 +2,8 @@ from compas_rhino.conversions import line_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.fabrication import BTLxFromGeometryDefinition
-from compas_timber.fabrication import Drilling
+
+from compas_timber.fabrication import DeferredDrilling
 
 
 class DrillHoleFeature(component):
@@ -21,4 +21,4 @@ class DrillHoleFeature(component):
         if not isinstance(element, list):
             element = [element]
 
-        return BTLxFromGeometryDefinition(Drilling, line_to_compas(line), element, diameter=diameter)
+        return DeferredDrilling.from_shapes(line_to_compas(line), element, diameter=diameter)

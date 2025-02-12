@@ -2,8 +2,8 @@ from compas_rhino.conversions import plane_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.fabrication import BTLxFromGeometryDefinition
-from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import DeferredJackRafterCut
+
 
 
 class TrimmingFeature(component):
@@ -14,4 +14,4 @@ class TrimmingFeature(component):
         if not isinstance(element, list):
             element = [element]
 
-        return BTLxFromGeometryDefinition(JackRafterCut, plane_to_compas(plane), element)
+        return DeferredJackRafterCut(plane_to_compas(plane), element)

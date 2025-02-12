@@ -107,7 +107,7 @@ class FastenerTimberInterface(Data):
         The frame of the instance of the fastener that is applied to the model.
     shapes : :class:`~compas.geometry.Geometry`
         Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.
-    features : list of :class:`~compas_timber.fabrication.BTLxFromGeometryDefinition
+    features : list of :class:`~compas_timber.fabrication.DeferredBTLxProcessing`
         The features that are applied by this interface to the timber element. The features are defined in world coordinates.
 
     Attributes
@@ -126,7 +126,7 @@ class FastenerTimberInterface(Data):
         }
     frame : :class:`~compas.geometry.Frame`
         The frame of the instance of the fastener that is applied to the model.
-    features : list of :class:`~compas_timber.fabrication.BTLxFromGeometryDefinition
+    features : list of :class:`~compas_timber.fabrication.DeferredBTLxProcessing`
         The features that are applied by this interface to the timber element. This returns the features in world coordinates.
 
 

@@ -1,4 +1,5 @@
 import os
+from sqlite3 import paramstyle
 import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
@@ -659,65 +660,6 @@ class EdgePositionType(object):
     OPPEDGE = "oppedge"
 
 
-class BTLxFromGeometryDefinition(Data):
-    """Container linking a BTLx Process Type and generator function to an input geometry.
-    This allows delaying the actual applying of features to a downstream component.
-
-    Parameters
-    ----------
-    processing : class
-        The BTLx Processing class.
-    geometries : list of :class:`~compas.geometry.Geometry`
-        The geometries to be used as input for the processing.
-    elements : list of :class:`~compas_timber.elements.Element`
-        The elements to be used as input for the processing.
-
-    Attributes
-    processing : class
-        The BTLx Processing class.
-    geometries : list of :class:`~compas.geometry.Geometry`
-        The geometries to be used as input for the processing.
-    elements : list of :class:`~compas_timber.elements.Element`
-        The elements to be used as input for the processing.
-    """
-
-    def __init__(self, processing, geometries, elements=None, **kwargs):
-        super(BTLxFromGeometryDefinition, self).__init__()
-        self.processing = processing
-        self.geometries = geometries if isinstance(geometries, list) else [geometries]
-        if elements:
-            self.elements = elements if isinstance(elements, list) else [elements]
-        else:
-            self.elements = []
-        self.kwargs = kwargs or {}
-
-    @property
-    def __data__(self):
-        return {"processing": self.processing, "geometries": self.geometries, "elements": self.elements, "kwargs": self.kwargs}
-
-    @classmethod
-    def __from_data__(cls, data):
-        return cls(data["processing"], data["geometries"], data["elements"], **data["kwargs"])
-
-    def __repr__(self):
-        return "{}({}, {})".format(BTLxFromGeometryDefinition.__class__.__name__, self.processing, self.geometries)
-
-    def ToString(self):
-        return repr(self)
-
-    def transform(self, transformation):
-        for geo in self.geometries:
-            geo.transform(transformation)
-
-    def transformed(self, transformation):
-        copy = self.copy()
-        copy.transform(transformation)
-        return copy
-
-    def feature_from_element(self, element):
-        print(self.kwargs)
-        return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
-
 class DeferredBTLxProcessing(Data):
     """Deferred BTLx Processing class for delayed processing of geometry.
 
@@ -734,7 +676,7 @@ class DeferredBTLxProcessing(Data):
 
     def __init__(self, processing_type = None, elements = None, **params):   #direct definition of BTLx Parameters
         if elements is None:
-            elements = []
+            self.elements = []
         else:
             self.elements = elements if isinstance(elements, list) else [elements]
         self.params = params
@@ -761,7 +703,7 @@ class DeferredBTLxProcessing(Data):
         if self.geometries:
             raise NotImplementedError("Processing from geometry should be implemented on specific Processing classes.")
         else:
-            return self.processing_type
+            return self.processing_type(**self.params)
 
     def __repr__(self):
         return "{}({}, {})".format(self.__class__.__name__, self.geometries, self.elements)
@@ -773,3 +715,6 @@ class DeferredBTLxProcessing(Data):
             [geo.__class__ for geo in self.geometries],
             [el.__class__ for el in self.elements]
             ))
+
+    def ToString(self):
+        return self.__str__()

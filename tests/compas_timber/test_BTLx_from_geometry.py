@@ -6,9 +6,10 @@ from compas.geometry import Vector
 from compas.geometry import Transformation
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Drilling
-from compas_timber.fabrication import BTLxFromGeometryDefinition
-from compas_timber.fabrication.double_cut import DoubleCut
-from compas_timber.fabrication.jack_cut import JackRafterCut
+from compas_timber.fabrication import DeferredDrilling
+from compas_timber.fabrication import DeferredBTLxProcessing
+from compas_timber.fabrication.double_cut import DeferredDoubleCut, DoubleCut
+from compas_timber.fabrication.jack_cut import DeferredJackRafterCut, JackRafterCut
 
 
 def test_deferred_drilling():
@@ -26,7 +27,7 @@ def test_deferred_drilling():
     diameter = 10.0
 
     drilling = Drilling.from_line_and_element(drill_line, beam, diameter)
-    drilling_def = BTLxFromGeometryDefinition(Drilling, drill_line, beam, diameter=diameter)
+    drilling_def = DeferredDrilling.from_shapes(drill_line, beam, diameter=diameter)
 
     t_drilling = Drilling.from_line_and_element(t_line, beam, diameter)
     t_def = drilling_def.transformed(xform)
@@ -47,7 +48,7 @@ def test_deferred_jack_cut():
     t_plane = test_plane.transformed(xform)
 
     jack_cut = JackRafterCut.from_plane_and_beam(test_plane, beam)
-    jack_cut_def = BTLxFromGeometryDefinition(JackRafterCut, test_plane, beam)
+    jack_cut_def = DeferredJackRafterCut.from_shapes(test_plane, beam)
 
     t_jack_cut = JackRafterCut.from_plane_and_beam(t_plane, beam)
     t_def = jack_cut_def.transformed(xform)
@@ -69,10 +70,10 @@ def test_deferred_double_cut():
     t_planes = [plane.transformed(xform) for plane in test_planes]
 
     double_cut = DoubleCut.from_planes_and_beam(test_planes, beam, ref_side_index=1)
-    double_cut_def = BTLxFromGeometryDefinition(DoubleCut, test_planes, beam, ref_side_index=1)
+    double_cut_def = DeferredDoubleCut.from_shapes(test_planes[0], test_planes[1], beam, ref_side_index=1)
 
     t_double_cut = DoubleCut.from_planes_and_beam(t_planes, beam, ref_side_index=0)
-    double_cut_def_a = BTLxFromGeometryDefinition(DoubleCut, test_planes, beam, ref_side_index=0)
+    double_cut_def_a = DeferredDoubleCut.from_shapes(test_planes[0], test_planes[1], beam, ref_side_index=0)
     t_def = double_cut_def_a.transformed(xform)
 
     assert double_cut_def.feature_from_element(beam).params_dict == double_cut.params_dict

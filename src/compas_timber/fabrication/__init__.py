@@ -3,8 +3,11 @@ from .btlx import BTLxProcessing
 from .btlx import BTLxPart
 from .btlx import OrientationType
 from .jack_cut import JackRafterCut
+from .jack_cut import DeferredJackRafterCut
 from .double_cut import DoubleCut
+from .double_cut import DeferredDoubleCut
 from .drilling import Drilling
+from .drilling import DeferredDrilling
 from .step_joint_notch import StepJointNotch
 from .step_joint import StepJoint
 from .dovetail_tenon import DovetailTenon
@@ -19,7 +22,6 @@ from .btlx import EdgePositionType
 from .btlx import LimitationTopType
 from .btlx import MachiningLimits
 from .btlx import StepShapeType
-from .btlx import BTLxFromGeometryDefinition
 from .btlx import DeferredBTLxProcessing
 
 __all__ = [
@@ -27,9 +29,12 @@ __all__ = [
     "BTLxPart",
     "BTLxProcessing",
     "JackRafterCut",
+    "DeferredJackRafterCut",
     "OrientationType",
     "DoubleCut",
+    "DeferredDoubleCut",
     "Drilling",
+    "DeferredDrilling",
     "StepJointNotch",
     "StepJoint",
     "DovetailTenon",
@@ -44,6 +49,5 @@ __all__ = [
     "LimitationTopType",
     "MachiningLimits",
     "StepShapeType",
-    "BTLxFromGeometryDefinition",
     "DeferredBTLxProcessing",
 ]

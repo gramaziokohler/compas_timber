@@ -11,8 +11,7 @@ from compas.geometry import angle_vectors_signed
 
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
-from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
-from compas_timber.fabrication.jack_cut import JackRafterCut
+from compas_timber.fabrication.jack_cut import DeferredJackRafterCut
 
 
 class BallNodeFastener(Fastener):
@@ -111,7 +110,7 @@ class BallNodeFastener(Fastener):
 
     @property
     def _default_features(self):
-        return [BTLxFromGeometryDefinition(JackRafterCut, Plane((self.ball_diameter * 2.0, 0, 0), (-1, 0, 0)))]
+        return [DeferredJackRafterCut.from_shapes(Plane((self.ball_diameter * 2.0, 0, 0), (-1, 0, 0)))]
 
     # ==========================================================================
     # Implementations of abstract methods
