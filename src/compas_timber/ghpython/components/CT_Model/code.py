@@ -30,7 +30,7 @@ class ModelComponent(component):
             self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
         if not JointRules:
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
-        if not (Elements):  # shows beams even if no joints are found
+        if not (Elements or Containers):  # shows beams even if no joints are found
             return
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
