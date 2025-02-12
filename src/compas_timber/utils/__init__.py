@@ -197,7 +197,6 @@ def distance_segment_segment(segment_a, segment_b):
     return distance_point_point(pt_seg_a, pt_seg_b)
 
 
-__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "distance_segment_segment"]
 def correct_polyline_direction(polyline, normal_vector, clockwise=False):
     """Corrects the direction of a polyline to be counter-clockwise around a given vector.
 
@@ -225,4 +224,4 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
     return polyline
 
 
-__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "correct_polyline_direction"]
+__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "distance_segment_segment", "correct_polyline_direction"]
