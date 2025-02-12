@@ -329,3 +329,98 @@ class JackRafterCutParams(BTLxProcessingParams):
         result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
         result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
         return result
+
+
+class JackRafterCutProxy(object):
+    """This object behaves like a JackRafterCut except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+    ----------
+    plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+        The cutting plane.
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam that is cut by this instance.
+    ref_side_index : int, optional
+        The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+    """
+
+    PROCESSING_NAME = "JackRafterCut"
+
+    def __init__(self, plane, beam, ref_side_index=0):
+        self.plane = plane
+        self.beam = beam
+        self.ref_side_index = ref_side_index
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCut`
+
+        """
+        if not self._processing:
+            self._processing = JackRafterCut.from_plane_and_beam(self.plane, self.beam, self.ref_side_index)
+        return self._processing
+
+    @classmethod
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
+        """Create a JackRafterCutProxy instance from a cutting plane and the beam it should cut.
+
+        Parameters
+        ----------
+        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+            The cutting plane.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        ref_side_index : int, optional
+            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCutProxy`
+
+        """
+        return cls(plane, beam, ref_side_index)
+
+    def apply(self, geometry, _):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to be cut.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the cutting plane does not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Beam) -> Brep
+        cutting_plane = self.plane
+        try:
+            return geometry.trimmed(cutting_plane)
+        except BrepTrimmingError:
+            raise FeatureApplicationError(
+                cutting_plane,
+                geometry,
+                "The cutting plane does not intersect with beam geometry.",
+            )
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)
