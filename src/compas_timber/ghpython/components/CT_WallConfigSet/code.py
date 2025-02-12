@@ -1,3 +1,4 @@
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from ghpythonlib.componentbase import executingcomponent as component
 
 from compas_timber.design import WallPopulatorConfigurationSet
