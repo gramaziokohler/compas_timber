@@ -349,8 +349,6 @@ class JackRafterCutProxy(object):
 
     """
 
-    PROCESSING_NAME = "JackRafterCut"
-
     def __init__(self, plane, beam, ref_side_index=0):
         self.plane = plane
         self.beam = beam
