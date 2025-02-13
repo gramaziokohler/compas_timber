@@ -1,0 +1,42 @@
+{
+    "name": "Wall",
+    "nickname": "Wall",
+    "category": "COMPAS Timber",
+    "subcategory": "Containers",
+    "description": "Creates a Wall from a Surface.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Surface",
+                "description": "Referenced surface, Guid of surface in the active Rhino document.",
+                "typeHintID": "brep",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Thickness",
+                "description": "Thickness of the wall.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "ConfigSet",
+                "description": "(optional) Configuration set for the wall poulator, if desired.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Wall",
+                "description": "ContainerDefinition object(s) containing the Wall."
+            },
+            {
+                "name": "Geometry",
+                "description": "Shape of the wall."
+            }
+        ]
+    }
+}
