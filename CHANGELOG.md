@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `from_shapes_and_element` class method to `Drilling`, `JackRafterCut`, and `DoubleCut` as a wrapper for their geometry based constructors for use with `BTLxFromGeometryDefinition`.
 * Added `YButtJoint` which joins the ends of three joints where the `cross_beams` get a miter cut and the `main_beam` gets a double cut.
 * Added `JackRafterCutProxy` to allow for deferred calculation of the `JackRafterCut` geometry thus improving visualization performance.
+* Added class "WallPopulator" to `compas_timber.design`.
+* Added class "WallPopulatorConfigurationSet" to `compas_timber.design`.
+* Added class "WallSelector" to `compas_timber.design`.
+* Added class "AnyWallSelector" to `compas_timber.design`.
+* Added class "LConnectionDetailA" to `compas_timber.design`.
+* Added class "LConnectionDetailB" to `compas_timber.design`.
+* Added class "TConnectionDetailA" to `compas_timber.design`.
+* Added `from_brep` to `compas_timber.elements.Wall.
+* Added `from_polyline` to `compas_timber.elements.Wall.
+* Added `WallJoint` to `compas_timber.connections`.
 
 ### Changed
 
@@ -39,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face including origin corner.
 * Bug fixes after adding `max_distance` to joint defs.
 * Using new `JackRafterCutProxy` in LMiterJoint, LButtJoint and TButtJoint.
+* Reworked `Wall` class to be defined with a standard polyline, frame and thickness.
 
 ### Removed
 

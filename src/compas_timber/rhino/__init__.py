@@ -2,7 +2,7 @@ from compas.plugins import plugin
 
 
 @plugin(category="solvers", requires=["Rhino"])
-def find_neighboring_beams(beams, inflate_by=0.0):
+def find_neighboring_elements(elements, inflate_by=0.0):
     """Uses the Rhino.Geometry.RTree implementation of RTree to find neighboring beams.
 
     Parameters
@@ -28,14 +28,14 @@ def find_neighboring_beams(beams, inflate_by=0.0):
         found_id = e_args.Id
 
         # eliminate duplicates (1, 2) == (2, 1)
-        pair = {beams[searched_id], beams[found_id]}
+        pair = {elements[searched_id], elements[found_id]}
         if searched_id != found_id and pair not in neighbors:
             neighbors.append(pair)
 
     rtree = Rhino.Geometry.RTree()
     bboxes = []
-    for index, beam in enumerate(beams):
-        aabb = beam.compute_aabb(inflate_by)
+    for index, element in enumerate(elements):
+        aabb = element.compute_aabb(inflate_by)
         bb = Rhino.Geometry.BoundingBox(aabb.xmin, aabb.ymin, aabb.zmin, aabb.xmax, aabb.ymax, aabb.zmax)
         bboxes.append(bb)
         rtree.Insert(bb, index)
@@ -47,5 +47,5 @@ def find_neighboring_beams(beams, inflate_by=0.0):
 
 
 __all__ = [
-    "find_neighboring_beams",
+    "find_neighboring_elements",
 ]
