@@ -212,7 +212,7 @@ class Drilling(BTLxProcessing):
         """
         if isinstance(line, list):
             line = line[0]
-        return cls.from_line_and_element(line, element, diameter, **kwargs)
+        return cls.from_line_and_element(line, element, float(diameter), **kwargs)
 
     @staticmethod
     def _flip_line_if_start_inside(line, element, ref_side_index):

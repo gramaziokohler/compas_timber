@@ -1,14 +1,33 @@
 import pytest
 
 from compas.geometry import Frame
+from compas.geometry import Polyline
+from compas.geometry import Point
+from compas.geometry import Vector
 from compas_timber.elements import Wall
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
+from compas_timber.utils import classify_polyline_segments
 
 
 @pytest.fixture
 def model():
     return TimberModel()
+
+
+@pytest.fixture
+def wall1():
+    return Wall.from_boundary(polyline=Polyline([[0, 0, 0], [0, 100, 0], [100, 100, 0], [100, 0, 0], [0, 0, 0]]), normal=Vector.Zaxis(), thickness=10, name="wall1")
+
+
+@pytest.fixture
+def wall2():
+    return Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10, name="wall2")
+
+
+@pytest.fixture
+def nameless_wall():
+    return Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
 
 
 @pytest.fixture
@@ -20,21 +39,16 @@ def beam_list():
     return [beam_a, beam_b, beam_c, beam_d]
 
 
-def test_wall_groups(model):
-    wall1 = Wall(5000, 200, 3000, name="wall1")
-    wall2 = Wall(3000, 200, 3000)
-
+def test_wall_groups(model, wall1, nameless_wall):
     model.add_group_element(wall1)
-    model.add_group_element(wall2, name="wall2")
+    model.add_group_element(nameless_wall, name="wall2")
 
     assert model.has_group("wall1")
     assert model.has_group("wall2")
 
 
-def test_add_elements_to_group(model, beam_list):
+def test_add_elements_to_group(model, beam_list, wall1, wall2):
     beam_a, beam_b, beam_c, beam_d = beam_list
-    wall1 = Wall(5000, 200, 3000, name="wall1")
-    wall2 = Wall(3000, 200, 3000, name="wall2")
 
     wall1_group = model.add_group_element(wall1)
     wall2_group = model.add_group_element(wall2)
@@ -50,11 +64,8 @@ def test_add_elements_to_group(model, beam_list):
     assert list(model.get_elements_in_group("wall2")) == [wall2, beam_c, beam_d]
 
 
-def test_get_elements_in_group_filter(model, beam_list):
+def test_get_elements_in_group_filter(model, beam_list, wall1, wall2):
     beam_a, beam_b, beam_c, beam_d = beam_list
-
-    wall1 = Wall(5000, 200, 3000, name="wall1")
-    wall2 = Wall(3000, 200, 3000, name="wall2")
 
     wall1_group = model.add_group_element(wall1)
     wall2_group = model.add_group_element(wall2)
@@ -75,9 +86,7 @@ def test_group_does_not_exist(model):
         list(model.get_elements_in_group("non_existent_group"))
 
 
-def test_group_already_exists(model):
-    wall1 = Wall(5000, 200, 3000, name="wall1")
-
+def test_group_already_exists(model, wall1):
     model.add_group_element(wall1)
 
     with pytest.raises(ValueError):
@@ -89,3 +98,73 @@ def test_not_group_element(model):
 
     with pytest.raises(ValueError):
         model.add_group_element(beam)
+
+
+def test_wall_with_door_openings():
+    outline = Polyline(
+        [
+            Point(x=5.265306325014119, y=0.0, z=2.0),
+            Point(x=5.265306325014119, y=0.0, z=6.0),
+            Point(x=0.0, y=0.0, z=6.0),
+            Point(x=0.0, y=0.0, z=0.0),
+            Point(x=8.617857142857142, y=0.0, z=0.0),
+            Point(x=8.617857142857144, y=0.0, z=4.0),
+            Point(x=11.0, y=0.0, z=4.0),
+            Point(x=10.999999999999998, y=0.0, z=0.0),
+            Point(x=17.0, y=0.0, z=0.0),
+            Point(x=17.0, y=0.0, z=6.0),
+            Point(x=7.0, y=0.0, z=6.0),
+            Point(x=7.0, y=0.0, z=2.0),
+        ]
+    )
+    normal = Vector.Yaxis()
+
+    outline_vertices, internal_vertex_groups = classify_polyline_segments(outline, normal)
+
+    assert outline_vertices == [2, 3, 8, 9]
+    assert internal_vertex_groups == [[4, 5, 6, 7], [10, 11, 0, 1]]
+
+
+def test_wall_with_door_openings_ccw():
+    outline = Polyline(
+        [
+            Point(x=5.265306325014119, y=0.0, z=2.0),
+            Point(x=5.265306325014119, y=0.0, z=6.0),
+            Point(x=0.0, y=0.0, z=6.0),
+            Point(x=0.0, y=0.0, z=0.0),
+            Point(x=8.617857142857142, y=0.0, z=0.0),
+            Point(x=8.617857142857144, y=0.0, z=4.0),
+            Point(x=11.0, y=0.0, z=4.0),
+            Point(x=10.999999999999998, y=0.0, z=0.0),
+            Point(x=17.0, y=0.0, z=0.0),
+            Point(x=17.0, y=0.0, z=6.0),
+            Point(x=7.0, y=0.0, z=6.0),
+            Point(x=7.0, y=0.0, z=2.0),
+        ]
+    )
+    normal = Vector.Yaxis() * -1.0
+
+    outline_vertices, internal_vertex_groups = classify_polyline_segments(outline, normal, direction="ccw")
+
+    assert outline_vertices == [2, 3, 8, 9]
+    assert internal_vertex_groups == [[4, 5, 6, 7], [10, 11, 0, 1]]
+
+
+def test_fu():
+    polyline = Polyline(
+        [
+            Point(x=-3.29152931150972, y=12.978899915119495, z=0.0),
+            Point(x=-3.2915293115097186, y=14.98344519542361, z=0.0),
+            Point(x=-3.2915293115097186, y=14.98344519542361, z=2.5),
+            Point(x=-3.291529311509721, y=11.006981997986284, z=2.5),
+            Point(x=-3.291529311509721, y=11.006981997986284, z=0.0),
+            Point(x=-3.29152931150972, y=12.06490942153033, z=0.0),
+            Point(x=-3.2915293115097204, y=12.06490942153033, z=1.9471006966997255),
+            Point(x=-3.2915293115097204, y=12.978899915119495, z=1.9471006966997255),
+            Point(x=-3.29152931150972, y=12.978899915119495, z=0.0),
+        ]
+    )
+
+    normal = Vector(x=1.000, y=-0.000, z=0.000)
+
+    external, internal = classify_polyline_segments(polyline, normal, direction="ccw")

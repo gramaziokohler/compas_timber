@@ -700,7 +700,7 @@ class BTLxFromGeometryDefinition(Data):
         return cls(data["processing"], data["geometries"], data["elements"], **data["kwargs"])
 
     def __repr__(self):
-        return "{}({}, {})".format(BTLxFromGeometryDefinition.__class__.__name__, self.processing, self.geometries)
+        return "{}({}, {})".format(BTLxFromGeometryDefinition.__name__, self.processing, self.geometries)
 
     def ToString(self):
         return repr(self)

@@ -15,4 +15,4 @@ Plugins
     :toctree: generated/
     :nosignatures:
 
-    find_neighboring_beams
+    find_neighboring_elements

@@ -2,11 +2,15 @@ import compas
 
 if not compas.IPY:
     from typing import Generator  # noqa: F401
+    from typing import List  # noqa: F401
 
 from compas.geometry import Point
 from compas_model.models import Model
 
+from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
+from compas_timber.connections import JointTopology
+from compas_timber.connections import WallJoint
 from compas_timber.errors import BeamJoiningError
 
 
@@ -68,12 +72,12 @@ class TimberModel(Model):
 
     @property
     def joints(self):
-        # type: () -> List[Joint, None, None]
-        joints = []
+        # type: () -> set[Joint]
+        joints = set()  # some joints might apear on more than one interaction
         for interaction in self.interactions():
             if isinstance(interaction, Joint):
-                joints.append(interaction)
-        return set(joints)  # remove duplicates
+                joints.add(interaction)
+        return joints
 
     @property
     def fasteners(self):
@@ -87,6 +91,13 @@ class TimberModel(Model):
         # type: () -> Generator[Wall, None, None]
         for element in self.elements():
             if getattr(element, "is_wall", False):
+                yield element
+
+    @property
+    def slabs(self):
+        # type: () -> Generator[Slab, None, None]
+        for element in self.elements():
+            if getattr(element, "is_slab", False):
                 yield element
 
     @property
@@ -128,6 +139,16 @@ class TimberModel(Model):
 
         """
         return self._guid_element[guid]
+
+    def add_element(self, element, parent=None, **kwargs):
+        # resolve parent name to GroupNode object
+        # TODO: upstream this to compas_model
+        if parent and isinstance(parent, str):
+            if not self.has_group(parent):
+                raise ValueError("Group {} not found in model.".format(parent))
+            parent = next((group for group in self._tree.groups if group.name == parent))
+        # print("add_element({}, {}, {})".format(element, parent, kwargs))
+        return super(TimberModel, self).add_element(element, parent, **kwargs)
 
     def add_group_element(self, element, name=None):
         """Add an element which shall contain other elements.
@@ -180,6 +201,8 @@ class TimberModel(Model):
 
         group_node = self.add_group(group_name)
         self.add_element(element, parent=group_node)
+
+        element.name = group_name
         return group_node
 
     def has_group(self, group_name):
@@ -228,6 +251,35 @@ class TimberModel(Model):
         elements = (node.element for node in group.children)
         return filter(filter_, elements)
 
+    def _safely_get_interactions(self, node_pair):
+        # type: (tuple) -> List[Interaction]
+        try:
+            return self._graph.edge_interactions(node_pair)
+        except KeyError:
+            return []
+
+    def get_interactions_for_element(self, element):
+        # type: (Element) -> List[Interaction]
+        """Get all interactions for a given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element to query.
+
+        Returns
+        -------
+        list[:class:`~compas_model.interactions.Interaction`]
+            A list of interactions for the given element.
+        """
+
+        negihbors = self._graph.neighbors(element.graph_node)
+        result = []
+        for nbr in negihbors:
+            result.extend(self._safely_get_interactions((element.graph_node, nbr)))
+            result.extend(self._safely_get_interactions((nbr, element.graph_node)))
+        return result
+
     def add_joint(self, joint):
         # type: (Joint) -> None
         """Add a joint object to the model.
@@ -241,6 +293,7 @@ class TimberModel(Model):
         for interaction in joint.interactions:
             element_a, element_b = interaction
             _ = self.add_interaction(element_a, element_b, joint)
+            # TODO: should we create a bidirectional interaction here?
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -298,3 +351,29 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
         return errors
+
+    def connect_adjacent_walls(self):
+        self._clear_wall_joints()
+        solver = ConnectionSolver()
+        pairs = solver.find_intersecting_pairs(list(self.walls), rtree=True)
+        for pair in pairs:
+            wall_a, wall_b = pair
+            result = solver.find_wall_wall_topology(wall_a, wall_b, tol=1e-6)
+
+            topology = result[0]
+            if topology != JointTopology.TOPO_UNKNOWN:
+                wall_a, wall_b = result[1], result[2]
+
+            assert wall_a and wall_b
+
+            # assume wall_a is the main, unless wall_b is explicitly marked as main
+            # TODO: use the Rule system? this isn't good enough, a wall can totally be main and cross at the same time (in two different interactions)
+            if wall_b.attributes.get("role", "cross") == "main":
+                WallJoint.create(self, wall_b, wall_a, topology=topology)
+            else:
+                WallJoint.create(self, wall_a, wall_b, topology=topology)
+
+    def _clear_wall_joints(self):
+        for joint in self.joints:
+            if isinstance(joint, WallJoint):
+                self.remove_joint(joint)
