@@ -1,17 +1,13 @@
 """Creates a Beam from a LineCurve."""
 
-import rhinoscriptsyntax as rs
 from compas.geometry import Brep
 from compas.scene import Scene
-from compas_rhino.conversions import curve_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.design import ContainerDefinition
 from compas_timber.elements import Wall
-from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
 
 
 class WallComponent(component):

@@ -1,4 +1,3 @@
-from compas.geometry import Frame
 
 from .slab import Slab
 

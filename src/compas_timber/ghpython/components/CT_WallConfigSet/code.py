@@ -1,9 +1,10 @@
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.design import WallPopulatorConfigurationSet
-from compas_timber.design import LConnectionDetailA, TConnectionDetailA
 from compas_timber.connections import JointTopology
+from compas_timber.design import LConnectionDetailA
+from compas_timber.design import TConnectionDetailA
+from compas_timber.design import WallPopulatorConfigurationSet
 
 
 class WallPopulatorConfigSetComponent(component):
