@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed input type from `Element` to `Beam` in components that currently only support beams.
 * Fixed drilling GH component not taking diameter as a string.
 * Reworked `Wall` class to be defined with a standard polyline, frame and thickness.
+* Changed labels in `Show_ref_sides` GH component to be 1-based to match the spec.
 
 ### Removed
 
