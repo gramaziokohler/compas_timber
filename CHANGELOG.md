@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed referenced to `beam` in `Drilling` to `element`. 
 * Changed `Drill Hole` and `Trim Feature` GH components to generate the relevant `BTLxProcessing` type rather than the deprecated `FeatureDefinition` type.
 * Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face including origin corner.
+* Bug fixes after adding `max_distance` to joint defs.
 * Using new `JackRafterCutProxy` in LMiterJoint, LButtJoint and TButtJoint.
 
 ### Removed
