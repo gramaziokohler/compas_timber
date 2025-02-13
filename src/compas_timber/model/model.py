@@ -280,7 +280,8 @@ class TimberModel(Model):
 
         """
         errors = []
-        for joint in self.joints:
+        joints = self.joints
+        for joint in joints:
             try:
                 joint.check_elements_compatibility()
                 joint.add_extensions()
@@ -289,7 +290,7 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
 
-        for joint in self.joints:
+        for joint in joints:
             try:
                 joint.add_features()
             except BeamJoiningError as bje:
