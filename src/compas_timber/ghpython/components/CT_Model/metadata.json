@@ -34,7 +34,8 @@
                 "name": "Features",
                 "description": "Collection of feature definitions.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten": true
             },
             {
                 "name": "MaxDistance",

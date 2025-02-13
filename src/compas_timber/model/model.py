@@ -52,7 +52,7 @@ class TimberModel(Model):
 
     def __str__(self):
         # type: () -> str
-        return "TimberModel ({}) with {} beam(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
+        return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
 
     @property
     def beams(self):
@@ -333,7 +333,8 @@ class TimberModel(Model):
 
         """
         errors = []
-        for joint in self.joints:
+        joints = self.joints
+        for joint in joints:
             try:
                 joint.check_elements_compatibility()
                 joint.add_extensions()
@@ -342,7 +343,7 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
 
-        for joint in self.joints:
+        for joint in joints:
             try:
                 joint.add_features()
             except BeamJoiningError as bje:

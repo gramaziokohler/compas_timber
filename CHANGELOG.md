@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `distance_segment_segment` to `compas_timber.utils`
+* Added `BTLxFromGeometryDefinition` class to replace the depricated `FeatureDefinition`. This allows deferred calculation of BTLx processings.
+* Added `from_shapes_and_element` class method to `Drilling`, `JackRafterCut`, and `DoubleCut` as a wrapper for their geometry based constructors for use with `BTLxFromGeometryDefinition`.
+* Added `YButtJoint` which joins the ends of three joints where the `cross_beams` get a miter cut and the `main_beam` gets a double cut.
+* Added `JackRafterCutProxy` to allow for deferred calculation of the `JackRafterCut` geometry thus improving visualization performance.
 * Added class "WallPopulator" to `compas_timber.design`.
 * Added class "WallPopulatorConfigurationSet" to `compas_timber.design`.
 * Added class "WallSelector" to `compas_timber.design`.
@@ -38,6 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `restore_beams_from_keys` in `LMiterJoint` to use the correct variable names.
 * Reworked `DoubleCut` to more reliably produce the feature and geometry with the `from_planes_and_element` class method.
 * Renamed `intersection_box_line()` to `intersection_beam_line_param()`, which now take a beam input and outputs the intersecting ref_face_index.
+* Added `max_distance` argument to `JointRule` subclasses and GH components so that max_distance can be set for each joint rule individually.
+* Changed referenced to `beam` in `Drilling` to `element`. 
+* Changed `Drill Hole` and `Trim Feature` GH components to generate the relevant `BTLxProcessing` type rather than the deprecated `FeatureDefinition` type.
+* Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face including origin corner.
+* Bug fixes after adding `max_distance` to joint defs.
+* Using new `JackRafterCutProxy` in LMiterJoint, LButtJoint and TButtJoint.
 * Reworked `Wall` class to be defined with a standard polyline, frame and thickness.
 
 ### Removed

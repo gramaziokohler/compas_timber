@@ -16,6 +16,7 @@ from .x_lap import XLapJoint
 from .t_dovetail import TDovetailJoint
 from .t_tenon_mortise import TenonMortiseJoint
 from .ball_node import BallNodeJoint
+from .y_butt import YButtJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .wall_joint import WallJoint
@@ -42,6 +43,7 @@ __all__ = [
     "TDovetailJoint",
     "BallNodeJoint",
     "TenonMortiseJoint",
+    "YButtJoint",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "WallJoint",
