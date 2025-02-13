@@ -617,7 +617,7 @@ class WallPopulator(object):
                 continue
 
             for rule in self.rules:
-                if rule.comply(pair, max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
+                if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
                     if rule.joint_type == LButtJoint:
                         beam_a, beam_b = rule.reorder([beam_a, beam_b])
                     joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
