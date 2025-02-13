@@ -1,3 +1,4 @@
+from itertools import product
 from math import fabs
 
 from compas.geometry import Plane
@@ -192,8 +193,8 @@ def distance_segment_segment(segment_a, segment_b):
     pta, ptb = intersection_line_line(segment_a, segment_b)
     if not pta:  # segments are parallel
         dists = []
-        for pair in [(segment_a[0], segment_b[0]), (segment_a[1], segment_b[0]), (segment_b[0], segment_a[1]), (segment_b[1], segment_a[1])]:
-            """gets shortest distance between all 4 possible pairs of endpoints. only for L/I_Topo. T_Topology cannot have paralell segments"""
+        for pair in product(segment_a, segment_b):
+            # gets shortest distance between all 4 possible pairs of endpoints. only for L/I_Topo. T_Topology cannot have paralell segments"""
             dists.append(distance_point_point(*pair))
         return min(dists)
     pt_seg_a = closest_point_on_segment(pta, segment_a)
