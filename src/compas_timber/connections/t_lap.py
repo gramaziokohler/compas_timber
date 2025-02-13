@@ -132,9 +132,9 @@ class TLapJoint(LapJoint):
                 main_cutting_frame = self.get_main_cutting_frame()
                 negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
             except AttributeError as ae:
-                raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[main_cutting_frame])
             except Exception as ex:
-                raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ex))
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
 
             main_volume = MillVolume(negative_brep_main_beam)
             cross_volume = MillVolume(negative_brep_cross_beam)
