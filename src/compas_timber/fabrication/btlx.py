@@ -14,6 +14,8 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
+from compas_timber.errors import FeatureApplicationError
+
 
 class BTLxWriter(object):
     """Class for writing BTLx files from a given model.
@@ -715,5 +717,7 @@ class BTLxFromGeometryDefinition(Data):
         return copy
 
     def feature_from_element(self, element):
-        print(self.kwargs)
-        return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
+        try:
+            return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
+        except Exception as ex:
+            raise FeatureApplicationError(self.geometries, element.blank, str(ex))

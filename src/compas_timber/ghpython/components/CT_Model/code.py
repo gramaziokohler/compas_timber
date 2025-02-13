@@ -12,6 +12,7 @@ from compas_timber.design import JointRule
 from compas_timber.design import WallPopulator
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
@@ -83,13 +84,20 @@ class ModelComponent(component):
             debug_info.add_joint_error(bje)
 
         if Features:
+            feature_errors = []
             features = [f for f in Features if f is not None]
             for f_def in features:
                 if not f_def.elements:
                     self.AddRuntimeMessage(Warning, "Features defined in model must have elements defined. Features without elements will be ignored")
-                else:
-                    for element in f_def.elements:
+                    return
+                for element in f_def.elements:
+                    try:
                         element.add_features(f_def.feature_from_element(element))
+                    except FeatureApplicationError as ex:
+                        feature_errors.append(ex)
+
+            for error in feature_errors:
+                debug_info.add_feature_error(error)
 
         Geometry = None
         scene = Scene()

@@ -20,9 +20,18 @@ class ShowFeatureErrors(component):
         error = feature_errors[index]
 
         geometries = [error.feature_geometry, error.element_geometry]
+        geometries = flatten(geometries)
         geo_objs = [SceneObject(item=geo) for geo in geometries]
         output = []
         for obj in geo_objs:
             output.extend(obj.draw())
 
         return error.message, output
+
+
+def flatten(lst):
+    if not lst:
+        return lst
+    if isinstance(lst[0], list):
+        return flatten(lst[0]) + flatten(lst[1:])
+    return lst[:1] + flatten(lst[1:])
