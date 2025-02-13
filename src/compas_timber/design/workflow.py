@@ -101,6 +101,9 @@ class JointRule(object):
 
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_rule_distance)
 
+        # these pairs were already handled by some external logic and shouldn't be processed again
+        # e.g. the beams within a wall are joined by wall specific logic
+        # however, other beams in the model should be allowed to be joined with them, thus they cannot be altogether excluded
         for pair in handled_pairs:
             if pair in element_pairs:
                 element_pairs.remove(pair)
