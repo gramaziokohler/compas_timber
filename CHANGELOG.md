@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face including origin corner.
 * Bug fixes after adding `max_distance` to joint defs.
 * Using new `JackRafterCutProxy` in LMiterJoint, LButtJoint and TButtJoint.
+* Changed input type from `Element` to `Beam` in components that currently only support beams.
 
 ### Removed
 
