@@ -896,6 +896,8 @@ document.write(`
         <li><a href="api/generated/compas_timber.elements.Wall.compute_worldtransformation.html#compas_timber.elements.Wall.compute_worldtransformation">(compas_timber.elements.Wall method)</a>
 </li>
       </ul></li>
+      <li><a href="api/generated/compas_timber.model.TimberModel.connect_adjacent_walls.html#compas_timber.model.TimberModel.connect_adjacent_walls">connect_adjacent_walls() (compas_timber.model.TimberModel method)</a>
+</li>
       <li><a href="api/generated/compas_timber.connections.ConnectionSolver.html#compas_timber.connections.ConnectionSolver">ConnectionSolver (class in compas_timber.connections)</a>
 </li>
       <li><a href="api/generated/compas_timber.design.DirectRule.contains.html#compas_timber.design.DirectRule.contains">contains() (compas_timber.design.DirectRule method)</a>
@@ -1138,13 +1140,15 @@ document.write(`
 </li>
       <li><a href="api/generated/compas_timber.connections.ConnectionSolver.find_intersecting_pairs.html#compas_timber.connections.ConnectionSolver.find_intersecting_pairs">find_intersecting_pairs() (compas_timber.connections.ConnectionSolver class method)</a>
 </li>
-      <li><a href="api/generated/compas_timber.connections.find_neighboring_beams.html#compas_timber.connections.find_neighboring_beams">find_neighboring_beams() (in module compas_timber.connections)</a>
+      <li><a href="api/generated/compas_timber.connections.find_neighboring_elements.html#compas_timber.connections.find_neighboring_elements">find_neighboring_elements() (in module compas_timber.connections)</a>
 
       <ul>
-        <li><a href="api/generated/compas_timber.rhino.find_neighboring_beams.html#compas_timber.rhino.find_neighboring_beams">(in module compas_timber.rhino)</a>
+        <li><a href="api/generated/compas_timber.rhino.find_neighboring_elements.html#compas_timber.rhino.find_neighboring_elements">(in module compas_timber.rhino)</a>
 </li>
       </ul></li>
       <li><a href="api/generated/compas_timber.connections.ConnectionSolver.find_topology.html#compas_timber.connections.ConnectionSolver.find_topology">find_topology() (compas_timber.connections.ConnectionSolver method)</a>
+</li>
+      <li><a href="api/generated/compas_timber.connections.ConnectionSolver.find_wall_wall_topology.html#compas_timber.connections.ConnectionSolver.find_wall_wall_topology">find_wall_wall_topology() (compas_timber.connections.ConnectionSolver method)</a>
 </li>
       <li><a href="api/generated/compas_timber.fabrication.DovetailMortise.frame_from_params_and_beam.html#compas_timber.fabrication.DovetailMortise.frame_from_params_and_beam">frame_from_params_and_beam() (compas_timber.fabrication.DovetailMortise method)</a>
 
@@ -1162,7 +1166,9 @@ document.write(`
 </li>
       <li><a href="api/generated/compas_timber.fabrication.FrenchRidgeLap.from_beam_beam_and_plane.html#compas_timber.fabrication.FrenchRidgeLap.from_beam_beam_and_plane">from_beam_beam_and_plane() (compas_timber.fabrication.FrenchRidgeLap class method)</a>
 </li>
-      <li><a href="api/generated/compas_timber.elements.Wall.from_box.html#compas_timber.elements.Wall.from_box">from_box() (compas_timber.elements.Wall class method)</a>
+      <li><a href="api/generated/compas_timber.elements.Wall.from_boundary.html#compas_timber.elements.Wall.from_boundary">from_boundary() (compas_timber.elements.Wall class method)</a>
+</li>
+      <li><a href="api/generated/compas_timber.elements.Wall.from_brep.html#compas_timber.elements.Wall.from_brep">from_brep() (compas_timber.elements.Wall class method)</a>
 </li>
       <li><a href="api/generated/compas_timber.elements.Beam.from_centerline.html#compas_timber.elements.Beam.from_centerline">from_centerline() (compas_timber.elements.Beam class method)</a>
 </li>
@@ -1498,6 +1504,8 @@ document.write(`
       </ul></li>
       <li><a href="api/generated/compas_timber.elements.FastenerTimberInterface.get_features.html#compas_timber.elements.FastenerTimberInterface.get_features">get_features() (compas_timber.elements.FastenerTimberInterface method)</a>
 </li>
+      <li><a href="api/generated/compas_timber.model.TimberModel.get_interactions_for_element.html#compas_timber.model.TimberModel.get_interactions_for_element">get_interactions_for_element() (compas_timber.model.TimberModel method)</a>
+</li>
       <li><a href="api/generated/compas_timber.design.SurfaceModel.get_interior_segment_indices.html#compas_timber.design.SurfaceModel.get_interior_segment_indices">get_interior_segment_indices() (compas_timber.design.SurfaceModel method)</a>
 </li>
       <li><a href="api/generated/compas_timber.ghpython.get_leaf_subclasses.html#compas_timber.ghpython.get_leaf_subclasses">get_leaf_subclasses() (in module compas_timber.ghpython)</a>
@@ -1703,13 +1711,29 @@ document.write(`
       <li><a href="api/generated/compas_timber.fabrication.BTLxPart.ref_side_from_face.html#compas_timber.fabrication.BTLxPart.ref_side_from_face">ref_side_from_face() (compas_timber.fabrication.BTLxPart method)</a>
 </li>
       <li><a href="api/generated/compas_timber.elements.Beam.remove_blank_extension.html#compas_timber.elements.Beam.remove_blank_extension">remove_blank_extension() (compas_timber.elements.Beam method)</a>
+
+      <ul>
+        <li><a href="api/generated/compas_timber.elements.Fastener.remove_blank_extension.html#compas_timber.elements.Fastener.remove_blank_extension">(compas_timber.elements.Fastener method)</a>
 </li>
+        <li><a href="api/generated/compas_timber.elements.Plate.remove_blank_extension.html#compas_timber.elements.Plate.remove_blank_extension">(compas_timber.elements.Plate method)</a>
+</li>
+        <li><a href="api/generated/compas_timber.elements.TimberElement.remove_blank_extension.html#compas_timber.elements.TimberElement.remove_blank_extension">(compas_timber.elements.TimberElement method)</a>
+</li>
+        <li><a href="api/generated/compas_timber.elements.Wall.remove_blank_extension.html#compas_timber.elements.Wall.remove_blank_extension">(compas_timber.elements.Wall method)</a>
+</li>
+      </ul></li>
       <li><a href="api/generated/compas_timber.model.TimberModel.remove_element.html#compas_timber.model.TimberModel.remove_element">remove_element() (compas_timber.model.TimberModel method)</a>
 </li>
       <li><a href="api/generated/compas_timber.elements.Beam.remove_features.html#compas_timber.elements.Beam.remove_features">remove_features() (compas_timber.elements.Beam method)</a>
 
       <ul>
+        <li><a href="api/generated/compas_timber.elements.Fastener.remove_features.html#compas_timber.elements.Fastener.remove_features">(compas_timber.elements.Fastener method)</a>
+</li>
         <li><a href="api/generated/compas_timber.elements.Plate.remove_features.html#compas_timber.elements.Plate.remove_features">(compas_timber.elements.Plate method)</a>
+</li>
+        <li><a href="api/generated/compas_timber.elements.TimberElement.remove_features.html#compas_timber.elements.TimberElement.remove_features">(compas_timber.elements.TimberElement method)</a>
+</li>
+        <li><a href="api/generated/compas_timber.elements.Wall.remove_features.html#compas_timber.elements.Wall.remove_features">(compas_timber.elements.Wall method)</a>
 </li>
       </ul></li>
       <li><a href="api/generated/compas_timber.model.TimberModel.remove_interaction.html#compas_timber.model.TimberModel.remove_interaction">remove_interaction() (compas_timber.model.TimberModel method)</a>
@@ -1732,6 +1756,8 @@ document.write(`
         <li><a href="api/generated/compas_timber.elements.Wall.reset.html#compas_timber.elements.Wall.reset">(compas_timber.elements.Wall method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/generated/compas_timber.connections.BallNodeJoint.restore_beams_from_keys.html#compas_timber.connections.BallNodeJoint.restore_beams_from_keys">restore_beams_from_keys() (compas_timber.connections.BallNodeJoint method)</a>
 
       <ul>
@@ -1764,10 +1790,12 @@ document.write(`
         <li><a href="api/generated/compas_timber.connections.XLapJoint.restore_beams_from_keys.html#compas_timber.connections.XLapJoint.restore_beams_from_keys">(compas_timber.connections.XLapJoint method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/generated/compas_timber.model.TimberModel.rotate.html#compas_timber.model.TimberModel.rotate">rotate() (compas_timber.model.TimberModel method)</a>
+      <li><a href="api/generated/compas_timber.elements.Wall.rotate.html#compas_timber.elements.Wall.rotate">rotate() (compas_timber.elements.Wall method)</a>
+
+      <ul>
+        <li><a href="api/generated/compas_timber.model.TimberModel.rotate.html#compas_timber.model.TimberModel.rotate">(compas_timber.model.TimberModel method)</a>
 </li>
+      </ul></li>
       <li><a href="api/generated/compas_timber.model.TimberModel.rotated.html#compas_timber.model.TimberModel.rotated">rotated() (compas_timber.model.TimberModel method)</a>
 </li>
   </ul></td>

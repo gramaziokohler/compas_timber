@@ -596,7 +596,7 @@ document.write(`
 <h1>Fastener</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Fastener">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Fastener</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/297d90b/src/compas_timber/elements/fastener.py#L13"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Fastener</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/be15525/src/compas_timber/elements/fastener.py#L13"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.timber.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></p>
 <p>A class to represent timber fasteners (screws, dowels, brackets).</p>
 <p>TODO: we should rethink this class. it is not entirely clear if it’s an abstract class or a generic fastener.
@@ -656,6 +656,12 @@ It inherits from TimberElement/Element but does not implement the appropriate me
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Fastener.from_jsonstring.html#compas_timber.elements.Fastener.from_jsonstring" title="compas_timber.elements.Fastener.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Fastener.remove_blank_extension.html#compas_timber.elements.Fastener.remove_blank_extension" title="compas_timber.elements.Fastener.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Fastener.remove_features.html#compas_timber.elements.Fastener.remove_features" title="compas_timber.elements.Fastener.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Fastener.reset.html#compas_timber.elements.Fastener.reset" title="compas_timber.elements.Fastener.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
 <td><p>Resets the element to its initial state by removing all features, extensions, and debug_info.</p></td>
