@@ -91,23 +91,24 @@ class JointRule(object):
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_rule_distance)
         joint_defs = []
         unmatched_pairs = []
+        compliant_direct_rules = []
+        for rule in direct_rules:
+            if rule.comply(rule.elements, model_max_distance=max_distance):  # see if pair complies with max distance
+                joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
+                compliant_direct_rules.append(rule)
         while element_pairs:
             pair = element_pairs.pop()
             match_found = False
-            for rule in direct_rules:
+            for rule in compliant_direct_rules:
                 if rule.contains(pair):  # see if pair is used in a direct rule
-                    if rule.comply(pair, model_max_distance=max_distance):  # see if pair complies with max distance
-                        joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
-                        match_found = True
-                        break
-
+                    match_found = True
+                    break
             if not match_found:
                 for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
                     if rule.comply(pair, model_max_distance=max_distance):
                         match_found = True
                         joint_defs.append(JointDefinition(rule.joint_type, rule.reorder(pair), **rule.kwargs))
                         break
-
             if not match_found:
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
                     comply, ordered_pair = rule.comply(pair, model_max_distance=max_distance)
@@ -178,7 +179,6 @@ class DirectRule(JointRule):
             max_distance = self.max_distance
         else:
             max_distance = model_max_distance
-
         try:
             for pair in combinations(list(elements), 2):
                 return distance_segment_segment(pair[0].centerline, pair[1].centerline) <= max_distance
