@@ -147,7 +147,6 @@ class TimberModel(Model):
             if not self.has_group(parent):
                 raise ValueError("Group {} not found in model.".format(parent))
             parent = next((group for group in self._tree.groups if group.name == parent))
-        # print("add_element({}, {}, {})".format(element, parent, kwargs))
         return super(TimberModel, self).add_element(element, parent, **kwargs)
 
     def add_group_element(self, element, name=None):

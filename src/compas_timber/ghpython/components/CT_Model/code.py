@@ -12,6 +12,7 @@ from compas_timber.design import JointRule
 from compas_timber.design import WallPopulator
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.model import TimberModel
 
 JOINT_DEFAULTS = {
@@ -37,6 +38,8 @@ class ModelComponent(component):
 
         Model = TimberModel()
         debug_info = DebugInfomation()
+
+        ##### Adding elements #####
         for element in Elements:
             # prepare elements for downstream processing
             element.reset()
@@ -48,6 +51,7 @@ class ModelComponent(component):
 
         Model.connect_adjacent_walls()
 
+        ##### Wall populating #####
         config_sets = [c_def.config_set for c_def in Containers]
         populators = []
         if any(config_sets):
@@ -55,8 +59,7 @@ class ModelComponent(component):
 
         handled_pairs = []
         wall_joint_definitions = []
-        slabs = list(Model.slabs)
-        for populator, slab in zip(populators, slabs):
+        for populator, slab in zip(populators, Model.slabs):
             elements = populator.create_elements()
             Model.add_elements(elements, parent=slab.name)
             joint_definitions = populator.create_joint_definitions(elements)
@@ -65,32 +68,43 @@ class ModelComponent(component):
                 element_a, element_b = j_def.elements
                 handled_pairs.append({element_a, element_b})
 
+        ##### Handle joinery #####
         joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
         if unmatched_pairs:
             for pair in unmatched_pairs:
                 self.AddRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info
 
-        if joint_defs:
-            if wall_joint_definitions:
-                joint_defs += wall_joint_definitions
-            # apply reversed. later joints in orginal list override ealier ones
-            for joint_def in joint_defs[::-1]:
-                joint_def.joint_type.create(Model, *joint_def.elements, **joint_def.kwargs)
+        if wall_joint_definitions:
+            joint_defs += wall_joint_definitions
+
+        # apply reversed. later joints in orginal list override ealier ones
+        for joint_def in joint_defs[::-1]:
+            joint_def.joint_type.create(Model, *joint_def.elements, **joint_def.kwargs)
 
         # checks elements compatibility and applies extensions and features resulting from joints
         bje = Model.process_joinery()
         if bje:
             debug_info.add_joint_error(bje)
 
+        ##### Handle user features #####
         if Features:
+            feature_errors = []
             features = [f for f in Features if f is not None]
             for f_def in features:
                 if not f_def.elements:
                     self.AddRuntimeMessage(Warning, "Features defined in model must have elements defined. Features without elements will be ignored")
-                else:
-                    for element in f_def.elements:
-                        element.add_features(f_def.feature_from_element(element))
+                    continue
 
+                for element in f_def.elements:
+                    try:
+                        element.add_features(f_def.feature_from_element(element))
+                    except FeatureApplicationError as ex:
+                        feature_errors.append(ex)
+
+            for error in feature_errors:
+                debug_info.add_feature_error(error)
+
+        ##### Visualization #####
         Geometry = None
         scene = Scene()
         for element in Model.elements():

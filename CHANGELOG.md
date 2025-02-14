@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `from_brep` to `compas_timber.elements.Wall.
 * Added `from_polyline` to `compas_timber.elements.Wall.
 * Added `WallJoint` to `compas_timber.connections`.
+* Added error handling when BTLx processing from geometry fails in GH.
 
 ### Changed
 
