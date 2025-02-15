@@ -19,6 +19,10 @@ class TimberElement(Element):
 
     """
 
+    def __init__(self, *args, **kwargs):
+        super(TimberElement, self).__init__(*args, **kwargs)
+        self.debug_info = []
+
     @property
     def is_beam(self):
         return False
@@ -39,12 +43,14 @@ class TimberElement(Element):
     def is_fastener(self):
         return False
 
-    def reset(self, only_joinery_features=False):
+    def remove_features(self):
+        pass
+
+    def remove_blank_extension(self):
+        pass
+
+    def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        if only_joinery_features:
-            self.remove_features([f for f in self.features if f.is_joinery_feature])
-        else:
-            self.remove_features()
-        if hasattr(self, "remove_blank_extension"):  # only beams should have this attribute
-            self.remove_blank_extension()
+        self.remove_features()
+        self.remove_blank_extension()
         self.debug_info = []

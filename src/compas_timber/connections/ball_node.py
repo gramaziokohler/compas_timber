@@ -134,11 +134,6 @@ class BallNodeJoint(Joint):
         for beam in self.beams:
             interface = self.fastener.base_interface.copy()
             pt = beam.centerline.closest_point(self._node_point)
-            print("joint point", self.node_point)
-            print("beam.key", beam.key)
-            print("pt", pt)
-            print("beam.midpoint", beam.midpoint)
-            print("beam.frame.zaxis", beam.frame.zaxis)
             interface.frame = Frame(pt, Vector.from_start_end(pt, beam.midpoint), beam.frame.zaxis)
             self.fastener.interfaces.append(interface)
             beam.add_features(interface.get_features(beam))

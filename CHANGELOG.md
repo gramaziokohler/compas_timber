@@ -8,14 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
 * Added `distance_segment_segment` to `compas_timber.utils`
 * Added `BTLxFromGeometryDefinition` class to replace the depricated `FeatureDefinition`. This allows deferred calculation of BTLx processings.
 * Added `from_shapes_and_element` class method to `Drilling`, `JackRafterCut`, and `DoubleCut` as a wrapper for their geometry based constructors for use with `BTLxFromGeometryDefinition`.
 * Added `YButtJoint` which joins the ends of three joints where the `cross_beams` get a miter cut and the `main_beam` gets a double cut.
+* Added `JackRafterCutProxy` to allow for deferred calculation of the `JackRafterCut` geometry thus improving visualization performance.
+* Added class "WallPopulator" to `compas_timber.design`.
+* Added class "WallPopulatorConfigurationSet" to `compas_timber.design`.
+* Added class "WallSelector" to `compas_timber.design`.
+* Added class "AnyWallSelector" to `compas_timber.design`.
+* Added class "LConnectionDetailA" to `compas_timber.design`.
+* Added class "LConnectionDetailB" to `compas_timber.design`.
+* Added class "TConnectionDetailA" to `compas_timber.design`.
+* Added `from_brep` to `compas_timber.elements.Wall.
+* Added `from_polyline` to `compas_timber.elements.Wall.
+* Added `WallJoint` to `compas_timber.connections`.
+* Added error handling when BTLx processing from geometry fails in GH.
 * Added `is_joinery_feature` to `BTLxProcessing` so that `Model.reset()` can optionally only remove features created by joinery.
 
 ### Changed
 
+* Updated Grasshopper Toolbox and Icons
 * Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
 * Removed model argument from `BTLxWriter` in the GH component and updated it to always return the BTLx string.
 * Fixed a bug in `compas_timber.Fabrication.StepJointNotch` related to the `orientation` and `strut_inclination` parameters.
@@ -35,9 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `max_distance` argument to `JointRule` subclasses and GH components so that max_distance can be set for each joint rule individually.
 * Changed referenced to `beam` in `Drilling` to `element`. 
 * Changed `Drill Hole` and `Trim Feature` GH components to generate the relevant `BTLxProcessing` type rather than the deprecated `FeatureDefinition` type.
-
-* Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face
-  including origin corner.
+* Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face including origin corner.
+* Bug fixes after adding `max_distance` to joint defs.
+* Using new `JackRafterCutProxy` in LMiterJoint, LButtJoint and TButtJoint.
+* Changed input type from `Element` to `Beam` in components that currently only support beams.
+* Fixed drilling GH component not taking diameter as a string.
+* Reworked `Wall` class to be defined with a standard polyline, frame and thickness.
+* Changed labels in `Show_ref_sides` GH component to be 1-based to match the spec.
 * Changed `Beam_fromCurve` GH component to accept `BTLxProcessings` directly for machinings that are not related to joinery. 
 * Changed `BTLxFeatureDefinition` GH component to directly output a `BTLxProcessing` because this does not need a deferred application.
 * `Model.reset()` now has a `only_joinery_features = False` argument.

@@ -13,7 +13,7 @@ from compas_timber.connections import LLapJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import TLapJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections import find_neighboring_beams
+from compas_timber.connections import find_neighboring_elements
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -216,7 +216,7 @@ if not compas.IPY:
             set([3, 5]),
             set([5, 6]),
         ]
-        result = find_neighboring_beams(list(example_model.beams))
+        result = find_neighboring_elements(list(example_model.beams))
         # beam objects => sets of keys for easy comparison
         key_sets = []
         for pair in result:
