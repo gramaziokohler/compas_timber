@@ -178,15 +178,13 @@ class FastenerTimberInterface(Data):
         return features
 
     def _get_hole_feature(self, hole, element):
-        """Get the line that goes through the timber element."""
+        """Get the line that goes through the timber element. Goes through the element.
+        If depth is required, holes should be added as Drilling features to the interface."""
         vector = hole.get("vector", None) or Vector(0.0, 0.0, 1.0)
-        length = vector.length
-        point = hole["point"] - vector * length * 0.5
-        drill_line = Line.from_point_direction_length(point, vector, length)
+        drill_line = Line.from_point_and_vector(hole["point"], vector)
         drill_line.transform(Transformation.from_frame(self.frame))
-        if hole["through"]:
-            pts, _ = intersection_line_beam_param(drill_line, element)
-            if pts:
-                drill_line = Line(*pts)
+        pts, _ = intersection_line_beam_param(drill_line, element)
+        if pts:
+            drill_line = Line(*pts)
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
-        return Drilling.from_line_and_element(drill_line, hole["diameter"], element)
+        return Drilling.from_line_and_element(drill_line, element, hole["diameter"])
