@@ -3,6 +3,7 @@ import pytest
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.tolerance import TOL
+from compas_timber.fabrication import BTLxProcessing
 
 from compas_timber.elements import Plate
 from compas_timber.fabrication import FreeContour
@@ -91,3 +92,22 @@ def test_plate_aperture_contour_serialization():
     assert contour_copy.header_attributes["ToolPosition"] == "right"
     assert contour_copy.header_attributes["CounterSink"] == "yes"
     assert contour_copy.contour_attributes["Depth"] == str(depth)
+
+
+
+def test_plate_aperture_BTLx():
+    plate_pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    thickness = 10.0
+    depth = 5.0
+    plate = Plate(plate_pline, thickness)
+    aperture_pline = Polyline([Point(25, 50, 0), Point(25, 150, 0), Point(75, 150, 0), Point(75, 50, 0), Point(25, 50, 0)])
+    contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth)
+
+    contour_copy = json_loads(json_dumps(contour))
+    plate.add_feature(contour_copy)
+
+
+    processing_element = BTLxProcessing.create_processing_from_dict(contour.processing_dict)
+
+    assert processing_element.tag == "FreeContour"
+    assert processing_element.attrib == contour.header_attributes

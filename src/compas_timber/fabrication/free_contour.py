@@ -154,7 +154,7 @@ class FreeContour(BTLxProcessing):
             result.append({"Line": {"EndPoint": BTLxPart.et_point_vals(point)}})
         return result
 
-    def create_processing(self):
+    def processing_dict(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
         NOTE: moved to BTLxProcessing because some processings are significantly different and need to be overridden.
 
@@ -170,16 +170,22 @@ class FreeContour(BTLxProcessing):
 
         """
         # create processing element
-        processing_element = ET.Element(
-            self.PROCESSING_NAME,
-            self.header_attributes,
-        )
-        contour_element = ET.SubElement(processing_element, "Contour", self.contour_attributes)
-        ET.SubElement(contour_element, "StartPoint", BTLxPart.et_point_vals(self.contour_points[0]))
-        for pt in self.contour_points[1:]:
-            point_element = ET.SubElement(contour_element, "Line")  # TODO: consider implementing arcs. maybe as tuple? (Point,Point)
-            point_element.append(ET.Element("EndPoint", BTLxPart.et_point_vals(pt)))
-        return processing_element
+
+        contour_dict = {
+            "name": "Contour",
+            "attributes": self.contour_attributes,
+            "content": [{"name": "StartPoint", "attributes": BTLxPart.et_point_vals(self.contour_points[0])}]
+        }
+        for pt in self.contour_points[1:]:     # TODO: consider implementing arcs. maybe as tuple? (Point,Point)
+            point_dict = {"name": "Line", "attributes":{},"content":[{"name": "EndPoint", "attributes": BTLxPart.et_point_vals(pt)}]}
+            contour_dict["content"].append(point_dict)  
+
+        processing_dict = { 
+            "name": self.PROCESSING_NAME,
+            "attributes": self.header_attributes,
+            "content": [contour_dict]
+        }
+        return processing_dict
 
 
 class FreeCountourParams(BTLxProcessingParams):

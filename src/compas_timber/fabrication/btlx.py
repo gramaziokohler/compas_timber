@@ -186,7 +186,7 @@ class BTLxWriter(object):
             for feature in beam.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = feature.create_processing()
+                    processing_element = BTLxProcessing.create_processing_from_dict(feature.processing_dict())
                     processings_element.append(processing_element)
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
@@ -447,7 +447,43 @@ class BTLxProcessing(Data):
             self.subprocessings = []
         self.subprocessings.append(subprocessing)
 
-    def create_processing(self):
+    @staticmethod
+    def create_processing_from_dict(data):
+        """
+        Recursively converts a dictionary to an ElementTree Element.
+
+        Parameters
+        ----------
+        data : dict
+            The dictionary to convert. uses structure:
+            param_dict = {
+                "name": name,
+                "attributes": {"key1": val1, "key2": val2},
+                "text":  "txt",
+                "content": [
+                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
+                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
+                    ]
+                }
+
+        Returns
+        -------
+        :class:`xml.etree.ElementTree.Element`
+            The resulting ElementTree Element.
+        """
+        element = ET.Element(data["name"], data["attributes"])
+        if data.get("text", None):
+            element.text = data["text"]
+        
+        for subdata in data.get("content", []):
+            subelement = BTLxProcessing.create_processing_from_dict(subdata)
+            element.append(subelement)
+        
+        return element
+
+
+    
+    def processing_dict(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
         moved to BTLxProcessing because some processings are significantly different and need to be overridden.
 
@@ -458,30 +494,26 @@ class BTLxProcessing(Data):
 
         Returns
         -------
-        :class:`~xml.etree.ElementTree.Element`
-            The processing element.
+        dict
+            The BTLx parameters as a dictionary.
 
         """
         # create processing element
-        processing_element = ET.Element(
-            self.PROCESSING_NAME,
-            self.header_attributes,
-        )
+        processing_dict = {
+            "name": self.PROCESSING_NAME,
+            "attributes": self.header_attributes,
+            "content": []
+        }
         # create parameter subelements
         for key, value in self.params_dict.items():
-            print(key, value)
-            if key not in self.header_attributes:
-                child = ET.SubElement(processing_element, key)
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        child.set(sub_key, sub_value)
-                else:
-                    child.text = str(value)
-        # create subprocessing elements
-        if self.subprocessings:
-            for subprocessing in self.subprocessings:
-                processing_element.append(subprocessing.create_processing())
-        return processing_element
+            sub = {"name":key}
+            sub["attributes"] = value if isinstance(value, dict) else {}
+            sub["text"] = value if isinstance(value, str) else ""
+            processing_dict["content"].append(sub)
+            if self.subprocessings:
+                for subprocessing in self.subprocessings:
+                    processing_dict["content"].append(subprocessing.processing_dict())
+        return processing_dict
 
 
 class BTLxProcessingParams(object):
