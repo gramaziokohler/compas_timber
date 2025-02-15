@@ -474,15 +474,13 @@ class BTLxProcessing(Data):
         element = ET.Element(data["name"], data["attributes"])
         if data.get("text", None):
             element.text = data["text"]
-        
+
         for subdata in data.get("content", []):
             subelement = BTLxProcessing.create_processing_from_dict(subdata)
             element.append(subelement)
-        
+
         return element
 
-
-    
     def processing_dict(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
         moved to BTLxProcessing because some processings are significantly different and need to be overridden.
@@ -499,14 +497,10 @@ class BTLxProcessing(Data):
 
         """
         # create processing element
-        processing_dict = {
-            "name": self.PROCESSING_NAME,
-            "attributes": self.header_attributes,
-            "content": []
-        }
+        processing_dict = {"name": self.PROCESSING_NAME, "attributes": self.header_attributes, "content": []}
         # create parameter subelements
         for key, value in self.params_dict.items():
-            sub = {"name":key}
+            sub = {"name": key}
             sub["attributes"] = value if isinstance(value, dict) else {}
             sub["text"] = value if isinstance(value, str) else ""
             processing_dict["content"].append(sub)
@@ -770,5 +764,4 @@ class BTLxFromGeometryDefinition(Data):
         return copy
 
     def feature_from_element(self, element):
-        print(self.kwargs)
         return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)

@@ -64,7 +64,6 @@ def test_deferred_double_cut():
 
     test_frame = Frame(Point(500, 0, 0), [-1, 0, 0], [0, 0, -1])
     test_planes = [Plane(Point(500, 0, 0), Vector(-1, 0, 1)), Plane(Point(500, 0, 0), Vector(-1, 0, -1))]
-    print(test_planes)
     xform = Transformation.from_frame_to_frame(Frame.worldXY(), test_frame)
     t_planes = [plane.transformed(xform) for plane in test_planes]
 

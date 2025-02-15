@@ -1,5 +1,3 @@
-import xml.etree.ElementTree as ET
-
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -174,17 +172,13 @@ class FreeContour(BTLxProcessing):
         contour_dict = {
             "name": "Contour",
             "attributes": self.contour_attributes,
-            "content": [{"name": "StartPoint", "attributes": BTLxPart.et_point_vals(self.contour_points[0])}]
+            "content": [{"name": "StartPoint", "attributes": BTLxPart.et_point_vals(self.contour_points[0])}],
         }
-        for pt in self.contour_points[1:]:     # TODO: consider implementing arcs. maybe as tuple? (Point,Point)
-            point_dict = {"name": "Line", "attributes":{},"content":[{"name": "EndPoint", "attributes": BTLxPart.et_point_vals(pt)}]}
-            contour_dict["content"].append(point_dict)  
+        for pt in self.contour_points[1:]:  # TODO: consider implementing arcs. maybe as tuple? (Point,Point)
+            point_dict = {"name": "Line", "attributes": {}, "content": [{"name": "EndPoint", "attributes": BTLxPart.et_point_vals(pt)}]}
+            contour_dict["content"].append(point_dict)
 
-        processing_dict = { 
-            "name": self.PROCESSING_NAME,
-            "attributes": self.header_attributes,
-            "content": [contour_dict]
-        }
+        processing_dict = {"name": self.PROCESSING_NAME, "attributes": self.header_attributes, "content": [contour_dict]}
         return processing_dict
 
 
