@@ -381,7 +381,7 @@ class Pocket(BTLxProcessing):
     def _calculate_tilt_angle(bottom_plane, plane):
         # calculate the tilt angle of the pocket based on the bottom_plane and the plane of the face to be tilted
         cross_vect = bottom_plane.normal.cross(plane.normal)
-        return abs(angle_vectors_signed(bottom_plane.normal, plane.normal, cross_vect, deg=True))
+        return abs(angle_vectors_signed(bottom_plane.normal, plane.normal, -cross_vect, deg=True))
 
 
     ########################################################################
@@ -410,8 +410,8 @@ class Pocket(BTLxProcessing):
 
         """
         # type: (Brep, Beam) -> Brep
+        # get the pocket volume
         pocket_volume = self.volume_from_params_and_beam(beam)
-
         # subtract the pocket volume from the beam geometry
         try:
             return geometry - pocket_volume
@@ -544,7 +544,7 @@ class Pocket(BTLxProcessing):
         for plane in planes:
             try:
                 pocket_volume = pocket_volume.trimmed(plane)
-            except Exception as e:
+            except Exception:
                 pass # Fail silently due to tolerance issues
 
         return pocket_volume

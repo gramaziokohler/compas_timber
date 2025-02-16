@@ -1,6 +1,5 @@
-from compas_timber.elements.features import MillVolume
-from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import Lap
+from compas_timber.fabrication import Pocket
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
@@ -54,7 +53,7 @@ class XLapJoint(LapJoint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        if are_beams_coplanar(*self.elements):  # TODO: this is a temporal solution to allow the vizualization of non-coplanar lap joints.
+        if are_beams_coplanar(*self.elements):
             # calculate the lap length and depth for each beam
             main_lap_length, cross_lap_length = self._get_lap_lengths()
             main_lap_depth, cross_lap_depth = self._get_lap_depths()
@@ -78,24 +77,15 @@ class XLapJoint(LapJoint):
                 cross_lap_depth,
                 ref_side_index=self.cross_ref_side_index,
             )
-
-            # add features to the beams
-            self.main_beam.add_features(main_lap_feature)
-            self.cross_beam.add_features(cross_lap_feature)
-
-            # register features to the joint
-            self.features.extend([main_lap_feature, cross_lap_feature])
-
+            pass
         else:
-            # TODO: this is a temporal solution to avoid the error if beams are not coplanar and allow the visualization of the joint.
-            # TODO: this solution does not generate machining features and therefore will be ignored in the fabrication process.
-            # TODO: once the Lap BTLx processing implimentation allows for non-coplanar beams, this should be removed.
-            try:
-                negative_brep_beam_a, negative_brep_beam_b = self._create_negative_volumes()
-            except Exception as ex:
-                raise BeamJoiningError(beams=self.beams, joint=self, debug_info=str(ex))
-            volume_a = MillVolume(negative_brep_beam_a)
-            volume_b = MillVolume(negative_brep_beam_b)
-            self.main_beam.add_features(volume_a)
-            self.cross_beam.add_features(volume_b)
-            self.features = [volume_a, volume_b]
+            negative_volume_main, negative_volume_cross = self._create_negative_volumes()
+            main_lap_feature = Pocket.from_volume_and_beam(negative_volume_main.to_mesh(), self.main_beam, self.main_ref_side_index)
+            cross_lap_feature = Pocket.from_volume_and_beam(negative_volume_cross.to_mesh(), self.cross_beam, self.cross_ref_side_index)
+
+        # add features to the beams
+        self.main_beam.add_features(main_lap_feature)
+        self.cross_beam.add_features(cross_lap_feature)
+
+        # register features to the joint
+        self.features.extend([main_lap_feature, cross_lap_feature])
