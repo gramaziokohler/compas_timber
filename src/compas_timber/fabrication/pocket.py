@@ -1,6 +1,7 @@
 import math
 
 from compas.datastructures import Mesh
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -412,7 +413,7 @@ class Pocket(BTLxProcessing):
         # type: (Brep, Beam) -> Brep
         # get the pocket volume
         pocket_volume = self.volume_from_params_and_beam(beam)
-        # subtract the pocket volume from the beam geometry
+
         try:
             return geometry - pocket_volume
         except IndexError:
@@ -520,10 +521,10 @@ class Pocket(BTLxProcessing):
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]
 
-
     def volume_from_params_and_beam(self, beam):
         """
-        Calculates the subtraction volume from the machining parameters in this instance and the given beam.
+        Calculates the trimming volume from the machining parameters in this instance and the given beam,
+        ensuring correct face orientation.
 
         Parameters
         ----------
@@ -532,22 +533,38 @@ class Pocket(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep
-            The volume of the pocket as a Brep.
+        :class:`compas.geometry.Mesh`
+            The correctly oriented trimming volume of the cut.
         """
         # Get cutting planes
-        planes = self._planes_from_params_and_beam(beam)
+        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_beam(beam)
         # pocket_volume = Polyhedron.from_planes(planes) #TODO: Uses Numpy which is not supported in Rhino 7
         # pocket_volume = Brep.from_planes(planes) #TODO: PluginNotInstalledError
 
-        pocket_volume = beam.geometry.copy()
-        for plane in planes:
-            try:
-                pocket_volume = pocket_volume.trimmed(plane)
-            except Exception:
-                pass # Fail silently due to tolerance issues
+        # Calculate vertices using plane-plane-plane intersection
+        vertices = [
+            Point(*intersection_plane_plane_plane(start_plane, bottom_plane, front_plane)),     # v0
+            Point(*intersection_plane_plane_plane(start_plane, bottom_plane, back_plane)),      # v1
+            Point(*intersection_plane_plane_plane(end_plane, bottom_plane, back_plane)),        # v2
+            Point(*intersection_plane_plane_plane(end_plane, bottom_plane, front_plane)),       # v3
+            Point(*intersection_plane_plane_plane(start_plane, top_plane, front_plane)),        # v4
+            Point(*intersection_plane_plane_plane(start_plane, top_plane, back_plane)),         # v5
+            Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),           # v6
+            Point(*intersection_plane_plane_plane(end_plane, top_plane, front_plane)),          # v7
+        ]
+        # define faces of the trimming volume
+        # ensure vertices are defined in counter-clockwise order when viewed from the outside
+        faces = [
+            [0, 1, 2, 3],  # Bottom face
+            [4, 5, 6, 7],  # Top face
+            [4, 5, 1, 0],  # Side face 1
+            [5, 6, 2, 1],  # Side face 2
+            [6, 7, 3, 2],  # Side face 3
+            [7, 4, 0, 3],  # Side face 4
+        ]
 
-        return pocket_volume
+        pocket_volume = Mesh.from_vertices_and_faces(vertices, faces)
+        return Brep.from_mesh(pocket_volume)
 
 
 class PocketParams(BTLxProcessingParams):
