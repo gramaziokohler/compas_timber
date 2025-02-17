@@ -37,6 +37,9 @@ class Wall(Slab):
         if len(self.outline) != 5:
             raise ValueError("Wall outline must have 4 segments.")
 
+    def __repr__(self):
+        return "Wall(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline, self.thickness)
+
     @property
     def is_wall(self):
         return True
