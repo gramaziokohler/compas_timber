@@ -175,7 +175,7 @@ class Slab(TimberElement):
         assert len(self.outline) == 5
 
     def __repr__(self):
-        return "Wall(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline, self.thickness)
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline, self.thickness)
 
     @staticmethod
     def _frame_from_polyline(polyline, normal):

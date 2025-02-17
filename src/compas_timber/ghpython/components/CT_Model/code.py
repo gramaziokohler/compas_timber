@@ -36,6 +36,9 @@ class ModelComponent(component):
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
+        # clear Nones
+        Containers = [c for c in Containers if c is not None]
+
         Model = TimberModel()
         debug_info = DebugInfomation()
 
