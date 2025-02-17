@@ -211,3 +211,122 @@ class FreeCountourParams(BTLxProcessingParams):
         result["contour_attributes"] = self._instance.contour_attributes
         result["contour_points"] = FreeContour.polyline_to_contour(self._instance.contour_points)
         return result
+
+
+class FreeContourProxy(object):
+    """This object behaves like a JackRafterCut except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+    ----------
+    plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+        The cutting plane.
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam that is cut by this instance.
+    ref_side_index : int, optional
+        The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+    """
+
+    def __init__(self, polyline, element, depth= None, interior=True, tool_position = None, ref_side_index= 3):
+        self.polyline = polyline
+        self.element = element
+        self.depth = depth
+        self.interior = interior
+        self.tool_position = tool_position
+        self.ref_side_index = ref_side_index
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCut`
+
+        """
+        if not self._processing:
+            self._processing = FreeContour.from_polyline_and_element(self.polyline, self.element, **self.params)
+        return self._processing
+
+    @classmethod
+    def from_plate(cls, plate, **kwargs):
+        """Create a JackRafterCutProxy instance from a cutting plane and the beam it should cut.
+
+        Parameters
+        ----------
+        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+            The cutting plane.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        ref_side_index : int, optional
+            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCutProxy`
+
+        """
+        kwargs["interior"] = False
+        return cls(plate.outline, plate.thickness, **kwargs)
+
+
+    @classmethod
+    def from_polyline_and_element(cls, polyline, element, **kwargs):
+        """Create a JackRafterCutProxy instance from a cutting plane and the beam it should cut.
+
+        Parameters
+        ----------
+        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+            The cutting plane.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        ref_side_index : int, optional
+            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCutProxy`
+
+        """
+        return cls(polyline, element, **kwargs)
+
+
+    def apply(self, geometry, _):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The element geometry to be cut.
+        element : :class:`compas_timber.elements.Beam or :class:`compas_timber.elements.Plate`
+            The element that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the cutting plane does not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Beam) -> Brep
+        if self.params["interior"]:
+            pts = correct_polyline_direction(pts, self.element.ref_sides[self.ref_side_index].normal, clockwise=True)
+            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_sides[self.ref_side_index].normal * self.depth * 2.0)
+            vol.translate(element.ref_sides[self.ref_side_index].normal * -self.depth)
+            return geometry - vol
+        else:
+            pts = correct_polyline_direction(pts, self.element.ref_sides[self.ref_side_index].normal)
+            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_sides[self.ref_side_index].normal * self.depth)
+            return geometry & vol
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)
