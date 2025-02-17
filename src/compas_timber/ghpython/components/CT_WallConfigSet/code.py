@@ -16,6 +16,9 @@ class WallPopulatorConfigSetComponent(component):
         if not beam_width:
             self.AddRuntimeMessage(Warning, "Input parameter 'Beam Width' failed to collect data")
 
+        if not (stud_spacing and beam_width):
+            return
+
         dims = {}
         for item in custom_dimensions:
             for key, val in item.items():
