@@ -26,6 +26,12 @@
                 "description": "(optional) Configuration set for the Slab poulator, if desired.",
                 "typeHintID": "ghdoc",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "FlipDirection",
+                "description": "(optional) Flip the orientation of the studs.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
