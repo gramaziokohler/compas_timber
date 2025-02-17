@@ -854,7 +854,7 @@ class WallPopulator(object):
 
     def generate_plates(self):
         if self._config_set.sheeting_inside:
-            self._elements.append(Plate(self.outer_polyline, self._config_set.sheeting_inside))
+            self._elements.append(Plate(self.outer_polyline.copy(), self._config_set.sheeting_inside))
         if self._config_set.sheeting_outside:
             pline = self.outer_polyline.copy()
             pline.translate(self.frame.zaxis * (self._wall.thickness + self._config_set.sheeting_outside))

@@ -11,7 +11,7 @@ from compas_timber.elements import Slab
 
 
 class SlabComponent(component):
-    def RunScript(self, surface, thickness, config_set):
+    def RunScript(self, surface, thickness, config_set, flip):
         # minimum inputs required
         if not surface:
             self.AddRuntimeMessage(Warning, "Input parameter 'Surface' failed to collect data")
@@ -40,6 +40,8 @@ class SlabComponent(component):
 
         for srf, t, c_s in zip(surface, thickness, config_set):
             wall = Slab.from_brep(Brep.from_native(srf), t)
+            if flip:
+                wall.rotate()
 
             containers.append(ContainerDefinition(wall, c_s))
             scene.add(wall.geometry)

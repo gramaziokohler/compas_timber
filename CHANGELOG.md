@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added missing arguments in configuration set component.
+* Added `FlipDirection` flag to flip stud direction of a slab.
+
 ### Changed
+
+* Fixed rotating stud direction in slab causes breaks plates and connections.
 
 ### Removed
 
