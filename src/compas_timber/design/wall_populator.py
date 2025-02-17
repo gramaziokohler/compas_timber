@@ -578,7 +578,7 @@ class WallPopulator(object):
         # type: (TimberModel, List[WallPopulatorConfigurationSet]) -> List[WallPopulator]
         """matches configuration sets to walls and returns a list of WallPopulator instances, each per wall"""
         # TODO: make sure number of walls and configuration sets match
-        walls = list(model.walls)  # TODO: these are anoying, consider making these lists again
+        walls = list(model.slabs)  # TODO: these are anoying, consider making these lists again
         if len(walls) != len(configuration_sets):
             raise ValueError("Number of walls and configuration sets do not match")
 
@@ -680,7 +680,11 @@ class WallPopulator(object):
         edge_studs = [beam_def for beam_def in perimeter_beams if beam_def.type == "edge_stud"]
         plate_beams = [beam_def for beam_def in perimeter_beams if beam_def.type == "plate"]
 
-        offset_elements(edge_studs + plate_beams)
+        # HACK alert! slabs seem to want it differently, get to the bottom of this
+        if self._wall.is_wall:
+            offset_elements(edge_studs + plate_beams)
+        else:
+            offset_elements(edge_studs + plate_beams, offset_inside=False)
         shorten_edges_to_fit_between_plates(edge_studs, plate_beams, self.dist_tolerance)
 
         self._beam_definitions.extend(perimeter_beams)

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.14.0] 2025-02-17
+
+### Added
+
 * Added `distance_segment_segment` to `compas_timber.utils`
 * Added `BTLxFromGeometryDefinition` class to replace the depricated `FeatureDefinition`. This allows deferred calculation of BTLx processings.
 * Added `from_shapes_and_element` class method to `Drilling`, `JackRafterCut`, and `DoubleCut` as a wrapper for their geometry based constructors for use with `BTLxFromGeometryDefinition`.
@@ -25,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `from_polyline` to `compas_timber.elements.Wall.
 * Added `WallJoint` to `compas_timber.connections`.
 * Added error handling when BTLx processing from geometry fails in GH.
+* Added new `Slab` class to `compas_timber.elements`.
+* Added `Slab` GH component.
 
 ### Changed
 
