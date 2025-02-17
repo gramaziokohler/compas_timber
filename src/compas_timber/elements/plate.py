@@ -10,6 +10,7 @@ from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
+from compas_timber.utils import correct_polyline_direction, is_polyline_clockwise
 
 from .timber import TimberElement
 
@@ -53,19 +54,22 @@ class Plate(TimberElement):
         data["vector"] = self.vector
         return data
 
-    def __init__(self, outline, thickness, vector=None, frame=None, **kwargs):
+    def __init__(self, outline, thickness, vector=None, frame=None, blank_extension = 0, **kwargs):
         super(Plate, self).__init__(**kwargs)
         if not outline.is_closed:
-            raise ValueError("The outline points are not coplanar.")
-        self.outline = outline
+            raise ValueError("The outline is not closed.")
+        self.blank_extension = blank_extension
         self.thickness = thickness
-        self.set_frame_and_outline(outline, vector)
+        self.outline = outline
+        self._vector = vector or None
+        self._frame = frame or None
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
         self._ref_frame = None
         self._blank = None
-        contour_feature = FreeContour.from_polyline_and_element(self.outline.points, self, interior=False)
+        self.correct_outline()
+        contour_feature = FreeContour.from_polyline_and_element(self.outline, self, interior=False)
         self.add_feature(contour_feature)
 
     def __repr__(self):
@@ -90,28 +94,30 @@ class Plate(TimberElement):
 
     @property
     def blank(self):
+        if not self._blank:
+            self._blank = self.obb.copy()
+            if self.blank_extension:
+                self._blank.xsize += 2*self.blank_extension
+                self._blank.ysize += 2*self.blank_extension
         return self._blank
 
     @property
     def blank_length(self):
-        return self._blank.xsize
+        return self.blank.xsize
 
     @property
     def width(self):
-        return self._blank.zsize
+        return self.blank.zsize
 
     @property
     def height(self):
-        return self._blank.ysize
-
-    @property
-    def vector(self):
-        return self.frame.zaxis * self.thickness
+        return self.blank.ysize
 
     @property
     def ref_frame(self):
         if not self._ref_frame:
-            self.compute_obb()
+            print(self.blank.xmin, self.blank.ymin, self.blank.zmin)
+            self._ref_frame = Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
         return self._ref_frame
 
     @property
@@ -124,27 +130,30 @@ class Plate(TimberElement):
         # type: () -> int | None
         return self.graph_node
 
+    @property
+    def frame(self):
+        if not self._frame:
+            self._frame = Frame.from_points(self.outline[0], self.outline[1], self.outline[-2])
+            if is_polyline_clockwise(self.outline, self._frame.normal):
+                self._frame = Frame(self._frame.point, self._frame.xaxis, -self._frame.yaxis)
+        return self._frame
+            # flips the frame if the frame.point is at an interior corner
+
+    @property
+    def vector(self):
+        if not self._vector:
+            self._vector = self.frame.zaxis * self.thickness
+        return self._vector
+
+
+
+
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
 
-    def set_frame_and_outline(self, outline, vector=None):
-        frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
-        aggregate_angle = 0.0  # this is used to determine if the outline is clockwise or counterclockwise
-        for i in range(len(outline.points) - 1):
-            first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
-            second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
-            aggregate_angle += angle_vectors_signed(first_vector, second_vector, frame.zaxis)
-        if aggregate_angle > 0:
-            frame = Frame(frame.point, frame.xaxis, -frame.yaxis)
-            # flips the frame if the frame.point is at an interior corner
-
-        if vector is not None and dot_vectors(frame.zaxis, vector) < 0:
-            # if the vector is pointing in the opposite direction from self.frame.normal
-            frame = Frame(frame.point, frame.yaxis, frame.xaxis)
-            self.outline = Polyline(self.outline[::-1])
-            # flips the frame if the frame.point is at an exterior corner
-        self.frame = frame
+    def correct_outline(self):
+        self.outline = correct_polyline_direction(self.outline, self.vector)
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -154,19 +163,21 @@ class Plate(TimberElement):
         ----------
         include_features : bool, optional
             If ``True``, include the features in the computed geometry.
-            If ``False``, return only the base geometry.
+            If ``False``, return only the outline geometry.
 
         Returns
         -------
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        plate_geo = Brep.from_box(self.blank)
-        for feature in self.features:
-            try:
-                plate_geo = feature.apply(plate_geo, self)
-            except FeatureApplicationError as error:
-                self.debug_info.append(error)
+        plate_geo = Brep.from_extrusion(self.outline, self.vector)
+        include_features = False
+        if include_features:
+            for feature in self.features:
+                try:
+                    plate_geo = feature.apply(plate_geo, self)
+                except FeatureApplicationError as error:
+                    self.debug_info.append(error)
         return plate_geo
 
     def compute_aabb(self, inflate=0.0):
@@ -209,19 +220,13 @@ class Plate(TimberElement):
 
         """
         vertices = []
-        for point in self.outline.points:
+        for point in self.outline:
             vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
         obb = Box.from_points(vertices)
         obb.zsize = self.thickness
         obb.translate([0, 0, self.thickness / 2])
-        self._blank = obb.copy()
-        self._blank.xsize += self.thickness
-        self._blank.ysize += self.thickness
-        self._ref_frame = Frame([self._blank.xmin, self._blank.ymin, self._blank.zmin], Vector.Xaxis(), Vector.Yaxis())
         xform_back = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
         obb.transform(xform_back)
-        self._blank.transform(xform_back)
-        self._ref_frame.transform(xform_back)
         return obb
 
     def compute_collision_mesh(self):
