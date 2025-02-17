@@ -31,7 +31,7 @@
                 "name": "FlipDirection",
                 "description": "(optional) Flip the orientation of the studs.",
                 "typeHintID": "bool",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
