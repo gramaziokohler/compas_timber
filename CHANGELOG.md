@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed rotating stud direction in slab causes breaks plates and connections.
+* Restructured some Gh Toolboxes & added Icons for Walls & Slabs
 
 ### Removed
 
