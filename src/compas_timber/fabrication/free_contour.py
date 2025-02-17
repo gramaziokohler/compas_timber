@@ -1,9 +1,10 @@
+from json import tool
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Transformation
 
-from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import correct_polyline_direction, is_polyline_clockwise
 
 from .btlx import AlignmentType
 from .btlx import BTLxPart
@@ -20,7 +21,7 @@ class FreeContour(BTLxProcessing):
         The points of the contour.
     depth : float
         The depth of the contour.
-    couter_sink : bool, optional
+    counter_sink : bool, optional
         If True, the contour is a counter sink. Default is False.
     tool_position : str, optional
         The position of the tool. Default is "left".
@@ -35,11 +36,11 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(self, contour_points, depth, couter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=False, inclination=0, **kwargs):
+    def __init__(self, contour_points, depth, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=False, inclination=0, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
         self.contour_points = contour_points
         self.depth = depth
-        self.couter_sink = couter_sink
+        self.counter_sink = counter_sink
         self.tool_position = tool_position
         self.depth_bounded = depth_bounded
         if inclination != 0:
@@ -55,7 +56,7 @@ class FreeContour(BTLxProcessing):
         data = super(FreeContour, self).__data__
         data["contour_points"] = self.contour_points
         data["depth"] = self.depth
-        data["couter_sink"] = self.couter_sink
+        data["counter_sink"] = self.counter_sink
         data["tool_position"] = self.tool_position
         data["depth_bounded"] = self.depth_bounded
         data["inclination"] = self.inclination
@@ -66,7 +67,7 @@ class FreeContour(BTLxProcessing):
         """Return the attributes to be included in the XML element."""
         return {
             "Name": self.PROCESSING_NAME,
-            "CounterSink": "yes" if self.couter_sink else "no",
+            "CounterSink": "yes" if self.counter_sink else "no",
             "ToolID": "0",
             "Process": "yes",
             "ToolPosition": self.tool_position,
@@ -86,7 +87,7 @@ class FreeContour(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline, element, depth=None, interior=True, ref_side_index=4):
+    def from_polyline_and_element(cls, polyline, element, depth=None, interior=True, tool_position = None, ref_side_index=3):
         """Construct a Contour processing from a polyline and element.
 
         Parameters
@@ -102,16 +103,29 @@ class FreeContour(BTLxProcessing):
         ref_side_index : int, optional
             The reference side index. Default is 4.
         """
-        pline = [pt.copy() for pt in polyline]
-        pline = correct_polyline_direction(pline, element.ref_frame.normal, clockwise=True)
-        tool_position = AlignmentType.RIGHT if interior else AlignmentType.LEFT  # TODO: see if we can have CCW contours. for now only CW.
-        couter_sink = True if interior else False
+        if polyline[0] != polyline[-1]: # if the polyline is not closed
+            if not tool_position:
+                raise ValueError("The polyline should be closed or a tool position should be provided.")
+            else:
+                return cls(polyline, depth, tool_position=tool_position, ref_side_index=ref_side_index)
+
+        if interior:
+            counter_sink = True
+            if is_polyline_clockwise(polyline, element.ref_sides[ref_side_index].normal):
+                tool_position = AlignmentType.LEFT
+            else:
+                tool_position = AlignmentType.RIGHT
+        else:
+            counter_sink = False
+            if is_polyline_clockwise(polyline, element.ref_sides[ref_side_index].normal):
+                tool_position = AlignmentType.RIGHT
+            else:
+                tool_position = AlignmentType.LEFT
 
         depth = depth or element.width
-        frame = element.ref_frame
-        xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-        points = [pt.transformed(xform) for pt in pline]
-        return cls(points, depth, tool_position=tool_position, couter_sink=couter_sink, ref_side_index=ref_side_index)
+        xform = Transformation.from_frame_to_frame(element.ref_frame, Frame.worldXY())
+        points = [pt.transformed(xform) for pt in polyline]
+        return cls(points, depth, tool_position=tool_position, counter_sink=counter_sink, ref_side_index=ref_side_index)
 
     ########################################################################
     # Methods
@@ -130,19 +144,24 @@ class FreeContour(BTLxProcessing):
         :class:`compas.geometry.Brep`
             The resulting geometry after processing.
 
+
         """
-        if self.tool_position == AlignmentType.RIGHT:  # contour should remove material inside of the contour
-            xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_frame)
+
+
+        if self.counter_sink:  # contour should remove material inside of the contour
+
+            xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_sides[self.ref_side_index])
             pts = [pt.transformed(xform) for pt in self.contour_points]
-            pts = correct_polyline_direction(pts, element.ref_frame.normal, clockwise=True)
-            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth * 2.0)
-            vol.translate(element.ref_frame.normal * -self.depth)
+            pts = correct_polyline_direction(pts, element.ref_sides[self.ref_side_index].normal, clockwise=True)
+            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_sides[self.ref_side_index].normal * self.depth * 2.0)
+            vol.translate(element.ref_sides[self.ref_side_index].normal * -self.depth)
             return geometry - vol
         else:
-            xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_frame)
+            print("NOT COUNTERSINK")
+            xform = Transformation.from_frame_to_frame(Frame.worldXY(), element.ref_sides[self.ref_side_index])
             pts = [pt.transformed(xform) for pt in self.contour_points]
-            pts = correct_polyline_direction(pts, element.ref_frame.normal, clockwise=True)
-            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_frame.normal * self.depth)
+            pts = correct_polyline_direction(pts, element.ref_sides[self.ref_side_index].normal)
+            vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), element.ref_sides[self.ref_side_index].normal * self.depth)
             return geometry & vol
 
     @staticmethod

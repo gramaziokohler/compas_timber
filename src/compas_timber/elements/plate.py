@@ -3,7 +3,7 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.geometry import Vector
+from compas.geometry import PlanarSurface
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas_model.elements import reset_computed
@@ -68,7 +68,6 @@ class Plate(TimberElement):
         self.debug_info = []
         self._ref_frame = None
         self._blank = None
-        self.correct_outline()
         contour_feature = FreeContour.from_polyline_and_element(self.outline, self, interior=False)
         self.add_feature(contour_feature)
 
@@ -121,6 +120,49 @@ class Plate(TimberElement):
         return self._ref_frame
 
     @property
+    def ref_sides(self):
+        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        # TODO: cache these
+        rs1_point = self.ref_frame.point
+        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
+        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
+        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
+        rs5_point = rs1_point
+        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
+        return (
+            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
+            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
+            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
+            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
+            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
+            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
+        )
+
+    def side_as_surface(self, side_index):
+        # type: (int) -> compas.geometry.PlanarSurface
+        """Returns the requested side of the beam as a parametric planar surface.
+
+        Parameters
+        ----------
+        side_index : int
+            The index of the reference side to be returned. 0 to 5.
+
+        """
+        # TODO: maybe this should be the default representation of the ref sides?
+        ref_side = self.ref_sides[side_index]
+        if side_index in (0, 2):  # top + bottom
+            xsize = self.blank_length
+            ysize = self.width
+        elif side_index in (1, 3):  # sides
+            xsize = self.blank_length
+            ysize = self.height
+        elif side_index in (4, 5):  # ends
+            xsize = self.width
+            ysize = self.height
+        return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
+
+    @property
     def has_features(self):
         # TODO: consider removing, this is not used anywhere
         return len(self.features) > 0
@@ -145,15 +187,9 @@ class Plate(TimberElement):
             self._vector = self.frame.zaxis * self.thickness
         return self._vector
 
-
-
-
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
-
-    def correct_outline(self):
-        self.outline = correct_polyline_direction(self.outline, self.vector)
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -170,14 +206,18 @@ class Plate(TimberElement):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        plate_geo = Brep.from_extrusion(self.outline, self.vector)
-        include_features = False
+        print("Computing geometry")
+        outline = Polyline(correct_polyline_direction(self.outline, self.vector, clockwise = True)) # corrects the direction of the outline to get correctly oriented Brep
+        print("CW?", is_polyline_clockwise(outline, self.vector))
+        plate_geo = Brep.from_extrusion(outline, self.vector)
         if include_features:
             for feature in self.features:
-                try:
-                    plate_geo = feature.apply(plate_geo, self)
-                except FeatureApplicationError as error:
-                    self.debug_info.append(error)
+                print(feature)
+                if feature.counter_sink:
+                    try:
+                        plate_geo = feature.apply(plate_geo, self)
+                    except FeatureApplicationError as error:
+                        self.debug_info.append(error)
         return plate_geo
 
     def compute_aabb(self, inflate=0.0):
@@ -207,11 +247,6 @@ class Plate(TimberElement):
     def compute_obb(self):
         # type: (float | None) -> compas.geometry.Box
         """Computes the Oriented Bounding Box (OBB) of the element.
-
-        Parameters
-        ----------
-        inflate : float
-            Offset of box to avoid floating point errors.
 
         Returns
         -------
