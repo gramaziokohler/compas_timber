@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Design",
     "description": "Defines a plate fastener.",
-    "exposure": 2,
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

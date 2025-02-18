@@ -2,6 +2,7 @@
 import math
 import random
 
+import Rhino
 import rhinoscriptsyntax as rs
 from compas_rhino.conversions import frame_to_rhino
 from ghpythonlib.componentbase import executingcomponent as component
@@ -19,13 +20,24 @@ class BakePlateMap(component):
             self.AddRuntimeMessage(Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)")
             return
 
+        unit_system = Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem
+
         if map_size:
             dimx, dimy, dimz = map_size
         else:
             # for the pine 251 material bitmap, rotated
-            dimx = 1.0
-            dimy = 1.0
-            dimz = 1.0
+            if unit_system == Rhino.UnitSystem.Meters:
+                dimx = 1.0
+                dimy = 1.0
+                dimz = 1.0
+            if unit_system == Rhino.UnitSystem.Centimeters:
+                dimx = 100
+                dimy = 100
+                dimz = 100
+            if unit_system == Rhino.UnitSystem.Millimeters:
+                dimx = 1000
+                dimy = 1000
+                dimz = 1000
 
         if not model:
             self.AddRuntimeMessage(Warning, "Input parameters Model failed to collect any Beam objects.")

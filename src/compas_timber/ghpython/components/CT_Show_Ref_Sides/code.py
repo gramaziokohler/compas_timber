@@ -33,7 +33,7 @@ class ShowBeamFaces(component):
                 frame.point = surface.point_at(0, ht / 4.0)
 
                 self.pl.append(frame_to_rhino(frame))
-                self.txt.append("RS_{}".format(side_index))
+                self.txt.append(surface.name)
                 self.ht.append(ht)
 
         return srfs
