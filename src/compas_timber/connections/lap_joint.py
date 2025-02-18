@@ -128,18 +128,6 @@ class LapJoint(Joint):
         ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return Plane.from_frame(beam_a.ref_sides[ref_side_index])
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
-
-        Raises
-        ------
-        UserWarning
-            If the elements are not compatible for the creation of the joint.
-        """
-        # TODO: This warning should be providing more information to the caller in regards to the affected beams and joints.
-        if not are_beams_coplanar(*self.elements):
-            warnings.warn("The beams are not coplanar, therefore BTLxProcessings will not be generated for this joint", UserWarning)
-
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
@@ -229,19 +217,18 @@ class LapJoint(Joint):
 
     def _create_negative_volumes(self):
         assert self.elements
-        beam_a, beam_b = self.elements
+        main_beam, cross_beam = self.elements
 
         # Get Cut Plane
-        plane_cut_vector = beam_a.centerline.vector.cross(beam_b.centerline.vector)
-
-        if self.flip_lap_side:
+        plane_cut_vector = main_beam.centerline.vector.cross(cross_beam.centerline.vector)
+        if plane_cut_vector.dot(main_beam.ref_sides[self.main_ref_side_index].normal) < 0 or self.flip_lap_side:
             plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
-        planes_main = self._sort_beam_planes(beam_a, plane_cut_vector)
+        planes_main = self._sort_beam_planes(main_beam, plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_main
 
-        planes_cross = self._sort_beam_planes(beam_b, -plane_cut_vector)
+        planes_cross = self._sort_beam_planes(cross_beam, -plane_cut_vector)
         plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
 
         # Lines as Frame Intersections
