@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.14.2] 2025-02-17
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.14.1] 2025-02-17
+
+### Added
+
+* Added missing arguments in configuration set component.
+* Added `FlipDirection` flag to flip stud direction of a slab.
+
+### Changed
+
+* Fixed rotating stud direction in slab causes breaks plates and connections.
+* Restructured some Gh Toolboxes & added Icons for Walls & Slabs
+
+### Removed
+
+
+## [0.14.0] 2025-02-17
+
+### Added
+
 * Added `distance_segment_segment` to `compas_timber.utils`
 * Added `BTLxFromGeometryDefinition` class to replace the depricated `FeatureDefinition`. This allows deferred calculation of BTLx processings.
 * Added `from_shapes_and_element` class method to `Drilling`, `JackRafterCut`, and `DoubleCut` as a wrapper for their geometry based constructors for use with `BTLxFromGeometryDefinition`.
@@ -25,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `from_polyline` to `compas_timber.elements.Wall.
 * Added `WallJoint` to `compas_timber.connections`.
 * Added error handling when BTLx processing from geometry fails in GH.
+* Added new `Slab` class to `compas_timber.elements`.
+* Added `Slab` GH component.
 * Added `FreeContour` BTLx processing and applied it to the `Plate` type so that plates can be machined.
 
 ### Changed
