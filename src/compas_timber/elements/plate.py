@@ -10,7 +10,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
-from datatable import f
 
 from .timber import TimberElement
 
