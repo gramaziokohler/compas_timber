@@ -25,7 +25,7 @@ class BTLxFromParams(component):
         else:
             self.processing_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
-    def RunScript(self, element, ref_side, *args):
+    def RunScript(self, element, ref_side = 0, *args):
         if not self.processing_type:
             ghenv.Component.Message = "Select Process type from context menu (right click)"
             self.AddRuntimeMessage(Warning, "Select Process type from context menu (right click)")
@@ -38,16 +38,16 @@ class BTLxFromParams(component):
                 if val is not None:
                     kwargs[arg] = val
 
-            process = self.processing_type(**kwargs)
-            print(process)
+            processing = self.processing_type(**kwargs)
 
             scene = Scene()
-            if process and element:
+            if processing and element:
                 for e in element:
-                    e.add_features(process)
-                    scene.add(e.geometry)
+                    e_copy = e.copy()
+                    e_copy.add_features(processing)
+                    scene.add(e_copy.geometry)
 
-            return DeferredBTLxProcessing(process,element), scene.draw()
+            return DeferredBTLxProcessing(processing, element), scene.draw()
 
     def arg_names(self):
         return inspect.getargspec(self.processing_type.__init__)[0][1:]
@@ -65,3 +65,16 @@ class BTLxFromParams(component):
         ghenv.Component.ExpireSolution(True)
 
 
+class DeferredBTLxProcessing(object):
+    def __init__(self, processing, elements):
+        self.processing = processing
+        self.elements = elements if isinstance(elements, list) else [elements]
+
+    def __str__(self):
+        return "DeferredBTLxProcessing({})".format(self.process)
+
+    def __repr__(self):
+        return "DeferredBTLxProcessing(process={!r})".format(self.process)
+
+    def feature_from_element(self, element):
+        return self.processing
