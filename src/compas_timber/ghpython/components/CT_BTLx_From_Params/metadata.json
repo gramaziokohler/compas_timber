@@ -1,0 +1,36 @@
+{
+    "name": "BTLx From Parameters",
+    "nickname": "BTLxFromParams",
+    "category": "COMPAS Timber",
+    "subcategory": "Features",
+    "description": "Generates a feature from BTLx parameters.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Element",
+                "description": "Element to apply BTLx feature to.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Reference Side",
+                "description": "integer 0-5 corresponding to BTLx reference side 1-6.",
+                "typeHintID": "int",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Feature",
+                "description": "Feature Definition. Should connect to CT_Model features input."
+            },
+            {
+                "name": "Preview",
+                "description": "Preview of geometry resulting from aplying BTLxProcesssing on element. Depending on joinery operations, this might not mathc the final geometry."
+            }
+        ]
+    }
+}
