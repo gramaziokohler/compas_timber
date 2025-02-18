@@ -5,6 +5,7 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polyhedron
 from compas.geometry import Projection
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
@@ -288,18 +289,39 @@ class Pocket(BTLxProcessing):
 
     @classmethod
     def from_volume_and_beam(cls, volume, beam, ref_side_index=0):
-        if not isinstance(volume, Mesh):
-            raise ValueError("Volume must be a Mesh.")
+        """Construct a Pocket feature from a volume and a beam.
 
-        if volume.number_of_faces() != 6:
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Mesh` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Polyhedron`
+            The volume of the pocket. Must have 6 faces.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        ref_side_index : int, optional
+            The index of the reference side of the beam. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The Pocket feature.
+
+        """
+        if isinstance(volume, Mesh):
+            planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
+        elif isinstance(volume, Polyhedron):
+            planes = volume.planes
+        elif isinstance(volume, Brep):
+            volume_frames = [face.frame_at(0,0) for face in volume.faces]
+            planes = [Plane.from_frame(frame) for frame in volume_frames]
+        else:
+            raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
+
+        if len(planes) != 6:
             raise ValueError("Volume must have 6 faces.")
 
         # get ref_side, and ref_edge from the beam
         ref_side = beam.ref_sides[ref_side_index]
 
-        # get planes from volume
-        # Extract planes from the volume
-        planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         # sort the planes based on the reference side
         start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = cls._sort_planes(planes, ref_side)
 
@@ -312,14 +334,6 @@ class Pocket(BTLxProcessing):
         # calculate start_x, start_y, start_depth
         start_x, start_y, start_depth = cls._calculate_start_x_y_depth(ref_side, start_point)
 
-        # calculate length
-        vect_length = start_point - end_point
-        length = abs(vect_length.dot(start_plane.normal))
-
-        # calculate the width
-        vect_width = start_point - back_point
-        width = abs(vect_width.dot(ref_side.yaxis))
-
         # calculate the angle of the pocket
         angle = cls._calculate_angle_in_plane(ref_side.yaxis, -front_plane.normal, ref_side.normal)
 
@@ -330,7 +344,13 @@ class Pocket(BTLxProcessing):
         slope = cls._calculate_angle_in_plane(ref_side.normal, -bottom_plane.normal, ref_side.xaxis)
 
         # calculate internal_angle
+        vect_length = start_point - end_point
+        vect_width = start_point - back_point
         internal_angle = angle_vectors_signed(vect_length, vect_width, ref_side.normal, deg=True)
+
+        # calculate length and width
+        length = vect_length.length*math.sin(math.radians(internal_angle))
+        width = vect_width.length*math.sin(math.radians(internal_angle))
 
         # calculate tilt angles
         tilt_ref_side = cls._calculate_tilt_angle(bottom_plane, front_plane)
@@ -398,6 +418,7 @@ class Pocket(BTLxProcessing):
     def _calculate_tilt_angle(bottom_plane, plane):
         # calculate the tilt angle of the pocket based on the bottom_plane and the plane of the face to be tilted
         return angle_vectors(-bottom_plane.normal, plane.normal, deg=True)
+
     ########################################################################
     # Methods
     ########################################################################
@@ -561,8 +582,8 @@ class Pocket(BTLxProcessing):
         """
         # Get cutting planes
         start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_beam(beam)
-        # pocket_volume = Polyhedron.from_planes([start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane]) #TODO: Uses Numpy which is not supported in Rhino 7
-        # pocket_volume = Brep.from_planes(planes) #TODO: PluginNotInstalledError
+        # pocket_volume = Polyhedron.from_planes(self._planes_from_params_and_beam(beam)) #TODO: Uses Numpy which is not supported in Rhino 7
+        # pocket_volume = Brep.from_planes(self._planes_from_params_and_beam(beam)) #TODO: PluginNotInstalledError
 
         # Calculate vertices using plane-plane-plane intersection
         vertices = [
@@ -575,6 +596,7 @@ class Pocket(BTLxProcessing):
             Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),           # v6
             Point(*intersection_plane_plane_plane(end_plane, top_plane, front_plane)),          # v7
         ]
+
         # define faces of the trimming volume
         # ensure vertices are defined in counter-clockwise order when viewed from the outside
         faces = [
