@@ -3,7 +3,7 @@ import pytest
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.tolerance import TOL
-from compas_timber.fabrication import BTLxProcessing
+from compas_timber.fabrication import BTLxWriter
 
 from compas_timber.elements import Plate
 from compas_timber.fabrication import FreeContour
@@ -116,7 +116,7 @@ def test_plate_aperture_BTLx():
     contour_copy = json_loads(json_dumps(contour))
     plate.add_feature(contour_copy)
 
-    processing_element = BTLxProcessing.create_processing_from_dict(contour.processing_dict())
+    processing_element = BTLxWriter._create_processing_from_dict(contour.processing_dict())
 
     assert processing_element.tag == "FreeContour"
     assert processing_element.attrib == contour.header_attributes

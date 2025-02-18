@@ -188,13 +188,47 @@ class BTLxWriter(object):
             for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = BTLxProcessing.create_processing_from_dict(feature.processing_dict())
+                    processing_element = BTLxWriter._create_processing_from_dict(feature.processing_dict())
                     processings_element.append(processing_element)
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
         part_element.append(part.et_shape)
         return part_element
+
+    @staticmethod
+    def _create_processing_from_dict(data):         #TODO: should we generate the whole BTLx file from a single dictionary like this?
+        """
+        Recursively converts a dictionary to an ElementTree Element.
+
+        Parameters
+        ----------
+        data : dict
+            The dictionary to convert. uses structure:
+            param_dict = {
+                "name": name,
+                "attributes": {"key1": val1, "key2": val2},
+                "text":  "txt",
+                "content": [
+                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
+                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
+                    ]
+                }
+
+        Returns
+        -------
+        :class:`xml.etree.ElementTree.Element`
+            The resulting ElementTree Element.
+        """
+        element = ET.Element(data["name"], data["attributes"])
+        if data.get("text", None):
+            element.text = data["text"]
+
+        for subdata in data.get("content", []):
+            subelement = BTLxWriter._create_processing_from_dict(subdata)
+            element.append(subelement)
+
+        return element
 
 
 class BTLxPart(object):
@@ -448,40 +482,6 @@ class BTLxProcessing(Data):
         if not self.subprocessings:
             self.subprocessings = []
         self.subprocessings.append(subprocessing)
-
-    @staticmethod
-    def create_processing_from_dict(data):
-        """
-        Recursively converts a dictionary to an ElementTree Element.
-
-        Parameters
-        ----------
-        data : dict
-            The dictionary to convert. uses structure:
-            param_dict = {
-                "name": name,
-                "attributes": {"key1": val1, "key2": val2},
-                "text":  "txt",
-                "content": [
-                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
-                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
-                    ]
-                }
-
-        Returns
-        -------
-        :class:`xml.etree.ElementTree.Element`
-            The resulting ElementTree Element.
-        """
-        element = ET.Element(data["name"], data["attributes"])
-        if data.get("text", None):
-            element.text = data["text"]
-
-        for subdata in data.get("content", []):
-            subelement = BTLxProcessing.create_processing_from_dict(subdata)
-            element.append(subelement)
-
-        return element
 
     def processing_dict(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.

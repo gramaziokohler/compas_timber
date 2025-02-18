@@ -192,7 +192,7 @@ def test_create_processing_with_dict_params():
 
     processing = MockProcessing()
     processing_dict = processing.processing_dict()
-    processing_element = BTLxProcessing.create_processing_from_dict(processing_dict)
+    processing_element = BTLxWriter._create_processing_from_dict(processing_dict)
 
     assert processing_element.tag == "MockProcessing"
     assert processing_element.attrib == processing.header_attributes
