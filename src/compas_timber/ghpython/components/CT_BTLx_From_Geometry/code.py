@@ -3,6 +3,7 @@ import inspect
 import Rhino.Geometry as rg
 from compas.geometry import Line
 from compas_rhino.conversions import plane_to_compas
+from compas_rhino.conversions import polyline_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
@@ -37,15 +38,17 @@ class BTLxFromGeometry(component):
         else:
             ghenv.Component.Message = self.processing_type.__name__
             for arg, arg_name in zip(args, self.arg_names()):
-                if not arg:
+                if arg is not None:
                     self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data".format(arg_name))
-                    return
+
             geometries = []
             for geo, arg_name in zip(args, self.arg_names())[0 : self.geometry_count]:
-                if isinstance(geo, rg.Curve):
+                if isinstance(geo, rg.LineCurve):
                     geometries.append(Line(geo.PointAtStart, geo.PointAtEnd))
                 elif isinstance(geo, rg.Plane):
                     geometries.append(plane_to_compas(geo))
+                elif isinstance(geo, rg.PolylineCurve):
+                    geometries.append(polyline_to_compas(geo.ToPolyline()))
                 else:
                     self.AddRuntimeMessage(Error, "Input parameter {} collect unusable data".format(arg_name))
             if not geometries:
@@ -57,7 +60,7 @@ class BTLxFromGeometry(component):
             for key, val in zip(self.arg_names()[self.geometry_count :], args[self.geometry_count :]):
                 if val is not None:
                     kwargs[key] = val
-            return BTLxFromGeometryDefinition(self.processing_type(), **kwargs)
+            return BTLxFromGeometryDefinition(self.processing_type, **kwargs)
 
     def arg_names(self):
         names = inspect.getargspec(self.processing_type.from_shapes_and_element)[0][1:]

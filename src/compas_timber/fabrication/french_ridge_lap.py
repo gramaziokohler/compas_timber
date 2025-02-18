@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -450,7 +451,7 @@ class FrenchRidgeLapParams(BTLxProcessingParams):
             The parameters of the French Ridge Lap feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(FrenchRidgeLapParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)

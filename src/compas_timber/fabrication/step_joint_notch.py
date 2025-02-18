@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -728,7 +729,7 @@ class StepJointNotchParams(BTLxProcessingParams):
             The parameters of the Step Joint Notch as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(StepJointNotchParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)

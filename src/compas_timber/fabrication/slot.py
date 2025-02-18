@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -354,7 +356,7 @@ class SlotParams(BTLxProcessingParams):
             The parameters of the Slot feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(SlotParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)

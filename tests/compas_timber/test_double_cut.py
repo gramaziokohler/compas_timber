@@ -173,7 +173,8 @@ def test_double_cut_params(
     double_cut = DoubleCut.from_planes_and_beam(cutting_planes, main_beams[test_index], ref_side_index)
 
     # Validate generated parameters
-    generated_params = double_cut.params_dict
+    generated_params = double_cut.header_attributes
+    generated_params.update(double_cut.params_dict)
     for key, value in expected_double_cut_params.items():
         assert generated_params[key] == value
 

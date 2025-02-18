@@ -225,7 +225,8 @@ def test_tenon_params(
         ref_side_index=ref_side_index,
     )
     # Validate generated parameters
-    generated_params = tenon.params_dict
+    generated_params = tenon.header_attributes
+    generated_params.update(tenon.params_dict)
     for key, value in expected_tenon_params[test_index].items():
         assert generated_params[key] == value
 
@@ -286,7 +287,8 @@ def test_mortise_params(
     )
 
     # Validate generated parameters
-    generated_params = mortise.params_dict
+    generated_params = mortise.header_attributes
+    generated_params.update(mortise.params_dict)
     for key, value in expected_mortise_params[test_index].items():
         assert generated_params[key] == value
 
