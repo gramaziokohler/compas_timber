@@ -1,16 +1,15 @@
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import PlanarSurface
 from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.geometry import PlanarSurface
-from compas.geometry import angle_vectors_signed
-from compas.geometry import dot_vectors
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
-from compas_timber.utils import correct_polyline_direction, is_polyline_clockwise
+from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
 
@@ -54,7 +53,7 @@ class Plate(TimberElement):
         data["vector"] = self.vector
         return data
 
-    def __init__(self, outline, thickness, vector=None, frame=None, blank_extension = 0, **kwargs):
+    def __init__(self, outline, thickness, vector=None, frame=None, blank_extension=0, **kwargs):
         super(Plate, self).__init__(**kwargs)
         if not outline.is_closed:
             raise ValueError("The outline is not closed.")
@@ -68,8 +67,7 @@ class Plate(TimberElement):
         self.debug_info = []
         self._ref_frame = None
         self._blank = None
-        contour_feature = FreeContour.from_polyline_and_element(self.outline, self, interior=False)
-        self.add_feature(contour_feature)
+        self._features = []
 
     def __repr__(self):
         # type: () -> str
@@ -96,8 +94,8 @@ class Plate(TimberElement):
         if not self._blank:
             self._blank = self.obb.copy()
             if self.blank_extension:
-                self._blank.xsize += 2*self.blank_extension
-                self._blank.ysize += 2*self.blank_extension
+                self._blank.xsize += 2 * self.blank_extension
+                self._blank.ysize += 2 * self.blank_extension
         return self._blank
 
     @property
@@ -115,7 +113,6 @@ class Plate(TimberElement):
     @property
     def ref_frame(self):
         if not self._ref_frame:
-            print(self.blank.xmin, self.blank.ymin, self.blank.zmin)
             self._ref_frame = Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
         return self._ref_frame
 
@@ -163,9 +160,8 @@ class Plate(TimberElement):
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
 
     @property
-    def has_features(self):
-        # TODO: consider removing, this is not used anywhere
-        return len(self.features) > 0
+    def features(self):
+        return [FreeContour.from_polyline_and_element(self.outline, self, interior=False)] + self._features
 
     @property
     def key(self):
@@ -179,7 +175,7 @@ class Plate(TimberElement):
             if is_polyline_clockwise(self.outline, self._frame.normal):
                 self._frame = Frame(self._frame.point, self._frame.xaxis, -self._frame.yaxis)
         return self._frame
-            # flips the frame if the frame.point is at an interior corner
+        # flips the frame if the frame.point is at an interior corner
 
     @property
     def vector(self):
@@ -190,6 +186,18 @@ class Plate(TimberElement):
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
+
+    def add_feature(self, feature):
+        # type: (compas_timber.parts.Feature) -> None
+        """Adds a feature to the plate.
+
+        Parameters
+        ----------
+        feature : :class:`~compas_timber.parts.Feature`
+            The feature to be added.
+
+        """
+        self._features.append(feature)
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -206,18 +214,14 @@ class Plate(TimberElement):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        print("Computing geometry")
-        outline = Polyline(correct_polyline_direction(self.outline, self.vector, clockwise = True)) # corrects the direction of the outline to get correctly oriented Brep
-        print("CW?", is_polyline_clockwise(outline, self.vector))
+        outline = Polyline(correct_polyline_direction(self.outline, self.vector, clockwise=True))  # corrects the direction of the outline to get correctly oriented Brep
         plate_geo = Brep.from_extrusion(outline, self.vector)
         if include_features:
-            for feature in self.features:
-                print(feature)
-                if feature.counter_sink:
-                    try:
-                        plate_geo = feature.apply(plate_geo, self)
-                    except FeatureApplicationError as error:
-                        self.debug_info.append(error)
+            for feature in self._features:
+                try:
+                    plate_geo = feature.apply(plate_geo, self)
+                except FeatureApplicationError as error:
+                    self.debug_info.append(error)
         return plate_geo
 
     def compute_aabb(self, inflate=0.0):
@@ -292,7 +296,7 @@ class Plate(TimberElement):
         """
         if not isinstance(features, list):
             features = [features]
-        self.features.extend(features)
+        self._features.extend(features)
 
     @reset_computed
     def remove_features(self, features=None):
@@ -305,8 +309,8 @@ class Plate(TimberElement):
 
         """
         if features is None:
-            self.features = []
+            self._features = []
         else:
             if not isinstance(features, list):
                 features = [features]
-            self.features = [f for f in self.features if f not in features]
+            self._features = [f for f in self._features if f not in features]

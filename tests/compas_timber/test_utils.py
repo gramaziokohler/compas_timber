@@ -44,16 +44,18 @@ def test_intersection_line_plane_param():
     assert TOL.is_allclose(expected_point, intersection_point)
     assert TOL.is_close(expected_t, t)
 
+
 def test_is_polyline_clockwise():
     pline_ccw = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
-    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0],  [1, 0, 0], [0, 0, 0]])
+    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
 
-    assert is_polyline_clockwise(pline_ccw, [0, 0, 1]) == False
-    assert is_polyline_clockwise(pline_cw, [0, 0, 1]) == True
+    assert not is_polyline_clockwise(pline_ccw, [0, 0, 1])
+    assert is_polyline_clockwise(pline_cw, [0, 0, 1])
+
 
 def test_correct_polyline_direction():
     pline_ccw = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
-    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0],  [1, 0, 0], [0, 0, 0]])
+    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
 
     pline_ccw_corrected = correct_polyline_direction(pline_ccw, [0, 0, 1], clockwise=True)
     pline_cw_corrected = correct_polyline_direction(pline_cw, [0, 0, 1], clockwise=False)

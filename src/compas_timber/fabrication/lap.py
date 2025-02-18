@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -643,7 +644,7 @@ class LapParams(BTLxProcessingParams):
             The parameters of the Lap feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(LapParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)

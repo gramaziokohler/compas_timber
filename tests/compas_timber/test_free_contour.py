@@ -23,8 +23,8 @@ def test_plate_blank():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 210.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 110.0)
+    assert TOL.is_zero(plate.blank.xsize - 200.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
+    assert TOL.is_zero(plate.blank.ysize - 100.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
@@ -34,8 +34,19 @@ def test_plate_blank_reversed():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 110.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 210.0)
+    assert TOL.is_zero(plate.blank.xsize - 100.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
+    assert TOL.is_zero(plate.blank.ysize - 200.0)
+    assert TOL.is_zero(plate.blank.zsize - 10.0)
+
+
+def test_plate_blank_extension():
+    pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    plate = Plate(pline, 10.0, blank_extension=5.0)
+
+    assert len(plate.features) == 1
+    assert isinstance(plate.features[0], FreeContour)
+    assert TOL.is_zero(plate.blank.xsize - 210.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
+    assert TOL.is_zero(plate.blank.ysize - 110.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
@@ -45,7 +56,7 @@ def test_plate_contour():
     plate = Plate(pline, thickness)
 
     expected = {
-        "header_attributes": {"ToolID": "0", "Name": "FreeContour", "ToolPosition": "left", "ReferencePlaneID": "4", "CounterSink": "no", "Process": "yes"},
+        "header_attributes": {"ToolID": "0", "Name": "FreeContour", "ToolPosition": "right", "ReferencePlaneID": "4", "CounterSink": "no", "Process": "yes"},
         "contour_attributes": {"Inclination": "0", "DepthBounded": "no", "Depth": "10.0"},
         "contour_points": [
             {"StartPoint": {"Y": "105.000", "X": "5.000", "Z": "0.000"}},
@@ -71,7 +82,7 @@ def test_plate_aperture_contour():
 
     assert len(plate.features) == 2
     assert plate.features[1] == contour
-    assert contour.header_attributes["ToolPosition"] == "right"
+    assert contour.header_attributes["ToolPosition"] == "left"
     assert contour.header_attributes["CounterSink"] == "yes"
     assert contour.contour_attributes["Depth"] == str(depth)
 
@@ -89,7 +100,7 @@ def test_plate_aperture_contour_serialization():
 
     assert len(plate.features) == 2
     assert plate.features[1] == contour_copy
-    assert contour_copy.header_attributes["ToolPosition"] == "right"
+    assert contour_copy.header_attributes["ToolPosition"] == "left"
     assert contour_copy.header_attributes["CounterSink"] == "yes"
     assert contour_copy.contour_attributes["Depth"] == str(depth)
 

@@ -7,7 +7,6 @@ from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.geometry import angle_vectors_signed
 from compas.geometry import add_vectors
-from compas.geometry import angle_vectors_signed
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
@@ -17,7 +16,6 @@ from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.geometry import Frame
 from compas.geometry import Transformation
-from compas.geometry import Vector
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_line_line
@@ -336,4 +334,13 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
         return Polyline(polyline[::-1])
     return polyline
 
-__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "classify_polyline_segments", "distance_segment_segment", "is_polyline_clockwise", "correct_polyline_direction"]
+
+__all__ = [
+    "intersection_line_line_param",
+    "intersection_line_plane_param",
+    "intersection_line_beam_param",
+    "classify_polyline_segments",
+    "distance_segment_segment",
+    "is_polyline_clockwise",
+    "correct_polyline_direction",
+]

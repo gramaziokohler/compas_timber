@@ -247,7 +247,8 @@ def test_lap_params_obj():
         ref_side_index=0,
     )
 
-    params = instance.params_dict
+    params = instance.header_attributes
+    params.update(instance.params_dict)
 
     assert params["Name"] == "Lap"
     assert params["Process"] == "yes"

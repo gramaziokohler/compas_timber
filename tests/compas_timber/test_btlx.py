@@ -180,7 +180,7 @@ def test_float_formatting_of_param_dicts():
     assert params_dict["StartDepth"] == "{:.3f}".format(test_processing.start_depth)
     assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
     assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
-    assert params_dict["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
+    assert test_processing.header_attributes["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
 
 
 def test_create_processing_with_dict_params():

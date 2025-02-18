@@ -211,7 +211,8 @@ def test_stepjointnotch_params(
     )
 
     # Validate generated parameters
-    generated_params = step_joint_notch.params_dict
+    generated_params = step_joint_notch.header_attributes
+    generated_params.update(step_joint_notch.params_dict)
     for key, value in expected_notch_params.items():
         assert generated_params[key] == value
 
@@ -246,6 +247,7 @@ def test_stepjoint_params(
     )
 
     # Validate generated parameters
-    generated_params = step_joint.params_dict
+    generated_params = step_joint.header_attributes
+    generated_params.update(step_joint.params_dict)
     for key, value in expected_step_params.items():
         assert generated_params[key] == value

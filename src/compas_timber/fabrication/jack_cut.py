@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
@@ -321,7 +322,7 @@ class JackRafterCutParams(BTLxProcessingParams):
             The parameters of the Jack Rafter Cut feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(JackRafterCutParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
