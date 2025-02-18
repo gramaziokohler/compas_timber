@@ -197,7 +197,7 @@ class BTLxWriter(object):
         return part_element
 
     @staticmethod
-    def _create_processing_from_dict(data):         #TODO: should we generate the whole BTLx file from a single dictionary like this?
+    def _create_processing_from_dict(data):  # TODO: should we generate the whole BTLx file from a single dictionary like this?
         """
         Recursively converts a dictionary to an ElementTree Element.
 
