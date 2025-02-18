@@ -10,6 +10,7 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
+from datatable import f
 
 from .timber import TimberElement
 
@@ -162,6 +163,10 @@ class Plate(TimberElement):
     @property
     def features(self):
         return [FreeContour.from_polyline_and_element(self.outline, self, interior=False)] + self._features
+
+    @features.setter
+    def features(self, features):
+        self._features = features
 
     @property
     def key(self):
