@@ -309,7 +309,8 @@ class Pocket(BTLxProcessing):
         if isinstance(volume, Mesh):
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Polyhedron):
-            planes = volume.planes
+            volume = volume.to_mesh()
+            planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
             volume_frames = [face.frame_at(0,0) for face in volume.faces]
             planes = [Plane.from_frame(frame) for frame in volume_frames]
@@ -319,6 +320,7 @@ class Pocket(BTLxProcessing):
         if len(planes) != 6:
             raise ValueError("Volume must have 6 faces.")
 
+
         # get ref_side, and ref_edge from the beam
         ref_side = beam.ref_sides[ref_side_index]
 
@@ -326,9 +328,12 @@ class Pocket(BTLxProcessing):
         start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = cls._sort_planes(planes, ref_side)
 
         # get the intersection points
-        start_point = Point(*intersection_plane_plane_plane(start_plane, front_plane, bottom_plane))
-        back_point = Point (*intersection_plane_plane_plane(start_plane, back_plane, bottom_plane))
-        end_point = Point(*intersection_plane_plane_plane(end_plane, front_plane, bottom_plane))
+        try:
+            start_point = Point(*intersection_plane_plane_plane(start_plane, front_plane, bottom_plane, tol=TOL.ABSOLUTE))
+            back_point = Point (*intersection_plane_plane_plane(start_plane, back_plane, bottom_plane, tol=TOL.ABSOLUTE))
+            end_point = Point(*intersection_plane_plane_plane(end_plane, front_plane, bottom_plane, tol=TOL.ABSOLUTE))
+        except TypeError as te:
+            raise ValueError("The planes do not intersect. " + str(te))
 
         ## params calculations
         # calculate start_x, start_y, start_depth
@@ -445,8 +450,18 @@ class Pocket(BTLxProcessing):
 
         """
         # type: (Brep, Beam) -> Brep
-        # get the pocket volume
-        pocket_volume = self.volume_from_params_and_beam(beam)
+        # get the pocket volume as a polyhedron
+        polyhedron_volume = self.volume_from_params_and_beam(beam)
+
+        # convert the polyhedron to a brep
+        try:
+            pocket_volume = Brep.from_mesh(polyhedron_volume.to_mesh())
+        except Exception as e:
+            raise FeatureApplicationError(
+                polyhedron_volume,
+                geometry,
+                "The pocket volume could not be converted to a Brep." + str(e),
+            )
 
         try:
             return geometry - pocket_volume
@@ -534,7 +549,7 @@ class Pocket(BTLxProcessing):
 
         # tilt start frame
         if self.machining_limits["FaceLimitedStart"]:
-            start_frame = bottom_frame.rotated(math.radians(self.tilt_start_side), -bottom_frame.xaxis, point=bottom_frame.point)
+            start_frame = bottom_frame.rotated(math.radians(180-self.tilt_start_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             start_frame = beam.ref_sides[4]
             start_frame.translate(start_frame.normal * tol.absolute)
@@ -542,7 +557,7 @@ class Pocket(BTLxProcessing):
         # tilt end frame
         if self.machining_limits["FaceLimitedEnd"]:
             end_frame = bottom_frame.translated(bottom_frame.yaxis * self.length)
-            end_frame.rotate(math.radians(self.tilt_end_side), end_frame.xaxis, point=end_frame.point)
+            end_frame.rotate(math.radians(180-self.tilt_end_side), -end_frame.xaxis, point=end_frame.point)
         else:
             end_frame = beam.ref_sides[5]
             end_frame.translate(end_frame.normal * tol.absolute)
@@ -567,7 +582,7 @@ class Pocket(BTLxProcessing):
 
     def volume_from_params_and_beam(self, beam):
         """
-        Calculates the trimming volume from the machining parameters in this instance and the given beam,
+        Calculates the subtracting volume from the machining parameters in this instance and the given beam,
         ensuring correct face orientation.
 
         Parameters
@@ -577,13 +592,11 @@ class Pocket(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Mesh`
-            The correctly oriented trimming volume of the cut.
+        :class:`compas.geometry.Polyhedron`
+            The correctly oriented subtracting volume of the pocket.
         """
         # Get cutting planes
         start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_beam(beam)
-        # pocket_volume = Polyhedron.from_planes(self._planes_from_params_and_beam(beam)) #TODO: Uses Numpy which is not supported in Rhino 7
-        # pocket_volume = Brep.from_planes(self._planes_from_params_and_beam(beam)) #TODO: PluginNotInstalledError
 
         # Calculate vertices using plane-plane-plane intersection
         vertices = [
@@ -601,15 +614,14 @@ class Pocket(BTLxProcessing):
         # ensure vertices are defined in counter-clockwise order when viewed from the outside
         faces = [
             [0, 1, 2, 3],  # Bottom face
-            [4, 5, 6, 7],  # Top face
-            [4, 5, 1, 0],  # Side face 1
-            [5, 6, 2, 1],  # Side face 2
-            [6, 7, 3, 2],  # Side face 3
-            [7, 4, 0, 3],  # Side face 4
+            [7, 6, 5, 4],  # Top face
+            [4, 5, 1, 0],  # Start face
+            [5, 6, 2, 1],  # Back face
+            [6, 7, 3, 2],  # End face
+            [7, 4, 0, 3],  # Front face
         ]
 
-        pocket_volume = Mesh.from_vertices_and_faces(vertices, faces)
-        return Brep.from_mesh(pocket_volume)
+        return Polyhedron(vertices, faces)
 
 
 class PocketParams(BTLxProcessingParams):
