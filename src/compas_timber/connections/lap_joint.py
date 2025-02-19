@@ -1,6 +1,3 @@
-import warnings
-
-from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -11,10 +8,7 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
 
-from compas_timber.errors import BeamJoiningError
-
 from .joint import Joint
-from .utilities import are_beams_coplanar
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 
@@ -128,50 +122,6 @@ class LapJoint(Joint):
         ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return Plane.from_frame(beam_a.ref_sides[ref_side_index])
 
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
-
-    def _get_lap_lengths(self):
-        lap_length_main = self.cross_beam.side_as_surface(self.cross_ref_side_index).ysize
-        lap_length_cross = self.main_beam.side_as_surface(self.main_ref_side_index).ysize
-        return lap_length_main, lap_length_cross
-
-    def _get_lap_depths(self):
-        """Returns the lap depths from the distance between the two lap faces and the bias value."""
-        main_frame = self.main_beam.ref_sides[self.main_ref_side_index]
-        cross_frame = self.cross_beam.ref_sides[self.cross_ref_side_index]
-
-        vect = main_frame.point - cross_frame.point
-        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
-        cross_vect.unitize()
-        lap_depth = abs(cross_vect.dot(vect))
-
-        main_lap_depth = lap_depth * self.cut_plane_bias
-        cross_lap_depth = lap_depth * (1 - self.cut_plane_bias)
-
-        main_height = self.main_beam.get_dimensions_relative_to_side(self.main_ref_side_index)[1]
-        cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_ref_side_index)[1]
-
-        if main_lap_depth >= main_height or cross_lap_depth >= cross_height:  # TODO: should we instead bypass the bias and use the max. possible depth?
-            raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Lap depth is bigger than the beam's height. Consider revising the bias.")
-        return main_lap_depth, cross_lap_depth
-
-    def get_main_cutting_frame(self):
-        assert self.elements
-        beam_a, beam_b = self.elements
-
-        _, cfr = self.get_face_most_towards_beam(beam_a, beam_b)
-        cfr = Frame(cfr.point, cfr.yaxis, cfr.xaxis)  # flip normal towards the inside of main beam
-        return cfr
-
-    def get_cross_cutting_frame(self):
-        assert self.elements
-        beam_a, beam_b = self.elements
-        _, cfr = self.get_face_most_towards_beam(beam_b, beam_a)
-        return cfr
-
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
         # Sorts the Beam Face Planes according to the Cut Plane
@@ -254,3 +204,8 @@ class LapJoint(Joint):
         negative_polyhedron_main_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
         negative_polyhedron_cross_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
         return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
+
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
