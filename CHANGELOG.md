@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added new `compas_timber.fabrication.Pocket`.
+
 ### Changed
 
+* Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `Pocket` BTLx Processsing instead of the `Lap`.
+
 ### Removed
+
+* Removed `check_elements_compatibility` method from the parent `LapJoint` since non co-planar lap joints can be achieved using the `Pocket` BTLx Processing.
 
 
 ## [0.14.2] 2025-02-17
