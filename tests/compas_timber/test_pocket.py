@@ -25,14 +25,14 @@ def tol():
 def neg_vol():
     return Polyhedron(
         vertices=[
-            Point(x=710.3028152648835, y=-30.0, z=-20.31135977362403),
-            Point(x=696.2754193511339, y=-30.0, z=4.844320113187994),
-            Point(x=675.8760155142505, y=30.000000000000007, z=-8.721476594856815),
-            Point(x=665.080014670604, y=30.000000000000007, z=10.639261702571591),
-            Point(x=737.3918650442374, y=29.999999999999993, z=13.973883380857407),
-            Point(x=732.9235961723932, y=29.999999999999993, z=21.9869416904287),
-            Point(x=771.8186647948703, y=-30.0, z=2.384000202090148),
-            Point(x=764.1190008529229, y=-30.0, z=16.19200010104508),
+            Point(761.913, 30.000, -30.000),
+            Point(733.833, 30.000, 20.356),
+            Point(789.877, -30.000, -30.000),
+            Point(765.028, -30.000, 14.561),
+            Point(715.705, -30.000, -30.000),
+            Point(697.185, -30.000, 3.214),
+            Point(687.741, 30.000, -30.000),
+            Point(665.989, 30.000, 9.008),
         ],
         faces=[[1, 7, 5, 3], [0, 2, 4, 6], [1, 3, 2, 0], [3, 5, 4, 2], [5, 7, 6, 4], [7, 1, 0, 6]],
     )
@@ -70,7 +70,7 @@ def test_pocket_from_polyhedron(tol, neg_vol, beam):
     # attribute assertions
     assert tol.is_close(instance.start_x, 536.945)
     assert tol.is_close(instance.start_y, 0.0)
-    assert tol.is_close(instance.start_depth, 26.602)
+    assert tol.is_close(instance.start_depth, 24.881)
     assert tol.is_close(instance.angle, 0.0)
     assert tol.is_close(instance.inclination, -5.180)
     assert tol.is_close(instance.slope, 13.900)
@@ -102,7 +102,7 @@ def test_pocket_from_mesh(tol, neg_vol, beam):
     # attribute assertions
     assert tol.is_close(instance.start_x, 536.945)
     assert tol.is_close(instance.start_y, 0.0)
-    assert tol.is_close(instance.start_depth, 26.602)
+    assert tol.is_close(instance.start_depth, 24.881)
     assert tol.is_close(instance.angle, 0.0)
     assert tol.is_close(instance.inclination, -5.180)
     assert tol.is_close(instance.slope, 13.900)
@@ -129,14 +129,14 @@ def test_pocket_from_mesh(tol, neg_vol, beam):
 
     # expected vertices and faces
     expected_vertices = [
-        Point(x=696.2742881997966, y=-30.000000174621015, z=4.844131893265533),
-        Point(x=764.1456308023633, y=-29.989522557661914, z=16.137703690909316),
-        Point(x=732.9502261218345, y=30.01047744233868, z=21.932645280293613),
-        Point(x=665.0788835192681, y=29.99999982537958, z=10.639073482649781),
-        Point(x=710.3079812186909, y=-30.009871217206715, z=-20.31459044052669),
-        Point(x=771.8173018048114, y=-29.994918670507513, z=2.3844143516783376),
-        Point(x=737.3891973807285, y=30.007355151272794, z=13.974736752592545),
-        Point(x=675.8798767946081, y=29.992402604573595, z=-8.72426803961245),
+        Point(x=697.184, y=-30.000, z=3.213),
+        Point(x=765.055, y=-29.990, z=14.507),
+        Point(x=733.860, y=30.010, z=20.302),
+        Point(x=665.988, y=30.000, z=9.008),
+        Point(x=710.308, y=-30.009, z=-20.314),
+        Point(x=771.817, y=-29.994, z=2.385),
+        Point(x=737.389, y=30.008, z=13.975),
+        Point(x=675.880, y=29.993, z=-8.724),
     ]
     expected_faces = [[0, 1, 2, 3], [7, 6, 5, 4], [4, 5, 1, 0], [5, 6, 2, 1], [6, 7, 3, 2], [7, 4, 0, 3]]
 
@@ -158,7 +158,7 @@ def test_pocket_from_lap_joint(tol, lap_joint):
     # attribute assertions
     assert tol.is_close(instance.start_x, 536.945)
     assert tol.is_close(instance.start_y, 0.0)
-    assert tol.is_close(instance.start_depth, 26.602)
+    assert tol.is_close(instance.start_depth, 24.871)
     assert tol.is_close(instance.angle, 0.0)
     assert tol.is_close(instance.inclination, -5.180)
     assert tol.is_close(instance.slope, 13.900)
