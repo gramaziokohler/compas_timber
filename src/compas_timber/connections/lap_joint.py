@@ -171,8 +171,6 @@ class LapJoint(Joint):
 
         # Get Cut Plane
         plane_cut_vector = main_beam.centerline.vector.cross(cross_beam.centerline.vector)
-        if plane_cut_vector.dot(main_beam.ref_sides[self.main_ref_side_index].normal) < 0 or self.flip_lap_side:
-            plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
         planes_main = self._sort_beam_planes(main_beam, plane_cut_vector)
@@ -183,7 +181,6 @@ class LapJoint(Joint):
 
         # Lines as Frame Intersections
         lines = []
-
         pt_a = intersection_plane_plane_plane(plane_a1, plane_b1, plane_a0)
         pt_b = intersection_plane_plane_plane(plane_a1, plane_b1, plane_b0)
         lines.append(Line(pt_a, pt_b))
@@ -200,10 +197,15 @@ class LapJoint(Joint):
         pt_b = intersection_plane_plane_plane(plane_a2, plane_b1, plane_b0)
         lines.append(Line(pt_a, pt_b))
 
-        # Create Polyhedrons
+        # # Create Polyhedrons
         negative_polyhedron_main_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
         negative_polyhedron_cross_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
-        return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
+
+        # flip the order if the cross_vector is pointing in the opposite direction of the offset_vector
+        offset_vector = Vector.from_start_end(*intersection_line_line(main_beam.centerline, cross_beam.centerline))
+        if plane_cut_vector.dot(offset_vector) > 0 and self.flip_lap_side:
+            return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
+        return negative_polyhedron_cross_beam, negative_polyhedron_main_beam
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
