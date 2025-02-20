@@ -203,9 +203,9 @@ class LapJoint(Joint):
 
         # flip the order if the cross_vector is pointing in the opposite direction of the offset_vector
         offset_vector = Vector.from_start_end(*intersection_line_line(main_beam.centerline, cross_beam.centerline))
-        if plane_cut_vector.dot(offset_vector) > 0 and self.flip_lap_side:
-            return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
-        return negative_polyhedron_cross_beam, negative_polyhedron_main_beam
+        if plane_cut_vector.dot(offset_vector) < 0 and not self.flip_lap_side:
+            return negative_polyhedron_cross_beam, negative_polyhedron_main_beam
+        return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
