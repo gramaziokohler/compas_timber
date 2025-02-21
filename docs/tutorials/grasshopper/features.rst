@@ -4,22 +4,21 @@ Features
 
 Features are additional geometric operations on beams:
 
-.. image:: ../images/diagram_features.png
+.. image:: ../images/Features_Axo.png
   :width: 75%
 
 |
 
-.. image:: ../images/gh_features.png
+Jack Rafter Cut Feature
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. image:: ../images/Features_JackRafter.png
   :width: 100%
 
 |
+**JackRafterCut** feature cuts beam with a plane. The part of the beam lying on the *z-positive* side ofthe plane will be removed.
 
-Brep Subtraction Feature
-^^^^^^^^^^^^^^^^^^^^^^^^
-**BrepSubtractionFeature** is a boolean operation to subtract any *Brep* geometry from a beam.
-
-* `Beam` : the beam to be subtracted from
-* `Brep` : the Brep geometry to subtract as a Brep
+* `Beam` : the beam to be trimmed
+* `Plane` : the plane to trim the beam as a surface
 
 Brep Drill Hole Feature
 ^^^^^^^^^^^^^^^^^^^^^^^
