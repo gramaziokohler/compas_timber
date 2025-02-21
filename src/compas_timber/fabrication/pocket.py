@@ -12,6 +12,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
+from compas.geometry import intersection_ray_mesh
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
@@ -293,7 +294,7 @@ class Pocket(BTLxProcessing):
 
         Parameters
         ----------
-        volume : :class:`~compas.geometry.Mesh` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Polyhedron`
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -320,6 +321,8 @@ class Pocket(BTLxProcessing):
         if len(planes) != 6:
             raise ValueError("Volume must have 6 faces.")
 
+        # # validate volume intersection with the beam
+        # cls._validate_volume_intersection(volume, beam, ref_side_index) # TODO: PluginNotInstalledError
 
         # get ref_side, and ref_edge from the beam
         ref_side = beam.ref_sides[ref_side_index]
@@ -333,7 +336,7 @@ class Pocket(BTLxProcessing):
             back_point = Point (*intersection_plane_plane_plane(start_plane, back_plane, bottom_plane, tol=TOL.ABSOLUTE))
             end_point = Point(*intersection_plane_plane_plane(end_plane, front_plane, bottom_plane, tol=TOL.ABSOLUTE))
         except TypeError as te:
-            raise ValueError("The planes do not intersect. " + str(te))
+            raise ValueError("The faces of the volume do not intersect. " + str(te))
 
         ## params calculations
         # calculate start_x, start_y, start_depth
@@ -385,6 +388,24 @@ class Pocket(BTLxProcessing):
             tilt_start_side,
             machining_limits.limits,
             ref_side_index=ref_side_index)
+
+    @staticmethod
+    def _validate_volume_intersection(volume, beam, ref_side_index):
+        # validate volume intersection with the beam
+        ref_surface = beam.side_as_surface(ref_side_index)
+        xaxis = ref_surface.frame.xaxis * ref_surface.xsize
+        yaxis = ref_surface.frame.yaxis * ref_surface.ysize
+
+        rays = [
+            [ref_surface.point_at(0, 0), xaxis],
+            [ref_surface.point_at(1, 0), yaxis],
+            [ref_surface.point_at(1, 1), -xaxis],
+            [ref_surface.point_at(0, 1), -yaxis],
+        ]
+
+        intersections = [intersection_ray_mesh(ray, volume) for ray in rays]
+        if not any(intersections):
+            raise ValueError("The volume does not intersect with the beam.")
 
     @staticmethod
     def _sort_planes(planes, ref_side):

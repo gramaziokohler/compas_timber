@@ -201,7 +201,7 @@ class LapJoint(Joint):
         pt_b = intersection_plane_plane_plane(plane_a2, plane_b1, plane_b0)
         lines.append(Line(pt_a, pt_b))
 
-        # # Create Polyhedrons
+        # Create Polyhedrons
         negative_polyhedron_main_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
         negative_polyhedron_cross_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
 
