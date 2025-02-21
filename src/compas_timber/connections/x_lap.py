@@ -1,3 +1,4 @@
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import Pocket
 
 from .lap_joint import LapJoint
@@ -53,8 +54,15 @@ class XLapJoint(LapJoint):
 
         # create lap features
         negative_volume_main, negative_volume_cross = self._create_negative_volumes()
-        main_lap_feature = Pocket.from_volume_and_beam(negative_volume_main, self.main_beam, self.main_ref_side_index)
-        cross_lap_feature = Pocket.from_volume_and_beam(negative_volume_cross, self.cross_beam, self.cross_ref_side_index)
+        try:
+            main_lap_feature = Pocket.from_volume_and_beam(negative_volume_main, self.main_beam, self.main_ref_side_index)
+        except ValueError as ve:
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ve), debug_geometries=[negative_volume_main])
+
+        try:
+            cross_lap_feature = Pocket.from_volume_and_beam(negative_volume_cross, self.cross_beam, self.cross_ref_side_index)
+        except ValueError as ve:
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ve), debug_geometries=[negative_volume_cross])
 
         # add features to the beams
         self.main_beam.add_features(main_lap_feature)
