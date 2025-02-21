@@ -283,3 +283,45 @@ def test_pocket_params_obj():
         "FaceLimitedEnd": "yes",
         "FaceLimitedFront": "no",
     }
+
+
+def test_pocket_with_5_faces(beam):
+    base_points = [
+        Point(788.77675, -19.774441, 30),
+        Point(828.859137, -19.246494, 30),
+        Point(828.33119, 20.835894, 30),
+        Point(788.248803, 20.307946, 30),
+    ]
+    tip_point = Point(808.55397, 0.530726, 7.24627)
+
+    vertices = base_points + [tip_point]
+    faces = [[0, 4, 1], [1, 4, 2], [2, 4, 3], [3, 4, 0], [0, 1, 2, 3]]
+
+    volume = Mesh.from_vertices_and_faces(vertices, faces)
+    try:
+        Pocket.from_volume_and_beam(volume, beam, ref_side_index=2)
+    except Exception as e:
+        assert isinstance(e, ValueError)
+        assert "Volume must have 6 faces." in str(e)
+
+
+# def test_pocket_with_non_intersecting_volume(beam):  # TODO: PluginNotInstalledError -> intersection_ray_mesh
+#     volume = Polyhedron(
+#         vertices=[
+#             Point(-10.000, -10.000, -10.000),
+#             Point(-10.000, 10.000, -10.000),
+#             Point(10.000, 10.000, -10.000),
+#             Point(10.000, -10.000, -10.000),
+#             Point(-10.000, -10.000, 10.000),
+#             Point(10.000, -10.000, 10.000),
+#             Point(10.000, 10.000, 10.000),
+#             Point(-10.000, 10.000, 10.000),
+#         ],
+#         faces=[[0, 1, 2, 3], [0, 3, 5, 4], [3, 2, 6, 5], [2, 1, 7, 6], [1, 0, 4, 7], [4, 5, 6, 7]],
+#     )
+
+#     try:
+#         Pocket.from_volume_and_beam(volume, beam, ref_side_index=2)
+#     except Exception as e:
+#         assert isinstance(e, ValueError)
+#         assert "The volume does not intersect with the beam." in str(e)
