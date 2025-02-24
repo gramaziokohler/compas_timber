@@ -113,8 +113,7 @@ class LFrenchRidgeLapJoint(LapJoint):
         dimensions = []
         ref_side_indices = [self.main_ref_side_index, self.cross_ref_side_index]
         for i, beam in enumerate(self.elements):
-            width = beam.side_as_surface(ref_side_indices[i]).ysize
-            height = beam.height if ref_side_indices[i] % 2 == 0 else beam.width
+            width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
             dimensions.append((width, height))
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
