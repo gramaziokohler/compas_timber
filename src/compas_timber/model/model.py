@@ -352,7 +352,7 @@ class TimberModel(Model):
                     raise bje
             # TODO: should we be handling the BTLxProcessing application errors differently?
             # TODO: Maybe a ProcessingApplicationError raised for the processing(s) that failed when adding the features to the elements?
-            # TODO: This would allow us to catch the processing that failed with the necessary info, while applying the rest of the required by the joint processings that were sucessfull.
+            # TODO: This would allow us to catch the processing that failed with the necessary info, while applying the rest of the required by the joint processings that were sucessfull.  # noqa: E501
             except ValueError as ve:
                 bje = BeamJoiningError(joint.elements, joint, debug_info=str(ve))
                 errors.append(bje)
