@@ -21,12 +21,14 @@ class BTLxFromParams(component):
         else:
             self.processing_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
-    def RunScript(self, element, ref_side=0, *args):
+    def RunScript(self, element, ref_side, *args):
         if not self.processing_type:
             ghenv.Component.Message = "Select Process type from context menu (right click)"
             self.AddRuntimeMessage(Warning, "Select Process type from context menu (right click)")
             return None
         else:
+            if not ref_side:
+                ref_side = 0
             ghenv.Component.Message = self.processing_type.__name__
             kwargs = {}
             kwargs["ref_side_index"] = ref_side
