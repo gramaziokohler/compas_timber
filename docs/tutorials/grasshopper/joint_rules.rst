@@ -156,6 +156,8 @@ Inputs:
 Tenon and Mortise
 ^^^^^^^^^^^^^^^^^
 
+A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.
+
 Inputs:
 
 * `start_y` : Start position of the tenon along the y-axis of the main beam.
@@ -202,6 +204,8 @@ Inputs:
 Tenon and Mortise
 ^^^^^^^^^^^^^^^^^
 
+A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.
+
 Inputs:
 
 * `start_y` : Start position of the tenon along the y-axis of the main beam.
@@ -212,6 +216,47 @@ Inputs:
 * `height` : Height of the tenon.
 * `shape` : The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
 * `shape_radius` : The radius used to define the shape of the tenon, if applicable.
+
+|
+
+T-Step
+^^^^^^
+
+Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.
+
+Inputs:
+
+* `step_shape` : Shape of the step feature. 0: step, 1: heel, 2: double.
+* `step_depth` : Depth of the step cut. Combined with a heel cut it generates a double step cut.
+* `heel_depth` : Depth of the heel cut. Combined with a step cut it generates a double step cut.
+* `tapered_heel` : If True, the heel cut is tapered.
+* `tenon_mortise_height` : Height of the tenon (main beam) mortise (cross beam) of the Step Joint. If None, the tenon and mortise featrue is not created.
+
+|
+
+T-Birdsmouth
+^^^^^^^^^^^^
+
+A DoubleCut is created on the main beam to fit the cross beam. The position of the cross beam should allow the creation of the doblecut. If one of the sides of the cross beam is parallel to the axis of the main beam a doublecut cannot be created. 
+
+
+T-Dovetail
+^^^^^^^^^^
+
+A dovetail cut is made on the main beam, and a corresponding notch is made on the cross beam to fit the main beam.
+
+Inputs:
+
+* `start_y` : Start position of the dovetail cut along the y-axis of the main beam.
+* `start_depth` : Depth of the dovetail cut from the surface of the main beam.
+* `rotation` : Rotation of the dovetail cut around the main beam’s axis.
+* `length` : Length of the dovetail cut along the main beam.
+* `width` : Width of the dovetail cut.
+* `cone_angle` : The angle of the dovetail cut, determining the taper of the joint.
+* `dovetail_shape` : The shape of the dovetail cut, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+* `tool_angle` :  The angle of the tool used to create the dovetail cut.
+* `tool_diameter` : The diameter of the tool used to create the dovetail cut.
+* `tool_height` : The height of the tool used to create the dovetail cut.
 
 |
 
