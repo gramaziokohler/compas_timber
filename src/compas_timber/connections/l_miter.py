@@ -1,9 +1,12 @@
+import math
+
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
+from compas_timber.connections.utilities import point_centerline_towards_joint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.utils import intersection_line_line_param
@@ -26,6 +29,8 @@ class LMiterJoint(Joint):
         First beam to be joined.
     beam_b : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    cutoff : bool, optional
+        If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
 
     Attributes
     ----------
@@ -33,6 +38,8 @@ class LMiterJoint(Joint):
         First beam to be joined.
     beam_b : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    cutoff : bool, optional
+        If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
 
     """
 
@@ -52,7 +59,7 @@ class LMiterJoint(Joint):
         self.beam_b = beam_b
         self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
         self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
-        self.cutoff = cutoff  # for very acute angles, limit the extension of the tip/beak of the joint
+        self.cutoff = cutoff or False
         self.features = []
 
     @property
@@ -97,6 +104,16 @@ class LMiterJoint(Joint):
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
 
+    def get_cutoff_plane(self):
+        """Returns a plane that is perpendicular to the miter plane at the intersection point of the two centerlines."""
+        cutting_plane = self.get_cutting_planes()[0]
+        cross_vect = cross_vectors(self.beam_a.centerline.direction, self.beam_b.centerline.direction)
+
+        cutoff_plane = cutting_plane.rotated(math.pi / 2, cross_vect, point=cutting_plane.point)
+        if cutoff_plane.normal.dot(point_centerline_towards_joint(*self.elements)) < 0:
+            cutoff_plane.xaxis = -cutoff_plane.xaxis
+        return cutoff_plane
+
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -111,7 +128,11 @@ class LMiterJoint(Joint):
         assert self.beam_a and self.beam_b
         start_a, start_b = None, None
         try:
-            plane_a, plane_b = self.get_cutting_planes()
+            if self.cutoff:
+                plane_a = self.get_cutoff_plane()
+                plane_b = plane_a.copy()
+            else:
+                plane_a, plane_b = self.get_cutting_planes()
             start_a, end_a = self.beam_a.extension_to_plane(plane_a)
             start_b, end_b = self.beam_b.extension_to_plane(plane_b)
         except AttributeError as ae:
@@ -145,6 +166,14 @@ class LMiterJoint(Joint):
         self.beam_a.add_features(cut1)
         self.beam_b.add_features(cut2)
         self.features = [cut1, cut2]
+
+        # add cutoffs if necessary
+        if self.cutoff:
+            cutoff_plane = self.get_cutoff_plane()
+            for beam in self.elements:
+                cutoff = JackRafterCutProxy.from_plane_and_beam(cutoff_plane, beam)
+                beam.add_features(cutoff)
+                self.features.append(cutoff)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
