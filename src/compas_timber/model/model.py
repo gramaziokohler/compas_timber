@@ -333,6 +333,7 @@ class TimberModel(Model):
         """
         errors = []
         joints = self.joints
+
         for joint in joints:
             try:
                 joint.check_elements_compatibility()
@@ -346,6 +347,14 @@ class TimberModel(Model):
             try:
                 joint.add_features()
             except BeamJoiningError as bje:
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+            # TODO: should we be handling the BTLxProcessing application errors differently?
+            # TODO: Maybe a ProcessingApplicationError raised for the processing(s) that failed when adding the features to the elements?
+            # TODO: This would allow us to catch the processing that failed with the necessary info, while applying the rest of the required by the joint processings that were sucessfull.
+            except ValueError as ve:
+                bje = BeamJoiningError(joint.elements, joint, debug_info=str(ve))
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje
