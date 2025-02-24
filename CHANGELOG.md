@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Adjusted `LMiterJoint` so that it now applies an extra cut to elements when the `cutoff` flag is enabled.
+
 ### Removed
 
 
