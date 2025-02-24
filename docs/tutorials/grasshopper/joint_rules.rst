@@ -157,6 +157,7 @@ Tenon and Mortise
 ^^^^^^^^^^^^^^^^^
 
 Inputs:
+
 * `start_y` : Start position of the tenon along the y-axis of the main beam.
 * `start_depth` : Depth of the tenon from the surface of the main beam.
 * `rotation` : Rotation of the tenon around the main beam’s axis.
@@ -202,6 +203,7 @@ Tenon and Mortise
 ^^^^^^^^^^^^^^^^^
 
 Inputs:
+
 * `start_y` : Start position of the tenon along the y-axis of the main beam.
 * `start_depth` : Depth of the tenon from the surface of the main beam.
 * `rotation` : Rotation of the tenon around the main beam’s axis.
