@@ -1,12 +1,9 @@
-import math
-
 from compas.geometry import Plane
 from compas.geometry import Vector
-from compas.geometry import angle_vectors
-from compas.tolerance import TOL
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
+from compas_timber.connections.utilities import are_beams_coplanar
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
@@ -64,8 +61,6 @@ class YButtJoint(Joint):
         self.cross_beam_b_guid = kwargs.get("cross_beam_b_guid", None) or str(cross_beam_b.guid)
         self.mill_depth = mill_depth
         self.features = []
-        if self.main_beam and self.cross_beams:
-            self.check_beam_compatibility()
 
     @property
     def beams(self):
@@ -75,23 +70,31 @@ class YButtJoint(Joint):
     def elements(self):
         return self.beams
 
-    def check_beam_compatibility(self):
-        """Checks if the beams are compatible for the joint.
+    def check_elements_compatibility(self):
+        """Checks if the elements are compatible for the creation of the joint.
 
-        This method checks if miter plane of the cross beams is perpendicular to the cross product of their centerlines.
+        For the Y-Butt joint, this method checks if the two cross beams are coplanar and have the same dimensions.
 
         Raises
-
+        ------
         BeamJoiningError
-            If the beams are not compatible.
+            If the elements are not compatible for the creation of the joint.
         """
-        if not TOL.is_zero(angle_vectors(self.cross_beams[0].frame.zaxis, self.cross_beams[1].frame.zaxis) % math.pi):
+        if not are_beams_coplanar(*self.cross_beams):
             raise BeamJoiningError(
-                beams=self.elements,
+                beams=self.cross_beams,
                 joint=self,
-                debug_info="The miter plane of the cross beams is not perpendicular to the cross product of their centerlines.",
-                debug_geometries=[beam.blank for beam in self.cross_beams],
+                debug_info="The two cross beams are not coplanar to create a Y-Butt joint.",
             )
+        # calculate widths and heights of the cross beams
+        dimensions = []
+        for beam in self.cross_beams:
+            ref_side_index = self.cross_beam_ref_side_index(beam)
+            width, height = beam.get_dimensions_relative_to_side(ref_side_index)
+            dimensions.append((width, height))
+        # check if the dimensions of both cross beams match
+        if dimensions[0] != dimensions[1]:
+            raise BeamJoiningError(self.cross_beams, self, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
@@ -187,7 +190,7 @@ class YButtJoint(Joint):
             self.cross_beams[0].remove_features(self.features)
             self.cross_beams[1].remove_features(self.features)
 
-        """get the cutting planes for the main beam"""
+        # get the cutting planes for the main beam
         planes = []
         for beam in self.cross_beams:
             cutting_plane = Plane.from_frame(beam.ref_sides[self.cross_beam_ref_side_index(beam)])
@@ -200,7 +203,7 @@ class YButtJoint(Joint):
         self.main_beam.add_features(main_feature)
         self.features = [main_feature]
 
-        """apply the pockets on the cross beams"""
+        # apply the pockets on the cross beams
         if self.mill_depth:
             for beam in self.cross_beams:
                 ref_side_index = self.main_beam_ref_side_index(beam)
@@ -217,7 +220,7 @@ class YButtJoint(Joint):
                 beam.add_features(cross_feature)
                 self.features.append(cross_feature)
 
-        """add miter features on cross_beams"""
+        # add miter features on cross_beams
         try:
             plane_a, plane_b = self.get_miter_planes(*self.cross_beams)
         except Exception as ex:
