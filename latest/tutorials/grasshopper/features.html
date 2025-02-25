@@ -591,40 +591,59 @@ document.write(`
                   
   <section id="features">
 <h1>Features</h1>
-<p>Features are additional geometric operations on beams:</p>
-<a class="reference internal image-reference" href="../../_images/diagram_features.png"><img alt="../../_images/diagram_features.png" src="../../_images/diagram_features.png" style="width: 75%;" />
+<p>Features are additional geometric operations on Beams:</p>
+<a class="reference internal image-reference" href="../../_images/Features_Axo.png"><img alt="../../_images/Features_Axo.png" src="../../_images/Features_Axo.png" style="width: 75%;" />
 </a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<a class="reference internal image-reference" href="../../_images/gh_features.png"><img alt="../../_images/gh_features.png" src="../../_images/gh_features.png" style="width: 100%;" />
+<section id="jack-rafter-cut-feature">
+<h2>Jack Rafter Cut Feature</h2>
+<a class="reference internal image-reference" href="../../_images/Features_JackRafter.png"><img alt="../../_images/Features_JackRafter.png" src="../../_images/Features_JackRafter.png" style="width: 100%;" />
 </a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<section id="brep-subtraction-feature">
-<h2>Brep Subtraction Feature</h2>
-<p><strong>BrepSubtractionFeature</strong> is a boolean operation to subtract any <em>Brep</em> geometry from a beam.</p>
+<p><strong>JackRafterCut</strong> feature cuts beam with a plane. The part of the beam lying on the <em>z-positive</em> side of the plane will be removed.</p>
 <ul class="simple">
-<li><p><cite>Beam</cite> : the beam to be subtracted from</p></li>
-<li><p><cite>Brep</cite> : the Brep geometry to subtract as a Brep</p></li>
+<li><p><cite>Beam</cite> : the beam to be trimmed.</p></li>
+<li><p><cite>Plane</cite> : the plane to trim the beam as a surface.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Plane angle</strong></p>
+<p>Angle between the cutting plane and the beam axis must be &gt; 0.01 and &lt; 179.9.</p>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="double-cut-feature">
+<h2>Double Cut Feature</h2>
+<a class="reference internal image-reference" href="../../_images/Features_DoubleCut.png"><img alt="../../_images/Features_DoubleCut.png" src="../../_images/Features_DoubleCut.png" style="width: 100%;" />
+</a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>DoubleCut</strong> feature cuts beam with two planes. The part of the beam lying on the <em>z-positive</em> sides of both planes will be removed.</p>
+<ul class="simple">
+<li><p><cite>Beam</cite> : the beam to be trimmed.</p></li>
+<li><p><cite>Plane_a</cite> : the first plane to trim the beam as a surface.</p></li>
+<li><p><cite>Plane_b</cite> : the second plane to trim the beam as a surface.</p></li>
 </ul>
 </section>
-<section id="brep-drill-hole-feature">
-<h2>Brep Drill Hole Feature</h2>
-<p><strong>BrepDrillHoleFeature</strong> is a boolean operation to subtract a hole from a beam.</p>
+<section id="drilling-feature">
+<h2>Drilling Feature</h2>
+<a class="reference internal image-reference" href="../../_images/Features_Drilling.png"><img alt="../../_images/Features_Drilling.png" src="../../_images/Features_Drilling.png" style="width: 100%;" />
+</a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><strong>Drilling</strong> feature  is a boolean operation to subtract a cylindrical hole from a beam.</p>
 <ul class="simple">
-<li><p><cite>Beam</cite> : the beam to be drilled</p></li>
-<li><p><cite>Line</cite> : the axis of the hole as a Line</p></li>
+<li><p><cite>Beam</cite> : the beam to be drilled.</p></li>
+<li><p><cite>Line</cite> : the axis of the hole as a line</p></li>
 <li><p><cite>Diameter</cite> : the diameter of the hole</p></li>
-</ul>
-</section>
-<section id="trim-feature">
-<h2>Trim Feature</h2>
-<p><strong>TrimFeature</strong> cuts a beam with a <em>Plane</em>. The part of the beam lying on the <em>z-positive</em> side of the plane will be removed.</p>
-<ul class="simple">
-<li><p><cite>Beam</cite> : the beam to be trimmed</p></li>
-<li><p><cite>Plane</cite> : the plane to trim the beam as a surface</p></li>
 </ul>
 <p>The output <cite>Feature</cite> is to be used as input for the <strong>Model</strong> component. See <a class="reference internal" href="model.html"><span class="doc">Model</span></a>.</p>
 </section>
@@ -651,9 +670,9 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brep-subtraction-feature">Brep Subtraction Feature</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brep-drill-hole-feature">Brep Drill Hole Feature</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#trim-feature">Trim Feature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jack-rafter-cut-feature">Jack Rafter Cut Feature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#double-cut-feature">Double Cut Feature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#drilling-feature">Drilling Feature</a></li>
 </ul>
   </nav></div>
 
