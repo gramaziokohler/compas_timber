@@ -67,8 +67,8 @@ def test_plate_contour():
         ],
     }
 
-    assert plate.features[0].header_attributes == expected["header_attributes"]
-    assert plate.features[0].contour_attributes["Depth"] == str(thickness)
+    assert plate.features[0].params.header_attributes == expected["header_attributes"]
+    assert plate.features[0].params.contour_attributes["Depth"] == str(thickness)
 
 
 def test_plate_aperture_contour():
@@ -82,9 +82,9 @@ def test_plate_aperture_contour():
 
     assert len(plate.features) == 2
     assert plate.features[1] == contour
-    assert contour.header_attributes["ToolPosition"] == "left"
-    assert contour.header_attributes["CounterSink"] == "yes"
-    assert contour.contour_attributes["Depth"] == str(depth)
+    assert contour.params.header_attributes["ToolPosition"] == "left"
+    assert contour.params.header_attributes["CounterSink"] == "yes"
+    assert contour.params.contour_attributes["Depth"] == str(depth)
 
 
 def test_plate_aperture_contour_serialization():
@@ -100,9 +100,9 @@ def test_plate_aperture_contour_serialization():
 
     assert len(plate.features) == 2
     assert plate.features[1] == contour_copy
-    assert contour_copy.header_attributes["ToolPosition"] == "left"
-    assert contour_copy.header_attributes["CounterSink"] == "yes"
-    assert contour_copy.contour_attributes["Depth"] == str(depth)
+    assert contour_copy.params.header_attributes["ToolPosition"] == "left"
+    assert contour_copy.params.header_attributes["CounterSink"] == "yes"
+    assert contour_copy.params.contour_attributes["Depth"] == str(depth)
 
 
 def test_plate_aperture_BTLx():
@@ -116,7 +116,7 @@ def test_plate_aperture_BTLx():
     contour_copy = json_loads(json_dumps(contour))
     plate.add_feature(contour_copy)
 
-    processing_element = BTLxWriter._create_processing_from_dict(contour.processing_dict())
+    processing_element = BTLxWriter._create_processing_from_dict(contour.processing_dict)
 
     assert processing_element.tag == "FreeContour"
-    assert processing_element.attrib == contour.header_attributes
+    assert processing_element.attrib == contour.params.header_attributes

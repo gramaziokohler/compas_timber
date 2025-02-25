@@ -127,8 +127,8 @@ class Mortise(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return MortiseParams(self).as_dict()
+    def params(self):
+        return MortiseParams(self)
 
     @property
     def start_x(self):

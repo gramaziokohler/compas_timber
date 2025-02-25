@@ -74,8 +74,8 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return JackRafterCutParams(self).as_dict()
+    def params(self):
+        return JackRafterCutParams(self)
 
     @property
     def orientation(self):

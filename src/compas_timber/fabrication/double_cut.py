@@ -93,8 +93,8 @@ class DoubleCut(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DoubleCutParams(self).as_dict()
+    def params(self):
+        return DoubleCutParams(self)
 
     @property
     def orientation(self):

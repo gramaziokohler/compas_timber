@@ -60,6 +60,7 @@ class Plate(TimberElement):
         self.blank_extension = blank_extension
         self.thickness = thickness
         self.outline = outline
+        self._outline_feature = None
         self._vector = vector or None
         self._frame = frame or None
         self.attributes = {}
@@ -161,7 +162,9 @@ class Plate(TimberElement):
 
     @property
     def features(self):
-        return [FreeContour.from_polyline_and_element(self.outline, self, interior=False)] + self._features
+        if not self._outline_feature:
+            self._outline_feature = FreeContour.from_polyline_and_element(self.outline, self, interior=False)
+        return [self._outline_feature] + self._features
 
     @features.setter
     def features(self, features):
@@ -252,7 +255,7 @@ class Plate(TimberElement):
         box.zsize += inflate
         return box
 
-    def compute_obb(self):
+    def compute_obb(self, inflate=0.0):
         # type: (float | None) -> compas.geometry.Box
         """Computes the Oriented Bounding Box (OBB) of the element.
 
@@ -268,8 +271,11 @@ class Plate(TimberElement):
         obb = Box.from_points(vertices)
         obb.zsize = self.thickness
         obb.translate([0, 0, self.thickness / 2])
-        xform_back = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
-        obb.transform(xform_back)
+        if inflate != 0.0:
+            obb.xsize += inflate
+            obb.ysize += inflate
+            obb.zsize += inflate
+        obb.transform(Transformation.from_frame_to_frame(Frame.worldXY(), self.frame))
         return obb
 
     def compute_collision_mesh(self):

@@ -235,7 +235,7 @@ def test_drilling(beam, drill_line, process_params_dict):
 
     drilling = Drilling.from_line_and_element(drill_line, beam, diameter)
 
-    generated_params = drilling.header_attributes
-    generated_params.update(drilling.params_dict)
+    generated_params = drilling.params.header_attributes
+    generated_params.update(drilling.params.as_dict())
     for key, value in process_params_dict.items():
         assert generated_params[key] == value

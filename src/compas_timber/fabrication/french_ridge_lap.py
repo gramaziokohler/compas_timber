@@ -78,8 +78,8 @@ class FrenchRidgeLap(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return FrenchRidgeLapParams(self).as_dict()
+    def params(self):
+        return FrenchRidgeLapParams(self)
 
     @property
     def orientation(self):

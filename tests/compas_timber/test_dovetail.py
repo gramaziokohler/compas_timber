@@ -312,8 +312,8 @@ def test_dovetailtenon_params(
         ref_side_index=ref_side_index,
     )
     # Validate generated parameters
-    generated_params = dovetail_tenon.header_attributes
-    generated_params.update(dovetail_tenon.params_dict)
+    generated_params = dovetail_tenon.params.header_attributes
+    generated_params.update(dovetail_tenon.params.as_dict())
     for key, value in expected_tenon_params.items():
         assert generated_params[key] == value
 
@@ -401,8 +401,8 @@ def test_dovetailmortise_params(
     )
 
     # Validate generated parameters
-    generated_params = dovetail_mortise.header_attributes
-    generated_params.update(dovetail_mortise.params_dict)
+    generated_params = dovetail_mortise.params.header_attributes
+    generated_params.update(dovetail_mortise.params.as_dict())
     for key, value in expected_mortise_params.items():
         assert generated_params[key] == value
 

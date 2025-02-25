@@ -138,8 +138,8 @@ class Lap(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return LapParams(self).as_dict()
+    def params(self):
+        return LapParams(self)
 
     @property
     def orientation(self):

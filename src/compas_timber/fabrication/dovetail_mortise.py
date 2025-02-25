@@ -150,8 +150,8 @@ class DovetailMortise(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DovetailMortiseParams(self).as_dict()
+    def params(self):
+        return DovetailMortiseParams(self)
 
     @property
     def start_x(self):

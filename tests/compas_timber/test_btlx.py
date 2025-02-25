@@ -172,7 +172,7 @@ def test_btlx_should_skip_feature():
 
 def test_float_formatting_of_param_dicts():
     test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
-    params_dict = test_processing.params_dict
+    params_dict = test_processing.params.as_dict()
 
     assert params_dict["Orientation"] == "end"
     assert params_dict["StartX"] == "{:.3f}".format(test_processing.start_x)
@@ -180,7 +180,7 @@ def test_float_formatting_of_param_dicts():
     assert params_dict["StartDepth"] == "{:.3f}".format(test_processing.start_depth)
     assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
     assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
-    assert test_processing.header_attributes["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
+    assert test_processing.params.header_attributes["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
 
 
 def test_create_processing_with_dict_params():
@@ -191,7 +191,14 @@ def test_create_processing_with_dict_params():
         subprocessings = []
 
     processing = MockProcessing()
-    processing_dict = processing.processing_dict()
+
+    processing_dict = {"name": processing.PROCESSING_NAME, "attributes": processing.header_attributes, "content": []}
+    for key, value in processing.params_dict.items():
+        sub = {"name": key}
+        sub["attributes"] = value if isinstance(value, dict) else {}
+        sub["text"] = value if isinstance(value, str) else ""
+        processing_dict["content"].append(sub)
+
     processing_element = BTLxWriter._create_processing_from_dict(processing_dict)
 
     assert processing_element.tag == "MockProcessing"

@@ -330,7 +330,7 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
 
     """
     cw = is_polyline_clockwise(polyline, normal_vector)
-    if (cw and not clockwise) or (not cw and clockwise):
+    if cw ^ clockwise:
         return Polyline(polyline[::-1])
     return polyline
 

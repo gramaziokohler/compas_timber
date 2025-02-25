@@ -86,8 +86,8 @@ def test_french_ridge_lap_data(tol):
 
 def test_french_ridge_lap_params_obj():
     instance = FrenchRidgeLap(OrientationType.START, 14.23, 31.24, EdgePositionType.REFEDGE, True, 11.0, ref_side_index=3)
-    params = instance.header_attributes
-    params.update(instance.params_dict)
+    params = instance.params.header_attributes
+    params.update(instance.params.as_dict())
 
     assert params["Name"] == "FrenchRidgeLap"
     assert params["Process"] == "yes"

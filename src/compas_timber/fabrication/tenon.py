@@ -140,8 +140,8 @@ class Tenon(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return TenonParams(self).as_dict()
+    def params(self):
+        return TenonParams(self)
 
     @property
     def orientation(self):

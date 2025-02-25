@@ -188,7 +188,7 @@ class BTLxWriter(object):
             for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = BTLxWriter._create_processing_from_dict(feature.processing_dict())
+                    processing_element = BTLxWriter._create_processing_from_dict(feature.processing_dict)
                     processings_element.append(processing_element)
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
@@ -230,6 +230,27 @@ class BTLxWriter(object):
 
         return element
 
+    @staticmethod
+    def et_point_vals(point):
+        """Returns the ET point values for a given point.
+
+        Parameters
+        ----------
+        point : :class:`~compas.geometry.Point`
+            The point to be converted.
+
+        Returns
+        -------
+        dict
+            The ET point values formatted for the ET element.
+
+        """
+        return {
+            "X": "{:.{prec}f}".format(point.x, prec=BTLxWriter.POINT_PRECISION),
+            "Y": "{:.{prec}f}".format(point.y, prec=BTLxWriter.POINT_PRECISION),
+            "Z": "{:.{prec}f}".format(point.z, prec=BTLxWriter.POINT_PRECISION),
+        }
+
 
 class BTLxPart(object):
     """Class representing a BTLx part. This acts as a wrapper for a Beam or Plate object.
@@ -238,6 +259,8 @@ class BTLxPart(object):
     ----------
     element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
         The element object.
+    order_num : int
+        The order number of the part. gets passed to `OrderNumber` and `SingleMemberNumber`.
 
     Attributes
     ----------
@@ -274,7 +297,6 @@ class BTLxPart(object):
         self.height = element.height
         self.frame = element.ref_frame
         self.processings = []
-        self._et_element = None
 
     @property
     def part_guid(self):
@@ -336,52 +358,15 @@ class BTLxPart(object):
             "ModuleNumber": "",
         }
 
-    @staticmethod
-    def et_point_vals(point):
-        """Returns the ET point values for a given point.
-
-        Parameters
-        ----------
-        point : :class:`~compas.geometry.Point`
-            The point to be converted.
-
-        Returns
-        -------
-        dict
-            The ET point values formatted for the ET element.
-
-        """
-        return {
-            "X": "{:.{prec}f}".format(point.x, prec=BTLxWriter.POINT_PRECISION),
-            "Y": "{:.{prec}f}".format(point.y, prec=BTLxWriter.POINT_PRECISION),
-            "Z": "{:.{prec}f}".format(point.z, prec=BTLxWriter.POINT_PRECISION),
-        }
-
-    @property
-    def et_element(self):
-        if self._et_element is None:
-            self._et_element = ET.Element("Part", self.attr)
-            self._shape_strings = None
-            self._et_element.append(self.et_transformations)
-            self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
-            self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
-            processings_et = ET.Element("Processings")
-            if self.processings:  # otherwise there will be an empty <Processings/> tag
-                for process in self.processings:
-                    processings_et.append(process.et_element)
-                self._et_element.append(processings_et)
-            self._et_element.append(self.et_shape)
-        return self._et_element
-
     @property
     def et_transformations(self):
         transformations = ET.Element("Transformations")
         guid = "{" + str(uuid.uuid4()) + "}"
         transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
         position = ET.SubElement(transformation, "Position")
-        position.append(ET.Element("ReferencePoint", self.et_point_vals(self.frame.point)))
-        position.append(ET.Element("XVector", self.et_point_vals(self.frame.xaxis)))
-        position.append(ET.Element("YVector", self.et_point_vals(self.frame.yaxis)))
+        position.append(ET.Element("ReferencePoint", BTLxWriter.et_point_vals(self.frame.point)))
+        position.append(ET.Element("XVector", BTLxWriter.et_point_vals(self.frame.xaxis)))
+        position.append(ET.Element("YVector", BTLxWriter.et_point_vals(self.frame.yaxis)))
         return transformations
 
     @property
@@ -467,21 +452,49 @@ class BTLxProcessing(Data):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
     @property
-    def header_attributes(self):
-        """Return the attributes to be included in the XML element."""
-        return {
-            "Name": self.PROCESSING_NAME,
-            "Priority": str(self.priority),
-            "Process": "yes",
-            "ProcessID": str(self.process_id),
-            "ReferencePlaneID": str(self.ref_side_index + 1),
-        }
+    def processing_dict(self):  # TODO: consider caching the self.params object.
+        return self.params.processing_dict()
 
     def add_subprocessing(self, subprocessing):
         """Add a nested subprocessing."""
         if not self.subprocessings:
             self.subprocessings = []
         self.subprocessings.append(subprocessing)
+
+
+class BTLxProcessingParams(object):
+    """Base class for BTLx processing parameters. This creates the dictionary of key-value pairs for the processing as expected by the BTLx file format.
+
+    Parameters
+    ----------
+    instance : :class:`BTLxProcessing`
+        The instance of the processing to create parameters for.
+
+    """
+
+    def __init__(self, instance):
+        self._instance = instance
+
+    @property
+    def header_attributes(self):
+        """Return the attributes to be included in the XML element."""
+        result = OrderedDict()
+        result["Name"] = self._instance.PROCESSING_NAME
+        result["Process"] = "yes"
+        result["Priority"] = str(self._instance.priority)
+        result["ProcessID"] = str(self._instance.process_id)
+        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        return result
+
+    def as_dict(self):
+        """Returns the processing parameters as a dictionary.
+
+        Returns
+        -------
+        dict
+            The processing parameters as a dictionary.
+        """
+        raise NotImplementedError("as_dict must be implemented in subclasses!")
 
     def processing_dict(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
@@ -499,47 +512,17 @@ class BTLxProcessing(Data):
 
         """
         # create processing element
-        processing_dict = {"name": self.PROCESSING_NAME, "attributes": self.header_attributes, "content": []}
+        processing_dict = {"name": self._instance.PROCESSING_NAME, "attributes": self.header_attributes, "content": []}
         # create parameter subelements
-        for key, value in self.params_dict.items():
+        for key, value in self._instance.params.as_dict().items():
             sub = {"name": key}
             sub["attributes"] = value if isinstance(value, dict) else {}
             sub["text"] = value if isinstance(value, str) else ""
             processing_dict["content"].append(sub)
-            if self.subprocessings:
-                for subprocessing in self.subprocessings:
+            if self._instance.subprocessings:
+                for subprocessing in self._instance.subprocessings:
                     processing_dict["content"].append(subprocessing.processing_dict())
         return processing_dict
-
-
-class BTLxProcessingParams(object):
-    """Base class for BTLx processing parameters. This creates the dictionary of key-value pairs for the processing as expected by the BTLx file format.
-
-    Parameters
-    ----------
-    instance : :class:`BTLxProcessing`
-        The instance of the processing to create parameters for.
-
-    """
-
-    def __init__(self, instance):
-        self._instance = instance
-
-    def as_dict(self):
-        """Returns the processing parameters as a dictionary.
-
-        Returns
-        -------
-        dict
-            The processing parameters as a dictionary.
-        """
-        result = OrderedDict()
-        result["Name"] = self._instance.PROCESSING_NAME
-        result["Process"] = "yes"
-        result["Priority"] = str(self._instance.priority)
-        result["ProcessID"] = str(self._instance.process_id)
-        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
-        return result
 
 
 class OrientationType(object):

@@ -31,8 +31,8 @@ def test_deferred_drilling():
     t_drilling = Drilling.from_line_and_element(t_line, beam, diameter)
     t_def = drilling_def.transformed(xform)
 
-    assert drilling_def.feature_from_element(beam).params_dict == drilling.params_dict
-    assert t_def.feature_from_element(beam).params_dict == t_drilling.params_dict
+    assert drilling_def.feature_from_element(beam).params.as_dict() == drilling.params.as_dict()
+    assert t_def.feature_from_element(beam).params.as_dict() == t_drilling.params.as_dict()
 
 
 def test_deferred_jack_cut():
@@ -52,8 +52,8 @@ def test_deferred_jack_cut():
     t_jack_cut = JackRafterCut.from_plane_and_beam(t_plane, beam)
     t_def = jack_cut_def.transformed(xform)
 
-    assert jack_cut_def.feature_from_element(beam).params_dict == jack_cut.params_dict
-    assert t_def.feature_from_element(beam).params_dict == t_jack_cut.params_dict
+    assert jack_cut_def.feature_from_element(beam).params.as_dict() == jack_cut.params.as_dict()
+    assert t_def.feature_from_element(beam).params.as_dict() == t_jack_cut.params.as_dict()
 
 
 def test_deferred_double_cut():
@@ -74,5 +74,5 @@ def test_deferred_double_cut():
     double_cut_def_a = BTLxFromGeometryDefinition(DoubleCut, test_planes, beam, ref_side_index=0)
     t_def = double_cut_def_a.transformed(xform)
 
-    assert double_cut_def.feature_from_element(beam).params_dict == double_cut.params_dict
-    assert t_def.feature_from_element(beam).params_dict == t_double_cut.params_dict
+    assert double_cut_def.feature_from_element(beam).params.as_dict() == double_cut.params.as_dict()
+    assert t_def.feature_from_element(beam).params.as_dict() == t_double_cut.params.as_dict()

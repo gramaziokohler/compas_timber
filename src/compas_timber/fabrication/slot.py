@@ -69,8 +69,8 @@ class Slot(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return SlotParams(self).as_dict()
+    def params(self):
+        return SlotParams(self)
 
     @property
     def orientation(self):

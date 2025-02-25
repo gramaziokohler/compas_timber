@@ -104,8 +104,8 @@ class StepJoint(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return StepJointParams(self).as_dict()
+    def params(self):
+        return StepJointParams(self)
 
     @property
     def orientation(self):

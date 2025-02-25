@@ -128,8 +128,8 @@ class StepJointNotch(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return StepJointNotchParams(self).as_dict()
+    def params(self):
+        return StepJointNotchParams(self)
 
     @property
     def orientation(self):

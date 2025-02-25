@@ -72,8 +72,8 @@ class Drilling(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DrillingParams(self).as_dict()
+    def params(self):
+        return DrillingParams(self)
 
     @property
     def start_x(self):

@@ -156,8 +156,8 @@ class DovetailTenon(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DovetailTenonParams(self).as_dict()
+    def params(self):
+        return DovetailTenonParams(self)
 
     @property
     def orientation(self):
