@@ -6,7 +6,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.connections.utilities import point_centerline_towards_joint
+from compas_timber.connections import point_centerline_towards_joint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.utils import intersection_line_line_param
@@ -59,7 +59,7 @@ class LMiterJoint(Joint):
         self.beam_b = beam_b
         self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
         self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
-        self.cutoff = cutoff or False
+        self.cutoff = cutoff
         self.features = []
 
     @property
