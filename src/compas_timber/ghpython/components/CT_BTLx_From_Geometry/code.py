@@ -37,12 +37,12 @@ class BTLxFromGeometry(component):
             return None
         else:
             ghenv.Component.Message = self.processing_type.__name__
-            for arg, arg_name in zip(args, self.arg_names()):
-                if arg is not None:
+            for arg, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
+                if arg is None:
                     self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data".format(arg_name))
 
             geometries = []
-            for geo, arg_name in zip(args, self.arg_names())[0 : self.geometry_count]:
+            for geo, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
                 if isinstance(geo, rg.LineCurve):
                     geometries.append(Line(geo.PointAtStart, geo.PointAtEnd))
                 elif isinstance(geo, rg.Plane):

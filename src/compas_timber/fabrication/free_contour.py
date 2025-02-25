@@ -199,7 +199,6 @@ class FreeCountourParams(BTLxProcessingParams):
 
     def processing_dict(self):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
-        NOTE: moved to BTLxProcessing because some processings are significantly different and need to be overridden.
 
         Parameters
         ----------
