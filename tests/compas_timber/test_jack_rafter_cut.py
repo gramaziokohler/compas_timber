@@ -105,7 +105,8 @@ def test_jack_rafter_cut_data(tol):
 def test_jack_rafter_params_obj():
     instance = JackRafterCut(OrientationType.START, 14.23, 0.22, 42, 123.555, 95.2, ref_side_index=3)
 
-    params = instance.params_dict
+    params = instance.params.header_attributes
+    params.update(instance.params.as_dict())
 
     assert params["Name"] == "JackRafterCut"
     assert params["Process"] == "yes"
