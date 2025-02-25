@@ -661,6 +661,29 @@ class EdgePositionType(object):
     OPPEDGE = "oppedge"
 
 
+class AlignmentType(object):
+    """Enum for the alignment of the cut.
+    Attributes
+    ----------
+    TOP : literal("top")
+        Top alignment.
+    BOTTOM : literal("bottom")
+        Bottom alignment.
+    LEFT : literal("left")
+        Left alignment.
+    RIGHT : literal("right")
+        Right alignment.
+    CENTER : literal("center")
+        Center alignment.
+    """
+
+    TOP = "top"
+    BOTTOM = "bottom"
+    LEFT = "left"
+    RIGHT = "right"
+    CENTER = "center"
+
+
 class BTLxFromGeometryDefinition(Data):
     """Container linking a BTLx Process Type and generator function to an input geometry.
     This allows delaying the actual applying of features to a downstream component.
