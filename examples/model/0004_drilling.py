@@ -57,7 +57,7 @@ drill_lines = [
 features = []
 diameter = 10
 for d_line in drill_lines:
-    features.append(Drilling.from_line_and_beam(d_line, diameter, beam))
+    features.append(Drilling.from_line_and_element(d_line, beam, diameter))
 
 
 beam.add_features(features)

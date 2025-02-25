@@ -5,7 +5,7 @@ Beams
 A :class:`~compas_timber.parts.Beam` object represents a linear (straight) timber part with a rectangular cross-section - for example as a stud, rafter, beam, joist etc.
 It has a local coordinate system, where the X-axis corresponds with the *centerline*,
 Y-axis with the *width* of the cross-section and Z-axis with the *height* of the cross-section.
-The *origin* is located at the start of the centerline.
+The *origin* is located at the start of the centerline. 
 
 .. image:: ../images/gh_beam.png
     :width: 50%

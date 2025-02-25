@@ -41,7 +41,7 @@ class JointRuleFromList(component):
                 )
                 return
             kwargs = {}
-            for i, val in enumerate(args[self.arg_start_index - 1 :]):
+            for i, val in enumerate(args[1:]):
                 if val is not None:
                     kwargs[self.arg_names[i]] = val
 
@@ -58,7 +58,7 @@ class JointRuleFromList(component):
 
     @property
     def arg_names(self):
-        return inspect.getargspec(self.joint_type.__init__)[0][self.arg_start_index :]
+        return inspect.getargspec(self.joint_type.__init__)[0][self.arg_start_index :] + ["max_distance"]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():

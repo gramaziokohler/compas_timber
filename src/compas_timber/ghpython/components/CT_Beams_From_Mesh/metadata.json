@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Design",
     "description": "Creates Beams and from mesh edges and maps them to the mesh vertexes.",
-    "exposure": 2,
+    "exposure": 8,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

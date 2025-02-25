@@ -1,21 +1,20 @@
 import math
 
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Rotation
+from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
+from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_plane_plane_plane
-from compas.geometry import is_point_behind_plane
+from compas.geometry import intersection_plane_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import intersection_line_beam_param
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -62,7 +61,7 @@ class DoubleCut(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation = OrientationType.START,
         start_x=0.0,
         start_y=50.0,
         angle_1=45.0,
@@ -166,12 +165,18 @@ class DoubleCut(BTLxProcessing):
             raise ValueError("Inclination_2 must be between 0.1 and 179.9.")
         self._inclination_2 = inclination_2
 
+    @property
+    def is_concave(self):
+        return self.angle_1 < self.angle_2
+
+
+
     ########################################################################
     # Alternative constructors
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, ref_side_index=0):
+    def from_planes_and_beam(cls, planes, beam, ref_side_index=None):
         """Create a DoubleCut instance from two cutting planes and the beam they should cut.
 
         Parameters
@@ -194,80 +199,95 @@ class DoubleCut(BTLxProcessing):
 
         # convert all frames to planes
         planes = [Plane.from_frame(plane) if isinstance(plane, Frame) else plane for plane in planes]
-
-        # check if the normals are facing the same direction
-        normals = [plane.normal for plane in planes]
-        if dot_vectors(*normals) < 0:
-            raise ValueError("The normals of the two planes are not aligned. Consider flipping one of them.")
-
-        # define ref side and ref edge
-        ref_side = beam.ref_sides[ref_side_index]
-        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-
-        # calculate the average plane of the two planes
-        point_start_xy = Point(*intersection_plane_plane_plane(planes[0], planes[1], Plane.from_frame(ref_side)))
-        if point_start_xy is None:
+        """ get the intersection line of cutting planes, which is used to determine whether the planes cut a concave or convex shape"""
+        ln = intersection_plane_plane(planes[0], planes[1])
+        line = Line(Point(*ln[0]), Point(*ln[1]))
+        intersection_points, face_indices = intersection_line_beam_param(line, beam)
+        if not intersection_points:
             raise ValueError("Planes do not intersect with beam.")
-        average_plane = Plane(point_start_xy, planes[0].normal + planes[1].normal)
+        if not ref_side_index:
+            ref_side_index = face_indices[0]
+            ref_side = beam.ref_sides[ref_side_index]
+            point_start_xy = intersection_points[0]
 
-        # calculate the orientation of the cut
-        orientation = cls._calculate_orientation(ref_side, average_plane)
+        else:
+            if ref_side_index not in face_indices:
+                raise ValueError("Planes do not intersect with selected ref_side {}.".format(ref_side_index))
+            else:
+                ref_side = beam.ref_sides[ref_side_index]
+                index = face_indices.index(ref_side_index)
+                point_start_xy = intersection_points[index]
 
-        # calculate the start_x and start_y of the cut
-        start_x, start_y = cls._calculate_start_x_y(ref_edge, point_start_xy)
-
-        # calculate the angles of the cuts
+        planes = cls._reorder_planes(planes, line, ref_side)
+        orientation = cls._calculate_orientation(beam, planes)
+        start_x, start_y = cls._calculate_start_x_y(ref_side, point_start_xy)
         angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
-
-        # calculate the inclinations of the cuts
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
 
-        # flip the values if the first angle is larger than the second.
-        if angle_1 > angle_2:
-            angle_1, angle_2 = angle_2, angle_1
-            inclination_1, inclination_2 = inclination_2, inclination_1
+        # TODO: evaluate if the planes should be cached for use in geometry creation.
+        return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index)
 
-        return cls(
-            orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index
-        )
 
     @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
+    def _reorder_planes(planes, intersection_line, ref_side):
+        """this makes sure that plane[0] is the one that is closest to the ref_side yaxis"""
+        lines = [Line.from_point_and_vector(plane.point, intersection_line.direction) for plane in planes]
+        points = [Point(*intersection_line_plane(line, Plane.from_frame(ref_side))) for line in lines]
+        dots = [dot_vectors(point, ref_side.yaxis) for point in points]
+        if dots[0] > dots[1]:
+            return [planes[1],planes[0]]
+        else:
+            return planes
+
+    @classmethod
+    def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
+        """Construct a DoubleCut process from a two planes and an element.
+
+        Parameters
+        ----------
+        plane_a : :class:`compas.geometry.Plane`
+            The first cutting plane.
+        plane_b : :class:`compas.geometry.Plane`
+            The second cutting plane.
+        element : :class:`compas_timber.elements.Element`
+            The element to be cut.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.DoubleCut`
+            The constructed double cut process.
+
+        """
+        return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
+
+    @staticmethod
+    def _calculate_orientation(beam, cutting_planes):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
+        if dot_vectors(beam.centerline.direction, (cutting_planes[0].normal+cutting_planes[1].normal)) > 0:
             return OrientationType.START
         else:
             return OrientationType.END
 
     @staticmethod
-    def _calculate_start_x_y(ref_edge, point_start_xy):
+    def _calculate_start_x_y(ref_side, point_start_xy):
         # calculate the start_x and start_y of the cut
-        intersection_plane = Plane(point_start_xy, ref_edge.direction)
-        intersection_point = intersection_line_plane(ref_edge, intersection_plane)
-
-        start_x = distance_point_point(intersection_point, ref_edge.start)
-        start_y = distance_point_point(intersection_point, point_start_xy)
-        if start_x is None or start_y is None:
-            raise ValueError("Planes do not intersect with beam.")
-        return start_x, start_y
+        pt_xy = point_start_xy.transformed(Transformation.from_frame_to_frame(ref_side, Frame.worldXY()))
+        return pt_xy.x, pt_xy.y
 
     @staticmethod
     def _calculate_angle(ref_side, planes, orientation):
         # calculate the angles of the planes in the horizontal direction. (normal: ref_side.zaxis)
-        if orientation == OrientationType.END:
-            planes.reverse()
-
         angles = []
         for plane in planes:
             angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
-            angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.zaxis, deg=True)
-            angles.append(abs(angle))
-
-        if sum(angle % 90 for angle in angles) > 180:
-            raise ValueError(
-                "The angles do not satisfy the required condition: one angle must be < 90 and another > 90."
-            )
+            if dot_vectors(angle_vector, ref_side.yaxis)<0:
+                angle_vector = -angle_vector    # make sure the angle vector is pointing in the same direction as the yaxis
+            if orientation == OrientationType.START:
+                angle = angle_vectors(ref_side.xaxis, angle_vector, deg=True)
+            else:
+                angle = angle_vectors(ref_side.xaxis, -angle_vector, deg=True)
+            angles.append(angle)
         return angles
 
     @staticmethod
@@ -275,8 +295,7 @@ class DoubleCut(BTLxProcessing):
         # calculate the inclinations of the planes in the vertical direction. (normal: ref_side.yaxis)
         inclinations = []
         for plane in planes:
-            ref_vect = Vector.cross(ref_side.normal, plane.normal)
-            inclination = angle_vectors_signed(ref_side.normal, plane.normal, ref_vect, deg=True)
+            inclination = angle_vectors(ref_side.normal, plane.normal, deg=True)
             inclinations.append(inclination)
         return inclinations
 
@@ -307,23 +326,24 @@ class DoubleCut(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         # get cutting planes from params and beam
-        trim_volume = geometry.copy()
+
         try:
             cutting_planes = self.planes_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
-
-        for cutting_plane in cutting_planes:
-            try:
+        if self.is_concave:
+            trim_volume = geometry.copy()
+            for cutting_plane in cutting_planes:
                 trim_volume.trim(cutting_plane)
-            except Exception as e:
-                raise BrepTrimmingError(
-                    cutting_plane, geometry, "Failed to trim geometry with cutting planes: {}".format(str(e))
-                )
+            return geometry - trim_volume
+        else:
+            for cutting_plane in cutting_planes:
+                plane = Plane(cutting_plane.point, -cutting_plane.normal)
+                geometry.trim(plane)
+            return geometry
 
-        return geometry - trim_volume
 
     def planes_from_params_and_beam(self, beam):
         """Calculates the cutting planeS from the machining parameters in this instance and the given beam
@@ -372,7 +392,6 @@ class DoubleCut(BTLxProcessing):
             ref_frame.xaxis, math.radians(inclination_2), point=p_origin
         )
         cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
-
         return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
 

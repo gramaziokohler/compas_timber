@@ -4,7 +4,7 @@
     "category": "COMPAS Timber",
     "subcategory": "Design",
     "description": "Defines custom beam profile dimensions by category for ModelFromSurface component. The Beam category is selected in the Context menu(right click on component).",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

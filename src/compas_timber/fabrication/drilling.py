@@ -153,8 +153,8 @@ class Drilling(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_line_and_beam(cls, line, diameter, beam):
-        """Construct a drilling processing from a line and diameter.
+    def from_line_and_element(cls, line, element, diameter):
+        """Construct a drilling process from a line and diameter.
 
         # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
         # TODO: make a from point alt. constructor that takes a point and a reference side and makes a straight drilling through.
@@ -163,12 +163,10 @@ class Drilling(BTLxProcessing):
         ----------
         line : :class:`compas.geometry.Line`
             The line on which the drilling is to be made.
+        element : :class:`compas_timber.elements.Element`
+            The element to drill.
         diameter : float
             The diameter of the drilling.
-        length : float
-            The length (depth?) of the drilling.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam to drill.
 
         Returns
         -------
@@ -176,10 +174,10 @@ class Drilling(BTLxProcessing):
             The constructed drilling processing.
 
         """
-        ref_side_index, xy_point = cls._calculate_ref_side_index(line, beam)
-        line = cls._flip_line_if_start_inside(line, beam, ref_side_index)
-        depth_limited = cls._is_depth_limited(line, beam)
-        ref_surface = beam.side_as_surface(ref_side_index)
+        ref_side_index, xy_point = cls._calculate_ref_side_index(line, element)
+        line = cls._flip_line_if_start_inside(line, element, ref_side_index)
+        depth_limited = cls._is_depth_limited(line, element)
+        ref_surface = element.side_as_surface(ref_side_index)
         depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
         x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_surface)
         angle = cls._calculate_angle(ref_surface, line, xy_point)
@@ -190,18 +188,42 @@ class Drilling(BTLxProcessing):
             raise FeatureApplicationError(
                 message=str(e),
                 feature_geometry=line,
-                element_geometry=beam.blank,
+                element_geometry=element.blank,
             )
 
+    @classmethod
+    def from_shapes_and_element(cls, line, element, diameter, **kwargs):
+        """Construct a drilling process from a line, element and diameter.
+
+        Parameters
+        ----------
+        line : :class:`compas.geometry.Line`
+            The line on which the drilling is to be made.
+        element : :class:`compas_timber.elements.Element`
+            The element to drill.
+        diameter : float
+            The diameter of the drilling.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.Drilling`
+            The constructed drilling process.
+
+        """
+        if isinstance(line, list):
+            line = line[0]
+        return cls.from_line_and_element(line, element, float(diameter), **kwargs)
+
     @staticmethod
-    def _flip_line_if_start_inside(line, beam, ref_side_index):
-        side_plane = beam.side_as_surface(ref_side_index).to_plane()
+    def _flip_line_if_start_inside(line, element, ref_side_index):
+        side_plane = element.side_as_surface(ref_side_index).to_plane()
         if is_point_behind_plane(line.start, side_plane):
             return Line(line.end, line.start)  # TODO: use line.flip() instead
         return line
 
     @staticmethod
-    def _calculate_ref_side_index(line, beam):
+    def _calculate_ref_side_index(line, element):
+        # TODO: this can also be done with compas_timber.utils.intersection_line_box_param() instead
         # TODO: upstream this to compas.geometry
         def is_point_on_surface(point, surface):
             point = Point(*point)
@@ -209,27 +231,27 @@ class Drilling(BTLxProcessing):
             return 0.0 <= local_point.x <= surface.xsize and 0.0 <= local_point.y <= surface.ysize
 
         intersections = {}
-        for index, side in enumerate(beam.ref_sides):
+        for index, side in enumerate(element.ref_sides):
             intersection = intersection_segment_plane(line, Plane.from_frame(side))
-            if intersection is not None and is_point_on_surface(intersection, beam.side_as_surface(index)):
+            if intersection is not None and is_point_on_surface(intersection, element.side_as_surface(index)):
                 intersections[index] = Point(*intersection)
 
         if not intersections:
             raise FeatureApplicationError(
-                message="The drill line must intersect with at lease one of the beam's reference sides.",
+                message="The drill line must intersect with at lease one of the element's reference sides.",
                 feature_geometry=line,
-                element_geometry=beam.blank,
+                element_geometry=element.blank,
             )
 
         ref_side_index = min(intersections, key=lambda i: intersections[i].distance_to_point(line.start))
         return ref_side_index, intersections[ref_side_index]
 
     @staticmethod
-    def _is_depth_limited(line, beam):
-        # check if the end point of the line is within the beam
+    def _is_depth_limited(line, element):
+        # check if the end point of the line is within the element
         # if it is, return True
         # otherwise, return False
-        return is_point_in_polyhedron(line.end, beam.blank.to_polyhedron())
+        return is_point_in_polyhedron(line.end, element.blank.to_polyhedron())
 
     @staticmethod
     def _xy_to_ref_side_space(point, ref_surface):
@@ -275,13 +297,13 @@ class Drilling(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry, beam):
-        """Apply the feature to the beam geometry.
+    def apply(self, geometry, element):
+        """Apply the feature to the element geometry.
 
         Raises
         ------
         :class:`compas_timber.errors.FeatureApplicationError`
-            If the cutting plane does not intersect with the beam geometry.
+            If the cutting plane does not intersect with the element geometry.
 
         Returns
         -------
@@ -289,23 +311,23 @@ class Drilling(BTLxProcessing):
             The resulting geometry after processing.
 
         """
-        drill_geometry = Brep.from_cylinder(self.cylinder_from_params_and_beam(beam))
+        drill_geometry = Brep.from_cylinder(self.cylinder_from_params_and_element(element))
         try:
             return geometry - drill_geometry
         except IndexError:
             raise FeatureApplicationError(
                 drill_geometry,
                 geometry,
-                "The drill geometry does not intersect with beam geometry.",
+                "The drill geometry does not intersect with element geometry.",
             )
 
-    def cylinder_from_params_and_beam(self, beam):
-        """Construct the geometry of the drilling using the parameters in this instance and the beam object.
+    def cylinder_from_params_and_element(self, element):
+        """Construct the geometry of the drilling using the parameters in this instance and the element object.
 
         Parameters
         ----------
-        beam : :class:`compas_timber.elements.Beam`
-            The beam to drill.
+        element : :class:`compas_timber.elements.Element`
+            The element to drill.
 
         Returns
         -------
@@ -318,15 +340,15 @@ class Drilling(BTLxProcessing):
         assert self.inclination is not None
         assert self.depth is not None
 
-        ref_surface = beam.side_as_surface(self.ref_side_index)
+        ref_surface = element.side_as_surface(self.ref_side_index)
         xy_world = ref_surface.point_at(self.start_x, self.start_y)
 
-        # x and y flipped because we want z pointting down into the beam, that'll be the cylinder long direction
+        # x and y flipped because we want z pointting down into the element, that'll be the cylinder long direction
         cylinder_frame = Frame(xy_world, ref_surface.zaxis, -ref_surface.yaxis)
         cylinder_frame.rotate(math.radians(self.angle), -ref_surface.zaxis, point=xy_world)
         cylinder_frame.rotate(math.radians(self.inclination), cylinder_frame.yaxis, point=xy_world)
 
-        drill_line = self._calculate_drill_line(beam, xy_world, cylinder_frame)
+        drill_line = self._calculate_drill_line(element, xy_world, cylinder_frame)
 
         # scale both ends so is protrudes nicely from the surface
         # TODO: this is a best-effort solution. this can be done more accurately taking the angle into account. consider doing that in the future.
@@ -340,15 +362,15 @@ class Drilling(BTLxProcessing):
         end = line.midpoint + direction * scale_factor
         return Line(start, end)
 
-    def _calculate_drill_line(self, beam, xy_world, cylinder_frame):
+    def _calculate_drill_line(self, element, xy_world, cylinder_frame):
         drill_line_direction = Line.from_point_and_vector(xy_world, cylinder_frame.zaxis)
         if self.depth_limited:
-            drill_bottom_plane = beam.side_as_surface(self.ref_side_index).to_plane()
+            drill_bottom_plane = element.side_as_surface(self.ref_side_index).to_plane()
             drill_bottom_plane.point -= drill_bottom_plane.normal * self.depth
         else:
             # this is not always the correct plane, but it's good enough for now, btlx viewer seems to be using the same method..
             # TODO: this is a best-effort solution. consider calculating intersection with other sides to always find the right one.
-            drill_bottom_plane = beam.side_as_surface(beam.opposing_side_index(self.ref_side_index)).to_plane()
+            drill_bottom_plane = element.side_as_surface(element.opposing_side_index(self.ref_side_index)).to_plane()
 
         intersection_point = intersection_line_plane(drill_line_direction, drill_bottom_plane)
         assert intersection_point  # if this fails, it means space and time as we know it has collapsed

@@ -2,7 +2,7 @@
     "name": "DecomposeBeam",
     "nickname": "DecomposeBeam",
     "category": "COMPAS Timber",
-    "subcategory": "Beams",
+    "subcategory": "Elements",
     "description": "Extracts main geometric characteristics of a Beam.",
     "exposure": 4,
     "ghpython": {
