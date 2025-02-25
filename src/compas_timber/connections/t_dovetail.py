@@ -1,8 +1,5 @@
 import math
 
-from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-from compas_timber.connections.utilities import point_centerline_towards_joint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
@@ -10,6 +7,9 @@ from compas_timber.fabrication import TenonShapeType
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
+from .utilities import beam_ref_side_incidence_with_vector
+from .utilities import point_centerline_towards_joint
 
 
 class TDovetailJoint(Joint):

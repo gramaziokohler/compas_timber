@@ -1,10 +1,10 @@
-from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
 
 
 class LButtJoint(Joint):

@@ -19,6 +19,7 @@ from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
+from .utilities import point_centerline_towards_joint
 from .wall_joint import WallJoint
 from .wall_joint import InterfaceLocation
 from .wall_joint import InterfaceRole
@@ -46,6 +47,7 @@ __all__ = [
     "YButtJoint",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
+    "point_centerline_towards_joint",
     "WallJoint",
     "InterfaceLocation",
     "InterfaceRole",
