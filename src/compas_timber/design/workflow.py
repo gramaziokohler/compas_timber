@@ -27,6 +27,14 @@ class CollectionDef(object):
         return "Collection with %s items." % len(self.objs)
 
 
+class ContainerDefinition(object):
+    """Holds a pair of slab and its configuration set if available."""
+
+    def __init__(self, slab, config_set=None):
+        self.slab = slab
+        self.config_set = config_set
+
+
 class JointRule(object):
     def comply(self, elements):
         """Returns True if the provided elements comply with the rule defined by this instance. False otherwise.
@@ -65,7 +73,7 @@ class JointRule(object):
         return [rule for rule in topo_rules.values() if rule is not None]
 
     @staticmethod
-    def joints_from_beams_and_rules(elements, rules, max_distance=TOL.absolute):
+    def joints_from_beams_and_rules(elements, rules, max_distance=TOL.absolute, handled_pairs=None):
         """processes joint rules into joint definitions.
 
         Parameters
@@ -83,23 +91,40 @@ class JointRule(object):
             A list of joint definitions that can be applied to the given elements.
 
         """
+        handled_pairs = handled_pairs or []
         elements = elements if isinstance(elements, list) else list(elements)
         direct_rules = JointRule.get_direct_rules(rules)
         solver = ConnectionSolver()
+
         max_distances = [rule.max_distance for rule in rules if rule.max_distance]
         max_rule_distance = max(max_distances) if max_distances else max_distance
+
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_rule_distance)
+
+        # these pairs were already handled by some external logic and shouldn't be processed again
+        # e.g. the beams within a wall are joined by wall specific logic
+        # however, other beams in the model should be allowed to be joined with them, thus they cannot be altogether excluded
+        for pair in handled_pairs:
+            if pair in element_pairs:
+                element_pairs.remove(pair)
+
         joint_defs = []
         unmatched_pairs = []
+        compliant_direct_rules = []
+
+        for rule in direct_rules:
+            if rule.comply(rule.elements, model_max_distance=max_distance):  # see if pair complies with max distance
+                joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
+                compliant_direct_rules.append(rule)
+
         while element_pairs:
             pair = element_pairs.pop()
             match_found = False
-            for rule in direct_rules:
+
+            for rule in compliant_direct_rules:
                 if rule.contains(pair):  # see if pair is used in a direct rule
-                    if rule.comply(pair, model_max_distance=max_distance):  # see if pair complies with max distance
-                        joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
-                        match_found = True
-                        break
+                    match_found = True
+                    break
 
             if not match_found:
                 for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
@@ -107,7 +132,6 @@ class JointRule(object):
                         match_found = True
                         joint_defs.append(JointDefinition(rule.joint_type, rule.reorder(pair), **rule.kwargs))
                         break
-
             if not match_found:
                 for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
                     comply, ordered_pair = rule.comply(pair, model_max_distance=max_distance)
@@ -178,7 +202,6 @@ class DirectRule(JointRule):
             max_distance = self.max_distance
         else:
             max_distance = model_max_distance
-
         try:
             for pair in combinations(list(elements), 2):
                 return distance_segment_segment(pair[0].centerline, pair[1].centerline) <= max_distance
