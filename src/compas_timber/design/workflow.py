@@ -246,9 +246,9 @@ class CategoryRule(JointRule):
     def comply(self, elements, model_max_distance=TOL.absolute):
         """Checks if the given elements comply with this CategoryRule.
         It checks:
-            that the elements have the expected category attribute,
-            that the max_distance is not exceeded,
-            that the joint supports the topology of the elements.
+        that the elements have the expected category attribute,
+        that the max_distance is not exceeded,
+        that the joint supports the topology of the elements.
 
 
         Parameters
