@@ -158,6 +158,9 @@ Tenon and Mortise
 
 A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.
 
+.. image:: ../images/gh_joint_LTenonMortise.png
+    :width: 50%
+
 Inputs:
 
 * `start_y` : Start position of the tenon along the y-axis of the main beam.
@@ -206,6 +209,9 @@ Tenon and Mortise
 
 A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.
 
+.. image:: ../images/gh_joint_TTenonMortise.png
+    :width: 50%
+
 Inputs:
 
 * `start_y` : Start position of the tenon along the y-axis of the main beam.
@@ -224,6 +230,9 @@ T-Step
 
 Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.
 
+.. image:: ../images/gh_joint_TStep.png
+    :width: 50%
+
 Inputs:
 
 * `step_shape` : Shape of the step feature. 0: step, 1: heel, 2: double.
@@ -239,11 +248,17 @@ T-Birdsmouth
 
 A DoubleCut is created on the main beam to fit the cross beam. The position of the cross beam should allow the creation of the doblecut. If one of the sides of the cross beam is parallel to the axis of the main beam a doublecut cannot be created. 
 
+.. image:: ../images/gh_joint_TBirdthmouth.png
+    :width: 50%
+|
 
 T-Dovetail
 ^^^^^^^^^^
 
 A dovetail cut is made on the main beam, and a corresponding notch is made on the cross beam to fit the main beam.
+
+.. image:: ../images/gh_joint_TDovetail.png
+    :width: 50%
 
 Inputs:
 
