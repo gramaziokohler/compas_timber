@@ -6,13 +6,13 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 
-from compas_timber.connections import point_centerline_towards_joint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import point_centerline_towards_joint
 
 
 class LMiterJoint(Joint):
