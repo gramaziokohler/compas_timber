@@ -10,6 +10,9 @@ from warnings import warn
 import compas
 from compas.data import Data
 from compas.geometry import Frame
+from compas.geometry import Vector
+from compas.geometry import distance_point_point_sqrd
+from compas.geometry import angle_vectors_signed
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
@@ -278,6 +281,7 @@ class BTLxPart(object):
         self.blank_length = beam.blank_length
         self.processings = []
         self._et_element = None
+        self._shape_strings = None
 
     @property
     def part_guid(self):
@@ -389,12 +393,15 @@ class BTLxPart(object):
     @property
     def et_shape(self):
         shape = ET.Element("Shape")
-        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
+        # appearance = ET.SubElement(shape, "Appearance")
+        # material = ET.SubElement(appearance, "Material", {"diffuseColor": "0.6 0.6 0.6", "emissiveColor":"0.4 0.4 0.4"})
+        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex="")
         indexed_face_set.set("coordIndex", " ")
-        indexed_face_set.append(ET.Element("Coordinate"))
-        # indexed_face_set.set("coordIndex", self.shape_strings[0])
-        # indexed_face_set.append(ET.Element("Coordinate", point=self.shape_strings[1]))
+        # indexed_face_set.append(ET.Element("Coordinate"))
+        indexed_face_set.set("coordIndex", self.shape_strings[0])
+        indexed_face_set.append(ET.Element("Coordinate", {"point":self.shape_strings[1]}))
         return shape
+
 
     @property
     def shape_strings(self):
@@ -402,29 +409,59 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
+
+
             try:
                 for face in self.beam.geometry.faces:
-                    for loop in face.loops:
-                        for vertex in loop.vertices:
-                            if brep_vertex_points.contains(vertex.point):
-                                brep_indices.append(brep_vertex_points.index(vertex.point))
-                            else:
-                                brep_vertex_points.append(vertex.point)
-                                brep_indices.append(len(brep_vertex_points))
+                    normal = face.native_face.NormalAt(0.5, 0.5)
+                    print("normal: ", normal)
+                    print("number of edges in face: ", len(face.edges))
+                    pts=[]
+                    for edge in face.edges:
+                        start_already_in = False
+                        end_already_in = False
+                        for pt in pts:
+                            if TOL.is_allclose(pt, edge.start_vertex.point):
+                                start_already_in = True
+                                break
+                        if not start_already_in:
+                            pts.append(edge.start_vertex.point)
 
-                brep_indices.append(-1)
-                brep_indices.pop(-1)
+                        for pt in pts:
+                            if TOL.is_allclose(pt, edge.end_vertex.point):
+                                end_already_in = True
+                                break
+                        if not end_already_in:
+                            pts.append(edge.end_vertex.point)
+
+
+                    print(pts)
+
+                    if len(pts) != len(face.edges):
+                        print([ed.start_vertex.point for ed in face.edges]+[ed.end_vertex.point for ed in face.edges])
+                        print(pts)
+                    for pt in pts:
+                        if pt in brep_vertex_points:
+                            brep_indices.append(brep_vertex_points.index(pt))
+                        else:
+                            brep_indices.append(len(brep_vertex_points))
+                            brep_vertex_points.append(pt)
+
+                    brep_indices.append(-1)
+                # brep_indices.pop(-1)
             except NotImplementedError:
                 print("brep.face.loop.vertices not implemented")
-            brep_indices_string = " "
+            brep_indices_string = ""
             for index in brep_indices:
                 brep_indices_string += str(index) + " "
 
-            brep_vertices_string = " "
+            brep_vertices_string = ""
             for point in brep_vertex_points:
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION)
+                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
+                brep_vertices_string = brep_vertices_string.replace('-','')
+
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
@@ -721,3 +758,27 @@ class BTLxFromGeometryDefinition(Data):
             return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
         except Exception as ex:
             raise FeatureApplicationError(self.geometries, element.blank, str(ex))
+
+def correct_polyline_direction(polyline, normal_vector):
+    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to correct.
+
+    Returns
+    -------
+    :class:`compas.geometry.Polyline`
+        The corrected polyline.
+
+    """
+    angle_sum = 0
+    for i in range(len(polyline) - 1):
+        u = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+        angle = angle_vectors_signed(u, v, normal_vector)
+        angle_sum += angle
+    if angle_sum > 0:
+        polyline = polyline[::-1]
+    return polyline
