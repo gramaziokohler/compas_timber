@@ -10,11 +10,10 @@ from warnings import warn
 import compas
 from compas.data import Data
 from compas.geometry import Frame
-from compas.geometry import Vector
-from compas.geometry import distance_point_point_sqrd
-from compas.geometry import angle_vectors_signed
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -196,7 +195,8 @@ class BTLxWriter(object):
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
-        part_element.append(part.et_shape)
+        if beam._geometry:
+            part_element.append(part.et_shape)
         return part_element
 
     def _create_processing(self, processing):
@@ -266,8 +266,6 @@ class BTLxPart(object):
         The blank length of the beam.
     processings : list
         A list of the processings applied to the beam.
-    et_element : :class:`~xml.etree.ElementTree.Element`
-        The ET element of the BTLx part.
 
     """
 
@@ -364,22 +362,6 @@ class BTLxPart(object):
         }
 
     @property
-    def et_element(self):
-        if self._et_element is None:
-            self._et_element = ET.Element("Part", self.attr)
-            self._shape_strings = None
-            self._et_element.append(self.et_transformations)
-            self._et_element.append(ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no"))
-            self._et_element.append(ET.Element("ReferenceSide", Side="1", Align="no"))
-            processings_et = ET.Element("Processings")
-            if self.processings:  # otherwise there will be an empty <Processings/> tag
-                for process in self.processings:
-                    processings_et.append(process.et_element)
-                self._et_element.append(processings_et)
-            self._et_element.append(self.et_shape)
-        return self._et_element
-
-    @property
     def et_transformations(self):
         transformations = ET.Element("Transformations")
         guid = "{" + str(uuid.uuid4()) + "}"
@@ -393,64 +375,53 @@ class BTLxPart(object):
     @property
     def et_shape(self):
         shape = ET.Element("Shape")
-        # appearance = ET.SubElement(shape, "Appearance")
-        # material = ET.SubElement(appearance, "Material", {"diffuseColor": "0.6 0.6 0.6", "emissiveColor":"0.4 0.4 0.4"})
-        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex="")
-        indexed_face_set.set("coordIndex", " ")
-        # indexed_face_set.append(ET.Element("Coordinate"))
-        indexed_face_set.set("coordIndex", self.shape_strings[0])
-        indexed_face_set.append(ET.Element("Coordinate", {"point":self.shape_strings[1]}))
+        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex=self.shape_strings[0])
+        indexed_face_set.append(ET.Element("Coordinate", {"point": self.shape_strings[1]}))
         return shape
-
 
     @property
     def shape_strings(self):
-        # TODO: this need some cleanup, potentially removal
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-
-
             try:
                 for face in self.beam.geometry.faces:
-                    normal = face.native_face.NormalAt(0.5, 0.5)
-                    print("normal: ", normal)
-                    print("number of edges in face: ", len(face.edges))
-                    pts=[]
-                    for edge in face.edges:
-                        start_already_in = False
-                        end_already_in = False
-                        for pt in pts:
-                            if TOL.is_allclose(pt, edge.start_vertex.point):
-                                start_already_in = True
-                                break
-                        if not start_already_in:
-                            pts.append(edge.start_vertex.point)
-
-                        for pt in pts:
-                            if TOL.is_allclose(pt, edge.end_vertex.point):
-                                end_already_in = True
-                                break
-                        if not end_already_in:
-                            pts.append(edge.end_vertex.point)
-
-
-                    print(pts)
+                    pts = []
+                    for loop in face.loops:
+                        if loop.is_outer:
+                            frame = face.surface.frame_at(0.5, 0.5)
+                            edges = loop.edges[1:]
+                            pts = [loop.edges[0].start_vertex.point, loop.edges[0].end_vertex.point]
+                            overflow = len(loop.edges)
+                            while edges and overflow > 0:
+                                for i, edge in enumerate(edges):
+                                    if not edge.is_line:
+                                        edges.pop(i)
+                                        continue
+                                    elif (edge.start_vertex.point in pts) and (edge.end_vertex.point in pts):  # edge endpoints already in pts
+                                        edges.pop(i)
+                                        continue
+                                    elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
+                                        pts.append(edges.pop(i).end_vertex.point)
+                                    elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
+                                        pts.append(edges.pop(i).start_vertex.point)
+                                overflow -= 1
+                            pts = correct_polyline_direction(pts, frame.normal)
 
                     if len(pts) != len(face.edges):
-                        print([ed.start_vertex.point for ed in face.edges]+[ed.end_vertex.point for ed in face.edges])
-                        print(pts)
-                    for pt in pts:
-                        if pt in brep_vertex_points:
-                            brep_indices.append(brep_vertex_points.index(pt))
-                        else:
-                            brep_indices.append(len(brep_vertex_points))
-                            brep_vertex_points.append(pt)
+                        print("edge count doesnt match point count, BTLxPart shape will be incorrect")
 
-                    brep_indices.append(-1)
-                # brep_indices.pop(-1)
+                    if len(pts) > 2:
+                        for pt in pts:
+                            if pt in brep_vertex_points:
+                                brep_indices.append(brep_vertex_points.index(pt))
+                            else:
+                                brep_indices.append(len(brep_vertex_points))
+                                brep_vertex_points.append(pt)
+                        brep_indices.append(-1)
+
             except NotImplementedError:
-                print("brep.face.loop.vertices not implemented")
+                print("BTLx shape generation failed, using element.blank instead")
             brep_indices_string = ""
             for index in brep_indices:
                 brep_indices_string += str(index) + " "
@@ -460,7 +431,7 @@ class BTLxPart(object):
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
                 brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
-                brep_vertices_string = brep_vertices_string.replace('-','')
+                brep_vertices_string = brep_vertices_string.replace("-", "")
 
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
@@ -759,6 +730,7 @@ class BTLxFromGeometryDefinition(Data):
         except Exception as ex:
             raise FeatureApplicationError(self.geometries, element.blank, str(ex))
 
+
 def correct_polyline_direction(polyline, normal_vector):
     """Corrects the direction of a polyline to be counter-clockwise around a given vector.
 
@@ -782,3 +754,10 @@ def correct_polyline_direction(polyline, normal_vector):
     if angle_sum > 0:
         polyline = polyline[::-1]
     return polyline
+
+
+def is_pt_in_list(pt, pt_list):
+    for pt_ in pt_list:
+        if TOL.is_allclose(pt, pt_):
+            return True
+    return False
