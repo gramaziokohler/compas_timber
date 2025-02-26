@@ -123,10 +123,6 @@ class LConnectionDetailB(LDetailBase):
         return Box(xsize, ysize, zsize, frame=box_frame)
 
     def create_elements_cross(self, interface, wall, config_set):
-        # create a beam (definition) as wide and as high as the wall
-        # it should be flush agains the interface
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
-
         if interface.interface_type == InterfaceLocation.FRONT:
             left_vertical = interface.interface_polyline.lines[0]
             parallel_to_interface = wall.baseline.direction * -1.0
@@ -151,7 +147,6 @@ class LConnectionDetailB(LDetailBase):
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
 
@@ -216,7 +211,6 @@ class LConnectionDetailA(LDetailBase):
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
 
@@ -251,7 +245,6 @@ class TConnectionDetailA(TDetailBase):
     def create_elements_cross(self, interface, wall, config_set):
         # create a beam (definition) as wide and as high as the wall
         # it should be flush agains the interface
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
         polyline = interface.interface_polyline
         top_midpoint = polyline.lines[1].midpoint
         bottom_midpoint = polyline.lines[3].midpoint
@@ -267,6 +260,5 @@ class TConnectionDetailA(TDetailBase):
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
