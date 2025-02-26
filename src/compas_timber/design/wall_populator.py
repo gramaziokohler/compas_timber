@@ -500,6 +500,7 @@ class WallPopulator(object):
         return [
             CategoryRule(edge_plate_joint, "edge_stud", "plate"),
             CategoryRule(TButtJoint, "detail", "plate"),  # TODO: have the details define this
+            CategoryRule(LButtJoint, "detail_edge", "plate"),  # TODO: have the details define this
             CategoryRule(TButtJoint, "stud", "plate"),
             CategoryRule(TButtJoint, "stud", "header"),
             CategoryRule(TButtJoint, "stud", "sill"),

@@ -134,7 +134,7 @@ class LConnectionDetailB(LDetailBase):
 
         edge_offset = config_set.beam_width * 0.5 + config_set.edge_stud_offset
         edge_beam_line = left_vertical.translated(parallel_to_interface * edge_offset)
-        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
+        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail_edge")
 
         between_edge = edge_beam_line.translated(perpendicular_to_interface * 0.5 * config_set.beam_width)
         between_edge.translate(parallel_to_interface * 0.5 * config_set.beam_width)
@@ -147,7 +147,7 @@ class LConnectionDetailB(LDetailBase):
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail_edge")
         return [edge_beam]
 
 
@@ -195,7 +195,7 @@ class LConnectionDetailA(LDetailBase):
 
         edge_offset = config_set.beam_width * 0.5 + config_set.edge_stud_offset
         edge_beam_line = edge_vertical.translated(parallel_to_interface * edge_offset)
-        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
+        edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail_edge")
 
         other_edge_line = edge_beam_line.translated(parallel_to_interface * 1.0 * (wall.thickness + config_set.beam_width))
         other_beam = BeamDefinition(other_edge_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
@@ -211,7 +211,7 @@ class LConnectionDetailA(LDetailBase):
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail_edge")
         return [edge_beam]
 
 
@@ -260,5 +260,5 @@ class TConnectionDetailA(TDetailBase):
         polyline = interface.interface_polyline
         beam_zaxis = interface.frame.normal
         reference_edge = polyline.lines[0].translated(interface.frame.xaxis * config_set.beam_width * 0.5)
-        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
+        edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail_edge")
         return [edge_beam]
