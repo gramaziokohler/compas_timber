@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `BTLx_From_Params` GH component which contains the definiton for class `DeferredBTLxProcessing` to allow directly defining BTLx parameters and passing them to the model.
+
 * Added new `compas_timber.fabrication.Pocket`.
 
 ### Changed
