@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Added `max_distance` to `TimberModel.connect_adjacent_walls()`.
+* Fixed plate doesn't get properly extended to the end of an L detail.
+* Fixed detail edge beams don't get LButt.
 
 ### Removed
 
