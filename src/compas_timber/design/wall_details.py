@@ -1,6 +1,7 @@
 from compas.geometry import Box
 from compas.geometry import Line
 from compas.geometry import Plane
+from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 
 from compas_timber.connections import InterfaceLocation
@@ -172,21 +173,18 @@ class LConnectionDetailA(LDetailBase):
         return Box(xsize, ysize, zsize, frame=box_frame)
 
     def create_elements_cross(self, interface, wall, config_set):
-        # create a beam (definition) as wide and as high as the wall
-        # it should be flush agains the interface
-        # TODO: if beam_height < wall thickness, there needs to be an offset here
-
         if interface.interface_type == InterfaceLocation.FRONT:
-            left_vertical = interface.interface_polyline.lines[0]
-            parallel_to_interface = wall.baseline.direction * -1.0
+            parallel_to_interface = wall.baseline.direction * -1.0  # this should always point from the wall outwards direction of the interface
         else:
-            left_vertical = interface.interface_polyline.lines[2]
             parallel_to_interface = wall.baseline.direction
+
+        vertical_lines = [interface.interface_polyline.lines[0], interface.interface_polyline.lines[2]]
+        edge_vertical = self._get_furthest_line(vertical_lines, wall.baseline.midpoint)
 
         perpendicular_to_interface = interface.frame.xaxis
 
         edge_offset = config_set.beam_width * 0.5 + config_set.edge_stud_offset
-        edge_beam_line = left_vertical.translated(parallel_to_interface * edge_offset)
+        edge_beam_line = edge_vertical.translated(parallel_to_interface * edge_offset)
         edge_beam = BeamDefinition(edge_beam_line, config_set.beam_width, wall.thickness, normal=perpendicular_to_interface, type="detail")
 
         other_edge_line = edge_beam_line.translated(parallel_to_interface * 1.0 * (wall.thickness + config_set.beam_width))
@@ -195,7 +193,6 @@ class LConnectionDetailA(LDetailBase):
         between_edge = edge_beam_line.translated(perpendicular_to_interface * 0.5 * config_set.beam_width)
         between_edge.translate(parallel_to_interface * 0.5 * config_set.beam_width)
         between_beam = BeamDefinition(between_edge, config_set.beam_width, wall.thickness, normal=parallel_to_interface, type="detail")
-        # return [between_beam, edge_beam, other_edge]
         return [between_beam, edge_beam, other_beam]
 
     def create_elements_main(self, interface, wall, config_set):
@@ -207,6 +204,20 @@ class LConnectionDetailA(LDetailBase):
         # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
+
+    def _get_furthest_line(self, lines, point):
+        furthest_line = lines[0]  # just to not start with None but one line will always be the furthest
+        max_distance = -float("inf")
+
+        for line in lines:
+            start_distance = distance_point_point(line.start, point)
+            end_distance = distance_point_point(line.end, point)
+
+            max_line_projection = max(start_distance, end_distance)
+            if max_line_projection > max_distance:
+                max_distance = max_line_projection
+                furthest_line = line
+        return furthest_line
 
 
 class TConnectionDetailA(TDetailBase):
