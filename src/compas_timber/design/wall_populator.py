@@ -344,7 +344,26 @@ class WallPopulatorConfigurationSet(object):
 
     Parameters
     ----------
-    connection_details : mapping topologies to a ConnectionDetail instances
+    stud_spacing : float
+        Space between the studs.
+    beam_width : float
+        Width of the beams.
+    tolerance : :class:`compas_tolerances.Tolerance`, optional
+        The tolerance for the populator.
+    sheeting_outside : float, optional
+        The thickness of the sheeting outside.
+    sheeting_inside : float, optional
+        The thickness of the sheeting inside.
+    lintel_posts : bool, optional
+        Whether to use lintel posts.
+    edge_stud_offset : float, optional
+        Additional offset for the edge studs.
+    custom_dimensions : dict, optional
+        Custom cross section for the beams, by category. (e.g. {"king_stud": (120, 60)})
+    joint_overrides : list(`compas_timber.workflow.CategoryRule), optional
+        List of joint rules to override the default ones.
+    connection_details : dict, optional
+        Mapping of `JointTopology` to and instace of ConnectionDetail class.
 
     """
 
@@ -689,37 +708,7 @@ class WallPopulator(object):
 
         self._beam_definitions.extend(perimeter_beams)
 
-    # def generate_perimeter_beams(self):
-    #     interior_indices = self.get_interior_segment_indices(self.outer_polyline)
-    #     for i, segment in enumerate(self.outer_polyline.lines):
-    #         beam_def = BeamDefinition(segment, parent=self)
-    #         if i in interior_indices:
-    #             # the outline of openings (internal trims) are handled here
-    #             if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-    #                 # these are the studs
-    #                 if self._config_set.lintel_posts:
-    #                     beam_def.type = "jack_stud"
-    #                 else:
-    #                     beam_def.type = "king_stud"
-    #             else:
-    #                 # these are the top beams of an opening
-    #                 beam_def.type = "header"
-    #         else:
-    #             # the outline of the wall is handled here (boundary)
-    #             if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-    #                 # these are the edge studs
-    #                 beam_def.type = "edge_stud"
-    #             else:
-    #                 beam_def.type = "plate"
-    #         self._beam_definitions.append(beam_def)
-
-    #     self._beam_definitions = self.offset_elements(self._beam_definitions)
-    #     if self._config_set.lintel_posts:
-    #         for beam_def in self._beam_definitions:
-    #             if beam_def.type == "jack_stud":
-    #                 offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-    #                 king_line = offset_line(beam_def.centerline, offset, self.normal)
-    #                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+        # TODO: handle lintel posts
 
     def get_interior_segment_indices(self, polyline):
         points = polyline.points[0:-1]
