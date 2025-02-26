@@ -9,6 +9,21 @@ from compas_timber.connections import InterfaceLocation
 from .wall_populator import BeamDefinition
 
 
+def _get_furthest_line(lines, point):
+    furthest_line = lines[0]  # just to not start with None but one line will always be the furthest
+    max_distance = -float("inf")
+
+    for line in lines:
+        start_distance = distance_point_point(line.start, point)
+        end_distance = distance_point_point(line.end, point)
+
+        max_line_projection = max(start_distance, end_distance)
+        if max_line_projection > max_distance:
+            max_distance = max_line_projection
+            furthest_line = line
+    return furthest_line
+
+
 class LDetailBase(object):
     def adjust_segments_main(self, interface, wall, config_set, perimeter_segments):
         # top and bottom segments are shortened/extended to the intersection plane
@@ -29,10 +44,10 @@ class LDetailBase(object):
             perimeter_segments["bottom"] = Line(bottom_segment.start, intersection_bottom)
 
     def adjust_segments_cross(self, interface, wall, config_set, perimeter_segments):
-        # top and bottom are extended to meet the other end of the main wall
-        # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
-        if interface.interface_type == InterfaceLocation.FRONT:
-            outer_point = interface.interface_polyline[0]
+        distance_a = distance_point_point(interface.interface_polyline[1], wall.baseline.midpoint)
+        distance_b = distance_point_point(interface.interface_polyline[2], wall.baseline.midpoint)
+        if distance_a > distance_b:
+            outer_point = interface.interface_polyline[1]
         else:
             outer_point = interface.interface_polyline[2]
         edge_plane = Plane(outer_point, wall.baseline.direction)  # TODO: using interface.frame.zaxis instead
@@ -179,7 +194,7 @@ class LConnectionDetailA(LDetailBase):
             parallel_to_interface = wall.baseline.direction
 
         vertical_lines = [interface.interface_polyline.lines[0], interface.interface_polyline.lines[2]]
-        edge_vertical = self._get_furthest_line(vertical_lines, wall.baseline.midpoint)
+        edge_vertical = _get_furthest_line(vertical_lines, wall.baseline.midpoint)
 
         perpendicular_to_interface = interface.frame.xaxis
 
@@ -204,20 +219,6 @@ class LConnectionDetailA(LDetailBase):
         # TODO: if beam_height < wall thickness, there needs to be an offset here
         edge_beam = BeamDefinition(reference_edge, config_set.beam_width, wall.thickness, normal=beam_zaxis, type="detail")
         return [edge_beam]
-
-    def _get_furthest_line(self, lines, point):
-        furthest_line = lines[0]  # just to not start with None but one line will always be the furthest
-        max_distance = -float("inf")
-
-        for line in lines:
-            start_distance = distance_point_point(line.start, point)
-            end_distance = distance_point_point(line.end, point)
-
-            max_line_projection = max(start_distance, end_distance)
-            if max_line_projection > max_distance:
-                max_distance = max_line_projection
-                furthest_line = line
-        return furthest_line
 
 
 class TConnectionDetailA(TDetailBase):
