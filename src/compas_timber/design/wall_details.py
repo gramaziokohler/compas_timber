@@ -29,7 +29,7 @@ class LDetailBase(object):
         # top and bottom segments are shortened/extended to the intersection plane
         # front or back (depending on the end at which the deailt is) segment are moved to the end of the interface
         # shorten top and bottom segments to the interface
-        interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])  # TODO: Interface.as_plane()
+        interface_plane = interface.as_plane()
         top_segment = perimeter_segments["top"]
         bottom_segment = perimeter_segments["bottom"]
         intersection_top = intersection_line_plane(top_segment, interface_plane)
@@ -69,7 +69,7 @@ class LDetailBase(object):
 class TDetailBase(object):
     def adjust_segments_main(self, interface, wall, config_set, perimeter_segments):
         # top and bottom segments are shortened/extended to the intersection plane
-        interface_plane = Plane.from_three_points(*interface.interface_polyline.points[:3])  # TODO: Interface.as_plane()
+        interface_plane = interface.as_plane()
         top_segment = perimeter_segments["top"]
         bottom_segment = perimeter_segments["bottom"]
         intersection_top = intersection_line_plane(top_segment, interface_plane)
