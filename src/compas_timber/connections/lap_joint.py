@@ -173,7 +173,7 @@ class LapJoint(Joint):
         plane_cut_vector = main_beam.centerline.vector.cross(cross_beam.centerline.vector)
         # flip the plane normal if the cross_vector is pointing in the opposite direction of the offset_vector
         offset_vector = Vector.from_start_end(*intersection_line_line(main_beam.centerline, cross_beam.centerline))
-        if plane_cut_vector.dot(offset_vector) > 0:
+        if plane_cut_vector.dot(offset_vector) >= 0:
             plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
