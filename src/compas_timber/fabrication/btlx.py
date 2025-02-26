@@ -381,6 +381,14 @@ class BTLxPart(object):
 
     @property
     def shape_strings(self):
+        """Generates the shape strings for the BTLxPart. Only works in environments where the beam.geometry Brep is available.
+
+        returns
+        -------
+        list
+            A list of two strings, the first string is the brep indices string, the second string is the brep vertices string.
+        """
+
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
@@ -732,6 +740,7 @@ class BTLxFromGeometryDefinition(Data):
 
 
 def correct_polyline_direction(polyline, normal_vector):
+    # TODO: this is a temporary method. I couldn't import the one from BallNodeJoint, so I copied it here. Once that method is moved to .utils, we can remove it here.
     """Corrects the direction of a polyline to be counter-clockwise around a given vector.
 
     Parameters
@@ -754,10 +763,3 @@ def correct_polyline_direction(polyline, normal_vector):
     if angle_sum > 0:
         polyline = polyline[::-1]
     return polyline
-
-
-def is_pt_in_list(pt, pt_list):
-    for pt_ in pt_list:
-        if TOL.is_allclose(pt, pt_):
-            return True
-    return False
