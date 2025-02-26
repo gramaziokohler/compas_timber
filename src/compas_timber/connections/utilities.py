@@ -1,3 +1,4 @@
+import math
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
@@ -165,6 +166,13 @@ def are_beams_coplanar(beam_a, beam_b, tol=TOL):
         True if the beams are coplanar, False otherwise.
     """
     # Compute the cross product of the centerline directions of the two beams
+    beam_angle = angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
+    if TOL.is_zero(beam_angle) or TOL.is_zero(beam_angle- math.pi): #beams are parallel
+        angle = angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
+        if TOL.is_zero(angle) or TOL.is_zero(angle- math.pi):
+            if TOL.is_close(beam_a.width, beam_b.width) and TOL.is_close(beam_a.height, beam_b.height):
+                return True
+        return False
     cross_vector = beam_a.centerline.direction.cross(beam_b.centerline.direction)
     cross_vector.unitize()
 

@@ -1,5 +1,7 @@
 from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.geometry import dot_vectors
+from compas.tolerance import TOL
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
@@ -115,6 +117,13 @@ class YButtJoint(Joint):
             limit_to_segments=False,
         )
 
+        parallel = False
+        if px_a is None or px_b is None: #beams are parallel
+            parallel = True
+            px_a = beam_a.endpoint_closest_to_point(beam_b.midpoint)[1]
+            px_b = beam_b.endpoint_closest_to_point(beam_a.midpoint)[1]
+
+
         p = (px_a + px_b) * 0.5
         # makes sure they point outward of a joint point
         va = Vector.from_start_end(beam_a.endpoint_closest_to_point(p)[1], beam_a.midpoint)
@@ -124,11 +133,15 @@ class YButtJoint(Joint):
         vb.unitize()
         v_bisector = va + vb
         # get frame
-        v_perp = Vector(*v_bisector.cross(va))
-        v_normal = Vector(*v_bisector.cross(v_perp))
+        if parallel:
+            pln_a = Plane(p, va)
+            pln_b = Plane(p, vb)
+        else:
+            v_perp = Vector(*v_bisector.cross(va))
+            v_normal = Vector(*v_bisector.cross(v_perp))
 
-        pln_a = Plane(p, v_normal)
-        pln_b = Plane(p, v_normal * -1.0)
+            pln_a = Plane(p, v_normal)
+            pln_b = Plane(p, v_normal * -1.0)
         return pln_a, pln_b
 
     def add_extensions(self):
@@ -199,7 +212,10 @@ class YButtJoint(Joint):
             planes.append(cutting_plane)
         for pl, b in zip(planes, self.cross_beams):
             pl.point = pl.closest_point(b.midpoint)
-        main_feature = DoubleCut.from_planes_and_beam(planes, self.main_beam)
+        if TOL.is_close(dot_vectors(planes[0].normal, planes[1].normal), 1.0):
+            main_feature = JackRafterCut.from_plane_and_beam(Plane(planes[0].point, -planes[0].normal), self.main_beam)
+        else:
+            main_feature = DoubleCut.from_planes_and_beam(planes, self.main_beam)
         self.main_beam.add_features(main_feature)
         self.features = [main_feature]
 
