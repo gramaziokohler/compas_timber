@@ -351,7 +351,7 @@ class TimberModel(Model):
                     raise bje
         return errors
 
-    def connect_adjacent_walls(self, max_distance=0.0):
+    def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.
 
         Parameters
