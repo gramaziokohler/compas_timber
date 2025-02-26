@@ -118,11 +118,10 @@ class YButtJoint(Joint):
         )
 
         parallel = False
-        if px_a is None or px_b is None: #beams are parallel
+        if px_a is None or px_b is None:  # beams are parallel
             parallel = True
             px_a = beam_a.endpoint_closest_to_point(beam_b.midpoint)[1]
             px_b = beam_b.endpoint_closest_to_point(beam_a.midpoint)[1]
-
 
         p = (px_a + px_b) * 0.5
         # makes sure they point outward of a joint point
