@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -279,6 +280,11 @@ class Window(object):
         crv.translate(self.normal * -offset)
 
         vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
+
+        # negative volume will cause weird boolean result
+        if vol.volume < 0:
+            vol.flip()
+
         return BrepSubtraction(vol)
 
     def create_elements(self):
@@ -457,6 +463,7 @@ class WallPopulator(object):
 
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
+        self._plate_segments = {}
         self._detail_obbs = []
         self._openings = []
 
@@ -641,6 +648,7 @@ class WallPopulator(object):
         top_segment = Line(self.points[2], self.points[3])
         bottom_segment = Line(self.points[0], self.points[1])
         self._adjusted_segments = {"front": front_segment, "back": back_segment, "top": top_segment, "bottom": bottom_segment}
+        self._plate_segments = deepcopy(self._adjusted_segments)
 
         perimeter_beams = []
         for interface in self._interfaces:
@@ -650,8 +658,10 @@ class WallPopulator(object):
                 if interface.interface_role == InterfaceRole.MAIN:
                     perimeter_beams.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
                     connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
+                    connection_detail.adjust_plates_main(interface, self._wall, self._config_set, self._plate_segments)
                 elif interface.interface_role == InterfaceRole.CROSS:
                     connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
+                    connection_detail.adjust_plates_cross(interface, self._wall, self._config_set, self._plate_segments)
                     perimeter_beams.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
                 handled_sides.add(interface.interface_type)
