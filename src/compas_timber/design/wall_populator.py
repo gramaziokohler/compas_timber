@@ -449,7 +449,6 @@ class WallPopulator(object):
 
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill", "detail"]
 
-    # TODO: this takes interfaces! let's the populator know how this wall potentially interacts with other walls
     def __init__(self, configuration_set, wall, interfaces=None):
         self._wall = wall
         self._config_set = configuration_set
@@ -466,25 +465,22 @@ class WallPopulator(object):
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
 
-        # these should just be properties of the wall
         self.frame = wall.frame
         self.panel_length = wall.length
         self.panel_height = wall.height
-        # self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
 
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
         self._detail_obbs = []
-        # TODO: get this mapping from the config set
+
         for key in self.BEAM_CATEGORY_NAMES:
-            self.beam_dimensions[key] = [configuration_set.beam_width, wall.thickness]
-        # if custom_dimensions:
-        #     for key, value in custom_dimensions.items():
-        #         if value:
-        #             if value[0] != 0:
-        #                 self.beam_dimensions[key][0] = value[0]
-        #             if value[1] != 0:
-        #                 self.beam_dimensions[key][1] = value[1]
+            self.beam_dimensions[key] = (configuration_set.beam_width, wall.thickness)
+
+        if self._config_set.custom_dimensions:
+            dimensions = self._config_set.custom_dimensions
+            for key, value in dimensions.items():
+                if value:
+                    self.beam_dimensions[key] = value
 
     def __repr__(self):
         return "WallPopulator({}, {})".format(self._config_set, self._wall)
