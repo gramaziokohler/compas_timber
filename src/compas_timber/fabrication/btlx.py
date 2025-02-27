@@ -392,42 +392,41 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            print("makeing shape!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%%%%%%%%%%%%%%&&&&&&&&&&&&&&&&&&&&&&&S")
-            try:
-                for face in self.beam.geometry.faces:
-                    pts = []
-                    frame = face.surface.frame_at(0.5, 0.5)
-                    print(frame.normal)
-                    trims = face.boundary.trims
-                    for trim in trims:
-                        if len(trim.curve.points) == 2 and trim.curve.points[0] != trim.curve.points[1]:
-                            pt = trim.curve.points[0].transformed(Transformation.from_frame_to_frame(Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)), frame))
-                            pts.append(pt)
-                    print(pts)
-                    print("corect pline")
-                    print(pts)
+            for face in self.beam.geometry.faces:
+                pts = []
+                frame = face.surface.frame_at(0.5, 0.5)
+                edges = face.boundary.edges[1:]
+                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
+                overflow = len(edges)
+                while edges and overflow > 0:
+                    for i, edge in enumerate(edges):
+                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
+                            edges.pop(i)
+                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
+                            pts.append(edges.pop(i).end_vertex.point)
+                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
+                            pts.append(edges.pop(i).start_vertex.point)
+                    overflow -= 1
+                pts = correct_polyline_direction(pts, frame.normal)
 
-                    pts = correct_polyline_direction(pts, frame.normal)
-                    if len(pts) > 2:
-                        for pt in pts:
-                            if pt in brep_vertex_points:
-                                brep_indices.append(brep_vertex_points.index(pt))
-                            else:
-                                brep_indices.append(len(brep_vertex_points))
-                                brep_vertex_points.append(pt)
-                        brep_indices.append(-1)
+                if len(pts) != len(face.edges):
+                    print("edge count doesnt match point count, BTLxPart shape will be incorrect")
 
-            except NotImplementedError:
-                print("BTLx shape generation failed, using element.blank instead")
+                if len(pts) > 2:
+                    for pt in pts:
+                        if pt in brep_vertex_points:
+                            brep_indices.append(brep_vertex_points.index(pt))
+                        else:
+                            brep_indices.append(len(brep_vertex_points))
+                            brep_vertex_points.append(pt)
+                    brep_indices.append(-1)
+
             brep_indices_string = ""
             for index in brep_indices:
                 brep_indices_string += str(index) + " "
 
             brep_vertices_string = ""
             for point in brep_vertex_points:
-
-
-
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
                 brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
