@@ -184,7 +184,7 @@ class FrenchRidgeLap(BTLxProcessing):
         ref_position = cls._calculate_ref_position(beam, other_beam, ref_side, plane, angle)
 
         # calculate the start_x of the cut
-        start_x = cls._calculate_start_x(ref_surface, orientation, angle)
+        start_x = cls._calculate_start_x(ref_surface, ref_position, plane)
 
         # define the drillhole
         drillhole = True if drillhole_diam else False
@@ -210,16 +210,15 @@ class FrenchRidgeLap(BTLxProcessing):
             return OrientationType.START
 
     @staticmethod
-    def _calculate_start_x(ref_surface, orientation, angle):
+    def _calculate_start_x(ref_surface, refedge, plane):
         # calculate the start_x of the cut
-        start_x = 0.0
-        dx = abs(ref_surface.ysize / math.tan(math.radians(angle)))
-        if orientation == OrientationType.END:
-            start_x = ref_surface.xsize
-            dx = -dx
-        if angle > 90.0:
-            start_x += dx
-        return start_x
+        if refedge == EdgePositionType.REFEDGE:
+            edge = Line(ref_surface.point_at(0,0), ref_surface.point_at(ref_surface.xsize,0))
+        else:
+            edge = Line(ref_surface.point_at(0,ref_surface.ysize), ref_surface.point_at(ref_surface.xsize,ref_surface.ysize))
+        intersection = intersection_line_plane(edge, plane)
+        return Vector.from_start_end(ref_surface.point_at(0,0), intersection).dot(ref_surface.xaxis)
+
 
     @staticmethod
     def _calculate_ref_position(beam, other_beam, ref_side, plane, angle):
@@ -242,6 +241,7 @@ class FrenchRidgeLap(BTLxProcessing):
         else:
             is_ref_edge = signed_angle < 0
         if is_ref_edge:
+            print("REFEDGE")
             return EdgePositionType.REFEDGE
         return EdgePositionType.OPPEDGE
 
