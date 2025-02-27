@@ -10,8 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `BTLx_From_Params` GH component which contains the definiton for class `DeferredBTLxProcessing` to allow directly defining BTLx parameters and passing them to the model.
+* Added `as_plane()` to `WallToWallInterface`.
 
 ### Changed
+
+* Added `max_distance` to `TimberModel.connect_adjacent_walls()`.
+* Fixed plate doesn't get properly extended to the end of an L detail.
+* Fixed detail edge beams don't get LButt.
+* Fixed walls might not be considered connecting depending on the surface's orientation.
 
 ### Removed
 

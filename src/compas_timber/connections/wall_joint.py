@@ -80,6 +80,16 @@ class WallToWallInterface(object):
             JointTopology.get_name(self.topology),
         )
 
+    def as_plane(self):
+        """Returns the interface as a plane.
+
+        Returns
+        -------
+        :class:`compas.geometry.Plane`
+            The plane of the interface.
+        """
+        return Plane.from_three_points(*self.interface_polyline.points[:3])
+
 
 class WallJoint(Joint):
     """Models a wall to wall interaction.
