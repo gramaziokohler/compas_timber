@@ -24,6 +24,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
+from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
@@ -652,9 +653,7 @@ class WallPopulator(object):
                 if interface.interface_role == InterfaceRole.MAIN:
                     perimeter_beams.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
                     connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
-                    self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set, self._wall))  # DEBUG
                 elif interface.interface_role == InterfaceRole.CROSS:
-                    self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set, self._wall))  # DEBUG
                     connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
                     perimeter_beams.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
@@ -664,9 +663,6 @@ class WallPopulator(object):
         bottom_segment = self._adjusted_segments["bottom"]
         front_segment = self._adjusted_segments["front"]
         back_segment = self._adjusted_segments["back"]
-
-        assert not TOL.is_zero(len(top_segment)), "top_segment is fucked"
-        assert not TOL.is_zero(len(bottom_segment)), "bottom_segment is fucked"
 
         if InterfaceLocation.FRONT not in handled_sides:
             perimeter_beams.append(BeamDefinition(front_segment, parent=self, type="edge_stud"))
@@ -826,14 +822,19 @@ class WallPopulator(object):
         return math.sqrt(min(distances))
 
     def generate_plates(self):
+        plates = []
         if self._config_set.sheeting_inside:
-            self._elements.append(Plate(self.outer_polyline.copy(), self._config_set.sheeting_inside))
+            plates.append(Plate(self.outer_polyline.copy(), self._config_set.sheeting_inside))
         if self._config_set.sheeting_outside:
             pline = self.outer_polyline.copy()
             pline.translate(self.frame.zaxis * (self._wall.thickness + self._config_set.sheeting_outside))
-            self._elements.append(Plate(pline, self._config_set.sheeting_outside))
-        # for window in self.windows:
-        #     self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
+            plates.append(Plate(pline, self._config_set.sheeting_outside))
+
+        for window in self.windows:
+            for plate in plates:
+                plate.add_feature(window.boolean_feature)
+
+        self._elements.extend(plates)
 
 
 def shorten_edges_to_fit_between_plates(beams_to_fit, beams_to_fit_between, dist_tolerance=None):
