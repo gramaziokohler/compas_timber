@@ -447,7 +447,6 @@ class WallPopulator(object):
         self._elements = []
         self._beam_definitions = []
         self._rules = []
-        self.windows = []
         self._features = []
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
@@ -459,6 +458,7 @@ class WallPopulator(object):
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
         self._detail_obbs = []
+        self._openings = []
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = (configuration_set.beam_width, wall.thickness)
@@ -519,8 +519,6 @@ class WallPopulator(object):
     @property
     def elements(self):
         elements = []
-        # for window in self.windows:
-        #     self._beam_definitions.extend(window.create_elements())
         for beam_def in self._beam_definitions:
             try:
                 elements.append(beam_def.to_beam())
@@ -708,11 +706,30 @@ class WallPopulator(object):
     def generate_windows(self):
         for opening in self.inner_polylines:
             if opening.opening_type == OpeningType.DOOR:
-                element = Door(opening.polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance)
+                element = Door(
+                    opening.polyline,
+                    self.beam_dimensions,
+                    self._wall.frame,
+                    self._wall.thickness,
+                    self.dist_tolerance,
+                    self._config_set.sheeting_inside,
+                    self._config_set.sheeting_outside,
+                    # self._config_set.lintel_posts,
+                )
             else:
-                element = Window(opening.polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance)
-            # self.windows.append(element)
+                element = Window(
+                    opening.polyline,
+                    self.beam_dimensions,
+                    self._wall.frame,
+                    self._wall.thickness,
+                    self.dist_tolerance,
+                    self._config_set.sheeting_inside,
+                    self._config_set.sheeting_outside,
+                    # self._config_set.lintel_posts,
+                )
+
             self._beam_definitions.extend(element.create_elements())
+            self._openings.append(element)
 
     def generate_studs(self):
         self.generate_stud_lines()
@@ -829,9 +846,9 @@ class WallPopulator(object):
             pline.translate(self.frame.zaxis * (self._wall.thickness + self._config_set.sheeting_outside))
             plates.append(Plate(pline, self._config_set.sheeting_outside))
 
-        for window in self.windows:
+        for opening in self._openings:
             for plate in plates:
-                plate.add_feature(window.boolean_feature)
+                plate.add_feature(opening.boolean_feature)
 
         self._elements.extend(plates)
 
