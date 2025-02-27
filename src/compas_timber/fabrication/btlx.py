@@ -392,33 +392,22 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
+            print("makeing shape!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%%%%%%%%%%%%%%&&&&&&&&&&&&&&&&&&&&&&&S")
             try:
                 for face in self.beam.geometry.faces:
                     pts = []
-                    for loop in face.loops:
-                        if loop.is_outer:
-                            frame = face.surface.frame_at(0.5, 0.5)
-                            edges = loop.edges[1:]
-                            pts = [loop.edges[0].start_vertex.point, loop.edges[0].end_vertex.point]
-                            overflow = len(loop.edges)
-                            while edges and overflow > 0:
-                                for i, edge in enumerate(edges):
-                                    if not edge.is_line:
-                                        edges.pop(i)
-                                        continue
-                                    elif (edge.start_vertex.point in pts) and (edge.end_vertex.point in pts):  # edge endpoints already in pts
-                                        edges.pop(i)
-                                        continue
-                                    elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
-                                        pts.append(edges.pop(i).end_vertex.point)
-                                    elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
-                                        pts.append(edges.pop(i).start_vertex.point)
-                                overflow -= 1
-                            pts = correct_polyline_direction(pts, frame.normal)
+                    frame = face.surface.frame_at(0.5, 0.5)
+                    print(frame.normal)
+                    trims = face.boundary.trims
+                    for trim in trims:
+                        if len(trim.curve.points) == 2 and trim.curve.points[0] != trim.curve.points[1]:
+                            pt = trim.curve.points[0].transformed(Transformation.from_frame_to_frame(Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)), frame))
+                            pts.append(pt)
+                    print(pts)
+                    print("corect pline")
+                    print(pts)
 
-                    if len(pts) != len(face.edges):
-                        print("edge count doesnt match point count, BTLxPart shape will be incorrect")
-
+                    pts = correct_polyline_direction(pts, frame.normal)
                     if len(pts) > 2:
                         for pt in pts:
                             if pt in brep_vertex_points:
@@ -436,6 +425,9 @@ class BTLxPart(object):
 
             brep_vertices_string = ""
             for point in brep_vertex_points:
+
+
+
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
                 brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
