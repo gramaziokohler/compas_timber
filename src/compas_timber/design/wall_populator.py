@@ -31,19 +31,6 @@ from compas_timber.elements.features import BrepSubtraction
 
 from .workflow import JointDefinition
 
-# def get_frame(points, normal, z_axis):
-#     frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
-#     pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
-#     for point in pts_on_xy:
-#         point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
-#     box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
-#     pt = Point(box_min[0], box_min[1], box_min[2])
-#     box_length = box_max[0] - box_min[0]
-#     box_height = box_max[1] - box_min[1]
-#     pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
-#     frame.point = pt
-#     return frame, box_length, box_height
-
 
 class WallSelector(object):
     """Selects walls based on their attributes."""
