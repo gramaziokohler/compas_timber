@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `Text` `BTLxProcessing` class, module and a corresponding `Label_Beams` GH Component.
 
 * Added `BTLx_From_Params` GH component which contains the definiton for class `DeferredBTLxProcessing` to allow directly defining BTLx parameters and passing them to the model.
 * Added `Shape` to BTLx output, showing finished element geometry in BTLx Viewer instead of just blank.
