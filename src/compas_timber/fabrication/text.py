@@ -1,10 +1,12 @@
 import os
 
-from compas.data import json_load
+from compas.data import json_loadz
 from compas.geometry import Frame
 from compas.geometry import Scale
 from compas.geometry import Transformation
 from compas.tolerance import TOL
+
+from compas_timber import DATA
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
@@ -227,8 +229,9 @@ class Text(BTLxProcessing):
 
     def draw_string_on_element(self, element):
         face = element.ref_sides[self.ref_side_index]
+        character_dict_path = os.path.join(DATA, "basic_characters_zip")
 
-        character_dict = json_load(os.path.join(os.path.dirname(__file__), "basic_characters.json"))
+        character_dict = json_loadz(character_dict_path)
         string_curves = []
         x_pos = 0
         spacing = 0.1
