@@ -1,5 +1,7 @@
 from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.geometry import dot_vectors
+from compas.tolerance import TOL
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
@@ -61,6 +63,8 @@ class YButtJoint(Joint):
         self.cross_beam_b_guid = kwargs.get("cross_beam_b_guid", None) or str(cross_beam_b.guid)
         self.mill_depth = mill_depth
         self.features = []
+        if self.main_beam and self.cross_beams[0] and self.cross_beams[1]:
+            self.check_elements_compatibility()
 
     @property
     def beams(self):
@@ -80,6 +84,7 @@ class YButtJoint(Joint):
         BeamJoiningError
             If the elements are not compatible for the creation of the joint.
         """
+
         if not are_beams_coplanar(*self.cross_beams):
             raise BeamJoiningError(
                 beams=self.cross_beams,
@@ -87,14 +92,14 @@ class YButtJoint(Joint):
                 debug_info="The two cross beams are not coplanar to create a Y-Butt joint.",
             )
         # calculate widths and heights of the cross beams
-        dimensions = []
-        for beam in self.cross_beams:
-            ref_side_index = self.cross_beam_ref_side_index(beam)
-            width, height = beam.get_dimensions_relative_to_side(ref_side_index)
-            dimensions.append((width, height))
-        # check if the dimensions of both cross beams match
-        if dimensions[0] != dimensions[1]:
-            raise BeamJoiningError(self.cross_beams, self, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
+        else:
+            dimensions = []
+            for beam in self.cross_beams:
+                ref_side_index = self.cross_beam_ref_side_index(beam)
+                dimensions.append(beam.get_dimensions_relative_to_side(ref_side_index)[0])  # beams only need a miter that meets in the corner. width can be different
+            # check if the dimensions of both cross beams match
+            if dimensions[0] != dimensions[1]:
+                raise BeamJoiningError(self.cross_beams, self, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
@@ -115,6 +120,12 @@ class YButtJoint(Joint):
             limit_to_segments=False,
         )
 
+        parallel = False
+        if px_a is None or px_b is None:  # beams are parallel
+            parallel = True
+            px_a = beam_a.endpoint_closest_to_point(beam_b.midpoint)[1]
+            px_b = beam_b.endpoint_closest_to_point(beam_a.midpoint)[1]
+
         p = (px_a + px_b) * 0.5
         # makes sure they point outward of a joint point
         va = Vector.from_start_end(beam_a.endpoint_closest_to_point(p)[1], beam_a.midpoint)
@@ -124,11 +135,15 @@ class YButtJoint(Joint):
         vb.unitize()
         v_bisector = va + vb
         # get frame
-        v_perp = Vector(*v_bisector.cross(va))
-        v_normal = Vector(*v_bisector.cross(v_perp))
+        if parallel:
+            pln_a = Plane(p, va)
+            pln_b = Plane(p, vb)
+        else:
+            v_perp = Vector(*v_bisector.cross(va))
+            v_normal = Vector(*v_bisector.cross(v_perp))
 
-        pln_a = Plane(p, v_normal)
-        pln_b = Plane(p, v_normal * -1.0)
+            pln_a = Plane(p, v_normal)
+            pln_b = Plane(p, v_normal * -1.0)
         return pln_a, pln_b
 
     def add_extensions(self):
@@ -199,7 +214,10 @@ class YButtJoint(Joint):
             planes.append(cutting_plane)
         for pl, b in zip(planes, self.cross_beams):
             pl.point = pl.closest_point(b.midpoint)
-        main_feature = DoubleCut.from_planes_and_beam(planes, self.main_beam)
+        if TOL.is_close(dot_vectors(planes[0].normal, planes[1].normal), 1.0):
+            main_feature = JackRafterCut.from_plane_and_beam(Plane(planes[0].point, -planes[0].normal), self.main_beam)
+        else:
+            main_feature = DoubleCut.from_planes_and_beam(planes, self.main_beam)
         self.main_beam.add_features(main_feature)
         self.features = [main_feature]
 
