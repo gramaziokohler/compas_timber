@@ -63,6 +63,8 @@ class YButtJoint(Joint):
         self.cross_beam_b_guid = kwargs.get("cross_beam_b_guid", None) or str(cross_beam_b.guid)
         self.mill_depth = mill_depth
         self.features = []
+        if self.main_beam and self.cross_beams[0] and self.cross_beams[1]:
+            self.check_elements_compatibility()
 
     @property
     def beams(self):
@@ -82,6 +84,7 @@ class YButtJoint(Joint):
         BeamJoiningError
             If the elements are not compatible for the creation of the joint.
         """
+
         if not are_beams_coplanar(*self.cross_beams):
             raise BeamJoiningError(
                 beams=self.cross_beams,
@@ -89,14 +92,14 @@ class YButtJoint(Joint):
                 debug_info="The two cross beams are not coplanar to create a Y-Butt joint.",
             )
         # calculate widths and heights of the cross beams
-        dimensions = []
-        for beam in self.cross_beams:
-            ref_side_index = self.cross_beam_ref_side_index(beam)
-            width, height = beam.get_dimensions_relative_to_side(ref_side_index)
-            dimensions.append((width, height))
-        # check if the dimensions of both cross beams match
-        if dimensions[0] != dimensions[1]:
-            raise BeamJoiningError(self.cross_beams, self, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
+        else:
+            dimensions = []
+            for beam in self.cross_beams:
+                ref_side_index = self.cross_beam_ref_side_index(beam)
+                dimensions.append(beam.get_dimensions_relative_to_side(ref_side_index)[0])  # beams only need a miter that meets in the corner. width can be different
+            # check if the dimensions of both cross beams match
+            if dimensions[0] != dimensions[1]:
+                raise BeamJoiningError(self.cross_beams, self, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
