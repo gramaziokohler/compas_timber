@@ -169,21 +169,29 @@ def are_beams_coplanar(beam_a, beam_b, tol=TOL):
     # Compute the cross product of the centerline directions of the two beams
     beam_angle = angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
     if TOL.is_zero(beam_angle) or TOL.is_zero(beam_angle - math.pi):  # beams are parallel
-        angle = angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
+        angle = angle_vectors(beam_a.frame.normal, beam_b.frame.normal)
         if TOL.is_zero(angle) or TOL.is_zero(angle - math.pi):
             if TOL.is_close(beam_a.width, beam_b.width) and TOL.is_close(beam_a.height, beam_b.height):
                 return True
         return False
+    
     cross_vector = beam_a.centerline.direction.cross(beam_b.centerline.direction)
     cross_vector.unitize()
 
-    for beam in [beam_a, beam_b]:
-        # Check if the cross product is parallel to the normal of the beam's frame
-        dot_with_beam_normal = abs(cross_vector.dot(beam.frame.normal))
-        is_beam_normal_coplanar = tol.is_close(dot_with_beam_normal, 1.0) or tol.is_zero(dot_with_beam_normal)
-        if not is_beam_normal_coplanar:
-            return False
-    return True
+    dot_with_beam_a_normal = abs(cross_vector.dot(beam_a.frame.normal))
+    dot_with_beam_b_normal = abs(cross_vector.dot(beam_b.frame.normal))
+
+    if tol.is_close(dot_with_beam_a_normal, 1.0) and tol.is_close(dot_with_beam_b_normal, 1.0): 
+        # both beam z-vectors parallel to cross vector
+        if beam_a.height == beam_b.height:
+            return True
+    elif tol.is_zero(dot_with_beam_a_normal) and tol.is_zero(dot_with_beam_b_normal):
+        # both beam z-vectors perpendicular to cross vector
+        if beam_a.width == beam_b.width:
+            return True
+    return False
+    
+
 
 
 def point_centerline_towards_joint(beam_a, beam_b):
