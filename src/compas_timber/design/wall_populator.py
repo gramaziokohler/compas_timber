@@ -607,7 +607,7 @@ class WallPopulator(object):
         creates and returns all the elements in the wall, returns also the joint definitions
         """
         self.generate_perimeter_beams()
-        self.generate_windows()
+        self.generate_openings()
         self.generate_studs()
         self.generate_plates()
         elements = self.elements
@@ -716,7 +716,7 @@ class WallPopulator(object):
             out.insert(0, out[0] - 1)
         return set(out)
 
-    def generate_windows(self):
+    def generate_openings(self):
         for opening in self.inner_polylines:
             if opening.opening_type == OpeningType.DOOR:
                 element = Door(
