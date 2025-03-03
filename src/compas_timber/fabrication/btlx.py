@@ -231,6 +231,164 @@ class BTLxWriter(object):
         return processing_element
 
 
+
+
+class BTLxLayer(object):
+    """Class representing a BTLx layer.
+
+    Parameters
+    ----------
+    single_member_number : str
+        The single member number of the layer.
+    order_number : str
+        The order number of the layer.
+    designation : str
+        The designation of the layer.
+    length : float
+        The length of the layer.
+    height : float
+        The height of the layer.
+    width : float
+        The width of the layer.
+    transformations : list
+        A list of transformations applied to the layer.
+    outlines : list
+        A list of outlines for the layer.
+    grain_direction : dict
+        The grain direction of the layer.
+    reference_side : dict
+        The reference side of the layer.
+    shape : dict
+        The shape of the layer.
+    part_refs : list
+        A list of part references for the layer.
+
+    Attributes
+    ----------
+    attr : dict
+        The attributes of the BTLx layer.
+    transformations : list
+        A list of transformations applied to the layer.
+    outlines : list
+        A list of outlines for the layer.
+    grain_direction : dict
+        The grain direction of the layer.
+    reference_side : dict
+        The reference side of the layer.
+    shape : dict
+        The shape of the layer.
+    part_refs : list
+        A list of part references for the layer.
+    et_element : :class:`~xml.etree.ElementTree.Element`
+        The ET element of the BTLx layer.
+
+    """
+
+    def __init__(self, single_member_number, length, height, width, transformations, outlines, reference_side, shape, part_refs):
+        self.single_member_number = single_member_number
+        self.length = length
+        self.height = height
+        self.width = width
+        self.transformations = transformations
+        self.outlines = outlines
+        self.reference_side = reference_side
+        self.shape = shape
+        self.part_refs = part_refs
+        self._et_element = None
+
+    @property
+    def attr(self):
+        return {
+            "SingleMemberNumber": self.single_member_number,
+            "AssemblyNumber": "",
+            "OrderNumber": "",
+            "Designation": "",
+            "Annotation": "",
+            "Storey": "",
+            "Group": "",
+            "Package": "",
+            "Material": "",
+            "TimberGrade": "",
+            "QualityGrade": "",
+            "Count": "1",
+            "Length": "{:.{prec}f}".format(self.length, prec=BTLxWriter.POINT_PRECISION),
+            "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
+            "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
+            "PlaningLength": "0",
+            "Weight": "0",
+            "ProcessingQuality": "automatic",
+            "StoreyType": "",
+            "ElementNumber": "00",
+            "Layer": "0",
+            "ModuleNumber": "",
+        }
+
+    @property
+    def et_element(self):
+        if self._et_element is None:
+            self._et_element = ET.Element("Layer", self.attr)
+            self._et_element.append(self.et_transformations)
+            self._et_element.append(self.et_outlines)
+            self._et_element.append(self.et_grain_direction)
+            self._et_element.append(self.et_reference_side)
+            self._et_element.append(self.et_shape)
+            self._et_element.append(self.et_part_refs)
+        return self._et_element
+
+    @property
+    def et_transformations(self):
+        transformations = ET.Element("Transformations")
+        for transformation in self.transformations:
+            guid = transformation.get("GUID", "{" + str(uuid.uuid4()) + "}")
+            transformation_element = ET.SubElement(transformations, "Transformation", GUID=guid)
+            position = ET.SubElement(transformation_element, "Position")
+            position.append(ET.Element("ReferencePoint", transformation.get("ReferencePoint", {})))
+            position.append(ET.Element("XVector", transformation.get("XVector", {})))
+            position.append(ET.Element("YVector", transformation.get("YVector", {})))
+        return transformations
+
+    @property
+    def et_outlines(self):
+        outlines = ET.Element("Outlines")
+        for outline in self.outlines:
+            outline_element = ET.SubElement(outlines, "Outline", ReferencePlaneID=outline.get("ReferencePlaneID", ""), Process=outline.get("Process", "no"))
+            contour = ET.SubElement(outline_element, "Contour")
+            start_point = outline.get("StartPoint", {})
+            contour.append(ET.Element("StartPoint", start_point))
+            for line in outline.get("Lines", []):
+                line_element = ET.SubElement(contour, "Line")
+                line_element.append(ET.Element("EndPoint", line.get("EndPoint", {})))
+        return outlines
+
+    @property
+    def et_grain_direction(self):
+        return ET.Element("GrainDirection", self.grain_direction)
+
+    @property
+    def et_reference_side(self):
+        return ET.Element("ReferenceSide", self.reference_side)
+
+    @property
+    def et_shape(self):
+        shape = ET.Element("Shape")
+        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex=self.shape.get("convex", "false"), coordIndex=self.shape.get("coordIndex", ""))
+        coordinate = ET.SubElement(indexed_face_set, "Coordinate", point=self.shape.get("Coordinate", {}).get("point", ""))
+        return shape
+
+    @property
+    def et_part_refs(self):
+        part_refs = ET.Element("PartRefs")
+        for part_ref in self.part_refs:
+            part_ref_element = ET.SubElement(part_refs, "PartRef", GUID=part_ref.get("GUID", ""))
+            position = ET.SubElement(part_ref_element, "Position")
+            position.append(ET.Element("ReferencePoint", part_ref.get("ReferencePoint", {})))
+            position.append(ET.Element("XVector", part_ref.get("XVector", {})))
+            position.append(ET.Element("YVector", part_ref.get("YVector", {})))
+        return part_refs
+
+
+
+
 class BTLxPart(object):
     """Class representing a BTLx part. This acts as a wrapper for a Beam object.
 
