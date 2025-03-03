@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Added `BTLx_From_Params` GH component which contains the definiton for class `DeferredBTLxProcessing` to allow directly defining BTLx parameters and passing them to the model.
 * Added `as_plane()` to `WallToWallInterface`.
+* Added optional argument `max_distance` to `WallPopulator.create_joint_definitions()`.
 
 ### Changed
 

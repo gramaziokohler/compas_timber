@@ -613,13 +613,14 @@ class WallPopulator(object):
         elements = self.elements
         return elements
 
-    def create_joint_definitions(self, elements):
+    def create_joint_definitions(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
 
         joint_definitions = []
-        max_distance = self._config_set.beam_width  # oterwise L's become X's
+        max_distance = max_distance or 0.0
+        max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
