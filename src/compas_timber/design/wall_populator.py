@@ -283,7 +283,9 @@ class Window(object):
 
         # negative volume will cause weird boolean result
         if vol.volume < 0:
-            vol.flip()
+            # TODO: remove once this is release in compas core
+            if hasattr(vol, "flip"):
+                vol.flip()
 
         return BrepSubtraction(vol)
 
