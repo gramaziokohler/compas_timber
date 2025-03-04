@@ -1,5 +1,6 @@
 import os
 import uuid
+from itertools import chain
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -37,6 +38,8 @@ class BTLxWriter(object):
 
 
     """
+
+    SERIALIZERS = {}
 
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
@@ -159,7 +162,8 @@ class BTLxWriter(object):
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
-        for i, beam in enumerate(model.beams):  # TODO: we need to add at least Plates to this too.
+        elements = chain(model.beams, model.plates)
+        for i, beam in enumerate(elements):
             part_element = self._create_part(beam, i)
             parts_element.append(part_element)
         return project_element
@@ -234,7 +238,7 @@ class BTLxWriter(object):
                 param.text = value
             else:
                 # TODO: look for serializer in registered serializers SERIALIZERS
-                pass
+                param = self._element_from_complex_param(value)
             processing_element.append(param)
 
         # create subprocessing elements
@@ -242,6 +246,26 @@ class BTLxWriter(object):
             for subprocessing in processing.subprocessings:
                 processing_element.append(self._create_processing(subprocessing))
         return processing_element
+
+    def _element_from_complex_param(self, param):
+        serializer = self.SERIALIZERS.get(type(param), None)
+        if not serializer:
+            raise ValueError("No serializer found for type: {}".format(type(param)))
+        return serializer(param)
+
+    @classmethod
+    def register_type_serializer(cls, type_, serializer):
+        """Register a type and its serializer.
+
+        Parameters
+        ----------
+        type_ : type
+            The type to be serialized.
+        serializer : callable
+            The serializer function. Takes an instance of `type_` and returns an XML element which correspondes with it.
+
+        """
+        cls.SERIALIZERS[type_] = serializer
 
 
 class BTLxPart(object):
@@ -444,6 +468,40 @@ class BTLxPart(object):
 
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
+
+
+def contour_to_xml(contour):
+    """Converts a contour to an XML element.
+
+    Parameters
+    ----------
+    contour : :class:`Contour`
+        The contour to be converted.
+
+    Returns
+    -------
+    :class:`~xml.etree.ElementTree.Element`
+        The element which represents the contour.
+
+    """
+    root = ET.Element("Contour")
+    root.set("Depth", "{:.{prec}f}".format(contour.depth, prec=BTLxWriter.POINT_PRECISION))
+    root.set("DepthBounded", "yes" if contour.depth_bounded else "no")
+    root.set("Inclination", "{:.{prec}f}".format(contour.inclination, prec=BTLxWriter.ANGLE_PRECISION))
+
+    start = contour.polyline[0]
+    start_point = ET.SubElement(root, "StartPoint")
+    start_point.set("X", "{:.{prec}f}".format(start.x, prec=BTLxWriter.POINT_PRECISION))
+    start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
+    start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
+
+    for point in contour.polyline[1:]:
+        line = ET.SubElement(root, "Line")
+        end_point = ET.SubElement(line, "EndPoint")
+        end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
+        end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
+        end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
+    return root
 
 
 class BTLxProcessing(Data):
@@ -703,6 +761,31 @@ class AlignmentType(object):
     LEFT = "left"
     RIGHT = "right"
     CENTER = "center"
+
+
+class Contour(object):
+    """Represens the contour of a free contour processing.
+
+    Parameters
+    ----------
+    depth : float
+        The depth of the contour.
+    depth_bounded : bool
+        If True, the depth is bounded.
+    inclination : float
+        The inclination of the contour.
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline of the contour.
+    """
+
+    def __init__(self, depth, depth_bounded, inclination, polyline):
+        self.depth = depth
+        self.depth_bounded = depth_bounded
+        self.inclination = inclination
+        self.polyline = polyline
+
+
+BTLxWriter.register_type_serializer(Contour, contour_to_xml)
 
 
 class BTLxFromGeometryDefinition(Data):
