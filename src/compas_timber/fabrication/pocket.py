@@ -342,14 +342,13 @@ class Pocket(BTLxProcessing):
         # calculate start_x, start_y, start_depth
         start_x, start_y, start_depth = cls._calculate_start_x_y_depth(ref_side, start_point)
 
-        # calculate the angle of the pocket
-        angle = cls._calculate_angle_in_plane(ref_side.yaxis, -front_plane.normal, ref_side.normal)
+        bottom_frame = Frame.from_points(start_point, end_point, back_point)
+        pja = Projection.from_plane(Plane.from_frame(ref_side))
+        angle_vector = Vector.from_start_end(start_point.transformed(pja), end_point.transformed(pja))
 
-        # calculate the inclination of the pocket
-        inclination = cls._calculate_angle_in_plane(ref_side.normal, -bottom_plane.normal, ref_side.yaxis)
-
-        # calculate the slope of the pocket
-        slope = cls._calculate_angle_in_plane(ref_side.normal, -bottom_plane.normal, ref_side.xaxis)
+        angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True)
+        inclination = angle_vectors_signed(angle_vector, Vector.from_start_end(start_point, end_point), bottom_frame.yaxis, deg=True)
+        slope = cls._calculate_angle_in_plane(ref_side.yaxis, bottom_frame.yaxis, bottom_frame.xaxis)
 
         # calculate internal_angle
         vect_length = start_point - end_point
@@ -436,9 +435,9 @@ class Pocket(BTLxProcessing):
     def _calculate_angle_in_plane(vector_1, vector_2, normal):
         # calculate the angle between two vectors in a plane
         projection = Projection.from_plane(Plane(Point(0, 0, 0), normal))
-        vector_1.transform(projection)
-        vector_2.transform(projection)
-        return angle_vectors_signed(vector_1, vector_2, normal, deg=True)
+        v1 = vector_1.transformed(projection)
+        v2 = vector_2.transformed(projection)
+        return angle_vectors_signed(v1, v2, normal, deg=True)
 
     @staticmethod
     def _calculate_tilt_angle(bottom_plane, plane):
