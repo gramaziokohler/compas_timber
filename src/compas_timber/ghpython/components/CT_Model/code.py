@@ -65,7 +65,7 @@ class ModelComponent(component):
         for populator, slab in zip(populators, Model.slabs):
             elements = populator.create_elements()
             Model.add_elements(elements, parent=slab.name)
-            joint_definitions = populator.create_joint_definitions(elements)
+            joint_definitions = populator.create_joint_definitions(elements, MaxDistance)
             wall_joint_definitions.extend(joint_definitions)
             for j_def in joint_definitions:
                 element_a, element_b = j_def.elements
