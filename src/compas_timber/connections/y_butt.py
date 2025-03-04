@@ -13,6 +13,10 @@ from compas_timber.fabrication import Lap
 from compas_timber.fabrication.double_cut import DoubleCut
 from compas_timber.utils import intersection_line_line_param
 
+from .joint import Joint
+from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
+
 
 class YButtJoint(Joint):
     """Represents a Y-Butt type joint which joins the ends of three beams,
