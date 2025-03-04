@@ -1,8 +1,7 @@
-from collections import OrderedDict
-
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
+from compas.geometry import Polyline
 from compas.geometry import Transformation
 
 from compas_timber.utils import correct_polyline_direction
@@ -11,7 +10,7 @@ from compas_timber.utils import is_polyline_clockwise
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
-from .btlx import BTLxWriter
+from .btlx import Contour
 
 
 class FreeContour(BTLxProcessing):
@@ -65,10 +64,6 @@ class FreeContour(BTLxProcessing):
     @property
     def params(self):  # TODO: I think this only gets called in tests or once when writing BTLx, but we could consider caching it
         return FreeCountourParams(self)
-
-    @property
-    def processing_dict(self):
-        return self.params.processing_dict()
 
     ########################################################################
     # Alternative constructors
@@ -162,24 +157,15 @@ class FreeContour(BTLxProcessing):
         else:
             return geometry & vol
 
-    @staticmethod
-    def polyline_to_contour(polyline):
-        result = [{"StartPoint": BTLxWriter.et_point_vals(polyline[0])}]
-        for point in polyline[1:]:
-            result.append({"Line": {"EndPoint": BTLxWriter.et_point_vals(point)}})
-        return result
-
 
 class FreeCountourParams(BTLxProcessingParams):
     def __init__(self, instance):
+        # type: (FreeContour) -> None
         super(FreeCountourParams, self).__init__(instance)
 
-    def as_dict(self):  # don't run super().as_dict() because it will return the default values
-        result = OrderedDict()
-        result["header_attributes"] = self.header_attributes
-        result["contour_attributes"] = self.contour_attributes
-        result["contour_points"] = FreeContour.polyline_to_contour(self._instance.contour_points)
-        return result
+    def as_dict(self):
+        contour_line = Polyline(self._instance.contour_points)
+        return {"Contour": Contour(self._instance.depth, self._instance.depth_bounded, self._instance.inclination, contour_line)}
 
     @property
     def header_attributes(self):
@@ -192,35 +178,3 @@ class FreeCountourParams(BTLxProcessingParams):
             "ToolPosition": self._instance.tool_position,
             "ReferencePlaneID": "4",
         }
-
-    @property
-    def contour_attributes(self):
-        return {"Depth": str(self._instance.depth), "DepthBounded": "yes" if self._instance.depth_bounded else "no", "Inclination": str(self._instance.inclination)}
-
-    def processing_dict(self):
-        """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
-
-        Parameters
-        ----------
-        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
-            The processing object.
-
-        Returns
-        -------
-        :class:`~xml.etree.ElementTree.Element`
-            The processing element.
-
-        """
-        # create processing element
-
-        contour_dict = {
-            "name": "Contour",
-            "attributes": self.contour_attributes,
-            "content": [{"name": "StartPoint", "attributes": BTLxWriter.et_point_vals(self._instance.contour_points[0])}],
-        }
-        for pt in self._instance.contour_points[1:]:  # TODO: consider implementing arcs. maybe as tuple? (Point,Point)
-            point_dict = {"name": "Line", "attributes": {}, "content": [{"name": "EndPoint", "attributes": BTLxWriter.et_point_vals(pt)}]}
-            contour_dict["content"].append(point_dict)
-
-        processing_dict = {"name": self._instance.PROCESSING_NAME, "attributes": self.header_attributes, "content": [contour_dict]}
-        return processing_dict
