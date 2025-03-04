@@ -158,19 +158,19 @@ class BTLxWriter(object):
         project_element = ET.Element("Project", Name=self._project_name)
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
-        # create part elements for each beam
-        for i, beam in enumerate(model.beams):  # TODO: we need to add at least Plates to this too.
-            part_element = self._create_part(beam, i)
+        # create part elements for each element
+        for i, element in enumerate(list(model.beams) + list(model.plates)):
+            part_element = self._create_part(element, i)
             parts_element.append(part_element)
         return project_element
 
-    def _create_part(self, beam, order_num):
+    def _create_part(self, element, order_num):
         """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
         ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam object.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element object.
         num : int
             The order number of the part.
 
@@ -181,16 +181,16 @@ class BTLxWriter(object):
 
         """
         # create part element
-        part = BTLxPart(beam, order_num=order_num)
+        part = BTLxPart(element, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # create processings element for the part if there are any
-        if beam.features:
+        if element.features:
             processings_element = ET.Element("Processings")
-            for feature in beam.features:
+            for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = self._create_processing(feature)
+                    processing_element = BTLxWriter._create_processing_from_dict(feature.processing_dict)
                     processings_element.append(processing_element)
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
@@ -199,91 +199,110 @@ class BTLxWriter(object):
             part_element.append(part.et_shape)
         return part_element
 
-    def _create_processing(self, processing):
-        """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
+    @staticmethod
+    def _create_processing_from_dict(data):  # TODO: should we generate the whole BTLx file from a single dictionary like this?
+        """
+        Recursively converts a dictionary to an ElementTree Element.
 
         Parameters
         ----------
-        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
-            The processing object.
+        data : dict
+            The dictionary to convert. uses structure:
+            param_dict = {
+                "name": name,
+                "attributes": {"key1": val1, "key2": val2},
+                "text":  "txt",
+                "content": [
+                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
+                    {"name": name,"attributes": {"key1": val1, "key2": val2}, "text":  "txt", "content": []},
+                    ]
+                }
 
         Returns
         -------
-        :class:`~xml.etree.ElementTree.Element`
-            The processing element.
+        :class:`xml.etree.ElementTree.Element`
+            The resulting ElementTree Element.
+        """
+        element = ET.Element(data["name"], data["attributes"])
+        if data.get("text", None):
+            element.text = data["text"]
+
+        for subdata in data.get("content", []):
+            subelement = BTLxWriter._create_processing_from_dict(subdata)
+            element.append(subelement)
+
+        return element
+
+    @staticmethod
+    def et_point_vals(point):
+        """Returns the ET point values for a given point.
+
+        Parameters
+        ----------
+        point : :class:`~compas.geometry.Point`
+            The point to be converted.
+
+        Returns
+        -------
+        dict
+            The ET point values formatted for the ET element.
 
         """
-        # create processing element
-        processing_element = ET.Element(
-            processing.PROCESSING_NAME,
-            processing.header_attributes,
-        )
-        # create parameter subelements
-        for key, value in processing.params_dict.items():
-            if key not in processing.header_attributes:
-                child = ET.SubElement(processing_element, key)
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        child.set(sub_key, sub_value)
-                else:
-                    child.text = str(value)
-        # create subprocessing elements
-        if processing.subprocessings:
-            for subprocessing in processing.subprocessings:
-                processing_element.append(self._create_processing(subprocessing))
-        return processing_element
+        return {
+            "X": "{:.{prec}f}".format(point.x, prec=BTLxWriter.POINT_PRECISION),
+            "Y": "{:.{prec}f}".format(point.y, prec=BTLxWriter.POINT_PRECISION),
+            "Z": "{:.{prec}f}".format(point.z, prec=BTLxWriter.POINT_PRECISION),
+        }
 
 
 class BTLxPart(object):
-    """Class representing a BTLx part. This acts as a wrapper for a Beam object.
+    """Class representing a BTLx part. This acts as a wrapper for a Beam or Plate object.
 
     Parameters
     ----------
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam object.
+    element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+        The element object.
+    order_num : int
+        The order number of the part. gets passed to `OrderNumber` and `SingleMemberNumber`.
 
     Attributes
     ----------
     attr : dict
         The attributes of the BTLx part.
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam object.
+    element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+        The element object.
     key : str
-        The key of the beam object.
+        The key of the element object.
     length : float
-        The length of the beam.
+        The length of the element.
     width : float
-        The width of the beam.
+        The width of the element.
     height : float
-        The height of the beam.
+        The height of the element.
     frame : :class:`~compas.geometry.Frame`
         The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
     blank : :class:`~compas.geometry.Box`
-        The blank of the beam.
+        The blank of the element.
     blank_frame : :class:`~compas.geometry.Frame`
         The frame of the blank.
-    blank_length : float
-        The blank length of the beam.
     processings : list
-        A list of the processings applied to the beam.
+        A list of the processings applied to the element.
 
     """
 
-    def __init__(self, beam, order_num):
-        self.beam = beam
+    def __init__(self, element, order_num):
+        self.element = element
         self.order_num = order_num
-        self.length = beam.blank_length
-        self.width = beam.width
-        self.height = beam.height
-        self.frame = beam.ref_frame
-        self.blank_length = beam.blank_length
+        self.length = element.blank_length
+        self.width = element.width
+        self.height = element.height
+        self.frame = element.ref_frame
         self.processings = []
-        self._et_element = None
         self._shape_strings = None
 
     @property
     def part_guid(self):
-        return str(self.beam.guid)
+        return str(self.element.guid)
 
     @property
     def et_grain_direction(self):
@@ -293,15 +312,15 @@ class BTLxPart(object):
     def et_reference_side(self):
         return ET.Element("ReferenceSide", Side="1", Align="no")
 
-    def ref_side_from_face(self, beam_face):
-        """Finds the one-based index of the reference side with normal that matches the normal of the given beam face.
+    def ref_side_from_face(self, element_face):  # TODO: this is not used. remove?
+        """Finds the one-based index of the reference side with normal that matches the normal of the given element face.
 
-        This essentially translates between the beam face reference system to the BTLx side reference system.
+        This essentially translates between the element face reference system to the BTLx side reference system.
 
         Parameters
         ----------
-        beam_face : :class:`~compas.geometry.Frame`
-            The frame of a beam face from beam.faces.
+        element_face : :class:`~compas.geometry.Frame`
+            The frame of an element face from element.faces.
 
         Returns
         -------
@@ -309,11 +328,11 @@ class BTLxPart(object):
             The key(index 1-6) of the reference surface.
 
         """
-        for index, ref_side in enumerate(self.beam.ref_sides):
-            angle = angle_vectors(ref_side.normal, beam_face.normal, deg=True)
+        for index, ref_side in enumerate(self.element.ref_sides):
+            angle = angle_vectors(ref_side.normal, element_face.normal, deg=True)
             if TOL.is_zero(angle):
                 return index + 1  # in BTLx face indices are one-based
-        raise ValueError("Given beam face does not match any of the reference surfaces.")
+        raise ValueError("Given element face does not match any of the reference surfaces.")
 
     @property
     def attr(self):
@@ -330,7 +349,7 @@ class BTLxPart(object):
             "TimberGrade": "",
             "QualityGrade": "",
             "Count": "1",
-            "Length": "{:.{prec}f}".format(self.blank_length, prec=BTLxWriter.POINT_PRECISION),
+            "Length": "{:.{prec}f}".format(self.length, prec=BTLxWriter.POINT_PRECISION),
             "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
             "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
             "Weight": "0",
@@ -367,9 +386,9 @@ class BTLxPart(object):
         guid = "{" + str(uuid.uuid4()) + "}"
         transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
         position = ET.SubElement(transformation, "Position")
-        position.append(ET.Element("ReferencePoint", self.et_point_vals(self.frame.point)))
-        position.append(ET.Element("XVector", self.et_point_vals(self.frame.xaxis)))
-        position.append(ET.Element("YVector", self.et_point_vals(self.frame.yaxis)))
+        position.append(ET.Element("ReferencePoint", BTLxWriter.et_point_vals(self.frame.point)))
+        position.append(ET.Element("XVector", BTLxWriter.et_point_vals(self.frame.xaxis)))
+        position.append(ET.Element("YVector", BTLxWriter.et_point_vals(self.frame.yaxis)))
         return transformations
 
     @property
@@ -392,7 +411,7 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            for face in self.beam.geometry.faces:
+            for face in self.element.geometry.faces:
                 pts = []
                 frame = face.surface.frame_at(0.5, 0.5)
                 edges = face.boundary.edges[1:]
@@ -442,7 +461,7 @@ class BTLxProcessing(Data):
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the beam to be cut. 0-5 correspond to RS1-RS6.
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6.
     priority : int
         The priority of the process.
     process_id : int
@@ -476,15 +495,8 @@ class BTLxProcessing(Data):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
     @property
-    def header_attributes(self):
-        """Return the attributes to be included in the XML element."""
-        return {
-            "Name": self.PROCESSING_NAME,
-            "Priority": str(self.priority),
-            "Process": "yes",
-            "ProcessID": str(self.process_id),
-            "ReferencePlaneID": str(self.ref_side_index + 1),
-        }
+    def processing_dict(self):  # TODO: consider caching the self.params object.
+        return self.params.processing_dict()
 
     def add_subprocessing(self, subprocessing):
         """Add a nested subprocessing."""
@@ -506,6 +518,17 @@ class BTLxProcessingParams(object):
     def __init__(self, instance):
         self._instance = instance
 
+    @property
+    def header_attributes(self):
+        """Return the attributes to be included in the XML element."""
+        result = OrderedDict()
+        result["Name"] = self._instance.PROCESSING_NAME
+        result["Process"] = "yes"
+        result["Priority"] = str(self._instance.priority)
+        result["ProcessID"] = str(self._instance.process_id)
+        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        return result
+
     def as_dict(self):
         """Returns the processing parameters as a dictionary.
 
@@ -514,13 +537,35 @@ class BTLxProcessingParams(object):
         dict
             The processing parameters as a dictionary.
         """
-        result = OrderedDict()
-        result["Name"] = self._instance.PROCESSING_NAME
-        result["Process"] = "yes"
-        result["Priority"] = str(self._instance.priority)
-        result["ProcessID"] = str(self._instance.process_id)
-        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
-        return result
+        raise NotImplementedError("as_dict must be implemented in subclasses!")
+
+    def processing_dict(self):
+        """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.
+        moved to BTLxProcessing because some processings are significantly different and need to be overridden.
+
+        Parameters
+        ----------
+        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
+            The processing object.
+
+        Returns
+        -------
+        dict
+            The BTLx parameters as a dictionary.
+
+        """
+        # create processing element
+        processing_dict = {"name": self._instance.PROCESSING_NAME, "attributes": self.header_attributes, "content": []}
+        # create parameter subelements
+        for key, value in self._instance.params.as_dict().items():
+            sub = {"name": key}
+            sub["attributes"] = value if isinstance(value, dict) else {}
+            sub["text"] = value if isinstance(value, str) else ""
+            processing_dict["content"].append(sub)
+            if self._instance.subprocessings:
+                for subprocessing in self._instance.subprocessings:
+                    processing_dict["content"].append(subprocessing.processing_dict())
+        return processing_dict
 
 
 class OrientationType(object):
@@ -666,6 +711,29 @@ class EdgePositionType(object):
 
     REFEDGE = "refedge"
     OPPEDGE = "oppedge"
+
+
+class AlignmentType(object):
+    """Enum for the alignment of the cut.
+    Attributes
+    ----------
+    TOP : literal("top")
+        Top alignment.
+    BOTTOM : literal("bottom")
+        Bottom alignment.
+    LEFT : literal("left")
+        Left alignment.
+    RIGHT : literal("right")
+        Right alignment.
+    CENTER : literal("center")
+        Center alignment.
+    """
+
+    TOP = "top"
+    BOTTOM = "bottom"
+    LEFT = "left"
+    RIGHT = "right"
+    CENTER = "center"
 
 
 class BTLxFromGeometryDefinition(Data):

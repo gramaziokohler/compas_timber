@@ -51,8 +51,9 @@ def test_horizontal_slot_negative_angle(beam):
     )
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
-
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
 
 
 def test_horizontal_slot_positive_angle(beam):
@@ -89,7 +90,9 @@ def test_horizontal_slot_positive_angle(beam):
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
 
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
 
 
 def test_vertical_slot_positive_angle(beam):
@@ -126,7 +129,9 @@ def test_vertical_slot_positive_angle(beam):
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
 
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
 
 
 def test_vertical_slot_negative_angle(beam):
@@ -163,4 +168,6 @@ def test_vertical_slot_negative_angle(beam):
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
 
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
