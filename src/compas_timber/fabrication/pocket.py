@@ -342,23 +342,29 @@ class Pocket(BTLxProcessing):
         # calculate start_x, start_y, start_depth
         start_x, start_y, start_depth = cls._calculate_start_x_y_depth(ref_side, start_point)
 
+        # x"-axis and y"-axis (planar axis of the bottom face of the volume)
+        xxaxis = Vector.from_start_end(start_point, end_point)
+        yyaxis = Vector.from_start_end(start_point, back_point)
+
         # calculate the angle of the pocket
-        angle = cls._calculate_angle_in_plane(ref_side.yaxis, -front_plane.normal, ref_side.normal)
+        angle = cls._calculate_angle_in_plane(ref_side.xaxis, xxaxis, ref_side.normal)
+
+        # x'-axis and y'-axis (see BTLx Documentation p.46)
+        xaxis = ref_side.xaxis.rotated(math.radians(angle), ref_side.normal)
+        yaxis = ref_side.yaxis.rotated(math.radians(angle), ref_side.normal)
 
         # calculate the inclination of the pocket
-        inclination = cls._calculate_angle_in_plane(ref_side.normal, -bottom_plane.normal, ref_side.yaxis)
+        inclination = cls._calculate_angle_in_plane(xaxis, xxaxis, yaxis)
 
         # calculate the slope of the pocket
-        slope = cls._calculate_angle_in_plane(ref_side.normal, -bottom_plane.normal, ref_side.xaxis)
+        slope = cls._calculate_angle_in_plane(yaxis, yyaxis, xxaxis)
 
         # calculate internal_angle
-        vect_length = start_point - end_point
-        vect_width = start_point - back_point
-        internal_angle = angle_vectors_signed(vect_length, vect_width, ref_side.normal, deg=True)
+        internal_angle = angle_vectors_signed(xxaxis, yyaxis, ref_side.normal, deg=True)
 
         # calculate length and width
-        length = vect_length.length*math.sin(math.radians(internal_angle))
-        width = vect_width.length*math.sin(math.radians(internal_angle))
+        length = xxaxis.length*math.sin(math.radians(internal_angle))
+        width = yyaxis.length*math.sin(math.radians(internal_angle))
 
         # calculate tilt angles
         tilt_ref_side = cls._calculate_tilt_angle(bottom_plane, front_plane)
@@ -367,10 +373,8 @@ class Pocket(BTLxProcessing):
         tilt_start_side = cls._calculate_tilt_angle(bottom_plane, start_plane)
 
         # define machining limits
-        machining_limits = MachiningLimits()
-        machining_limits.face_limited_top = False
-        machining_limits.face_limited_back = False
-        machining_limits.face_limited_front = False
+        machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
+
 
         return cls(
             start_x,
@@ -386,7 +390,7 @@ class Pocket(BTLxProcessing):
             tilt_end_side,
             tilt_opp_side,
             tilt_start_side,
-            machining_limits.limits,
+            machining_limits,
             ref_side_index=ref_side_index)
 
     @staticmethod
@@ -434,16 +438,40 @@ class Pocket(BTLxProcessing):
 
     @staticmethod
     def _calculate_angle_in_plane(vector_1, vector_2, normal):
-        # calculate the angle between two vectors in a plane
+        # calculate the angle between two vectors projected on a plane
         projection = Projection.from_plane(Plane(Point(0, 0, 0), normal))
-        vector_1.transform(projection)
-        vector_2.transform(projection)
-        return angle_vectors_signed(vector_1, vector_2, normal, deg=True)
+        proj_vect_1 = vector_1.transformed(projection)
+        proj_vect_2 = vector_2.transformed(projection)
+        return angle_vectors_signed(proj_vect_1, proj_vect_2, normal, deg=True)
 
     @staticmethod
     def _calculate_tilt_angle(bottom_plane, plane):
         # calculate the tilt angle of the pocket based on the bottom_plane and the plane of the face to be tilted
         return angle_vectors(-bottom_plane.normal, plane.normal, deg=True)
+
+    @staticmethod
+    def _define_machining_limits(planes, beam, ref_side_index):
+        # define machining limits based on the planes
+        def _set_machining_limit(side, plane):
+            vect = Vector.from_start_end(side.point, plane.point)
+            return TOL.is_negative(dot_vectors(vect, side.normal), 0.1)
+
+        ref_sides = [Plane.from_frame(frame) for frame in beam.ref_sides]
+        start_side, end_side = ref_sides[-2:]
+        ref_sides = ref_sides[:-2]
+        ref_side, front_side, opp_side, back_side = ref_sides[ref_side_index:] + ref_sides[:ref_side_index]
+        start_plane, end_plane, front_plane, back_plane, bottom_plane, top_plane = planes
+
+        machining_limits = MachiningLimits()
+        machining_limits.face_limited_start = _set_machining_limit(start_side, start_plane)
+        machining_limits.face_limited_end = _set_machining_limit(end_side, end_plane)
+        machining_limits.face_limited_front = _set_machining_limit(front_side, front_plane)
+        machining_limits.face_limited_back = _set_machining_limit(back_side, back_plane)
+        machining_limits.face_limited_top = _set_machining_limit(ref_side, top_plane)
+        machining_limits.face_limited_bottom = _set_machining_limit(opp_side, bottom_plane)
+
+        return machining_limits.limits
+
 
     ########################################################################
     # Methods
@@ -522,7 +550,7 @@ class Pocket(BTLxProcessing):
         bottom_frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
 
         # rotate the plane based on the angle
-        bottom_frame.rotate(math.radians(self.angle), -bottom_frame.normal, point=bottom_frame.point)
+        bottom_frame.rotate(math.radians(self.angle), bottom_frame.normal, point=bottom_frame.point)
         # rotate the plane based on the inclination
         bottom_frame.rotate(math.radians(self.inclination), bottom_frame.yaxis, point=bottom_frame.point)
         # rotate the plane based on the slope
@@ -565,8 +593,12 @@ class Pocket(BTLxProcessing):
         bottom_frame = self._bottom_frame_from_params_and_beam(beam)
 
         # get top frame
-        top_frame = beam.ref_sides[self.ref_side_index]
-        top_frame.translate(top_frame.normal * tol.absolute)
+        if self.machining_limits["FaceLimitedTop"]:
+            top_frame = bottom_frame.translated(-bottom_frame.zaxis * self.start_depth)
+            top_frame.xaxis = -top_frame.xaxis
+        else:
+            top_frame = beam.ref_sides[self.ref_side_index]
+            top_frame.translate(top_frame.normal * tol.absolute)
 
         # tilt start frame
         if self.machining_limits["FaceLimitedStart"]:
@@ -585,15 +617,15 @@ class Pocket(BTLxProcessing):
 
         # tilt front frame
         if self.machining_limits["FaceLimitedFront"]:
-            front_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.xaxis, point=bottom_frame.point)
+            front_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.yaxis, point=bottom_frame.point)
         else:
             front_frame = beam.ref_sides[(self.ref_side_index+1)%4]
             front_frame.translate(front_frame.normal * tol.absolute)
 
         # tilt back frame
         if self.machining_limits["FaceLimitedBack"]:
-            back_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.xaxis, point=bottom_frame.point)
-            back_frame.translate(-back_frame.normal * self.width)
+            back_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.yaxis, point=bottom_frame.point)
+            back_frame.translate(back_frame.normal * self.width)
         else:
             back_frame = beam.ref_sides[(self.ref_side_index-1)%4]
             back_frame.translate(back_frame.normal * tol.absolute)
