@@ -163,18 +163,18 @@ class BTLxWriter(object):
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
         elements = chain(model.beams, model.plates)
-        for i, beam in enumerate(elements):
-            part_element = self._create_part(beam, i)
+        for i, element in enumerate(elements):
+            part_element = self._create_part(element, i)
             parts_element.append(part_element)
         return project_element
 
-    def _create_part(self, beam, order_num):
+    def _create_part(self, element, order_num):
         """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
         ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam object.
+        element : :class:`~compas_model.elements.Element` # TODO: not really
+            The element object.
         num : int
             The order number of the part.
 
@@ -185,13 +185,13 @@ class BTLxWriter(object):
 
         """
         # create part element
-        part = BTLxPart(beam, order_num=order_num)
+        part = BTLxPart(element, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # create processings element for the part if there are any
-        if beam.features:
+        if element.features:
             processings_element = ET.Element("Processings")
-            for feature in beam.features:
+            for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
                     processing_element = self._create_processing(feature)
@@ -199,7 +199,7 @@ class BTLxWriter(object):
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
-        if beam._geometry:
+        if element._geometry:
             part_element.append(part.et_shape)
         return part_element
 
@@ -267,55 +267,54 @@ class BTLxWriter(object):
 
 
 class BTLxPart(object):
-    """Class representing a BTLx part. This acts as a wrapper for a Beam object.
+    """Class representing a BTLx part. This acts as a wrapper for an Element object.
 
     Parameters
     ----------
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam object.
+    element : :class:`~compas_model.elements.Element`  # TODO: not really, make BTLx Element parent class
+        The element object.
 
     Attributes
     ----------
     attr : dict
         The attributes of the BTLx part.
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam object.
+    element : :class:`~compas_timber.elements.element`
+        The element object.
     key : str
-        The key of the beam object.
+        The key of the element object.
     length : float
-        The length of the beam.
+        The length of the element.
     width : float
-        The width of the beam.
+        The width of the element.
     height : float
-        The height of the beam.
+        The height of the element.
     frame : :class:`~compas.geometry.Frame`
         The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
     blank : :class:`~compas.geometry.Box`
-        The blank of the beam.
+        The blank of the element.
     blank_frame : :class:`~compas.geometry.Frame`
         The frame of the blank.
     blank_length : float
-        The blank length of the beam.
+        The blank length of the element.
     processings : list
-        A list of the processings applied to the beam.
+        A list of the processings applied to the element.
 
     """
 
-    def __init__(self, beam, order_num):
-        self.beam = beam
+    def __init__(self, element, order_num):
+        self.element = element
         self.order_num = order_num
-        self.length = beam.blank_length
-        self.width = beam.width
-        self.height = beam.height
-        self.frame = beam.ref_frame
-        self.blank_length = beam.blank_length
+        self.length = element.blank_length
+        self.width = element.width
+        self.height = element.height
+        self.frame = element.ref_frame
         self.processings = []
         self._et_element = None
         self._shape_strings = None
 
     @property
     def part_guid(self):
-        return str(self.beam.guid)
+        return str(self.element.guid)
 
     @property
     def et_grain_direction(self):
@@ -325,15 +324,15 @@ class BTLxPart(object):
     def et_reference_side(self):
         return ET.Element("ReferenceSide", Side="1", Align="no")
 
-    def ref_side_from_face(self, beam_face):
-        """Finds the one-based index of the reference side with normal that matches the normal of the given beam face.
+    def ref_side_from_face(self, element_face):
+        """Finds the one-based index of the reference side with normal that matches the normal of the given element face.
 
-        This essentially translates between the beam face reference system to the BTLx side reference system.
+        This essentially translates between the element face reference system to the BTLx side reference system.
 
         Parameters
         ----------
-        beam_face : :class:`~compas.geometry.Frame`
-            The frame of a beam face from beam.faces.
+        element_face : :class:`~compas.geometry.Frame`
+            The frame of a element face from element.faces.
 
         Returns
         -------
@@ -341,11 +340,11 @@ class BTLxPart(object):
             The key(index 1-6) of the reference surface.
 
         """
-        for index, ref_side in enumerate(self.beam.ref_sides):
-            angle = angle_vectors(ref_side.normal, beam_face.normal, deg=True)
+        for index, ref_side in enumerate(self.element.ref_sides):
+            angle = angle_vectors(ref_side.normal, element_face.normal, deg=True)
             if TOL.is_zero(angle):
                 return index + 1  # in BTLx face indices are one-based
-        raise ValueError("Given beam face does not match any of the reference surfaces.")
+        raise ValueError("Given element face does not match any of the reference surfaces.")
 
     @property
     def attr(self):
@@ -362,7 +361,7 @@ class BTLxPart(object):
             "TimberGrade": "",
             "QualityGrade": "",
             "Count": "1",
-            "Length": "{:.{prec}f}".format(self.blank_length, prec=BTLxWriter.POINT_PRECISION),
+            "Length": "{:.{prec}f}".format(self.length, prec=BTLxWriter.POINT_PRECISION),
             "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
             "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
             "Weight": "0",
@@ -413,7 +412,7 @@ class BTLxPart(object):
 
     @property
     def shape_strings(self):
-        """Generates the shape strings for the BTLxPart. Only works in environments where the beam.geometry Brep is available.
+        """Generates the shape strings for the BTLxPart. Only works in environments where the element.geometry Brep is available.
 
         returns
         -------
@@ -424,7 +423,7 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            for face in self.beam.geometry.faces:
+            for face in self.element.geometry.faces:
                 pts = []
                 frame = face.surface.frame_at(0.5, 0.5)
                 edges = face.boundary.edges[1:]
@@ -508,7 +507,7 @@ class BTLxProcessing(Data):
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the beam to be cut. 0-5 correspond to RS1-RS6.
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6.
     priority : int
         The priority of the process.
     process_id : int
@@ -599,9 +598,9 @@ class OrientationType(object):
     Attributes
     ----------
     START : literal("start")
-        The start of the beam is cut away.
+        The start of the element is cut away.
     END : literal("end")
-        The end of the beam is cut away.
+        The end of the element is cut away.
     """
 
     START = "start"
