@@ -325,9 +325,6 @@ class Pocket(BTLxProcessing):
         if len(planes) != 6:
             raise ValueError("Volume must have 6 faces.")
 
-        # # validate volume intersection with the element
-        # cls._validate_volume_intersection(volume, element, ref_side_index) # TODO: PluginNotInstalledError
-
         # get ref_side of the element
         ref_side = element.ref_sides[ref_side_index]
 
@@ -423,24 +420,6 @@ class Pocket(BTLxProcessing):
 
         """
         return cls.from_volume_and_element(volume, element, **kwargs)
-
-    @staticmethod
-    def _validate_volume_intersection(volume, element, ref_side_index):
-        # validate volume intersection with the element
-        ref_surface = element.side_as_surface(ref_side_index) # TODO: make sure `Plate` element has side_as_surface method
-        xaxis = ref_surface.frame.xaxis * ref_surface.xsize
-        yaxis = ref_surface.frame.yaxis * ref_surface.ysize
-
-        rays = [
-            [ref_surface.point_at(0, 0), xaxis],
-            [ref_surface.point_at(1, 0), yaxis],
-            [ref_surface.point_at(1, 1), -xaxis],
-            [ref_surface.point_at(0, 1), -yaxis],
-        ]
-
-        intersections = [intersection_ray_mesh(ray, volume) for ray in rays]
-        if not any(intersections):
-            raise ValueError("The volume does not intersect with the element.")
 
     @staticmethod
     def _sort_planes(planes, ref_side):
