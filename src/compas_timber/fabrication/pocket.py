@@ -3,6 +3,7 @@ import math
 from compas.datastructures import Mesh
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
@@ -11,6 +12,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
+from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
@@ -289,7 +291,7 @@ class Pocket(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_volume_and_element(cls, volume, element, machining_limits=None, ref_side_index=0):
+    def from_volume_and_element(cls, volume, element, machining_limits=None, ref_side_index=None):
         """Construct a Pocket feature from a volume and a TimberElement.
 
         Parameters
@@ -318,6 +320,7 @@ class Pocket(BTLxProcessing):
         elif isinstance(volume, Brep):
             volume_frames = [face.frame_at(0,0) for face in volume.faces]
             planes = [Plane.from_frame(frame) for frame in volume_frames]
+
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
 
@@ -325,6 +328,8 @@ class Pocket(BTLxProcessing):
             raise ValueError("Volume must have 6 faces.")
 
         # get ref_side of the element
+        if not ref_side_index:
+            ref_side_index = cls._get_optimal_ref_side_index(element, volume)
         ref_side = element.ref_sides[ref_side_index]
 
         # sort the planes based on the reference side
@@ -337,7 +342,7 @@ class Pocket(BTLxProcessing):
             back_point = Point (*intersection_plane_plane_plane(start_plane, back_plane, bottom_plane, tol=TOL.ABSOLUTE))
             end_point = Point(*intersection_plane_plane_plane(end_plane, front_plane, bottom_plane, tol=TOL.ABSOLUTE))
         except TypeError as te:
-            raise ValueError("The faces of the volume do not intersect. " + str(te))
+            raise ValueError("Failed to orient the volume to the element. Consider using a different ref_side_index " + str(te))
 
         ## params calculations
         # calculate start_x, start_y, start_depth
@@ -419,6 +424,28 @@ class Pocket(BTLxProcessing):
 
         """
         return cls.from_volume_and_element(volume, element, **kwargs)
+
+    @staticmethod
+    def _get_optimal_ref_side_index(element, volume):
+        # get the optimal reference side index based on the volume. The optimal reference side is the one with the most intersections with the volume edges.
+        # get the volume edges
+        if isinstance(volume, Brep):
+            volume_curve = [edge.curve for edge in volume.edges]
+            volume_edges = [Line(*curve.points) for curve in volume_curve]
+        else:
+            volume_edges = [volume.edge_line(edge) for edge in volume.edges()]
+
+        intersection_counts = []
+        for i, side in enumerate(element.ref_sides):
+            int_pts = []
+            for edge in volume_edges:
+                int_pt = intersection_segment_plane(edge, Plane.from_frame(side))
+                if int_pt:
+                    int_pts.append(int_pt)
+            intersection_counts.append((i, len(int_pts)))
+        # Find the index with the maximum intersections
+        optimal_index = max(intersection_counts, key=lambda x: x[1])[0] if intersection_counts else None
+        return optimal_index
 
     @staticmethod
     def _sort_planes(planes, ref_side):
