@@ -13,10 +13,6 @@ from compas_timber.fabrication import Lap
 from compas_timber.fabrication.double_cut import DoubleCut
 from compas_timber.utils import intersection_line_line_param
 
-from .joint import Joint
-from .solver import JointTopology
-from .utilities import beam_ref_side_incidence
-
 
 class YButtJoint(Joint):
     """Represents a Y-Butt type joint which joins the ends of three beams,
@@ -67,8 +63,7 @@ class YButtJoint(Joint):
         self.cross_beam_b_guid = kwargs.get("cross_beam_b_guid", None) or str(cross_beam_b.guid)
         self.mill_depth = mill_depth
         self.features = []
-        if self.main_beam and self.cross_beams[0] and self.cross_beams[1]:
-            self.check_elements_compatibility()
+
 
     @property
     def beams(self):

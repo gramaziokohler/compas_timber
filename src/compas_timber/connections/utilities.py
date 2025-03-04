@@ -148,7 +148,6 @@ def beam_ref_side_incidence_with_vector(beam_a, vector, ignore_ends=True):
     return ref_side_angles
 
 
-
 def are_beam_frames_orthogonal(beam_a, beam_b, tol=TOL):
     """
     Checks if two beams are coplanar based on the cross product of their centerline directions.
@@ -168,7 +167,6 @@ def are_beam_frames_orthogonal(beam_a, beam_b, tol=TOL):
         True if the beams are coplanar, False otherwise.
     """
 
-
     beam_angle = angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
     if TOL.is_zero(beam_angle) or TOL.is_zero(beam_angle - math.pi):  # beams are parallel
         if TOL.is_zero(angle_vectors(beam_a.frame.normal, beam_b.frame.normal) % math.pi / 2):
@@ -185,7 +183,6 @@ def are_beam_frames_orthogonal(beam_a, beam_b, tol=TOL):
         if not is_beam_normal_coplanar:
             return False
     return True
-
 
 
 def point_centerline_towards_joint(beam_a, beam_b):
