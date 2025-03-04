@@ -65,7 +65,7 @@ def test_pocket_from_polyhedron(tol, neg_vol, beam):
     assert isinstance(neg_vol, Polyhedron)
 
     # Pocket instance
-    instance = Pocket.from_volume_and_beam(neg_vol, beam, ref_side_index=2)
+    instance = Pocket.from_volume_and_element(neg_vol, beam, ref_side_index=2)
 
     # attribute assertions
     assert tol.is_close(instance.start_x, 536.945)
@@ -97,7 +97,7 @@ def test_pocket_from_mesh(tol, neg_vol, beam):
     assert isinstance(mesh_neg_vol, Mesh)
 
     # Pocket instance
-    instance = Pocket.from_volume_and_beam(mesh_neg_vol, beam, ref_side_index=2)
+    instance = Pocket.from_volume_and_element(mesh_neg_vol, beam, ref_side_index=2)
 
     # attribute assertions
     assert tol.is_close(instance.start_x, 536.945)
@@ -124,7 +124,7 @@ def test_pocket_from_mesh(tol, neg_vol, beam):
     assert instance.ref_side_index == 2
 
     # volume from Lap instance
-    pocket_volume = instance.volume_from_params_and_beam(beam)
+    pocket_volume = instance.volume_from_params_and_element(beam)
     vertices, faces = pocket_volume.to_vertices_and_faces()
 
     # expected vertices and faces
@@ -154,7 +154,7 @@ def test_pocket_from_mesh(tol, neg_vol, beam):
 def test_pocket_from_lap_joint(tol, lap_joint):
     neg_vol_main, _ = lap_joint._create_negative_volumes()
 
-    instance = Pocket.from_volume_and_beam(neg_vol_main, lap_joint.main_beam, ref_side_index=lap_joint.main_ref_side_index)
+    instance = Pocket.from_volume_and_element(neg_vol_main, lap_joint.main_beam, ref_side_index=lap_joint.main_ref_side_index)
     # attribute assertions
     assert tol.is_close(instance.start_x, 536.945)
     assert tol.is_close(instance.start_y, 0.0)
@@ -299,29 +299,7 @@ def test_pocket_with_5_faces(beam):
 
     volume = Mesh.from_vertices_and_faces(vertices, faces)
     try:
-        Pocket.from_volume_and_beam(volume, beam, ref_side_index=2)
+        Pocket.from_volume_and_element(volume, beam, ref_side_index=2)
     except Exception as e:
         assert isinstance(e, ValueError)
         assert "Volume must have 6 faces." in str(e)
-
-
-# def test_pocket_with_non_intersecting_volume(beam):  # TODO: PluginNotInstalledError -> intersection_ray_mesh
-#     volume = Polyhedron(
-#         vertices=[
-#             Point(-10.000, -10.000, -10.000),
-#             Point(-10.000, 10.000, -10.000),
-#             Point(10.000, 10.000, -10.000),
-#             Point(10.000, -10.000, -10.000),
-#             Point(-10.000, -10.000, 10.000),
-#             Point(10.000, -10.000, 10.000),
-#             Point(10.000, 10.000, 10.000),
-#             Point(-10.000, 10.000, 10.000),
-#         ],
-#         faces=[[0, 1, 2, 3], [0, 3, 5, 4], [3, 2, 6, 5], [2, 1, 7, 6], [1, 0, 4, 7], [4, 5, 6, 7]],
-#     )
-
-#     try:
-#         Pocket.from_volume_and_beam(volume, beam, ref_side_index=2)
-#     except Exception as e:
-#         assert isinstance(e, ValueError)
-#         assert "The volume does not intersect with the beam." in str(e)
