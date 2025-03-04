@@ -12,7 +12,9 @@ import compas
 from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -849,3 +851,29 @@ class BTLxFromGeometryDefinition(Data):
             return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
         except Exception as ex:
             raise FeatureApplicationError(self.geometries, element.blank, str(ex))
+
+
+def correct_polyline_direction(polyline, normal_vector):
+    # TODO: this is a temporary method. I couldn't import the one from BallNodeJoint, so I copied it here. Once that method is moved to .utils, we can remove it here.
+    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to correct.
+
+    Returns
+    -------
+    :class:`compas.geometry.Polyline`
+        The corrected polyline.
+
+    """
+    angle_sum = 0
+    for i in range(len(polyline) - 1):
+        u = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+        angle = angle_vectors_signed(u, v, normal_vector)
+        angle_sum += angle
+    if angle_sum > 0:
+        polyline = polyline[::-1]
+    return polyline
