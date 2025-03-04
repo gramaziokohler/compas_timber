@@ -6,18 +6,17 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
-from compas.geometry import Projection
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
-from compas.geometry import intersection_ray_mesh
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import angle_vectors_projected
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -349,17 +348,17 @@ class Pocket(BTLxProcessing):
         yyaxis = Vector.from_start_end(start_point, back_point)
 
         # calculate the angle of the pocket
-        angle = cls._calculate_angle_in_plane(ref_side.xaxis, xxaxis, ref_side.normal)
+        angle = angle_vectors_projected(ref_side.xaxis, xxaxis, ref_side.normal)
 
         # x'-axis and y'-axis (see BTLx Documentation p.46)
         xaxis = ref_side.xaxis.rotated(math.radians(angle), ref_side.normal)
         yaxis = ref_side.yaxis.rotated(math.radians(angle), ref_side.normal)
 
         # calculate the inclination of the pocket
-        inclination = cls._calculate_angle_in_plane(xaxis, xxaxis, yaxis)
+        inclination = angle_vectors_projected(xaxis, xxaxis, yaxis)
 
         # calculate the slope of the pocket
-        slope = cls._calculate_angle_in_plane(yaxis, yyaxis, xxaxis)
+        slope = angle_vectors_projected(yaxis, yyaxis, xxaxis)
 
         # calculate internal_angle
         internal_angle = angle_vectors_signed(xxaxis, yyaxis, ref_side.normal, deg=True)
@@ -445,14 +444,6 @@ class Pocket(BTLxProcessing):
         start_y = dot_vectors(start_vector, ref_side.yaxis)
         start_depth = dot_vectors(start_vector, -ref_side.zaxis)
         return start_x, start_y, start_depth
-
-    @staticmethod
-    def _calculate_angle_in_plane(vector_1, vector_2, normal):
-        # calculate the angle between two vectors projected on a plane
-        projection = Projection.from_plane(Plane(Point(0, 0, 0), normal))
-        proj_vect_1 = vector_1.transformed(projection)
-        proj_vect_2 = vector_2.transformed(projection)
-        return angle_vectors_signed(proj_vect_1, proj_vect_2, normal, deg=True)
 
     @staticmethod
     def _calculate_tilt_angle(bottom_plane, plane):
