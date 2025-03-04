@@ -13,6 +13,7 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_ray_mesh
+from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
@@ -289,7 +290,7 @@ class Pocket(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_volume_and_beam(cls, volume, beam, ref_side_index=0):
+    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=0):
         """Construct a Pocket feature from a volume and a beam.
 
         Parameters
@@ -298,6 +299,8 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the beam. Default is 0.
 
@@ -307,6 +310,7 @@ class Pocket(BTLxProcessing):
             The Pocket feature.
 
         """
+        # type: (Polyhedron | Brep | Mesh, Beam, dict, int) -> Pocket
         if isinstance(volume, Mesh):
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Polyhedron):
@@ -328,7 +332,8 @@ class Pocket(BTLxProcessing):
         ref_side = beam.ref_sides[ref_side_index]
 
         # sort the planes based on the reference side
-        start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = cls._sort_planes(planes, ref_side)
+        planes = cls._sort_planes(planes, ref_side)
+        start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = planes
 
         # get the intersection points
         try:
@@ -373,8 +378,11 @@ class Pocket(BTLxProcessing):
         tilt_start_side = cls._calculate_tilt_angle(bottom_plane, start_plane)
 
         # define machining limits
-        machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
-
+        if machining_limits:
+            if not isinstance(machining_limits, dict):
+                raise ValueError("machining_limits must be a dictionary.")
+        else:
+            machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
 
         return cls(
             start_x,
@@ -452,10 +460,6 @@ class Pocket(BTLxProcessing):
     @staticmethod
     def _define_machining_limits(planes, beam, ref_side_index):
         # define machining limits based on the planes
-        def _set_machining_limit(side, plane):
-            vect = Vector.from_start_end(side.point, plane.point)
-            return TOL.is_negative(dot_vectors(vect, side.normal), 0.1)
-
         ref_sides = [Plane.from_frame(frame) for frame in beam.ref_sides]
         start_side, end_side = ref_sides[-2:]
         ref_sides = ref_sides[:-2]
@@ -463,12 +467,13 @@ class Pocket(BTLxProcessing):
         start_plane, end_plane, front_plane, back_plane, bottom_plane, top_plane = planes
 
         machining_limits = MachiningLimits()
-        machining_limits.face_limited_start = _set_machining_limit(start_side, start_plane)
-        machining_limits.face_limited_end = _set_machining_limit(end_side, end_plane)
-        machining_limits.face_limited_front = _set_machining_limit(front_side, front_plane)
-        machining_limits.face_limited_back = _set_machining_limit(back_side, back_plane)
-        machining_limits.face_limited_top = _set_machining_limit(ref_side, top_plane)
-        machining_limits.face_limited_bottom = _set_machining_limit(opp_side, bottom_plane)
+        # machining_limits.face_limited_top = is_point_behind_plane(top_plane.point, ref_side)
+        machining_limits.face_limited_top = False # TODO: Should this always be False?
+        machining_limits.face_limited_start = is_point_behind_plane(start_plane.point, start_side)
+        machining_limits.face_limited_end = is_point_behind_plane(end_plane.point, end_side)
+        machining_limits.face_limited_front = is_point_behind_plane(front_plane.point, front_side)
+        machining_limits.face_limited_back = is_point_behind_plane(back_plane.point, back_side)
+        machining_limits.face_limited_bottom = is_point_behind_plane(bottom_plane.point, opp_side)
 
         return machining_limits.limits
 
