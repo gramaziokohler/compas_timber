@@ -226,16 +226,21 @@ class BTLxWriter(object):
 
         for key, value in params_dict.items():
             if isinstance(value, dict):
-                # childless element: <Element key1="value1" key2="value2" />
+                # childless element:
+                # <Element key1="value1" key2="value2" />
                 param = ET.Element(key)
                 for sub_key, sub_value in value.items():
                     param.set(sub_key, sub_value)
+
             elif isinstance(value, str):
-                # single value element: <Element>value</Element>
+                # single value element:
+                # <Element>value</Element>
                 param = ET.Element(key)
                 param.text = value
+
             else:
-                # complex parameter: e.g. <Element><SubElement1 /><SubElement2 /></Element>
+                # complex parameter:
+                # <Element><SubElement1 /><SubElement2 /></Element>
                 param = self._element_from_complex_param(value)
             processing_element.append(param)
 
