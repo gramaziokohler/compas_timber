@@ -217,7 +217,6 @@ class BTLxWriter(object):
             The processing element.
 
         """
-        # create processing element
         processing_params = processing.params
         params_dict = processing_params.as_dict()
 
@@ -225,23 +224,22 @@ class BTLxWriter(object):
             processing_params.header_attributes["Name"],
             processing_params.header_attributes,
         )
-        # create parameter subelements
+
         for key, value in params_dict.items():
             if isinstance(value, dict):
+                # childless element: <Element key1="value1" key2="value2" />
                 param = ET.Element(key)
-                # childless element
                 for sub_key, sub_value in value.items():
                     param.set(sub_key, sub_value)
             elif isinstance(value, str):
+                # single value element: <Element>value</Element>
                 param = ET.Element(key)
-                # element with single text value as param
                 param.text = value
             else:
-                # TODO: look for serializer in registered serializers SERIALIZERS
+                # complex parameter: e.g. <Element><SubElement1 /><SubElement2 /></Element>
                 param = self._element_from_complex_param(value)
             processing_element.append(param)
 
-        # create subprocessing elements
         if processing.subprocessings:  # TODO: expose this in Params as well so this logic only interacts with it
             for subprocessing in processing.subprocessings:
                 processing_element.append(self._create_processing(subprocessing))
