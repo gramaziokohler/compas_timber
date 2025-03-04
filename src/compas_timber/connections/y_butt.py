@@ -5,14 +5,15 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
-from compas_timber.connections import Joint
-from compas_timber.connections import JointTopology
-from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication.double_cut import DoubleCut
 from compas_timber.utils import intersection_line_line_param
+
+from .joint import Joint
+from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
 
 
 class YButtJoint(Joint):

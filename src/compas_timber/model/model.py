@@ -351,17 +351,34 @@ class TimberModel(Model):
                     raise bje
         return errors
 
-    def connect_adjacent_walls(self):
+    def connect_adjacent_walls(self, max_distance=None):
+        """Connects adjacent walls in the model.
+
+        Parameters
+        ----------
+        max_distance : float, optional
+            The maximum distance between walls to consider them adjacent. Default is 0.0.
+
+        """
         self._clear_wall_joints()
         solver = ConnectionSolver()
-        pairs = solver.find_intersecting_pairs(list(self.walls), rtree=True)
+
+        walls = list(self.walls)
+        if max_distance is None:
+            max_distance = max(wall.thickness for wall in walls)
+
+        pairs = solver.find_intersecting_pairs(walls, rtree=True, max_distance=max_distance)
         for pair in pairs:
             wall_a, wall_b = pair
-            result = solver.find_wall_wall_topology(wall_a, wall_b, tol=1e-6)
+            result = solver.find_wall_wall_topology(wall_a, wall_b, tol=1e-6, max_distance=max_distance)
 
             topology = result[0]
-            if topology != JointTopology.TOPO_UNKNOWN:
-                wall_a, wall_b = result[1], result[2]
+
+            unsupported_topos = (JointTopology.TOPO_UNKNOWN, JointTopology.TOPO_I, JointTopology.TOPO_X)
+            if topology in unsupported_topos:
+                continue
+
+            wall_a, wall_b = result[1], result[2]
 
             assert wall_a and wall_b
 
