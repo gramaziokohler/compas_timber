@@ -373,7 +373,9 @@ class TimberModel(Model):
             result = solver.find_wall_wall_topology(wall_a, wall_b, tol=1e-6, max_distance=max_distance)
 
             topology = result[0]
-            if topology == JointTopology.TOPO_UNKNOWN:
+
+            unsupported_topos = (JointTopology.TOPO_UNKNOWN, JointTopology.TOPO_I, JointTopology.TOPO_X)
+            if topology in unsupported_topos:
                 continue
 
             wall_a, wall_b = result[1], result[2]
