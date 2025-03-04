@@ -11,7 +11,9 @@ import compas
 from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -193,7 +195,8 @@ class BTLxWriter(object):
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
-        part_element.append(part.et_shape)
+        if beam._geometry:
+            part_element.append(part.et_shape)
         return part_element
 
     @staticmethod
@@ -284,8 +287,6 @@ class BTLxPart(object):
         The frame of the blank.
     processings : list
         A list of the processings applied to the element.
-    et_element : :class:`~xml.etree.ElementTree.Element`
-        The ET element of the BTLx part.
 
     """
 
@@ -297,6 +298,7 @@ class BTLxPart(object):
         self.height = element.height
         self.frame = element.ref_frame
         self.processings = []
+        self._shape_strings = None
 
     @property
     def part_guid(self):
@@ -358,6 +360,26 @@ class BTLxPart(object):
             "ModuleNumber": "",
         }
 
+    def et_point_vals(self, point):
+        """Returns the ET point values for a given point.
+
+        Parameters
+        ----------
+        point : :class:`~compas.geometry.Point`
+            The point to be converted.
+
+        Returns
+        -------
+        dict
+            The ET point values formatted for the ET element.
+
+        """
+        return {
+            "X": "{:.{prec}f}".format(point.x, prec=BTLxWriter.POINT_PRECISION),
+            "Y": "{:.{prec}f}".format(point.y, prec=BTLxWriter.POINT_PRECISION),
+            "Z": "{:.{prec}f}".format(point.z, prec=BTLxWriter.POINT_PRECISION),
+        }
+
     @property
     def et_transformations(self):
         transformations = ET.Element("Transformations")
@@ -372,42 +394,63 @@ class BTLxPart(object):
     @property
     def et_shape(self):
         shape = ET.Element("Shape")
-        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="true", coordIndex="")
-        indexed_face_set.set("coordIndex", " ")
-        indexed_face_set.append(ET.Element("Coordinate"))
-        # indexed_face_set.set("coordIndex", self.shape_strings[0])
-        # indexed_face_set.append(ET.Element("Coordinate", point=self.shape_strings[1]))
+        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex=self.shape_strings[0])
+        indexed_face_set.append(ET.Element("Coordinate", {"point": self.shape_strings[1]}))
         return shape
 
     @property
     def shape_strings(self):
-        # TODO: this need some cleanup, potentially removal
+        """Generates the shape strings for the BTLxPart. Only works in environments where the beam.geometry Brep is available.
+
+        returns
+        -------
+        list
+            A list of two strings, the first string is the brep indices string, the second string is the brep vertices string.
+        """
+
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            try:
-                for face in self.element.geometry.faces:
-                    for loop in face.loops:
-                        for vertex in loop.vertices:
-                            if brep_vertex_points.contains(vertex.point):
-                                brep_indices.append(brep_vertex_points.index(vertex.point))
-                            else:
-                                brep_vertex_points.append(vertex.point)
-                                brep_indices.append(len(brep_vertex_points))
+            for face in self.element.geometry.faces:
+                pts = []
+                frame = face.surface.frame_at(0.5, 0.5)
+                edges = face.boundary.edges[1:]
+                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
+                overflow = len(edges)
+                while edges and overflow > 0:
+                    for i, edge in enumerate(edges):
+                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
+                            edges.pop(i)
+                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
+                            pts.append(edges.pop(i).end_vertex.point)
+                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
+                            pts.append(edges.pop(i).start_vertex.point)
+                    overflow -= 1
+                pts = correct_polyline_direction(pts, frame.normal)
 
-                brep_indices.append(-1)
-                brep_indices.pop(-1)
-            except NotImplementedError:
-                print("brep.face.loop.vertices not implemented")
-            brep_indices_string = " "
+                if len(pts) != len(face.edges):
+                    print("edge count doesnt match point count, BTLxPart shape will be incorrect")
+
+                if len(pts) > 2:
+                    for pt in pts:
+                        if pt in brep_vertex_points:
+                            brep_indices.append(brep_vertex_points.index(pt))
+                        else:
+                            brep_indices.append(len(brep_vertex_points))
+                            brep_vertex_points.append(pt)
+                    brep_indices.append(-1)
+
+            brep_indices_string = ""
             for index in brep_indices:
                 brep_indices_string += str(index) + " "
 
-            brep_vertices_string = " "
+            brep_vertices_string = ""
             for point in brep_vertex_points:
                 xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
                 point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=BTLxWriter.POINT_PRECISION)
+                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
+                brep_vertices_string = brep_vertices_string.replace("-", "")
+
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
 
@@ -753,3 +796,29 @@ class BTLxFromGeometryDefinition(Data):
             return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
         except Exception as ex:
             raise FeatureApplicationError(self.geometries, element.blank, str(ex))
+
+
+def correct_polyline_direction(polyline, normal_vector):
+    # TODO: this is a temporary method. I couldn't import the one from BallNodeJoint, so I copied it here. Once that method is moved to .utils, we can remove it here.
+    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to correct.
+
+    Returns
+    -------
+    :class:`compas.geometry.Polyline`
+        The corrected polyline.
+
+    """
+    angle_sum = 0
+    for i in range(len(polyline) - 1):
+        u = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+        angle = angle_vectors_signed(u, v, normal_vector)
+        angle_sum += angle
+    if angle_sum > 0:
+        polyline = polyline[::-1]
+    return polyline
