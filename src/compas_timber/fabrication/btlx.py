@@ -506,6 +506,16 @@ class BTLxProcessingParams(object):
     def __init__(self, instance):
         self._instance = instance
 
+    @property
+    def header_attributes(self):
+        result = OrderedDict()
+        result["Name"] = self._instance.PROCESSING_NAME
+        result["Process"] = "yes"
+        result["Priority"] = str(self._instance.priority)
+        result["ProcessID"] = str(self._instance.process_id)
+        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        return result
+
     def as_dict(self):
         """Returns the processing parameters as a dictionary.
 
@@ -514,13 +524,7 @@ class BTLxProcessingParams(object):
         dict
             The processing parameters as a dictionary.
         """
-        result = OrderedDict()
-        result["Name"] = self._instance.PROCESSING_NAME
-        result["Process"] = "yes"
-        result["Priority"] = str(self._instance.priority)
-        result["ProcessID"] = str(self._instance.process_id)
-        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
-        return result
+        raise NotImplementedError
 
 
 class OrientationType(object):
