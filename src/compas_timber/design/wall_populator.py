@@ -1,5 +1,4 @@
 import math
-from copy import deepcopy
 
 from compas.geometry import Brep
 from compas.geometry import Frame

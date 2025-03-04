@@ -8,7 +8,7 @@ from compas_timber.fabrication import Lap
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
-from .utilities import are_beams_coplanar
+from .utilities import are_beam_frames_orthogonal
 
 
 class TLapJoint(LapJoint):
@@ -89,7 +89,7 @@ class TLapJoint(LapJoint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        if are_beams_coplanar(*self.elements):  # TODO: this is a temporal solution to allow the vizualization of non-coplanar lap joints.
+        if are_beam_frames_orthogonal(*self.elements):  # TODO: this is a temporal solution to allow the vizualization of non-coplanar lap joints.
             # calculate the lap length and depth for each beam
             main_lap_length, cross_lap_length = self._get_lap_lengths()
             main_lap_depth, cross_lap_depth = self._get_lap_depths()
