@@ -290,19 +290,19 @@ class Pocket(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=0):
-        """Construct a Pocket feature from a volume and a beam.
+    def from_volume_and_element(cls, volume, element, machining_limits=None, ref_side_index=0):
+        """Construct a Pocket feature from a volume and a TimberElement.
 
         Parameters
         ----------
         volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam that is cut by this instance.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
         machining_limits : dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
-            The index of the reference side of the beam. Default is 0.
+            The index of the reference side of the element. Default is 0.
 
         Returns
         -------
@@ -310,7 +310,7 @@ class Pocket(BTLxProcessing):
             The Pocket feature.
 
         """
-        # type: (Polyhedron | Brep | Mesh, Beam, dict, int) -> Pocket
+        # type: (Polyhedron | Brep | Mesh, Beam | Plate, dict, int) -> Pocket
         if isinstance(volume, Mesh):
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Polyhedron):
@@ -325,11 +325,11 @@ class Pocket(BTLxProcessing):
         if len(planes) != 6:
             raise ValueError("Volume must have 6 faces.")
 
-        # # validate volume intersection with the beam
-        # cls._validate_volume_intersection(volume, beam, ref_side_index) # TODO: PluginNotInstalledError
+        # # validate volume intersection with the element
+        # cls._validate_volume_intersection(volume, element, ref_side_index) # TODO: PluginNotInstalledError
 
-        # get ref_side, and ref_edge from the beam
-        ref_side = beam.ref_sides[ref_side_index]
+        # get ref_side of the element
+        ref_side = element.ref_sides[ref_side_index]
 
         # sort the planes based on the reference side
         planes = cls._sort_planes(planes, ref_side)
@@ -382,7 +382,7 @@ class Pocket(BTLxProcessing):
             if not isinstance(machining_limits, dict):
                 raise ValueError("machining_limits must be a dictionary.")
         else:
-            machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
+            machining_limits = cls._define_machining_limits(planes, element, ref_side_index)
 
         return cls(
             start_x,
@@ -402,9 +402,9 @@ class Pocket(BTLxProcessing):
             ref_side_index=ref_side_index)
 
     @staticmethod
-    def _validate_volume_intersection(volume, beam, ref_side_index):
-        # validate volume intersection with the beam
-        ref_surface = beam.side_as_surface(ref_side_index)
+    def _validate_volume_intersection(volume, element, ref_side_index):
+        # validate volume intersection with the element
+        ref_surface = element.side_as_surface(ref_side_index) # TODO: make sure `Plate` element has side_as_surface method
         xaxis = ref_surface.frame.xaxis * ref_surface.xsize
         yaxis = ref_surface.frame.yaxis * ref_surface.ysize
 
@@ -417,7 +417,7 @@ class Pocket(BTLxProcessing):
 
         intersections = [intersection_ray_mesh(ray, volume) for ray in rays]
         if not any(intersections):
-            raise ValueError("The volume does not intersect with the beam.")
+            raise ValueError("The volume does not intersect with the element.")
 
     @staticmethod
     def _sort_planes(planes, ref_side):
@@ -458,9 +458,9 @@ class Pocket(BTLxProcessing):
         return angle_vectors(-bottom_plane.normal, plane.normal, deg=True)
 
     @staticmethod
-    def _define_machining_limits(planes, beam, ref_side_index):
+    def _define_machining_limits(planes, element, ref_side_index):
         # define machining limits based on the planes
-        ref_sides = [Plane.from_frame(frame) for frame in beam.ref_sides]
+        ref_sides = [Plane.from_frame(frame) for frame in element.ref_sides]
         start_side, end_side = ref_sides[-2:]
         ref_sides = ref_sides[:-2]
         ref_side, front_side, opp_side, back_side = ref_sides[ref_side_index:] + ref_sides[:ref_side_index]
@@ -482,20 +482,20 @@ class Pocket(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry, beam):
-        """Apply the feature to the beam geometry.
+    def apply(self, geometry, element):
+        """Apply the feature to the element geometry.
 
         Parameters
         ----------
         geometry : :class:`~compas.geometry.Brep`
-            The beam geometry to be cut.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
+            The geometry of the elements to be processed.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element that is processed by this instance.
 
         Raises
         ------
         :class:`~compas_timber.errors.FeatureApplicationError`
-            If the cutting plane does not intersect with beam geometry.
+            If the cutting plane does not intersect with element geometry.
 
         Returns
         -------
@@ -503,9 +503,9 @@ class Pocket(BTLxProcessing):
             The resulting geometry after processing
 
         """
-        # type: (Brep, Beam) -> Brep
+        # type: (Brep, Beam | Plate) -> Brep
         # get the pocket volume as a polyhedron
-        polyhedron_volume = self.volume_from_params_and_beam(beam)
+        polyhedron_volume = self.volume_from_params_and_element(element)
 
         # convert the polyhedron to a brep
         try:
@@ -523,16 +523,16 @@ class Pocket(BTLxProcessing):
             raise FeatureApplicationError(
                 pocket_volume,
                 geometry,
-                "The pocket volume does not intersect with the beam geometry." + str(e),
+                "The pocket volume does not intersect with the element geometry." + str(e),
             )
 
-    def _bottom_frame_from_params_and_beam(self, beam):
-        """Calculates the bottom frame of the pocket from the machining parameters in this instance and the given beam.
+    def _bottom_frame_from_params_and_element(self, element):
+        """Calculates the bottom frame of the pocket from the machining parameters in this instance and the given element.
 
         Parameters
         ----------
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element that is cut by this instance.
 
         Returns
         -------
@@ -547,8 +547,8 @@ class Pocket(BTLxProcessing):
         assert self.slope is not None
         assert self.internal_angle is not None
 
-        ref_side = beam.ref_sides[self.ref_side_index]
-        ref_surface = beam.side_as_surface(self.ref_side_index)
+        ref_side = element.ref_sides[self.ref_side_index]
+        ref_surface = element.side_as_surface(self.ref_side_index) # TODO: make sure `Plate` element has side_as_surface method
 
         p_origin = ref_surface.point_at(self.start_x, self.start_y)
         p_origin.translate(-ref_side.normal * self.start_depth)
@@ -568,13 +568,13 @@ class Pocket(BTLxProcessing):
         bottom_frame.rotate(math.radians(180-self.internal_angle), bottom_frame.normal, point=bottom_frame.point)
         return bottom_frame
 
-    def _planes_from_params_and_beam(self, beam):
-        """Calculates the planes that create the pocket from the machining parameters in this instance and the given beam
+    def _planes_from_params_and_element(self, element):
+        """Calculates the planes that create the pocket from the machining parameters in this instance and the given element
 
         Parameters
         ----------
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element that is cut by this instance.
 
         Returns
         -------
@@ -582,7 +582,6 @@ class Pocket(BTLxProcessing):
             The planes of the cut as a list.
 
         """
-        # type: (Beam) -> List[Plane]
         assert self.length
         assert self.width
         assert self.tilt_ref_side
@@ -595,21 +594,21 @@ class Pocket(BTLxProcessing):
         tol.absolute = 1e-3
 
         # get bottom frame
-        bottom_frame = self._bottom_frame_from_params_and_beam(beam)
+        bottom_frame = self._bottom_frame_from_params_and_element(element)
 
         # get top frame
         if self.machining_limits["FaceLimitedTop"]:
             top_frame = bottom_frame.translated(-bottom_frame.zaxis * self.start_depth)
             top_frame.xaxis = -top_frame.xaxis
         else:
-            top_frame = beam.ref_sides[self.ref_side_index]
+            top_frame = element.ref_sides[self.ref_side_index]
             top_frame.translate(top_frame.normal * tol.absolute)
 
         # tilt start frame
         if self.machining_limits["FaceLimitedStart"]:
             start_frame = bottom_frame.rotated(math.radians(180-self.tilt_start_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
-            start_frame = beam.ref_sides[4]
+            start_frame = element.ref_sides[4]
             start_frame.translate(start_frame.normal * tol.absolute)
 
         # tilt end frame
@@ -617,14 +616,14 @@ class Pocket(BTLxProcessing):
             end_frame = bottom_frame.translated(bottom_frame.yaxis * self.length)
             end_frame.rotate(math.radians(180-self.tilt_end_side), -end_frame.xaxis, point=end_frame.point)
         else:
-            end_frame = beam.ref_sides[5]
+            end_frame = element.ref_sides[5]
             end_frame.translate(end_frame.normal * tol.absolute)
 
         # tilt front frame
         if self.machining_limits["FaceLimitedFront"]:
             front_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.yaxis, point=bottom_frame.point)
         else:
-            front_frame = beam.ref_sides[(self.ref_side_index+1)%4]
+            front_frame = element.ref_sides[(self.ref_side_index+1)%4]
             front_frame.translate(front_frame.normal * tol.absolute)
 
         # tilt back frame
@@ -632,29 +631,29 @@ class Pocket(BTLxProcessing):
             back_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.yaxis, point=bottom_frame.point)
             back_frame.translate(back_frame.normal * self.width)
         else:
-            back_frame = beam.ref_sides[(self.ref_side_index-1)%4]
+            back_frame = element.ref_sides[(self.ref_side_index-1)%4]
             back_frame.translate(back_frame.normal * tol.absolute)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]
 
-    def volume_from_params_and_beam(self, beam):
+    def volume_from_params_and_element(self, element):
         """
-        Calculates the subtracting volume from the machining parameters in this instance and the given beam,
-        ensuring correct face orientation.
+        Calculates the subtracting volume from the machining parameters in this instance and the given element, ensuring correct face orientation.
 
         Parameters
         ----------
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element that is cut by this instance.
 
         Returns
         -------
         :class:`compas.geometry.Polyhedron`
             The correctly oriented subtracting volume of the pocket.
         """
+        # type: (Beam | Plate) -> Polyhedron
         # Get cutting planes
-        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_beam(beam)
+        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_element(element)
 
         # Calculate vertices using plane-plane-plane intersection
         vertices = [
