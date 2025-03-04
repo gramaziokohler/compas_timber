@@ -214,21 +214,31 @@ class BTLxWriter(object):
 
         """
         # create processing element
+        processing_params = processing.params
+        params_dict = processing_params.as_dict()
+
         processing_element = ET.Element(
-            processing.PROCESSING_NAME,
-            processing.header_attributes,
+            processing_params.header_attributes["Name"],
+            processing_params.header_attributes,
         )
         # create parameter subelements
-        for key, value in processing.params_dict.items():
-            if key not in processing.header_attributes:
-                child = ET.SubElement(processing_element, key)
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        child.set(sub_key, sub_value)
-                else:
-                    child.text = str(value)
+        for key, value in params_dict.items():
+            if isinstance(value, dict):
+                param = ET.Element(key)
+                # childless element
+                for sub_key, sub_value in value.items():
+                    param.set(sub_key, sub_value)
+            elif isinstance(value, str):
+                param = ET.Element(key)
+                # element with single text value as param
+                param.text = value
+            else:
+                # TODO: look for serializer in registered serializers SERIALIZERS
+                pass
+            processing_element.append(param)
+
         # create subprocessing elements
-        if processing.subprocessings:
+        if processing.subprocessings:  # TODO: expose this in Params as well so this logic only interacts with it
             for subprocessing in processing.subprocessings:
                 processing_element.append(self._create_processing(subprocessing))
         return processing_element
