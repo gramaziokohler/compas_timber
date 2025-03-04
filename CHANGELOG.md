@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed "No intersection found between walls" error when walls connect in unsupported topology.
+* Implemented slab perimeter offset workaround.
 
 ### Removed
 
