@@ -401,6 +401,29 @@ class Pocket(BTLxProcessing):
             machining_limits,
             ref_side_index=ref_side_index)
 
+    @classmethod
+    def from_shapes_and_element(cls, volume, element, **kwargs):
+        """Construct a Pocket feature from a volume and a TimberElement.
+
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the pocket. Must have 6 faces.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The Pocket feature.
+
+        """
+        return cls.from_volume_and_element(volume, element, **kwargs)
+
     @staticmethod
     def _validate_volume_intersection(volume, element, ref_side_index):
         # validate volume intersection with the element
