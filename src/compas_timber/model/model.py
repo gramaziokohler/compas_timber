@@ -361,19 +361,25 @@ class TimberModel(Model):
 
         """
         self._clear_wall_joints()
-        solver = ConnectionSolver()
 
         walls = list(self.walls)
+
+        if not walls:
+            return
+
         if max_distance is None:
             max_distance = max(wall.thickness for wall in walls)
 
+        solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(walls, rtree=True, max_distance=max_distance)
         for pair in pairs:
             wall_a, wall_b = pair
             result = solver.find_wall_wall_topology(wall_a, wall_b, tol=1e-6, max_distance=max_distance)
 
             topology = result[0]
-            if topology == JointTopology.TOPO_UNKNOWN:
+
+            unsupported_topos = (JointTopology.TOPO_UNKNOWN, JointTopology.TOPO_I, JointTopology.TOPO_X)
+            if topology in unsupported_topos:
                 continue
 
             wall_a, wall_b = result[1], result[2]
