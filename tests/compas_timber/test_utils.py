@@ -3,9 +3,12 @@ from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.geometry import Polyline
 
 from compas_timber.utils import intersection_line_line_param
 from compas_timber.utils import intersection_line_plane_param
+from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import correct_polyline_direction
 
 
 def test_intersection_line_line_param():
@@ -40,3 +43,22 @@ def test_intersection_line_plane_param():
 
     assert TOL.is_allclose(expected_point, intersection_point)
     assert TOL.is_close(expected_t, t)
+
+
+def test_is_polyline_clockwise():
+    pline_ccw = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
+
+    assert not is_polyline_clockwise(pline_ccw, [0, 0, 1])
+    assert is_polyline_clockwise(pline_cw, [0, 0, 1])
+
+
+def test_correct_polyline_direction():
+    pline_ccw = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
+
+    pline_ccw_corrected = correct_polyline_direction(pline_ccw, [0, 0, 1], clockwise=True)
+    pline_cw_corrected = correct_polyline_direction(pline_cw, [0, 0, 1], clockwise=False)
+
+    assert pline_ccw == pline_cw_corrected
+    assert pline_cw == pline_ccw_corrected

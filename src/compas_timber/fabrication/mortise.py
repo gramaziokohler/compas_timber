@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -126,8 +127,8 @@ class Mortise(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return MortiseParams(self).as_dict()
+    def params(self):
+        return MortiseParams(self)
 
     @property
     def start_x(self):
@@ -532,7 +533,7 @@ class MortiseParams(BTLxProcessingParams):
         """
         # type: () -> OrderedDict
 
-        result = super(MortiseParams, self).as_dict()
+        result = OrderedDict()
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
         result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
