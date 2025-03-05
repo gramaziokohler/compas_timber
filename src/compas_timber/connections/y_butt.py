@@ -64,7 +64,6 @@ class YButtJoint(Joint):
         self.mill_depth = mill_depth
         self.features = []
 
-
     @property
     def beams(self):
         return [self.main_beam] + self.cross_beams
