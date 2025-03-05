@@ -488,9 +488,12 @@ def contour_to_xml(contour):
 
     """
     root = ET.Element("Contour")
-    root.set("Depth", "{:.{prec}f}".format(contour.depth, prec=BTLxWriter.POINT_PRECISION))
-    root.set("DepthBounded", "yes" if contour.depth_bounded else "no")
-    root.set("Inclination", "{:.{prec}f}".format(contour.inclination, prec=BTLxWriter.ANGLE_PRECISION))
+    if contour.depth:
+        root.set("Depth", "{:.{prec}f}".format(contour.depth, prec=BTLxWriter.POINT_PRECISION))
+    if contour.depth_bounded:
+        root.set("DepthBounded", "yes" if contour.depth_bounded else "no")
+    if contour.inclination:
+        root.set("Inclination", "{:.{prec}f}".format(contour.inclination, prec=BTLxWriter.ANGLE_PRECISION))
 
     start = contour.polyline[0]
     start_point = ET.SubElement(root, "StartPoint")
@@ -498,8 +501,11 @@ def contour_to_xml(contour):
     start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
 
-    for point in contour.polyline[1:]:
+    for i, point in enumerate(contour.polyline[1:]):
         line = ET.SubElement(root, "Line")
+        if len(contour.point_attributes) > i:
+            for key, val in contour.point_attributes[i].items():
+                line.set(key, val)
         end_point = ET.SubElement(line, "EndPoint")
         end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
         end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
@@ -546,16 +552,22 @@ class BTLxProcessing(Data):
     def PROCESSING_NAME(self):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
-    @property
-    def header_attributes(self):
-        """Return the attributes to be included in the XML element."""
-        return {
-            "Name": self.PROCESSING_NAME,
-            "Priority": str(self.priority),
-            "Process": "yes",
-            "ProcessID": str(self.process_id),
-            "ReferencePlaneID": str(self.ref_side_index + 1),
-        }
+    @classmethod
+    def from_header_attributes_and_params(cls, header = None, params = None):
+        """Alternative constructor for creating a BTLxProcessingParams instance from header attributes and parameters.
+
+        Parameters
+        ----------
+        header : dict
+            The header attributes as a dictionary.
+        params : dict
+            The processing parameters as a dictionary.
+        """
+
+        instance = cls.__init__()
+        instance.params._params = params
+        instance.params_dict = params
+        return instance
 
     def add_subprocessing(self, subprocessing):
         """Add a nested subprocessing."""
@@ -576,6 +588,7 @@ class BTLxProcessingParams(object):
 
     def __init__(self, instance):
         self._instance = instance
+        self._params = None
 
     @property
     def header_attributes(self):
@@ -595,8 +608,7 @@ class BTLxProcessingParams(object):
         dict
             The processing parameters as a dictionary.
         """
-        raise NotImplementedError
-
+        return self._params
 
 class OrientationType(object):
     """Enum for the orientation of the cut.
@@ -767,7 +779,7 @@ class AlignmentType(object):
 
 
 class Contour(object):
-    """Represens the contour of a free contour processing.
+    """Represens the generic contour for specific free contour processings.
 
     Parameters
     ----------
@@ -779,13 +791,16 @@ class Contour(object):
         The inclination of the contour.
     polyline : :class:`compas.geometry.Polyline`
         The polyline of the contour.
+    point_attributes : list of dict
+        The attributes of each segment of the polyline.
     """
 
-    def __init__(self, depth, depth_bounded, inclination, polyline):
+    def __init__(self, polyline, depth = None, depth_bounded = None, inclination = None, point_attributes = []):
         self.depth = depth
         self.depth_bounded = depth_bounded
         self.inclination = inclination
         self.polyline = polyline
+        self.point_attributes = point_attributes
 
 
 BTLxWriter.register_type_serializer(Contour, contour_to_xml)
