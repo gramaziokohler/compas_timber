@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.15.2] 2025-03-05
+
+### Added
+
+### Changed
+
+* Fixed `ValueError` occurring when connecting just a slab to the GH model component.
+
+### Removed
+
+
+## [0.15.1] 2025-03-04
+
+### Added
+
+### Changed
+
+* Fixed "No intersection found between walls" error when walls connect in unsupported topology.
+* Implemented slab perimeter offset workaround.
+
+### Removed
+
+
+## [0.15.0] 2025-03-04
+
+### Added
+
 * Added `BTLx_From_Params` GH component which contains the definiton for class `DeferredBTLxProcessing` to allow directly defining BTLx parameters and passing them to the model.
 * Added `Shape` to BTLx output, showing finished element geometry in BTLx Viewer instead of just blank.
 * Added `as_plane()` to `WallToWallInterface`.

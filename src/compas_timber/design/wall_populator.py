@@ -685,11 +685,15 @@ class WallPopulator(object):
         edge_studs = [beam_def for beam_def in perimeter_beams if beam_def.type == "edge_stud"]
         plate_beams = [beam_def for beam_def in perimeter_beams if beam_def.type == "plate"]
 
-        # HACK alert! slabs seem to want it differently, get to the bottom of this
         if self._wall.is_wall:
             offset_elements(edge_studs + plate_beams)
         else:
-            offset_elements(edge_studs + plate_beams, offset_inside=False)
+            # HACK alert! slabs seem to want it differently, get to the bottom of this
+            if self.normal.z < 0:
+                offset_elements(edge_studs + plate_beams, offset_inside=False)
+            else:
+                offset_elements(edge_studs + plate_beams)
+
         shorten_edges_to_fit_between_plates(edge_studs, plate_beams, self.dist_tolerance)
 
         self._beam_definitions.extend(perimeter_beams)
