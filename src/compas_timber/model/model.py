@@ -364,6 +364,10 @@ class TimberModel(Model):
         solver = ConnectionSolver()
 
         walls = list(self.walls)
+
+        if not walls:
+            return
+
         if max_distance is None:
             max_distance = max(wall.thickness for wall in walls)
 

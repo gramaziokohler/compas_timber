@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed `ValueError` occurring when connecting just a slab to the GH model component.
+
 ### Removed
 
 
