@@ -503,9 +503,6 @@ def contour_to_xml(contour):
 
     for i, point in enumerate(contour.polyline[1:]):
         line = ET.SubElement(root, "Line")
-        if len(contour.point_attributes) > i:
-            for key, val in contour.point_attributes[i].items():
-                line.set(key, val)
         end_point = ET.SubElement(line, "EndPoint")
         end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
         end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
@@ -792,16 +789,14 @@ class Contour(object):
         The inclination of the contour.
     polyline : :class:`compas.geometry.Polyline`
         The polyline of the contour.
-    point_attributes : list of dict
-        The attributes of each segment of the polyline.
+    TODO: add point attributes for other types like NailContour
     """
 
-    def __init__(self, polyline, depth=None, depth_bounded=None, inclination=None, point_attributes=[]):
+    def __init__(self, polyline, depth=None, depth_bounded=None, inclination=None):
         self.depth = depth
         self.depth_bounded = depth_bounded
         self.inclination = inclination
         self.polyline = polyline
-        self.point_attributes = point_attributes
 
 
 BTLxWriter.register_type_serializer(Contour, contour_to_xml)
