@@ -86,8 +86,8 @@ class TLapJoint(LapJoint):
 
         # create lap features
         negative_volume_main, negative_volume_cross = self._create_negative_volumes()
-        main_lap_feature = Pocket.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
-        cross_lap_feature = Pocket.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
+        main_lap_feature = Pocket.from_volume_and_element(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
+        cross_lap_feature = Pocket.from_volume_and_element(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
 
         # cutoff feature for main beam
         main_cut_feature = JackRafterCut.from_plane_and_beam(self.main_cutting_plane, self.main_beam)
