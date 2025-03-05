@@ -180,5 +180,3 @@ def test_float_formatting_of_param_dicts():
     assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
     assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
     assert test_processing.params.header_attributes["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
-
-

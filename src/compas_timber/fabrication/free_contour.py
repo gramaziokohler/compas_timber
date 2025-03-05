@@ -165,7 +165,7 @@ class FreeCountourParams(BTLxProcessingParams):
 
     def as_dict(self):
         contour_line = Polyline(self._instance.contour_points)
-        return {"Contour": Contour(contour_line, depth = self._instance.depth, depth_bounded = self._instance.depth_bounded, inclination = self._instance.inclination)}
+        return {"Contour": Contour(contour_line, depth=self._instance.depth, depth_bounded=self._instance.depth_bounded, inclination=self._instance.inclination)}
 
     @property
     def header_attributes(self):

@@ -12,11 +12,10 @@ import compas
 from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Transformation
-from compas.geometry import Vector
 from compas.geometry import angle_vectors
-from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 
+from compas_timber.elements import Beam
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
@@ -200,7 +199,8 @@ class BTLxWriter(object):
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
-        if element._geometry:
+        if isinstance(element, Beam) and element._geometry:
+            # TODO: implement this for plates as well. Brep.from_extrusion seems to have incorrect number of faces regardless of input curve.
             part_element.append(part.et_shape)
         return part_element
 
@@ -553,7 +553,7 @@ class BTLxProcessing(Data):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
     @classmethod
-    def from_header_attributes_and_params(cls, header = None, params = None):
+    def from_header_attributes_and_params(cls, header=None, params=None):
         """Alternative constructor for creating a BTLxProcessingParams instance from header attributes and parameters.
 
         Parameters
@@ -609,6 +609,7 @@ class BTLxProcessingParams(object):
             The processing parameters as a dictionary.
         """
         return self._params
+
 
 class OrientationType(object):
     """Enum for the orientation of the cut.
@@ -795,7 +796,7 @@ class Contour(object):
         The attributes of each segment of the polyline.
     """
 
-    def __init__(self, polyline, depth = None, depth_bounded = None, inclination = None, point_attributes = []):
+    def __init__(self, polyline, depth=None, depth_bounded=None, inclination=None, point_attributes=[]):
         self.depth = depth
         self.depth_bounded = depth_bounded
         self.inclination = inclination
@@ -866,29 +867,3 @@ class BTLxFromGeometryDefinition(Data):
             return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
         except Exception as ex:
             raise FeatureApplicationError(self.geometries, element.blank, str(ex))
-
-
-def correct_polyline_direction(polyline, normal_vector):
-    # TODO: this is a temporary method. I couldn't import the one from BallNodeJoint, so I copied it here. Once that method is moved to .utils, we can remove it here.
-    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
-
-    Parameters
-    ----------
-    polyline : :class:`compas.geometry.Polyline`
-        The polyline to correct.
-
-    Returns
-    -------
-    :class:`compas.geometry.Polyline`
-        The corrected polyline.
-
-    """
-    angle_sum = 0
-    for i in range(len(polyline) - 1):
-        u = Vector.from_start_end(polyline[i - 1], polyline[i])
-        v = Vector.from_start_end(polyline[i], polyline[i + 1])
-        angle = angle_vectors_signed(u, v, normal_vector)
-        angle_sum += angle
-    if angle_sum > 0:
-        polyline = polyline[::-1]
-    return polyline
