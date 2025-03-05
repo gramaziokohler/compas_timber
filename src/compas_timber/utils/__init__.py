@@ -15,6 +15,7 @@ from compas.geometry import subtract_vectors
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import Projection
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_line_line
@@ -290,4 +291,37 @@ def distance_segment_segment(segment_a, segment_b):
     return distance_point_point(pt_seg_a, pt_seg_b)
 
 
-__all__ = ["intersection_line_line_param", "intersection_line_plane_param", "intersection_line_beam_param", "classify_polyline_segments", "distance_segment_segment"]
+def angle_vectors_projected(vector_1, vector_2, normal):
+    """Computes the angle between two vectors projected onto a plane defined by a normal vector.
+
+    Parameters
+    ----------
+    vector_1 : :class:`compas.geometry.Vector`
+        The first vector.
+    vector_2 : :class:`compas.geometry.Vector`
+        The second vector.
+    normal : :class:`compas.geometry.Vector`
+        The normal vector of the plane to project the vectors onto.
+
+    Returns
+    -------
+    float
+        The angle between the two projected vectors
+    """
+    if isinstance(normal, Plane) or isinstance(normal, Frame):
+        normal = normal.normal
+
+    projection = Projection.from_plane(Plane(Point(0, 0, 0), normal))
+    proj_vect_1 = vector_1.transformed(projection)
+    proj_vect_2 = vector_2.transformed(projection)
+    return angle_vectors_signed(proj_vect_1, proj_vect_2, normal, deg=True)
+
+
+__all__ = [
+    "intersection_line_line_param",
+    "intersection_line_plane_param",
+    "intersection_line_beam_param",
+    "classify_polyline_segments",
+    "distance_segment_segment",
+    "angle_vectors_projected",
+]

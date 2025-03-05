@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `as_plane()` to `WallToWallInterface`.
 * Added optional argument `max_distance` to `WallPopulator.create_joint_definitions()`.
 
+* Added new `compas_timber.fabrication.Pocket`.
+
 ### Changed
 
 * Added `max_distance` to `TimberModel.connect_adjacent_walls()`.
@@ -56,7 +58,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed detail edge beams don't get LButt.
 * Fixed walls might not be considered connecting depending on the surface's orientation.
 
+* Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `Pocket` BTLx Processsing instead of the `Lap`.
+
 ### Removed
+
+* Removed `check_elements_compatibility` method from the parent `LapJoint` since non co-planar lap joints can be achieved using the `Pocket` BTLx Processing.
 
 
 ## [0.14.2] 2025-02-17
