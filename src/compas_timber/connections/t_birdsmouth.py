@@ -109,18 +109,15 @@ class TBirdsmouthJoint(Joint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        # get cutting planes
         cutting_planes = self._get_cutting_planes()
 
-        ## main feature
         # generate double cut feature
         main_feature = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam)
 
-        # register feature to beam and joint
+        # register main feature to beam and joint
         self.main_beam.add_features(main_feature)
         self.features.append(main_feature)
 
-        ## cross feature
         if self.mill_depth:
             main_ref_side_index = main_feature.ref_side_index
             lap_cutting_plane = self.main_beam.ref_sides[main_ref_side_index]
@@ -145,7 +142,7 @@ class TBirdsmouthJoint(Joint):
                 ref_side_index=self.cross_ref_side_indices[1],
             )
 
-            # register features to beam and joint
+            # register cross features to beam and joint
             self.cross_beam.add_features([cross_feature_1, cross_feature_2])
             self.features.extend([cross_feature_1, cross_feature_2])
 
