@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Removed `main_ref_side_index` property from `TBirdsmouthJoint` since it's now defined in the `DoubleCut` BTLxProcessing.
+* Added `mill_depth` argument in `TBirdsmouthJoint` for creating pockets on the cross_beam if asked.
+
 * Refactored the `check_element_compatibility` method in `YButtJoint` so that it checks for coplanarity and dimensioning of the cross elements.
 * Enhanced `DoubleCut.from_planes_and_beam` to verify that provided planes are not parallel and raise a `ValueError` if they are.
 * Adjusted `process_joinery` method to catch `ValueError` exceptions during `BTLxProcessing` generation and wrap them in `BeamJoiningError` objects.
