@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -30,19 +31,6 @@ from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
 
 from .workflow import JointDefinition
-
-# def get_frame(points, normal, z_axis):
-#     frame = Frame(points[0], cross_vectors(z_axis, normal), z_axis)
-#     pts_on_xy = [Point(point.x, point.y, point.z) for point in points]
-#     for point in pts_on_xy:
-#         point.transform(matrix_from_frame_to_frame(frame, Frame.worldXY()))
-#     box_min, _, box_max, _ = bounding_box_xy(pts_on_xy)
-#     pt = Point(box_min[0], box_min[1], box_min[2])
-#     box_length = box_max[0] - box_min[0]
-#     box_height = box_max[1] - box_min[1]
-#     pt.transform(matrix_from_frame_to_frame(Frame.worldXY(), frame))
-#     frame.point = pt
-#     return frame, box_length, box_height
 
 
 class WallSelector(object):
@@ -292,6 +280,13 @@ class Window(object):
         crv.translate(self.normal * -offset)
 
         vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
+
+        # negative volume will cause weird boolean result
+        if vol.volume < 0:
+            # TODO: remove once this is release in compas core
+            if hasattr(vol, "flip"):
+                vol.flip()
+
         return BrepSubtraction(vol)
 
     def create_elements(self):
@@ -344,7 +339,26 @@ class WallPopulatorConfigurationSet(object):
 
     Parameters
     ----------
-    connection_details : mapping topologies to a ConnectionDetail instances
+    stud_spacing : float
+        Space between the studs.
+    beam_width : float
+        Width of the beams.
+    tolerance : :class:`compas_tolerances.Tolerance`, optional
+        The tolerance for the populator.
+    sheeting_outside : float, optional
+        The thickness of the sheeting outside.
+    sheeting_inside : float, optional
+        The thickness of the sheeting inside.
+    lintel_posts : bool, optional
+        Whether to use lintel posts.
+    edge_stud_offset : float, optional
+        Additional offset for the edge studs.
+    custom_dimensions : dict, optional
+        Custom cross section for the beams, by category. (e.g. {"king_stud": (120, 60)})
+    joint_overrides : list(`compas_timber.workflow.CategoryRule), optional
+        List of joint rules to override the default ones.
+    connection_details : dict, optional
+        Mapping of `JointTopology` to and instace of ConnectionDetail class.
 
     """
 
@@ -430,7 +444,6 @@ class WallPopulator(object):
 
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill", "detail"]
 
-    # TODO: this takes interfaces! let's the populator know how this wall potentially interacts with other walls
     def __init__(self, configuration_set, wall, interfaces=None):
         self._wall = wall
         self._config_set = configuration_set
@@ -442,30 +455,28 @@ class WallPopulator(object):
         self._elements = []
         self._beam_definitions = []
         self._rules = []
-        self.windows = []
         self._features = []
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
 
-        # these should just be properties of the wall
         self.frame = wall.frame
         self.panel_length = wall.length
         self.panel_height = wall.height
-        # self.frame, self.panel_length, self.panel_height = get_frame(self.points, self.normal, self.z_axis)
 
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
+        self._plate_segments = {}
         self._detail_obbs = []
-        # TODO: get this mapping from the config set
+        self._openings = []
+
         for key in self.BEAM_CATEGORY_NAMES:
-            self.beam_dimensions[key] = [configuration_set.beam_width, wall.thickness]
-        # if custom_dimensions:
-        #     for key, value in custom_dimensions.items():
-        #         if value:
-        #             if value[0] != 0:
-        #                 self.beam_dimensions[key][0] = value[0]
-        #             if value[1] != 0:
-        #                 self.beam_dimensions[key][1] = value[1]
+            self.beam_dimensions[key] = (configuration_set.beam_width, wall.thickness)
+
+        if self._config_set.custom_dimensions:
+            dimensions = self._config_set.custom_dimensions
+            for key, value in dimensions.items():
+                if value:
+                    self.beam_dimensions[key] = value
 
     def __repr__(self):
         return "WallPopulator({}, {})".format(self._config_set, self._wall)
@@ -481,6 +492,7 @@ class WallPopulator(object):
         return [
             CategoryRule(edge_plate_joint, "edge_stud", "plate"),
             CategoryRule(TButtJoint, "detail", "plate"),  # TODO: have the details define this
+            CategoryRule(LButtJoint, "detail_edge", "plate"),  # TODO: have the details define this
             CategoryRule(TButtJoint, "stud", "plate"),
             CategoryRule(TButtJoint, "stud", "header"),
             CategoryRule(TButtJoint, "stud", "sill"),
@@ -516,8 +528,6 @@ class WallPopulator(object):
     @property
     def elements(self):
         elements = []
-        # for window in self.windows:
-        #     self._beam_definitions.extend(window.create_elements())
         for beam_def in self._beam_definitions:
             try:
                 elements.append(beam_def.to_beam())
@@ -597,19 +607,20 @@ class WallPopulator(object):
         creates and returns all the elements in the wall, returns also the joint definitions
         """
         self.generate_perimeter_beams()
-        self.generate_windows()
+        self.generate_openings()
         self.generate_studs()
         self.generate_plates()
         elements = self.elements
         return elements
 
-    def create_joint_definitions(self, elements):
+    def create_joint_definitions(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
 
         joint_definitions = []
-        max_distance = self._config_set.beam_width  # oterwise L's become X's
+        max_distance = max_distance or 0.0
+        max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
         for pair in found_pairs:
             beam_a, beam_b = pair
             detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
@@ -649,9 +660,7 @@ class WallPopulator(object):
                 if interface.interface_role == InterfaceRole.MAIN:
                     perimeter_beams.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
                     connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
-                    self._detail_obbs.append(connection_detail.get_detail_obb_main(interface, self._config_set, self._wall))  # DEBUG
                 elif interface.interface_role == InterfaceRole.CROSS:
-                    self._detail_obbs.append(connection_detail.get_detail_obb_cross(interface, self._config_set, self._wall))  # DEBUG
                     connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
                     perimeter_beams.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
@@ -661,9 +670,6 @@ class WallPopulator(object):
         bottom_segment = self._adjusted_segments["bottom"]
         front_segment = self._adjusted_segments["front"]
         back_segment = self._adjusted_segments["back"]
-
-        assert not TOL.is_zero(len(top_segment)), "top_segment is fucked"
-        assert not TOL.is_zero(len(bottom_segment)), "bottom_segment is fucked"
 
         if InterfaceLocation.FRONT not in handled_sides:
             perimeter_beams.append(BeamDefinition(front_segment, parent=self, type="edge_stud"))
@@ -680,46 +686,20 @@ class WallPopulator(object):
         edge_studs = [beam_def for beam_def in perimeter_beams if beam_def.type == "edge_stud"]
         plate_beams = [beam_def for beam_def in perimeter_beams if beam_def.type == "plate"]
 
-        # HACK alert! slabs seem to want it differently, get to the bottom of this
         if self._wall.is_wall:
             offset_elements(edge_studs + plate_beams)
         else:
-            offset_elements(edge_studs + plate_beams, offset_inside=False)
+            # HACK alert! slabs seem to want it differently, get to the bottom of this
+            if self.normal.z < 0:
+                offset_elements(edge_studs + plate_beams, offset_inside=False)
+            else:
+                offset_elements(edge_studs + plate_beams)
+
         shorten_edges_to_fit_between_plates(edge_studs, plate_beams, self.dist_tolerance)
 
         self._beam_definitions.extend(perimeter_beams)
 
-    # def generate_perimeter_beams(self):
-    #     interior_indices = self.get_interior_segment_indices(self.outer_polyline)
-    #     for i, segment in enumerate(self.outer_polyline.lines):
-    #         beam_def = BeamDefinition(segment, parent=self)
-    #         if i in interior_indices:
-    #             # the outline of openings (internal trims) are handled here
-    #             if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-    #                 # these are the studs
-    #                 if self._config_set.lintel_posts:
-    #                     beam_def.type = "jack_stud"
-    #                 else:
-    #                     beam_def.type = "king_stud"
-    #             else:
-    #                 # these are the top beams of an opening
-    #                 beam_def.type = "header"
-    #         else:
-    #             # the outline of the wall is handled here (boundary)
-    #             if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
-    #                 # these are the edge studs
-    #                 beam_def.type = "edge_stud"
-    #             else:
-    #                 beam_def.type = "plate"
-    #         self._beam_definitions.append(beam_def)
-
-    #     self._beam_definitions = self.offset_elements(self._beam_definitions)
-    #     if self._config_set.lintel_posts:
-    #         for beam_def in self._beam_definitions:
-    #             if beam_def.type == "jack_stud":
-    #                 offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-    #                 king_line = offset_line(beam_def.centerline, offset, self.normal)
-    #                 self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+        # TODO: handle lintel posts
 
     def get_interior_segment_indices(self, polyline):
         points = polyline.points[0:-1]
@@ -737,14 +717,33 @@ class WallPopulator(object):
             out.insert(0, out[0] - 1)
         return set(out)
 
-    def generate_windows(self):
+    def generate_openings(self):
         for opening in self.inner_polylines:
             if opening.opening_type == OpeningType.DOOR:
-                element = Door(opening.polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance)
+                element = Door(
+                    opening.polyline,
+                    self.beam_dimensions,
+                    self._wall.frame,
+                    self._wall.thickness,
+                    self.dist_tolerance,
+                    self._config_set.sheeting_inside,
+                    self._config_set.sheeting_outside,
+                    # self._config_set.lintel_posts,
+                )
             else:
-                element = Window(opening.polyline, self.beam_dimensions, self._wall.frame, self._wall.thickness, self.dist_tolerance)
-            # self.windows.append(element)
+                element = Window(
+                    opening.polyline,
+                    self.beam_dimensions,
+                    self._wall.frame,
+                    self._wall.thickness,
+                    self.dist_tolerance,
+                    self._config_set.sheeting_inside,
+                    self._config_set.sheeting_outside,
+                    # self._config_set.lintel_posts,
+                )
+
             self._beam_definitions.extend(element.create_elements())
+            self._openings.append(element)
 
     def generate_studs(self):
         self.generate_stud_lines()
@@ -853,14 +852,19 @@ class WallPopulator(object):
         return math.sqrt(min(distances))
 
     def generate_plates(self):
+        plates = []
         if self._config_set.sheeting_inside:
-            self._elements.append(Plate(self.outer_polyline.copy(), self._config_set.sheeting_inside))
+            plates.append(Plate(self.outer_polyline.copy(), self._config_set.sheeting_inside))
         if self._config_set.sheeting_outside:
             pline = self.outer_polyline.copy()
             pline.translate(self.frame.zaxis * (self._wall.thickness + self._config_set.sheeting_outside))
-            self._elements.append(Plate(pline, self._config_set.sheeting_outside))
-        # for window in self.windows:
-        #     self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
+            plates.append(Plate(pline, self._config_set.sheeting_outside))
+
+        for opening in self._openings:
+            for plate in plates:
+                plate.add_feature(opening.boolean_feature)
+
+        self._elements.extend(plates)
 
 
 def shorten_edges_to_fit_between_plates(beams_to_fit, beams_to_fit_between, dist_tolerance=None):

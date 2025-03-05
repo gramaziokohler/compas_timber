@@ -1,13 +1,13 @@
 from compas.tolerance import TOL
 
-from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import StepJoint
 from compas_timber.fabrication import StepJointNotch
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
+from .utilities import beam_ref_side_incidence_with_vector
 
 
 class TStepJoint(Joint):
