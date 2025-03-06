@@ -107,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added error handling when BTLx processing from geometry fails in GH.
 * Added new `Slab` class to `compas_timber.elements`.
 * Added `Slab` GH component.
+* Added `FreeContour` BTLx processing and applied it to the `Plate` type so that plates can be machined.
 
 ### Changed
 

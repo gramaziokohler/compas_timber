@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -155,8 +156,8 @@ class DovetailTenon(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DovetailTenonParams(self).as_dict()
+    def params(self):
+        return DovetailTenonParams(self)
 
     @property
     def orientation(self):
@@ -852,7 +853,7 @@ class DovetailTenonParams(BTLxProcessingParams):
             The parameters of the Dovetail Tenon as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(DovetailTenonParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)

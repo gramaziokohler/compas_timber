@@ -1,15 +1,15 @@
 import math
 
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import NurbsCurve
+from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import bounding_box_xy
+from compas.geometry import closest_point_on_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point_sqrd
@@ -26,10 +26,9 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.design import FeatureDefinition
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.elements.features import BrepSubtraction
+from compas_timber.fabrication import FreeContour
 from compas_timber.model import TimberModel
 
 
@@ -489,7 +488,8 @@ class SurfaceModel(object):
             pline.translate(self.frame.zaxis * (self.frame_depth + self.sheeting_outside))
             self._elements.append(Plate(pline, self.sheeting_outside))
         for window in self.windows:
-            self._features.append(FeatureDefinition(window.boolean_feature, [plate for plate in self.plate_elements]))
+            for plate in self.plate_elements:
+                window.apply_contour_to_plate(plate)
 
     class Window(object):
         """
@@ -584,17 +584,12 @@ class SurfaceModel(object):
                 self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
             return self._frame
 
-        @property
-        def boolean_feature(self):
-            offset = self.parent.sheeting_inside if self.parent.sheeting_inside else 0
-            so = self.parent.sheeting_outside if self.parent.sheeting_outside else 0
-            thickness = offset + so + self.parent.frame_depth
-
-            crv = self.outline.copy()
-            crv.translate(self.normal * -offset)
-
-            vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
-            return BrepSubtraction(vol)
+        def apply_contour_to_plate(self, plate):
+            projected_points = []
+            for point in self.outline.points:
+                projected_points.append(closest_point_on_plane(point, Plane.from_frame(plate.frame)))
+            feature = FreeContour.from_polyline_and_element(Polyline(projected_points), plate)
+            plate.add_feature(feature)
 
         def process_outlines(self):
             for i, segment in enumerate(self.outline.lines):
