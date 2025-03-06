@@ -596,13 +596,13 @@ document.write(`
 <h1>BTLxPart</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.BTLxPart">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxPart</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/43e6ac2/src/compas_timber/fabrication/btlx.py#L237"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxPart</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e72627f/src/compas_timber/fabrication/btlx.py#L274"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Class representing a BTLx part. This acts as a wrapper for a Beam object.</p>
+<p>Class representing a BTLx part. This acts as a wrapper for an Element object.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The beam object.</p>
+<dt><strong>element</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>  # TODO: not really, make BTLx Element parent class</span></dt><dd><p>The element object.</p>
 </dd>
 </dl>
 </dd>
@@ -610,25 +610,25 @@ document.write(`
 <dd class="field-even"><dl>
 <dt><strong>attr</strong><span class="classifier">dict</span></dt><dd><p>The attributes of the BTLx part.</p>
 </dd>
-<dt><strong>beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The beam object.</p>
+<dt><strong>element</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></span></dt><dd><p>The element object.</p>
 </dd>
-<dt><strong>key</strong><span class="classifier">str</span></dt><dd><p>The key of the beam object.</p>
+<dt><strong>key</strong><span class="classifier">str</span></dt><dd><p>The key of the element object.</p>
 </dd>
-<dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>The length of the beam.</p>
+<dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>The length of the element.</p>
 </dd>
-<dt><strong>width</strong><span class="classifier">float</span></dt><dd><p>The width of the beam.</p>
+<dt><strong>width</strong><span class="classifier">float</span></dt><dd><p>The width of the element.</p>
 </dd>
-<dt><strong>height</strong><span class="classifier">float</span></dt><dd><p>The height of the beam.</p>
+<dt><strong>height</strong><span class="classifier">float</span></dt><dd><p>The height of the element.</p>
 </dd>
 <dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.</p>
 </dd>
-<dt><strong>blank</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>The blank of the beam.</p>
+<dt><strong>blank</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>The blank of the element.</p>
 </dd>
 <dt><strong>blank_frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of the blank.</p>
 </dd>
-<dt><strong>blank_length</strong><span class="classifier">float</span></dt><dd><p>The blank length of the beam.</p>
+<dt><strong>blank_length</strong><span class="classifier">float</span></dt><dd><p>The blank length of the element.</p>
 </dd>
-<dt><strong>processings</strong><span class="classifier">list</span></dt><dd><p>A list of the processings applied to the beam.</p>
+<dt><strong>processings</strong><span class="classifier">list</span></dt><dd><p>A list of the processings applied to the element.</p>
 </dd>
 </dl>
 </dd>
@@ -640,7 +640,7 @@ document.write(`
 <td><p>Returns the ET point values for a given point.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLxPart.ref_side_from_face.html#compas_timber.fabrication.BTLxPart.ref_side_from_face" title="compas_timber.fabrication.BTLxPart.ref_side_from_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref_side_from_face</span></code></a></p></td>
-<td><p>Finds the one-based index of the reference side with normal that matches the normal of the given beam face.</p></td>
+<td><p>Finds the one-based index of the reference side with normal that matches the normal of the given element face.</p></td>
 </tr>
 </tbody>
 </table>

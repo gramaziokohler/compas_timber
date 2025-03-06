@@ -601,13 +601,13 @@ document.write(`
 <h1>BTLxPart.ref_side_from_face</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.fabrication.BTLxPart.ref_side_from_face">
-<span class="sig-prename descclassname"><span class="pre">BTLxPart.</span></span><span class="sig-name descname"><span class="pre">ref_side_from_face</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_face</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/43e6ac2/src/compas_timber/fabrication/btlx.py#L296"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Finds the one-based index of the reference side with normal that matches the normal of the given beam face.</p>
-<p>This essentially translates between the beam face reference system to the BTLx side reference system.</p>
+<span class="sig-prename descclassname"><span class="pre">BTLxPart.</span></span><span class="sig-name descname"><span class="pre">ref_side_from_face</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element_face</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e72627f/src/compas_timber/fabrication/btlx.py#L332"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Finds the one-based index of the reference side with normal that matches the normal of the given element face.</p>
+<p>This essentially translates between the element face reference system to the BTLx side reference system.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>beam_face</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of a beam face from beam.faces.</p>
+<dt><strong>element_face</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of an element face from element.faces.</p>
 </dd>
 </dl>
 </dd>
