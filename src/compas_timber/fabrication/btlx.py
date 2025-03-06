@@ -549,7 +549,6 @@ class BTLxProcessing(Data):
     def PROCESSING_NAME(self):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
-
     def add_subprocessing(self, subprocessing):
         """Add a nested subprocessing."""
         if not self.subprocessings:
