@@ -3,7 +3,7 @@ from compas_timber.fabrication import FrenchRidgeLap
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
-from .utilities import are_beam_frames_orthogonal
+from .utilities import are_beams_aligned_with_cross_vector
 
 
 class LFrenchRidgeLapJoint(LapJoint):
@@ -103,7 +103,7 @@ class LFrenchRidgeLapJoint(LapJoint):
         BeamJoiningError
             If the elements are not compatible for the creation of the joint.
         """
-        if not are_beam_frames_orthogonal(*self.elements):
+        if not are_beams_aligned_with_cross_vector(*self.elements):
             raise BeamJoiningError(
                 beams=self.elements,
                 joint=self,

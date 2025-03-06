@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored the `check_element_compatibility` method in `YButtJoint` so that it checks for coplanarity and dimensioning of the cross elements.
 * Enhanced `DoubleCut.from_planes_and_beam` to verify that provided planes are not parallel and raise a `ValueError` if they are.
 * Adjusted `process_joinery` method to catch `ValueError` exceptions during `BTLxProcessing` generation and wrap them in `BeamJoiningError` objects.
-* Refactored and renamed `are_beams_coplanar` function to `are_beam_frames_orthogonal`.
+* Refactored and renamed `are_beams_coplanar` function to `are_beams_aligned_with_cross_vector`.
 
 ### Removed
 

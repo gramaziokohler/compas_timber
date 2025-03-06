@@ -5,7 +5,7 @@ from compas.tolerance import TOL
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
-from compas_timber.connections.utilities import are_beam_frames_orthogonal
+from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
@@ -83,7 +83,7 @@ class YButtJoint(Joint):
             If the elements are not compatible for the creation of the joint.
         """
 
-        if not are_beam_frames_orthogonal(*self.cross_beams):
+        if not are_beams_aligned_with_cross_vector(*self.cross_beams):
             raise BeamJoiningError(
                 beams=self.cross_beams,
                 joint=self,
