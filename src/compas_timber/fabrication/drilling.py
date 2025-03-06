@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -71,8 +72,8 @@ class Drilling(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DrillingParams(self).as_dict()
+    def params(self):
+        return DrillingParams(self)
 
     @property
     def start_x(self):
@@ -382,7 +383,7 @@ class DrillingParams(BTLxProcessingParams):
         super(DrillingParams, self).__init__(instance)
 
     def as_dict(self):
-        result = super(DrillingParams, self).as_dict()
+        result = OrderedDict()
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)

@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Removed `main_ref_side_index` property from `TBirdsmouthJoint` since it's now defined in the `DoubleCut` BTLxProcessing.
+* Added `mill_depth` argument in `TBirdsmouthJoint` for creating pockets on the cross_beam if asked.
+
+### Removed
+
+
+## [0.15.2] 2025-03-05
+
+### Added
+
+### Changed
+
 * Fixed `ValueError` occurring when connecting just a slab to the GH model component.
 
 ### Removed
@@ -96,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added error handling when BTLx processing from geometry fails in GH.
 * Added new `Slab` class to `compas_timber.elements`.
 * Added `Slab` GH component.
+* Added `FreeContour` BTLx processing and applied it to the `Plate` type so that plates can be machined.
 
 ### Changed
 
