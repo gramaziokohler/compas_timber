@@ -10,26 +10,26 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Model",
-                "description": "Model whose beams should be labeled.",
+                "name": "Elements",
+                "description": "Elements to be labeled.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             },
             {
-                "name": "BaseString",
-                "description": "String to be applied to each Beam. If none is given, a standard identifier will be used.",
+                "name": "BaseText",
+                "description": "Text to be applied to each Beam. If none is given, a standard identifier will be used.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             },
             {
                 "name": "CharToReplace",
-                "description": "Optional character in the BaseString to be replaced by Beam.attributes. This only works if Attributes is not empty and a single BaseString is given.",
+                "description": "Optional character in the BaseText to be replaced by Beam.attributes. This only works if Attributes is not empty and a single BaseText is given.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
             },
             {
                 "name": "Attributes",
-                "description": "Beam attribute names to substitute into the BaseString.",
+                "description": "Beam attribute names to substitute into the BaseText.",
                 "typeHintID": "str",
                 "scriptParamAccess": 1
             },
@@ -38,12 +38,18 @@
                 "description": "Height of the Text.",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
+            },
+            {
+                "name": "RefSide",
+                "description": "side on which to apply the Text.",
+                "typeHintID": "int",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
             {
-                "name": "TextCurves",
-                "description": "Polyline representations of the Text."
+                "name": "LabelFeature",
+                "description": "Label feature to be added to timber model."
             }
         ]
     }

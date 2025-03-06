@@ -95,7 +95,6 @@ class Text(BTLxProcessing):
         self.text_height_auto = text_height_auto
         self.text_height = text_height
         self.text = text
-        self.is_label = False
 
 
     ########################################################################
@@ -225,7 +224,7 @@ class Text(BTLxProcessing):
             The resulting geometry after processing. #TODO: think about ways to display text curves from `draw_string_on_element()`
 
         """
-        return [geometry]
+        return geometry
 
     def draw_string_on_element(self, element):
         face = element.ref_sides[self.ref_side_index]
@@ -265,35 +264,6 @@ class Text(BTLxProcessing):
                 pt.translate([self.start_x+x_offset, self.start_y+y_offset, 0])
                 pt.transform(Transformation.from_frame_to_frame(Frame.worldXY(), face))
         return string_curves
-
-    @classmethod
-    def label_element(cls, element, string = None, text_height = None):
-        if element.is_beam:
-            text_height = text_height if text_height else min(element.width, element.height) / 2
-            x_positions = [0.0, element.length]
-            for feat in element.features:
-                if getattr(feat, "start_x", None):
-                    x_positions.append(feat.start_x)
-            if x_positions:
-                x_positions.sort()
-                biggest_gap = (0,0)
-            for i in range(len(x_positions)-1):
-                if x_positions[i+1] - x_positions[i] > biggest_gap[1]-biggest_gap[0]:
-                    biggest_gap = (x_positions[i], x_positions[i+1])
-            x_pos = (biggest_gap[0] + biggest_gap[1]) / 2
-            string = string if string else "C{}_B{}".format(element.attributes.get("category"), element.key)
-            text = cls(
-                ref_side_index = 1,
-                start_x=x_pos,
-                start_y=element.side_as_surface(1).ysize / 2.0,
-                alignment_horizontal = AlignmentType.CENTER,
-                alignment_vertical = AlignmentType.CENTER,
-                text_height = text_height,
-                text = string)
-            element.add_feature(text)
-            return text
-        else:
-            raise ValueError("Only beams can be labeled.")
 
 
 class TextParams(BTLxProcessingParams):

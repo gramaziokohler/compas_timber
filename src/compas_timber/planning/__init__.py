@@ -7,6 +7,8 @@ from .sequencer import Model3d
 from .sequencer import Text3d
 from .sequencer import LinearDimension
 from .sequencer import BuildingPlanParser
+from .label import Label
+from .label import DeferredLabel
 
 __all__ = [
     "Actor",
@@ -18,4 +20,6 @@ __all__ = [
     "Step",
     "SimpleSequenceGenerator",
     "Text3d",
+    "Label",
+    "DeferredLabel",
 ]
