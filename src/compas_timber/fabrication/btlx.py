@@ -501,7 +501,7 @@ def contour_to_xml(contour):
     start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
 
-    for i, point in enumerate(contour.polyline[1:]):
+    for point in contour.polyline[1:]:
         line = ET.SubElement(root, "Line")
         end_point = ET.SubElement(line, "EndPoint")
         end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
@@ -549,22 +549,6 @@ class BTLxProcessing(Data):
     def PROCESSING_NAME(self):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
-    @classmethod
-    def from_header_attributes_and_params(cls, header=None, params=None):
-        """Alternative constructor for creating a BTLxProcessingParams instance from header attributes and parameters.
-
-        Parameters
-        ----------
-        header : dict
-            The header attributes as a dictionary.
-        params : dict
-            The processing parameters as a dictionary.
-        """
-
-        instance = cls.__init__()
-        instance.params._params = params
-        instance.params_dict = params
-        return instance
 
     def add_subprocessing(self, subprocessing):
         """Add a nested subprocessing."""
@@ -585,7 +569,6 @@ class BTLxProcessingParams(object):
 
     def __init__(self, instance):
         self._instance = instance
-        self._params = None
 
     @property
     def header_attributes(self):
@@ -605,7 +588,7 @@ class BTLxProcessingParams(object):
         dict
             The processing parameters as a dictionary.
         """
-        return self._params
+        raise NotImplementedError("as_dict must be implemented in subclasses!")
 
 
 class OrientationType(object):
