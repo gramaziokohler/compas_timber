@@ -15,22 +15,40 @@ class Label(object):
         The text of the label.
     """
 
-    def __init__(self, element, text=None, ref_side_index=0):
+    def __init__(self, element, text=None):
         self.element = element
         self.text = (
             text
             if text
             else "{}_{}_{}".format(self.element.__class__.__name__, self.element.key, self.element.attributes.get("category") if self.element.attributes.get("category") else "")
         )
-        self.ref_side_index = ref_side_index
 
     @property
     def __data__(self):
         return {"element": self.element, "text": self.text}
 
     @classmethod
-    def from_element(cls, element, attributes=[], base_string="", char_to_replace=None, ref_side_index=0):
-        """Get text from attributes of the element."""
+    def from_element(cls, element, attributes=[], base_string="", char_to_replace=None):
+        """Get text from attributes of the element.
+
+        Parameters
+        ----------
+        element : :class:`compas_timber.structure.Beam`
+            The element to which the label is attached.
+        attributes : list
+            List of element's attributes to be included in the label.
+        base_string : str
+            Base string to be used for the label.
+        char_to_replace : str
+            Character to be replaced in the base string.
+
+        Returns
+        -------
+        :class:`compas_timber.planning.Label`
+            The label object.
+
+        """
+
         string_out = ""
         att_names = [a for a in attributes] if attributes else []
         for char in base_string:
@@ -41,9 +59,27 @@ class Label(object):
         for attribute in att_names:
             string_out += str(getattr(element, attribute, " "))
             string_out += "-"
-        return cls(element, string_out, ref_side_index)
+        return cls(element, string_out)
 
-    def engrave_on_beam(self, beam, text_height=None):
+    def engrave_on_beam(self, beam, text_height=None, ref_side_index=0):
+        """Create the Text BTLxProcessing to engrave the label on a beam.
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam to engrave the label on.
+        text_height : float
+            The height of the text.
+        ref_side_index : int
+            The reference side index.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.Text`
+            The Text BTLxProcessing object.
+
+
+        """
         text_height = text_height if text_height else min(beam.width, beam.height) / 2
         x_positions = [0.0, beam.length]
         for feat in beam.features:
@@ -57,9 +93,9 @@ class Label(object):
                 biggest_gap = (x_positions[i], x_positions[i + 1])
         x_pos = (biggest_gap[0] + biggest_gap[1]) / 2
         return Text(
-            ref_side_index=self.ref_side_index,
+            ref_side_index = ref_side_index,
             start_x=x_pos,
-            start_y=self.element.side_as_surface(self.ref_side_index).ysize / 2.0,
+            start_y=self.element.side_as_surface(ref_side_index).ysize / 2.0,
             alignment_horizontal=AlignmentType.CENTER,
             alignment_vertical=AlignmentType.CENTER,
             text_height=text_height,
@@ -68,7 +104,25 @@ class Label(object):
 
 
 class DeferredLabel(Data):
-    """A deferred label for a timber assembly."""
+    """A deferred label for a timber assembly, allowing attribues generated via joinery and other processings to be included in label data.
+
+    parameters
+    ----------
+    elements : list
+        The elements to which the label is attached.
+    base_string : str
+        The base string of the label.
+    attributes : list
+        List of element's attributes to be included in the label.
+    char_to_replace : str
+        Character to be replaced in the base string.
+    text_height : float
+        The height of the text.
+    ref_side_index : int
+        The reference side index.
+
+
+    """
 
     def __init__(self, elements, base_string=None, attributes=None, char_to_replace=None, text_height=None, ref_side_index=0):
         self.elements = elements
@@ -92,7 +146,9 @@ class DeferredLabel(Data):
         }
 
     def feature_from_element(self, element):
+        """Get the Text BTLxProcessing object to apply to the element."""
+
         if not element.is_beam:
             raise NotImplementedError("Engraving for {} not implemented".format(element.__class__.__name__))
-        label = Label.from_element(element, self.attributes, self.base_string, self.char_to_replace, self.ref_side_index)  # get Label object.
-        return label.engrave_on_beam(element, self.text_height)  # return Text processing object.
+        label = Label.from_element(element, self.attributes, self.base_string, self.char_to_replace)  # get Label object.
+        return label.engrave_on_beam(element, self.text_height, self.ref_side_index)  # return Text processing object.
