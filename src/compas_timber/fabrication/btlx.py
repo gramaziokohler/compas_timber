@@ -15,7 +15,6 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
-from compas_timber.elements import Beam
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
@@ -199,7 +198,7 @@ class BTLxWriter(object):
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
-        if isinstance(element, Beam) and element._geometry:
+        if element.is_beam and element._geometry:
             # TODO: implement this for plates as well. Brep.from_extrusion seems to have incorrect number of faces regardless of input curve.
             part_element.append(part.et_shape)
         return part_element
