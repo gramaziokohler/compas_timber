@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added `Text` `BTLxProcessing` class, module and a corresponding `Label_Beams` GH Component.
+* Added `Label` and `DeferredLabel` classes
 
 ### Changed
 

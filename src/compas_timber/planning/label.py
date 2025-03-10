@@ -17,15 +17,17 @@ class Label(object):
 
     def __init__(self, element, text=None):
         self.element = element
-        self.text = (
-            text
-            if text
-            else "{}_{}_{}".format(self.element.__class__.__name__, self.element.key, self.element.attributes.get("category") if self.element.attributes.get("category") else "")
-        )
+        self.user_text = text
 
     @property
     def __data__(self):
         return {"element": self.element, "text": self.text}
+
+    @property
+    def text(self):
+        if self.user_text:
+            return self.user_text
+        return "{}_{}_{}".format(self.element.__class__.__name__, self.element.key, self.element.attributes.get("category") if self.element.attributes.get("category") else "")
 
     @classmethod
     def from_element(cls, element, attributes=[], base_string="", char_to_replace=None):
@@ -57,8 +59,9 @@ class Label(object):
             else:
                 string_out += str(getattr(element, att_names.pop(0), " ") if len(att_names) > 0 else "_")
         for attribute in att_names:
+            string_out += "_"
             string_out += str(getattr(element, attribute, " "))
-            string_out += "-"
+
         return cls(element, string_out)
 
     def engrave_on_beam(self, beam, text_height=None, ref_side_index=0):
@@ -93,7 +96,7 @@ class Label(object):
                 biggest_gap = (x_positions[i], x_positions[i + 1])
         x_pos = (biggest_gap[0] + biggest_gap[1]) / 2
         return Text(
-            ref_side_index = ref_side_index,
+            ref_side_index=ref_side_index,
             start_x=x_pos,
             start_y=self.element.side_as_surface(ref_side_index).ysize / 2.0,
             alignment_horizontal=AlignmentType.CENTER,
