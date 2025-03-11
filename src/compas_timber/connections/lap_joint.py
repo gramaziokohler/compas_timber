@@ -14,7 +14,7 @@ from compas.geometry import intersection_plane_plane_plane
 from compas_timber.errors import BeamJoiningError
 
 from .joint import Joint
-from .utilities import are_beams_coplanar
+from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 
@@ -137,7 +137,7 @@ class LapJoint(Joint):
             If the elements are not compatible for the creation of the joint.
         """
         # TODO: This warning should be providing more information to the caller in regards to the affected beams and joints.
-        if not are_beams_coplanar(*self.elements):
+        if not are_beams_aligned_with_cross_vector(*self.elements):
             warnings.warn("The beams are not coplanar, therefore BTLxProcessings will not be generated for this joint", UserWarning)
 
     def restore_beams_from_keys(self, model):
