@@ -200,8 +200,12 @@ class DoubleCut(BTLxProcessing):
 
         # convert all frames to planes
         planes = [Plane.from_frame(plane) if isinstance(plane, Frame) else plane for plane in planes]
-        """ get the intersection line of cutting planes, which is used to determine whether the planes cut a concave or convex shape"""
+
+        # get the intersection line of cutting planes, which is used to determine whether the planes cut a concave or convex shape
         ln = intersection_plane_plane(planes[0], planes[1])
+        if not ln:
+            raise ValueError("The two cutting planes are parallel consider using a JackRafterCut")
+
         line = Line(Point(*ln[0]), Point(*ln[1]))
         intersection_points, face_indices = intersection_line_beam_param(line, beam)
         if not intersection_points:

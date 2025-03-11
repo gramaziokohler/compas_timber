@@ -642,8 +642,8 @@ class Beam(TimberElement):
         -------
         tuple(float, float)
             The perpendicular and parallel dimensions of the beam to the reference side.
-                - Perpendicular dimension: The measurement at a right angle to the reference side.
-                - Parallel dimension: The measurement along the same direction as the reference side.
+                - Perpendicular dimension: The measurement normal to the reference side.
+                - Parallel dimension: The measurement along y-axis of reference side.
         """
         if ref_side_index in [1, 3]:
             return self.height, self.width
