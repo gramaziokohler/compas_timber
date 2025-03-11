@@ -3,8 +3,10 @@ from math import fabs
 
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import add_vectors
+from compas.geometry import Vector
+from compas.geometry import Polyline
 from compas.geometry import angle_vectors_signed
+from compas.geometry import add_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
@@ -14,7 +16,6 @@ from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.geometry import Frame
 from compas.geometry import Transformation
-from compas.geometry import Vector
 from compas.geometry import Projection
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
@@ -317,6 +318,50 @@ def angle_vectors_projected(vector_1, vector_2, normal):
     return angle_vectors_signed(proj_vect_1, proj_vect_2, normal, deg=True)
 
 
+def is_polyline_clockwise(polyline, normal_vector):
+    """Check if a polyline is clockwise.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to check.
+
+    Returns
+    -------
+    bool
+        True if the polyline is clockwise, False otherwise.
+
+    """
+    assert polyline[0] == polyline[-1], "Polyline should be closed"
+    angle_sum = 0
+    for i in range(len(polyline) - 1):
+        u = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+        angle = angle_vectors_signed(u, v, normal_vector)
+        angle_sum += angle
+    return angle_sum < 0
+
+
+def correct_polyline_direction(polyline, normal_vector, clockwise=False):
+    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to correct.
+
+    Returns
+    -------
+    :class:`compas.geometry.Polyline`
+        The corrected polyline.
+
+    """
+    cw = is_polyline_clockwise(polyline, normal_vector)
+    if cw ^ clockwise:
+        return Polyline(polyline[::-1])
+    return polyline
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -324,4 +369,6 @@ __all__ = [
     "classify_polyline_segments",
     "distance_segment_segment",
     "angle_vectors_projected",
+    "is_polyline_clockwise",
+    "correct_polyline_direction",
 ]

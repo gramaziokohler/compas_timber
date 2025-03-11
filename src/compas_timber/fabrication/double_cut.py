@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -92,8 +93,8 @@ class DoubleCut(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DoubleCutParams(self).as_dict()
+    def params(self):
+        return DoubleCutParams(self)
 
     @property
     def orientation(self):
@@ -417,7 +418,7 @@ class DoubleCutParams(BTLxProcessingParams):
             The parameters of the Double Cut feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(DoubleCutParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)

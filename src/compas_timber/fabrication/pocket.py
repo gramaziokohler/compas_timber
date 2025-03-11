@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -138,7 +139,7 @@ class Pocket(BTLxProcessing):
 
     @property
     def params_dict(self):
-        return PocketParams(self).as_dict()
+        return PocketParams(self)
 
     @property
     def start_x(self):
@@ -723,7 +724,7 @@ class PocketParams(BTLxProcessingParams):
             The parameters of the Pocket feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(PocketParams, self).as_dict()
+        result = OrderedDict()
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
         result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)

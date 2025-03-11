@@ -361,12 +361,16 @@ class TimberModel(Model):
 
         """
         self._clear_wall_joints()
-        solver = ConnectionSolver()
 
         walls = list(self.walls)
+
+        if not walls:
+            return
+
         if max_distance is None:
             max_distance = max(wall.thickness for wall in walls)
 
+        solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(walls, rtree=True, max_distance=max_distance)
         for pair in pairs:
             wall_a, wall_b = pair
