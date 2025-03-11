@@ -6,18 +6,21 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Rotation
+from compas.geometry import Polyhedron
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
+from compas.geometry import distance_point_plane
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
+from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import angle_vectors_projected
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -369,6 +372,147 @@ class Lap(BTLxProcessing):
                    machining_limits=machining_limits.limits,
                    ref_side_index=ref_side_index)
 
+    @classmethod
+    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None):
+        """Construct a Lap feature from a volume and a Beam.
+
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the pocket. Must have 6 faces.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+            The Lap feature.
+
+        """
+        # type: (Polyhedron | Brep | Mesh, Beam, dict, int) -> Lap
+        if isinstance(volume, Mesh):
+            planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
+        elif isinstance(volume, Polyhedron):
+            volume = volume.to_mesh()
+            planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
+        elif isinstance(volume, Brep):
+            volume_frames = [face.frame_at(0,0) for face in volume.faces]
+            planes = [Plane.from_frame(frame) for frame in volume_frames]
+
+        else:
+            raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
+
+        if len(planes) != 6:
+            raise ValueError("Volume must have 6 faces.")
+
+        # get ref_side of the
+        if not ref_side_index:
+            ref_side_index = cls._get_optimal_ref_side_index(beam, volume)
+        ref_side = beam.ref_sides[ref_side_index]
+
+        # sort the planes based on the reference side
+        planes = cls._sort_planes(planes, ref_side)
+        start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = planes
+
+        # get the intersection points
+        try: # TODO: ideally avoid doing all these intersection calculations
+            start_point = Point(*intersection_plane_plane_plane(start_plane, front_plane, Plane.from_frame(ref_side), tol=TOL.ABSOLUTE))
+            bottom_point = Point(*intersection_plane_plane_plane(start_plane, front_plane, bottom_plane, tol=TOL.ABSOLUTE))
+            back_point = Point (*intersection_plane_plane_plane(start_plane, back_plane, Plane.from_frame(ref_side), tol=TOL.ABSOLUTE))
+            end_point = Point(*intersection_plane_plane_plane(end_plane, front_plane, Plane.from_frame(ref_side), tol=TOL.ABSOLUTE))
+        except TypeError as te:
+            raise ValueError("Failed to orient the volume to the element. Consider using a different ref_side_index " + str(te))
+
+        # for simplicity, orientation is always set to START
+        orientation = OrientationType.START
+
+        # calculate start_x, start_y
+        start_x, start_y = cls._calculate_start_x_y(ref_side, start_point)
+
+        # x"-axis and y"-axis (planar axis of the top face of the volume)
+        xxaxis = Vector.from_start_end(start_point, end_point)
+        yyaxis = Vector.from_start_end(start_point, back_point)
+        zzaxis = Vector.from_start_end(start_point, bottom_point)
+
+        # calculate the angle of the lap
+        angle = angle_vectors_signed(-yyaxis, ref_side.xaxis, ref_side.normal, deg=True)
+
+        # calculate the inclination of the lap
+        inclination = angle_vectors_projected(zzaxis, front_plane.normal, yyaxis)
+        inclination = 180 + inclination if inclination < 0 else inclination
+
+        # calculate the slope of the lap
+        slope = angle_vectors_projected(-ref_side.normal, bottom_plane.normal, start_plane.normal)
+
+        # calculate length, width and depth
+        length = distance_point_plane(start_plane.point, end_plane)
+        width = abs(yyaxis.dot(ref_side.yaxis))
+        depth = abs(zzaxis.dot(ref_side.zaxis))
+
+        # define lead_angle and lead_inclination parallelity
+        lead_angle_parallel = cls._check_lead_parallelity(beam, ref_side_index, front_plane, back_plane)
+        lead_inclination_parallel = lead_angle_parallel
+
+        if lead_angle_parallel:
+            lead_angle = 90.0
+        else:
+            lead_angle = angle_vectors_signed(xxaxis, yyaxis, ref_side.normal, deg=True)
+
+        if lead_inclination_parallel:
+            lead_inclination = 90.0
+        else:
+            lead_inclination = angle_vectors_signed(front_plane.normal, bottom_plane.normal, ref_side.xaxis, deg=True)
+
+        # define machining limits
+        if machining_limits:
+            if not isinstance(machining_limits, dict):
+                raise ValueError("machining_limits must be a dictionary.")
+        else:
+            machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
+
+        return cls(orientation,
+                   start_x,
+                   start_y,
+                   angle,
+                   inclination,
+                   slope,
+                   length,
+                   width,
+                   depth,
+                   lead_angle_parallel,
+                   lead_angle,
+                   lead_inclination_parallel,
+                   lead_inclination,
+                   machining_limits=machining_limits,
+                   ref_side_index=ref_side_index)
+
+    @classmethod
+    def from_shapes_and_element(cls, volume, element, **kwargs):
+        """Construct a Pocket feature from a volume and a TimberElement.
+
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the Lap. Must have 6 faces.
+        element : :class:`~compas_timber.elements.Beam`
+            The element that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+            The Lap feature.
+
+        """
+        return cls.from_volume_and_element(volume, element, **kwargs)
+
     @staticmethod
     def _calculate_orientation(ref_side, plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
@@ -423,6 +567,80 @@ class Lap(BTLxProcessing):
         length = math.sin(math.radians(angle))*dist
         return length
 
+    @staticmethod
+    def _get_optimal_ref_side_index(element, volume):
+        # get the optimal reference side index based on the volume. The optimal reference side is the one with the most intersections with the volume edges.
+        # get the volume edges
+        if isinstance(volume, Brep):
+            volume_curve = [edge.curve for edge in volume.edges]
+            volume_edges = [Line(*curve.points) for curve in volume_curve]
+        else:
+            volume_edges = [volume.edge_line(edge) for edge in volume.edges()]
+
+        intersection_counts = []
+        for i, side in enumerate(element.ref_sides):
+            int_pts = []
+            for edge in volume_edges:
+                int_pt = intersection_segment_plane(edge, Plane.from_frame(side))
+                if int_pt:
+                    int_pts.append(int_pt)
+            intersection_counts.append((i, len(int_pts)))
+        # Find the index with the maximum intersections
+        optimal_index = max(intersection_counts, key=lambda x: x[1])[0] if intersection_counts else None
+        return optimal_index
+
+    @staticmethod
+    def _sort_planes(planes, ref_side):
+        # Sort planes based on the dot product of face normals with the x-axis
+        planes.sort(key=lambda plane: plane.normal.dot(ref_side.xaxis))
+        start_plane, end_plane = planes[0], planes[-1]
+
+        # Sort planes based on the dot product of face normals with the y-axis
+        planes.sort(key=lambda plane: plane.normal.dot(ref_side.yaxis))
+        front_plane, back_plane = planes[0], planes[-1]
+
+        # Sort planes based on the dot product of face normals with the z-axis
+        planes.sort(key=lambda plane: plane.normal.dot(ref_side.zaxis))
+        bottom_plane, top_plane = planes[0], planes[-1]
+
+        return start_plane, end_plane, front_plane, back_plane, bottom_plane, top_plane
+
+    @staticmethod
+    def _calculate_start_x_y(ref_side, start_point):
+        # calculate the start_x, start_y of the pocket based on the start_corner_point and the ref_side
+        start_vector = Vector.from_start_end(ref_side.point, start_point)
+        start_x = dot_vectors(start_vector, ref_side.xaxis)
+        start_y = dot_vectors(start_vector, ref_side.yaxis)
+        return start_x, start_y
+
+    @staticmethod
+    def _check_lead_parallelity(beam, ref_side_index, front_plane, back_plane):
+        # define lead_angle and lead_inclination parallelity
+        front_side = beam.front_side(ref_side_index)
+        parallelity = True
+        for plane in [front_plane, back_plane]:
+            if not plane.is_parallel(Plane.from_frame(front_side)):
+                parallelity = False  # Change to False if any plane is not parallel
+        return parallelity
+
+    @staticmethod
+    def _define_machining_limits(planes, element, ref_side_index):
+        # define machining limits based on the planes
+        ref_sides = [Plane.from_frame(frame) for frame in element.ref_sides]
+        start_side, end_side = ref_sides[-2:]
+        ref_sides = ref_sides[:-2]
+        _, front_side, opp_side, back_side = ref_sides[ref_side_index:] + ref_sides[:ref_side_index]
+        start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = planes
+
+        machining_limits = MachiningLimits()
+        machining_limits.face_limited_top = False
+        machining_limits.face_limited_start = is_point_behind_plane(start_plane.point, start_side)
+        machining_limits.face_limited_end = is_point_behind_plane(end_plane.point, end_side)
+        machining_limits.face_limited_front = is_point_behind_plane(front_plane.point, front_side)
+        machining_limits.face_limited_back = is_point_behind_plane(back_plane.point, back_side)
+        machining_limits.face_limited_bottom = is_point_behind_plane(bottom_plane.point, opp_side)
+        return machining_limits.limits
+
 
     ########################################################################
     # Methods
@@ -472,7 +690,41 @@ class Lap(BTLxProcessing):
                 "The lap volume does not intersect with the beam geometry.",
             )
 
-    def planes_from_params_and_beam(self, beam):
+    def _start_frame_from_params_and_beam(self, beam):
+        """Calculates the start frame of the lap from the machining parameters in this instance and the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`compas.geometry.Frame`
+            The start frame of the lap.
+        """
+        assert self.start_x is not None
+        assert self.start_y is not None
+        assert self.depth is not None
+        assert self.angle is not None
+        assert self.inclination is not None
+        assert self.slope is not None
+
+        ref_surface = beam.side_as_surface(self.ref_side_index)
+        p_origin = ref_surface.point_at(self.start_x, self.start_y)
+        start_frame = Frame(p_origin, -ref_surface.frame.yaxis, ref_surface.frame.xaxis)
+
+        # define angle rotation matrix
+        angle_angle = self.angle if self.orientation == OrientationType.END else 180-self.angle
+        start_frame.rotate(math.radians(angle_angle), start_frame.normal, point=p_origin)
+        # define inclination rotation matrix
+        inclination_axis = start_frame.yaxis if self.orientation == OrientationType.END else -start_frame.yaxis
+        start_frame.rotate(math.radians(self.inclination), inclination_axis, point=start_frame.point)
+        # define slope rotation matrix
+        start_frame.rotate(math.radians(self.slope), start_frame.normal, point=start_frame.point)
+        return start_frame
+
+    def _planes_from_params_and_beam(self, beam):
         """Calculates the planes that create the lap from the machining parameters in this instance and the given beam
 
         Parameters
@@ -484,62 +736,55 @@ class Lap(BTLxProcessing):
         -------
         list of :class:`compas.geometry.Plane`
             The planes of the cut as a list.
-
         """
         # type: (Beam) -> List[Plane]
-        assert self.orientation is not None
-        assert self.start_x is not None
-        assert self.start_y is not None
-        assert self.angle is not None
-        assert self.inclination is not None
-        assert self.slope is not None
         assert self.length is not None
         assert self.width is not None
         assert self.depth is not None
         assert self.machining_limits is not None
 
-        ref_surface = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_surface.point_at(self.start_x, self.start_y)
-        start_frame = Frame(p_origin, ref_surface.frame.xaxis, ref_surface.frame.yaxis)
+        tol = Tolerance()
+        tol.absolute=1e-3
 
-        # define angle rotation matrix
-        angle_angle = self.angle if self.orientation == OrientationType.END else 180-self.angle
-        angle_rot = Rotation.from_axis_and_angle(start_frame.zaxis, math.radians(angle_angle), point=p_origin)
-        # define inclination rotation matrix
-        inclination_axis = start_frame.xaxis if self.orientation == OrientationType.END else -start_frame.xaxis
-        inclination_rot = Rotation.from_axis_and_angle(inclination_axis, math.radians(self.inclination), point=p_origin)
-        # define slope rotation matrix
-        slope_axis = -start_frame.zaxis
-        slope_rot = Rotation.from_axis_and_angle(slope_axis, math.radians(self.slope), point=p_origin)
+        if self.machining_limits["FaceLimitedStart"]:
+            start_frame = self._start_frame_from_params_and_beam(beam)
+        else:
+            start_frame = beam.ref_sides[4]
 
-        # get start_face and opp_face (two sides of the cut)
-        start_frame.transform(angle_rot*inclination_rot*slope_rot)
-        end_frame = start_frame.translated(-start_frame.zaxis * self.length)
-        end_frame.yaxis = -end_frame.yaxis
+        if self.machining_limits["FaceLimitedEnd"]:
+            end_frame = start_frame.translated(-start_frame.normal * self.length)
+            end_frame.yaxis = -end_frame.yaxis
+        else:
+            end_frame = beam.ref_sides[5]
 
-        # get top_face and bottom_face
-        lead_inclination_axis = -start_frame.xaxis if self.orientation == OrientationType.END else start_frame.xaxis
-        lead_inclination_rot = Rotation.from_axis_and_angle(lead_inclination_axis, math.radians(self.lead_inclination), point=p_origin)
-        top_frame = start_frame.transformed(lead_inclination_rot)
-        bottom_frame = top_frame.translated(-top_frame.zaxis * self.depth)
-        bottom_frame.xaxis = -bottom_frame.xaxis
+        top_frame = beam.ref_sides[self.ref_side_index] # top should always be unlimited
 
-        # get front_face and back_face #TODO: is this correct?
-        front_frame = start_frame.rotated(math.radians(self.lead_angle), start_frame.xaxis, point=start_frame.point)
-        back_frame = front_frame.translated(-front_frame.zaxis * self.width)
-        back_frame.xaxis = -back_frame.xaxis
+        if self.machining_limits["FaceLimitedBottom"]:
+            bottom_frame = Frame(start_frame.point, start_frame.zaxis, start_frame.yaxis)
+            angle = angle_vectors_signed(top_frame.xaxis, -start_frame.xaxis, top_frame.yaxis)
+            bottom_frame = bottom_frame.translated(bottom_frame.zaxis * (self.depth/math.sin(angle)))
+        else:
+            bottom_frame = beam.ref_sides[4]
+
+        if self.machining_limits["FaceLimitedFront"]:
+            front_frame = bottom_frame.rotated(math.radians(self.lead_angle), bottom_frame.xaxis, point=bottom_frame.point)
+        else:
+            front_frame = beam.front_side(self.ref_side_index)
+            front_frame.translate(front_frame.normal * tol.absolute)
+
+        if self.machining_limits["FaceLimitedBack"]:
+            back_frame = front_frame.translated(-front_frame.zaxis * self.width)
+            back_frame.xaxis = -back_frame.xaxis
+        else:
+            back_frame = beam.back_side(self.ref_side_index)
+            back_frame.translate(back_frame.normal * tol.absolute)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
-
-        # replace frames according to machining limits
-        frames = self._update_frames_based_on_machining_limits(frames, beam)
-
         return [Plane.from_frame(frame) for frame in frames]
 
     def volume_from_params_and_beam(self, beam):
         """
-        Calculates the trimming volume from the machining parameters in this instance and the given beam,
-        ensuring correct face orientation.
+        Calculates the subtracting volume from the machining parameters in this instance and the given beam, ensuring correct face orientation.
 
         Parameters
         ----------
@@ -548,12 +793,12 @@ class Lap(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Mesh`
-            The correctly oriented trimming volume of the cut.
+        :class:`compas.geometry.Polyhedron`
+            The correctly oriented subtracting volume of the lap.
         """
-        # Get cutting frames
-
-        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self.planes_from_params_and_beam(beam)
+        # type: Beam -> Polyhedron
+        # Get cutting planes
+        start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_beam(beam)
 
         # Calculate vertices using plane-plane-plane intersection
         vertices = [
@@ -566,59 +811,22 @@ class Lap(BTLxProcessing):
             Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),           # v6
             Point(*intersection_plane_plane_plane(end_plane, top_plane, front_plane)),          # v7
         ]
+
         # define faces of the trimming volume
         # ensure vertices are defined in counter-clockwise order when viewed from the outside
         faces = [
-            [3, 2, 1, 0],  # Bottom face
+            [0, 1, 2, 3],  # Bottom face
             [7, 6, 5, 4],  # Top face
-            [0, 1, 5, 4],  # Side face 1
-            [1, 2, 6, 5],  # Side face 2
-            [2, 3, 7, 6],  # Side face 3
-            [3, 0, 4, 7],  # Side face 4
+            [4, 5, 1, 0],  # Start face
+            [5, 6, 2, 1],  # Back face
+            [6, 7, 3, 2],  # End face
+            [7, 4, 0, 3],  # Front face
         ]
+
         # ensure proper vertex order based on orientation
         if self.orientation == OrientationType.END:
             faces = [face[::-1] for face in faces]
-
-        return Mesh.from_vertices_and_faces(vertices, faces)
-
-    def _update_frames_based_on_machining_limits(self, frames, beam):
-        """Updates the frames based on the machining limits.
-
-        Parameters
-        ----------
-        frames : list of :class:`compas.geometry.Frame`
-            The frames of the cut.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
-
-        Returns
-        -------
-        list of :class:`compas.geometry.Frame`
-            The updated frames of the cut.
-        """
-        tol = Tolerance()
-        tol.absolute=1e-3
-
-        if not self.machining_limits["FaceLimitedStart"]:
-            frames[0] = beam.ref_sides[4]
-        if not self.machining_limits["FaceLimitedEnd"]:
-            frames[1] = beam.ref_sides[5]
-        if not self.machining_limits["FaceLimitedTop"]:
-            frames[2] = beam.ref_sides[self.ref_side_index]
-            frames[2].translate(frames[2].zaxis * tol.absolute) # offset the top frame to avoid tolerance issues
-        if not self.machining_limits["FaceLimitedBottom"]:
-            opp_ref_side_index = beam.opposing_side_index(self.ref_side_index)
-            frames[3] = beam.ref_sides[opp_ref_side_index]
-            frames[3].translate(frames[3].zaxis * tol.absolute) # offset the bottom frame to avoid tolerance issues
-        if not self.machining_limits["FaceLimitedFront"]:
-            frames[4] = beam.ref_sides[(self.ref_side_index-1)%4]
-            frames[4].translate(frames[4].zaxis * tol.absolute) # offset the front frame to avoid tolerance issues
-        if not self.machining_limits["FaceLimitedBack"]:
-            frames[5] = beam.ref_sides[(self.ref_side_index+1)%4]
-            frames[5].translate(frames[5].zaxis * tol.absolute) # offset the back frame to avoid tolerance issues
-
-        return frames
+        return Polyhedron(vertices, faces)
 
 
 class LapParams(BTLxProcessingParams):
