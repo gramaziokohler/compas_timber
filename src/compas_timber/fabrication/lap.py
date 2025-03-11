@@ -488,28 +488,28 @@ class Lap(BTLxProcessing):
                    machining_limits=machining_limits,
                    ref_side_index=ref_side_index)
 
-    # @classmethod
-    # def from_shapes_and_element(cls, volume, element, **kwargs):
-    #     """Construct a Lap feature from a volume and a TimberElement.
+    @classmethod
+    def from_shapes_and_element(cls, volume, element, **kwargs):
+        """Construct a Lap feature from a volume and a TimberElement.
 
-    #     Parameters
-    #     ----------
-    #     volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
-    #         The volume of the Lap. Must have 6 faces.
-    #     element : :class:`~compas_timber.elements.Beam`
-    #         The element that is cut by this instance.
-    #     machining_limits : dict, optional
-    #         The machining limits for the cut. Default is None.
-    #     ref_side_index : int, optional
-    #         The index of the reference side of the element. Default is 0.
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the Lap. Must have 6 faces.
+        element : :class:`~compas_timber.elements.Beam`
+            The element that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
 
-    #     Returns
-    #     -------
-    #     :class:`~compas_timber.fabrication.Lap`
-    #         The Lap feature.
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+            The Lap feature.
 
-    #     """
-    #     return cls.from_volume_and_element(volume, element, **kwargs)
+        """
+        return cls.from_volume_and_element(volume, element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, plane):
@@ -607,7 +607,8 @@ class Lap(BTLxProcessing):
         front_side = beam.front_side(ref_side_index)
         parallelity = True
         for plane in [front_plane, back_plane]:
-            if not plane.is_parallel(Plane.from_frame(front_side)):
+            dot = dot_vectors(plane.normal, front_side.normal)
+            if not TOL.is_close(abs(dot), 1.0):
                 parallelity = False  # Change to False if any plane is not parallel
         return parallelity
 
