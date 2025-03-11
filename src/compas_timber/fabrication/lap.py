@@ -294,7 +294,7 @@ class Lap(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, length, depth, is_pocket=False, ref_side_index=0):
+    def from_plane_and_beam(cls, plane, beam, length, depth, ref_side_index=0):
         """Create a Lap instance from a plane and a beam. The lap is defined by the plane given and a plane parallel to that at a distance defined by the length and a given depth.
         This method is used to create pocket cuts.
 
@@ -308,8 +308,6 @@ class Lap(BTLxProcessing):
             The length of the lap.
         depth : float
             The depth of the lap.
-        is_pocket : bool, optional
-            If True, the lap is a pocket cut. Default is False
         ref_side_index : int, optional
             The reference side index of the main_beam to be cut. Default is 0 (i.e. RS1).
 
@@ -338,16 +336,16 @@ class Lap(BTLxProcessing):
         orientation = cls._calculate_orientation(ref_side, planes[0])
 
         # calculate the start_x of the lap
-        start_x = cls._calculate_start_x(ref_side, ref_edge, planes, orientation, depth, is_pocket)
+        start_x = cls._calculate_start_x(ref_side, ref_edge, planes, orientation, depth)
 
         # calculate the angle of the lap
         angle = cls._calculate_angle(ref_side, planes[0])
 
         # calculate the inclination of the lap
-        inclination = cls._calculate_inclination(ref_side, planes[0], is_pocket)
+        inclination = 90.0
 
         # calculate the slope of the lap
-        slope = 0.0 # TODO: implement slope calculation
+        slope = 0.0
 
         # calculate length
         length = cls._calculate_length(planes, ref_side, ref_edge, depth, angle)
@@ -379,7 +377,7 @@ class Lap(BTLxProcessing):
         Parameters
         ----------
         volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
-            The volume of the pocket. Must have 6 faces.
+            The volume of the lap. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
         machining_limits : dict, optional
@@ -419,7 +417,7 @@ class Lap(BTLxProcessing):
         start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = planes
 
         # get the intersection points
-        try: # TODO: ideally avoid doing all these intersection calculations
+        try:
             start_point = Point(*intersection_plane_plane_plane(start_plane, front_plane, Plane.from_frame(ref_side), tol=TOL.ABSOLUTE))
             bottom_point = Point(*intersection_plane_plane_plane(start_plane, front_plane, bottom_plane, tol=TOL.ABSOLUTE))
             back_point = Point (*intersection_plane_plane_plane(start_plane, back_plane, Plane.from_frame(ref_side), tol=TOL.ABSOLUTE))
@@ -490,28 +488,28 @@ class Lap(BTLxProcessing):
                    machining_limits=machining_limits,
                    ref_side_index=ref_side_index)
 
-    @classmethod
-    def from_shapes_and_element(cls, volume, element, **kwargs):
-        """Construct a Pocket feature from a volume and a TimberElement.
+    # @classmethod
+    # def from_shapes_and_element(cls, volume, element, **kwargs):
+    #     """Construct a Lap feature from a volume and a TimberElement.
 
-        Parameters
-        ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
-            The volume of the Lap. Must have 6 faces.
-        element : :class:`~compas_timber.elements.Beam`
-            The element that is cut by this instance.
-        machining_limits : dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
+    #     Parameters
+    #     ----------
+    #     volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+    #         The volume of the Lap. Must have 6 faces.
+    #     element : :class:`~compas_timber.elements.Beam`
+    #         The element that is cut by this instance.
+    #     machining_limits : dict, optional
+    #         The machining limits for the cut. Default is None.
+    #     ref_side_index : int, optional
+    #         The index of the reference side of the element. Default is 0.
 
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Lap`
-            The Lap feature.
+    #     Returns
+    #     -------
+    #     :class:`~compas_timber.fabrication.Lap`
+    #         The Lap feature.
 
-        """
-        return cls.from_volume_and_element(volume, element, **kwargs)
+    #     """
+    #     return cls.from_volume_and_element(volume, element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, plane):
@@ -522,14 +520,12 @@ class Lap(BTLxProcessing):
             return OrientationType.START
 
     @staticmethod
-    def _calculate_start_x(ref_side, ref_edge, planes, orientation, depth, is_pocket):
+    def _calculate_start_x(ref_side, ref_edge, planes, orientation, depth):
         # calculate the start x distance based on intersections of planes with reference edges.
         # if the lap is meant for a pocket one must consider the offseted reference edge
-        if is_pocket:
-            offseted_ref_edge = ref_edge.translated(-ref_side.normal * depth)
-            ref_edges = [offseted_ref_edge, ref_edge]
-        else:
-            ref_edges = [ref_edge]
+        offseted_ref_edge = ref_edge.translated(-ref_side.normal * depth)
+        ref_edges = [offseted_ref_edge, ref_edge]
+
         x_distances = []
         for edge, plane in zip(ref_edges, planes):
             if intersection_line_plane(edge, plane) is None:
@@ -544,14 +540,6 @@ class Lap(BTLxProcessing):
         # vector rotation direction of the plane's normal in the vertical direction
         angle_vector = Vector.cross(ref_side.normal, plane.normal)
         return abs(angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True))
-
-    @staticmethod
-    def _calculate_inclination(ref_side, plane, is_pocket):
-        # vector rotation direction of the plane's normal in the vertical direction
-        if is_pocket:
-            return 90.0
-        else:
-            return abs(angle_vectors_signed(ref_side.normal, plane.normal, ref_side.normal, deg=True))
 
     @staticmethod
     def _calculate_length(planes, ref_side, ref_edge, depth, angle):
@@ -607,7 +595,7 @@ class Lap(BTLxProcessing):
 
     @staticmethod
     def _calculate_start_x_y(ref_side, start_point):
-        # calculate the start_x, start_y of the pocket based on the start_corner_point and the ref_side
+        # calculate the start_x, start_y of the lap based on the start_corner_point and the ref_side
         start_vector = Vector.from_start_end(ref_side.point, start_point)
         start_x = dot_vectors(start_vector, ref_side.xaxis)
         start_y = dot_vectors(start_vector, ref_side.yaxis)
