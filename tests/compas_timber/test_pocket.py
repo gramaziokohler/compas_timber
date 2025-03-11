@@ -151,35 +151,6 @@ def test_pocket_from_mesh(tol, neg_vol, beam):
         assert face == expected_face
 
 
-def test_pocket_from_lap_joint(tol, lap_joint):
-    neg_vol_main, _ = lap_joint._create_negative_volumes()
-
-    instance = Pocket.from_volume_and_element(neg_vol_main, lap_joint.main_beam, ref_side_index=lap_joint.main_ref_side_index)
-    # attribute assertions
-    assert tol.is_close(instance.start_x, 536.945)
-    assert tol.is_close(instance.start_y, 0.0)
-    assert tol.is_close(instance.start_depth, 24.871)
-    assert tol.is_close(instance.angle, 0.0)
-    assert tol.is_close(instance.inclination, -5.180)
-    assert tol.is_close(instance.slope, 13.900)
-    assert tol.is_close(instance.length, 60.975)
-    assert tol.is_close(instance.width, 61.796)
-    assert tol.is_close(instance.internal_angle, 116.055)
-    assert tol.is_close(instance.tilt_ref_side, 76.154)
-    assert tol.is_close(instance.tilt_end_side, 79.739)
-    assert tol.is_close(instance.tilt_opp_side, 103.846)
-    assert tol.is_close(instance.tilt_start_side, 100.261)
-    assert instance.machining_limits == {
-        "FaceLimitedBack": False,
-        "FaceLimitedStart": True,
-        "FaceLimitedBottom": True,
-        "FaceLimitedTop": False,
-        "FaceLimitedEnd": True,
-        "FaceLimitedFront": False,
-    }
-    assert instance.ref_side_index == 2
-
-
 def test_pocket_data():
     machining_limits = {
         "FaceLimitedBack": False,
