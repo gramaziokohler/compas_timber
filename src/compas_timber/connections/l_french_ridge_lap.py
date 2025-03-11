@@ -3,7 +3,7 @@ from compas_timber.fabrication import FrenchRidgeLap
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
-from .utilities import are_beams_coplanar
+from .utilities import are_beams_aligned_with_cross_vector
 
 
 class LFrenchRidgeLapJoint(LapJoint):
@@ -103,7 +103,7 @@ class LFrenchRidgeLapJoint(LapJoint):
         BeamJoiningError
             If the elements are not compatible for the creation of the joint.
         """
-        if not are_beams_coplanar(*self.elements):
+        if not are_beams_aligned_with_cross_vector(*self.elements):
             raise BeamJoiningError(
                 beams=self.elements,
                 joint=self,
@@ -113,8 +113,7 @@ class LFrenchRidgeLapJoint(LapJoint):
         dimensions = []
         ref_side_indices = [self.main_ref_side_index, self.cross_ref_side_index]
         for i, beam in enumerate(self.elements):
-            width = beam.side_as_surface(ref_side_indices[i]).ysize
-            height = beam.height if ref_side_indices[i] % 2 == 0 else beam.width
+            width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
             dimensions.append((width, height))
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
