@@ -1,14 +1,15 @@
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import NurbsCurve
+from compas.geometry import PlanarSurface
+from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.geometry import Vector
-from compas.geometry import angle_vectors_signed
-from compas.geometry import dot_vectors
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.fabrication import FreeContour
+from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
 
@@ -52,16 +53,22 @@ class Plate(TimberElement):
         data["vector"] = self.vector
         return data
 
-    def __init__(self, outline, thickness, vector=None, frame=None, **kwargs):
+    def __init__(self, outline, thickness, vector=None, frame=None, blank_extension=0, **kwargs):
         super(Plate, self).__init__(**kwargs)
         if not outline.is_closed:
-            raise ValueError("The outline points are not coplanar.")
-        self.outline = outline
+            raise ValueError("The outline is not closed.")
+        self.blank_extension = blank_extension
         self.thickness = thickness
-        self.set_frame_and_outline(outline, vector)
+        self.outline = outline
+        self._outline_feature = None
+        self._vector = vector or None
+        self._frame = frame or None
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+        self._ref_frame = None
+        self._blank = None
+        self._features = []
 
     def __repr__(self):
         # type: () -> str
@@ -85,49 +92,119 @@ class Plate(TimberElement):
 
     @property
     def blank(self):
-        return self.obb
+        if not self._blank:
+            self._blank = self.obb.copy()
+            if self.blank_extension:
+                self._blank.xsize += 2 * self.blank_extension
+                self._blank.ysize += 2 * self.blank_extension
+        return self._blank
 
     @property
-    def vector(self):
-        return self.frame.zaxis * self.thickness
+    def blank_length(self):
+        return self.blank.xsize
 
     @property
-    def shape(self):
-        brep = Brep.from_extrusion(NurbsCurve.from_points(self.outline.points, degree=1), self.vector)
-        return brep
+    def width(self):
+        return self.blank.zsize
 
     @property
-    def has_features(self):
-        # TODO: consider removing, this is not used anywhere
-        return len(self.features) > 0
+    def height(self):
+        return self.blank.ysize
+
+    @property
+    def ref_frame(self):
+        if not self._ref_frame:
+            self._ref_frame = Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
+        return self._ref_frame
+
+    @property
+    def ref_sides(self):
+        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        # TODO: cache these
+        rs1_point = self.ref_frame.point
+        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
+        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
+        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
+        rs5_point = rs1_point
+        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
+        return (
+            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
+            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
+            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
+            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
+            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
+            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
+        )
+
+    def side_as_surface(self, side_index):
+        # type: (int) -> compas.geometry.PlanarSurface
+        """Returns the requested side of the beam as a parametric planar surface.
+
+        Parameters
+        ----------
+        side_index : int
+            The index of the reference side to be returned. 0 to 5.
+
+        """
+        # TODO: maybe this should be the default representation of the ref sides?
+        ref_side = self.ref_sides[side_index]
+        if side_index in (0, 2):  # top + bottom
+            xsize = self.blank_length
+            ysize = self.width
+        elif side_index in (1, 3):  # sides
+            xsize = self.blank_length
+            ysize = self.height
+        elif side_index in (4, 5):  # ends
+            xsize = self.width
+            ysize = self.height
+        return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
+
+    @property
+    def features(self):
+        if not self._outline_feature:
+            self._outline_feature = FreeContour.from_polyline_and_element(self.outline, self, interior=False)
+        return [self._outline_feature] + self._features
+
+    @features.setter
+    def features(self, features):
+        self._features = features
 
     @property
     def key(self):
         # type: () -> int | None
         return self.graph_node
 
+    @property
+    def frame(self):
+        if not self._frame:
+            self._frame = Frame.from_points(self.outline[0], self.outline[1], self.outline[-2])
+            if is_polyline_clockwise(self.outline, self._frame.normal):
+                self._frame = Frame(self._frame.point, self._frame.xaxis, -self._frame.yaxis)
+        return self._frame
+        # flips the frame if the frame.point is at an interior corner
+
+    @property
+    def vector(self):
+        if not self._vector:
+            self._vector = self.frame.zaxis * self.thickness
+        return self._vector
+
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
 
-    def set_frame_and_outline(self, outline, vector=None):
-        frame = Frame.from_points(outline.points[0], outline.points[1], outline.points[-2])
-        aggregate_angle = 0.0  # this is used to determine if the outline is clockwise or counterclockwise
-        for i in range(len(outline.points) - 1):
-            first_vector = Vector.from_start_end(outline.points[i - 1], outline.points[i])
-            second_vector = Vector.from_start_end(outline.points[i], outline.points[i + 1])
-            aggregate_angle += angle_vectors_signed(first_vector, second_vector, frame.zaxis)
-        if aggregate_angle > 0:
-            frame = Frame(frame.point, frame.xaxis, -frame.yaxis)
-            # flips the frame if the frame.point is at an interior corner
+    def add_feature(self, feature):
+        # type: (compas_timber.parts.Feature) -> None
+        """Adds a feature to the plate.
 
-        if vector is not None and dot_vectors(frame.zaxis, vector) < 0:
-            # if the vector is pointing in the opposite direction from self.frame.normal
-            frame = Frame(frame.point, frame.yaxis, frame.xaxis)
-            self.outline.reverse()
-            # flips the frame if the frame.point is at an exterior corner
+        Parameters
+        ----------
+        feature : :class:`~compas_timber.parts.Feature`
+            The feature to be added.
 
-        self.frame = frame
+        """
+        self._features.append(feature)
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -137,18 +214,19 @@ class Plate(TimberElement):
         ----------
         include_features : bool, optional
             If ``True``, include the features in the computed geometry.
-            If ``False``, return only the base geometry.
+            If ``False``, return only the outline geometry.
 
         Returns
         -------
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        plate_geo = self.shape
+        outline = Polyline(correct_polyline_direction(self.outline, self.vector, clockwise=True))  # corrects the direction of the outline to get correctly oriented Brep
+        plate_geo = Brep.from_extrusion(outline, self.vector)
         if include_features:
-            for feature in self.features:
+            for feature in self._features:
                 try:
-                    plate_geo = feature.apply(plate_geo)
+                    plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return plate_geo
@@ -181,29 +259,23 @@ class Plate(TimberElement):
         # type: (float | None) -> compas.geometry.Box
         """Computes the Oriented Bounding Box (OBB) of the element.
 
-        Parameters
-        ----------
-        inflate : float
-            Offset of box to avoid floating point errors.
-
         Returns
         -------
         :class:`compas.geometry.Box`
             The OBB of the element.
 
         """
-        vertices = [point for point in self.outline.points]
-        for point in self.outline.points:
-            vertices.append(point + self.vector)
-        for point in vertices:
-            point.transform(Transformation.from_change_of_basis(Frame.worldXY(), self.frame))
+        vertices = []
+        for point in self.outline:
+            vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
         obb = Box.from_points(vertices)
-        obb.xsize += inflate
-        obb.ysize += inflate
-        obb.zsize += inflate
-
-        obb.transform(Transformation.from_change_of_basis(self.frame, Frame.worldXY()))
-
+        obb.zsize = self.thickness
+        obb.translate([0, 0, self.thickness / 2])
+        if inflate != 0.0:
+            obb.xsize += inflate
+            obb.ysize += inflate
+            obb.zsize += inflate
+        obb.transform(Transformation.from_frame_to_frame(Frame.worldXY(), self.frame))
         return obb
 
     def compute_collision_mesh(self):
@@ -234,7 +306,7 @@ class Plate(TimberElement):
         """
         if not isinstance(features, list):
             features = [features]
-        self.features.extend(features)
+        self._features.extend(features)
 
     @reset_computed
     def remove_features(self, features=None):
@@ -247,8 +319,8 @@ class Plate(TimberElement):
 
         """
         if features is None:
-            self.features = []
+            self._features = []
         else:
             if not isinstance(features, list):
                 features = [features]
-            self.features = [f for f in self.features if f not in features]
+            self._features = [f for f in self._features if f not in features]

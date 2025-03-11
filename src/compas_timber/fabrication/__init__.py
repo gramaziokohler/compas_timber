@@ -16,6 +16,7 @@ from .tenon import Tenon
 from .mortise import Mortise
 from .slot import Slot
 from .pocket import Pocket
+from .free_contour import FreeContour
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
 from .btlx import LimitationTopType
@@ -42,6 +43,7 @@ __all__ = [
     "Mortise",
     "Slot",
     "Pocket",
+    "FreeContour",
     "TenonShapeType",
     "EdgePositionType",
     "LimitationTopType",

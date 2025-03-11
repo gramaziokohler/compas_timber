@@ -5,18 +5,18 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import date
 from datetime import datetime
+from itertools import chain
 from warnings import warn
 
 import compas
 from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Transformation
-from compas.geometry import Vector
 from compas.geometry import angle_vectors
-from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import correct_polyline_direction
 
 
 class BTLxWriter(object):
@@ -37,6 +37,8 @@ class BTLxWriter(object):
 
 
     """
+
+    SERIALIZERS = {}
 
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
@@ -159,18 +161,19 @@ class BTLxWriter(object):
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
-        for i, beam in enumerate(model.beams):  # TODO: we need to add at least Plates to this too.
-            part_element = self._create_part(beam, i)
+        elements = chain(model.beams, model.plates)
+        for i, element in enumerate(elements):
+            part_element = self._create_part(element, i)
             parts_element.append(part_element)
         return project_element
 
-    def _create_part(self, beam, order_num):
+    def _create_part(self, element, order_num):
         """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
         ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam object.
+        element : :class:`~compas_model.elements.Element` # TODO: not really
+            The element object.
         num : int
             The order number of the part.
 
@@ -181,13 +184,13 @@ class BTLxWriter(object):
 
         """
         # create part element
-        part = BTLxPart(beam, order_num=order_num)
+        part = BTLxPart(element, order_num=order_num)
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # create processings element for the part if there are any
-        if beam.features:
+        if element.features:
             processings_element = ET.Element("Processings")
-            for feature in beam.features:
+            for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
                     processing_element = self._create_processing(feature)
@@ -195,7 +198,8 @@ class BTLxWriter(object):
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
-        if beam._geometry:
+        if element.is_beam and element._geometry:
+            # TODO: implement this for plates as well. Brep.from_extrusion seems to have incorrect number of faces regardless of input curve.
             part_element.append(part.et_shape)
         return part_element
 
@@ -213,77 +217,109 @@ class BTLxWriter(object):
             The processing element.
 
         """
-        # create processing element
+        processing_params = processing.params
+        params_dict = processing_params.as_dict()
+
         processing_element = ET.Element(
-            processing.PROCESSING_NAME,
-            processing.header_attributes,
+            processing_params.header_attributes["Name"],
+            processing_params.header_attributes,
         )
-        # create parameter subelements
-        for key, value in processing.params_dict.items():
-            if key not in processing.header_attributes:
-                child = ET.SubElement(processing_element, key)
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        child.set(sub_key, sub_value)
-                else:
-                    child.text = str(value)
-        # create subprocessing elements
-        if processing.subprocessings:
+
+        for key, value in params_dict.items():
+            if isinstance(value, dict):
+                # childless element:
+                # <Element key1="value1" key2="value2" />
+                param = ET.Element(key)
+                for sub_key, sub_value in value.items():
+                    param.set(sub_key, sub_value)
+
+            elif isinstance(value, str):
+                # single value element:
+                # <Element>value</Element>
+                param = ET.Element(key)
+                param.text = value
+
+            else:
+                # complex parameter:
+                # <Element><SubElement1 /><SubElement2 /></Element>
+                param = self._element_from_complex_param(value)
+            processing_element.append(param)
+
+        if processing.subprocessings:  # TODO: expose this in Params as well so this logic only interacts with it
             for subprocessing in processing.subprocessings:
                 processing_element.append(self._create_processing(subprocessing))
         return processing_element
 
+    def _element_from_complex_param(self, param):
+        serializer = self.SERIALIZERS.get(type(param), None)
+        if not serializer:
+            raise ValueError("No serializer found for type: {}".format(type(param)))
+        return serializer(param)
+
+    @classmethod
+    def register_type_serializer(cls, type_, serializer):
+        """Register a type and its serializer.
+
+        Parameters
+        ----------
+        type_ : type
+            The type to be serialized.
+        serializer : callable
+            The serializer function. Takes an instance of `type_` and returns an XML element which correspondes with it.
+
+        """
+        cls.SERIALIZERS[type_] = serializer
+
 
 class BTLxPart(object):
-    """Class representing a BTLx part. This acts as a wrapper for a Beam object.
+    """Class representing a BTLx part. This acts as a wrapper for an Element object.
 
     Parameters
     ----------
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam object.
+    element : :class:`~compas_model.elements.Element`  # TODO: not really, make BTLx Element parent class
+        The element object.
 
     Attributes
     ----------
     attr : dict
         The attributes of the BTLx part.
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam object.
+    element : :class:`~compas_model.elements.Element`
+        The element object.
     key : str
-        The key of the beam object.
+        The key of the element object.
     length : float
-        The length of the beam.
+        The length of the element.
     width : float
-        The width of the beam.
+        The width of the element.
     height : float
-        The height of the beam.
+        The height of the element.
     frame : :class:`~compas.geometry.Frame`
         The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
     blank : :class:`~compas.geometry.Box`
-        The blank of the beam.
+        The blank of the element.
     blank_frame : :class:`~compas.geometry.Frame`
         The frame of the blank.
     blank_length : float
-        The blank length of the beam.
+        The blank length of the element.
     processings : list
-        A list of the processings applied to the beam.
+        A list of the processings applied to the element.
 
     """
 
-    def __init__(self, beam, order_num):
-        self.beam = beam
+    def __init__(self, element, order_num):
+        self.element = element
         self.order_num = order_num
-        self.length = beam.blank_length
-        self.width = beam.width
-        self.height = beam.height
-        self.frame = beam.ref_frame
-        self.blank_length = beam.blank_length
+        self.length = element.blank_length
+        self.width = element.width
+        self.height = element.height
+        self.frame = element.ref_frame
         self.processings = []
         self._et_element = None
         self._shape_strings = None
 
     @property
     def part_guid(self):
-        return str(self.beam.guid)
+        return str(self.element.guid)
 
     @property
     def et_grain_direction(self):
@@ -293,15 +329,15 @@ class BTLxPart(object):
     def et_reference_side(self):
         return ET.Element("ReferenceSide", Side="1", Align="no")
 
-    def ref_side_from_face(self, beam_face):
-        """Finds the one-based index of the reference side with normal that matches the normal of the given beam face.
+    def ref_side_from_face(self, element_face):
+        """Finds the one-based index of the reference side with normal that matches the normal of the given element face.
 
-        This essentially translates between the beam face reference system to the BTLx side reference system.
+        This essentially translates between the element face reference system to the BTLx side reference system.
 
         Parameters
         ----------
-        beam_face : :class:`~compas.geometry.Frame`
-            The frame of a beam face from beam.faces.
+        element_face : :class:`~compas.geometry.Frame`
+            The frame of an element face from element.faces.
 
         Returns
         -------
@@ -309,11 +345,11 @@ class BTLxPart(object):
             The key(index 1-6) of the reference surface.
 
         """
-        for index, ref_side in enumerate(self.beam.ref_sides):
-            angle = angle_vectors(ref_side.normal, beam_face.normal, deg=True)
+        for index, ref_side in enumerate(self.element.ref_sides):
+            angle = angle_vectors(ref_side.normal, element_face.normal, deg=True)
             if TOL.is_zero(angle):
                 return index + 1  # in BTLx face indices are one-based
-        raise ValueError("Given beam face does not match any of the reference surfaces.")
+        raise ValueError("Given element face does not match any of the reference surfaces.")
 
     @property
     def attr(self):
@@ -330,7 +366,7 @@ class BTLxPart(object):
             "TimberGrade": "",
             "QualityGrade": "",
             "Count": "1",
-            "Length": "{:.{prec}f}".format(self.blank_length, prec=BTLxWriter.POINT_PRECISION),
+            "Length": "{:.{prec}f}".format(self.length, prec=BTLxWriter.POINT_PRECISION),
             "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
             "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
             "Weight": "0",
@@ -381,7 +417,7 @@ class BTLxPart(object):
 
     @property
     def shape_strings(self):
-        """Generates the shape strings for the BTLxPart. Only works in environments where the beam.geometry Brep is available.
+        """Generates the shape strings for the BTLxPart. Only works in environments where the element.geometry Brep is available.
 
         returns
         -------
@@ -392,7 +428,7 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            for face in self.beam.geometry.faces:
+            for face in self.element.geometry.faces:
                 pts = []
                 frame = face.surface.frame_at(0.5, 0.5)
                 edges = face.boundary.edges[1:]
@@ -436,13 +472,50 @@ class BTLxPart(object):
         return self._shape_strings
 
 
+def contour_to_xml(contour):
+    """Converts a contour to an XML element.
+
+    Parameters
+    ----------
+    contour : :class:`Contour`
+        The contour to be converted.
+
+    Returns
+    -------
+    :class:`~xml.etree.ElementTree.Element`
+        The element which represents the contour.
+
+    """
+    root = ET.Element("Contour")
+    if contour.depth:
+        root.set("Depth", "{:.{prec}f}".format(contour.depth, prec=BTLxWriter.POINT_PRECISION))
+    if contour.depth_bounded:
+        root.set("DepthBounded", "yes" if contour.depth_bounded else "no")
+    if contour.inclination:
+        root.set("Inclination", "{:.{prec}f}".format(contour.inclination, prec=BTLxWriter.ANGLE_PRECISION))
+
+    start = contour.polyline[0]
+    start_point = ET.SubElement(root, "StartPoint")
+    start_point.set("X", "{:.{prec}f}".format(start.x, prec=BTLxWriter.POINT_PRECISION))
+    start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
+    start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
+
+    for point in contour.polyline[1:]:
+        line = ET.SubElement(root, "Line")
+        end_point = ET.SubElement(line, "EndPoint")
+        end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
+        end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
+        end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
+    return root
+
+
 class BTLxProcessing(Data):
     """Base class for BTLx Processing.
 
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the beam to be cut. 0-5 correspond to RS1-RS6.
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6.
     priority : int
         The priority of the process.
     process_id : int
@@ -475,17 +548,6 @@ class BTLxProcessing(Data):
     def PROCESSING_NAME(self):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
 
-    @property
-    def header_attributes(self):
-        """Return the attributes to be included in the XML element."""
-        return {
-            "Name": self.PROCESSING_NAME,
-            "Priority": str(self.priority),
-            "Process": "yes",
-            "ProcessID": str(self.process_id),
-            "ReferencePlaneID": str(self.ref_side_index + 1),
-        }
-
     def add_subprocessing(self, subprocessing):
         """Add a nested subprocessing."""
         if not self.subprocessings:
@@ -506,14 +568,8 @@ class BTLxProcessingParams(object):
     def __init__(self, instance):
         self._instance = instance
 
-    def as_dict(self):
-        """Returns the processing parameters as a dictionary.
-
-        Returns
-        -------
-        dict
-            The processing parameters as a dictionary.
-        """
+    @property
+    def header_attributes(self):
         result = OrderedDict()
         result["Name"] = self._instance.PROCESSING_NAME
         result["Process"] = "yes"
@@ -522,6 +578,16 @@ class BTLxProcessingParams(object):
         result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
         return result
 
+    def as_dict(self):
+        """Returns the processing parameters as a dictionary.
+
+        Returns
+        -------
+        dict
+            The processing parameters as a dictionary.
+        """
+        raise NotImplementedError("as_dict must be implemented in subclasses!")
+
 
 class OrientationType(object):
     """Enum for the orientation of the cut.
@@ -529,9 +595,9 @@ class OrientationType(object):
     Attributes
     ----------
     START : literal("start")
-        The start of the beam is cut away.
+        The start of the element is cut away.
     END : literal("end")
-        The end of the beam is cut away.
+        The end of the element is cut away.
     """
 
     START = "start"
@@ -668,6 +734,55 @@ class EdgePositionType(object):
     OPPEDGE = "oppedge"
 
 
+class AlignmentType(object):
+    """Enum for the alignment of the cut.
+    Attributes
+    ----------
+    TOP : literal("top")
+        Top alignment.
+    BOTTOM : literal("bottom")
+        Bottom alignment.
+    LEFT : literal("left")
+        Left alignment.
+    RIGHT : literal("right")
+        Right alignment.
+    CENTER : literal("center")
+        Center alignment.
+    """
+
+    TOP = "top"
+    BOTTOM = "bottom"
+    LEFT = "left"
+    RIGHT = "right"
+    CENTER = "center"
+
+
+class Contour(object):
+    """Represens the generic contour for specific free contour processings.
+
+    Parameters
+    ----------
+    depth : float
+        The depth of the contour.
+    depth_bounded : bool
+        If True, the depth is bounded.
+    inclination : float
+        The inclination of the contour.
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline of the contour.
+    TODO: add point attributes for other types like NailContour
+    """
+
+    def __init__(self, polyline, depth=None, depth_bounded=None, inclination=None):
+        self.depth = depth
+        self.depth_bounded = depth_bounded
+        self.inclination = inclination
+        self.polyline = polyline
+
+
+BTLxWriter.register_type_serializer(Contour, contour_to_xml)
+
+
 class BTLxFromGeometryDefinition(Data):
     """Container linking a BTLx Process Type and generator function to an input geometry.
     This allows delaying the actual applying of features to a downstream component.
@@ -728,29 +843,3 @@ class BTLxFromGeometryDefinition(Data):
             return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
         except Exception as ex:
             raise FeatureApplicationError(self.geometries, element.blank, str(ex))
-
-
-def correct_polyline_direction(polyline, normal_vector):
-    # TODO: this is a temporary method. I couldn't import the one from BallNodeJoint, so I copied it here. Once that method is moved to .utils, we can remove it here.
-    """Corrects the direction of a polyline to be counter-clockwise around a given vector.
-
-    Parameters
-    ----------
-    polyline : :class:`compas.geometry.Polyline`
-        The polyline to correct.
-
-    Returns
-    -------
-    :class:`compas.geometry.Polyline`
-        The corrected polyline.
-
-    """
-    angle_sum = 0
-    for i in range(len(polyline) - 1):
-        u = Vector.from_start_end(polyline[i - 1], polyline[i])
-        v = Vector.from_start_end(polyline[i], polyline[i + 1])
-        angle = angle_vectors_signed(u, v, normal_vector)
-        angle_sum += angle
-    if angle_sum > 0:
-        polyline = polyline[::-1]
-    return polyline
