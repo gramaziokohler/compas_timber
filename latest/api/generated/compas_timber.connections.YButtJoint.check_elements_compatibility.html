@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="YButtJoint.copy" href="compas_timber.connections.YButtJoint.copy.html" />
-    <link rel="prev" title="YButtJoint.ToString" href="compas_timber.connections.YButtJoint.ToString.html" />
+    <link rel="next" title="YButtJoint.cross_beam_ref_side_index" href="compas_timber.connections.YButtJoint.cross_beam_ref_side_index.html" />
+    <link rel="prev" title="YButtJoint.add_features" href="compas_timber.connections.YButtJoint.add_features.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -601,13 +601,13 @@ document.write(`
 <h1>YButtJoint.check_elements_compatibility</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.YButtJoint.check_elements_compatibility">
-<span class="sig-prename descclassname"><span class="pre">YButtJoint.</span></span><span class="sig-name descname"><span class="pre">check_elements_compatibility</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e72627f/src/compas_timber/connections/joint.py#L84"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Checks if the beams are compatible for the creation of the joint.
-This is optional and should only be implemented by joints that require it.</p>
+<span class="sig-prename descclassname"><span class="pre">YButtJoint.</span></span><span class="sig-name descname"><span class="pre">check_elements_compatibility</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/55fb297/src/compas_timber/connections/y_butt.py#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Checks if the elements are compatible for the creation of the joint.</p>
+<p>For the Y-Butt joint, this method checks if the two cross beams are coplanar and have the same dimensions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamJoiningError</span></code></dt><dd><p>Should be raised whenever the elements did not comply with the requirements of the joint.</p>
+<dt>BeamJoiningError</dt><dd><p>If the elements are not compatible for the creation of the joint.</p>
 </dd>
 </dl>
 </dd>
