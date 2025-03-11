@@ -648,3 +648,51 @@ class Beam(TimberElement):
         if ref_side_index in [1, 3]:
             return self.height, self.width
         return self.width, self.height
+
+    def front_side(self, ref_side_index):
+        """Returns the front side of the beam relative to the given reference side.
+        This method does not consider the start and end sides.
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the front side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the front side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 1) % 4]
+
+    def back_side(self, ref_side_index):
+        """Returns the back side of the beam relative to the given reference side.
+        This method does not consider the start and end sides.
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the back side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the back side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index - 1) % 4]
+
+    def opp_side(self, ref_side_index):
+        """Returns the opposite side of the beam relative to the given reference side.
+        This method does not consider the start and end sides.
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the opposite side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the opposite side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 2) % 4]
