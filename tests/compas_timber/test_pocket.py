@@ -254,13 +254,7 @@ def test_pocket_params_obj():
         ref_side_index=0,
     )
 
-    params = instance.params_dict
-
-    assert params["Name"] == "Pocket"
-    assert params["Process"] == "yes"
-    assert params["Priority"] == "0"
-    assert params["ProcessID"] == "0"
-    assert params["ReferencePlaneID"] == "1"
+    params = instance.params_dict.as_dict()
 
     assert params["StartX"] == "2289.328"
     assert params["StartY"] == "0.000"
