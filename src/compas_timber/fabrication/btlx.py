@@ -443,6 +443,8 @@ class BTLxPart(object):
                         elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
                             pts.append(edges.pop(i).start_vertex.point)
                     overflow -= 1
+                if not TOL.is_allclose(pts[0], pts[-1]):  # make sure the polyline is closed
+                    pts.append(pts[0])
                 pts = correct_polyline_direction(pts, frame.normal)
 
                 if len(pts) != len(face.edges):
