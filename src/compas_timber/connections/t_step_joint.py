@@ -130,8 +130,7 @@ class TStepJoint(Joint):
     def main_extension_plane(self):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        opp_side_index = self.cross_beam.opposing_side_index(ref_side_index)
-        return self.cross_beam.ref_sides[opp_side_index]
+        return self.cross_beam.opp_side(ref_side_index)
 
     def set_step_depths(self, step_depth=None, heel_depth=None):
         """Sets the default step and heel depths based on the joint type if they are not provided."""

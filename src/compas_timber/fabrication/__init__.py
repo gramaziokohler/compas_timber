@@ -15,6 +15,7 @@ from .french_ridge_lap import FrenchRidgeLap
 from .tenon import Tenon
 from .mortise import Mortise
 from .slot import Slot
+from .pocket import Pocket
 from .free_contour import FreeContour
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
@@ -41,6 +42,7 @@ __all__ = [
     "Tenon",
     "Mortise",
     "Slot",
+    "Pocket",
     "FreeContour",
     "TenonShapeType",
     "EdgePositionType",

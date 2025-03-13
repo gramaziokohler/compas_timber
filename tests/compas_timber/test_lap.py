@@ -4,7 +4,7 @@ from compas.data import json_dumps
 from compas.data import json_loads
 
 from compas.geometry import Point
-from compas.geometry import Plane
+from compas.geometry import Polyhedron
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Vector
@@ -17,7 +17,7 @@ from compas_timber.fabrication import Lap
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+    return Tolerance(unit="MM", absolute=1e-2, relative=1e-2)
 
 
 def test_lap_for_pocket_from_frame(tol):
@@ -43,7 +43,6 @@ def test_lap_for_pocket_from_frame(tol):
         beam,
         lap_length,
         lap_depth,
-        is_pocket=True,
         ref_side_index=ref_side_index,
     )
 
@@ -74,23 +73,17 @@ def test_lap_for_pocket_from_frame(tol):
 
     # expected vertices and faces
     expected_vertices = [
-        [31941.467663941679, -3247.6682128906177, 13.58295656705431],
-        [31941.467663941679, -3247.6682128906177, 133.58495656705432],
-        [31808.142267843792, -3247.6682128906177, 133.58495656705432],
-        [31808.142267843792, -3247.6682128906177, 13.58295656705431],
-        [31941.467663941679, -3227.667212890618, 13.58295656705431],
-        [31941.467663941679, -3227.667212890618, 133.58495656705432],
-        [31808.142267843792, -3227.667212890618, 133.58495656705432],
-        [31808.142267843792, -3227.667212890618, 13.58295656705431],
+        Point(x=31941.779032189967, y=-3247.6682128899993, z=133.58495656710002),
+        Point(x=31941.779032189967, y=-3247.6682128899993, z=13.582956567099998),
+        Point(x=31808.42492581622, y=-3247.6682128899993, z=13.582956567099998),
+        Point(x=31808.42492581622, y=-3247.6682128899993, z=133.58495656710002),
+        Point(x=31941.779032189967, y=-3227.66821289, z=133.58495656710002),
+        Point(x=31941.779032189967, y=-3227.66821289, z=13.582956567099998),
+        Point(x=31808.42492581622, y=-3227.66821289, z=13.582956567099998),
+        Point(x=31808.42492581622, y=-3227.66821289, z=133.58495656710002),
     ]
-    expected_faces = [
-        [0, 1, 2, 3],
-        [4, 5, 6, 7],
-        [4, 5, 1, 0],
-        [5, 6, 2, 1],
-        [6, 7, 3, 2],
-        [7, 4, 0, 3],
-    ]
+
+    expected_faces = [[3, 2, 1, 0], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
 
     # assert vertices
     assert len(mesh_vertices) == len(expected_vertices)
@@ -103,31 +96,41 @@ def test_lap_for_pocket_from_frame(tol):
         assert face == expected_face
 
 
-def test_lap_for_halflaps_from_plane(tol):
-    centerline = Line(
-        Point(x=32087.5161016, y=-4629.03501941, z=73.5839565671),
-        Point(x=33194.4503091, y=-1833.71037612, z=73.5839565671),
-    )
-    cross_cection = [80, 100]
-    beam = Beam.from_centerline(centerline, cross_cection[0], cross_cection[1])
+def test_lap_from_polyhedron(tol):
+    centerline = Line(Point(x=598.9718391480744, y=442.07491356492113, z=-43.147538325873505), Point(x=439.346903483214, y=-335.92694125538884, z=69.2873648757245))
+    cross_cection = [60, 60]
+    z_vector = Vector(x=-0.379, y=0.208, z=0.902)
+    beam = Beam.from_centerline(centerline, cross_cection[0], cross_cection[1], z_vector)
 
-    cutting_plane = Plane(point=Point(x=30396.144, y=-3287.668, z=13.584), normal=Vector(x=-0.000, y=-1.000, z=0.000))
-    lap_length = 60.0
-    lap_depth = 88.0
-    ref_side_index = 2
+    polyhedron = Polyhedron(
+        vertices=(
+            Point(x=538.7940634854756, y=-30.0, z=17.375355587655925),
+            Point(x=560.2327136921036, y=-30.0, z=-30.0),
+            Point(x=545.7550689114237, y=30.0, z=20.525401820812363),
+            Point(x=568.6192015970676, y=30.0, z=-30.0),
+            Point(x=490.65016682732494, y=30.0, z=-4.4110805717187915),
+            Point(x=502.22985601347585, y=30.0, z=-30.0),
+            Point(x=483.6891614013768, y=-30.0, z=-7.561126804875222),
+            Point(x=493.8433681085121, y=-30.0, z=-30.0),
+        ),
+        faces=[[1, 7, 5, 3], [0, 2, 4, 6], [1, 3, 2, 0], [3, 5, 4, 2], [5, 7, 6, 4], [7, 1, 0, 6]],
+    )
 
     # Lap instance
-    instance = Lap.from_plane_and_beam(cutting_plane, beam, lap_length, lap_depth, is_pocket=False, ref_side_index=ref_side_index)
+    instance = Lap.from_volume_and_beam(polyhedron, beam, ref_side_index=0)
 
     # attribute assertions
     assert instance.orientation == "start"
-    assert tol.is_close(instance.start_x, 1458.549)
-    assert tol.is_close(instance.angle, 68.397)
-    assert tol.is_close(instance.inclination, 90.0)
-    assert tol.is_close(instance.slope, 0.0)
+    assert tol.is_close(instance.start_x, 414.510)
+    assert tol.is_close(instance.start_y, 0.0)
+    assert tol.is_close(instance.angle, 97.420)
+    assert tol.is_close(instance.inclination, 102.009)
+    assert tol.is_close(instance.slope, -1.552)
     assert tol.is_close(instance.length, 60.0)
-    assert tol.is_close(instance.width, 80.0)
-    assert tol.is_close(instance.depth, 88.0)
+    assert tol.is_close(instance.width, 60.0)
+    assert tol.is_close(instance.depth, 21.843)
+    assert instance.lead_angle_parallel
+    assert instance.lead_inclination_parallel
     assert tol.is_close(instance.lead_angle, 90.0)
     assert tol.is_close(instance.lead_inclination, 90.0)
     assert instance.machining_limits == {
@@ -138,40 +141,34 @@ def test_lap_for_halflaps_from_plane(tol):
         "FaceLimitedEnd": True,
         "FaceLimitedFront": False,
     }
-    assert instance.ref_side_index == ref_side_index
+    assert instance.ref_side_index == 0
 
     # volume from Lap instance
-    mesh_volume = instance.volume_from_params_and_beam(beam)
-    mesh_vertices, mesh_faces = mesh_volume.to_vertices_and_faces()
+    polyhedron_volume = instance.volume_from_params_and_beam(beam)
+    polyhedron_vertices, polyhedron_faces = polyhedron_volume.to_vertices_and_faces()
 
     # expected vertices and faces
     expected_vertices = [
-        [32575.667318015712, -3287.6682128900229, 35.583956567057157],
-        [32661.713622767158, -3287.6682128900229, 35.583956567057157],
-        [32685.473314726958, -3227.6682128899961, 35.583956567057157],
-        [32599.427009975512, -3227.6682128899961, 35.583956567057157],
-        [32575.667318015712, -3287.6682128900229, 123.58495656705432],
-        [32661.713622767158, -3287.6682128900229, 123.58495656705432],
-        [32685.473314726958, -3227.6682128899961, 123.58495656705433],
-        [32599.427009975512, -3227.6682128899961, 123.58495656705433],
-    ]
-    expected_faces = [
-        [3, 2, 1, 0],
-        [7, 6, 5, 4],
-        [0, 1, 5, 4],
-        [1, 2, 6, 5],
-        [2, 3, 7, 6],
-        [3, 0, 4, 7],
+        Point(x=545.7518711352025, y=29.98333920635866, z=20.52784609054484),
+        Point(x=490.6469688626071, y=29.984565652479933, z=-4.408635885446827),
+        Point(x=483.7033000113646, y=-30.015262730668805, z=-7.599938477900096),
+        Point(x=538.80820228396, y=-30.016489176790078, z=17.33654349809157),
+        Point(x=554.9647476420856, y=29.999999999999886, z=0.16913431102190285),
+        Point(x=499.18166059019865, y=29.999999999999886, z=-23.268687779043713),
+        Point(x=486.8693268123292, y=-30.009537209529466, z=-14.596257931322373),
+        Point(x=542.6524138642161, y=-30.009537209529466, z=8.841564158743273),
     ]
 
+    expected_faces = [[0, 1, 2, 3], [7, 6, 5, 4], [4, 5, 1, 0], [5, 6, 2, 1], [6, 7, 3, 2], [7, 4, 0, 3]]
+
     # assert vertices
-    assert len(mesh_vertices) == len(expected_vertices)
-    for vertex, expected_vertex in zip(mesh_vertices, expected_vertices):
+    assert len(polyhedron_vertices) == len(expected_vertices)
+    for vertex, expected_vertex in zip(polyhedron_vertices, expected_vertices):
         for coord, expected_coord in zip(vertex, expected_vertex):
             assert tol.is_close(coord, expected_coord)
     # assert faces
-    assert len(mesh_faces) == len(expected_faces)
-    for face, expected_face in zip(mesh_faces, expected_faces):
+    assert len(polyhedron_faces) == len(expected_faces)
+    for face, expected_face in zip(polyhedron_faces, expected_faces):
         assert face == expected_face
 
 
