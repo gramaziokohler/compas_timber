@@ -298,6 +298,8 @@ def is_polyline_clockwise(polyline, normal_vector):
     ----------
     polyline : :class:`compas.geometry.Polyline`
         The polyline to check.
+    normal_vector : :class:`compas.geometry.Vector`
+        The normal vector to use for the angle calculation.
 
     Returns
     -------
@@ -307,6 +309,7 @@ def is_polyline_clockwise(polyline, normal_vector):
     """
     # make sure the polyline is closed
     if not polyline[0] == polyline[-1]:
+        polyline = polyline[:]  # create a copy
         polyline.append(polyline[0])
 
     angle_sum = 0
