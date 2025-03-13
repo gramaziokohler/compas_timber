@@ -85,15 +85,6 @@ class Beam(TimberElement):
 
     """
 
-    OPPOSING_SIDE_MAP = {
-        0: 2,
-        2: 0,
-        1: 3,
-        3: 1,
-        4: 5,
-        5: 4,
-    }
-
     @property
     def __data__(self):
         data = super(Beam, self).__data__
@@ -528,23 +519,6 @@ class Beam(TimberElement):
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
 
-    def opposing_side_index(self, side_index):
-        # type: (int) -> int
-        """Returns the index of reference side opposing the given side index.
-
-        Parameters
-        ----------
-        side_index : int
-            The index of the reference side to be returned. 0 to 5.
-
-        Returns
-        -------
-        int
-            The index of the opposing side.
-
-        """
-        return self.OPPOSING_SIDE_MAP[side_index]
-
     def _resolve_blank_extensions(self):
         # type: () -> tuple[float, float]
         """Returns the max amount by which to extend the beam at both ends."""
@@ -631,6 +605,7 @@ class Beam(TimberElement):
             return "end", pe
 
     def get_dimensions_relative_to_side(self, ref_side_index):
+        # type: (int) -> tuple[float, float]
         """Returns the perpendicular and parallel dimensions of the beam to the given reference side.
 
         Parameters
@@ -650,6 +625,7 @@ class Beam(TimberElement):
         return self.width, self.height
 
     def front_side(self, ref_side_index):
+        # type: (int) -> Frame
         """Returns the front side of the beam relative to the given reference side.
         This method does not consider the start and end sides.
 
@@ -666,6 +642,7 @@ class Beam(TimberElement):
         return self.ref_sides[(ref_side_index + 1) % 4]
 
     def back_side(self, ref_side_index):
+        # type: (int) -> Frame
         """Returns the back side of the beam relative to the given reference side.
         This method does not consider the start and end sides.
 
@@ -682,6 +659,7 @@ class Beam(TimberElement):
         return self.ref_sides[(ref_side_index - 1) % 4]
 
     def opp_side(self, ref_side_index):
+        # type: (int) -> Frame
         """Returns the opposite side of the beam relative to the given reference side.
         This method does not consider the start and end sides.
 
