@@ -93,10 +93,6 @@ class LButtJoint(Joint):
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
         return ref_side_index
 
-    @property
-    def main_beam_opposing_side_index(self):
-        return self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
-
     def update_beam_roles(self):
         """Flips the main and cross beams based on the joint parameters.
         Prioritizes the beam with the smaller cross-section if `small_beam_butts` is True.
@@ -138,7 +134,7 @@ class LButtJoint(Joint):
             )
         # extend the cross beam
         try:
-            cutting_plane_cross = self.main_beam.ref_sides[self.main_beam_opposing_side_index]
+            cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross])
@@ -189,7 +185,7 @@ class LButtJoint(Joint):
 
         # apply a refinement cut on the cross beam
         if self.modify_cross:
-            modification_plane = self.main_beam.ref_sides[self.main_beam_opposing_side_index]
+            modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
