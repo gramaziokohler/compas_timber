@@ -9,18 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added new `compas_timber.fabrication.Pocket`.
+* Added `front_side`, `back_side`, `opp_side` methods to the `Beam` class for retrieving specific sides relative to a reference side.
+
 ### Changed
 
 * Removed `main_ref_side_index` property from `TBirdsmouthJoint` since it's now defined in the `DoubleCut` BTLxProcessing.
 * Added `mill_depth` argument in `TBirdsmouthJoint` for creating pockets on the cross_beam if asked.
-
 * Refactored the `check_element_compatibility` method in `YButtJoint` so that it checks for coplanarity and dimensioning of the cross elements.
 * Enhanced `DoubleCut.from_planes_and_beam` to verify that provided planes are not parallel and raise a `ValueError` if they are.
 * Adjusted `process_joinery` method to catch `ValueError` exceptions during `BTLxProcessing` generation and wrap them in `BeamJoiningError` objects.
 * Refactored and renamed `are_beams_coplanar` function to `are_beams_aligned_with_cross_vector`.
+* Refactored `_create_negative_volumes()` in `LapJoint` so that it generates box-like volumes. 
+* Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `_create_negative_volumes()` method to get the negative volumes and use the alt constructor `Lap.from_volume_and_beam()`.
 
 ### Removed
 
+* Removed `check_elements_compatibility` method from the parent `LapJoint` since non co-planar lap joints can be achieved.
+* Removed the `is_pocket` argument in `Lap.from_plane_and_beam()` since this class method will now only serve for pockets in Butt joints.
+* Removed `opposing_side_index` and `OPPOSING_SIDE_MAP` from `Beam` class since they have now been replaced by `front_side`, `back_side`, `opp_side` methods.
+* Removed the deprecated `main_beam_opposing_side_index` property from `LButtJoint` and `TButtJoint` as it is no longer in use.
 
 ## [0.15.2] 2025-03-05
 
@@ -54,8 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `as_plane()` to `WallToWallInterface`.
 * Added optional argument `max_distance` to `WallPopulator.create_joint_definitions()`.
 
-* Added new `compas_timber.fabrication.Pocket`.
-
 ### Changed
 
 * Added `max_distance` to `TimberModel.connect_adjacent_walls()`.
@@ -63,11 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed detail edge beams don't get LButt.
 * Fixed walls might not be considered connecting depending on the surface's orientation.
 
-* Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `Pocket` BTLx Processsing instead of the `Lap`.
-
 ### Removed
-
-* Removed `check_elements_compatibility` method from the parent `LapJoint` since non co-planar lap joints can be achieved using the `Pocket` BTLx Processing.
 
 
 ## [0.14.2] 2025-02-17

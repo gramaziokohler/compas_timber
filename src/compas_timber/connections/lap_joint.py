@@ -134,9 +134,12 @@ class LapJoint(Joint):
     def _create_polyhedron(plane_a, lines, bias):  # Hexahedron from 2 Planes and 4 Lines
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
         int_points = []
+        # Find the line with the biggest length
+        longest_line = max(lines, key=lambda line: line.length)
+        plane = Plane(longest_line.point_at(bias), longest_line.direction)
         for i in lines:
             point_top = intersection_line_plane(i, plane_a)
-            point_bottom = i.point_at(bias)  # intersection_line_plane(i, plane_b
+            point_bottom = intersection_line_plane(i, plane)
             point_top = Point(*point_top)
             point_bottom = Point(*point_bottom)
             int_points.append(point_top)
