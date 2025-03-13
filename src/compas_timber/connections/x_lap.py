@@ -1,4 +1,3 @@
-from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import Lap
 
 from .lap_joint import LapJoint
