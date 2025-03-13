@@ -626,8 +626,8 @@ class Beam(TimberElement):
 
     def front_side(self, ref_side_index):
         # type: (int) -> Frame
-        """Returns the front side of the beam relative to the given reference side.
-        This method does not consider the start and end sides.
+        """Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
 
         Parameters
         ----------
@@ -643,8 +643,8 @@ class Beam(TimberElement):
 
     def back_side(self, ref_side_index):
         # type: (int) -> Frame
-        """Returns the back side of the beam relative to the given reference side.
-        This method does not consider the start and end sides.
+        """Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
 
         Parameters
         ----------
@@ -660,8 +660,8 @@ class Beam(TimberElement):
 
     def opp_side(self, ref_side_index):
         # type: (int) -> Frame
-        """Returns the opposite side of the beam relative to the given reference side.
-        This method does not consider the start and end sides.
+        """Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
 
         Parameters
         ----------
