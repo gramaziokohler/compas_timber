@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Removed `check_elements_compatibility` method from the parent `LapJoint` since non co-planar lap joints can be achieved.
 * Removed the `is_pocket` argument in `Lap.from_plane_and_beam()` since this class method will now only serve for pockets in Butt joints.
+* Removed `opposing_side_index` and `OPPOSING_SIDE_MAP` from `Beam` class since they have now been replaced by `front_side`, `back_side`, `opp_side` methods.
+* Removed the deprecated `main_beam_opposing_side_index` property from `LButtJoint` and `TButtJoint` as it is no longer in use.
 
 ## [0.15.2] 2025-03-05
 
