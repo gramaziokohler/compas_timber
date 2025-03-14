@@ -1,10 +1,20 @@
+from re import M
+from compas.geometry import NurbsCurve
+
 from compas.geometry import Box
 from compas.geometry import Brep
+from compas.geometry import BrepFace
+from compas.geometry import BrepLoop
+from compas.datastructures import Mesh
+
+from compas.geometry import Surface
 from compas.geometry import Frame
 from compas.geometry import PlanarSurface
-from compas.geometry import Polyline
+from compas.geometry import Polyhedron
 from compas.geometry import Transformation
 from compas_model.elements import reset_computed
+from compas.itertools import pairwise
+
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
@@ -48,20 +58,22 @@ class Plate(TimberElement):
     @property
     def __data__(self):
         data = super(Plate, self).__data__
-        data["outline"] = self.outline
-        data["thickness"] = self.thickness
-        data["vector"] = self.vector
+        data["outline_a"] = self.outline_a
+        data["outline_b"] = self.outline_b
         return data
 
-    def __init__(self, outline, thickness, vector=None, frame=None, blank_extension=0, **kwargs):
+    def __init__(self, outline_a, outline_b, frame=None, blank_extension=0, **kwargs):
         super(Plate, self).__init__(**kwargs)
-        if not outline.is_closed:
-            raise ValueError("The outline is not closed.")
+        if not outline_a.is_closed:
+            raise ValueError("The outline_a is not closed.")
+        if not outline_b.is_closed:
+            raise ValueError("The outline_b is not closed.")
+        if len(outline_a) != len(outline_b):
+            raise ValueError("The outlines have different number of points.")
         self.blank_extension = blank_extension
-        self.thickness = thickness
-        self.outline = outline
+        self.outline_a = outline_a
+        self.outline_b = outline_b
         self._outline_feature = None
-        self._vector = vector or None
         self._frame = frame or None
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -78,7 +90,6 @@ class Plate(TimberElement):
         return "Plate {} with thickness {:.3f} with vector {} at {}".format(
             self.outline,
             self.thickness,
-            self.vector,
             self.frame,
         )
 
@@ -184,11 +195,22 @@ class Plate(TimberElement):
         return self._frame
         # flips the frame if the frame.point is at an interior corner
 
-    @property
-    def vector(self):
-        if not self._vector:
-            self._vector = self.frame.zaxis * self.thickness
-        return self._vector
+    # ==========================================================================
+    # Alternate constructors
+    # ==========================================================================
+
+    @classmethod
+    def from_outline_thickness(cls, outline, thickness, vector=None, frame=None, blank_extension=0, **kwargs):
+        thickness_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal
+        if vector and thickness_vector.dot(vector) < 0:
+            thickness_vector = -thickness_vector
+        elif frame and thickness_vector.dot(frame.zaxis) < 0:
+            thickness_vector = -thickness_vector
+        thickness_vector = thickness_vector.unitize() * thickness
+
+        outline_b = outline.translated(vector)
+        return cls(outline, outline_b, frame=frame, blank_extension=blank_extension, **kwargs)
+
 
     # ==========================================================================
     # Implementations of abstract methods
@@ -206,6 +228,44 @@ class Plate(TimberElement):
         """
         self._features.append(feature)
 
+    def compute_shape(self):
+        # type: () -> compas.datastructures.Mesh
+        """Compute the shape of the plate from the given polygons and features.
+        This shape is relative to the frame of the element.
+
+        Returns
+        -------
+        :class:`compas.datastructures.Mesh`
+
+        """
+        # nca = NurbsCurve.from_points(self.outline_a.points, degree=1)
+        # ncb = NurbsCurve.from_points(self.outline_b.points, degree=1)
+        # crvs = [nca, ncb]
+        # for i in range(len(self.outline_a)-1):
+        #     a = self.outline_a[i]
+        #     b = self.outline_a[i+1]
+        #     c = self.outline_b[i+1]
+        #     d = self.outline_b[i]
+        #     crvs.append(NurbsCurve.from_points([a, b, d, c], degree=1))
+        # shape = Brep.from_curves(crvs)
+        # return shape
+
+        vertices = [[pt.x,pt.y,pt.z] for pt in self.outline_a.points[:-1] + self.outline_b.points[:-1]]
+        faces = []
+        pt_ct = len(self.outline_a)-1
+        faces.append(list(range(pt_ct)))
+        faces.append(list(range(pt_ct, 2 * pt_ct)))
+        for i in range(pt_ct):
+            a = i
+            b = (i+1)%(pt_ct)
+            c = b+pt_ct
+            d = a+pt_ct
+            faces.append([a, b, c, d])
+        mesh = Polyhedron(vertices, faces)
+        shape = Brep.from_mesh(mesh, triangulate = False)
+        return mesh
+
+
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
         """Compute the geometry of the element.
@@ -221,8 +281,10 @@ class Plate(TimberElement):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        outline = Polyline(correct_polyline_direction(self.outline, self.vector, clockwise=True))  # corrects the direction of the outline to get correctly oriented Brep
-        plate_geo = Brep.from_extrusion(outline, self.vector)
+
+
+
+        plate_geo = self.compute_shape()
         if include_features:
             for feature in self._features:
                 try:
