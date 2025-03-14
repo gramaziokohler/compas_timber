@@ -499,13 +499,21 @@ def contour_to_xml(contour):
     start_point.set("X", "{:.{prec}f}".format(start.x, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
+    if isinstance(contour.inclination, list):
+        for point, inc in zip(contour.polyline[1:], contour.inclination):
+            line = ET.SubElement(root, "Line", {"inclination": "{:.{prec}f}".format(inc, prec=BTLxWriter.ANGLE_PRECISION)})
+            end_point = ET.SubElement(line, "EndPoint")
+            end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
 
-    for point in contour.polyline[1:]:
-        line = ET.SubElement(root, "Line")
-        end_point = ET.SubElement(line, "EndPoint")
-        end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
-        end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
-        end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
+    else:
+        for point in contour.polyline[1:]:
+            line = ET.SubElement(root, "Line")
+            end_point = ET.SubElement(line, "EndPoint")
+            end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
     return root
 
 

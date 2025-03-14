@@ -174,7 +174,7 @@ class Plate(TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
-            self._outline_feature = FreeContour.from_polyline_and_element(self.outline, self, interior=False)
+            self._outline_feature = FreeContour.from_polylines_and_element([self.outline_a, self.outline_b], self, interior=False)
         return [self._outline_feature] + self._features
 
     @features.setter
@@ -228,43 +228,6 @@ class Plate(TimberElement):
         """
         self._features.append(feature)
 
-    def compute_shape(self):
-        # type: () -> compas.datastructures.Mesh
-        """Compute the shape of the plate from the given polygons and features.
-        This shape is relative to the frame of the element.
-
-        Returns
-        -------
-        :class:`compas.datastructures.Mesh`
-
-        """
-        # nca = NurbsCurve.from_points(self.outline_a.points, degree=1)
-        # ncb = NurbsCurve.from_points(self.outline_b.points, degree=1)
-        # crvs = [nca, ncb]
-        # for i in range(len(self.outline_a)-1):
-        #     a = self.outline_a[i]
-        #     b = self.outline_a[i+1]
-        #     c = self.outline_b[i+1]
-        #     d = self.outline_b[i]
-        #     crvs.append(NurbsCurve.from_points([a, b, d, c], degree=1))
-        # shape = Brep.from_curves(crvs)
-        # return shape
-
-        vertices = [[pt.x,pt.y,pt.z] for pt in self.outline_a.points[:-1] + self.outline_b.points[:-1]]
-        faces = []
-        pt_ct = len(self.outline_a)-1
-        faces.append(list(range(pt_ct)))
-        faces.append(list(range(pt_ct, 2 * pt_ct)))
-        for i in range(pt_ct):
-            a = i
-            b = (i+1)%(pt_ct)
-            c = b+pt_ct
-            d = a+pt_ct
-            faces.append([a, b, c, d])
-        mesh = Polyhedron(vertices, faces)
-        shape = Brep.from_mesh(mesh, triangulate = False)
-        return mesh
-
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -282,9 +245,8 @@ class Plate(TimberElement):
 
         """
 
-
-
-        plate_geo = self.compute_shape()
+        plate_geo = Brep.from_loft([self.outline_a, self.outline_b])
+        plate_geo.make_solid()
         if include_features:
             for feature in self._features:
                 try:
