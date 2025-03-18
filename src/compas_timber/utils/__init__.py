@@ -292,16 +292,16 @@ def distance_segment_segment(segment_a, segment_b):
     return distance_point_point(pt_seg_a, pt_seg_b)
 
 
-def angle_vectors_projected(vector_1, vector_2, normal):
+def angle_vectors_projected(vector_a, vector_b, normal):
     """Computes the angle between two vectors projected onto a plane defined by a normal vector.
 
     Parameters
     ----------
-    vector_1 : :class:`compas.geometry.Vector`
+    vector_a : :class:`compas.geometry.Vector`
         The first vector.
-    vector_2 : :class:`compas.geometry.Vector`
+    vector_b : :class:`compas.geometry.Vector`
         The second vector.
-    normal : :class:`compas.geometry.Vector`
+    normal : :class:`compas.geometry.Vector` or :class:`compas.geometry.Plane` or :class:`compas.geometry.Frame`
         The normal vector of the plane to project the vectors onto.
 
     Returns
@@ -309,13 +309,13 @@ def angle_vectors_projected(vector_1, vector_2, normal):
     float
         The angle between the two projected vectors
     """
-    if isinstance(normal, Plane) or isinstance(normal, Frame):
+    if isinstance(normal, (Plane, Frame)):
         normal = normal.normal
 
     projection = Projection.from_plane(Plane(Point(0, 0, 0), normal))
-    proj_vect_1 = vector_1.transformed(projection)
-    proj_vect_2 = vector_2.transformed(projection)
-    return angle_vectors_signed(proj_vect_1, proj_vect_2, normal, deg=True)
+    proj_vect_a = vector_a.transformed(projection)
+    proj_vect_b = vector_b.transformed(projection)
+    return angle_vectors_signed(proj_vect_a, proj_vect_b, normal, deg=True)
 
 
 def is_polyline_clockwise(polyline, normal_vector):
