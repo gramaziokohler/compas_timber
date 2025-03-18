@@ -225,7 +225,7 @@ def test_pocket_params_obj():
         ref_side_index=0,
     )
 
-    params = instance.params_dict.as_dict()
+    params = instance.params.as_dict()
 
     assert params["StartX"] == "2289.328"
     assert params["StartY"] == "0.000"
