@@ -488,7 +488,6 @@ class Pocket(BTLxProcessing):
         start_plane, end_plane, front_plane, back_plane, bottom_plane, top_plane = planes
 
         machining_limits = MachiningLimits()
-        # machining_limits.face_limited_top = is_point_behind_plane(top_plane.point, ref_side)
         machining_limits.face_limited_top = False # TODO: Should this always be False?
         machining_limits.face_limited_start = is_point_behind_plane(start_plane.point, start_side)
         machining_limits.face_limited_end = is_point_behind_plane(end_plane.point, end_side)
