@@ -138,7 +138,7 @@ class Pocket(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
+    def params(self):
         return PocketParams(self)
 
     @property
