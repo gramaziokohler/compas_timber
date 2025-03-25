@@ -292,12 +292,14 @@ def distance_segment_segment(segment_a, segment_b):
 
 
 def is_polyline_clockwise(polyline, normal_vector):
-    """Check if a polyline is clockwise.
+    """Check if a polyline is clockwise. If the polyline is open, it is closed before the check.
 
     Parameters
     ----------
     polyline : :class:`compas.geometry.Polyline`
         The polyline to check.
+    normal_vector : :class:`compas.geometry.Vector`
+        The normal vector to use for the angle calculation.
 
     Returns
     -------
@@ -305,7 +307,11 @@ def is_polyline_clockwise(polyline, normal_vector):
         True if the polyline is clockwise, False otherwise.
 
     """
-    assert polyline[0] == polyline[-1], "Polyline should be closed"
+    # make sure the polyline is closed
+    if not polyline[0] == polyline[-1]:
+        polyline = polyline[:]  # create a copy
+        polyline.append(polyline[0])
+
     angle_sum = 0
     for i in range(len(polyline) - 1):
         u = Vector.from_start_end(polyline[i - 1], polyline[i])
