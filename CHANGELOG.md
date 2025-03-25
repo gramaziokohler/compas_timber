@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored and renamed `are_beams_coplanar` function to `are_beams_aligned_with_cross_vector`.
 * Refactored `_create_negative_volumes()` in `LapJoint` so that it generates box-like volumes. 
 * Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `_create_negative_volumes()` method to get the negative volumes and use the alt constructor `Lap.from_volume_and_beam()`.
+* Fixed an error occuring in `BTLxPart.shape_strings` by ensuring the polyline is always closed.
 
 ### Removed
 
