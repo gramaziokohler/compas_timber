@@ -857,3 +857,105 @@ class LapParams(BTLxProcessingParams):
         result["LeadInclination"] = "{:.{prec}f}".format(float(self._instance.lead_inclination), prec=TOL.precision)
         result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
         return result
+
+
+class LapProxy(object):
+    """This object behaves like a Lap except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+    ----------
+    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep`
+        The negative volume that constitutes the lap.
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam where lap should be applied.
+    machining_limits : dict, optional
+        The machining limits for the cut. Default is None.
+    ref_side_index : int, optional
+        The reference side index for the Lap.
+
+    """
+
+    def __init__(self, volume, beam, machining_limits=None, ref_side_index=None):
+        self.volume = volume
+        self.beam = beam
+        self.machining_limits = machining_limits
+        self.ref_side_index = ref_side_index
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+
+        """
+        if not self._processing:
+            self._processing = Lap.from_volume_and_beam(self.volume, self.beam, self.machining_limits, self.ref_side_index)
+        return self._processing
+
+    @classmethod
+    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None):
+        """Construct a Lap feature from a volume and a Beam.
+
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep`
+            The volume of the lap. Must have 6 faces.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+            The Lap feature.
+
+        """
+        if isinstance(volume, Polyhedron):
+            volume = Brep.from_mesh(volume.to_mesh())
+        if volume.volume < 0:
+            volume.flip()
+        return cls(volume, beam, machining_limits, ref_side_index)
+
+    def apply(self, geometry, _):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to apply the lap to.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is lapped by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the lap volume does not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Beam) -> Brep
+        try:
+            return geometry - self.volume
+        except IndexError:
+            raise FeatureApplicationError(
+                self.volume,
+                geometry,
+                "The volume to subtract does not intersect with beam geometry.",
+            )
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)
