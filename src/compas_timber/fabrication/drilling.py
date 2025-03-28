@@ -371,7 +371,7 @@ class Drilling(BTLxProcessing):
         else:
             # this is not always the correct plane, but it's good enough for now, btlx viewer seems to be using the same method..
             # TODO: this is a best-effort solution. consider calculating intersection with other sides to always find the right one.
-            drill_bottom_plane = element.side_as_surface(element.opposing_side_index(self.ref_side_index)).to_plane()
+            drill_bottom_plane = element.side_as_surface(element.opp_side(self.ref_side_index)).to_plane()
 
         intersection_point = intersection_line_plane(drill_line_direction, drill_bottom_plane)
         assert intersection_point  # if this fails, it means space and time as we know it has collapsed
