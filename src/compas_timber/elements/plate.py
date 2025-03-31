@@ -14,7 +14,7 @@ from compas.geometry import Polyhedron
 from compas.geometry import Transformation
 from compas_model.elements import reset_computed
 from compas.itertools import pairwise
-
+from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
@@ -22,6 +22,7 @@ from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
+
 
 
 class Plate(TimberElement):
@@ -244,9 +245,17 @@ class Plate(TimberElement):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
+        nca = NurbsCurve.from_points(self.outline_a.points, degree=1)
+        ncb = NurbsCurve.from_points(self.outline_b.points, degree=1)
 
-        plate_geo = Brep.from_loft([self.outline_a, self.outline_b])
-        plate_geo.make_solid()
+        curves = [nca, ncb]
+        for i in range(len(self.outline_a)-1):
+            a = self.outline_a.points[i]
+            b = self.outline_a.points[i+1]
+            c = self.outline_b.points[i+1]
+            d = self.outline_b.points[i]
+            curves.append(NurbsCurve.from_points([a, b, c, d, a], degree=1))
+        plate_geo = Brep.from_curves(curves)[0]
         if include_features:
             for feature in self._features:
                 try:
