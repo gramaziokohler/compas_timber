@@ -53,8 +53,8 @@ class LapJoint(Joint):
     @property
     def __data__(self):
         data = super(LapJoint, self).__data__
-        data["main_beam"] = self.main_beam_guid
-        data["cross_beam"] = self.cross_beam_guid
+        data["main_beam_guid"] = self.main_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["flip_lap_side"] = self.flip_lap_side
         data["cut_plane_bias"] = self.cut_plane_bias
         return data
