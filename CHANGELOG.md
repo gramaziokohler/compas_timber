@@ -11,8 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Fixed `AttrbuteError` when deserializing a model with Lap joints.
-
+* Fixed `AttributeError` when deserializing a model with Lap joints.
 ### Removed
 
 
