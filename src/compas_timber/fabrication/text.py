@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 
 from compas.data import json_loadz
 from compas.geometry import Frame
@@ -61,6 +62,7 @@ class Text(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
+        text,
         start_x=0.0,
         start_y=0.0,
         angle=0.0,
@@ -70,7 +72,6 @@ class Text(BTLxProcessing):
         stacked_marking=False,
         text_height_auto=True,
         text_height=20.0,
-        text="",
         **kwargs
     ):
         super(Text, self).__init__(**kwargs)
@@ -102,8 +103,8 @@ class Text(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return TextParams(self).as_dict()
+    def params(self):
+        return TextParams(self)
 
     @property
     def start_x(self):
@@ -205,6 +206,8 @@ class Text(BTLxProcessing):
 
     @text.setter
     def text(self, value):
+        if value == "":
+            raise ValueError("Text should not be empty.")
         self._text = value
 
 
@@ -212,7 +215,7 @@ class Text(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry, beam):
+    def apply(self, geometry, _):
         """Apply the feature to the beam geometry.
 
         Raises
@@ -224,9 +227,20 @@ class Text(BTLxProcessing):
             The resulting geometry after processing. #TODO: think about ways to display text curves from `draw_string_on_element()`
 
         """
+        # NOTE: this currently does nothing due to the fact the visualizing the text as a brep subtraction is very heavy and usually unnecessary.
         return geometry
 
     def draw_string_on_element(self, element):
+        """This returns translated and scaled curves which correspond to the text and the element the text is engraved on.
+
+        Parameters
+        ----------
+        element : :class:`compas_timber.elements.Beam`
+            The beam on which the text is engraved.
+        """
+        assert self.text
+        assert self.text_height is not None
+
         face = element.ref_sides[self.ref_side_index]
         character_dict_path = os.path.join(DATA, "basic_characters_zip")
 
@@ -238,7 +252,7 @@ class Text(BTLxProcessing):
             crvs = character_dict[char]["curves"]
             translated_crvs = []
             for crv in crvs:
-                translated_crvs.append(crv.translated([x_pos+spacing,0,0]))
+                translated_crvs.append(crv.translated([x_pos + spacing,0,0]))
             string_curves.extend(translated_crvs)
             x_pos += spacing + character_dict[char]["width"]
         x_pos *= self.text_height
@@ -246,14 +260,14 @@ class Text(BTLxProcessing):
         if self.alignment_vertical == AlignmentType.BOTTOM:
             y_offset = 0
         elif self.alignment_vertical == AlignmentType.CENTER:
-            y_offset = -self.text_height/2
+            y_offset = -self.text_height / 2
         elif self.alignment_vertical == AlignmentType.TOP:
             y_offset = -self.text_height
 
         if self.alignment_horizontal == AlignmentType.LEFT:
             x_offset = 0
         elif self.alignment_horizontal == AlignmentType.CENTER:
-            x_offset = -x_pos/2
+            x_offset = -x_pos / 2
         elif self.alignment_horizontal == AlignmentType.RIGHT:
             x_offset = -x_pos
 
@@ -271,7 +285,7 @@ class TextParams(BTLxProcessingParams):
         super(TextParams, self).__init__(instance)
 
     def as_dict(self):
-        result = super(TextParams, self).as_dict()
+        result = OrderedDict()
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
