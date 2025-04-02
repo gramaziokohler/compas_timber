@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `BTLxWriteProcessingError` to `btlx` module.
+* Added `errors` property to `BTLxWriter` class. 
+
 ### Changed
 
 * Fixed `AttributeError` when deserializing a model with Lap joints.
+
 ### Removed
 
 
