@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added processing `Text` to `compas_timber.fabrication`.
+* Added `TextParams` to `compas_timber.fabrication`.
+
 ### Changed
 
 * Fixed `AttributeError` when deserializing a model with Lap joints.
