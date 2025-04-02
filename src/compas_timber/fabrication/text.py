@@ -240,6 +240,8 @@ class Text(BTLxProcessing):
         """
         assert self.text
         assert self.text_height is not None
+        assert self.start_x is not None
+        assert self.start_y is not None
 
         face = element.ref_sides[self.ref_side_index]
         character_dict_path = os.path.join(DATA, "basic_characters_zip")
