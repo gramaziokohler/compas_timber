@@ -19,6 +19,36 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
 
+class BTLxWriteProcessingError(BaseException):
+    """Exception raised when an error occurs while writing a Processing to BTLx file.
+
+    Parameters
+    ----------
+    message : str
+        The error message.
+    part : :class:`BTLxPart`
+        The part that caused the error.
+    failed_processing : :class:`BTLxProcessing`
+        The processing that caused the error.
+
+    Attributes
+    ----------
+    message : str
+        The error message.
+    part : :class:`BTLxPart`
+        The part that caused the error.
+    failed_processing : :class:`BTLxProcessing`
+        The processing that caused the error.
+
+    """
+
+    def __init__(self, message, part, failed_processing):
+        super(BTLxWriteProcessingError, self).__init__(message)
+        self.message = message
+        self.part = part
+        self.failed_processing = failed_processing
+
+
 class BTLxWriter(object):
     """Class for writing BTLx files from a given model.
 
@@ -60,6 +90,11 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
+        self._errors = []
+
+    @property
+    def errors(self):
+        return self._errors
 
     def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
@@ -106,6 +141,8 @@ class BTLxWriter(object):
         :meth:`BTLxWriter.write`
 
         """
+        self._errors = []
+
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history
         file_history_element = self._create_file_history()
@@ -193,8 +230,12 @@ class BTLxWriter(object):
             for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = self._create_processing(feature)
-                    processings_element.append(processing_element)
+                    try:
+                        processing_element = self._create_processing(feature)
+                    except ValueError as ex:
+                        self._errors.append(BTLxWriteProcessingError("Failed to create processing: {}".format(ex), part, feature))
+                    else:
+                        processings_element.append(processing_element)
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
