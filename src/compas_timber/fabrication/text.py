@@ -43,6 +43,7 @@ class Text(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Text"  # type: ignore
+    _CHARACTER_DICT = {}
 
     @property
     def __data__(self):
@@ -96,6 +97,13 @@ class Text(BTLxProcessing):
         self.text_height_auto = text_height_auto
         self.text_height = text_height
         self.text = text
+
+
+    @staticmethod
+    def _load_character_dict():
+        if Text._CHARACTER_DICT is None:
+            character_dict_path = os.path.join(DATA, "basic_characters.zip")
+            Text._CHARACTER_DICT = json_loadz(character_dict_path)  # type: ignore
 
 
     ########################################################################
@@ -230,33 +238,37 @@ class Text(BTLxProcessing):
         # NOTE: this currently does nothing due to the fact the visualizing the text as a brep subtraction is very heavy and usually unnecessary.
         return geometry
 
-    def draw_string_on_element(self, element):
+    def create_text_curves_for_element(self, element):
         """This returns translated and scaled curves which correspond to the text and the element the text is engraved on.
 
         Parameters
         ----------
         element : :class:`compas_timber.elements.Beam`
             The beam on which the text is engraved.
+
+        Returns
+        -------
+        list[:class:`compas.geometry.Curve`]
+            The curves representing the text.
         """
         assert self.text
         assert self.text_height is not None
         assert self.start_x is not None
         assert self.start_y is not None
 
-        face = element.ref_sides[self.ref_side_index]
-        character_dict_path = os.path.join(DATA, "basic_characters_zip")
+        self._load_character_dict()
 
-        character_dict = json_loadz(character_dict_path)
+        face = element.ref_sides[self.ref_side_index]
         string_curves = []
         x_pos = 0
         spacing = 0.1
         for char in self.text:
-            crvs = character_dict[char]["curves"]
+            curves = Text._CHARACTER_DICT[char]["curves"]
             translated_crvs = []
-            for crv in crvs:
+            for crv in curves:
                 translated_crvs.append(crv.translated([x_pos + spacing,0,0]))
             string_curves.extend(translated_crvs)
-            x_pos += spacing + character_dict[char]["width"]
+            x_pos += spacing + Text._CHARACTER_DICT[char]["width"]
         x_pos *= self.text_height
 
         if self.alignment_vertical == AlignmentType.BOTTOM:
