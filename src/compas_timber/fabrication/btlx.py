@@ -19,7 +19,7 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
 
-class BTLxWriteProcessingError(BaseException):
+class BTLxWriteProcessingError(Exception):
     """Exception raised when an error occurs while writing a Processing to BTLx file.
 
     Parameters
