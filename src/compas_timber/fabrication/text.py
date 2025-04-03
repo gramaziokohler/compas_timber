@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 
 from compas.data import json_loadz
 from compas.geometry import Frame
@@ -102,8 +103,8 @@ class Text(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return TextParams(self).as_dict()
+    def params(self):
+        return TextParams(self)
 
     @property
     def start_x(self):
@@ -194,10 +195,11 @@ class Text(BTLxProcessing):
 
     @text_height.setter
     def text_height(self, value):
-        if 0 <= value <= 50000:
-            self._text_height = value
-        else:
+        if 0 > value or value > 50000:
             raise ValueError("TextHeight should be between 0 and 50000. Got: {}".format(value))
+        else:
+            self._text_height = value
+
 
     @property
     def text(self):
@@ -227,6 +229,17 @@ class Text(BTLxProcessing):
         return geometry
 
     def draw_string_on_element(self, element):
+        """Draws the text on the element using polylines.
+        Parameters
+        ----------
+        element : :class:`compas.datastructures.Mesh`
+            The element on which to draw the text.
+        Returns
+        -------
+        list of :class:`compas.geometry.Curve`
+            The curves representing the text.
+        """
+
         face = element.ref_sides[self.ref_side_index]
         character_dict_path = os.path.join(DATA, "basic_characters_zip")
 
@@ -271,7 +284,7 @@ class TextParams(BTLxProcessingParams):
         super(TextParams, self).__init__(instance)
 
     def as_dict(self):
-        result = super(TextParams, self).as_dict()
+        result = OrderedDict()
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)

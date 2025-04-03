@@ -30,7 +30,7 @@ class Label(object):
         return "{}_{}_{}".format(self.element.__class__.__name__, self.element.key, self.element.attributes.get("category") if self.element.attributes.get("category") else "")
 
     @classmethod
-    def from_element(cls, element, attributes=[], base_string="", char_to_replace=None):
+    def from_element(cls, element, attributes=None, base_string="", char_to_replace=None):
         """Get text from attributes of the element.
 
         Parameters
