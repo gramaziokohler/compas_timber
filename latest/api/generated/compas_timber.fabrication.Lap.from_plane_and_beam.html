@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Lap.planes_from_params_and_beam" href="compas_timber.fabrication.Lap.planes_from_params_and_beam.html" />
+    <link rel="next" title="Lap.from_shapes_and_element" href="compas_timber.fabrication.Lap.from_shapes_and_element.html" />
     <link rel="prev" title="Lap.apply" href="compas_timber.fabrication.Lap.apply.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -601,7 +601,7 @@ document.write(`
 <h1>Lap.from_plane_and_beam</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.fabrication.Lap.from_plane_and_beam">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Lap.</span></span><span class="sig-name descname"><span class="pre">from_plane_and_beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plane</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_pocket</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_side_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0c95aa4/src/compas_timber/fabrication/lap.py#L294"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Lap.</span></span><span class="sig-name descname"><span class="pre">from_plane_and_beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plane</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_side_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/14e72ac/src/compas_timber/fabrication/lap.py#L297"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Create a Lap instance from a plane and a beam. The lap is defined by the plane given and a plane parallel to that at a distance defined by the length and a given depth.
 This method is used to create pocket cuts.</p>
 <dl class="field-list">
@@ -614,8 +614,6 @@ This method is used to create pocket cuts.</p>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>The length of the lap.</p>
 </dd>
 <dt><strong>depth</strong><span class="classifier">float</span></dt><dd><p>The depth of the lap.</p>
-</dd>
-<dt><strong>is_pocket</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the lap is a pocket cut. Default is False</p>
 </dd>
 <dt><strong>ref_side_index</strong><span class="classifier">int, optional</span></dt><dd><p>The reference side index of the main_beam to be cut. Default is 0 (i.e. RS1).</p>
 </dd>

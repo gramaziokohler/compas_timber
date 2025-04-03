@@ -596,7 +596,7 @@ document.write(`
 <h1>XLapJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.XLapJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">XLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0c95aa4/src/compas_timber/connections/x_lap.py#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">XLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/14e72ac/src/compas_timber/connections/x_lap.py#L7"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.LapJoint.html#compas_timber.connections.LapJoint" title="compas_timber.connections.lap_joint.LapJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p>
 <p>Represents an X-Lap type joint which joins the two beams somewhere along their length with a lap.</p>
 <p>This joint type is compatible with beams in X topology.</p>
@@ -645,7 +645,7 @@ document.write(`
 <td><p>Adds the extensions defined by this joint to affected beam(s).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.check_elements_compatibility.html#compas_timber.connections.XLapJoint.check_elements_compatibility" title="compas_timber.connections.XLapJoint.check_elements_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_elements_compatibility</span></code></a></p></td>
-<td><p>Checks if the elements are compatible for the creation of the joint.</p></td>
+<td><p>Checks if the beams are compatible for the creation of the joint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.copy.html#compas_timber.connections.XLapJoint.copy" title="compas_timber.connections.XLapJoint.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
@@ -662,17 +662,11 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.from_jsonstring.html#compas_timber.connections.XLapJoint.from_jsonstring" title="compas_timber.connections.XLapJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.get_cross_cutting_frame.html#compas_timber.connections.XLapJoint.get_cross_cutting_frame" title="compas_timber.connections.XLapJoint.get_cross_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cross_cutting_frame</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.get_face_most_ortho_to_beam.html#compas_timber.connections.XLapJoint.get_face_most_ortho_to_beam" title="compas_timber.connections.XLapJoint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.get_face_most_ortho_to_beam.html#compas_timber.connections.XLapJoint.get_face_most_ortho_to_beam" title="compas_timber.connections.XLapJoint.get_face_most_ortho_to_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_ortho_to_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal is most orthogonal to <cite>beam_a</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.get_face_most_towards_beam.html#compas_timber.connections.XLapJoint.get_face_most_towards_beam" title="compas_timber.connections.XLapJoint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.get_face_most_towards_beam.html#compas_timber.connections.XLapJoint.get_face_most_towards_beam" title="compas_timber.connections.XLapJoint.get_face_most_towards_beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_face_most_towards_beam</span></code></a></p></td>
 <td><p>Of all the faces of <cite>beam_b</cite>, returns the one whose normal most faces <cite>beam_a</cite>.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.get_main_cutting_frame.html#compas_timber.connections.XLapJoint.get_main_cutting_frame" title="compas_timber.connections.XLapJoint.get_main_cutting_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_main_cutting_frame</span></code></a></p></td>
-<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.XLapJoint.restore_beams_from_keys.html#compas_timber.connections.XLapJoint.restore_beams_from_keys" title="compas_timber.connections.XLapJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
