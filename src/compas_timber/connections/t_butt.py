@@ -97,10 +97,6 @@ class TButtJoint(Joint):
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
-    @property
-    def main_beam_opposing_side_index(self):
-        return self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
-
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -163,7 +159,6 @@ class TButtJoint(Joint):
                 self.cross_beam,
                 lap_length,
                 self.mill_depth,
-                is_pocket=True,
                 ref_side_index=self.cross_beam_ref_side_index,
             )
             self.cross_beam.add_features(cross_feature)

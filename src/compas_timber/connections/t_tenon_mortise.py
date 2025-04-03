@@ -184,8 +184,7 @@ class TenonMortiseJoint(Joint):
 
         #cross_beam
         try:
-            opposing_ref_side = self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
-            cutting_plane = self.main_beam.ref_sides[opposing_ref_side]
+            cutting_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])

@@ -21,6 +21,7 @@ Classes
     FrenchRidgeLap
     JackRafterCut
     Lap
+    Pocket
     Slot
     StepJoint
     StepJointNotch
