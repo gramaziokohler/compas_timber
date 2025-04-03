@@ -255,7 +255,11 @@ class Plate(TimberElement):
             c = self.outline_b.points[i+1]
             d = self.outline_b.points[i]
             curves.append(NurbsCurve.from_points([a, b, c, d, a], degree=1))
-        plate_geo = Brep.from_curves(curves)[0]
+        plate_geo = Brep.from_curves(curves)
+        if len(plate_geo) != 1:
+            raise ValueError("The curves could not be joined into a single Brep.")
+        else:
+            plate_geo = plate_geo[0]
         if include_features:
             for feature in self._features:
                 try:
