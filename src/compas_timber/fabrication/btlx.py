@@ -472,6 +472,26 @@ class BTLxPart(object):
         return self._shape_strings
 
 
+def free_contour_to_xml(contour):
+    """Converts a contour to an XML element.
+
+    Parameters
+    ----------
+    contour : :class:`Contour`
+        The contour to be converted.
+
+    Returns
+    -------
+    :class:`~xml.etree.ElementTree.Element`
+        The element which represents the contour.
+
+    """
+    if contour.associated_contour:
+        return dual_contour_to_xml(contour)
+    else:
+        return contour_to_xml(contour)
+
+
 def contour_to_xml(contour):
     """Converts a contour to an XML element.
 
@@ -516,6 +536,38 @@ def contour_to_xml(contour):
             end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
     return root
 
+
+def dual_contour_to_xml(contour):
+    """Converts a contour to an XML element.
+
+    Parameters
+    ----------
+    contour : :class:`Contour`
+        The contour to be converted.
+
+    Returns
+    -------
+    :class:`~xml.etree.ElementTree.Element`
+        The element which represents the contour.
+
+    """
+    root = ET.Element("DualContour")
+    principal_contour = ET.SubElement(root, "PrincipalContour")
+    associated_contour = ET.SubElement(root, "AssociatedContour")
+    for polyline, et_contour in zip([contour.polyline, contour.associated_contour], [principal_contour, associated_contour]):
+        start = polyline[0]
+        start_point = ET.SubElement(et_contour, "StartPoint")
+        start_point.set("X", "{:.{prec}f}".format(start.x, prec=BTLxWriter.POINT_PRECISION))
+        start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
+        start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
+
+        for point in polyline[1:]:
+            line = ET.SubElement(root, "Line")
+            end_point = ET.SubElement(line, "EndPoint")
+            end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
+    return root
 
 class BTLxProcessing(Data):
     """Base class for BTLx Processing.
