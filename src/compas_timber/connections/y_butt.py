@@ -230,7 +230,6 @@ class YButtJoint(Joint):
                     beam,
                     lap_length,
                     self.mill_depth,
-                    is_pocket=True,
                     ref_side_index=self.cross_beam_ref_side_index(beam),
                 )
                 beam.add_features(cross_feature)

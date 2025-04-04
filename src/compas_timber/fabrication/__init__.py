@@ -11,10 +11,12 @@ from .step_joint import StepJoint
 from .dovetail_tenon import DovetailTenon
 from .dovetail_mortise import DovetailMortise
 from .lap import Lap
+from .lap import LapProxy
 from .french_ridge_lap import FrenchRidgeLap
 from .tenon import Tenon
 from .mortise import Mortise
 from .slot import Slot
+from .pocket import Pocket
 from .free_contour import FreeContour
 from .text import Text
 from .btlx import TenonShapeType
@@ -38,10 +40,12 @@ __all__ = [
     "DovetailTenon",
     "DovetailMortise",
     "Lap",
+    "LapProxy",
     "FrenchRidgeLap",
     "Tenon",
     "Mortise",
     "Slot",
+    "Pocket",
     "FreeContour",
     "Text",
     "TenonShapeType",
