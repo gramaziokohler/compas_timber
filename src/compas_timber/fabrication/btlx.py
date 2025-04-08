@@ -501,7 +501,7 @@ def contour_to_xml(contour):
     start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
 
     if isinstance(contour.inclination, (float, int)):   # single Inclination for all segments
-        root.set("Inclination", "{:.{prec}f}".format(contour.inclination[0], prec=BTLxWriter.ANGLE_PRECISION))
+        root.set("Inclination", "{:.{prec}f}".format(contour.inclination, prec=BTLxWriter.ANGLE_PRECISION))
         for point in contour.polyline[1:]:
             line = ET.SubElement(root, "Line")
             end_point = ET.SubElement(line, "EndPoint")

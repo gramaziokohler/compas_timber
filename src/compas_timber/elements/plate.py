@@ -26,7 +26,7 @@ from .timber import TimberElement
 
 class Plate(TimberElement):
     """
-    A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
+    A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.
 
     Parameters
     ----------
@@ -36,22 +36,32 @@ class Plate(TimberElement):
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
     frame : :class:`~compas.geometry.Frame`, optional
         The coordinate system (frame) of this plate. Default is None.
-    vector : :class:`~compas.geometry.Vector`, optional
-        The vector of the plate. Default is None.
+    blank_extension : float, optional
+        The extension of the blank geometry around the edges of the plate geometry. Default is 0.
 
 
     Attributes
     ----------
     frame : :class:`~compas.geometry.Frame`
         The coordinate system (frame) of this plate.
-    shape : :class:`~compas.geometry.Brep`
-        An extrusion representing the base geometry of this plate.
     outline_a : :class:`~compas.geometry.Polyline`
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.RhinoCurve`
         A line representing the associated outline of this plate.
-    thickness : float
+    blank_length : float
+        Length of the plate blank.
+    width : float
         Thickness of the plate material.
+    height : float
+        Height of the plate blank.
+    shape : :class:`~compas.geometry.Brep`
+        The geometry of the Plate before other machining features are applied.
+    blank : :class:`~compas.geometry.Box`
+        A feature-less box representing the material stock geometry to produce this plate.
+    ref_frame : :class:`~compas.geometry.Frame`
+        Reference frame for machining processings according to BTLx standard.
+    ref_sides : tuple(:class:`~compas.geometry.Frame`)
+        A tuple containing the 6 frames representing the sides of the plate according to BTLx standard.
     aabb : tuple(float, float, float, float, float, float)
         An axis-aligned bounding box of this plate as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
     key : int, optional
@@ -64,6 +74,8 @@ class Plate(TimberElement):
         data = super(Plate, self).__data__
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
+        data["frame"] = self.frame
+        data["blank_extension"] = self.blank_extension
         return data
 
     def __init__(self, outline_a, outline_b, frame=None, blank_extension=0, **kwargs):
@@ -74,11 +86,11 @@ class Plate(TimberElement):
             raise ValueError("The outline_b is not closed.")
         if len(outline_a) != len(outline_b):
             raise ValueError("The outlines have different number of points.")
-        self.blank_extension = blank_extension
         self.outline_a = outline_a
         self.outline_b = outline_b
         self._outline_feature = None
         self._frame = frame or None
+        self.blank_extension = blank_extension
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -88,14 +100,10 @@ class Plate(TimberElement):
 
     def __repr__(self):
         # type: () -> str
-        return "Plate(outline_a={!r}, thickness={})".format(self.outline_a, self.thickness)
+        return "Plate(outline_a={!r}, outline_b={!r})".format(self.outline_a, self.outline_b)
 
     def __str__(self):
-        return "Plate {} with thickness {:.3f} with vector {} at {}".format(
-            self.outline_a,
-            self.thickness,
-            self.frame,
-        )
+        return "Plate {}, {} ".format(self.outline_a, self.outline_b)
 
     # ==========================================================================
     # Computed attributes
@@ -151,6 +159,7 @@ class Plate(TimberElement):
             Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
             Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
         )
+
 
     def side_as_surface(self, side_index):
         # type: (int) -> compas.geometry.PlanarSurface
@@ -232,6 +241,19 @@ class Plate(TimberElement):
         """
         self._features.append(feature)
 
+    def shape(self):
+        # type: () -> compas.geometry.Brep
+        """The shape of the plate before other features area applied.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The shape of the element.
+
+        """
+        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in [self.outline_a, self.outline_b]])
+        plate_geo.cap_planar_holes()
+        return plate_geo
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -248,12 +270,9 @@ class Plate(TimberElement):
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        nca = NurbsCurve.from_points(self.outline_a, degree=1)
-        ncb = NurbsCurve.from_points(self.outline_b, degree=1)
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in [self.outline_a, self.outline_b]])
-        plate_geo.cap_planar_holes()
+        plate_geo = self.shape()
         if include_features:
             for feature in self._features:
                 try:

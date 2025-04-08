@@ -54,13 +54,12 @@ class FreeContour(BTLxProcessing):
         self.counter_sink = counter_sink
         self.tool_position = tool_position
         self.depth_bounded = depth_bounded
-
-        if inclination:
+        if inclination is not None:
             if isinstance(inclination, (int, float)):
                 self.inclination = inclination
             elif not isinstance(inclination, list):
                 raise ValueError("Inclination should be a float or a list of floats.")
-            if len(inclination) != len(contour_points)-1:
+            elif len(inclination) != len(contour_points)-1:
                 raise ValueError("Inclination should either be a single float or have the same number of values as contour segments.")
             else:
                 self.inclination = inclination
@@ -77,7 +76,7 @@ class FreeContour(BTLxProcessing):
         data["counter_sink"] = self.counter_sink
         data["tool_position"] = self.tool_position
         data["depth_bounded"] = self.depth_bounded
-        data["inclination"] = self.inclination if isinstance(self.inclination, list) else 0.0
+        data["inclination"] = self.inclination
         return data
 
     @property
@@ -89,7 +88,7 @@ class FreeContour(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline, element, depth=None, interior=True, tool_position=None, ref_side_index=None):
+    def from_polyline_and_element(cls, polyline, element, depth=None, interior=None, tool_position=None, ref_side_index=None):
         """Construct a Contour processing from a polyline and element.
 
         Parameters
@@ -99,13 +98,13 @@ class FreeContour(BTLxProcessing):
         element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
             The element.
         depth : float, optional
-            The depth of the contour. Default is the width of the element.
+            The depth of the contour. Default is the thickness of the element.
         interior : bool, optional
             If True, the contour is an interior contour. Default is True.
-        tool_position : str, optional
+        tool_position : BTLx.AlignmentType, optional
             The position of the tool. Default is "left".
         ref_side_index : int, optional
-            The reference side index. Default is 3.
+            The reference side index. If none is given, the function will try to find the reference side index based on the polyline and element.
         """
 
         if not ref_side_index:
@@ -136,7 +135,7 @@ class FreeContour(BTLxProcessing):
         return cls(points, depth=depth, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index)
 
     @classmethod
-    def from_polylines_and_element(cls, polylines, element, depth=None, interior=None, tool_position=None, ref_side_index=None):
+    def from_polylines_and_element(cls, polylines, element, interior=None, tool_position=None, ref_side_index=None):
         """Construct a Contour processing from a list of polylines and element.
 
         Parameters
@@ -145,10 +144,12 @@ class FreeContour(BTLxProcessing):
             The top and bottome polylines of the contour.
         element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
             The element.
-        depth : float, optional
-            The depth of the contour. Default is the width of the element.
         interior : bool, optional
             If True, the contour is an interior contour. Default is None.
+        tool_position : BTLx.AlignmentType, optional
+            The position of the tool. Default is None.
+        ref_side_index : int, optional
+            The reference side index. If none is given, the function will try to find the reference side index based on the polylines and element.
         """
 
         if len(polylines) != 2:
@@ -180,7 +181,7 @@ class FreeContour(BTLxProcessing):
                     tool_position = AlignmentType.RIGHT
 
 
-        if cls.are_all_segments_parallel(polylines[0], polylines[1]): # use DualContour
+        if not cls.are_all_segments_parallel(polylines[0], polylines[1]): # use DualContour
             xform = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
             points_principal = [pt.transformed(xform) for pt in polylines[0]]
             points_associated = [pt.transformed(xform) for pt in polylines[1]]
@@ -192,13 +193,12 @@ class FreeContour(BTLxProcessing):
                 cp = bottom_line.closest_point(top_line.start)
                 inclination = angle_vectors_signed(Vector.from_start_end(top_line.start, cp), -ref_side.normal, -top_line.direction, deg=True)
                 inclinations.append(inclination)
-
-            depth = depth or element.width
+            if len(set(inclinations)) == 1:
+                inclinations = inclinations[0]  # remove duplicates
+            depth = distance_point_plane(polylines[1][0], Plane.from_frame(ref_side))
             xform = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
             points = [pt.transformed(xform) for pt in polylines[0]]
-
-            return cls(points, depth=depth, counter_sink = interior, tool_position=tool_position, ref_side_index=ref_side_index, inclination=inclinations)
-
+            return cls(points, depth = depth, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index, inclination=inclinations)
 
 
     @classmethod
