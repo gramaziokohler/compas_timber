@@ -251,20 +251,9 @@ class Plate(TimberElement):
         nca = NurbsCurve.from_points(self.outline_a, degree=1)
         ncb = NurbsCurve.from_points(self.outline_b, degree=1)
 
-        # curves = [nca, ncb]
-        # for i in range(len(self.outline_a)-1):
-        #     a = self.outline_a.points[i]
-        #     b = self.outline_a.points[i+1]
-        #     c = self.outline_b.points[i+1]
-        #     d = self.outline_b.points[i]
-        #     curves.append(NurbsCurve.from_points([a, b, c, d, a], degree=1))
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = Brep.from_loft([nca, ncb])
+        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in [self.outline_a, self.outline_b]])
         plate_geo.cap_planar_holes()
-        # if len(plate_geo) != 1:
-        #     raise ValueError("The curves could not be joined into a single Brep.")
-        # else:
-        #     plate_geo = plate_geo[0]
         if include_features:
             for feature in self._features:
                 try:

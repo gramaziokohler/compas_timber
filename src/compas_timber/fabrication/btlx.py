@@ -251,8 +251,6 @@ class BTLxWriter(object):
         return processing_element
 
     def _element_from_complex_param(self, param):
-        print("SERIALIZERS", self.SERIALIZERS)
-        print("param", type(param).__name__)
         serializer = self.SERIALIZERS.get(type(param).__name__, None)
         if not serializer:
             raise ValueError("No serializer found for type: {}".format(type(param)))
@@ -489,35 +487,36 @@ def contour_to_xml(contour):
         The element which represents the contour.
 
     """
-    print("inclinations are: ", contour.inclination)
 
     root = ET.Element("Contour")
     if contour.depth:
         root.set("Depth", "{:.{prec}f}".format(contour.depth, prec=BTLxWriter.POINT_PRECISION))
     if contour.depth_bounded:
         root.set("DepthBounded", "yes" if contour.depth_bounded else "no")
-    if isinstance(contour.inclination, (float, int)):
-        root.set("Inclination", "{:.{prec}f}".format(contour.inclination[0], prec=BTLxWriter.ANGLE_PRECISION))
 
     start = contour.polyline[0]
     start_point = ET.SubElement(root, "StartPoint")
     start_point.set("X", "{:.{prec}f}".format(start.x, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
-    if len(contour.inclination) == len(contour.polyline) - 1:
-        for point, inc in zip(contour.polyline[1:], contour.inclination):
-            line = ET.SubElement(root, "Line", {"Inclination": "{:.{prec}f}".format(inc, prec=BTLxWriter.ANGLE_PRECISION)})
-            end_point = ET.SubElement(line, "EndPoint")
-            end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
-            end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
-            end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
-    else:
+
+    if isinstance(contour.inclination, (float, int)):   # single Inclination for all segments
+        root.set("Inclination", "{:.{prec}f}".format(contour.inclination[0], prec=BTLxWriter.ANGLE_PRECISION))
         for point in contour.polyline[1:]:
             line = ET.SubElement(root, "Line")
             end_point = ET.SubElement(line, "EndPoint")
             end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
             end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
             end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
+
+    else:   # one Inclination value per segment
+        for point, inc in zip(contour.polyline[1:], contour.inclination):
+            line = ET.SubElement(root, "Line", {"Inclination": "{:.{prec}f}".format(inc, prec=BTLxWriter.ANGLE_PRECISION)})
+            end_point = ET.SubElement(line, "EndPoint")
+            end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
+            end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
+
     return root
 
 

@@ -228,7 +228,7 @@ class FreeContour(BTLxProcessing):
 
     @staticmethod
     def are_all_segments_parallel(polyline_a, polyline_b):
-        for top_line, bottom_line in zip(Polyline(polyline_a[0]).lines, Polyline(polyline_b[1]).lines):
+        for top_line, bottom_line in zip(Polyline(polyline_a).lines, Polyline(polyline_b).lines):
             if not TOL.is_zero(angle_vectors(top_line.direction, bottom_line.direction)%math.pi, tol=1e-6):
                 return False
         return True
