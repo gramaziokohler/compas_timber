@@ -251,7 +251,9 @@ class BTLxWriter(object):
         return processing_element
 
     def _element_from_complex_param(self, param):
-        serializer = self.SERIALIZERS.get(type(param), None)
+        print("SERIALIZERS", self.SERIALIZERS)
+        print("param", type(param).__name__)
+        serializer = self.SERIALIZERS.get(type(param).__name__, None)
         if not serializer:
             raise ValueError("No serializer found for type: {}".format(type(param)))
         return serializer(param)
@@ -472,25 +474,6 @@ class BTLxPart(object):
         return self._shape_strings
 
 
-def free_contour_to_xml(contour):
-    """Converts a contour to an XML element.
-
-    Parameters
-    ----------
-    contour : :class:`Contour`
-        The contour to be converted.
-
-    Returns
-    -------
-    :class:`~xml.etree.ElementTree.Element`
-        The element which represents the contour.
-
-    """
-    if contour.associated_contour:
-        return dual_contour_to_xml(contour)
-    else:
-        return contour_to_xml(contour)
-
 
 def contour_to_xml(contour):
     """Converts a contour to an XML element.
@@ -506,27 +489,28 @@ def contour_to_xml(contour):
         The element which represents the contour.
 
     """
+    print("inclinations are: ", contour.inclination)
+
     root = ET.Element("Contour")
     if contour.depth:
         root.set("Depth", "{:.{prec}f}".format(contour.depth, prec=BTLxWriter.POINT_PRECISION))
     if contour.depth_bounded:
         root.set("DepthBounded", "yes" if contour.depth_bounded else "no")
-    if contour.inclination:
-        root.set("Inclination", "{:.{prec}f}".format(contour.inclination, prec=BTLxWriter.ANGLE_PRECISION))
+    if isinstance(contour.inclination, (float, int)):
+        root.set("Inclination", "{:.{prec}f}".format(contour.inclination[0], prec=BTLxWriter.ANGLE_PRECISION))
 
     start = contour.polyline[0]
     start_point = ET.SubElement(root, "StartPoint")
     start_point.set("X", "{:.{prec}f}".format(start.x, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
-    if isinstance(contour.inclination, list):
+    if len(contour.inclination) == len(contour.polyline) - 1:
         for point, inc in zip(contour.polyline[1:], contour.inclination):
-            line = ET.SubElement(root, "Line", {"inclination": "{:.{prec}f}".format(inc, prec=BTLxWriter.ANGLE_PRECISION)})
+            line = ET.SubElement(root, "Line", {"Inclination": "{:.{prec}f}".format(inc, prec=BTLxWriter.ANGLE_PRECISION)})
             end_point = ET.SubElement(line, "EndPoint")
             end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
             end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
             end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
-
     else:
         for point in contour.polyline[1:]:
             line = ET.SubElement(root, "Line")
@@ -542,8 +526,8 @@ def dual_contour_to_xml(contour):
 
     Parameters
     ----------
-    contour : :class:`Contour`
-        The contour to be converted.
+    contour : :class:`DualContour`
+        The DualContour to be converted.
 
     Returns
     -------
@@ -554,7 +538,7 @@ def dual_contour_to_xml(contour):
     root = ET.Element("DualContour")
     principal_contour = ET.SubElement(root, "PrincipalContour")
     associated_contour = ET.SubElement(root, "AssociatedContour")
-    for polyline, et_contour in zip([contour.polyline, contour.associated_contour], [principal_contour, associated_contour]):
+    for polyline, et_contour in zip([contour.principal_contour, contour.associated_contour], [principal_contour, associated_contour]):
         start = polyline[0]
         start_point = ET.SubElement(et_contour, "StartPoint")
         start_point.set("X", "{:.{prec}f}".format(start.x, prec=BTLxWriter.POINT_PRECISION))
@@ -562,7 +546,7 @@ def dual_contour_to_xml(contour):
         start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
 
         for point in polyline[1:]:
-            line = ET.SubElement(root, "Line")
+            line = ET.SubElement(et_contour, "Line")
             end_point = ET.SubElement(line, "EndPoint")
             end_point.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
             end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
@@ -840,7 +824,30 @@ class Contour(object):
         self.polyline = polyline
 
 
-BTLxWriter.register_type_serializer(Contour, contour_to_xml)
+BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
+
+class DualContour(object):
+    """Represens the generic contour for specific free contour processings.
+
+    Parameters
+    ----------
+    depth : float
+        The depth of the contour.
+    depth_bounded : bool
+        If True, the depth is bounded.
+    inclination : float
+        The inclination of the contour.
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline of the contour.
+    TODO: add point attributes for other types like NailContour
+    """
+
+    def __init__(self, principal_contour, associated_contour, depth_bounded=None):
+        self.principal_contour = principal_contour
+        self.associated_contour = associated_contour
+        self.depth_bounded = depth_bounded
+
+BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
 
 
 class BTLxFromGeometryDefinition(Data):

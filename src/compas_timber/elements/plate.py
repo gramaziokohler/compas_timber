@@ -1,10 +1,9 @@
-from re import M
 from compas.geometry import NurbsCurve
 
 from compas.geometry import Box
 from compas.geometry import Brep
-from compas.geometry import BrepFace
-from compas.geometry import BrepLoop
+from compas.geometry import Polyline
+from compas.geometry import Point
 from compas.datastructures import Mesh
 
 from compas.geometry import Surface
@@ -31,10 +30,12 @@ class Plate(TimberElement):
 
     Parameters
     ----------
-    outline : :class:`~compas.geometry.RhinoCurve`
-        A line representing the outline of this plate.
-    thickness : float
-        Thickness of the plate material.
+    outline_a : :class:`~compas.geometry.RhinoCurve`
+        A line representing the principal outline of this plate.
+    outline_b : :class:`~compas.geometry.RhinoCurve`
+        A line representing the associated outline of this plate. This should have the same number of points as outline_a.
+    frame : :class:`~compas.geometry.Frame`, optional
+        The coordinate system (frame) of this plate. Default is None.
     vector : :class:`~compas.geometry.Vector`, optional
         The vector of the plate. Default is None.
 
@@ -45,8 +46,10 @@ class Plate(TimberElement):
         The coordinate system (frame) of this plate.
     shape : :class:`~compas.geometry.Brep`
         An extrusion representing the base geometry of this plate.
-    outline : :class:`~compas.geometry.Polyline`
-        A line representing the outline of this plate.
+    outline_a : :class:`~compas.geometry.Polyline`
+        A line representing the principal outline of this plate.
+    outline_b : :class:`~compas.geometry.RhinoCurve`
+        A line representing the associated outline of this plate.
     thickness : float
         Thickness of the plate material.
     aabb : tuple(float, float, float, float, float, float)
@@ -65,9 +68,9 @@ class Plate(TimberElement):
 
     def __init__(self, outline_a, outline_b, frame=None, blank_extension=0, **kwargs):
         super(Plate, self).__init__(**kwargs)
-        if not outline_a.is_closed:
+        if not TOL.is_allclose(outline_a[0], outline_a[-1]):
             raise ValueError("The outline_a is not closed.")
-        if not outline_b.is_closed:
+        if not TOL.is_allclose(outline_b[0], outline_b[-1]):
             raise ValueError("The outline_b is not closed.")
         if len(outline_a) != len(outline_b):
             raise ValueError("The outlines have different number of points.")
@@ -85,11 +88,11 @@ class Plate(TimberElement):
 
     def __repr__(self):
         # type: () -> str
-        return "Plate(outline={!r}, thickness={})".format(self.outline, self.thickness)
+        return "Plate(outline_a={!r}, thickness={})".format(self.outline_a, self.thickness)
 
     def __str__(self):
         return "Plate {} with thickness {:.3f} with vector {} at {}".format(
-            self.outline,
+            self.outline_a,
             self.thickness,
             self.frame,
         )
@@ -190,8 +193,8 @@ class Plate(TimberElement):
     @property
     def frame(self):
         if not self._frame:
-            self._frame = Frame.from_points(self.outline[0], self.outline[1], self.outline[-2])
-            if is_polyline_clockwise(self.outline, self._frame.normal):
+            self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
+            if is_polyline_clockwise(self.outline_a, self._frame.normal):
                 self._frame = Frame(self._frame.point, self._frame.xaxis, -self._frame.yaxis)
         return self._frame
         # flips the frame if the frame.point is at an interior corner
@@ -207,9 +210,9 @@ class Plate(TimberElement):
             thickness_vector = -thickness_vector
         elif frame and thickness_vector.dot(frame.zaxis) < 0:
             thickness_vector = -thickness_vector
-        thickness_vector = thickness_vector.unitize() * thickness
-
-        outline_b = outline.translated(vector)
+        thickness_vector.unitize()
+        thickness_vector *= thickness
+        outline_b = Polyline([p.translated(thickness_vector) for p in outline])
         return cls(outline, outline_b, frame=frame, blank_extension=blank_extension, **kwargs)
 
 
@@ -238,28 +241,30 @@ class Plate(TimberElement):
         ----------
         include_features : bool, optional
             If ``True``, include the features in the computed geometry.
-            If ``False``, return only the outline geometry.
+            If ``False``, return only the plate shape.
 
         Returns
         -------
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        nca = NurbsCurve.from_points(self.outline_a.points, degree=1)
-        ncb = NurbsCurve.from_points(self.outline_b.points, degree=1)
+        nca = NurbsCurve.from_points(self.outline_a, degree=1)
+        ncb = NurbsCurve.from_points(self.outline_b, degree=1)
 
-        curves = [nca, ncb]
-        for i in range(len(self.outline_a)-1):
-            a = self.outline_a.points[i]
-            b = self.outline_a.points[i+1]
-            c = self.outline_b.points[i+1]
-            d = self.outline_b.points[i]
-            curves.append(NurbsCurve.from_points([a, b, c, d, a], degree=1))
-        plate_geo = Brep.from_curves(curves)
-        if len(plate_geo) != 1:
-            raise ValueError("The curves could not be joined into a single Brep.")
-        else:
-            plate_geo = plate_geo[0]
+        # curves = [nca, ncb]
+        # for i in range(len(self.outline_a)-1):
+        #     a = self.outline_a.points[i]
+        #     b = self.outline_a.points[i+1]
+        #     c = self.outline_b.points[i+1]
+        #     d = self.outline_b.points[i]
+        #     curves.append(NurbsCurve.from_points([a, b, c, d, a], degree=1))
+        # TODO: consider if Brep.from_curves(curves) is faster/better
+        plate_geo = Brep.from_loft([nca, ncb])
+        plate_geo.cap_planar_holes()
+        # if len(plate_geo) != 1:
+        #     raise ValueError("The curves could not be joined into a single Brep.")
+        # else:
+        #     plate_geo = plate_geo[0]
         if include_features:
             for feature in self._features:
                 try:
@@ -283,9 +288,9 @@ class Plate(TimberElement):
             The AABB of the element.
 
         """
-        vertices = [point for point in self.outline.points]
-        for point in self.outline.points:
-            vertices.append(point + self.vector)
+        vertices = []
+        for outline in [self.outline_a, self.outline_b]:
+            vertices.extend([point for point in outline])
         box = Box.from_points(vertices)
         box.xsize += inflate
         box.ysize += inflate
@@ -303,11 +308,13 @@ class Plate(TimberElement):
 
         """
         vertices = []
-        for point in self.outline:
-            vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
-        obb = Box.from_points(vertices)
-        obb.zsize = self.thickness
-        obb.translate([0, 0, self.thickness / 2])
+        for outline in [self.outline_a, self.outline_b]:
+            vertices.extend([point for point in outline])
+
+        world_vertices = []
+        for point in vertices:
+            world_vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
+        obb = Box.from_points(world_vertices)
         if inflate != 0.0:
             obb.xsize += inflate
             obb.ysize += inflate
@@ -361,3 +368,4 @@ class Plate(TimberElement):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
+
