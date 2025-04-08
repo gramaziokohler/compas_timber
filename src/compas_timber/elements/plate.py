@@ -1,27 +1,18 @@
-from compas.geometry import NurbsCurve
-
 from compas.geometry import Box
 from compas.geometry import Brep
-from compas.geometry import Polyline
-from compas.geometry import Point
-from compas.datastructures import Mesh
-
-from compas.geometry import Surface
 from compas.geometry import Frame
+from compas.geometry import NurbsCurve
 from compas.geometry import PlanarSurface
-from compas.geometry import Polyhedron
+from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas_model.elements import reset_computed
-from compas.itertools import pairwise
 from compas.tolerance import TOL
+from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
-from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
-
 
 
 class Plate(TimberElement):
@@ -160,7 +151,6 @@ class Plate(TimberElement):
             Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
         )
 
-
     def side_as_surface(self, side_index):
         # type: (int) -> compas.geometry.PlanarSurface
         """Returns the requested side of the beam as a parametric planar surface.
@@ -223,7 +213,6 @@ class Plate(TimberElement):
         thickness_vector *= thickness
         outline_b = Polyline([p.translated(thickness_vector) for p in outline])
         return cls(outline, outline_b, frame=frame, blank_extension=blank_extension, **kwargs)
-
 
     # ==========================================================================
     # Implementations of abstract methods
@@ -376,4 +365,3 @@ class Plate(TimberElement):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
-

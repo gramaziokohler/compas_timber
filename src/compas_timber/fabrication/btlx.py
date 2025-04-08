@@ -472,7 +472,6 @@ class BTLxPart(object):
         return self._shape_strings
 
 
-
 def contour_to_xml(contour):
     """Converts a contour to an XML element.
 
@@ -500,7 +499,7 @@ def contour_to_xml(contour):
     start_point.set("Y", "{:.{prec}f}".format(start.y, prec=BTLxWriter.POINT_PRECISION))
     start_point.set("Z", "{:.{prec}f}".format(start.z, prec=BTLxWriter.POINT_PRECISION))
 
-    if isinstance(contour.inclination, (float, int)):   # single Inclination for all segments
+    if isinstance(contour.inclination, (float, int)):  # single Inclination for all segments
         root.set("Inclination", "{:.{prec}f}".format(contour.inclination, prec=BTLxWriter.ANGLE_PRECISION))
         for point in contour.polyline[1:]:
             line = ET.SubElement(root, "Line")
@@ -509,7 +508,7 @@ def contour_to_xml(contour):
             end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
             end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
 
-    else:   # one Inclination value per segment
+    else:  # one Inclination value per segment
         for point, inc in zip(contour.polyline[1:], contour.inclination):
             line = ET.SubElement(root, "Line", {"Inclination": "{:.{prec}f}".format(inc, prec=BTLxWriter.ANGLE_PRECISION)})
             end_point = ET.SubElement(line, "EndPoint")
@@ -551,6 +550,7 @@ def dual_contour_to_xml(contour):
             end_point.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
             end_point.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
     return root
+
 
 class BTLxProcessing(Data):
     """Base class for BTLx Processing.
@@ -825,6 +825,7 @@ class Contour(object):
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
 
+
 class DualContour(object):
     """Represens the generic contour for specific free contour processings.
 
@@ -845,6 +846,7 @@ class DualContour(object):
         self.principal_contour = principal_contour
         self.associated_contour = associated_contour
         self.depth_bounded = depth_bounded
+
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
 

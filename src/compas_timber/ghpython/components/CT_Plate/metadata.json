@@ -3,7 +3,7 @@
     "nickname": "Plate",
     "category": "COMPAS Timber",
     "subcategory": "Elements",
-    "description": "Creates a Plate from a Polyline.",
+    "description": "Creates a Plate from a Polyline or Polylines.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,

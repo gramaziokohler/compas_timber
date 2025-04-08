@@ -4,8 +4,6 @@ import rhinoscriptsyntax as rs
 from compas.scene import Scene
 from compas_rhino.conversions import curve_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.elements import Plate as CTPlate
