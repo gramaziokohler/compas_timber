@@ -1,3 +1,7 @@
+import os
+import pytest
+
+from compas.data import json_load
 from compas.geometry import Point
 from compas.geometry import Line
 
@@ -5,7 +9,11 @@ from compas_timber.elements import Beam
 from compas_timber.fabrication import Text
 from compas_timber.fabrication import AlignmentType
 
-from fixtures.text_processing import expected_curves
+
+@pytest.fixture
+def expected_curves():
+    filepath = os.path.join(os.path.dirname(__file__), "fixtures", "expected_curves.json")
+    return json_load(filepath)
 
 
 def test_curves_for_text(expected_curves):
