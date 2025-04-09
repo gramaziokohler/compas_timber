@@ -11,6 +11,8 @@ from compas.geometry import dot_vectors
 from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
+from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 
 @pluggable(category="solvers")
@@ -42,6 +44,8 @@ def find_neighboring_elements(elements, inflate_by=0.0):
 
 class JointTopology(object):
     """Enumeration of the possible joint topologies.
+
+    TODO: make values strings and get rid of the get_name method.
 
     Attributes
     ----------
@@ -83,9 +87,21 @@ class JointTopology(object):
 
 
 class ConnectionSolver(object):
-    """Provides tools for detecting beam intersections and joint topologies."""
+    """Provides tools for detecting beam intersections and joint topologies.
+
+    Parameters
+    ----------
+    tolerance : :class:`~compas.tolerance.Tolerance`, optional
+        Tolerance instance to use for computations. Default is the global TOL.
+    max_distance : float, optional
+        Maximum distance, in design units, at which two beams are considered touching.
+    """
 
     TOLERANCE = 1e-6
+
+    def __init__(self, tolerance=None, max_distance=None):
+        self._tolerance = tolerance or TOL
+        self._max_distance = max_distance or self._tolerance.absolute
 
     @classmethod
     def find_intersecting_pairs(cls, beams, rtree=False, max_distance=0.0):
