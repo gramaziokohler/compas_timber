@@ -1,25 +1,28 @@
 # flake8: noqa
+import Grasshopper
+import Rhino
 import System
 import rhinoscriptsyntax as rs
-from ghpythonlib.componentbase import executingcomponent as component
+
+
 
 from compas_rhino.conversions import frame_to_rhino
 
 
-class ShowBeamFaces(component):
-    def RunScript(self, Beam, RefSideIndex):
-        if not Beam:
+class ShowElementFaces(Grasshopper.Kernel.GH_ScriptInstance):
+    def RunScript(self, element: System.Collections.Generic.List[object], ref_side_index: System.Collections.Generic.List[int]):
+        if not element:
             return None
         self.pl = []
         self.txt = []
         self.ht = []
         srfs = []
-        if not RefSideIndex:
-            RefSideIndex = [0]
-        if not len(RefSideIndex) == len(Beam):
-            RefSideIndex = [RefSideIndex[0] for _ in Beam]
+        if not ref_side_index:
+            ref_side_index = [0]
+        if not len(ref_side_index) == len(element):
+            ref_side_index = [ref_side_index[0] for _ in element]
 
-        for b, i in zip(Beam, RefSideIndex):
+        for b, i in zip(element, ref_side_index):
             srfs.append(self.get_srf(b, i))
             ht = 1000
             for side_index in range(len(b.ref_sides)):

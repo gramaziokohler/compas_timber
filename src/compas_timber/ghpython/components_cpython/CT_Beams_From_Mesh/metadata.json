@@ -10,25 +10,25 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Mesh",
+                "name": "mesh",
                 "description": "Mesh whose edges are used to generate beams.",
                 "typeHintID": "mesh",
                 "scriptParamAccess": 0
             },
             {
-                "name": "Width",
+                "name": "width",
                 "description": "Width of beams",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             },
             {
-                "name": "Height",
+                "name": "height",
                 "description": "Height of beams",
                 "typeHintID": "float",
                 "scriptParamAccess": 0
             },
             {
-                "name": "Category",
+                "name": "category",
                 "description": "Category assigned to beams that can be used to define joint rules.",
                 "typeHintID": "str",
                 "scriptParamAccess": 0
