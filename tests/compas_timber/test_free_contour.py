@@ -8,8 +8,8 @@ from compas_timber.fabrication import BTLxWriter
 
 from compas_timber.elements import Plate
 from compas_timber.fabrication import FreeContour
-from compas_timber.fabrication import Contour
-from compas_timber.fabrication import DualContour
+from compas_timber.fabrication.btlx import Contour
+from compas_timber.fabrication.btlx import DualContour
 from compas.data import json_loads
 from compas.data import json_dumps
 

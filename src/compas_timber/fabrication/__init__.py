@@ -22,8 +22,6 @@ from .btlx import LimitationTopType
 from .btlx import MachiningLimits
 from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
-from .btlx import Contour
-from .btlx import DualContour
 
 __all__ = [
     "BTLxWriter",
@@ -50,6 +48,4 @@ __all__ = [
     "MachiningLimits",
     "StepShapeType",
     "BTLxFromGeometryDefinition",
-    "Contour",
-    "DualContour",
 ]
