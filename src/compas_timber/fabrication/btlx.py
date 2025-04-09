@@ -15,38 +15,9 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
+from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
-
-
-class BTLxProcessingError(Exception):
-    """Exception raised when an error occurs while writing a Processing to BTLx file.
-
-    Parameters
-    ----------
-    message : str
-        The error message.
-    part : :class:`BTLxPart`
-        The part that caused the error.
-    failed_processing : :class:`BTLxProcessing`
-        The processing that caused the error.
-
-    Attributes
-    ----------
-    message : str
-        The error message.
-    part : :class:`BTLxPart`
-        The part that caused the error.
-    failed_processing : :class:`BTLxProcessing`
-        The processing that caused the error.
-
-    """
-
-    def __init__(self, message, part, failed_processing):
-        super(BTLxProcessingError, self).__init__(message)
-        self.message = message
-        self.part = part
-        self.failed_processing = failed_processing
 
 
 class BTLxWriter(object):
