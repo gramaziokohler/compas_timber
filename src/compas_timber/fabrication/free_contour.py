@@ -113,7 +113,7 @@ class FreeContour(BTLxProcessing):
             The reference side index. If none is given, the function will try to find the reference side index based on the polyline and element.
         """
 
-        if not ref_side_index:
+        if ref_side_index is None:
             ref_side_index = cls.get_ref_face_index(polyline, element)
 
         ref_side = element.ref_sides[ref_side_index]
