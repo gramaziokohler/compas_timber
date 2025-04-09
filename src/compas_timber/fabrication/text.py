@@ -153,7 +153,7 @@ class Text(BTLxProcessing):
 
     @alignment_vertical.setter
     def alignment_vertical(self, value):
-        if value not in ["bottom", "center", "top"]:
+        if value not in ("bottom", "center", "top"):
             raise ValueError("AlignmentVertical should be one of 'bottom', 'center', 'top'. Got: {}".format(value))
         self._alignment_vertical = value
 
@@ -163,7 +163,7 @@ class Text(BTLxProcessing):
 
     @alignment_horizontal.setter
     def alignment_horizontal(self, value):
-        if value not in ["left", "center", "right"]:
+        if value not in ("left", "center", "right"):
             raise ValueError("AlignmentHorizontal should be one of 'left', 'center', 'right'. Got: {}".format(value))
         self._alignment_horizontal = value
 
@@ -173,7 +173,7 @@ class Text(BTLxProcessing):
 
     @alignment_multiline.setter
     def alignment_multiline(self, value):
-        if value not in ["left", "center", "right"]:
+        if value not in ("left", "center", "right"):
             raise ValueError("AlignmentMultiline should be one of 'left', 'center', 'right'. Got: {}".format(value))
         self._alignment_multiline = value
 
@@ -183,7 +183,7 @@ class Text(BTLxProcessing):
 
     @stacked_marking.setter
     def stacked_marking(self, value):
-        if value not in [True, False]:
+        if value not in (True, False):
             raise ValueError("StackedMarking should be a Boolean. Got: {}".format(value))
         self._stacked_marking = value
 
@@ -193,7 +193,7 @@ class Text(BTLxProcessing):
 
     @text_height_auto.setter
     def text_height_auto(self, value):
-        if value not in [True, False]:
+        if value not in (True, False):
             raise ValueError("TextHeightAuto should be a Boolean. Got: {}".format(value))
         self._text_height_auto = value
 
