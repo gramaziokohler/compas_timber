@@ -80,7 +80,7 @@ def test_plate_aperture_contour():
     depth = 5.0
     plate = Plate.from_outline_thickness(plate_pline, thickness)
     aperture_pline = Polyline([Point(25, 50, 0), Point(25, 150, 0), Point(75, 150, 0), Point(75, 50, 0), Point(25, 50, 0)])
-    contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth, interior =True)
+    contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth, interior=True)
     plate.add_feature(contour)
 
     assert len(plate.features) == 2
@@ -136,6 +136,7 @@ def test_double_contour_plate():
     assert TOL.is_zero(plate.blank.ysize - 120.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
+
 def test_contour_plate_blank():
     pline_a = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     pline_b = Polyline([Point(-10, -10, 10), Point(-10, 210, 10), Point(110, 210, 10), Point(110, -10, 10), Point(-10, -10, 10)])
@@ -147,6 +148,7 @@ def test_contour_plate_blank():
     assert TOL.is_zero(plate.blank.ysize - 120.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
+
 def test_contour_plate_simple_inclination():
     pline_a = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     pline_b = Polyline([Point(-10, -10, 10), Point(-10, 210, 10), Point(110, 210, 10), Point(110, -10, 10), Point(-10, -10, 10)])
@@ -157,21 +159,39 @@ def test_contour_plate_simple_inclination():
     assert TOL.is_zero(plate.blank.xsize - 220.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
     assert TOL.is_zero(plate.blank.ysize - 120.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
-    assert TOL.is_close(plate.features[0].params.as_dict()["Contour"].inclination, - 45.0)
+    assert TOL.is_close(plate.features[0].params.as_dict()["Contour"].inclination, -45.0)
+
 
 def test_contour_plate_multiple_inclination():
     pline_a = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
-    pline_b = Polyline([Point(-10, -10*math.tan(math.pi/6), 10), Point(-10, 210, 10), Point(110, 210, 10), Point(110, -10*math.tan(math.pi/6), 10), Point(-10, -10*math.tan(math.pi/6), 10)])
+    pline_b = Polyline(
+        [
+            Point(-10, -10 * math.tan(math.pi / 6), 10),
+            Point(-10, 210, 10),
+            Point(110, 210, 10),
+            Point(110, -10 * math.tan(math.pi / 6), 10),
+            Point(-10, -10 * math.tan(math.pi / 6), 10),
+        ]
+    )
     plate = Plate(pline_a, pline_b)
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
     assert isinstance(plate.features[0].params.as_dict().get("Contour"), Contour)
-    assert TOL.is_allclose(plate.features[0].params.as_dict()["Contour"].inclination, [- 45.0, -45.0, -45.0, -30.0])
+    assert TOL.is_allclose(plate.features[0].params.as_dict()["Contour"].inclination, [-45.0, -45.0, -45.0, -30.0])
 
-def test_double_contour_plate():
+
+def test_dual_contour_plate():
     pline_a = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
-    pline_b = Polyline([Point(10, 10*math.tan(math.pi/6), 10), Point(-10, 210, 10), Point(110, 210, 10), Point(110, -10*math.tan(math.pi/6), 10), Point(10, 10*math.tan(math.pi/6), 10)])
+    pline_b = Polyline(
+        [
+            Point(10, 10 * math.tan(math.pi / 6), 10),
+            Point(-10, 210, 10),
+            Point(110, 210, 10),
+            Point(110, -10 * math.tan(math.pi / 6), 10),
+            Point(10, 10 * math.tan(math.pi / 6), 10),
+        ]
+    )
     plate = Plate(pline_a, pline_b)
 
     assert len(plate.features) == 1
