@@ -19,7 +19,7 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
 
-class BTLxWriteProcessingError(Exception):
+class BTLxProcessingError(Exception):
     """Exception raised when an error occurs while writing a Processing to BTLx file.
 
     Parameters
@@ -43,7 +43,7 @@ class BTLxWriteProcessingError(Exception):
     """
 
     def __init__(self, message, part, failed_processing):
-        super(BTLxWriteProcessingError, self).__init__(message)
+        super(BTLxProcessingError, self).__init__(message)
         self.message = message
         self.part = part
         self.failed_processing = failed_processing
@@ -233,7 +233,7 @@ class BTLxWriter(object):
                     try:
                         processing_element = self._create_processing(feature)
                     except ValueError as ex:
-                        self._errors.append(BTLxWriteProcessingError("Failed to create processing: {}".format(ex), part, feature))
+                        self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
                     else:
                         processings_element.append(processing_element)
                 else:
