@@ -48,7 +48,7 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(self, contour_points, associated_contour_points=None, depth=None, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=False, inclination=None, **kwargs):
+    def __init__(self, contour_points, associated_contour_points=None, depth=None, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, inclination=None, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
         self.contour_points = contour_points
         if not (associated_contour_points or depth):
