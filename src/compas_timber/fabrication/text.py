@@ -26,7 +26,7 @@ class Text(BTLxProcessing):
     angle : float
         The horizontal angle of the first cut. -179.9 < angle < 179.9.
     alignment_vertical : int
-        The vertical alignment of the text. Should be either AlignmentType.TOP, AlignmentType.CENTER ot AlignmentType.BOTTOM.
+        The vertical alignment of the text. Should be either AlignmentType.TOP, AlignmentType.CENTER or AlignmentType.BOTTOM.
     alignment_horizontal : int
         The horizontal alignment of the text. Should be either AlignmentType.LEFT, AlignmentType.CENTER or AlignmentType.RIGHT.
     alignment_multiline : int
