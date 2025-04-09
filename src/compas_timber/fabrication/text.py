@@ -19,26 +19,26 @@ class Text(BTLxProcessing):
 
     Parameters
     ----------
-    start_x : float
-        The start x-coordinate of the cut in parametric space of the reference side. -100000.0 < start_x < 100000.0.
-    start_y : float
-        The start y-coordinate of the cut in parametric space of the reference side. 0.0 < start_y < 50000.0.
-    angle : float
-        The horizontal angle of the first cut. -179.9 < angle < 179.9.
-    alignment_vertical : int
-        The vertical alignment of the text. Should be either AlignmentType.TOP, AlignmentType.CENTER or AlignmentType.BOTTOM.
-    alignment_horizontal : int
-        The horizontal alignment of the text. Should be either AlignmentType.LEFT, AlignmentType.CENTER or AlignmentType.RIGHT.
-    alignment_multiline : int
-        The alignment of the text in multiline mode. Should be either AlignmentType.LEFT, AlignmentType.CENTER or AlignmentType.RIGHT.
-    stacked_marking : bool
-        If the text is a stacked marking.
-    text_height_auto : bool
-        If the text height is automatically calculated.
-    text_height : float
-        The height of the text. 0.1 < text_height < 5000.0.
     text : str
         The text to be engraved on the beam.
+    start_x : float, optional
+        The start x-coordinate of the cut in parametric space of the reference side. -100000.0 < start_x < 100000.0. Default is 0.0.
+    start_y : float, optional
+        The start y-coordinate of the cut in parametric space of the reference side. -50000.0 < start_y < 50000.0. Default is 0.0.
+    angle : float, optional
+        The horizontal angle of the first cut. -180.0 < angle < 180.0. Default is 0.0.
+    alignment_vertical : {`AlignmentType.BOTTOM`, `AlignmentType.CENTER` or `AlignmentType.TOP`}, optional
+        The vertical alignment of the text. Default is `AlignmentType.BOTTOM`.
+    alignment_horizontal : {`AlignmentType.LEFT`, `AlignmentType.CENTER` or `AlignmentType.RIGHT`}, optional
+        The horizontal alignment of the text. Default is `AlignmentType.LEFT`.
+    alignment_multiline : {`AlignmentType.LEFT`, `AlignmentType.CENTER` or `AlignmentType.RIGHT`}, optional
+        The alignment of the text in multiline mode. Default is `AlignmentType.LEFT`.
+    stacked_marking : bool, optional
+        If the text is a stacked marking. Default is False.
+    text_height_auto : bool, optional
+        If the text height is automatically calculated. Default is True.
+    text_height : float, optional
+        The height of the text. 0 < text_height < 5000.0.
 
     """
 
@@ -101,7 +101,7 @@ class Text(BTLxProcessing):
 
     @staticmethod
     def _load_character_dict():
-        if Text._CHARACTER_DICT is None:
+        if not Text._CHARACTER_DICT:
             character_dict_path = os.path.join(DATA, "basic_characters.zip")
             Text._CHARACTER_DICT = json_loadz(character_dict_path)  # type: ignore
 
