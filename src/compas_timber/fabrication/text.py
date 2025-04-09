@@ -38,7 +38,7 @@ class Text(BTLxProcessing):
     text_height_auto : bool, optional
         If the text height is automatically calculated. Default is True.
     text_height : float, optional
-        The height of the text. 0 < text_height < 5000.0.
+        The height of the text. 0 < text_height < 50000.0. Default is 20.0.
 
     """
 
