@@ -258,7 +258,8 @@ class Text(BTLxProcessing):
 
         self._load_character_dict()
 
-        face = element.ref_sides[self.ref_side_index]
+        ref_side_index = self.ref_side_index or 0
+        face = element.ref_sides[ref_side_index]
         string_curves = []
         x_pos = 0
         spacing = 0.1
