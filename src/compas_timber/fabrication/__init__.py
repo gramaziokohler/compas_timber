@@ -22,6 +22,7 @@ from .text import Text
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
 from .btlx import LimitationTopType
+from .btlx import AlignmentType
 from .btlx import MachiningLimits
 from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
@@ -51,6 +52,7 @@ __all__ = [
     "TenonShapeType",
     "EdgePositionType",
     "LimitationTopType",
+    "AlignmentType",
     "MachiningLimits",
     "StepShapeType",
     "BTLxFromGeometryDefinition",
