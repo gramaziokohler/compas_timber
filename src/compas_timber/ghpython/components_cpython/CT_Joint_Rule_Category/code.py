@@ -1,8 +1,8 @@
+# flake8: noqa
 import inspect
 from collections import OrderedDict
+
 import Grasshopper
-import Rhino
-import System
 from System.Windows.Forms import ToolStripMenuItem
 from System.Windows.Forms import ToolStripSeparator
 

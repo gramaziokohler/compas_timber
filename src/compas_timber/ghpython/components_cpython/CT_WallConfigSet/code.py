@@ -1,5 +1,5 @@
+# flake8: noqa
 import Grasshopper
-import Rhino
 import System
 
 from compas_timber.connections import JointTopology
@@ -10,7 +10,18 @@ from compas_timber.design import WallPopulatorConfigurationSet
 
 class WallPopulatorConfigSetComponent(Grasshopper.Kernel.GH_ScriptInstance):
     DEFAULT_DETAILS = {JointTopology.TOPO_L: LConnectionDetailA(), JointTopology.TOPO_T: TConnectionDetailA()}
-    def RunScript(self, stud_spacing: float, beam_width: float, sheeting_outside: float, sheeting_inside: float, lintel_posts: bool, edge_stud_offset: float, custom_dimensions: System.Collections.Generic.List[object], joint_overrides: System.Collections.Generic.List[object]):
+
+    def RunScript(
+        self,
+        stud_spacing: float,
+        beam_width: float,
+        sheeting_outside: float,
+        sheeting_inside: float,
+        lintel_posts: bool,
+        edge_stud_offset: float,
+        custom_dimensions: System.Collections.Generic.List[object],
+        joint_overrides: System.Collections.Generic.List[object],
+    ):
         if not stud_spacing:
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Stud Spacing' failed to collect data")
         if not beam_width:

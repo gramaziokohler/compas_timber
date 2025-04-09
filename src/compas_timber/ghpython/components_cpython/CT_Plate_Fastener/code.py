@@ -1,14 +1,15 @@
 import Grasshopper
 import Rhino
 import System
-
 from compas.scene import SceneObject
 
 from compas_timber.elements import PlateFastener
 
 
 class PlateFastenerComponent(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, outline: Rhino.Geometry.Polyline, thickness: float, cutouts: System.Collections.Generic.List[Rhino.Geometry.Polyline], main_beam_interface, cross_beam_interface):
+    def RunScript(
+        self, outline: Rhino.Geometry.Polyline, thickness: float, cutouts: System.Collections.Generic.List[Rhino.Geometry.Polyline], main_beam_interface, cross_beam_interface
+    ):
         outline_points = [point for point in outline] if outline else None
         cutout_points = []
         for cutout in cutouts:

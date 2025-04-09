@@ -1,4 +1,6 @@
 """Set attributes to the referenced object by encoding them in the objects's name."""
+
+# flake8: noqa
 import Grasshopper
 import Rhino
 import System
@@ -8,7 +10,15 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 
 class Attributes_Set(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, ref_obj: System.Collections.Generic.List[System.Guid], z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d], width: System.Collections.Generic.List[float], height: System.Collections.Generic.List[float], category: System.Collections.Generic.List[str], update: bool):
+    def RunScript(
+        self,
+        ref_obj: System.Collections.Generic.List[System.Guid],
+        z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
+        width: System.Collections.Generic.List[float],
+        height: System.Collections.Generic.List[float],
+        category: System.Collections.Generic.List[str],
+        update: bool,
+    ):
         _o = list_input_valid(self, ref_obj, "RefObj")
         if not _o:
             return
@@ -17,28 +27,34 @@ class Attributes_Set(Grasshopper.Kernel.GH_ScriptInstance):
         if z_vector or width or height or category:
             pass
         else:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "None of the input parameters 'ZVector', 'Width', 'Height', 'Category' collected any data.")
+            ghenv.Component.AddRuntimeMessage(
+                Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "None of the input parameters 'ZVector', 'Width', 'Height', 'Category' collected any data."
+            )
 
         n = len(ref_obj)
 
         if z_vector:
             if len(z_vector) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
                     " Input parameter 'ZVector' requires either none, one or the same number of values as in refObj.",
                 )
         if width:
             if len(width) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
                     " Input parameter 'Width' requires either none, one or the same number of values as in refObj.",
                 )
         if height:
             if len(height) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
                     " Input parameter 'Height' requires either none, one or the same number of values as in refObj.",
                 )
         if category:
             if len(category) not in (0, 1, n):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error,
                     " Input parameter 'Category' requires either none, one or the same number of values as in refObj.",
                 )
 

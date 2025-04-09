@@ -1,6 +1,6 @@
+# flake8: noqa
 import Grasshopper
-import Rhino
-import System
+
 from compas_timber.design import SurfaceModel
 
 beam_category_names = SurfaceModel.beam_category_names()

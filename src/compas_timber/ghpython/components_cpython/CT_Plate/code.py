@@ -1,11 +1,12 @@
 """Creates a Beam from a LineCurve."""
+
+# flake8: noqa
 import Grasshopper
 import Rhino
-import System
 import rhinoscriptsyntax as rs
+import System
 from compas.scene import Scene
 from compas_rhino.conversions import curve_to_compas
-
 from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.elements import Plate as CTPlate
@@ -13,7 +14,14 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 
 class Plate(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, outline: System.Collections.Generic.List[Rhino.Geometry.Polyline], thickness: System.Collections.Generic.List[float], vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d], category: System.Collections.Generic.List[str], updateRefObj: bool):
+    def RunScript(
+        self,
+        outline: System.Collections.Generic.List[Rhino.Geometry.Polyline],
+        thickness: System.Collections.Generic.List[float],
+        vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
+        category: System.Collections.Generic.List[str],
+        updateRefObj: bool,
+    ):
         # minimum inputs required
         if not outline:
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Outline' failed to collect data")
@@ -35,9 +43,13 @@ class Plate(Grasshopper.Kernel.GH_ScriptInstance):
             if len(thickness) not in (1, N):
                 ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'T' I need either one or the same number of inputs as the Crv parameter.")
             if len(category) not in (0, 1, N):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter.")
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
+                )
             if len(vector) not in (0, 1, N):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'Vector' I need either none, one or the same number of inputs as the Crv parameter.")
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'Vector' I need either none, one or the same number of inputs as the Crv parameter."
+                )
 
             # duplicate data if None or single value
             if len(thickness) != N:

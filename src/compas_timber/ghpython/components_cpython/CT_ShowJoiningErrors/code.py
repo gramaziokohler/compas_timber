@@ -1,9 +1,7 @@
 # flake8: noqa
 import Grasshopper
-import Rhino
-import System
-from compas.scene import SceneObject
 
+from compas.scene import SceneObject
 
 
 class ShowJoiningErrors(Grasshopper.Kernel.GH_ScriptInstance):

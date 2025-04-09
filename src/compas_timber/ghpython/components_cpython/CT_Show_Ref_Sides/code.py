@@ -1,9 +1,7 @@
 # flake8: noqa
 import Grasshopper
-import Rhino
 import System
 import rhinoscriptsyntax as rs
-
 
 
 from compas_rhino.conversions import frame_to_rhino

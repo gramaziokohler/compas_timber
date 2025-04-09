@@ -1,12 +1,11 @@
 """Creates a Beam from a LineCurve."""
 
+# flake8: noqa
 import Grasshopper
 import Rhino
-import System
 from compas.geometry import Brep
 from compas.scene import Scene
 from compas.tolerance import Tolerance
-
 from Rhino.Geometry import Brep as RhinoBrep
 from Rhino.Geometry import Vector3d as RhinoVector
 
@@ -14,8 +13,17 @@ from compas_timber.design import DebugInfomation
 from compas_timber.design import SurfaceModel
 
 
-class SurfaceModelComponent(component):
-    def RunScript(self, surface: Rhino.Geometry.Brep, stud_spacing: float, beam_width: float, frame_depth: float, stud_direction: Rhino.Geometry.Vector3d, options, CreateGeometry: bool = False):
+class SurfaceModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
+    def RunScript(
+        self,
+        surface: Rhino.Geometry.Brep,
+        stud_spacing: float,
+        beam_width: float,
+        frame_depth: float,
+        stud_direction: Rhino.Geometry.Vector3d,
+        options,
+        CreateGeometry: bool = False,
+    ):
         # minimum inputs required
         if not surface:
             return
@@ -32,7 +40,9 @@ class SurfaceModelComponent(component):
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
         if not stud_spacing:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm")
+            ghenv.Component.AddRuntimeMessage(
+                Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm"
+            )
             if tol.unit == "M":
                 stud_spacing = 0.625
             elif tol.unit == "MM":
@@ -43,7 +53,9 @@ class SurfaceModelComponent(component):
             raise TypeError("stud_spacing expected a float, got: {}".format(type(stud_spacing)))
 
         if not beam_width:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'beam_width' failed to collect data, using default value of 60mm")
+            ghenv.Component.AddRuntimeMessage(
+                Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'beam_width' failed to collect data, using default value of 60mm"
+            )
             if tol.unit == "M":
                 beam_width = 0.06
             elif tol.unit == "MM":
@@ -54,7 +66,9 @@ class SurfaceModelComponent(component):
             raise TypeError("beam_width expected a float, got: {}".format(type(beam_width)))
 
         if not frame_depth:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'frame_depth' failed to collect data, using default value of 140mm")
+            ghenv.Component.AddRuntimeMessage(
+                Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'frame_depth' failed to collect data, using default value of 140mm"
+            )
             if tol.unit == "M":
                 frame_depth = 0.14
             elif tol.unit == "MM":

@@ -1,18 +1,24 @@
 """Creates a Beam from a LineCurve."""
+
+# flake8: noqa
 import Grasshopper
 import Rhino
 import System
-
 from compas.geometry import Brep
 from compas.scene import Scene
-
 
 from compas_timber.design import ContainerDefinition
 from compas_timber.elements import Slab
 
 
 class SlabComponent(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, surface: System.Collections.Generic.List[Rhino.Geometry.Brep], thickness: System.Collections.Generic.List[float], config_set: System.Collections.Generic.List[object], flip: bool):
+    def RunScript(
+        self,
+        surface: System.Collections.Generic.List[Rhino.Geometry.Brep],
+        thickness: System.Collections.Generic.List[float],
+        config_set: System.Collections.Generic.List[object],
+        flip: bool,
+    ):
         # minimum inputs required
         if not surface:
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Surface' failed to collect data")

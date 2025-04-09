@@ -17,7 +17,9 @@ from Rhino.RhinoDoc import ActiveDoc
 class BakePlateMap(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, model, map_size: System.Collections.Generic.List[float], swap_uv: bool, bake: bool):
         if map_size and len(map_size) != 3:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)")
+            ghenv.Component.AddRuntimeMessage(
+                Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
+            )
             return
 
         unit_system = Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem

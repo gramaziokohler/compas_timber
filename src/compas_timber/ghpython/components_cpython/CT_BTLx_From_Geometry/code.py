@@ -1,12 +1,12 @@
+# flake8: noqa
 import inspect
+
 import Grasshopper
-import Rhino
-import System
 import Rhino.Geometry as rg
+import System
 from compas.geometry import Line
 from compas_rhino.conversions import plane_to_compas
 from compas_rhino.conversions import polyline_to_compas
-
 
 from compas_timber.fabrication import BTLxFromGeometryDefinition
 from compas_timber.fabrication import BTLxProcessing

@@ -1,4 +1,6 @@
 """Creates a Beam from a LineCurve."""
+
+# flake8: noqa
 import Grasshopper
 import Rhino
 import rhinoscriptsyntax as rs
@@ -7,7 +9,6 @@ from compas.geometry import Vector
 from compas.scene import Scene
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
-
 
 from compas_timber.elements import Beam
 

@@ -1,7 +1,6 @@
+# flake8: noqa
 import Grasshopper
-import Rhino
 import System
-
 from compas.scene import Scene
 from compas.tolerance import TOL
 
@@ -13,13 +12,20 @@ from compas_timber.elements import Plate
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.model import TimberModel
 
-
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
 TOL.absolute = 1e-6
 
 
 class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, Elements: System.Collections.Generic.List[object], Containers: System.Collections.Generic.List[object], JointRules: System.Collections.Generic.List[object], Features: System.Collections.Generic.List[object], MaxDistance: float, CreateGeometry: bool):
+    def RunScript(
+        self,
+        Elements: System.Collections.Generic.List[object],
+        Containers: System.Collections.Generic.List[object],
+        JointRules: System.Collections.Generic.List[object],
+        Features: System.Collections.Generic.List[object],
+        MaxDistance: float,
+        CreateGeometry: bool,
+    ):
         if not Elements:
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter Beams failed to collect data")
         if not JointRules:
@@ -68,7 +74,9 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
         if unmatched_pairs:
             for pair in unmatched_pairs:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key)
+                )  # TODO: add to debug_info
 
         if wall_joint_definitions:
             joint_defs += wall_joint_definitions
@@ -88,7 +96,9 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             features = [f for f in Features if f is not None]
             for f_def in features:
                 if not f_def.elements:
-                    ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Features defined in model must have elements defined. Features without elements will be ignored")
+                    ghenv.Component.AddRuntimeMessage(
+                        Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Features defined in model must have elements defined. Features without elements will be ignored"
+                    )
                     continue
 
                 for element in f_def.elements:

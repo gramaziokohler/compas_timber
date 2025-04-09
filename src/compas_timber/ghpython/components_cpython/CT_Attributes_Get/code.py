@@ -1,4 +1,6 @@
 """Read attributes encoded in the referenced object's name."""
+
+# flake8: noqa
 import Grasshopper
 import Rhino
 import System
@@ -38,7 +40,9 @@ class Attributes_Get(Grasshopper.Kernel.GH_ScriptInstance):
             if gl:
                 gl = list(gl)
                 if len(gl) > 1:
-                    ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Remark, "Some objects belong to more than one group! (I will pick the first group I find.)")
+                    ghenv.Component.AddRuntimeMessage(
+                        Grasshopper.Kernel.GH_RuntimeMessageLevel.Remark, "Some objects belong to more than one group! (I will pick the first group I find.)"
+                    )
                 group = gl[0]
 
             else:

@@ -1,9 +1,18 @@
+# flake8: noqa
 import Grasshopper
-import Rhino
 import System
 
+
 class SurfaceModelOptions(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, sheeting_outside: float, sheeting_inside: float, lintel_posts: bool, edge_stud_offset: float, custom_dimensions: System.Collections.Generic.List[object], joint_overrides: System.Collections.Generic.List[object]):
+    def RunScript(
+        self,
+        sheeting_outside: float,
+        sheeting_inside: float,
+        lintel_posts: bool,
+        edge_stud_offset: float,
+        custom_dimensions: System.Collections.Generic.List[object],
+        joint_overrides: System.Collections.Generic.List[object],
+    ):
         if sheeting_outside is not None and not isinstance(sheeting_outside, float):
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "sheeting_outside expected a float, got: {}".format(type(sheeting_outside)))
         if sheeting_inside is not None and not isinstance(sheeting_inside, float):

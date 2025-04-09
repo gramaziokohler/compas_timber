@@ -1,5 +1,5 @@
+# flake8: noqa
 import Grasshopper
-import Rhino
 import System
 
 

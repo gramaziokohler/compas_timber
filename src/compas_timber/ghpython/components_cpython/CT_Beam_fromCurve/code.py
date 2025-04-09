@@ -1,12 +1,13 @@
 """Creates a Beam from a LineCurve."""
+
+# flake8: noqa
 import Grasshopper
 import Rhino
-import System
 import rhinoscriptsyntax as rs
+import System
 from compas.scene import Scene
 from compas_rhino.conversions import line_to_compas
 from compas_rhino.conversions import vector_to_compas
-
 from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.elements import Beam as CTBeam
@@ -14,7 +15,15 @@ from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_att
 
 
 class Beam_fromCurve(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, centerline: System.Collections.Generic.List[object], z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d], width: System.Collections.Generic.List[float], height: System.Collections.Generic.List[float], category: System.Collections.Generic.List[str], updateRefObj: bool):
+    def RunScript(
+        self,
+        centerline: System.Collections.Generic.List[object],
+        z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
+        width: System.Collections.Generic.List[float],
+        height: System.Collections.Generic.List[float],
+        category: System.Collections.Generic.List[str],
+        updateRefObj: bool,
+    ):
         # minimum inputs required
         if not centerline:
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Centerline' failed to collect data")
@@ -39,13 +48,17 @@ class Beam_fromCurve(Grasshopper.Kernel.GH_ScriptInstance):
             # check list lengths for consistency
             N = len(centerline)
             if len(z_vector) not in (0, 1, N):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter.")
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'ZVector' I need either none, one or the same number of inputs as the Crv parameter."
+                )
             if len(width) not in (1, N):
                 ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'W' I need either one or the same number of inputs as the Crv parameter.")
             if len(height) not in (1, N):
                 ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'H' I need either one or the same number of inputs as the Crv parameter.")
             if len(category) not in (0, 1, N):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter.")
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'Category' I need either none, one or the same number of inputs as the Crv parameter."
+                )
 
             # duplicate data if None or single value
             if len(z_vector) != N:

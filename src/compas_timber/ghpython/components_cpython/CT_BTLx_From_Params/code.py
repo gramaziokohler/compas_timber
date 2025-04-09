@@ -1,7 +1,8 @@
+# flake8: noqa
 import inspect
+
 import Grasshopper
 import System
-
 from compas.scene import Scene
 
 from compas_timber.fabrication import BTLxProcessing

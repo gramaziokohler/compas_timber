@@ -4,7 +4,6 @@ import Grasshopper
 from compas.scene import SceneObject
 
 
-
 class ShowFeatureErrors(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, debug_info, i: int):
         if i is None:

@@ -1,6 +1,7 @@
+# flake8: noqa
 import inspect
-import Grasshopper
 
+import Grasshopper
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
@@ -49,7 +50,9 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             if not isinstance(beam_b, list):
                 beam_b = [beam_b]
             if len(beam_a) != len(beam_b):
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1]))
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1])
+                )
                 return
             Rules = []
             for main, secondary in zip(beam_a, beam_b):
@@ -58,8 +61,8 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 if not isinstance(supported_topo, list):
                     supported_topo = [supported_topo]
                 if topology not in supported_topo:
-                    ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.
-                        Warning,
+                    ghenv.Component.AddRuntimeMessage(
+                        Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning,
                         "Beams meet with topology: {} which does not agree with joint of type: {}".format(JointTopology.get_name(topology), self.joint_type.__name__),
                     )
                 Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))

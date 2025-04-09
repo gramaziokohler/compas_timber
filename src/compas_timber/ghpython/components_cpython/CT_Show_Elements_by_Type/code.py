@@ -1,7 +1,6 @@
 # flake8: noqa
 import Grasshopper
-import Rhino
-import System
+
 from compas.scene import Scene
 
 

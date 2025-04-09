@@ -1,8 +1,6 @@
+# flake8: noqa
 import Grasshopper
-import Rhino
-import System
 from compas.scene import Scene
-
 from System.Windows.Forms import ToolStripSeparator
 
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output

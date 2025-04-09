@@ -1,8 +1,7 @@
+# flake8: noqa
 import inspect
 
 import Grasshopper
-import Rhino
-import System
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
