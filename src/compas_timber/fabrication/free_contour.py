@@ -29,9 +29,11 @@ class FreeContour(BTLxProcessing):
 
     Parameters
     ----------
-    contour_points : list of :class:`compas.geometry.Point`
+    contour_points : class:`compas.geometry.Polyline` or list of :class:`compas.geometry.Point`
         The points of the contour.
-    depth : float
+    associated_contour_points : class:`compas.geometry.Polyline` or list of :class:`compas.geometry.Point`
+        The points of the associated contour.
+    depth : float, optional
         The depth of the contour.
     counter_sink : bool, optional
         If True, the contour is a counter sink. Default is False.
@@ -39,23 +41,23 @@ class FreeContour(BTLxProcessing):
         The position of the tool. Default is "left".
     depth_bounded : bool, optional
         If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.
-    inclination : float, optional
-        The inclination of the contour. Default is 0. This is not yet implemented.
+    inclination : float or list of float, optional
+        The inclination of the contour. Default is 0 meaning the cut is perpendicular to the reference side.
 
     """
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(self, contour_points, associated_contour=None, depth=None, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=False, inclination=None, **kwargs):
+    def __init__(self, contour_points, associated_contour_points=None, depth=None, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=False, inclination=None, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
         self.contour_points = contour_points
-        if not (associated_contour or depth):
+        if not (associated_contour_points or depth):
             raise ValueError("Contour requires either a depth value or an associated_contour (for DualContour).")
-        self.associated_contour = associated_contour
+        self.associated_contour_points = associated_contour_points
         self.depth = depth
         self.counter_sink = counter_sink
         self.tool_position = tool_position
-        self.depth_bounded = depth_bounded
+        self.depth_bounded = True if self.depth else depth_bounded
         if inclination is not None:
             if isinstance(inclination, (int, float)):
                 self.inclination = inclination
@@ -273,13 +275,13 @@ class FreeCountourParams(BTLxProcessingParams):
         super(FreeCountourParams, self).__init__(instance)
 
     def as_dict(self):
-        if not self._instance.associated_contour:
+        if not self._instance.associated_contour_points:
             contour_line = Polyline(self._instance.contour_points)
             return {"Contour": Contour(contour_line, depth=self._instance.depth, depth_bounded=self._instance.depth_bounded, inclination=self._instance.inclination)}
         else:
             contour_line = Polyline(self._instance.contour_points)
-            associated_contour_line = Polyline(self._instance.associated_contour)
-            return {"Contour": DualContour(contour_line, associated_contour_line, depth_bounded=self._instance.depth_bounded)}
+            associated_contour_points = Polyline(self._instance.associated_contour_points)
+            return {"Contour": DualContour(contour_line, associated_contour_points, depth_bounded=self._instance.depth_bounded)}
 
     @property
     def header_attributes(self):
