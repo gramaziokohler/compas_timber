@@ -13,10 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `front_side`, `back_side`, `opp_side` methods to the `Beam` class for retrieving specific sides relative to a reference side.
 * Added processing `Text` to `compas_timber.fabrication`.
 * Added `TextParams` to `compas_timber.fabrication`.
+* Added new `BTLxProcessingError` to `compas_timber.errors`.
+* Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 
 ### Changed
 
 * Fixed `AttributeError` when deserializing a model with Lap joints.
+
 ### Removed
 
 

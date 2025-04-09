@@ -15,6 +15,7 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
+from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
@@ -60,6 +61,11 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
+        self._errors = []
+
+    @property
+    def errors(self):
+        return self._errors
 
     def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
@@ -106,6 +112,8 @@ class BTLxWriter(object):
         :meth:`BTLxWriter.write`
 
         """
+        self._errors = []
+
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history
         file_history_element = self._create_file_history()
@@ -193,8 +201,12 @@ class BTLxWriter(object):
             for feature in element.features:
                 # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
                 if hasattr(feature, "PROCESSING_NAME"):
-                    processing_element = self._create_processing(feature)
-                    processings_element.append(processing_element)
+                    try:
+                        processing_element = self._create_processing(feature)
+                    except ValueError as ex:
+                        self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
+                    else:
+                        processings_element.append(processing_element)
                 else:
                     warn("Unsupported feature will be skipped: {}".format(feature))
             part_element.append(processings_element)
