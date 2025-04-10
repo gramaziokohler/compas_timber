@@ -159,7 +159,7 @@ def test_contour_plate_simple_inclination():
     assert TOL.is_zero(plate.blank.xsize - 220.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
     assert TOL.is_zero(plate.blank.ysize - 120.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
-    assert TOL.is_close(plate.features[0].params.as_dict()["Contour"].inclination, -45.0)
+    assert TOL.is_close(plate.features[0].params.as_dict()["Contour"].inclination[0], -45.0)
 
 
 def test_contour_plate_multiple_inclination():

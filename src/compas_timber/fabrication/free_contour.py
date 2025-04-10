@@ -1,6 +1,4 @@
-from json import tool
 import math
-from operator import xor
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -46,13 +44,12 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(self, contour_param_object,  counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
+    def __init__(self, contour_param_object, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
         self.contour_param_object = contour_param_object
         self.counter_sink = counter_sink
         self.tool_position = tool_position
         self.depth_bounded = depth_bounded
-
 
     ########################################################################
     # Properties
@@ -148,14 +145,13 @@ class FreeContour(BTLxProcessing):
             inclinations = []
             for top_line, bottom_line in zip(Polyline(polylines[0]).lines, Polyline(polylines[1]).lines):
                 cp = bottom_line.closest_point(top_line.start)
-                inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), -ref_side.normal, -top_line.direction, deg=True),6))
+                inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), -ref_side.normal, -top_line.direction, deg=True), 6))
             if len(set(inclinations)) == 1:
-                inclinations = [inclinations[0]] # all inclinations are the same, set one global inclination for FreeContour processing
+                inclinations = [inclinations[0]]  # all inclinations are the same, set one global inclination for FreeContour processing
             depth = distance_point_plane(polylines[1][0], Plane.from_frame(ref_side))
             polyline = Polyline(polylines[0]).transformed(xform_to_part_coords)
             contour = Contour(polyline, depth=depth, inclination=inclinations)
             return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
-
 
     @classmethod
     def from_shapes_and_element(cls, polyline, element, depth=None, interior=True, **kwargs):
@@ -183,7 +179,7 @@ class FreeContour(BTLxProcessing):
                 raise ValueError("Interior polyline must be closed.")
             else:
                 return tool_position
-        else: # if the polyline is closed
+        else:  # if the polyline is closed
             if interior:
                 if is_polyline_clockwise(polyline, ref_side.normal):
                     calculated_tool_position = AlignmentType.RIGHT
@@ -253,7 +249,6 @@ class FreeCountourParams(BTLxProcessingParams):
 
     def as_dict(self):
         return {"Contour": self._instance.contour_param_object}
-
 
     @property
     def header_attributes(self):

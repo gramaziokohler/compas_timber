@@ -240,7 +240,7 @@ class Plate(TimberElement):
         return cls(outline, outline_b, frame=frame, blank_extension=blank_extension, **kwargs)
 
     # ==========================================================================
-        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (self.outline_a, self.outline_b)])
+    #  methods
     # ==========================================================================
 
     def add_feature(self, feature):

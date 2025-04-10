@@ -817,10 +817,18 @@ class Contour(object):
     """
 
     def __init__(self, polyline, depth=None, depth_bounded=None, inclination=None):
+        self.polyline = polyline
         self.depth = depth
         self.depth_bounded = depth_bounded
         self.inclination = inclination
-        self.polyline = polyline
+
+    def __data__(self):
+        data = super(Contour, self).__data__
+        data["polyline"] = self.polyline
+        data["depth"] = self.depth
+        data["depth_bounded"] = self.depth_bounded
+        data["inclination"] = self.inclination
+        return data
 
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
@@ -846,6 +854,13 @@ class DualContour(object):
         self.principal_contour = principal_contour
         self.associated_contour = associated_contour
         self.depth_bounded = depth_bounded
+
+    def __data__(self):
+        data = super(DualContour, self).__data__
+        data["principal_contour"] = (self.principal_contour,)
+        data["associated_contour"] = (self.associated_contour,)
+        data["depth_bounded"] = self.depth_bounded
+        return data
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
