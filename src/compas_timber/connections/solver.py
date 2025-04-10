@@ -8,6 +8,7 @@ from compas.geometry import closest_point_on_line
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
+from compas.geometry import is_parallel_line_line
 from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
@@ -151,20 +152,17 @@ class ConnectionSolver(object):
 
         """
         tol = self.TOLERANCE  # TODO: change to a unit-sensitive value
-        angtol = 1e-3
         a1, a2 = beam_a.centerline
         b1, b2 = beam_b.centerline
+
+        line_a = beam_a.centerline
+        line_b = beam_b.centerline
+
         va = subtract_vectors(a2, a1)
         vb = subtract_vectors(b2, b1)
 
         # check if centerlines parallel
-        ang = angle_vectors(va, vb)
-        if ang < angtol or ang > math.pi - angtol:
-            parallel = True
-        else:
-            parallel = False
-
-        if parallel:
+        if is_parallel_line_line(line_a, line_b, tol=tol):
             pa = a1
             pb = closest_point_on_line(a1, [b1, b2])
             if self._exceed_max_distance(pa, pb, max_distance, tol):
