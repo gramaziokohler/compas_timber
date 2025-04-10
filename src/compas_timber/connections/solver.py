@@ -168,6 +168,7 @@ class ConnectionSolver(object):
             pa = a1
             pb = closest_point_on_line(a1, [b1, b2])
             if self._exceed_max_distance(pa, pb, max_distance, tol):
+                # TODO: not sure about this branch, seems wrong if a1 is the end furthest away from linei b1-b2
                 return JointTopology.TOPO_UNKNOWN, None, None
 
             # check if any ends meet

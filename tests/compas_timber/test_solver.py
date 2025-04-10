@@ -94,6 +94,14 @@ def beams_I_overlapping():
     return (Beam.from_centerline(line_a, width, height), Beam.from_centerline(line_b, width, height))
 
 
+@pytest.fixture
+def beams_I_slight_angle():
+    width, height = 10, 20
+    line_a = Line(Point(x=0.0, y=600.0, z=49.99999999999999), Point(x=200.0, y=600.0, z=49.99999999999999))
+    line_b = Line(Point(x=200.0, y=600.0, z=49.99999999999999), Point(x=406.807796286557, y=599.8857529579757, z=49.99999999999999))
+    return (Beam.from_centerline(line_a, width, height), Beam.from_centerline(line_b, width, height))
+
+
 def test_solver_L_touching(beams_L_touching):
     beam_a, beam_b = beams_L_touching
     solver = ConnectionSolver()
@@ -227,5 +235,16 @@ def test_solver_I_overlapping(beams_I_overlapping):
     topology, beam_a, beam_b = solver.find_topology(beam_a, beam_b)
 
     assert topology == JointTopology.TOPO_UNKNOWN
+    assert beam_a == beam_a
+    assert beam_b == beam_b
+
+
+@pytest.mark.xfail(reason="Slight angle should be detected as I, but currently not...")
+def test_solver_I_slight_angle(beams_I_slight_angle):
+    beam_a, beam_b = beams_I_slight_angle
+    solver = ConnectionSolver()
+    topology, beam_a, beam_b = solver.find_topology(beam_a, beam_b)  # angle tolerance is hardcoded here 1e-3
+
+    assert topology == JointTopology.TOPO_I
     assert beam_a == beam_a
     assert beam_b == beam_b
