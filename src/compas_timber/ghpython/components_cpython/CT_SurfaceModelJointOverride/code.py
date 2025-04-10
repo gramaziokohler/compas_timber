@@ -9,8 +9,8 @@ from compas_timber.connections import Joint
 from compas_timber.design import CategoryRule
 from compas_timber.design import SurfaceModel
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
+from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
+from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
 
 
 class SurfaceModelJointRule(Grasshopper.Kernel.GH_ScriptInstance):
@@ -91,16 +91,16 @@ class SurfaceModelJointRule(Grasshopper.Kernel.GH_ScriptInstance):
 
     def on_beam_a_click(self, sender, event_info):
         self.cat_a = sender.Text
-        rename_gh_output(self.output_name(), 0, ghenv)
+        rename_cpython_gh_output(self.output_name(), 0, ghenv)
         ghenv.Component.ExpireSolution(True)
 
     def on_beam_b_click(self, sender, event_info):
         self.cat_b = sender.Text
-        rename_gh_output(self.output_name(), 0, ghenv)
+        rename_cpython_gh_output(self.output_name(), 0, ghenv)
         ghenv.Component.ExpireSolution(True)
 
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
-        rename_gh_output(self.output_name(), 0, ghenv)
-        manage_dynamic_params(self.arg_names()[2:], ghenv, rename_count=0, permanent_param_count=0)
+        rename_cpython_gh_output(self.output_name(), 0, ghenv)
+        manage_cpython_dynamic_params(self.arg_names()[2:], ghenv, rename_count=0, permanent_param_count=0)
         ghenv.Component.ExpireSolution(True)

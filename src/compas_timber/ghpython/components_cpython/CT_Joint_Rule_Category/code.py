@@ -9,8 +9,8 @@ from System.Windows.Forms import ToolStripSeparator
 from compas_timber.connections import Joint
 from compas_timber.design import CategoryRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
+from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
+from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
 
 
 class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
@@ -85,11 +85,11 @@ class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
 
     def on_topo_click(self, sender, event_info):
         self.topo_bools[str(sender)] = not self.topo_bools[str(sender)]
-        rename_gh_output(self.output_name(), 0, ghenv)
+        rename_cpython_gh_output(self.output_name(), 0, ghenv)
         ghenv.Component.ExpireSolution(True)
 
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
-        rename_gh_output(self.output_name(), 0, ghenv)
-        manage_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=2)
+        rename_cpython_gh_output(self.output_name(), 0, ghenv)
+        manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=2)
         ghenv.Component.ExpireSolution(True)

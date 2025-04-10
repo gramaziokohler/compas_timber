@@ -7,8 +7,8 @@ from compas.scene import Scene
 
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
+from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
+from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
 
 
 class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
@@ -65,8 +65,8 @@ class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
 
     def on_item_click(self, sender, event_info):
         self.processing_type = self.classes[str(sender)]
-        rename_gh_output(self.processing_type.__name__, 0, ghenv)
-        manage_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=2)
+        rename_cpython_gh_output(self.processing_type.__name__, 0, ghenv)
+        manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=2)
         ghenv.Component.ExpireSolution(True)
 
 

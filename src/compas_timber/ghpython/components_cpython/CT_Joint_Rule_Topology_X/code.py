@@ -8,8 +8,8 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import XLapJoint
 from compas_timber.design import TopologyRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
+from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
+from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
 
 
 class X_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
@@ -60,6 +60,6 @@ class X_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def on_item_click(self, sender, event_info):
         self.clicked = True
         self.joint_type = self.classes[str(sender)]
-        rename_gh_output(self.joint_type.__name__, 0, ghenv)
-        manage_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=0)
+        rename_cpython_gh_output(self.joint_type.__name__, 0, ghenv)
+        manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=0)
         ghenv.Component.ExpireSolution(True)
