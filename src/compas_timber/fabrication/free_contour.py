@@ -1,4 +1,6 @@
+from json import tool
 import math
+from operator import xor
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -29,12 +31,8 @@ class FreeContour(BTLxProcessing):
 
     Parameters
     ----------
-    contour_points : class:`compas.geometry.Polyline` or list of :class:`compas.geometry.Point`
-        The points of the contour.
-    associated_contour_points : class:`compas.geometry.Polyline` or list of :class:`compas.geometry.Point`
-        The points of the associated contour.
-    depth : float, optional
-        The depth of the contour.
+    contour_param_object : :class:`compas_timber.fabrication.btlx.Contour` or :class:`compas_timber.fabrication.btlx.DualContour`
+        The contour parameter object.
     counter_sink : bool, optional
         If True, the contour is a counter sink. Default is False.
     tool_position : str, optional
@@ -48,29 +46,13 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
 
-    def __init__(
-        self, contour_points, associated_contour_points=None, depth=None, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, inclination=None, **kwargs
-    ):
+    def __init__(self, contour_param_object,  counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
-        self.contour_points = contour_points
-        if not (associated_contour_points or depth):
-            raise ValueError("Contour requires either a depth value or an associated_contour (for DualContour).")
-        self.associated_contour_points = associated_contour_points
-        self.depth = depth
+        self.contour_param_object = contour_param_object
         self.counter_sink = counter_sink
         self.tool_position = tool_position
-        self.depth_bounded = True if self.depth else depth_bounded
-        if inclination is not None:
-            if isinstance(inclination, (int, float)):
-                self.inclination = inclination
-            elif not isinstance(inclination, list):
-                raise ValueError("Inclination should be a float or a list of floats.")
-            elif len(inclination) != len(contour_points) - 1:
-                raise ValueError("Inclination should either be a single float or have the same number of values as contour segments.")
-            else:
-                self.inclination = inclination
-        else:
-            self.inclination = 0.0
+        self.depth_bounded = depth_bounded
+
 
     ########################################################################
     # Properties
@@ -79,12 +61,10 @@ class FreeContour(BTLxProcessing):
     @property
     def __data__(self):
         data = super(FreeContour, self).__data__
-        data["contour_points"] = self.contour_points
-        data["depth"] = self.depth
+        data["contour_param_object"] = self.contour_param_object
         data["counter_sink"] = self.counter_sink
         data["tool_position"] = self.tool_position
         data["depth_bounded"] = self.depth_bounded
-        data["inclination"] = self.inclination
         return data
 
     @property
@@ -119,28 +99,13 @@ class FreeContour(BTLxProcessing):
             ref_side_index = cls.get_ref_face_index(polyline, element)
 
         ref_side = element.ref_sides[ref_side_index]
-
-        if polyline[0] != polyline[-1]:  # if polyline is not closed
-            if tool_position is None:
-                raise ValueError("The polyline should be closed or a tool position should be provided.")
-            elif interior:
-                raise ValueError("Interior polyline must be closed.")
-        else:
-            if interior:
-                if is_polyline_clockwise(polyline, ref_side.normal):
-                    tool_position = AlignmentType.RIGHT
-                else:
-                    tool_position = AlignmentType.LEFT
-            else:
-                if is_polyline_clockwise(polyline, ref_side.normal):
-                    tool_position = AlignmentType.LEFT
-                else:
-                    tool_position = AlignmentType.RIGHT
-
+        tool_position = cls.parse_tool_position(polyline, ref_side, tool_position, interior)
         depth = depth or element.width
-        xform = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
-        points = [pt.transformed(xform) for pt in polyline]
-        return cls(points, depth=depth, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index)
+        xform_to_part_coords = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
+        points = [pt.transformed(xform_to_part_coords) for pt in polyline]
+        contour = Contour(points, depth=depth, inclination=[0.0])
+
+        return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index)
 
     @classmethod
     def from_polylines_and_element(cls, polylines, element, interior=None, tool_position=None, ref_side_index=None):
@@ -170,42 +135,27 @@ class FreeContour(BTLxProcessing):
             ref_side_index = cls.get_ref_face_index(polylines[0], element)
 
         ref_side = element.ref_sides[ref_side_index]
-
-        if polylines[0][0] != polylines[0][-1]:  # if polyline is not closed
-            if tool_position is None:
-                raise ValueError("The polyline should be closed or a tool position should be provided.")
-            elif interior:
-                raise ValueError("Interior polyline must be closed.")
-        else:
-            if interior:
-                if is_polyline_clockwise(polylines[0], ref_side.normal):
-                    tool_position = AlignmentType.RIGHT
-                else:
-                    tool_position = AlignmentType.LEFT
-            else:
-                if is_polyline_clockwise(polylines[0], ref_side.normal):
-                    tool_position = AlignmentType.LEFT
-                else:
-                    tool_position = AlignmentType.RIGHT
+        xform_to_part_coords = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
+        tool_position = cls.parse_tool_position(polylines[0], ref_side, tool_position, interior)
 
         if not cls.are_all_segments_parallel(polylines[0], polylines[1]):  # use DualContour
-            xform = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
-            points_principal = [pt.transformed(xform) for pt in polylines[0]]
-            points_associated = [pt.transformed(xform) for pt in polylines[1]]
-            return cls(points_principal, points_associated, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
+            points_principal = [pt.transformed(xform_to_part_coords) for pt in polylines[0]]
+            points_associated = [pt.transformed(xform_to_part_coords) for pt in polylines[1]]
+            dual_contour = DualContour(points_principal, points_associated)
+            return cls(dual_contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
 
         else:  # use Contour with inclination
             inclinations = []
             for top_line, bottom_line in zip(Polyline(polylines[0]).lines, Polyline(polylines[1]).lines):
                 cp = bottom_line.closest_point(top_line.start)
-                inclination = angle_vectors_signed(Vector.from_start_end(top_line.start, cp), -ref_side.normal, -top_line.direction, deg=True)
-                inclinations.append(inclination)
+                inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), -ref_side.normal, -top_line.direction, deg=True),6))
             if len(set(inclinations)) == 1:
-                inclinations = inclinations[0]  # remove duplicates
+                inclinations = [inclinations[0]] # all inclinations are the same, set one global inclination for FreeContour processing
             depth = distance_point_plane(polylines[1][0], Plane.from_frame(ref_side))
-            xform = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
-            points = [pt.transformed(xform) for pt in polylines[0]]
-            return cls(points, depth=depth, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index, inclination=inclinations)
+            polyline = Polyline(polylines[0]).transformed(xform_to_part_coords)
+            contour = Contour(polyline, depth=depth, inclination=inclinations)
+            return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
+
 
     @classmethod
     def from_shapes_and_element(cls, polyline, element, depth=None, interior=True, **kwargs):
@@ -223,6 +173,31 @@ class FreeContour(BTLxProcessing):
             If True, the contour is an interior contour. Default is True.
         """
         return cls.from_polyline_and_element(polyline, element, depth, interior, **kwargs)
+
+    @staticmethod
+    def parse_tool_position(polyline, ref_side, tool_position, interior):
+        if polyline[0] != polyline[-1]:  # if polyline is not closed
+            if tool_position is None:
+                raise ValueError("The polyline should be closed or a tool position should be provided.")
+            elif interior:
+                raise ValueError("Interior polyline must be closed.")
+            else:
+                return tool_position
+        else: # if the polyline is closed
+            if interior:
+                if is_polyline_clockwise(polyline, ref_side.normal):
+                    calculated_tool_position = AlignmentType.RIGHT
+                else:
+                    calculated_tool_position = AlignmentType.LEFT
+            else:
+                if is_polyline_clockwise(polyline, ref_side.normal):
+                    calculated_tool_position = AlignmentType.LEFT
+                else:
+                    calculated_tool_position = AlignmentType.RIGHT
+            if tool_position is None or tool_position == calculated_tool_position:
+                return calculated_tool_position
+            else:
+                raise ValueError("Tool position does not match the contour direction for internal contour.")
 
     @staticmethod
     def get_ref_face_index(contour_points, element):
@@ -277,13 +252,8 @@ class FreeCountourParams(BTLxProcessingParams):
         super(FreeCountourParams, self).__init__(instance)
 
     def as_dict(self):
-        if not self._instance.associated_contour_points:
-            contour_line = Polyline(self._instance.contour_points)
-            return {"Contour": Contour(contour_line, depth=self._instance.depth, depth_bounded=self._instance.depth_bounded, inclination=self._instance.inclination)}
-        else:
-            contour_line = Polyline(self._instance.contour_points)
-            associated_contour_points = Polyline(self._instance.associated_contour_points)
-            return {"Contour": DualContour(contour_line, associated_contour_points, depth_bounded=self._instance.depth_bounded)}
+        return {"Contour": self._instance.contour_param_object}
+
 
     @property
     def header_attributes(self):
