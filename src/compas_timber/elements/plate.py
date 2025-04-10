@@ -21,9 +21,9 @@ class Plate(TimberElement):
 
     Parameters
     ----------
-    outline_a : :class:`~compas.geometry.RhinoCurve`
+    outline_a : :class:`~compas.geometry.Polyline`                                                  TODO: add support for NurbsCurve
         A line representing the principal outline of this plate.
-    outline_b : :class:`~compas.geometry.RhinoCurve`
+    outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
     frame : :class:`~compas.geometry.Frame`, optional
         The coordinate system (frame) of this plate. Default is None.
@@ -204,6 +204,31 @@ class Plate(TimberElement):
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, frame=None, blank_extension=0, **kwargs):
+        """
+        Constructs a plate from a polyline outline and a thickness.
+        The outline is the top face of the plate, and the thickness is the distance to the bottom face.
+
+        Parameters
+        ----------
+        outline : :class:`~compas.geometry.Polyline`
+            A polyline representing the outline of the plate.
+        thickness : float
+            The thickness of the plate.
+        vector : :class:`~compas.geometry.Vector`, optional
+            The direction of the thickness vector. If None, the thickness vector is determined from the outline.
+        frame : :class:`~compas.geometry.Frame`, optional
+            The frame of the plate. If None, the frame is determined from the outline.
+        blank_extension : float, optional
+            The extension of the blank geometry around the edges of the plate geometry. Default is 0.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Plate`
+            A Plate object representing the plate with the given outline and thickness.
+        """
+
         thickness_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal
         if vector and thickness_vector.dot(vector) < 0:
             thickness_vector = -thickness_vector
@@ -211,11 +236,11 @@ class Plate(TimberElement):
             thickness_vector = -thickness_vector
         thickness_vector.unitize()
         thickness_vector *= thickness
-        outline_b = Polyline([p.translated(thickness_vector) for p in outline])
+        outline_b = Polyline(outline).translated(thickness_vector)
         return cls(outline, outline_b, frame=frame, blank_extension=blank_extension, **kwargs)
 
     # ==========================================================================
-    # Implementations of abstract methods
+        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (self.outline_a, self.outline_b)])
     # ==========================================================================
 
     def add_feature(self, feature):
@@ -240,7 +265,7 @@ class Plate(TimberElement):
             The shape of the element.
 
         """
-        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in [self.outline_a, self.outline_b]])
+        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (self.outline_a, self.outline_b)])
         plate_geo.cap_planar_holes()
         return plate_geo
 
@@ -286,7 +311,7 @@ class Plate(TimberElement):
 
         """
         vertices = []
-        for outline in [self.outline_a, self.outline_b]:
+        for outline in (self.outline_a, self.outline_b):
             vertices.extend([point for point in outline])
         box = Box.from_points(vertices)
         box.xsize += inflate
