@@ -800,7 +800,7 @@ class AlignmentType(object):
     CENTER = "center"
 
 
-class Contour(object):
+class Contour(Data):
     """Represens the generic contour for specific free contour processings.
 
     Parameters
@@ -817,24 +817,21 @@ class Contour(object):
     """
 
     def __init__(self, polyline, depth=None, depth_bounded=None, inclination=None):
+        super(Contour, self).__init__()
         self.polyline = polyline
         self.depth = depth
         self.depth_bounded = depth_bounded
         self.inclination = inclination
 
+    @property
     def __data__(self):
-        data = super(Contour, self).__data__
-        data["polyline"] = self.polyline
-        data["depth"] = self.depth
-        data["depth_bounded"] = self.depth_bounded
-        data["inclination"] = self.inclination
-        return data
+        return {"polyline": self.polyline, "depth": self.depth, "depth_bounded": self.depth_bounded, "inclination": self.inclination}
 
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
 
 
-class DualContour(object):
+class DualContour(Data):
     """Represens the generic contour for specific free contour processings.
 
     Parameters
@@ -851,16 +848,14 @@ class DualContour(object):
     """
 
     def __init__(self, principal_contour, associated_contour, depth_bounded=None):
+        super(DualContour, self).__init__()
         self.principal_contour = principal_contour
         self.associated_contour = associated_contour
         self.depth_bounded = depth_bounded
 
+    @property
     def __data__(self):
-        data = super(DualContour, self).__data__
-        data["principal_contour"] = (self.principal_contour,)
-        data["associated_contour"] = (self.associated_contour,)
-        data["depth_bounded"] = self.depth_bounded
-        return data
+        return {"principal_contour": self.principal_contour, "associated_contour": self.associated_contour, "depth_bounded": self.depth_bounded}
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)

@@ -25,8 +25,6 @@ class Plate(TimberElement):
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
-    frame : :class:`~compas.geometry.Frame`, optional
-        The coordinate system (frame) of this plate. Default is None.
     blank_extension : float, optional
         The extension of the blank geometry around the edges of the plate geometry. Default is 0.
 
@@ -65,11 +63,10 @@ class Plate(TimberElement):
         data = super(Plate, self).__data__
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
-        data["frame"] = self.frame
         data["blank_extension"] = self.blank_extension
         return data
 
-    def __init__(self, outline_a, outline_b, frame=None, blank_extension=0, **kwargs):
+    def __init__(self, outline_a, outline_b, blank_extension=0, **kwargs):
         super(Plate, self).__init__(**kwargs)
         if not TOL.is_allclose(outline_a[0], outline_a[-1]):
             raise ValueError("The outline_a is not closed.")
@@ -80,7 +77,7 @@ class Plate(TimberElement):
         self.outline_a = outline_a
         self.outline_b = outline_b
         self._outline_feature = None
-        self._frame = frame or None
+        self._frame = None
         self.blank_extension = blank_extension
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -203,7 +200,7 @@ class Plate(TimberElement):
     # ==========================================================================
 
     @classmethod
-    def from_outline_thickness(cls, outline, thickness, vector=None, frame=None, blank_extension=0, **kwargs):
+    def from_outline_thickness(cls, outline, thickness, vector=None, blank_extension=0, **kwargs):
         """
         Constructs a plate from a polyline outline and a thickness.
         The outline is the top face of the plate, and the thickness is the distance to the bottom face.
@@ -216,8 +213,6 @@ class Plate(TimberElement):
             The thickness of the plate.
         vector : :class:`~compas.geometry.Vector`, optional
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        frame : :class:`~compas.geometry.Frame`, optional
-            The frame of the plate. If None, the frame is determined from the outline.
         blank_extension : float, optional
             The extension of the blank geometry around the edges of the plate geometry. Default is 0.
         **kwargs : dict, optional
@@ -232,12 +227,10 @@ class Plate(TimberElement):
         thickness_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal
         if vector and thickness_vector.dot(vector) < 0:
             thickness_vector = -thickness_vector
-        elif frame and thickness_vector.dot(frame.zaxis) < 0:
-            thickness_vector = -thickness_vector
         thickness_vector.unitize()
         thickness_vector *= thickness
         outline_b = Polyline(outline).translated(thickness_vector)
-        return cls(outline, outline_b, frame=frame, blank_extension=blank_extension, **kwargs)
+        return cls(outline, outline_b, blank_extension=blank_extension, **kwargs)
 
     # ==========================================================================
     #  methods
