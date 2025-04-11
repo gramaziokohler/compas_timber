@@ -1,0 +1,20 @@
+{
+    "name": "Surface Assembly Joint Override ",
+    "nickname": "JointOverride",
+    "category": "COMPAS Timber",
+    "subcategory": "Joint Rules",
+    "description": "overrides the standard joint rules for Surface Assembly",
+    "exposure": 16,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+        ],
+        "outputParameters": [
+            {
+                "name": "Rule",
+                "description": "A joint rule."
+            }
+        ]
+    }
+}

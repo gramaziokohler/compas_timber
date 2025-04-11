@@ -1,0 +1,70 @@
+{
+    "name": "SurfaceModel",
+    "nickname": "SurfaceModel",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Creates Beams and joint rules from a planar brep surface.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "surface",
+                "description": "Referenced planar surface from which to generate beams and joint rules.",
+                "typeHintID": "brep",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "stud_spacing",
+                "description": "spacing between studs.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "beam_width",
+                "description": "Width of the cross-section.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "frame_depth",
+                "description": "thickness of the frame section of the resulting model. used to set Beam.height",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "stud_direction",
+                "description": "(optional) Vector defining the direction of stud in the model. Default is world-Z",
+                "typeHintID": "vector",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "options",
+                "description": "(optional) SurfaceModel options.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "CreateGeometry",
+                "description": "generate joint and feature geometry",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Model",
+                "description": "compas_timber TimberModel object."
+            },
+            {
+                "name": "Geometry",
+                "description": "Model geometry."
+            },
+            {
+                "name": "Debug",
+                "description": "debug_info."
+            }
+        ]
+    }
+}

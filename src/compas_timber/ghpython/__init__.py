@@ -5,6 +5,10 @@ from .ghcomponent_helpers import list_input_valid
 from .ghcomponent_helpers import item_input_valid
 from .ghcomponent_helpers import get_leaf_subclasses
 from .ghcomponent_helpers import rename_gh_input
+from .ghcomponent_helpers import add_cpython_gh_param
+from .ghcomponent_helpers import clear_cpython_gh_params
+from .ghcomponent_helpers import manage_cpython_dynamic_params
+from .ghcomponent_helpers import rename_cpython_gh_input
 
 
 __all__ = [
@@ -15,4 +19,8 @@ __all__ = [
     "item_input_valid",
     "get_leaf_subclasses",
     "rename_gh_input",
+    "clear_cpython_gh_params",
+    "add_cpython_gh_param",
+    "manage_cpython_dynamic_params",
+    "rename_cpython_gh_input",
 ]
