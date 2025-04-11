@@ -27,49 +27,53 @@ TOL.absolute = 1e-6
 
 class ModelComponent(component):
     def RunScript(self, Elements, Containers, JointRules, Features, MaxDistance, CreateGeometry):
-        if not Elements:
-            self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
         if not JointRules:
             self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
         if not (Elements or Containers):  # shows beams even if no joints are found
+            self.AddRuntimeMessage(Warning, "No elements or containers were given")
             return
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
-        # clear Nones
-        Containers = [c for c in Containers if c is not None]
+
 
         Model = TimberModel()
         debug_info = DebugInfomation()
 
         ##### Adding elements #####
-        for element in Elements:
-            # prepare elements for downstream processing
-            element.reset()
-            Model.add_element(element)
+        if Elements:
+            for element in Elements:
+                # prepare elements for downstream processing
+                element.reset()
+                Model.add_element(element)
 
-        for index, c_def in enumerate(Containers):
-            slab = c_def.slab
-            Model.add_group_element(slab, name=slab.name + str(index))
+        ##### Adding containers #####
+        handled_pairs = None
+        wall_joint_definitions = None
+        if Containers:
+            Containers = [c for c in Containers if c is not None] # clear Nones
+            for index, c_def in enumerate(Containers):
+                slab = c_def.slab
+                Model.add_group_element(slab, name=slab.name + str(index))
 
-        Model.connect_adjacent_walls()
+            Model.connect_adjacent_walls()
 
-        ##### Wall populating #####
-        config_sets = [c_def.config_set for c_def in Containers]
-        populators = []
-        if any(config_sets):
-            populators = WallPopulator.from_model(Model, config_sets)
+            ##### Wall populating #####
+            config_sets = [c_def.config_set for c_def in Containers]
+            populators = []
+            if any(config_sets):
+                populators = WallPopulator.from_model(Model, config_sets)
 
-        handled_pairs = []
-        wall_joint_definitions = []
-        for populator, slab in zip(populators, Model.slabs):
-            elements = populator.create_elements()
-            Model.add_elements(elements, parent=slab.name)
-            joint_definitions = populator.create_joint_definitions(elements, MaxDistance)
-            wall_joint_definitions.extend(joint_definitions)
-            for j_def in joint_definitions:
-                element_a, element_b = j_def.elements
-                handled_pairs.append({element_a, element_b})
+            handled_pairs = []
+            wall_joint_definitions = []
+            for populator, slab in zip(populators, Model.slabs):
+                elements = populator.create_elements()
+                Model.add_elements(elements, parent=slab.name)
+                joint_definitions = populator.create_joint_definitions(elements, MaxDistance)
+                wall_joint_definitions.extend(joint_definitions)
+                for j_def in joint_definitions:
+                    element_a, element_b = j_def.elements
+                    handled_pairs.append({element_a, element_b})
 
         ##### Handle joinery #####
         joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
