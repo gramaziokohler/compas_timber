@@ -1,6 +1,7 @@
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Vector
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
@@ -28,6 +29,7 @@ class TOliGinaJoint(TenonMortiseJoint):
     def add_features(self):
         super(TOliGinaJoint, self).add_features()
         self.cross_beam.add_feature(self._make_oli_text())
+        self.cross_beam.add_feature(self._make_date_text())
         self.main_beam.add_feature(self._make_gina_text())
 
     def _make_oli_text(self):
@@ -74,5 +76,24 @@ class TOliGinaJoint(TenonMortiseJoint):
         # on cross beam
         # Find face: facing upwards
         # find start_x: joint position plus
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.cross_beam, Vector.Zaxis(), ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)  # type: ignore
 
-        return Text("3.5.2025")
+        p1, _ = intersection_line_line(self.main_beam.centerline, self.cross_beam.centerline, tol=TOL.absolute)
+        assert p1
+
+        plane = Plane(p1, self.cross_beam.centerline.direction)
+        ref_side = self.cross_beam.ref_sides[ref_side_index]
+        p1 = intersection_line_plane(Line.from_point_and_vector(ref_side.point, ref_side.xaxis), plane, tol=TOL.absolute)
+        assert p1
+        p1 = Point(*p1)
+
+        translation_vector = -ref_side.xaxis
+        offset = self.main_beam.width * 2.0
+        p1.translate(translation_vector * offset)
+
+        local_p1 = ref_side.to_local_coordinates(p1)
+        start_x = local_p1.x
+
+        start_y = self.cross_beam.height * 0.2
+        return Text("3.5.2025", start_x=start_x, start_y=start_y, ref_side_index=ref_side_index)
