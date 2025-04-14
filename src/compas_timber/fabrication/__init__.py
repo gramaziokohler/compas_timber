@@ -18,9 +18,11 @@ from .mortise import Mortise
 from .slot import Slot
 from .pocket import Pocket
 from .free_contour import FreeContour
+from .text import Text
 from .btlx import TenonShapeType
 from .btlx import EdgePositionType
 from .btlx import LimitationTopType
+from .btlx import AlignmentType
 from .btlx import MachiningLimits
 from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
@@ -46,9 +48,11 @@ __all__ = [
     "Slot",
     "Pocket",
     "FreeContour",
+    "Text",
     "TenonShapeType",
     "EdgePositionType",
     "LimitationTopType",
+    "AlignmentType",
     "MachiningLimits",
     "StepShapeType",
     "BTLxFromGeometryDefinition",
