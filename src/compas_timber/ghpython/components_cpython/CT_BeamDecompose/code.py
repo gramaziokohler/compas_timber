@@ -44,7 +44,7 @@ class BeamDecompose(Grasshopper.Kernel.GH_ScriptInstance):
         return self.rhino_frames, self.centerline, self.shapes, self.width, self.height
 
     def DrawViewportWires(self, arg):
-        if self.Locked:
+        if ghenv.Component.Locked:
             return
 
         for f, s, faces in zip(self.frames, self.scales, self.faces):

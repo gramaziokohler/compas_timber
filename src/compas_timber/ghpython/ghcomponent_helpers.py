@@ -1,16 +1,15 @@
-try:        #Rhino7
+try:  # Rhino7
     import Grasshopper
     from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
     from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 except (ImportError, SyntaxError):
     pass
-try:        #Rhino8
+try:  # Rhino8
     import Grasshopper
-    import RhinoCodePluginGH.Parameters;
+    import RhinoCodePluginGH.Parameters
 except (ImportError, SyntaxError):
     pass
 
-import messagebox
 
 def list_input_valid(component, Param, name):
     if not Param:
@@ -71,7 +70,7 @@ def add_gh_param(
         param.Description = name
         param.Access = Grasshopper.Kernel.GH_ParamAccess.item
         param.Optional = True
-        if not index:
+        if index is None:
             index = getattr(ghenv.Component.Params, io).Count
 
         registers = dict(Input="RegisterInputParam", Output="RegisterOutputParam")
@@ -207,8 +206,9 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
                         add_gh_param(name, "Input", ghenv)
 
 
-
-def add_cpython_gh_param(name, io, ghenv, index=None):  # we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components
+def add_cpython_gh_param(
+    name, io, ghenv, index=None
+):  # we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components
     """Adds a parameter to the Grasshopper component.
 
     Parameters
@@ -237,15 +237,16 @@ def add_cpython_gh_param(name, io, ghenv, index=None):  # we could also make bea
         param.Access = Grasshopper.Kernel.GH_ParamAccess.item
         param.Optional = True
         if io == "Input":
-            if not index:
+            if index is None:
                 index = ghenv.Component.Params.Input.Count
             ghenv.Component.Params.RegisterInputParam(param, index)
         else:
-            if not index:
+            if index is None:
                 index = ghenv.Component.Params.Output.Count
             ghenv.Component.Params.RegisterOutputParam(param, index)
         ghenv.Component.VariableParameterMaintenance()
         ghenv.Component.Params.OnParametersChanged()
+
 
 def clear_cpython_gh_params(ghenv, permanent_param_count=1):
     """Clears all input parameters from the component.
@@ -295,6 +296,7 @@ def rename_cpython_gh_input(input_name, index, ghenv):
     ghenv.Component.VariableParameterMaintenance()
     ghenv.Component.Params.OnParametersChanged()
 
+
 def rename_cpython_gh_output(output_name, index, ghenv):
     """Renames a parameter in the Grasshopper component.
 
@@ -318,6 +320,7 @@ def rename_cpython_gh_output(output_name, index, ghenv):
     param.Description = output_name
     ghenv.Component.VariableParameterMaintenance()
     ghenv.Component.Params.OnParametersChanged()
+
 
 def manage_cpython_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_count=0, keep_connections=True):
     """Clears all input parameters from the component.
@@ -354,7 +357,7 @@ def manage_cpython_dynamic_params(input_names, ghenv, rename_count=0, permanent_
                 if i < rename_count:
                     rename_cpython_gh_input(name, i + permanent_param_count, ghenv)
                 else:
-                    add_cpython_gh_param(name, "Input", ghenv)
+                    add_cpython_gh_param(name, "Input", ghenv, index=i + permanent_param_count)
 
         else:
             register_params = False
@@ -373,5 +376,5 @@ def manage_cpython_dynamic_params(input_names, ghenv, rename_count=0, permanent_
                     elif i < rename_count:
                         rename_cpython_gh_input(name, i, ghenv)
                     else:
-                        add_cpython_gh_param(name, "Input", ghenv)
+                        add_cpython_gh_param(name, "Input", ghenv, index=i + permanent_param_count)
     ghenv.Component.VariableParameterMaintenance()

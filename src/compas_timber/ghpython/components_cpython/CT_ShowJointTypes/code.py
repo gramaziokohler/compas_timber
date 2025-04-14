@@ -15,8 +15,8 @@ class ShowJointTypes(Grasshopper.Kernel.GH_ScriptInstance):
             return
 
         for joint in model.joints:
-            line_a, line_b = joint.beams[0].centerline, joint.beams[1].centerline
-            [p1, t1], [p2, t2] = intersection_line_line_param(line_a, line_b, float("inf"), False, 1e-3)
+            line_a, line_b = joint.elements[0].centerline, joint.elements[1].centerline
+            [p1, _], [p2, _] = intersection_line_line_param(line_a, line_b, float("inf"), False, 1e-3)
             p1 = point_to_rhino(p1)
             p2 = point_to_rhino(p2)
 
@@ -24,7 +24,7 @@ class ShowJointTypes(Grasshopper.Kernel.GH_ScriptInstance):
             self.txt.append(joint.__class__.__name__)
 
     def DrawViewportWires(self, arg):
-        if self.Locked:
+        if ghenv.Component.Locked:
             return
         col = System.Drawing.Color.FromArgb(255, 0, 0, 0)
         # https://developer.rhino3d.com/api/RhinoCommon/html/M_Rhino_Display_DisplayPipeline_Draw2dText_5.htm

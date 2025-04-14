@@ -1,7 +1,10 @@
+"""Shows the names of the connection topology types."""
+
 # flake8: noqa
 import Grasshopper
 import System
 from compas_rhino.conversions import point_to_rhino
+from compas_timber.connections import ConnectionSolver
 
 from compas_timber.connections import JointTopology
 from compas_timber.utils import intersection_line_line_param
@@ -14,7 +17,17 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
 
         if not model:
             return
-        for topo in model.topologies:
+
+        topologies = []
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b)
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
+                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
+
+        for topo in topologies:
             beam_a = topo["beam_a"]
             beam_b = topo["beam_b"]
             topology = topo.get("detected_topo")
@@ -26,7 +39,7 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
             self.txt.append(JointTopology.get_name(topology))
 
     def DrawViewportWires(self, arg):
-        if self.Locked:
+        if ghenv.Component.Locked:
             return
         col = System.Drawing.Color.FromArgb(0, 0, 255, 0)
         # https://developer.rhino3d.com/api/RhinoCommon/html/M_Rhino_Display_DisplayPipeline_Draw2dText_5.htm

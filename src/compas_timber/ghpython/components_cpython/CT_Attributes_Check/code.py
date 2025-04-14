@@ -48,9 +48,8 @@ class Attributes_Check(Grasshopper.Kernel.GH_ScriptInstance):
             self.data.append(d)
 
     def DrawViewportWires(self, arg):
-        if self.Locked:
+        if ghenv.Component.Locked:
             return
-
         colorOK = System.Drawing.Color.FromArgb(255, 0, 150, 100)
         colorBAD = System.Drawing.Color.FromArgb(255, 220, 0, 70)
         colors = [colorBAD, colorOK]

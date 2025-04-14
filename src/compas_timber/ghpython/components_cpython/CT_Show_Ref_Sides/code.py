@@ -43,7 +43,7 @@ class ShowElementFaces(Grasshopper.Kernel.GH_ScriptInstance):
         return rh_srf
 
     def DrawViewportWires(self, arg):
-        if self.Locked:
+        if ghenv.Component.Locked:
             return
         col = System.Drawing.Color.FromArgb(255, 255, 255, 255)
         # https://developer.rhino3d.com/api/RhinoCommon/html/M_Rhino_Display_DisplayPipeline_Draw3dText_5.htm
