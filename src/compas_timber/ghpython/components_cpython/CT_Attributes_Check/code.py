@@ -5,7 +5,7 @@ import Rhino
 import Rhino.Geometry as rg
 import System
 
-from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attributes
 
 
@@ -13,7 +13,8 @@ class Attributes_Check(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, ref_obj):
         self.data = []
 
-        list_input_valid(self, ref_obj, "RefObj")
+        if not list_input_valid_cpython(ghenv, ref_obj, "RefObj"):
+            return
 
         for obj in ref_obj:
             d = {"refobj": ref_obj, "crv": None, "msg": [], "ok": None, "pln": None, "pt": None}

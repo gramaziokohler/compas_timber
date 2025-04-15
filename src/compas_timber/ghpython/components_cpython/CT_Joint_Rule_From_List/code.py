@@ -9,6 +9,7 @@ from compas_timber.design import DirectRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class JointRuleFromList(Grasshopper.Kernel.GH_ScriptInstance):
@@ -30,8 +31,7 @@ class JointRuleFromList(Grasshopper.Kernel.GH_ScriptInstance):
             return None
         else:
             ghenv.Component.Message = self.joint_type.__name__
-            if not elements:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter {} failed to collect data.".format(self.arg_names[0]))
+            if not list_input_valid_cpython(ghenv, elements, self.arg_names[0]):
                 return
             if not self.joint_type.element_count_complies(elements):
                 ghenv.Component.AddRuntimeMessage(

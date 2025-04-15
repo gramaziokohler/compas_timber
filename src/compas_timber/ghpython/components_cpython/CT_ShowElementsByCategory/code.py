@@ -10,7 +10,7 @@ class ShowElementsByCategory(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
         super(ShowElementsByCategory, self).__init__()
         self.element_type = None
-        if ghenv.Component.Params.Output[0].NickName == "type":
+        if ghenv.Component.Params.Output[0].NickName == "elements":
             self.joint_type = None
         else:
             self.element_type = ghenv.Component.Params.Output[0].NickName

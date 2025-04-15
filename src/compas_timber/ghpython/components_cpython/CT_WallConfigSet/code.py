@@ -6,6 +6,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.design import LConnectionDetailA
 from compas_timber.design import TConnectionDetailA
 from compas_timber.design import WallPopulatorConfigurationSet
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class WallPopulatorConfigSetComponent(Grasshopper.Kernel.GH_ScriptInstance):
@@ -22,12 +23,7 @@ class WallPopulatorConfigSetComponent(Grasshopper.Kernel.GH_ScriptInstance):
         custom_dimensions: System.Collections.Generic.List[object],
         joint_overrides: System.Collections.Generic.List[object],
     ):
-        if not stud_spacing:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Stud Spacing' failed to collect data")
-        if not beam_width:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Beam Width' failed to collect data")
-
-        if not (stud_spacing and beam_width):
+        if not item_input_valid_cpython(ghenv, stud_spacing, "Stud Spacing") or not item_input_valid_cpython(ghenv, beam_width, "Beam Width"):
             return
 
         dims = {}

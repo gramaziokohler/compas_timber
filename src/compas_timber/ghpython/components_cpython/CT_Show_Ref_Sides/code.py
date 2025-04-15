@@ -5,12 +5,13 @@ import rhinoscriptsyntax as rs
 
 
 from compas_rhino.conversions import frame_to_rhino
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class ShowElementFaces(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, element: System.Collections.Generic.List[object], ref_side_index: System.Collections.Generic.List[int]):
-        if not element:
-            return None
+        if not list_input_valid_cpython(ghenv, element, "Element"):
+            return
         self.pl = []
         self.txt = []
         self.ht = []

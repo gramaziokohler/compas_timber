@@ -8,14 +8,18 @@ import Rhino
 import rhinoscriptsyntax as rs
 from compas_rhino.conversions import frame_to_rhino
 
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 from Rhino import Render
 from Rhino.Geometry import Interval
 from Rhino.Geometry import Plane
-from Rhino.RhinoDoc import ActiveDoc
 
 
 class BakePlateMap(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, model, map_size: System.Collections.Generic.List[float], swap_uv: bool, bake: bool):
+    def RunScript(self,
+            model,
+            map_size: System.Collections.Generic.List[float],
+            swap_uv: bool,
+            bake: bool):
         if map_size and len(map_size) != 3:
             ghenv.Component.AddRuntimeMessage(
                 Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
@@ -41,8 +45,7 @@ class BakePlateMap(Grasshopper.Kernel.GH_ScriptInstance):
                 dimy = 1000
                 dimz = 1000
 
-        if not model:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameters Model failed to collect any Beam objects.")
+        if not item_input_valid_cpython(ghenv, model, "Model"):
             return
 
         if not bake:
@@ -58,7 +61,7 @@ class BakePlateMap(Grasshopper.Kernel.GH_ScriptInstance):
                 for brep, frame in zip(breps, frames):
                     guid = ActiveDoc.Objects.Add(brep)
                     boxmap = self.create_box_map(frame, dimx, dimy, dimz, swap_uv)
-                    ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
+                    Rhino.RhinoDoc.ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
         finally:
             rs.EnableRedraw(True)
 

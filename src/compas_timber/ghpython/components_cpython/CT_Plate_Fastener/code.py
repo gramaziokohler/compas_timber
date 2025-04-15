@@ -12,8 +12,9 @@ class PlateFastenerComponent(Grasshopper.Kernel.GH_ScriptInstance):
     ):
         outline_points = [point for point in outline] if outline else None
         cutout_points = []
-        for cutout in cutouts:
-            cutout_points.append([pt for pt in cutout])
+        if cutouts:
+            for cutout in cutouts:
+                cutout_points.append([pt for pt in cutout])
         if main_beam_interface and cross_beam_interface:
             interfaces = [main_beam_interface, cross_beam_interface]
         else:

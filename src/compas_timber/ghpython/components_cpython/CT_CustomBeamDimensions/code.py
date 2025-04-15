@@ -2,6 +2,7 @@
 import Grasshopper
 
 from compas_timber.design import SurfaceModel
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 beam_category_names = SurfaceModel.beam_category_names()
 
@@ -16,7 +17,7 @@ class CustomBeamDimensions(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, width: float, height: float):
         dims = {}
 
-        if width is None or height is None:
+        if not (item_input_valid_cpython(ghenv, width, "Width") and item_input_valid_cpython(ghenv, height, "Height")):
             return
 
         if ghenv.Component.Params.Output[0].NickName != "Dimensions":

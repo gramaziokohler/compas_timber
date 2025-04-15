@@ -10,6 +10,7 @@ from compas_timber.design import DirectRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
@@ -39,11 +40,7 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 if val is not None:
                     kwargs[self.arg_names()[i + 2]] = val
 
-            if not beam_a:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0]))
-            if not beam_b:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1]))
-            if not (args[0] and args[1]):
+            if not item_input_valid_cpython(ghenv, beam_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, beam_b, self.arg_names()[1]):
                 return
             if not isinstance(beam_a, list):
                 beam_a = [beam_a]

@@ -24,7 +24,7 @@
         ],
         "outputParameters": [
             {
-                "name": "Reference Side",
+                "name": "ReferenceSide",
                 "description": "Reference Side as surface."
             }
         ]

@@ -8,6 +8,7 @@ from compas_timber.connections import ConnectionSolver
 
 from compas_timber.connections import JointTopology
 from compas_timber.utils import intersection_line_line_param
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
@@ -15,7 +16,7 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
         self.pt = []
         self.txt = []
 
-        if not model:
+        if not item_input_valid_cpython(ghenv, model, "model"):
             return
 
         topologies = []

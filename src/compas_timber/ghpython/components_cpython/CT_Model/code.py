@@ -11,6 +11,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.model import TimberModel
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
 TOL.absolute = 1e-6
@@ -26,11 +27,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         MaxDistance: float,
         CreateGeometry: bool,
     ):
-        if not Elements:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter Beams failed to collect data")
-        if not JointRules:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter JointRules failed to collect data")
-        if not (Elements or Containers):  # shows beams even if no joints are found
+        if not (list_input_valid_cpython(ghenv, Elements, "Elements") or list_input_valid_cpython(ghenv, Containers, "Containers")):  # shows beams even if no joints are found
             return
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0

@@ -11,19 +11,17 @@ from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 
 from compas_timber.elements import Beam
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, mesh: Rhino.Geometry.Mesh, width: float, height: float, category: str):
         # minimum inputs required
-        if not mesh:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'mesh' failed to collect data")
+        if not item_input_valid_cpython(ghenv, mesh, "mesh")    :
             return
-        if not width:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'width' failed to collect data")
+        if not item_input_valid_cpython(ghenv, width, "width"):
             return
-        if not height:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'height' failed to collect data")
+        if not item_input_valid_cpython(ghenv, height, "height"):
             return
         edge_index_pairs = []
 

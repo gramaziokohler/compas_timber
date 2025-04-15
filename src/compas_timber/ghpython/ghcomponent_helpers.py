@@ -206,6 +206,27 @@ def manage_dynamic_params(input_names, ghenv, rename_count=0, permanent_param_co
                         add_gh_param(name, "Input", ghenv)
 
 
+def list_input_valid_cpython(ghenv, Param, name):
+    if not Param:
+        ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter %s failed to collect data" % name)
+    else:
+        if all([_ is None for _ in Param]):
+            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter %s failed to collect data" % name)
+        elif any([_ is None for _ in Param]):
+            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Remark, "Input parameter %s contains some Null values" % name)
+            return True
+        else:
+            return True
+    return False
+
+
+def item_input_valid_cpython(ghenv, Param, name):
+    if not Param:
+        ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter %s failed to collect data" % name)
+    else:
+        return True
+    return False
+
 def add_cpython_gh_param(
     name, io, ghenv, index=None
 ):  # we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components

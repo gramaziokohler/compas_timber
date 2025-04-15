@@ -3,9 +3,13 @@ import Grasshopper
 
 from compas.scene import Scene
 
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
+
 
 class ShowElementsByType(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, model):
+        if not item_input_valid_cpython(ghenv, model, "Model"):
+            return
         beam_scene = Scene()
         plate_scene = Scene()
         fastener_scene = Scene()

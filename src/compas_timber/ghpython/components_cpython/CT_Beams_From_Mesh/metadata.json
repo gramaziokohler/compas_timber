@@ -40,7 +40,7 @@
                 "description": "List of compas_timber Beams."
             },
             {
-                "name": "Beam Map",
+                "name": "BeamMap",
                 "description": "a Data Tree with the beams organized by connection to a mesh vertex. Used to define joint rules using the Joint_Rules_From_List component."
             },
             {

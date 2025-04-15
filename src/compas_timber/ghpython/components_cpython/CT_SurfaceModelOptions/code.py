@@ -21,9 +21,10 @@ class SurfaceModelOptions(Grasshopper.Kernel.GH_ScriptInstance):
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "lintel_posts expected a bool, got: {}".format(type(lintel_posts)))
 
         dims = {}
-        for item in custom_dimensions:
-            for key, val in item.items():
-                dims[key] = val
+        if custom_dimensions is not None:
+            for item in custom_dimensions:
+                for key, val in item.items():
+                    dims[key] = val
 
         dict = {
             "sheeting_outside": sheeting_outside,

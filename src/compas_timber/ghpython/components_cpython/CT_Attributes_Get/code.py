@@ -5,13 +5,14 @@ import Grasshopper
 import Rhino
 import System
 
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 from compas_timber.ghpython.rhino_object_name_attributes import get_obj_attributes
 
 
 class Attributes_Get(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, ref_crv: System.Guid):
-        if not ref_crv:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter ref_crv failed to collect data")
+        if not list_input_valid_cpython(ghenv, ref_crv, "RefCrv"):
+            return
         z_vector = []
         width = []
         height = []

@@ -9,6 +9,7 @@ from System.Windows.Forms import ToolStripSeparator
 from compas_timber.connections import Joint
 from compas_timber.design import CategoryRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
 
@@ -42,11 +43,7 @@ class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             for i, val in enumerate(args[2:]):
                 if val is not None:
                     kwargs[self.arg_names()[i + 2]] = val
-            if not cat_a:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0]))
-            if not cat_b:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1]))
-            if not (cat_a and cat_b):
+            if not item_input_valid_cpython(ghenv, cat_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, cat_b, self.arg_names()[1]):
                 return
 
             topos = []

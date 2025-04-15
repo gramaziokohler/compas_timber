@@ -28,20 +28,21 @@ class FastenerTimberInterfaceComponent(Grasshopper.Kernel.GH_ScriptInstance):
             else:
                 raise Warning("Number of diameters must either match the number of points or be a single value")
         feat_list = []
-        for feature in features:
-            if feature:
-                if feature.elements:
-                    ghenv.Component.AddRuntimeMessage(
-                        Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning,
-                        "Features in the Fastener Timber Interface are applied by joints. Elements in feature definitions will be ignored",
-                    )
-                feat_list.append(feature)
+        if features:
+            for feature in features:
+                if feature:
+                    if feature.elements:
+                        ghenv.Component.AddRuntimeMessage(
+                            Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning,
+                            "Features in the Fastener Timber Interface are applied by joints. Elements in feature definitions will be ignored",
+                        )
+                    feat_list.append(feature)
         outline_points = [pt for pt in outline] if outline else None
         interface = FastenerTimberInterface(
             outline_points,
             thickness,
             holes,
-            shapes=[Brep.from_native(brep) for brep in extra_shapes],
+            shapes=[Brep.from_native(brep) for brep in extra_shapes] if extra_shapes else [],
             features=feat_list,
         )
         return interface

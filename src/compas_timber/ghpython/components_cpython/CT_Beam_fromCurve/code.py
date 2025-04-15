@@ -8,25 +8,23 @@ import System
 from compas.scene import Scene
 from compas_rhino.conversions import line_to_compas
 from compas_rhino.conversions import vector_to_compas
-from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.elements import Beam as CTBeam
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class Beam_fromCurve(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(
-        self,
-        centerline: System.Collections.Generic.List[object],
-        z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
-        width: System.Collections.Generic.List[float],
-        height: System.Collections.Generic.List[float],
-        category: System.Collections.Generic.List[str],
-        updateRefObj: bool,
-    ):
+    def RunScript(self,
+            centerline: System.Collections.Generic.List[object],
+            z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
+            width: System.Collections.Generic.List[float],
+            height: System.Collections.Generic.List[float],
+            category: System.Collections.Generic.List[str],
+            updateRefObj: bool):
         # minimum inputs required
-        if not centerline:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Centerline' failed to collect data")
+        if not list_input_valid_cpython(ghenv, centerline, "Centerline"):
+            return
         if not width:
             length = self._get_centerline_length(centerline)
             width = [length / 20]
@@ -97,7 +95,7 @@ class Beam_fromCurve(Grasshopper.Kernel.GH_ScriptInstance):
         # type hint on the input has to be 'ghdoc' for this to work
         guid = None
         geometry = line
-        rhino_obj = ActiveDoc.Objects.FindId(line)
+        rhino_obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(line)
         if rhino_obj:
             guid = line
             geometry = rhino_obj.Geometry

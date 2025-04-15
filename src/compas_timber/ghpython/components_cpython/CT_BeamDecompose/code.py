@@ -1,13 +1,16 @@
+"""Extracts main geometric characteristics of a Beam."""
 # flake8: noqa
 import Grasshopper
 import System
+from System.Drawing import Color
 
 from compas.geometry import Line
 from compas_rhino.conversions import frame_to_rhino_plane
 from compas_rhino.conversions import line_to_rhino
 from compas_rhino.conversions import point_to_rhino
 from compas_rhino.conversions import box_to_rhino
-from System.Drawing import Color
+
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class BeamDecompose(Grasshopper.Kernel.GH_ScriptInstance):
@@ -19,7 +22,10 @@ class BeamDecompose(Grasshopper.Kernel.GH_ScriptInstance):
     SCREEN_SIZE = 10
     RELATIVE_SIZE = 0
 
-    def RunScript(self, beam: System.Collections.Generic.List[object], show_frame: bool, show_faces: bool):
+    def RunScript(self,
+            beam: System.Collections.Generic.List[object],
+            show_frame: bool,
+            show_faces: bool):
         self.show_faces = show_faces if show_faces is not None else False
         self.show_frame = show_frame if show_frame is not None else False
         self.frames = []
@@ -30,18 +36,20 @@ class BeamDecompose(Grasshopper.Kernel.GH_ScriptInstance):
         self.height = []
         self.centerline = []
         self.shapes = []
+        if not list_input_valid_cpython(ghenv, beam, "beam"):
+            return
+        else:
+            for b in beam:
+                self.frames.append(b.frame)
+                self.rhino_frames.append(frame_to_rhino_plane(b.frame))
+                self.scales.append(b.width + b.height)
+                self.centerline.append(line_to_rhino(b.centerline))
+                self.shapes.append(box_to_rhino(b.shape))
+                self.width.append(b.width)
+                self.height.append(b.height)
+                self.faces.append(b.faces)
 
-        for b in beam:
-            self.frames.append(b.frame)
-            self.rhino_frames.append(frame_to_rhino_plane(b.frame))
-            self.scales.append(b.width + b.height)
-            self.centerline.append(line_to_rhino(b.centerline))
-            self.shapes.append(box_to_rhino(b.shape))
-            self.width.append(b.width)
-            self.height.append(b.height)
-            self.faces.append(b.faces)
-
-        return self.rhino_frames, self.centerline, self.shapes, self.width, self.height
+            return self.rhino_frames, self.centerline, self.shapes, self.width, self.height
 
     def DrawViewportWires(self, arg):
         if ghenv.Component.Locked:

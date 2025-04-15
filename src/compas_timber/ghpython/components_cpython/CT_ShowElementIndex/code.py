@@ -3,6 +3,7 @@ import Grasshopper
 import System
 
 from compas_rhino.conversions import point_to_rhino
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class ShowElementIndex(Grasshopper.Kernel.GH_ScriptInstance):
@@ -10,8 +11,8 @@ class ShowElementIndex(Grasshopper.Kernel.GH_ScriptInstance):
         self.pt = []
         self.txt = []
 
-        if not model:
-            return None
+        if not list_input_valid_cpython(ghenv, model, "Model"):
+            return
         for element in model.beams + model.plates:
             self.pt.append(point_to_rhino(element.midpoint))
             self.txt.append(str(element.key))

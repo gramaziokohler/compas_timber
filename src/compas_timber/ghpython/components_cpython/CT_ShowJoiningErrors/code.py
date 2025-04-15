@@ -2,15 +2,14 @@
 import Grasshopper
 
 from compas.scene import SceneObject
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class ShowJoiningErrors(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, debug_info, i: int):
-        if i is None:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'i' failed to collect data")
+        if not item_input_valid_cpython(ghenv, i, "i"):
             i = 0
-        if not debug_info:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'DebugInfo' failed to collect data")
+        if not item_input_valid_cpython(ghenv, debug_info, "DebugInfo"):
             return
         if not debug_info.joint_errors:
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "No joining errors found in input parameter 'DebugInfo'")

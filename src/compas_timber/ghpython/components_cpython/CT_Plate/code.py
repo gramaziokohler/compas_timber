@@ -7,37 +7,30 @@ import rhinoscriptsyntax as rs
 import System
 from compas.scene import Scene
 from compas_rhino.conversions import curve_to_compas
-from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.elements import Plate as CTPlate
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class Plate(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(
-        self,
-        outline: System.Collections.Generic.List[Rhino.Geometry.Polyline],
-        thickness: System.Collections.Generic.List[float],
-        vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
-        category: System.Collections.Generic.List[str],
-        updateRefObj: bool,
-    ):
+    def RunScript(self,
+            outline: System.Collections.Generic.List[object],
+            thickness: System.Collections.Generic.List[float],
+            vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
+            category: System.Collections.Generic.List[str],
+            updateRefObj: bool):
         # minimum inputs required
-        if not outline:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Outline' failed to collect data")
-        if not thickness:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Thickness' failed to collect data")
-        if not vector:
-            vector = [None]
-        # reformat unset parameters for consistency
 
-        if not category:
-            category = [None]
-
-        plates = []
-        scene = Scene()
-
-        if outline and thickness:
+        if not list_input_valid_cpython(ghenv, outline, "Outline") or not list_input_valid_cpython(ghenv, thickness, "Thickness"):
+            return
+        else:
+            if not vector:
+                vector = [None]
+            if not category:
+                category = [None]
+            plates = []
+            scene = Scene()
             # check list lengths for consistency
             N = len(outline)
             if len(thickness) not in (1, N):
@@ -85,7 +78,7 @@ class Plate(Grasshopper.Kernel.GH_ScriptInstance):
         # type hint on the input has to be 'ghdoc' for this to work
         guid = None
         geometry = line
-        rhino_obj = ActiveDoc.Objects.FindId(line)
+        rhino_obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(line)
 
         if rhino_obj:
             guid = line

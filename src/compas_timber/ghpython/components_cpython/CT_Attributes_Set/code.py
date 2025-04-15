@@ -5,7 +5,7 @@ import Grasshopper
 import Rhino
 import System
 
-from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
 
 
@@ -19,8 +19,7 @@ class Attributes_Set(Grasshopper.Kernel.GH_ScriptInstance):
         category: System.Collections.Generic.List[str],
         update: bool,
     ):
-        _o = list_input_valid(self, ref_obj, "RefObj")
-        if not _o:
+        if not list_input_valid_cpython(self, ref_obj, "RefObj"):
             return
 
         # requires at least one of these inputs to be not None

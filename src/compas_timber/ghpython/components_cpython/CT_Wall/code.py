@@ -9,6 +9,7 @@ from compas.scene import Scene
 
 from compas_timber.design import ContainerDefinition
 from compas_timber.elements import Wall
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class WallComponent(Grasshopper.Kernel.GH_ScriptInstance):
@@ -16,12 +17,7 @@ class WallComponent(Grasshopper.Kernel.GH_ScriptInstance):
         self, surface: System.Collections.Generic.List[Rhino.Geometry.Brep], thickness: System.Collections.Generic.List[float], config_set: System.Collections.Generic.List[object]
     ):
         # minimum inputs required
-        if not surface:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Surface' failed to collect data")
-        if not thickness:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter 'Thickness' failed to collect data")
-
-        if not surface or not thickness:
+        if not list_input_valid_cpython(ghenv, surface, "Surface") or not list_input_valid_cpython(ghenv, thickness, "Thickness"):
             return
 
         if not config_set:

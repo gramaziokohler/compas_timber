@@ -7,11 +7,11 @@ import System
 import Rhino
 import rhinoscriptsyntax as rs
 from compas_rhino.conversions import frame_to_rhino
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 from Rhino import Render
 from Rhino.Geometry import Interval
 from Rhino.Geometry import Plane
-from Rhino.RhinoDoc import ActiveDoc
 
 
 class BakeBoxMap(Grasshopper.Kernel.GH_ScriptInstance):
@@ -41,8 +41,7 @@ class BakeBoxMap(Grasshopper.Kernel.GH_ScriptInstance):
                 dimy = 200
                 dimz = 1000
 
-        if not model:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameters Model failed to collect any Beam objects.")
+        if not item_input_valid_cpython(ghenv, model, "Model"):
             return
 
         if not bake:
@@ -58,7 +57,7 @@ class BakeBoxMap(Grasshopper.Kernel.GH_ScriptInstance):
                 for brep, frame in zip(breps, frames):
                     guid = ActiveDoc.Objects.Add(brep)
                     boxmap = self.create_box_map(frame, dimx, dimy, dimz)
-                    ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
+                    Rhino.RhinoDoc.ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
         finally:
             rs.EnableRedraw(True)
 
