@@ -170,7 +170,7 @@ class FreeContour(BTLxProcessing):
 
     @staticmethod
     def parse_tool_position(polyline, ref_side, tool_position, interior):
-        if not polyline.is_closed:  # if polyline is not closed
+        if not Polyline(polyline).is_closed:  # if polyline is not closed
             if tool_position is None:
                 raise ValueError("The polyline should be closed or a tool position should be provided.")
             elif interior:

@@ -816,7 +816,7 @@ class Contour(Data):
     TODO: add point attributes for other types like NailContour
     """
 
-    def __init__(self, polyline, depth=None, depth_bounded=None, inclination=None):
+    def __init__(self, polyline, depth=None, depth_bounded=True, inclination=None):
         super(Contour, self).__init__()
         self.polyline = polyline
         self.depth = depth
