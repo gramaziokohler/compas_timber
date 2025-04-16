@@ -3,20 +3,21 @@
 import rhinoscriptsyntax as rs
 from compas.scene import Scene
 from compas_rhino.conversions import curve_to_compas
+from compas_rhino.conversions import vector_to_compas
 from ghpythonlib.componentbase import executingcomponent as component
 from Rhino.RhinoDoc import ActiveDoc
 
 from compas_timber.elements import Plate as CTPlate
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid
 
 
 class Plate(component):
     def RunScript(self, outline, outline_b, thickness, vector, category, updateRefObj):
-        if not outline:
-            print("Input parameter 'Outline' failed to collect data")
+        if not list_input_valid(self, outline, outline):
             return
         if not thickness and not outline_b:
-            print("Input required on either 'Thickness' or 'outline_b")
+            self.AddRuntimeMessage(Warning, "Input required on either 'Thickness' or 'outline_b")
             return
         if not outline_b:
             outline_b = [None]

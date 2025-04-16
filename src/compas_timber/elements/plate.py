@@ -35,7 +35,7 @@ class Plate(TimberElement):
         The coordinate system (frame) of this plate.
     outline_a : :class:`~compas.geometry.Polyline`
         A line representing the principal outline of this plate.
-    outline_b : :class:`~compas.geometry.RhinoCurve`
+    outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate.
     blank_length : float
         Length of the plate blank.
@@ -303,9 +303,7 @@ class Plate(TimberElement):
             The AABB of the element.
 
         """
-        vertices = []
-        for outline in (self.outline_a, self.outline_b):
-            vertices.extend([point for point in outline])
+        vertices = self.outline_a.points + self.outline_b.points
         box = Box.from_points(vertices)
         box.xsize += inflate
         box.ysize += inflate
@@ -322,10 +320,7 @@ class Plate(TimberElement):
             The OBB of the element.
 
         """
-        vertices = []
-        for outline in [self.outline_a, self.outline_b]:
-            vertices.extend([point for point in outline])
-
+        vertices = self.outline_a.points + self.outline_b.points
         world_vertices = []
         for point in vertices:
             world_vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))

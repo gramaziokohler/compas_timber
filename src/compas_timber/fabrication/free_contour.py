@@ -37,8 +37,6 @@ class FreeContour(BTLxProcessing):
         The position of the tool. Default is "left".
     depth_bounded : bool, optional
         If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.
-    inclination : float or list of float, optional
-        The inclination of the contour. Default is 0 meaning the cut is perpendicular to the reference side.
 
     """
 
@@ -105,21 +103,21 @@ class FreeContour(BTLxProcessing):
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index)
 
     @classmethod
-    def from_polylines_and_element(cls, polylines, element, interior=None, tool_position=None, ref_side_index=None):
+    def from_polylines_and_element(cls, polylines, element, interior=False, tool_position=None, ref_side_index=None):
         """Construct a Contour processing from a list of polylines and element.
-
-        Parameters
-        ----------
-        polylines : list of list of :class:`compas.geometry.Point`
-            The top and bottome polylines of the contour.
-        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
-            The element.
-        interior : bool, optional
-            If True, the contour is an interior contour. Default is None.
-        tool_position : BTLx.AlignmentType, optional
-            The position of the tool. Default is None.
-        ref_side_index : int, optional
-            The reference side index. If none is given, the function will try to find the reference side index based on the polylines and element.
+        def from_polylines_and_element(cls, polylines, element, interior=False, tool_position=None, ref_side_index=None):
+            Parameters
+            ----------
+            polylines : list of list of :class:`compas.geometry.Point`
+                The top and bottome polylines of the contour.
+            element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+                The element.
+            interior : bool, optional
+                If True, the contour is an interior contour. Default is False.
+            tool_position : BTLx.AlignmentType, optional
+                The position of the tool. Default is None.
+            ref_side_index : int, optional
+                The reference side index. If none is given, the function will try to find the reference side index based on the polylines and element.
         """
 
         if len(polylines) != 2:
@@ -172,7 +170,7 @@ class FreeContour(BTLxProcessing):
 
     @staticmethod
     def parse_tool_position(polyline, ref_side, tool_position, interior):
-        if polyline[0] != polyline[-1]:  # if polyline is not closed
+        if not polyline.is_closed:  # if polyline is not closed
             if tool_position is None:
                 raise ValueError("The polyline should be closed or a tool position should be provided.")
             elif interior:

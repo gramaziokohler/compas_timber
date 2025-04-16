@@ -836,14 +836,12 @@ class DualContour(Data):
 
     Parameters
     ----------
-    depth : float
-        The depth of the contour.
+    principal_contour : :class:`compas.geometry.Polyline`
+        The principal contour of the dual contour.
+    associated_contour : :class:`compas.geometry.Polyline`
+        The associated contour of the dual contour. Must have same number of segments as `principal_contour`.
     depth_bounded : bool
         If True, the depth is bounded.
-    inclination : float
-        The inclination of the contour.
-    polyline : :class:`compas.geometry.Polyline`
-        The polyline of the contour.
     TODO: add point attributes for other types like NailContour
     """
 
