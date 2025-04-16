@@ -3,7 +3,7 @@
     "nickname": "Plate",
     "category": "COMPAS Timber",
     "subcategory": "Elements",
-    "description": "Creates a Plate from a Polyline.",
+    "description": "Creates a Plate from a Polyline or Polylines.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
@@ -11,7 +11,13 @@
         "inputParameters": [
             {
                 "name": "Outline",
-                "description": "Referenced polyline, Guid of polyline in the active Rhino document.",
+                "description": "Primary outline that defines shape of plate.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Outline_b",
+                "description": "Secondary outline to generate plate edge. must have same number of segments as Outline.",
                 "typeHintID": "ghdoc",
                 "scriptParamAccess": 1
             },
