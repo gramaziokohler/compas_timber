@@ -134,9 +134,7 @@ class FreeContour(BTLxProcessing):
         if not cls.are_all_segments_parallel(polylines[0], polylines[1]):  # use DualContour
             points_principal = [pt.transformed(xform_to_part_coords) for pt in polylines[0]]
             points_associated = [pt.transformed(xform_to_part_coords) for pt in polylines[1]]
-            dual_contour = DualContour(points_principal, points_associated)
-            return cls(dual_contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
-
+            contour = DualContour(points_principal, points_associated)
         else:  # use Contour with inclination
             inclinations = []
             for top_line, bottom_line in zip(Polyline(polylines[0]).lines, Polyline(polylines[1]).lines):
@@ -147,7 +145,8 @@ class FreeContour(BTLxProcessing):
             depth = distance_point_plane(polylines[1][0], Plane.from_frame(ref_side))
             polyline = Polyline(polylines[0]).transformed(xform_to_part_coords)
             contour = Contour(polyline, depth=depth, inclination=inclinations)
-            return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
+
+        return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
 
     @classmethod
     def from_shapes_and_element(cls, polyline, element, depth=None, interior=True, **kwargs):
