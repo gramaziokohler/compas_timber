@@ -10,7 +10,7 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
@@ -20,8 +20,6 @@ from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import Contour
 from .btlx import DualContour
-
-TOL = Tolerance()
 
 
 class FreeContour(BTLxProcessing):
@@ -63,7 +61,7 @@ class FreeContour(BTLxProcessing):
         return data
 
     @property
-    def params(self):  # TODO: I think this only gets called in tests or once when writing BTLx, but we could consider caching it
+    def params(self):
         return FreeCountourParams(self)
 
     ########################################################################
@@ -71,7 +69,7 @@ class FreeContour(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline, element, depth=None, interior=None, tool_position=None, ref_side_index=None):
+    def from_polyline_and_element(cls, polyline, element, depth=None, interior=False, tool_position=None, ref_side_index=None):
         """Construct a Contour processing from a polyline and element.
 
         Parameters
@@ -83,7 +81,7 @@ class FreeContour(BTLxProcessing):
         depth : float, optional
             The depth of the contour. Default is the thickness of the element.
         interior : bool, optional
-            If True, the contour is an interior contour. Default is True.
+            If True, the contour is an interior contour. Default is False.
         tool_position : BTLx.AlignmentType, optional
             The position of the tool. Default is "left".
         ref_side_index : int, optional
