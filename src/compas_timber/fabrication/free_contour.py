@@ -102,10 +102,8 @@ class FreeContour(BTLxProcessing):
         ref_side = element.ref_sides[ref_side_index]
         tool_position = cls.parse_tool_position(polyline, ref_side, interior, tool_position)
         depth = depth or element.width
-        xform_to_part_coords = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
-        points = [pt.transformed(xform_to_part_coords) for pt in polyline]
-        contour = Contour(points, depth=depth, inclination=[0.0])
-
+        transformed_polyline = polyline.transformed(Transformation.from_frame_to_frame(ref_side, Frame.worldXY()))
+        contour = Contour(transformed_polyline, depth=depth, inclination=[0.0])
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index)
 
     @classmethod
@@ -142,13 +140,13 @@ class FreeContour(BTLxProcessing):
             contour = DualContour(points_principal, points_associated)
         else:  # use Contour with inclination
             inclinations = []
-            for top_line, bottom_line in zip(Polyline(top_polyline).lines, Polyline(bottom_polyline).lines):
+            for top_line, bottom_line in zip(top_polyline.lines, bottom_polyline.lines):
                 cp = bottom_line.closest_point(top_line.start)
                 inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), -ref_side.normal, -top_line.direction, deg=True), 6))
             if len(set(inclinations)) == 1:
                 inclinations = [inclinations[0]]  # all inclinations are the same, set one global inclination for FreeContour processing
             depth = distance_point_plane(bottom_polyline[0], Plane.from_frame(ref_side))
-            polyline = Polyline(top_polyline).transformed(xform_to_part_coords)
+            polyline = top_polyline.transformed(xform_to_part_coords)
             contour = Contour(polyline, depth=depth, inclination=inclinations)
 
         return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
@@ -173,7 +171,7 @@ class FreeContour(BTLxProcessing):
     @staticmethod
     def parse_tool_position(polyline, ref_side, interior, tool_position=None):
         # type: (Polyline, Frame, bool, str | None) -> str
-        if not Polyline(polyline).is_closed:  # if polyline is not closed
+        if not polyline.is_closed:  # if polyline is not closed
             if tool_position is None:
                 raise ValueError("The polyline should be closed or a tool position should be provided.")
             elif interior:
@@ -208,7 +206,7 @@ class FreeContour(BTLxProcessing):
 
     @staticmethod
     def are_all_segments_parallel(polyline_a, polyline_b):
-        for top_line, bottom_line in zip(Polyline(polyline_a).lines, Polyline(polyline_b).lines):
+        for top_line, bottom_line in zip(polyline_a.lines, polyline_b.lines):
             if not TOL.is_zero(angle_vectors(top_line.direction, bottom_line.direction) % math.pi, tol=1e-6):
                 return False
         return True
