@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `DualContour` BTLx Contour type for ruled surface Swarf contours.
+
 ### Changed
 
 * Removed `main_ref_side_index` property from `TBirdsmouthJoint` since it's now defined in the `DoubleCut` BTLxProcessing.
@@ -35,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored `_create_negative_volumes()` in `LapJoint` so that it generates box-like volumes. 
 * Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `_create_negative_volumes()` method to get the negative volumes and use the alt constructor `Lap.from_volume_and_beam()`.
 * Fixed an error occuring in `BTLxPart.shape_strings` by ensuring the polyline is always closed.
+* Implemented `Inclination` in the `FreeContour` BTLx Processing.
+* Changed `Plate` element to be defined by top and bottom contours instead of one contour and thickness. 
 
 ### Removed
 

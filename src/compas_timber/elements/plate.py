@@ -1,14 +1,15 @@
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import NurbsCurve
 from compas.geometry import PlanarSurface
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
-from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
@@ -16,28 +17,40 @@ from .timber import TimberElement
 
 class Plate(TimberElement):
     """
-    A class to represent timber plates (plywood, CLT, etc.) with uniform thickness.
+    A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.
 
     Parameters
     ----------
-    outline : :class:`~compas.geometry.RhinoCurve`
-        A line representing the outline of this plate.
-    thickness : float
-        Thickness of the plate material.
-    vector : :class:`~compas.geometry.Vector`, optional
-        The vector of the plate. Default is None.
+    outline_a : :class:`~compas.geometry.Polyline`                                                  TODO: add support for NurbsCurve
+        A line representing the principal outline of this plate.
+    outline_b : :class:`~compas.geometry.Polyline`
+        A line representing the associated outline of this plate. This should have the same number of points as outline_a.
+    blank_extension : float, optional
+        The extension of the blank geometry around the edges of the plate geometry. Default is 0.
 
 
     Attributes
     ----------
     frame : :class:`~compas.geometry.Frame`
         The coordinate system (frame) of this plate.
-    shape : :class:`~compas.geometry.Brep`
-        An extrusion representing the base geometry of this plate.
-    outline : :class:`~compas.geometry.Polyline`
-        A line representing the outline of this plate.
-    thickness : float
+    outline_a : :class:`~compas.geometry.Polyline`
+        A line representing the principal outline of this plate.
+    outline_b : :class:`~compas.geometry.Polyline`
+        A line representing the associated outline of this plate.
+    blank_length : float
+        Length of the plate blank.
+    width : float
         Thickness of the plate material.
+    height : float
+        Height of the plate blank.
+    shape : :class:`~compas.geometry.Brep`
+        The geometry of the Plate before other machining features are applied.
+    blank : :class:`~compas.geometry.Box`
+        A feature-less box representing the material stock geometry to produce this plate.
+    ref_frame : :class:`~compas.geometry.Frame`
+        Reference frame for machining processings according to BTLx standard.
+    ref_sides : tuple(:class:`~compas.geometry.Frame`)
+        A tuple containing the 6 frames representing the sides of the plate according to BTLx standard.
     aabb : tuple(float, float, float, float, float, float)
         An axis-aligned bounding box of this plate as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
     key : int, optional
@@ -48,21 +61,24 @@ class Plate(TimberElement):
     @property
     def __data__(self):
         data = super(Plate, self).__data__
-        data["outline"] = self.outline
-        data["thickness"] = self.thickness
-        data["vector"] = self.vector
+        data["outline_a"] = self.outline_a
+        data["outline_b"] = self.outline_b
+        data["blank_extension"] = self.blank_extension
         return data
 
-    def __init__(self, outline, thickness, vector=None, frame=None, blank_extension=0, **kwargs):
+    def __init__(self, outline_a, outline_b, blank_extension=0, **kwargs):
         super(Plate, self).__init__(**kwargs)
-        if not outline.is_closed:
-            raise ValueError("The outline is not closed.")
-        self.blank_extension = blank_extension
-        self.thickness = thickness
-        self.outline = outline
+        if not TOL.is_allclose(outline_a[0], outline_a[-1]):
+            raise ValueError("The outline_a is not closed.")
+        if not TOL.is_allclose(outline_b[0], outline_b[-1]):
+            raise ValueError("The outline_b is not closed.")
+        if len(outline_a) != len(outline_b):
+            raise ValueError("The outlines have different number of points.")
+        self.outline_a = outline_a
+        self.outline_b = outline_b
         self._outline_feature = None
-        self._vector = vector or None
-        self._frame = frame or None
+        self._frame = None
+        self.blank_extension = blank_extension
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -72,15 +88,10 @@ class Plate(TimberElement):
 
     def __repr__(self):
         # type: () -> str
-        return "Plate(outline={!r}, thickness={})".format(self.outline, self.thickness)
+        return "Plate(outline_a={!r}, outline_b={!r})".format(self.outline_a, self.outline_b)
 
     def __str__(self):
-        return "Plate {} with thickness {:.3f} with vector {} at {}".format(
-            self.outline,
-            self.thickness,
-            self.vector,
-            self.frame,
-        )
+        return "Plate {}, {} ".format(self.outline_a, self.outline_b)
 
     # ==========================================================================
     # Computed attributes
@@ -163,7 +174,7 @@ class Plate(TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
-            self._outline_feature = FreeContour.from_polyline_and_element(self.outline, self, interior=False)
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         return [self._outline_feature] + self._features
 
     @features.setter
@@ -178,20 +189,56 @@ class Plate(TimberElement):
     @property
     def frame(self):
         if not self._frame:
-            self._frame = Frame.from_points(self.outline[0], self.outline[1], self.outline[-2])
-            if is_polyline_clockwise(self.outline, self._frame.normal):
+            self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
+            if is_polyline_clockwise(self.outline_a, self._frame.normal):
                 self._frame = Frame(self._frame.point, self._frame.xaxis, -self._frame.yaxis)
         return self._frame
         # flips the frame if the frame.point is at an interior corner
 
-    @property
-    def vector(self):
-        if not self._vector:
-            self._vector = self.frame.zaxis * self.thickness
-        return self._vector
+    # ==========================================================================
+    # Alternate constructors
+    # ==========================================================================
+
+    @classmethod
+    def from_outline_thickness(cls, outline, thickness, vector=None, blank_extension=0, **kwargs):
+        """
+        Constructs a plate from a polyline outline and a thickness.
+        The outline is the top face of the plate, and the thickness is the distance to the bottom face.
+
+        Parameters
+        ----------
+        outline : :class:`~compas.geometry.Polyline`
+            A polyline representing the outline of the plate.
+        thickness : float
+            The thickness of the plate.
+        vector : :class:`~compas.geometry.Vector`, optional
+            The direction of the thickness vector. If None, the thickness vector is determined from the outline.
+        blank_extension : float, optional
+            The extension of the blank geometry around the edges of the plate geometry. Default is 0.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Plate`
+            A Plate object representing the plate with the given outline and thickness.
+        """
+        # this ensure the plate's geometry can always be computed
+        if TOL.is_zero(thickness):
+            thickness = TOL.absolute
+
+        # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
+        # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
+        thickness_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal
+        if vector and thickness_vector.dot(vector) < 0:
+            thickness_vector = -thickness_vector
+        thickness_vector.unitize()
+        thickness_vector *= thickness
+        outline_b = Polyline(outline).translated(thickness_vector)
+        return cls(outline, outline_b, blank_extension=blank_extension, **kwargs)
 
     # ==========================================================================
-    # Implementations of abstract methods
+    #  methods
     # ==========================================================================
 
     def add_feature(self, feature):
@@ -206,6 +253,20 @@ class Plate(TimberElement):
         """
         self._features.append(feature)
 
+    def shape(self):
+        # type: () -> compas.geometry.Brep
+        """The shape of the plate before other features area applied.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The shape of the element.
+
+        """
+        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (self.outline_a, self.outline_b)])
+        plate_geo.cap_planar_holes()
+        return plate_geo
+
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
         """Compute the geometry of the element.
@@ -214,15 +275,16 @@ class Plate(TimberElement):
         ----------
         include_features : bool, optional
             If ``True``, include the features in the computed geometry.
-            If ``False``, return only the outline geometry.
+            If ``False``, return only the plate shape.
 
         Returns
         -------
         :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        outline = Polyline(correct_polyline_direction(self.outline, self.vector, clockwise=True))  # corrects the direction of the outline to get correctly oriented Brep
-        plate_geo = Brep.from_extrusion(outline, self.vector)
+
+        # TODO: consider if Brep.from_curves(curves) is faster/better
+        plate_geo = self.shape()
         if include_features:
             for feature in self._features:
                 try:
@@ -246,9 +308,7 @@ class Plate(TimberElement):
             The AABB of the element.
 
         """
-        vertices = [point for point in self.outline.points]
-        for point in self.outline.points:
-            vertices.append(point + self.vector)
+        vertices = self.outline_a.points + self.outline_b.points
         box = Box.from_points(vertices)
         box.xsize += inflate
         box.ysize += inflate
@@ -265,16 +325,14 @@ class Plate(TimberElement):
             The OBB of the element.
 
         """
-        vertices = []
-        for point in self.outline:
-            vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
-        obb = Box.from_points(vertices)
-        obb.zsize = self.thickness
-        obb.translate([0, 0, self.thickness / 2])
-        if inflate != 0.0:
-            obb.xsize += inflate
-            obb.ysize += inflate
-            obb.zsize += inflate
+        vertices = self.outline_a.points + self.outline_b.points
+        world_vertices = []
+        for point in vertices:
+            world_vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
+        obb = Box.from_points(world_vertices)
+        obb.xsize += inflate
+        obb.ysize += inflate
+        obb.zsize += inflate
         obb.transform(Transformation.from_frame_to_frame(Frame.worldXY(), self.frame))
         return obb
 
