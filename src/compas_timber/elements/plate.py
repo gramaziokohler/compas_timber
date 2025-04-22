@@ -174,7 +174,7 @@ class Plate(TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
-            self._outline_feature = FreeContour.from_polylines_and_element([self.outline_a, self.outline_b], self, interior=False)
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         return [self._outline_feature] + self._features
 
     @features.setter

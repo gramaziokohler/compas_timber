@@ -1,3 +1,11 @@
+try:
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from compas_timber.elements import Plate
+except ImportError:
+    pass
+
 import math
 
 from compas.geometry import Brep
@@ -101,49 +109,46 @@ class FreeContour(BTLxProcessing):
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index)
 
     @classmethod
-    def from_polylines_and_element(cls, polylines, element, interior=False, tool_position=None, ref_side_index=None):
+    def from_top_bottom_and_elements(cls, top_polyline, bottom_polyline, element, interior=False, tool_position=None, ref_side_index=None):
+        # type: (Polyline, Polyline, Plate, bool, str | None, int | None) -> FreeContour
         """Construct a Contour processing from a list of polylines and element.
-        def from_polylines_and_element(cls, polylines, element, interior=False, tool_position=None, ref_side_index=None):
-            Parameters
-            ----------
-            polylines : list of list of :class:`compas.geometry.Point`
-                The top and bottome polylines of the contour.
-            element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
-                The element.
-            interior : bool, optional
-                If True, the contour is an interior contour. Default is False.
-            tool_position : BTLx.AlignmentType, optional
-                The position of the tool. Default is None.
-            ref_side_index : int, optional
-                The reference side index. If none is given, the function will try to find the reference side index based on the polylines and element.
+
+        Parameters
+        ----------
+        polylines : list of list of :class:`compas.geometry.Point`
+            The top and bottome polylines of the contour.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element.
+        interior : bool, optional
+            If True, the contour is an interior contour. Default is False.
+        tool_position : BTLx.AlignmentType, optional
+            The position of the tool. Default is None.
+        ref_side_index : int, optional
+            The reference side index. If none is given, the function will try to find the reference side index based on the polylines and element.
         """
-
-        if len(polylines) != 2:
-            raise ValueError("Two polylines are expected.")
-
-        if len(polylines[0]) != len(polylines[1]):
+        if len(top_polyline) != len(bottom_polyline):
             raise ValueError("The top and bottom polylines should have the same number of points.")
 
         if not ref_side_index:
-            ref_side_index = cls.get_ref_face_index(polylines[0], element)
+            ref_side_index = cls.get_ref_face_index(top_polyline, element)
 
         ref_side = element.ref_sides[ref_side_index]
         xform_to_part_coords = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
-        tool_position = cls.parse_tool_position(polylines[0], ref_side, tool_position, interior)
+        tool_position = cls.parse_tool_position(top_polyline, ref_side, tool_position, interior)
 
-        if not cls.are_all_segments_parallel(polylines[0], polylines[1]):  # use DualContour
-            points_principal = [pt.transformed(xform_to_part_coords) for pt in polylines[0]]
-            points_associated = [pt.transformed(xform_to_part_coords) for pt in polylines[1]]
+        if not cls.are_all_segments_parallel(top_polyline, bottom_polyline):  # use DualContour
+            points_principal = [pt.transformed(xform_to_part_coords) for pt in top_polyline]
+            points_associated = [pt.transformed(xform_to_part_coords) for pt in bottom_polyline]
             contour = DualContour(points_principal, points_associated)
         else:  # use Contour with inclination
             inclinations = []
-            for top_line, bottom_line in zip(Polyline(polylines[0]).lines, Polyline(polylines[1]).lines):
+            for top_line, bottom_line in zip(Polyline(top_polyline).lines, Polyline(bottom_polyline).lines):
                 cp = bottom_line.closest_point(top_line.start)
                 inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), -ref_side.normal, -top_line.direction, deg=True), 6))
             if len(set(inclinations)) == 1:
                 inclinations = [inclinations[0]]  # all inclinations are the same, set one global inclination for FreeContour processing
-            depth = distance_point_plane(polylines[1][0], Plane.from_frame(ref_side))
-            polyline = Polyline(polylines[0]).transformed(xform_to_part_coords)
+            depth = distance_point_plane(bottom_polyline[0], Plane.from_frame(ref_side))
+            polyline = Polyline(top_polyline).transformed(xform_to_part_coords)
             contour = Contour(polyline, depth=depth, inclination=inclinations)
 
         return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
@@ -167,6 +172,7 @@ class FreeContour(BTLxProcessing):
 
     @staticmethod
     def parse_tool_position(polyline, ref_side, tool_position, interior):
+        # type: (Polyline, Frame, str | None, bool) -> str
         if not Polyline(polyline).is_closed:  # if polyline is not closed
             if tool_position is None:
                 raise ValueError("The polyline should be closed or a tool position should be provided.")
