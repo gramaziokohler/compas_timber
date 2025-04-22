@@ -803,6 +803,8 @@ class AlignmentType(object):
 class Contour(Data):
     """Represens the generic contour for specific free contour processings.
 
+    TODO: add point attributes for other types like NailContour
+
     Parameters
     ----------
     depth : float
@@ -813,7 +815,6 @@ class Contour(Data):
         The inclination of the contour.
     polyline : :class:`compas.geometry.Polyline`
         The polyline of the contour.
-    TODO: add point attributes for other types like NailContour
     """
 
     def __init__(self, polyline, depth=None, depth_bounded=True, inclination=None):
@@ -834,6 +835,8 @@ BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
 class DualContour(Data):
     """Represens the generic contour for specific free contour processings.
 
+    TODO: add point attributes for other types like NailContour
+
     Parameters
     ----------
     principal_contour : :class:`compas.geometry.Polyline`
@@ -842,7 +845,6 @@ class DualContour(Data):
         The associated contour of the dual contour. Must have same number of segments as `principal_contour`.
     depth_bounded : bool
         If True, the depth is bounded.
-    TODO: add point attributes for other types like NailContour
     """
 
     def __init__(self, principal_contour, associated_contour, depth_bounded=None):
