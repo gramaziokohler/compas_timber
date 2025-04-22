@@ -100,7 +100,7 @@ class FreeContour(BTLxProcessing):
             ref_side_index = cls.get_ref_face_index(polyline, element)
 
         ref_side = element.ref_sides[ref_side_index]
-        tool_position = cls.parse_tool_position(polyline, ref_side, tool_position, interior)
+        tool_position = cls.parse_tool_position(polyline, ref_side, interior, tool_position)
         depth = depth or element.width
         xform_to_part_coords = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
         points = [pt.transformed(xform_to_part_coords) for pt in polyline]
@@ -134,7 +134,7 @@ class FreeContour(BTLxProcessing):
 
         ref_side = element.ref_sides[ref_side_index]
         xform_to_part_coords = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
-        tool_position = cls.parse_tool_position(top_polyline, ref_side, tool_position, interior)
+        tool_position = cls.parse_tool_position(top_polyline, ref_side, interior, tool_position)
 
         if not cls.are_all_segments_parallel(top_polyline, bottom_polyline):  # use DualContour
             points_principal = [pt.transformed(xform_to_part_coords) for pt in top_polyline]
@@ -171,8 +171,8 @@ class FreeContour(BTLxProcessing):
         return cls.from_polyline_and_element(polyline, element, depth, interior, **kwargs)
 
     @staticmethod
-    def parse_tool_position(polyline, ref_side, tool_position, interior):
-        # type: (Polyline, Frame, str | None, bool) -> str
+    def parse_tool_position(polyline, ref_side, interior, tool_position=None):
+        # type: (Polyline, Frame, bool, str | None) -> str
         if not Polyline(polyline).is_closed:  # if polyline is not closed
             if tool_position is None:
                 raise ValueError("The polyline should be closed or a tool position should be provided.")
