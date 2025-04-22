@@ -64,13 +64,13 @@ class PlateComponent(component):
                 guid_b, geometry_b = self._get_guid_and_geometry(line_b)
                 rhino_polyline_b = rs.coercecurve(geometry_b)
                 line_b = curve_to_compas_polyline(rhino_polyline_b)
-                plate = Plate(line_a.points, line_b.points)
+                plate = Plate(line_a, line_b)
                 plate.attributes["rhino_guid_a"] = str(guid_a) if guid_a else None
                 if updateRefObj and guid_b:
                     update_rhobj_attributes_name(guid_b, "outline", str(line_b))
 
             else:
-                plate = Plate.from_outline_thickness(line_a.points, t, vector_to_compas(v) if v else None)
+                plate = Plate.from_outline_thickness(line_a, t, vector_to_compas(v) if v else None)
 
             plate.attributes["rhino_guid_a"] = str(guid_a) if guid_a else None
             plate.attributes["category"] = c
