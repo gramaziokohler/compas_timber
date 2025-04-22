@@ -2,7 +2,9 @@ try:
     from typing import TYPE_CHECKING
 
     if TYPE_CHECKING:
-        from compas_timber.elements import Plate
+        from compas.geometry import Polyline  # noqa: F401
+
+        from compas_timber.elements import Plate  # noqa: F401
 except ImportError:
     pass
 
@@ -12,7 +14,6 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Plane
-from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
@@ -196,6 +197,7 @@ class FreeContour(BTLxProcessing):
 
     @staticmethod
     def get_ref_face_index(contour_points, element):
+        # type: (Polyline, Plate) -> int
         curve_frame = Frame.from_points(contour_points[0], contour_points[1], contour_points[-2])
         for i, ref_side in enumerate(element.ref_sides):
             if TOL.is_zero(distance_point_plane(contour_points[0], Plane.from_frame(ref_side)), tol=1e-6) and TOL.is_zero(
