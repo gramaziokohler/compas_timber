@@ -308,7 +308,7 @@ class Plate(TimberElement):
             The AABB of the element.
 
         """
-        vertices = Polyline(self.outline_a).points + Polyline(self.outline_b).points
+        vertices = self.outline_a.points + self.outline_b.points
         box = Box.from_points(vertices)
         box.xsize += inflate
         box.ysize += inflate
@@ -325,15 +325,14 @@ class Plate(TimberElement):
             The OBB of the element.
 
         """
-        vertices = Polyline(self.outline_a).points + Polyline(self.outline_b).points
+        vertices = self.outline_a.points + self.outline_b.points
         world_vertices = []
         for point in vertices:
             world_vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
         obb = Box.from_points(world_vertices)
-        if inflate != 0.0:
-            obb.xsize += inflate
-            obb.ysize += inflate
-            obb.zsize += inflate
+        obb.xsize += inflate
+        obb.ysize += inflate
+        obb.zsize += inflate
         obb.transform(Transformation.from_frame_to_frame(Frame.worldXY(), self.frame))
         return obb
 
