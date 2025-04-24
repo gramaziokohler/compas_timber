@@ -1,16 +1,19 @@
-# flake8: noqa
+"""Generates a direct joint between two elements. This overrides other joint rules."""
+
 import inspect
 
-import Grasshopper
+import Grasshopper  # type: ignore
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.design import DirectRule
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
-from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
+from compas_timber.ghpython import error
+from compas_timber.ghpython import get_leaf_subclasses
+from compas_timber.ghpython import item_input_valid_cpython
+from compas_timber.ghpython import manage_cpython_dynamic_params
+from compas_timber.ghpython import rename_cpython_gh_output
+from compas_timber.ghpython import warning
 
 
 class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
@@ -21,18 +24,22 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             if cls.MAX_ELEMENT_COUNT == 2:
                 self.classes[cls.__name__] = cls
 
-        if ghenv.Component.Params.Output[0].NickName == "Rule":
+        if self.component.Params.Output[0].NickName == "Rule":
             self.joint_type = None
         else:
-            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
+            self.joint_type = self.classes.get(self.component.Params.Output[0].NickName, None)
+
+    @property
+    def component(self):
+        return ghenv.Component  # type: ignore  # noqa: F821
 
     def RunScript(self, *args):
         if not self.joint_type:
-            ghenv.Component.Message = "Select joint type from context menu (right click)"
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Select joint type from context menu (right click)")
+            self.component.Message = "Select joint type from context menu (right click)"
+            warning(self.component, "Select joint type from context menu (right click)")
             return None
         else:
-            ghenv.Component.Message = self.joint_type.__name__
+            self.component.Message = self.joint_type.__name__
             beam_a = args[0]
             beam_b = args[1]
             kwargs = {}
@@ -42,26 +49,21 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
 
             if not item_input_valid_cpython(ghenv, beam_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, beam_b, self.arg_names()[1]):
                 return
-            if not isinstance(beam_a, list):
+            if not hasattr(beam_a, "__iter__"):
                 beam_a = [beam_a]
-            if not isinstance(beam_b, list):
+            if not hasattr(beam_b, "__iter__"):
                 beam_b = [beam_b]
             if len(beam_a) != len(beam_b):
-                ghenv.Component.AddRuntimeMessage(
-                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1])
-                )
+                error(self.component, f"Number of items in {self.arg_names()[0]} and {self.arg_names()[1]} must match!")
                 return
             Rules = []
             for main, secondary in zip(beam_a, beam_b):
                 topology, _, _ = ConnectionSolver().find_topology(main, secondary)
                 supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-                if not isinstance(supported_topo, list):
+                if not hasattr(supported_topo, "__iter__"):
                     supported_topo = [supported_topo]
                 if topology not in supported_topo:
-                    ghenv.Component.AddRuntimeMessage(
-                        Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning,
-                        "Beams meet with topology: {} which does not agree with joint of type: {}".format(JointTopology.get_name(topology), self.joint_type.__name__),
-                    )
+                    warning(self.component, f"Beams meet with topology: {JointTopology.get_name(topology)} which does not agree with joint of type: {self.joint_type.__name__}")
                 Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
             return Rules
 
@@ -78,4 +80,4 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         self.joint_type = self.classes[str(sender)]
         rename_cpython_gh_output(self.joint_type.__name__, 0, ghenv)
         manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=2, permanent_param_count=0)
-        ghenv.Component.ExpireSolution(True)
+        self.component.ExpireSolution(True)
