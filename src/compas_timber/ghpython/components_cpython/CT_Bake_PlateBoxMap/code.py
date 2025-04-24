@@ -15,11 +15,7 @@ from Rhino.Geometry import Plane
 
 
 class BakePlateMap(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self,
-            model,
-            map_size: System.Collections.Generic.List[float],
-            swap_uv: bool,
-            bake: bool):
+    def RunScript(self, model, map_size: System.Collections.Generic.List[float], swap_uv: bool, bake: bool):
         if map_size and len(map_size) != 3:
             ghenv.Component.AddRuntimeMessage(
                 Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Input parameter MapSize requires exactly three float values (scale factors in x,y,z directions)"
@@ -59,7 +55,7 @@ class BakePlateMap(Grasshopper.Kernel.GH_ScriptInstance):
                 rs.EnableRedraw(False)
 
                 for brep, frame in zip(breps, frames):
-                    guid = ActiveDoc.Objects.Add(brep)
+                    guid = Rhino.RhinoDoc.ActiveDoc.Objects.Add(brep)
                     boxmap = self.create_box_map(frame, dimx, dimy, dimz, swap_uv)
                     Rhino.RhinoDoc.ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
         finally:

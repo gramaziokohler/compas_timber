@@ -7,7 +7,7 @@ import System
 import Rhino
 import rhinoscriptsyntax as rs
 from compas_rhino.conversions import frame_to_rhino
-from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
+from compas_timber.ghpython import item_input_valid_cpython
 
 from Rhino import Render
 from Rhino.Geometry import Interval
@@ -55,7 +55,7 @@ class BakeBoxMap(Grasshopper.Kernel.GH_ScriptInstance):
                 rs.EnableRedraw(False)
 
                 for brep, frame in zip(breps, frames):
-                    guid = ActiveDoc.Objects.Add(brep)
+                    guid = Rhino.RhinoDoc.ActiveDoc.Objects.Add(brep)
                     boxmap = self.create_box_map(frame, dimx, dimy, dimz)
                     Rhino.RhinoDoc.ActiveDoc.Objects.ModifyTextureMapping(guid, 1, boxmap)
         finally:
