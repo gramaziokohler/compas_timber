@@ -10,6 +10,11 @@ from .ghcomponent_helpers import clear_cpython_gh_params
 from .ghcomponent_helpers import manage_cpython_dynamic_params
 from .ghcomponent_helpers import rename_cpython_gh_input
 
+from .ghcomponent_helpers import warning
+from .ghcomponent_helpers import error
+from .ghcomponent_helpers import remark
+from .ghcomponent_helpers import message
+
 
 __all__ = [
     "clear_gh_params",
@@ -23,4 +28,8 @@ __all__ = [
     "add_cpython_gh_param",
     "manage_cpython_dynamic_params",
     "rename_cpython_gh_input",
+    "warning",
+    "error",
+    "remark",
+    "message",
 ]

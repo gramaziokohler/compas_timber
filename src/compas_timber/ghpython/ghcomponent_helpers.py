@@ -11,6 +11,58 @@ except (ImportError, SyntaxError):
     pass
 
 
+def warning(component, message):
+    """Add a warning message to the component.
+
+    Parameters
+    ----------
+    component : Grasshopper.Kernel.IGH_Component
+        The component instance. Pre-Rhino8 use `self`. Post-Rhino8 use `ghenv.Component`.
+    message : str
+        The message to display.
+    """
+    component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, message)
+
+
+def error(component, message):
+    """Add an error message to the component.
+
+    Parameters
+    ----------
+    component : Grasshopper.Kernel.IGH_Component
+        The component instance. Pre-Rhino8 use `self`. Post-Rhino8 use `ghenv.Component`.
+    message : str
+        The message to display.
+    """
+    component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, message)
+
+
+def remark(component, message):
+    """Add a remark message to the component.
+
+    Parameters
+    ----------
+    component : Grasshopper.Kernel.IGH_Component
+        The component instance. Pre-Rhino8 use `self`. Post-Rhino8 use `ghenv.Component`.
+    message : str
+        The message to display.
+    """
+    component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Remark, message)
+
+
+def message(component, message):
+    """Add a text that will appear under the component.
+
+    Parameters
+    ----------
+    component : Grasshopper.Kernel.IGH_Component
+        The component instance. Pre-Rhino8 use `self`. Post-Rhino8 use `ghenv.Component`.
+    message : str
+        The message to display.
+    """
+    component.Message = message
+
+
 def list_input_valid(component, Param, name):
     if not Param:
         component.AddRuntimeMessage(Warning, "Input parameter %s failed to collect data" % name)
@@ -226,6 +278,7 @@ def item_input_valid_cpython(ghenv, Param, name):
     else:
         return True
     return False
+
 
 def add_cpython_gh_param(
     name, io, ghenv, index=None
