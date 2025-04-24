@@ -8,20 +8,7 @@
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
-        "inputParameters": [
-            {
-                "name": "cat_a",
-                "description": "Categeory of the first Beam.",
-                "typeHintID": "str",
-                "scriptParamAccess": 0
-            },
-            {
-                "name": "cat_b",
-                "description": "Category of the second Beam.",
-                "typeHintID": "str",
-                "scriptParamAccess": 0
-            }
-        ],
+        "inputParameters": [],
         "outputParameters": [
             {
                 "name": "Rule",

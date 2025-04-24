@@ -1,3 +1,5 @@
+"""Defines which Joint type will be applied in the Automatic Joints component for connecting Beams with the given Category attributes. This overrides Topological Joint rules and is overriden by Direct joint rules"""
+
 # flake8: noqa
 import inspect
 from collections import OrderedDict
@@ -37,14 +39,13 @@ class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def component(self):
         return ghenv.Component  # type: ignore
 
-    def RunScript(self, cat_a: str, cat_b: str, *args):
+    def RunScript(self, *args):
         if not self.joint_type:
-            message(self.component, "Select joint type from context menu (right click)")
             warning(self.component, "Select joint type from context menu (right click)")
             return None
         else:
             message(self.component, self.joint_type.__name__)
-
+            cat_a, cat_b = args[:2]
             kwargs = {}
             for i, val in enumerate(args[2:]):
                 if val is not None:
