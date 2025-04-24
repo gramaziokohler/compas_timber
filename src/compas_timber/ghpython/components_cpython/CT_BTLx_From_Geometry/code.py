@@ -10,9 +10,12 @@ from compas_rhino.conversions import polyline_to_compas
 
 from compas_timber.fabrication import BTLxFromGeometryDefinition
 from compas_timber.fabrication import BTLxProcessing
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
+from compas_timber.ghpython import get_leaf_subclasses
+from compas_timber.ghpython import manage_cpython_dynamic_params
+from compas_timber.ghpython import rename_cpython_gh_output
+from compas_timber.ghpython import warning
+from compas_timber.ghpython import error
+from compas_timber.ghpython import message
 
 import rhinoscriptsyntax as rs
 
@@ -32,16 +35,19 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
         else:
             self.processing_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
+    @property
+    def component(self):
+        return ghenv.Component  # type: ignore
+
     def RunScript(self, elements: System.Collections.Generic.List[object], *args):
         if not self.processing_type:
-            ghenv.Component.Message = "Select Process type from context menu (right click)"
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Select Process type from context menu (right click)")
+            warning(self.component, "Select Process type from context menu (right click)")
             return None
         else:
-            ghenv.Component.Message = self.processing_type.__name__
+            message(self.component, self.processing_type.__name__)
             for arg, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
                 if arg is None:
-                    ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter {} failed to collect data".format(arg_name))
+                    warning(self.component, f"Input parameter {arg_name} failed to collect data")
 
             geometries = []
             for geo, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
@@ -54,10 +60,12 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
                 elif isinstance(geo, rg.PolylineCurve):
                     geometries.append(polyline_to_compas(geo.ToPolyline()))
                 else:
-                    ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "Input parameter {} collect unusable data".format(arg_name))
+                    error(self.component, f"Input parameter {arg_name} collect unusable data")
+
             if not geometries:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "no valid geometry collected")
+                warning(self.component, "no valid geometry collected")
                 return
+
             kwargs = {"geometries": geometries}
             if elements:
                 kwargs["elements"] = elements
