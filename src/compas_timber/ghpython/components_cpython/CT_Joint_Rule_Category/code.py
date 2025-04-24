@@ -56,7 +56,7 @@ class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def arg_names(self):
         names = inspect.getargspec(self.joint_type.__init__)[0][1:]
         for i in range(2):
-            names[i] += " category"
+            names[i] += "_category"
         return [name for name in names if (name != "key") and (name != "frame")] + ["max_distance"]
 
     def AppendAdditionalMenuItems(self, menu):
