@@ -8,10 +8,12 @@ from System.Windows.Forms import ToolStripSeparator
 
 from compas_timber.connections import Joint
 from compas_timber.design import CategoryRule
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
-from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
-from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
+from compas_timber.ghpython import get_leaf_subclasses
+from compas_timber.ghpython import item_input_valid_cpython
+from compas_timber.ghpython import manage_cpython_dynamic_params
+from compas_timber.ghpython import rename_cpython_gh_output
+from compas_timber.ghpython import warning
+from compas_timber.ghpython import message
 
 
 class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
@@ -31,13 +33,17 @@ class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             for key in parsed_output[1:]:
                 self.topo_bools[key] = True
 
+    @property
+    def component(self):
+        return ghenv.Component  # type: ignore
+
     def RunScript(self, cat_a: str, cat_b: str, *args):
         if not self.joint_type:
-            ghenv.Component.Message = "Select joint type from context menu (right click)"
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Select joint type from context menu (right click)")
+            message(self.component, "Select joint type from context menu (right click)")
+            warning(self.component, "Select joint type from context menu (right click)")
             return None
         else:
-            ghenv.Component.Message = self.joint_type.__name__
+            message(self.component, self.joint_type.__name__)
 
             kwargs = {}
             for i, val in enumerate(args[2:]):
