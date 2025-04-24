@@ -14,6 +14,8 @@ from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
 
+import rhinoscriptsyntax as rs
+
 
 class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
@@ -43,6 +45,8 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
 
             geometries = []
             for geo, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
+                geo = rs.coercegeometry(geo)  # guid to geometry
+
                 if isinstance(geo, rg.LineCurve):
                     geometries.append(Line(geo.PointAtStart, geo.PointAtEnd))
                 elif isinstance(geo, rg.Plane):
