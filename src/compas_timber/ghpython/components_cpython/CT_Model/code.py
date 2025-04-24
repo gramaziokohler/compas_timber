@@ -1,3 +1,5 @@
+"""Creates an Model"""
+
 # flake8: noqa
 import Grasshopper
 import System
@@ -11,13 +13,17 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.model import TimberModel
-from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
+from compas_timber.ghpython import warning
 
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
 TOL.absolute = 1e-6
 
 
 class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
+    @property
+    def component(self):
+        return ghenv.Component  # type: ignore
+
     def RunScript(
         self,
         Elements: System.Collections.Generic.List[object],
@@ -27,7 +33,17 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         MaxDistance: float,
         CreateGeometry: bool,
     ):
-        if not (list_input_valid_cpython(ghenv, Elements, "Elements") or list_input_valid_cpython(ghenv, Containers, "Containers")):  # shows beams even if no joints are found
+        # this used to be default behavior in Rhino7.. I think..
+        Elements = Elements or []
+        Containers = Containers or []
+        JointRules = JointRules or []
+        Features = Features or []
+
+        if not Elements:
+            warning(self.component, "Input parameter Beams failed to collect data")
+        if not JointRules:
+            warning(self.component, "Input parameter JointRules failed to collect data")
+        if not (Elements or Containers):  # shows beams even if no joints are found
             return
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
@@ -68,12 +84,12 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
                 handled_pairs.append({element_a, element_b})
 
         ##### Handle joinery #####
+        print(Model.beams)
         joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
         if unmatched_pairs:
             for pair in unmatched_pairs:
-                ghenv.Component.AddRuntimeMessage(
-                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key)
-                )  # TODO: add to debug_info
+                e_a, e_b = pair
+                warning(self.component, f"No joint rule found for beams {e_a.key} and {e_b.key}")  # TODO: add to debug_info
 
         if wall_joint_definitions:
             joint_defs += wall_joint_definitions
@@ -93,9 +109,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             features = [f for f in Features if f is not None]
             for f_def in features:
                 if not f_def.elements:
-                    ghenv.Component.AddRuntimeMessage(
-                        Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Features defined in model must have elements defined. Features without elements will be ignored"
-                    )
+                    warning(self.component, "Features defined in model must have elements defined. Features without elements will be ignored")
                     continue
 
                 for element in f_def.elements:
@@ -122,7 +136,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
                     scene.add(element.geometry)
 
         if debug_info.has_errors:
-            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Error found during joint creation. See DebugInfo output for details.")
+            warning(self.component, "Error found during joint creation. See DebugInfo output for details.")
 
         Geometry = scene.draw()
         return Model, Geometry, debug_info
