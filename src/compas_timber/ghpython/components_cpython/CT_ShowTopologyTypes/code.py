@@ -1,3 +1,4 @@
+# r: compas_timber>=0.15.3
 """Shows the names of the connection topology types."""
 
 # flake8: noqa

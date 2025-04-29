@@ -1,3 +1,4 @@
+# r: compas_timber>=0.15.3
 # flake8: noqa
 from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 from compas_timber.design.workflow import Attribute
