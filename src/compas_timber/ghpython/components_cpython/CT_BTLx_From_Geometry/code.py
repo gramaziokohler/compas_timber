@@ -68,7 +68,7 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
 
             kwargs = {"geometries": geometries}
             if elements:
-                kwargs["elements"] = elements
+                kwargs["elements"] = list(elements)
             for key, val in zip(self.arg_names()[self.geometry_count :], args[self.geometry_count :]):
                 if val is not None:
                     kwargs[key] = val
