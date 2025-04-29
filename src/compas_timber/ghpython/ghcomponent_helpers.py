@@ -1,12 +1,6 @@
-try:  # Rhino7
-    import Grasshopper
-    from Grasshopper.Kernel.GH_RuntimeMessageLevel import Remark
-    from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
-except (ImportError, SyntaxError):
-    pass
-try:  # Rhino8
-    import Grasshopper
-    import RhinoCodePluginGH.Parameters
+try:
+    import Grasshopper  # type: ignore
+    import RhinoCodePluginGH.Parameters  # type: ignore
 except (ImportError, SyntaxError):
     pass
 
@@ -65,12 +59,12 @@ def message(component, message):
 
 def list_input_valid(component, Param, name):
     if not Param:
-        component.AddRuntimeMessage(Warning, "Input parameter %s failed to collect data" % name)
+        component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter %s failed to collect data" % name)
     else:
         if all([_ is None for _ in Param]):
-            component.AddRuntimeMessage(Warning, "Input parameter %s failed to collect data" % name)
+            component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter %s failed to collect data" % name)
         elif any([_ is None for _ in Param]):
-            component.AddRuntimeMessage(Remark, "Input parameter %s contains some Null values" % name)
+            component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Remark, "Input parameter %s contains some Null values" % name)
             return True
         else:
             return True
@@ -79,7 +73,7 @@ def list_input_valid(component, Param, name):
 
 def item_input_valid(component, Param, name):
     if not Param:
-        component.AddRuntimeMessage(Warning, "Input parameter %s failed to collect data" % name)
+        component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter %s failed to collect data" % name)
     else:
         return True
     return False
