@@ -17,7 +17,7 @@ from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, mesh: Rhino.Geometry.Mesh, width: float, height: float, category: str):
         # minimum inputs required
-        if not item_input_valid_cpython(ghenv, mesh, "mesh")    :
+        if not item_input_valid_cpython(ghenv, mesh, "mesh"):
             return
         if not item_input_valid_cpython(ghenv, width, "width"):
             return

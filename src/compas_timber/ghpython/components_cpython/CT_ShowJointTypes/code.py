@@ -7,7 +7,6 @@ from compas_timber.utils import intersection_line_line_param
 from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
-
 class ShowJointTypes(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, model):
         self.pt = []

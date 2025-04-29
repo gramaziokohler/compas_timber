@@ -15,13 +15,15 @@ from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class Beam_fromCurve(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self,
-            centerline: System.Collections.Generic.List[object],
-            z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
-            width: System.Collections.Generic.List[float],
-            height: System.Collections.Generic.List[float],
-            category: System.Collections.Generic.List[str],
-            updateRefObj: bool):
+    def RunScript(
+        self,
+        centerline: System.Collections.Generic.List[object],
+        z_vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
+        width: System.Collections.Generic.List[float],
+        height: System.Collections.Generic.List[float],
+        category: System.Collections.Generic.List[str],
+        updateRefObj: bool,
+    ):
         # minimum inputs required
         if not list_input_valid_cpython(ghenv, centerline, "Centerline"):
             return

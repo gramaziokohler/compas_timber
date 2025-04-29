@@ -1,4 +1,5 @@
 """Extracts main geometric characteristics of a Beam."""
+
 # flake8: noqa
 import Grasshopper
 import System
@@ -22,10 +23,7 @@ class BeamDecompose(Grasshopper.Kernel.GH_ScriptInstance):
     SCREEN_SIZE = 10
     RELATIVE_SIZE = 0
 
-    def RunScript(self,
-            beam: System.Collections.Generic.List[object],
-            show_frame: bool,
-            show_faces: bool):
+    def RunScript(self, beam: System.Collections.Generic.List[object], show_frame: bool, show_faces: bool):
         self.show_faces = show_faces if show_faces is not None else False
         self.show_frame = show_frame if show_frame is not None else False
         self.frames = []
