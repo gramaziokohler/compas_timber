@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.16.1] 2025-04-30
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.16.0] 2025-04-30
+
+### Added
+
 * Added new `compas_timber.fabrication.Pocket`.
 * Added `front_side`, `back_side`, `opp_side` methods to the `Beam` class for retrieving specific sides relative to a reference side.
 * Added processing `Text` to `compas_timber.fabrication`.
