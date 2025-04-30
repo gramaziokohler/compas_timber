@@ -10,3 +10,4 @@ build
 wheel
 pytest-mock
 build
+pythonnet
