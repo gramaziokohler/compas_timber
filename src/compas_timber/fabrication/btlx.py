@@ -60,6 +60,7 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
+        self._module_tolerance = None
 
     def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
@@ -106,6 +107,7 @@ class BTLxWriter(object):
         :meth:`BTLxWriter.write`
 
         """
+        self._module_tolerance = model.tolerance
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history
         file_history_element = self._create_file_history()
@@ -183,8 +185,11 @@ class BTLxWriter(object):
             The part element.
 
         """
+        assert self._module_tolerance
         # create part element
-        part = BTLxPart(element, order_num=order_num)
+        scale_factor = 1000.0 if self._module_tolerance.unit == "M" else 1.0
+        part = BTLxPart(element, order_num=order_num, scale_factor=scale_factor)
+
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # create processings element for the part if there are any
@@ -217,6 +222,12 @@ class BTLxWriter(object):
             The processing element.
 
         """
+        assert self._module_tolerance
+        # BTLx always uses mm
+        if self._module_tolerance.unit == "M":
+            # TODO: throw some warning here as it's generally a better idea to design in mm when intending to use BTLx
+            processing = processing.scaled(1000.0)
+
         processing_params = processing.params
         params_dict = processing_params.as_dict()
 
@@ -306,16 +317,17 @@ class BTLxPart(object):
 
     """
 
-    def __init__(self, element, order_num):
+    def __init__(self, element, order_num, scale_factor=1.0):
         self.element = element
         self.order_num = order_num
-        self.length = element.blank_length
-        self.width = element.width
-        self.height = element.height
-        self.frame = element.ref_frame
+        self.length = element.blank_length * scale_factor
+        self.width = element.width * scale_factor
+        self.height = element.height * scale_factor
+        self.frame = element.ref_frame.scaled(scale_factor)
         self.processings = []
         self._et_element = None
         self._shape_strings = None
+        self._scale_factor = scale_factor
 
     @property
     def part_guid(self):
@@ -428,7 +440,8 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            for face in self.element.geometry.faces:
+            scaled_geometry = self.element.geometry.scaled(self._scale_factor)
+            for face in scaled_geometry.faces:
                 pts = []
                 frame = face.surface.frame_at(0.5, 0.5)
                 edges = face.boundary.edges[1:]
@@ -596,6 +609,25 @@ class BTLxProcessing(Data):
         if not self.subprocessings:
             self.subprocessings = []
         self.subprocessings.append(subprocessing)
+
+    def scaled(self, factor):
+        """Returns a new instance of the processing with the parameters scaled by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.BTLxProcessing`
+            A new instance of the processing with the parameters scaled by the given factor.
+
+        """
+        # type: (float) -> BTLxProcessing
+        new_instance = self.copy()
+        new_instance.scale(factor)
+        return new_instance
 
 
 class BTLxProcessingParams(object):
