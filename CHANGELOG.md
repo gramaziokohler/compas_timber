@@ -18,7 +18,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added attribute `tolrance` to `TimberModel`.
+* Added `scaled` method to `compas_timber.fabrication.BTLxProcessing` to scale the BTLx parameters.
+* Added `scaled` method to `compas_timber.fabrication.BTLxPart` to scale the BTLx parameters.
+* Added `scale` method to `compas_timber.fabrication.JackRafterCut`.
+* Added `scale` method to `compas_timber.fabrication.Drilling`.
+* Added `scale` method to `compas_timber.fabrication.DoubleCut`.
+* Added `scale` method to `compas_timber.fabrication.Lap`.
+* Added `scale` method to `compas_timber.fabrication.FrenchRidgeLap`.
+* Added `scale` method to `compas_timber.fabrication.Tenon`.
+* Added `scale` method to `compas_timber.fabrication.Mortise`.
+* Added `scale` method to `compas_timber.fabrication.StepJoint`.
+* Added `scale` method to `compas_timber.fabrication.StepJointNotch`.
+* Added `scale` method to `compas_timber.fabrication.DovetailTenon`.
+* Added `scale` method to `compas_timber.fabrication.DovetailMortise`.
+* Added `scale` method to `compas_timber.fabrication.Slot`.
+* Added `scale` method to `compas_timber.fabrication.Pocket`.
+* Added `scale` method to `compas_timber.fabrication.Text`.
+
 ### Changed
+
+* BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.
+* Added missing `__data__` to `compas_timber.fabrication.Drilling`.
+* Added missing `__data__` to `compas_timber.fabrication.Slot`.
 
 ### Removed
 
