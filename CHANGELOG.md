@@ -9,15 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-### Changed
-
-### Removed
-
-
-## [0.16.1] 2025-04-30
-
-### Added
-
 * Added attribute `tolrance` to `TimberModel`.
 * Added `scaled` method to `compas_timber.fabrication.BTLxProcessing` to scale the BTLx parameters.
 * Added `scaled` method to `compas_timber.fabrication.BTLxPart` to scale the BTLx parameters.
@@ -41,6 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.
 * Added missing `__data__` to `compas_timber.fabrication.Drilling`.
 * Added missing `__data__` to `compas_timber.fabrication.Slot`.
+
+### Removed
+
+
+## [0.16.1] 2025-04-30
+
+### Added
+
+### Changed
 
 ### Removed
 
