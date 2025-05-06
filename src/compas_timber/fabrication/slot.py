@@ -17,7 +17,23 @@ from .btlx import OrientationType
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
 
-    # TODO: add __data__
+    @property
+    def __data__(self):
+        data = super(Slot, self).__data__
+        data["orientation"] = self.orientation
+        data["start_x"] = self.start_x
+        data["start_y"] = self.start_y
+        data["start_depth"] = self.start_depth
+        data["angle"] = self.angle
+        data["inclination"] = self.inclination
+        data["length"] = self.length
+        data["depth"] = self.depth
+        data["thickness"] = self.thickness
+        data["angle_ref_point"] = self.angle_ref_point
+        data["angle_opp_point"] = self.angle_opp_point
+        data["add_angle_opp_point"] = self.add_angle_opp_point
+        data["machining_limits"] = self.machining_limits
+        return data
 
     # fmt: off
     def __init__(

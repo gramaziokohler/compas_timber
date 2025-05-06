@@ -175,7 +175,7 @@ def test_vertical_slot_negative_angle(beam):
 
 
 def test_slot_scaled():
-    slot = Slot(orientation=OrientationType.START, start_x=14.23, start_y=0.22, start_depth=42.0, angle=123.555, inclination=95.2, length=100.0, depth=10.0, thickness=5.0)
+    slot = Slot(orientation=OrientationType.START, start_x=14.23, start_y=0.22, start_depth=42.0, angle=23.5, inclination=95.2, length=100.0, depth=10.0, thickness=5.0)
 
     scaled_slot = slot.scaled(2.0)
 

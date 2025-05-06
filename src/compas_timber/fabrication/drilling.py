@@ -47,6 +47,18 @@ class Drilling(BTLxProcessing):
 
     PROCESSING_NAME = "Drilling"  # type: ignore
 
+    @property
+    def __data__(self):
+        data = super(Drilling, self).__data__
+        data["start_x"] = self.start_x
+        data["start_y"] = self.start_y
+        data["angle"] = self.angle
+        data["inclination"] = self.inclination
+        data["depth_limited"] = self.depth_limited
+        data["depth"] = self.depth
+        data["diameter"] = self.diameter
+        return data
+
     def __init__(self, start_x=0.0, start_y=0.0, angle=0.0, inclination=90.0, depth_limited=False, depth=50.0, diameter=20.0, **kwargs):
         super(Drilling, self).__init__(**kwargs)
         self._start_x = None
