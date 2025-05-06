@@ -299,6 +299,23 @@ class JackRafterCut(BTLxProcessing):
             plane_normal = -cutting_plane.xaxis
         return Plane(cutting_plane.point, plane_normal)
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self._start_x *= factor
+        self._start_y *= factor
+        self._start_depth *= factor
+
 
 class JackRafterCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Jack Rafter Cut feature.

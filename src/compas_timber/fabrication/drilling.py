@@ -45,8 +45,6 @@ class Drilling(BTLxProcessing):
         The diameter of the drilling. In mm.
     """
 
-    # TODO: add __data__
-
     PROCESSING_NAME = "Drilling"  # type: ignore
 
     def __init__(self, start_x=0.0, start_y=0.0, angle=0.0, inclination=90.0, depth_limited=False, depth=50.0, diameter=20.0, **kwargs):
@@ -376,6 +374,24 @@ class Drilling(BTLxProcessing):
         intersection_point = intersection_line_plane(drill_line_direction, drill_bottom_plane)
         assert intersection_point  # if this fails, it means space and time as we know it has collapsed
         return Line(xy_world, intersection_point)
+
+    def scale(self, factor):
+        """Scale the parameters of the Double Cut feature by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self._start_x *= factor
+        self._start_y *= factor
+        self._depth *= factor
+        self._diameter *= factor
 
 
 class DrillingParams(BTLxProcessingParams):

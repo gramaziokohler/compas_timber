@@ -428,6 +428,24 @@ class FrenchRidgeLap(BTLxProcessing):
             subtraction_volume += Brep.from_cylinder(drill_cylinder)
         return subtraction_volume
 
+    def scale(self, factor):
+        """Scale the parameters of the Double Cut feature by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        orientation=OrientationType.START, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0
+        """
+        # type: (float) -> None
+        self.start_x *= factor
+        self.drillhole_diam *= factor
+
 
 class FrenchRidgeLapParams(BTLxProcessingParams):
     """A class to store the parameters of a French Ridge Lap feature.

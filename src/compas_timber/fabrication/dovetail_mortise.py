@@ -699,6 +699,27 @@ class DovetailMortise(BTLxProcessing):
 
         return dovetail_volume
 
+    def scale(self, factor):
+        """Scale the parameters of the DovetailMortise processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self._start_x *= factor
+        self._start_y *= factor
+        self._start_depth *= factor
+        self._length *= factor
+        self._width *= factor
+        self._depth *= factor
+        self._shape_radius *= factor
+
 
 class DovetailMortiseParams(BTLxProcessingParams):
     """A class to store the parameters of a Dovetail Mortise feature.

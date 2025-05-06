@@ -17,6 +17,8 @@ from .btlx import OrientationType
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
 
+    # TODO: add __data__
+
     # fmt: off
     def __init__(
         self,
@@ -331,6 +333,26 @@ class Slot(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         return geometry.copy()
+
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.start_depth *= factor
+        self.length *= factor
+        self.depth *= factor
+        self.thickness *= factor
 
 
 class SlotParams(BTLxProcessingParams):
