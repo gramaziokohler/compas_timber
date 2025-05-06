@@ -3,8 +3,10 @@
 
 # flake8: noqa
 import Grasshopper
+import Rhino
 import System
 from compas.scene import Scene
+from compas.tolerance import Tolerance
 from compas.tolerance import TOL
 
 from compas_timber.design import DebugInfomation
@@ -52,7 +54,16 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         # clear Nones
         Containers = [c for c in Containers if c is not None]
 
-        Model = TimberModel()
+        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
+        tol = None
+        if units == "m":
+            tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
+        elif units == "cm":
+            tol = Tolerance(unit="CM", absolute=1e-4, relative=1e-4)
+        elif units == "mm":
+            tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+
+        Model = TimberModel(tolerance=tol)
         debug_info = DebugInfomation()
 
         ##### Adding elements #####
