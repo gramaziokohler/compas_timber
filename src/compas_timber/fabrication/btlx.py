@@ -14,6 +14,7 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
@@ -60,7 +61,7 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
-        self._module_tolerance = None
+        self._tolerance = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
     def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
@@ -107,7 +108,7 @@ class BTLxWriter(object):
         :meth:`BTLxWriter.write`
 
         """
-        self._module_tolerance = model.tolerance
+        self._tolerance = model.tolerance
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history
         file_history_element = self._create_file_history()
@@ -185,9 +186,9 @@ class BTLxWriter(object):
             The part element.
 
         """
-        assert self._module_tolerance
+        assert self._tolerance
         # create part element
-        scale_factor = 1000.0 if self._module_tolerance.unit == "M" else 1.0
+        scale_factor = 1000.0 if self._tolerance.unit == "M" else 1.0
         part = BTLxPart(element, order_num=order_num, scale_factor=scale_factor)
 
         part_element = ET.Element("Part", part.attr)
@@ -222,9 +223,9 @@ class BTLxWriter(object):
             The processing element.
 
         """
-        assert self._module_tolerance
+        assert self._tolerance
         # BTLx always uses mm
-        if self._module_tolerance.unit == "M":
+        if self._tolerance.unit == "M":
             # TODO: throw some warning here as it's generally a better idea to design in mm when intending to use BTLx
             processing = processing.scaled(1000.0)
 
