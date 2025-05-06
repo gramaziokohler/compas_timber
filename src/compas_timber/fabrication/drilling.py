@@ -45,9 +45,19 @@ class Drilling(BTLxProcessing):
         The diameter of the drilling. In mm.
     """
 
-    # TODO: add __data__
-
     PROCESSING_NAME = "Drilling"  # type: ignore
+
+    @property
+    def __data__(self):
+        data = super(Drilling, self).__data__
+        data["start_x"] = self.start_x
+        data["start_y"] = self.start_y
+        data["angle"] = self.angle
+        data["inclination"] = self.inclination
+        data["depth_limited"] = self.depth_limited
+        data["depth"] = self.depth
+        data["diameter"] = self.diameter
+        return data
 
     def __init__(self, start_x=0.0, start_y=0.0, angle=0.0, inclination=90.0, depth_limited=False, depth=50.0, diameter=20.0, **kwargs):
         super(Drilling, self).__init__(**kwargs)
@@ -376,6 +386,24 @@ class Drilling(BTLxProcessing):
         intersection_point = intersection_line_plane(drill_line_direction, drill_bottom_plane)
         assert intersection_point  # if this fails, it means space and time as we know it has collapsed
         return Line(xy_world, intersection_point)
+
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self._start_x *= factor
+        self._start_y *= factor
+        self._depth *= factor
+        self._diameter *= factor
 
 
 class DrillingParams(BTLxProcessingParams):

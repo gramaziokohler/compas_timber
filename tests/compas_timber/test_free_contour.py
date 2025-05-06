@@ -197,3 +197,16 @@ def test_dual_contour_plate():
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
     assert isinstance(plate.features[0].params.as_dict().get("Contour"), DualContour)
+
+
+def test_contour_scaled():
+    polyline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
+    depth = 10.0
+    contour = Contour(polyline=polyline, depth=depth)
+
+    scaled_contour = contour.scaled(2.0)
+
+    assert TOL.is_allclose(scaled_contour.polyline, contour.polyline.scaled(2.0))
+    assert scaled_contour.depth == contour.depth * 2.0
+    assert scaled_contour.inclination == contour.inclination
+    assert scaled_contour.depth_bounded == contour.depth_bounded

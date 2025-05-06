@@ -13,6 +13,7 @@ from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Lap
+from compas_timber.fabrication import OrientationType
 
 
 @pytest.fixture
@@ -274,3 +275,48 @@ def test_lap_params_obj():
         "FaceLimitedEnd": "yes",
         "FaceLimitedFront": "no",
     }
+
+
+def test_lap_scaled():
+    machining_limits = {
+        "FaceLimitedBack": False,
+        "FaceLimitedStart": True,
+        "FaceLimitedBottom": True,
+        "FaceLimitedTop": False,
+        "FaceLimitedEnd": True,
+        "FaceLimitedFront": False,
+    }
+
+    instance = Lap(
+        OrientationType.END,
+        2289.328,
+        0.0,
+        111.603,
+        90.0,
+        0.0,
+        80.0,
+        60.0,
+        22.0,
+        True,
+        90.0,
+        True,
+        90.0,
+        machining_limits,
+        ref_side_index=0,
+    )
+
+    scaled_instance = instance.scaled(2.0)
+
+    assert scaled_instance.orientation == instance.orientation
+    assert scaled_instance.start_x == instance.start_x * 2.0
+    assert scaled_instance.start_y == instance.start_y * 2.0
+    assert scaled_instance.angle == instance.angle
+    assert scaled_instance.inclination == instance.inclination
+    assert scaled_instance.slope == instance.slope
+    assert scaled_instance.length == instance.length * 2.0
+    assert scaled_instance.width == instance.width * 2.0
+    assert scaled_instance.depth == instance.depth * 2.0
+    assert scaled_instance.lead_angle == instance.lead_angle
+    assert scaled_instance.lead_inclination == instance.lead_inclination
+    assert scaled_instance.machining_limits == instance.machining_limits
+    assert scaled_instance.ref_side_index == instance.ref_side_index
