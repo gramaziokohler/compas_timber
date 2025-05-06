@@ -388,7 +388,7 @@ class Drilling(BTLxProcessing):
         return Line(xy_world, intersection_point)
 
     def scale(self, factor):
-        """Scale the parameters of the Double Cut feature by a given factor.
+        """Scale the parameters of this processing by a given factor.
 
         Note
         ----

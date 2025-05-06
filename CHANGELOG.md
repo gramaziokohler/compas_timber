@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added attribute `tolrance` to `TimberModel`.
+* Added attribute `tolerance` to `TimberModel`.
 * Added `scaled` method to `compas_timber.fabrication.BTLxProcessing` to scale the BTLx parameters.
 * Added `scaled` method to `compas_timber.fabrication.BTLxPart` to scale the BTLx parameters.
 * Added `scale` method to `compas_timber.fabrication.JackRafterCut`.

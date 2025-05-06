@@ -429,7 +429,7 @@ class FrenchRidgeLap(BTLxProcessing):
         return subtraction_volume
 
     def scale(self, factor):
-        """Scale the parameters of the Double Cut feature by a given factor.
+        """Scale the parameters of the this processing by a given factor.
 
         Note
         ----
@@ -440,7 +440,6 @@ class FrenchRidgeLap(BTLxProcessing):
         factor : float
             The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
 
-        orientation=OrientationType.START, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0
         """
         # type: (float) -> None
         self.start_x *= factor

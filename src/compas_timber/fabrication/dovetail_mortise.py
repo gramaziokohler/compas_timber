@@ -700,7 +700,7 @@ class DovetailMortise(BTLxProcessing):
         return dovetail_volume
 
     def scale(self, factor):
-        """Scale the parameters of the DovetailMortise processing by a given factor.
+        """Scale the parameters of this processing by a given factor.
 
         Note
         ----

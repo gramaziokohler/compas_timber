@@ -300,7 +300,7 @@ class JackRafterCut(BTLxProcessing):
         return Plane(cutting_plane.point, plane_normal)
 
     def scale(self, factor):
-        """Scale the parameters of this processing by a given factor.
+        """Scale the parameters of the this processing by a given factor.
 
         Note
         ----
