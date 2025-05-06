@@ -860,6 +860,38 @@ class Contour(Data):
     def __data__(self):
         return {"polyline": self.polyline, "depth": self.depth, "depth_bounded": self.depth_bounded, "inclination": self.inclination}
 
+    def scale(self, factor):
+        """Scale the contour by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        """
+        self.polyline.scale(factor)
+        if self.depth is not None:
+            self.depth *= factor
+
+    def scaled(self, factor):
+        """Returns a new instance of the contour with the parameters scaled by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Contour`
+            A new instance of the contour with the parameters scaled by the given factor.
+
+        """
+        # type: (float) -> Contour
+        new_instance = self.copy()
+        new_instance.scale(factor)
+        return new_instance
+
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
 
@@ -888,6 +920,39 @@ class DualContour(Data):
     @property
     def __data__(self):
         return {"principal_contour": self.principal_contour, "associated_contour": self.associated_contour, "depth_bounded": self.depth_bounded}
+
+    def scale(self, factor):
+        """Scale the dual contour by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        """
+        self.principal_contour.scaled(factor)
+        self.associated_contour.scaled(factor)
+        if self.depth_bounded is not None:
+            self.depth_bounded *= factor
+
+    def scaled(self, factor):
+        """Returns a new instance of the dual contour with the parameters scaled by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.DualContour`
+            A new instance of the dual contour with the parameters scaled by the given factor.
+
+        """
+        # type: (float) -> DualContour
+        new_instance = self.copy()
+        new_instance.scale(factor)
+        return new_instance
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
