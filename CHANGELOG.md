@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed `AttributeError` when deserializing a model with Lap joints.
+* Fixed a bug in `compas_timber.fabrication.Lap` where `ref_side_index` failed for `0` by checking for `None` instead.
+* Fixed a bug in `compas_timber.fabrication.Lap` to handle the case when the vectors used to calculate the `inclination` angle are perpendicular.
+* Adjusted `angle_vectors_projected` function so that it returns `None` if any of the projections results in a zero-vector.
+
 ### Removed
 
 
