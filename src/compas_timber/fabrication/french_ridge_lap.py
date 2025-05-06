@@ -429,7 +429,7 @@ class FrenchRidgeLap(BTLxProcessing):
         return subtraction_volume
 
     def scale(self, factor):
-        """Scale the parameters of the this processing by a given factor.
+        """Scale the parameters of this processing by a given factor.
 
         Note
         ----
