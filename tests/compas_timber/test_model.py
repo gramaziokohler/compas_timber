@@ -218,7 +218,11 @@ def test_error_deepcopy_feature():
 
     error = FeatureApplicationError("mama", "papa", "dog")
 
-    deepcopy(error)
+    error = deepcopy(error)
+
+    assert error.feature_geometry == "mama"
+    assert error.element_geometry == "papa"
+    assert error.message == "dog"
 
 
 def test_error_deepcopy_fastener():
@@ -227,7 +231,11 @@ def test_error_deepcopy_fastener():
 
     error = FastenerApplicationError("mama", "papa", "dog")
 
-    deepcopy(error)
+    error = deepcopy(error)
+
+    assert error.elements == "mama"
+    assert error.fastener == "papa"
+    assert error.message == "dog"
 
 
 def test_error_deepcopy_joint():
@@ -236,4 +244,9 @@ def test_error_deepcopy_joint():
 
     error = BeamJoiningError("mama", "papa", "dog", "cucumber")
 
-    deepcopy(error)
+    error = deepcopy(error)
+
+    assert error.beams == "mama"
+    assert error.joint == "papa"
+    assert error.debug_info == "dog"
+    assert error.debug_geometries == "cucumber"
