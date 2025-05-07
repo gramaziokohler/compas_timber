@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed max recursion depth error when copying `TimberModel`/`Beam` with proxy processings.
+
 ### Removed
 
 

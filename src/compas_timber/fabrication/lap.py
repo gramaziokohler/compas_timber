@@ -879,6 +879,12 @@ class LapProxy(object):
 
     """
 
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
+
     def __init__(self, volume, beam, machining_limits=None, ref_side_index=None):
         self.volume = volume
         self.beam = beam
