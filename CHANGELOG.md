@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
+
 
 ## [0.16.1] 2025-04-30
 
