@@ -210,3 +210,43 @@ def test_copy_model_with_processing_jackraftercut_proxy():
     assert len(copied_beams) == 1
     assert len(copied_beams[0].features) == 1
     assert isinstance(copied_beams[0].features[0], JackRafterCut)
+
+
+def test_error_deepcopy_feature():
+    from copy import deepcopy
+    from compas_timber.errors import FeatureApplicationError
+
+    error = FeatureApplicationError("mama", "papa", "dog")
+
+    error = deepcopy(error)
+
+    assert error.feature_geometry == "mama"
+    assert error.element_geometry == "papa"
+    assert error.message == "dog"
+
+
+def test_error_deepcopy_fastener():
+    from copy import deepcopy
+    from compas_timber.errors import FastenerApplicationError
+
+    error = FastenerApplicationError("mama", "papa", "dog")
+
+    error = deepcopy(error)
+
+    assert error.elements == "mama"
+    assert error.fastener == "papa"
+    assert error.message == "dog"
+
+
+def test_error_deepcopy_joint():
+    from copy import deepcopy
+    from compas_timber.errors import BeamJoiningError
+
+    error = BeamJoiningError("mama", "papa", "dog", "cucumber")
+
+    error = deepcopy(error)
+
+    assert error.beams == "mama"
+    assert error.joint == "papa"
+    assert error.debug_info == "dog"
+    assert error.debug_geometries == "cucumber"
