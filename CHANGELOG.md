@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed `TypeError` when deepcopying beams with `debug_info` on them.
+
 ### Removed
 
 
