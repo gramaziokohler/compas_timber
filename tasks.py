@@ -15,8 +15,8 @@ from invoke.exceptions import Exit
 import tomlkit
 
 
-def _get_version_from_toml(toml_file: str) -> str:
-    with open(toml_file, "r") as f:
+def _get_version_from_toml() -> str:
+    with open("pyproject.toml", "r") as f:
         pyproject_data = tomlkit.load(f)
     if not pyproject_data:
         raise Exit("Failed to load pyproject.toml.")
@@ -27,12 +27,24 @@ def _get_version_from_toml(toml_file: str) -> str:
     return version
 
 
+def _get_package_name() -> str:
+    with open("pyproject.toml", "r") as f:
+        pyproject_data = tomlkit.load(f)
+    if not pyproject_data:
+        raise Exit("Failed to load pyproject.toml.")
+
+    name = pyproject_data.get("project", {}).get("name", None)
+    if not name:
+        raise Exit("Failed to get package name from pyproject.toml. Please provide a version number.")
+    return name
+
+
 @task(help={"version": "New minimum version to set in the header. If not provided, current version is used."})
 def update_gh_header(ctx, version=None):
     """Update the minimum version header of all CPython Grasshopper components."""
-    version = version or _get_version_from_toml("pyproject.toml")
-
-    new_header = f"#r: compas_timber>={version}"
+    version = version or _get_version_from_toml()
+    package_name = _get_package_name()
+    new_header = f"#r: {package_name}>={version}"
 
     for file in Path(ctx.ghuser_cpython.source_dir).glob("**/code.py"):
         try:
@@ -40,7 +52,7 @@ def update_gh_header(ctx, version=None):
                 original_content = f.readlines()
             with open(file, "w", encoding="utf-8") as f:
                 for line in original_content:
-                    if line.startswith("# r: compas_timber"):
+                    if line.startswith(f"# r: {package_name}"):
                         f.write(new_header + "\n")
                     else:
                         f.write(line)
