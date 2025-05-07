@@ -9,8 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [0.16.1] 2025-04-30
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.16.0] 2025-04-30
+
+### Added
+
 * Added new `compas_timber.fabrication.Pocket`.
 * Added `front_side`, `back_side`, `opp_side` methods to the `Beam` class for retrieving specific sides relative to a reference side.
+* Added processing `Text` to `compas_timber.fabrication`.
+* Added `TextParams` to `compas_timber.fabrication`.
+* Added new Grasshopper components for Rhino8/cpython. 
+* Added new methods to handle adaptive GH_component parameters using cpython.
 
 ### Changed
 
@@ -21,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.15.3] 2025-03-25
 
 ### Added
+
+* Added `DualContour` BTLx Contour type for ruled surface Swarf contours.
 
 ### Changed
 
@@ -33,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored `_create_negative_volumes()` in `LapJoint` so that it generates box-like volumes. 
 * Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `_create_negative_volumes()` method to get the negative volumes and use the alt constructor `Lap.from_volume_and_beam()`.
 * Fixed an error occuring in `BTLxPart.shape_strings` by ensuring the polyline is always closed.
+* Implemented `Inclination` in the `FreeContour` BTLx Processing.
+* Changed `Plate` element to be defined by top and bottom contours instead of one contour and thickness. 
 
 ### Removed
 

@@ -3,8 +3,6 @@ import System
 import rhinoscriptsyntax as rs
 from ghpythonlib.componentbase import executingcomponent as component
 
-from compas.geometry import Line
-from compas.scene import Scene
 from compas_rhino.conversions import frame_to_rhino
 
 
@@ -26,7 +24,7 @@ class ShowBeamFaces(component):
             ht = 1000
             for side_index in range(len(b.ref_sides)):
                 surface = b.side_as_surface(side_index)
-                ht = min([self.ht, surface.xsize / 6.0, surface.ysize / 6.0])
+                ht = min([ht, surface.xsize / 6.0, surface.ysize / 6.0])
             for side_index in range(len(b.ref_sides)):
                 surface = b.side_as_surface(side_index)
                 frame = b.ref_sides[side_index]

@@ -1,16 +1,82 @@
-[tool.black]
-line-length = 179
+# ============================================================================
+# Project info
+# ============================================================================
 
-[tool.pytest.ini_options]
-minversion = "6.0"
-testpaths = ["tests"]
-python_files = [
-    "test_*.py",
-    "tests.py"
+[project]
+name = "compas_timber"
+description = "COMPAS package for modeling, designing and fabricating timber assemblies."
+authors = [
+    { name = "Aleksandra Anna Apolinarska", email = "apolinarska@arch.ethz.ch" },
+    { name = "Chen Kasirer", email = "kasirer@arch.ethz.ch" },
+    { name = "Gonzalo Casas", email = "casas@arch.ethz.ch" },
+    { name = "Jonas Haldemann", email = "haldemann@arch.ethz.ch" },
+    { name = "Oliver Appling Bucklin", email = "bucklin@arch.ethz.ch" },
+    { name = "Aurèle L. Gheyselinck", email = "gheyselinck@arch.ethz.ch" },
+    { name = "Panayiotis Papacharalambous", email = "papacharalambous@arch.ethz.ch" }
 ]
-addopts = "-ra --strict --doctest-modules --doctest-glob=*.rst --tb=short"
-doctest_optionflags= "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE ALLOW_BYTES NUMBER"
-filterwarnings = "ignore::DeprecationWarning"
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic = ["dependencies", "optional-dependencies", "version"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+[project.urls]
+Homepage = "https://gramaziokohler.github.io/compas_timber/latest/"
+Repository = "https://github.com/gramaziokohler/compas_timber"
+
+# ============================================================================
+# Setup and build
+# ============================================================================
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.dynamic]
+version = { attr = "compas_timber.__version__" }
+dependencies = { file = "requirements.txt" }
+optional-dependencies = { dev = { file = "requirements-dev.txt" } }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+
+# ============================================================================
+# Release
+# ============================================================================
+
+[tool.bumpversion]
+current_version = "0.16.1"
+message = "Bump version to {new_version}"
+commit = true
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "src/compas_timber/__version__.py"
+search = "{current_version}"
+replace = "{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
+search = "Unreleased"
+replace = "[{new_version}] {now:%Y-%m-%d}"
+
+# ============================================================================
+# linting and formatting
+# ============================================================================
+
+[tool.black]
+extend-exclude = '(/[a-zA-Z\./]*[\s]?)'  # exclude everything, black should be removed..
 
 [tool.isort]
 line_length = 179
@@ -23,10 +89,6 @@ ensure_newline_before_comments = true
 known_first_party = "compas_timber"
 default_section = "THIRDPARTY"
 forced_separate = "test_compas_timber"
-
-# ============================================================================
-# linting and formatting
-# ============================================================================
 
 [tool.ruff]
 line-length = 179
@@ -41,6 +103,7 @@ select = ["E", "F", "I"]
 "tests/*" = ["I001"]
 "tasks.py" = ["I001"]
 "src/compas_timber/ghpython/components/*/code.py" = ["F821"]
+"src/compas_timber/ghpython/components_cpython/*/code.py" = ["F821"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
@@ -57,3 +120,18 @@ max-doc-length = 179
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
+
+# ============================================================================
+# Testing
+# ============================================================================
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = [
+    "test_*.py",
+    "tests.py"
+]
+addopts = "-ra --strict --doctest-modules --doctest-glob=*.rst --tb=short"
+doctest_optionflags= "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE ALLOW_BYTES NUMBER"
+filterwarnings = "ignore::DeprecationWarning"
