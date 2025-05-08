@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
+
 ### Changed
+
+* Processings which are not the result of joinery are now serialized with `Beam`.
+* Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 
 ### Removed
 
