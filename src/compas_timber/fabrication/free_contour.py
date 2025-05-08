@@ -78,7 +78,7 @@ class FreeContour(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline, element, depth=None, interior=False, tool_position=None, ref_side_index=None):
+    def from_polyline_and_element(cls, polyline, element, depth=None, interior=False, tool_position=None, ref_side_index=None, **kwargs):
         """Construct a Contour processing from a polyline and element.
 
         Parameters
@@ -105,10 +105,10 @@ class FreeContour(BTLxProcessing):
         depth = depth or element.width
         transformed_polyline = polyline.transformed(Transformation.from_frame_to_frame(ref_side, Frame.worldXY()))
         contour = Contour(transformed_polyline, depth=depth, inclination=[0.0])
-        return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index)
+        return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
 
     @classmethod
-    def from_top_bottom_and_elements(cls, top_polyline, bottom_polyline, element, interior=False, tool_position=None, ref_side_index=None):
+    def from_top_bottom_and_elements(cls, top_polyline, bottom_polyline, element, interior=False, tool_position=None, ref_side_index=None, **kwargs):
         # type: (Polyline, Polyline, Plate, bool, str | None, int | None) -> FreeContour
         """Construct a Contour processing from a list of polylines and element.
 
@@ -150,7 +150,7 @@ class FreeContour(BTLxProcessing):
             polyline = top_polyline.transformed(xform_to_part_coords)
             contour = Contour(polyline, depth=depth, inclination=inclinations)
 
-        return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index)
+        return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index, **kwargs)  # type: ignore
 
     @classmethod
     def from_shapes_and_element(cls, polyline, element, depth=None, interior=True, **kwargs):
