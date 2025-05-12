@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed `TypeError` when deepcopying beams with `debug_info` on them.
 * Processings which are not the result of joinery are now serialized with `Beam`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 
