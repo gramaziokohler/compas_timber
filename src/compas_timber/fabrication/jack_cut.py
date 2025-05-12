@@ -367,6 +367,12 @@ class JackRafterCutProxy(object):
 
     """
 
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
+
     def __init__(self, plane, beam, ref_side_index=0):
         self.plane = plane
         self.beam = beam

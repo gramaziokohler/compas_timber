@@ -32,6 +32,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.
 * Added missing `__data__` to `compas_timber.fabrication.Drilling`.
 * Added missing `__data__` to `compas_timber.fabrication.Slot`.
+* Fixed `TypeError` when deepcopying beams with `debug_info` on them.
+
+### Removed
+
+
+## [0.16.2] 2025-05-07
+
+### Added
+
+### Changed
+
+* Fixed max recursion depth error when copying `TimberModel`/`Beam` with proxy processings.
 
 ### Removed
 
