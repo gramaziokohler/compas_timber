@@ -83,6 +83,9 @@ class Plate(TimberElement):
         self.debug_info = []
         self._ref_frame = None
         self._blank = None
+
+        # The base feature is expected to be the first as it's treated differently than the others
+        # therefore, if there are any feature passed to __init__, they should appear after the base feature
         self._features.insert(0, FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False))
 
     def __repr__(self):
@@ -265,6 +268,8 @@ class Plate(TimberElement):
         # TODO: consider if Brep.from_curves(curves) is faster/better
         plate_geo = self.shape()
         if include_features:
+            # Skip the first feature. This base feature is indirectly considered by self.shape() so not needed for visualization.
+            # it is however used by the BTLx logic.
             for feature in self._features[1:]:
                 try:
                     plate_geo = feature.apply(plate_geo, self)
