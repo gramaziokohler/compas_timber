@@ -442,7 +442,7 @@ class Lap(BTLxProcessing):
 
         # calculate the inclination of the lap
         inclination = angle_vectors_projected(zzaxis, front_plane.normal, yyaxis)
-        if not inclination:
+        if inclination is None:
             inclination = angle_vectors_signed(zzaxis, ref_side.xaxis, ref_side.normal, deg=True)
         inclination = 180 + inclination if inclination < 0 else inclination
 
