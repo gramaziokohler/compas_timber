@@ -2,18 +2,17 @@
 Installation
 ********************************************************************************
 
-Stable
-======
+User
+=======
 
-Install with conda
-------------------
-
-In an new environment:
+.. note::
+    While there are many similar tools, we recommend using `mamba` to manage your Python environments.
+    It can be installed from `here <https://github.com/conda-forge/miniforge/releases/tag/25.3.0-3>`_.
 
 .. code-block:: bash
 
-    conda create -n <myenvname> compas_timber -c conda-forge --yes
-    conda activate <myenvname>
+    mamba create -n <myenvname> compas_timber -c conda-forge --yes
+    mamba activate <myenvname>
 
 Install to Rhino 7.0
 
@@ -21,10 +20,10 @@ Install to Rhino 7.0
 
     python -m compas_rhino.install -v7.0
 
-Development
-===========
+Developer
+=========
 
-To get the latest development version, `fork the repository <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo>`_ and clone the fork
+If you wish to contribute to or modify COMPAS Timber, `fork the repository <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo>`_ and clone the fork
 
 .. code-block:: bash
 
@@ -35,18 +34,23 @@ Create a new environment if necessary
 
 .. code-block:: bash
 
-    conda create -n <myenvname> python=3.10
-    conda activate <myenvname>
+    mamba create -n <myenvname> python=3.10 --yes
+    mamba activate <myenvname>
 
 Install the package in editable mode with its development dependencies
 
 .. code-block:: bash
 
-    pip install -r requirements-dev.txt
+    pip install -e .[dev]
 
-Compile the Grasshopper components
+To compile the Rhino7 Grasshopper components
 
 .. code-block:: bash
 
     invoke build-ghuser-components
-    python -m compas_rhino.install -v7.0
+
+To compile the Rhino8 Grasshopper components
+
+.. code-block:: bash
+
+    invoke build-cpython-ghuser-components
