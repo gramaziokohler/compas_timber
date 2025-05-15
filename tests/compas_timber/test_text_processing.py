@@ -37,3 +37,21 @@ def test_curves_for_text(expected_curves):
     assert text.angle == 0.0
     assert not text.stacked_marking
     assert text.text_height_auto
+
+
+def test_text_scaled():
+    text = Text("some text", text_height=200, ref_side_index=3)
+
+    scaled = text.scaled(2.0)
+
+    assert scaled.text_height == text.text_height * 2.0
+    assert scaled.start_x == text.start_x * 2.0
+    assert scaled.start_y == text.start_y * 2.0
+    assert scaled.angle == text.angle
+    assert scaled.stacked_marking == text.stacked_marking
+    assert scaled.text_height_auto == text.text_height_auto
+    assert scaled.alignment_vertical == text.alignment_vertical
+    assert scaled.alignment_horizontal == text.alignment_horizontal
+    assert scaled.alignment_multiline == text.alignment_multiline
+    assert scaled.ref_side_index == text.ref_side_index
+    assert scaled.text == text.text

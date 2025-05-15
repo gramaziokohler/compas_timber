@@ -509,6 +509,27 @@ class Mortise(BTLxProcessing):
         tenon_box = Box(self.width, self.length, self.depth, cutting_frame)
         return Brep.from_box(tenon_box)
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.start_depth *= factor
+        self.length *= factor
+        self.width *= factor
+        self.depth *= factor
+        self.shape_radius *= factor
+
 
 class MortiseParams(BTLxProcessingParams):
     """A class to store the parameters of a Mortise feature.
