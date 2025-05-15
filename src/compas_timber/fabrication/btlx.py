@@ -565,6 +565,8 @@ class BTLxProcessing(Data):
         The process ID.
     PROCESSING_NAME : str
         The name of the process.
+    is_joinery : bool
+        If True, the process is a result of joinery process.
 
     """
 
@@ -572,12 +574,17 @@ class BTLxProcessing(Data):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index=None, priority=0, process_id=0):
+    def __init__(self, ref_side_index=None, priority=0, process_id=0, is_joinery=True):
         super(BTLxProcessing, self).__init__()
         self.ref_side_index = ref_side_index
         self._priority = priority
         self._process_id = process_id
         self.subprocessings = None
+        self._is_joinery = is_joinery
+
+    @property
+    def is_joinery(self):
+        return self._is_joinery
 
     @property
     def priority(self):

@@ -142,7 +142,7 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=0, **kwargs):
         """Create a JackRafterCut instance from a cutting plane and the beam it should cut.
 
         Parameters
@@ -174,7 +174,7 @@ class JackRafterCut(BTLxProcessing):
         start_x = distance_point_point(ref_edge.point, point_start_x)
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
-        return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
+        return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index, **kwargs)
 
     @classmethod
     def from_shapes_and_element(cls, plane, element, **kwargs):
