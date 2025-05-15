@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added tasks `update-gh-header` to update the version in the header of the GH components.
+
 ### Changed
 
 * Fixed `TypeError` when deepcopying beams with `debug_info` on them.
