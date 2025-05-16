@@ -853,12 +853,12 @@ class WallPopulator(object):
     def generate_plates(self):
         plates = []
         if self._config_set.sheeting_inside:
-            plates.append(Plate(self.outer_polyline.copy(), self._config_set.sheeting_inside))
+            pline = self.outer_polyline.translated(self.frame.zaxis * (-self._config_set.sheeting_inside))
+            plates.append(Plate.from_outline_thickness(pline, self._config_set.sheeting_inside))
         if self._config_set.sheeting_outside:
-            pline = self.outer_polyline.copy()
-            pline.translate(self.frame.zaxis * (self._wall.thickness + self._config_set.sheeting_outside))
-            plates.append(Plate(pline, self._config_set.sheeting_outside))
-
+            pline = self.outer_polyline.translated(self.frame.zaxis * (self._wall.thickness))
+            plates.append(Plate.from_outline_thickness(pline, self._config_set.sheeting_outside))
+            # this assumes that self.frame.zaxis points towards the outside of the wall
         for opening in self._openings:
             for plate in plates:
                 plate.add_feature(opening.boolean_feature)
