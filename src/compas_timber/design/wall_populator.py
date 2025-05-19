@@ -448,6 +448,10 @@ class WallPopulator(object):
         self._config_set = configuration_set
         self._z_axis = wall.frame.yaxis  # up
         self.normal = wall.frame.zaxis  # out
+        # if configuration_set.sheeting_inside:
+        #     self.outer_polyline = wall.outline.translated(self.normal * -configuration_set.sheeting_inside)
+        #     self.inner_polylines = [pline.translated(self.normal * -configuration_set.sheeting_inside) for pline in wall.openings]
+        # else:
         self.outer_polyline = wall.outline
         self.inner_polylines = wall.openings
         self.edges = []
@@ -468,9 +472,14 @@ class WallPopulator(object):
         self._detail_obbs = []
         self._openings = []
 
-        for key in self.BEAM_CATEGORY_NAMES:
-            self.beam_dimensions[key] = (configuration_set.beam_width, wall.thickness)
+        frame_thickness = wall.thickness
+        if configuration_set.sheeting_inside:
+            frame_thickness -= configuration_set.sheeting_inside
+        if configuration_set.sheeting_outside:
+            frame_thickness -= configuration_set.sheeting_outside
 
+        for key in self.BEAM_CATEGORY_NAMES:
+            self.beam_dimensions[key] = (configuration_set.beam_width, frame_thickness)
         if self._config_set.custom_dimensions:
             dimensions = self._config_set.custom_dimensions
             for key, value in dimensions.items():
@@ -650,6 +659,10 @@ class WallPopulator(object):
         top_segment = Line(self.points[2], self.points[3])
         bottom_segment = Line(self.points[0], self.points[1])
         self._adjusted_segments = {"front": front_segment, "back": back_segment, "top": top_segment, "bottom": bottom_segment}
+
+        for seg in self._adjusted_segments.values():
+            seg.translate(self.normal * self.config_set.sheeting_inside)
+
 
         perimeter_beams = []
         for interface in self._interfaces:
