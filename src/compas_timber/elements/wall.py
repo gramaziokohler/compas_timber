@@ -21,22 +21,12 @@ class Wall(Slab):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, outline, thickness, openings=None, justification="inside", frame=None, name=None, **kwargs):
+    def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
         super(Wall, self).__init__(outline, thickness, openings, frame, name, **kwargs)
-        if justification not in ["inside", "outside", "center"]:
-            raise ValueError("Justification must be one of 'inside', 'outside', or 'center'.")
-        if justification == "inside":
-            self.outline = outline
-        elif justification == "outside":
-            self.outline = outline.translated(-thickness*self.frame.normal)
-        elif justification == "center":
-            self.outline = outline.offset(-(thickness / 2)*self.frame.normal)
         self.thickness = thickness
         self.openings = openings or []
         self.attributes = {}
         self.attributes.update(kwargs)
-
-        self.justification = justification
         self._faces = None
         self._corners = None
 
@@ -56,9 +46,9 @@ class Wall(Slab):
         """Enum for the alignment of the cut.
         Attributes
         ----------
-        INSIDE : literal("inside")
+        RIGHT : literal("right")
             Inside alignment. Wall volume offsets to the z-direction when using right-handed outline curve.
-        OUTSIDE : literal("outside")
+        LEFT : literal("left")
             Outside alignment. Wall volume offsets to the z-direction when using left-handed outline curve.
         CENTER : literal("center")
             Center alignment.

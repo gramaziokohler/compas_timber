@@ -2,7 +2,9 @@ import math
 
 from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Line
+from compas.geometry import Polyline
 from compas.geometry import NurbsCurve
 from compas.geometry import Point
 from compas.geometry import Vector
@@ -15,6 +17,7 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import intersection_segment_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
+from compas.geometry import closest_point_on_plane
 from compas.tolerance import TOL
 
 from compas_timber.connections import ConnectionSolver
@@ -28,6 +31,9 @@ from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
+from compas_timber.utils import is_polyline_clockwise
+from compas_timber.fabrication import FreeContour
+
 
 from .workflow import JointDefinition
 
@@ -161,7 +167,7 @@ class BeamDefinition(object):
         self.centerline = Line(line[0], line[1])
 
     def translate(self, vector):
-        self.centerline.transform(vector)
+        self.centerline.translate(vector)
 
     def to_beam(self):
         # TODO: this is quite stiff, if I know the corner, I can just create beam using Beam(...)
@@ -268,25 +274,6 @@ class Window(object):
         # if not self._frame:
         #     self._frame, self._panel_length, self._panel_height = get_frame(self.points, self.parent.normal, self.zaxis)
         return self._frame
-
-    @property
-    def boolean_feature(self):
-        offset = self._sheeting_inside if self._sheeting_inside else 0
-        so = self._sheeting_outside if self._sheeting_outside else 0
-        thickness = offset + so + self._wall_thickness
-
-        crv = self.outline.copy()
-        crv.translate(self.normal * -offset)
-
-        vol = Brep.from_extrusion(NurbsCurve.from_points(crv.points, degree=1), self.normal * thickness)
-
-        # negative volume will cause weird boolean result
-        if vol.volume < 0:
-            # TODO: remove once this is release in compas core
-            if hasattr(vol, "flip"):
-                vol.flip()
-
-        return BrepSubtraction(vol)
 
     def create_elements(self):
         # ^  3 ---- 2
@@ -448,10 +435,6 @@ class WallPopulator(object):
         self._config_set = configuration_set
         self._z_axis = wall.frame.yaxis  # up
         self.normal = wall.frame.zaxis  # out
-        # if configuration_set.sheeting_inside:
-        #     self.outer_polyline = wall.outline.translated(self.normal * -configuration_set.sheeting_inside)
-        #     self.inner_polylines = [pline.translated(self.normal * -configuration_set.sheeting_inside) for pline in wall.openings]
-        # else:
         self.outer_polyline = wall.outline
         self.inner_polylines = wall.openings
         self.edges = []
@@ -471,7 +454,6 @@ class WallPopulator(object):
         self._plate_segments = {}
         self._detail_obbs = []
         self._openings = []
-
         frame_thickness = wall.thickness
         if configuration_set.sheeting_inside:
             frame_thickness -= configuration_set.sheeting_inside
@@ -538,6 +520,7 @@ class WallPopulator(object):
         elements = []
         for beam_def in self._beam_definitions:
             try:
+                beam_def.translate(self.normal * self._config_set.sheeting_inside)
                 elements.append(beam_def.to_beam())
             except Exception:
                 print("Error creating beam from centerline: {}".format(beam_def.centerline))
@@ -660,8 +643,6 @@ class WallPopulator(object):
         bottom_segment = Line(self.points[0], self.points[1])
         self._adjusted_segments = {"front": front_segment, "back": back_segment, "top": top_segment, "bottom": bottom_segment}
 
-        for seg in self._adjusted_segments.values():
-            seg.translate(self.normal * self.config_set.sheeting_inside)
 
 
         perimeter_beams = []
@@ -677,6 +658,7 @@ class WallPopulator(object):
                     perimeter_beams.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
 
                 handled_sides.add(interface.interface_type)
+
 
         top_segment = self._adjusted_segments["top"]
         bottom_segment = self._adjusted_segments["bottom"]
@@ -866,16 +848,16 @@ class WallPopulator(object):
     def generate_plates(self):
         plates = []
         if self._config_set.sheeting_inside:
-            pline = self.outer_polyline.translated(self.frame.zaxis * (-self._config_set.sheeting_inside))
-            plates.append(Plate.from_outline_thickness(pline, self._config_set.sheeting_inside))
+            plate = Plate.from_outline_thickness(self.outer_polyline, self._config_set.sheeting_inside, self.normal)
+            plates.append(plate)
         if self._config_set.sheeting_outside:
-            pline = self.outer_polyline.translated(self.frame.zaxis * (self._wall.thickness))
-            plates.append(Plate.from_outline_thickness(pline, self._config_set.sheeting_outside))
-            # this assumes that self.frame.zaxis points towards the outside of the wall
-        for opening in self._openings:
-            for plate in plates:
-                plate.add_feature(opening.boolean_feature)
-
+            pline = self.outer_polyline.translated(self.frame.zaxis * (self._wall.thickness-self._config_set.sheeting_outside))
+            plate = Plate.from_outline_thickness(pline, self._config_set.sheeting_outside, self.normal)
+            plates.append(plate)
+        for plate in plates:
+            for opening in self._openings:
+                projected_outline = Polyline([closest_point_on_plane(pt, Plane.from_frame(plate.frame)) for pt in opening.outline])
+                plate.add_feature(FreeContour.from_polyline_and_element(projected_outline, plate, interior = True))
         self._elements.extend(plates)
 
 

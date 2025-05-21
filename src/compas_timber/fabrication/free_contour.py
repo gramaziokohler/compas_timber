@@ -14,11 +14,14 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Plane
+from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import offset_polyline
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
+from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 
 from compas_timber.utils import correct_polyline_direction
@@ -234,10 +237,13 @@ class FreeContour(BTLxProcessing):
         # TODO: this is only called when there features present other than the Plate's outline (i.e. inner cuts)
         ref_side = element.ref_sides[self.ref_side_index]
         xform = Transformation.from_frame_to_frame(Frame.worldXY(), ref_side)
-        pts = [pt.transformed(xform) for pt in self.contour_points]
-        pts = correct_polyline_direction(pts, ref_side.normal, clockwise=True)
-        vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), ref_side.normal * self.depth * 2.0)
-        vol.translate(ref_side.normal * -self.depth)
+        pts = [pt.transformed(xform) for pt in self.contour_param_object.polyline]
+        pts = correct_polyline_direction(pts, -ref_side.normal, clockwise=True)
+        pln = Polyline(offset_polyline(Polyline(pts), 0.001, normal=-ref_side.normal)) #This is the only way I could get the boolean difference to work
+        pt = intersection_line_line(pln.lines[0], pln.lines[-1])
+        pln[0] = pt[0]
+        pln[-1] = pt[0]
+        vol = Brep.from_extrusion(NurbsCurve.from_points(pln, degree=1), -ref_side.normal * self.contour_param_object.depth)
 
         if self.counter_sink:  # contour should remove material inside of the contour
             return geometry - vol

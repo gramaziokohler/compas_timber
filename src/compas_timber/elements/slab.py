@@ -58,7 +58,14 @@ class Slab(TimberElement):
 
     def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(frame=frame or Frame.worldXY(), name=name)
+        super(Slab, self).__init__(frame=frame or Frame.from_points(outline[0], outline[1], outline[-2]), name=name)
+        justification = kwargs.get("justification", "right")
+        if justification not in ["right", "left", "center"]:
+            raise ValueError("Justification must be one of 'right', 'left', or 'center'.")
+        if justification == "left":
+            outline.translate(-thickness*self.frame.normal)
+        elif justification == "center":
+            outline.translate(-(thickness / 2)*self.frame.normal)
         self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
@@ -193,7 +200,7 @@ class Slab(TimberElement):
         for opening in openings:
             opening.orient_polyline(normal)
         wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
-        return cls(oriented_polyline, thickness, openings, wall_frame, **kwargs)
+        return cls(oriented_polyline, thickness, openings, frame = wall_frame, **kwargs)
 
     @classmethod
     def from_brep(cls, brep, thickness, **kwargs):

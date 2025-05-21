@@ -229,9 +229,13 @@ class Plate(TimberElement):
 
         # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
+
+
         thickness_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal
         if vector and thickness_vector.dot(vector) < 0:
             thickness_vector = -thickness_vector
+        if not is_polyline_clockwise(outline, thickness_vector):
+            outline = Polyline(outline[::-1])
         thickness_vector.unitize()
         thickness_vector *= thickness
         outline_b = Polyline(outline).translated(thickness_vector)
