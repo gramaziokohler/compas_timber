@@ -1,10 +1,12 @@
 from compas.data import Data
 from compas.geometry import Box
+from compas.geometry import Point
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polyline
 from compas.geometry import bounding_box
+from compas.geometry import distance_point_plane
 
 from compas_timber.utils import classify_polyline_segments
 
@@ -56,11 +58,13 @@ class Slab(TimberElement):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
+    def __init__(self, outline_a, outline_b, openings=None, frame=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
         super(Slab, self).__init__(frame=frame or Frame.worldXY(), name=name)
-        self.outline = outline
-        self.thickness = thickness
+        self.outline_a = outline_a
+        self.outline_b = outline_b
+        self._thickness = None
+
         self.openings = openings or []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -87,9 +91,18 @@ class Slab(TimberElement):
         return self.frame.point.copy()
 
     @property
+    def thickness(self):
+        if self._thickness is None:
+            self._thickness = distance_point_plane(self.outline_a[0], Plane.from_points(*self.outline_b[:3]))
+
+    @property
     def centerline(self):
         # TODO: temp hack to make this compatible with `find_topology`.
         return self.baseline
+
+    @property
+    def frame(self):
+        return Frame.from_points(self.outline[0], self.outline[1], self.outline[-2])
 
     @property
     def baseline(self):
@@ -109,45 +122,6 @@ class Slab(TimberElement):
     def height(self):
         return self.outline.points[0].distance_to_point(self.outline.points[3])
 
-    @property
-    def corners(self):
-        assert self.frame
-        if not self._corners:
-            points = self.outline.points
-            self._corners = (
-                points[0],
-                points[1],
-                points[1] + self.frame.zaxis * self.thickness,
-                points[0] + self.frame.zaxis * self.thickness,
-                points[3],
-                points[2],
-                points[2] + self.frame.zaxis * self.thickness,
-                points[3] + self.frame.zaxis * self.thickness,
-            )  # this order is consistent with what's required by `Box.from_bounding_box`
-        return self._corners
-
-    @property
-    def faces(self):
-        if not self._faces:
-            corners = self.corners
-            bottom_face = Frame.from_points(corners[0], corners[1], corners[3])
-            left_face = Frame.from_points(corners[4], corners[5], corners[0])
-            top_face = Frame.from_points(corners[7], corners[6], corners[4])
-            right_face = Frame.from_points(corners[3], corners[2], corners[7])
-            back_face = Frame.from_points(corners[0], corners[3], corners[4])
-            front_face = Frame.from_points(corners[5], corners[6], corners[1])
-            # this order is consistent with BTLx ref-side system
-            self._faces = (bottom_face, left_face, top_face, right_face, back_face, front_face)
-        return self._faces
-
-    @property
-    def end_faces(self):
-        return self.faces[-2:]
-
-    @property
-    def envelope_faces(self):
-        return self.faces[:4]
-
     def compute_geometry(self, _=False):
         assert self.frame
 
@@ -158,14 +132,26 @@ class Slab(TimberElement):
         obb = self.compute_obb(inflate_by)
         return Box.from_bounding_box(bounding_box(obb.points))
 
-    def compute_obb(self, inflate_by=0.0):
-        assert self.frame
-        # TODO: this is more like obb than aabb
-        box = Box.from_bounding_box(self.corners)
-        box.xsize += inflate_by
-        box.ysize += inflate_by
-        box.zsize += inflate_by
-        return box
+    def compute_obb(self):
+        # type: (float | None) -> compas.geometry.Box
+        """Computes the Oriented Bounding Box (OBB) of the element.
+
+        Returns
+        -------
+        :class:`compas.geometry.Box`
+            The OBB of the element.
+
+        """
+        vertices = self.outline_a.points + self.outline_b.points
+        world_vertices = []
+        for point in vertices:
+            world_vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
+        obb = Box.from_points(world_vertices)
+        obb.xsize += inflate
+        obb.ysize += inflate
+        obb.zsize += inflate
+        obb.transform(Transformation.from_frame_to_frame(Frame.worldXY(), self.frame))
+        return obb
 
     def rotate(self):
         assert self.frame
@@ -177,27 +163,53 @@ class Slab(TimberElement):
     def __repr__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline, self.thickness)
 
-    @staticmethod
-    def _frame_from_polyline(polyline, normal):
-        points = polyline.points
-        xaxis = points[1] - points[0]
-        xaxis.unitize()
-        yaxis = normal.cross(xaxis)
-        return Frame(points[0], xaxis, yaxis)
+    @classmethod
+    def from_boundary(cls, outline, thickness, vector = None, openings=None, **kwargs):
+        """Creates a wall from a boundary outline and a thickness.
+
+        Parameters
+        ----------
+        outline : :class:`compas.geometry.Polyline`
+            The outline of the wall.
+        thickness : float
+            The thickness of the wall.
+        vector : :class:`compas.geometry.Vector`
+            The vector in which the wall is extruded.(optional)
+        openings : list[:class:`compas_timber.elements.Opening`]
+            The openings in the wall. (optional)
+        kwargs : dict
+            Additional keyword arguments.
+            These are passed to the :class:`compas_timber.elements.Slab` constructor.
+        """
+
+        if TOL.is_zero(thickness):
+            thickness = TOL.absolute
+        thickness_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal
+        if vector and thickness_vector.dot(vector) < 0:
+            thickness_vector = -thickness_vector
+        thickness_vector.unitize()
+        thickness_vector *= thickness
+        outline_b = Polyline(outline).translated(thickness_vector)
+        return cls(outline, outline_b, openings, **kwargs)
 
     @classmethod
-    def from_boundary(cls, polyline, normal, thickness, openings=None, **kwargs):
-        """Use this to make sure the polyline is oriented correctly."""
-        oriented_polyline = _oriented_polyline(polyline, normal)
-        openings = openings or []
-        for opening in openings:
-            opening.orient_polyline(normal)
-        wall_frame = cls._frame_from_polyline(oriented_polyline, normal)
-        return cls(oriented_polyline, thickness, openings, wall_frame, **kwargs)
+    def from_brep(cls, brep, thickness, vector = None, **kwargs):
+        """Creates a wall from a brep with a single planar face.
 
-    @classmethod
-    def from_brep(cls, brep, thickness, **kwargs):
-        """Creates a wall from a brep with a single planar face."""
+
+        Parameters
+        ----------
+        brep : :class:`compas.geometry.Brep`
+            The brep to create the wall from. must be as single planar face.
+        thickness : float
+            The thickness of the wall.
+        vector : :class:`compas.geometry.Vector`
+            The vector in which the wall is extruded.(optional)
+        kwargs : dict
+            Additional keyword arguments.
+            These are passed to the :class:`compas_timber.elements.Slab` constructor.
+        """
+
         if len(brep.faces) > 1:
             raise ValueError("Can only single-face breps to create a Wall. This brep has {}".format(len(brep.faces)))
 
