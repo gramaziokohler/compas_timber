@@ -40,13 +40,13 @@ class InterfaceRole(object):
 
 
 
-class SlabToSlabInterface(object):
+class PlateToPlateInterface(object):
     """
     interface : :class:`compas.geometry.Polyline`
         The outline of the interface area.
     frame : :class:`compas.geometry.Frame`
         The frame of the interface area.
-        xaxis : interface normal (towards other slab)
+        xaxis : interface normal (towards other plate)
         yaxis : up along the interface side
         normal: width direction, perpendicular to the interface
 
@@ -85,87 +85,89 @@ class PlateJoint(Joint):
 
     Parameters
     ----------
-    plate_a : :class:`compas_timber.elements.Slab`
+    plate_a : :class:`compas_timber.elements.Plate`
         The first plate.
-    plate_b : :class:`compas_timber.elements.Slab`
+    plate_b : :class:`compas_timber.elements.Plate`
         The second plate.
     topology : literal(JointTopology)
         The topology in which the plates are connected.
 
     Attributes
     ----------
-    slabs : tuple of :class:`compas_timber.elements.Slab`
-        The slabs that are connected.
-    slab_a_interface : :class:`compas.geometry.PlanarSurface`
-        The interface surface of slab_a where it meets slab_b.
-    slab_b_interface : :class:`compas.geometry.PlanarSurface`
-        The interface surface of slab_b where it meets slab_a.
+    plates : tuple of :class:`compas_timber.elements.Plate`
+        The plates that are connected.
+    plate_a_interface : :class:`compas.geometry.PlanarSurface`
+        The interface surface of plate_a where it meets plate_b.
+    plate_b_interface : :class:`compas.geometry.PlanarSurface`
+        The interface surface of plate_b where it meets plate_a.
 
     """
 
     @property
     def __data__(self):
-        data = super(SlabJoint, self).__data__
-        data["main_slab_guid"] = self._main_slab_guid
-        data["cross_slab_guid"] = self._cross_slab_guid
+        data = super(PlateJoint, self).__data__
+        data["main_plate_guid"] = self._main_plate_guid
+        data["cross_plate_guid"] = self._cross_plate_guid
         data["topology"] = self.topology
         data["main_segment_index"] = self.main_segment_index
         data["cross_segment_index"] = self.cross_segment_index
         return data
 
     def __init__(self, topology_result, **kwargs):
-        super(SlabJoint, self).__init__(**kwargs)
+        super(PlateJoint, self).__init__(**kwargs)
         self.topology = topology_result[0]
-        self.main_slab = topology_result[1][0]
-        self.main_segment_index = topology_result[1][2]
-        self.cross_slab = topology_result[2][0]
-        self.cross_segment_index = topology_result[2][2]
+        self.main_plate = topology_result[1][0]
+        self.main_segment_index = topology_result[1][1]
+        self.cross_plate = topology_result[2][0]
+        self.cross_segment_index = topology_result[2][1]
+        self._main_plate_interface = None
+        self._cross_plate_interface = None
 
 
-        self._main_slab_guid = kwargs.get("main_slab_guid", None) or str(self.main_slab.guid)  # type: ignore
-        self._cross_slab_guid = kwargs.get("cross_slab_guid", None) or str(self.cross_slab.guid)  # type: ignore
+        self._main_plate_guid = kwargs.get("main_plate_guid", None) or str(self.main_plate.guid)  # type: ignore
+        self._cross_plate_guid = kwargs.get("cross_plate_guid", None) or str(self.cross_plate.guid)  # type: ignore
 
-        if self.main_slab and self.cross_slab:
+        if self.main_plate and self.cross_plate:
             self.reorder_planes_and_outlines()
-            self._adjust_slab_outlines()
+            self._adjust_plate_outlines()
 
     def __repr__(self):
-        return "SlabJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
+        return "PlateJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
     @property
-    def slabs(self):
+    def plates(self):
         return self.elements
 
     @property
     def elements(self):
-        return self.main_slab, self.cross_slab
+        return self.main_plate, self.cross_plate
 
     @property
     def geometry(self):
-        assert self.main_slab_interface
-        return self.main_slab_interface.interface_polyline
+        assert self.main_plate_interface
+        return self.main_plate_interface.interface_polyline
 
     @property
-    def main_slab_interface(self):
-        """The interface of the main slab."""
-        return Polyline([self.main_slab.outline_a[self.main_segment_index],
-        self.main_slab.outline_a[self.main_segment_index+1],
-        self.main_slab.outline_b[self.main_segment_index+1],
-        self.main_slab.outline_b[self.main_segment_index],
-        self.main_slab.outline_a[self.main_segment_index]])
+    def main_interface_polyline(self):
+        """The interface of the main plate."""
+        return Polyline([self.main_plate.outline_a[self.main_segment_index],
+        self.main_plate.outline_a[self.main_segment_index+1],
+        self.main_plate.outline_b[self.main_segment_index+1],
+        self.main_plate.outline_b[self.main_segment_index],
+        self.main_plate.outline_a[self.main_segment_index]])
 
     @property
-    def cross_slab_interface(self):
+    def cross_interface_polyline(self):
         points = []
         if self.topology == JointTopology.TOPO_L:
-            for index in [self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_slab.outline_a.lines)]:
+            for index in [self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_plate.outline_a.lines)]:
                 seg = self.cross_outlines[0].lines[index]
-                for plane in self.main_slab.planes:
+                for plane in self.main_planes:
                     pt =  intersection_line_plane(seg, plane)
                     if pt:
                         points.append(pt)
         else:
-            for plane in self.main_slab.planes:
+            for plane in self.main_planes:
                 pts = intersection_polyline_plane(self.cross_outlines[0], plane)
                 print("pts: ", pts)
                 if len(pts) == 2:
@@ -175,43 +177,43 @@ class PlateJoint(Joint):
 
     @property
     def interfaces(self):
-        return self.main_slab_interface, self.cross_slab_interface
+        return self.main_plate_interface, self.cross_plate_interface
 
-    def get_interface_for_slab(self, slab):
-        if slab is self.main_slab:
-            return self.main_slab_interface
-        elif slab is self.cross_slab:
-            return self.cross_slab_interface
+    def get_interface_for_plate(self, plate):
+        if plate is self.main_plate:
+            return self.main_plate_interface
+        elif plate is self.cross_plate:
+            return self.cross_plate_interface
         else:
-            raise ValueError("Slab not part of this joint.")
+            raise ValueError("Plate not part of this joint.")
 
     def reorder_planes_and_outlines(self):
-        if dot_vectors(self.cross_slab.frame.normal, SlabJoint.get_polyline_segment_perpendicular_vector(self.main_slab.outline_a, self.main_segment_index)) < 0:
-            self.cross_planes = self.cross_slab.planes[::-1]
-            self.cross_outlines = self.cross_slab.outlines[::-1]
+        if dot_vectors(self.cross_plate.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.main_plate.outline_a, self.main_segment_index)) < 0:
+            self.cross_planes = self.cross_plate.planes[::-1]
+            self.cross_outlines = self.cross_plate.outlines[::-1]
         else:
-            self.cross_planes = self.cross_slab.planes
-            self.cross_outlines = self.cross_slab.outlines
+            self.cross_planes = self.cross_plate.planes
+            self.cross_outlines = self.cross_plate.outlines
 
-        self.main_planes = self.main_slab.planes
-        self.main_outlines = self.main_slab.outlines
+        self.main_planes = self.main_plate.planes
+        self.main_outlines = self.main_plate.outlines
         if self.topology == JointTopology.TOPO_L:
-            if dot_vectors(self.main_slab.frame.normal, SlabJoint.get_polyline_segment_perpendicular_vector(self.cross_slab.outline_a, self.cross_segment_index)) < 0:
-                self.main_planes = self.main_slab.planes[::-1]
-                self.main_outlines = self.main_slab.outlines[::-1]
+            if dot_vectors(self.main_plate.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.cross_plate.outline_a, self.cross_segment_index)) < 0:
+                self.main_planes = self.main_plate.planes[::-1]
+                self.main_outlines = self.main_plate.outlines[::-1]
 
 
 
 
-    def _adjust_slab_outlines(self):
-        """Adjust the outlines of the slabs to match the joint."""
+    def _adjust_plate_outlines(self):
+        """Adjust the outlines of the plates to match the joint."""
 
-        assert self.main_slab
-        assert self.cross_slab
+        assert self.main_plate
+        assert self.cross_plate
 
 
         for polyline in self.main_outlines:
-            for i, index in enumerate([self.main_segment_index-1, (self.main_segment_index+1)% len(self.main_slab.outline_a.lines)]):      #for each adjacent segment in the main slab outline
+            for i, index in enumerate([self.main_segment_index-1, (self.main_segment_index+1)% len(self.main_plate.outline_a.lines)]):      #for each adjacent segment in the main plate outline
                 seg = polyline.lines[index] # get the segment
                 pt = intersection_line_plane(seg, self.cross_planes[0])
                 if pt:
@@ -226,7 +228,7 @@ class PlateJoint(Joint):
 
         if self.topology == JointTopology.TOPO_L:
             for polyline in self.cross_outlines:
-                for i, index in enumerate([self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_slab.outline_a.lines)]):      #for each adjacent segment in the main slab outline
+                for i, index in enumerate([self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_plate.outline_a.lines)]):      #for each adjacent segment in the main plate outline
                     seg = polyline.lines[index] # get the segment
                     pt = intersection_line_plane(seg, self.main_planes[1])
                     if pt:
@@ -239,34 +241,38 @@ class PlateJoint(Joint):
                             if self.cross_segment_index+1 == len(polyline.lines):
                                 polyline[0] = pt
 
-    def _calculate_interfaces(self):
-        return
-
-        # self.main_slab_interface = SlabToSlabInterface(
-        #     interface,
-        #     Frame(interface[0], interface_normal, up_vector),
-        #     main_interface_type,
-        #     InterfaceRole.MAIN,
-        #     self.topology,
-        # )
-        # self.cross_slab_interface = SlabToSlabInterface(
-        #     interface,
-        #     Frame(interface[1], interface_normal.inverted(), up_vector.inverted()),
-        #     cross_interface_type,
-        #     InterfaceRole.CROSS,
-        #     self.topology,
-        # )
+    @property
+    def main_plate_interface(self):
+        if not self._main_plate_interface:
+            frame = Frame.from_points(self.main_interface_polyline.points[0], self.main_interface_polyline.points[1], self.main_interface_polyline.points[-2])
+            if dot_vectors(frame.normal, Vector.from_start_end(self.cross_planes[1].point, self.cross_planes[0].point)) < 0:
+                frame = Frame.from_points(self.main_interface_polyline.points[0], self.main_interface_polyline.points[-2], self.main_interface_polyline.points[1])
+            self._main_plate_interface = PlateToPlateInterface(
+                self.main_interface_polyline,
+                frame,
+                main_interface_type,
+                InterfaceRole.MAIN,
+                self.topology,
+            )
+        return self._main_plate_interface
 
 
+    @property
+    def cross_plate_interface(self):
+        if not self._cross_plate_interface:
+            frame = Frame.from_points(self.cross_interface_polyline.points[0], self.cross_interface_polyline.points[1], self.cross_interface_polyline.points[-2])
+            if dot_vectors(frame.normal, Vector.from_start_end(self.cross_planes[0].point, self.cross_planes[1].point)) < 0:
+                frame = Frame.from_points(self.cross_interface_polyline.points[0], self.cross_interface_polyline.points[-2], self.cross_interface_polyline.points[1])
+            self._cross_plate_interface = PlateToPlateInterface(
+                self.cross_interface_polyline,
+                frame,
+                cross_interface_type,
+                InterfaceRole.CROSS,
+                self.topology,
+            )
+        return self._cross_plate_interface
 
 
-    @staticmethod
-    def find_colinear_segment(polyline, lines):
-        for i, seg in enumerate(polyline.lines):
-            for line in lines:
-                if is_colinear_line_line(seg, line):
-                    return i
-        return None
 
 
     @staticmethod
@@ -290,7 +296,7 @@ class PlateJoint(Joint):
         pt = polyline.lines[segment_index].point_at(0.5)
         perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
         point = pt + (perp_vector * 0.1)
-        if SlabJoint.is_point_in_polyline(point, polyline):
+        if PlateJoint.is_point_in_polyline(point, polyline):
             return Vector.from_start_end(point, pt)
         return Vector.from_start_end(pt, point)
 
@@ -320,16 +326,16 @@ class PlateJoint(Joint):
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
-        self.restore_slabs_from_keys(*args, **kwargs)
+        self.restore_plates_from_keys(*args, **kwargs)
 
-    def restore_slabs_from_keys(self, model):
-        self.main_slab = model.element_by_guid(self._main_slab_guid)
-        self.cross_slab = model.element_by_guid(self._cross_slab_guid)
+    def restore_plates_from_keys(self, model):
+        self.main_plate = model.element_by_guid(self._main_plate_guid)
+        self.cross_plate = model.element_by_guid(self._cross_plate_guid)
         self._calculate_interfaces()
 
     def flip_roles(self):
-        self.main_slab, self.cross_slab = self.cross_slab, self.main_slab
-        self._main_slab_guid, self._cross_slab_guid = self._cross_slab_guid, self._main_slab_guid
+        self.main_plate, self.cross_plate = self.cross_plate, self.main_plate
+        self._main_plate_guid, self._cross_plate_guid = self._cross_plate_guid, self._main_plate_guid
         self._calculate_interfaces()
 
     def add_features(self):
