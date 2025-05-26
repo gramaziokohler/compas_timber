@@ -234,10 +234,10 @@ class FreeContour(BTLxProcessing):
         # TODO: this is only called when there features present other than the Plate's outline (i.e. inner cuts)
         ref_side = element.ref_sides[self.ref_side_index]
         xform = Transformation.from_frame_to_frame(Frame.worldXY(), ref_side)
-        pts = [pt.transformed(xform) for pt in self.contour_points]
+        pts = [pt.transformed(xform) for pt in self.contour_param_object.polyline]
         pts = correct_polyline_direction(pts, ref_side.normal, clockwise=True)
-        vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), ref_side.normal * self.depth * 2.0)
-        vol.translate(ref_side.normal * -self.depth)
+        vol = Brep.from_extrusion(NurbsCurve.from_points(pts, degree=1), ref_side.normal * self.contour_param_object.depth * 2.0)
+        vol.translate(ref_side.normal * -self.contour_param_object.depth)
 
         if self.counter_sink:  # contour should remove material inside of the contour
             return geometry - vol

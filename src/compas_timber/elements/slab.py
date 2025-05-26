@@ -6,11 +6,21 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polyline
 from compas.geometry import bounding_box
+from compas.geometry import dot_vectors
 from compas.geometry import distance_point_plane
+from compas.tolerance import TOL
+from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas.geometry import Plane
+from compas.geometry import NurbsCurve
+from compas.geometry import closest_point_on_plane
 
 from compas_timber.utils import classify_polyline_segments
+from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import correct_polyline_direction
 
 from .timber import TimberElement
+from .plate import Plate
 
 
 class OpeningType(object):
@@ -38,7 +48,7 @@ class Opening(Data):
         self.polyline = _oriented_polyline(self.polyline, normal)
 
 
-class Slab(TimberElement):
+class Slab(Plate):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 
@@ -52,30 +62,18 @@ class Slab(TimberElement):
     @property
     def __data__(self):
         data = super(Slab, self).__data__
-        data["outline"] = self.outline
+        data["outline_a"] = self.outline_a
+        data["outline_b"] = self.outline_b
         data["openings"] = self.openings
-        data["thickness"] = self.thickness
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, outline_a, outline_b, openings=None, frame=None, name=None, **kwargs):
+    def __init__(self, outline_a, outline_b, openings=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(frame=frame or Frame.worldXY(), name=name)
-        self.outline_a = outline_a
-        self.outline_b = outline_b
-        self._thickness = None
-
-        self.openings = openings or []
+        super(Slab, self).__init__(outline_a, outline_b, name=name, **kwargs)
+        self.openings = openings
         self.attributes = {}
         self.attributes.update(kwargs)
-
-        self._faces = None
-        self._corners = None
-
-        if not outline.is_closed:
-            raise ValueError("Outline is not closed.")
-        if len(self.outline) != 5:
-            raise ValueError("Wall outline must have 4 segments.")
 
     @property
     def is_slab(self):
@@ -86,173 +84,44 @@ class Slab(TimberElement):
         return True
 
     @property
-    def origin(self):
-        assert self.frame
-        return self.frame.point.copy()
-
-    @property
-    def thickness(self):
-        if self._thickness is None:
-            self._thickness = distance_point_plane(self.outline_a[0], Plane.from_points(*self.outline_b[:3]))
-
-    @property
-    def centerline(self):
-        # TODO: temp hack to make this compatible with `find_topology`.
-        return self.baseline
-
-    @property
-    def frame(self):
-        return Frame.from_points(self.outline[0], self.outline[1], self.outline[-2])
-
-    @property
-    def baseline(self):
-        # type: () -> Line
-        points = self.outline.points
-        return Line(points[0], points[1])
-
-    @property
     def width(self):
-        return self.thickness
+        return self.obb.xsize
 
     @property
     def length(self):
-        return self.baseline.length
+        return self.obb.ysize
 
     @property
     def height(self):
-        return self.outline.points[0].distance_to_point(self.outline.points[3])
+        return self.thickness
 
-    def compute_geometry(self, _=False):
-        assert self.frame
+    def compute_geometry(self, include_features=True):
+        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
+        """Compute the geometry of the element.
 
-        extrusion_vector = self.frame.zaxis * self.thickness
-        return Brep.from_extrusion(self.outline, extrusion_vector)
-
-    def compute_aabb(self, inflate_by=0.1):
-        obb = self.compute_obb(inflate_by)
-        return Box.from_bounding_box(bounding_box(obb.points))
-
-    def compute_obb(self):
-        # type: (float | None) -> compas.geometry.Box
-        """Computes the Oriented Bounding Box (OBB) of the element.
+        Parameters
+        ----------
+        include_features : bool, optional
+            If ``True``, include the features in the computed geometry.
+            If ``False``, return only the plate shape.
 
         Returns
         -------
-        :class:`compas.geometry.Box`
-            The OBB of the element.
+        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
-        vertices = self.outline_a.points + self.outline_b.points
-        world_vertices = []
-        for point in vertices:
-            world_vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
-        obb = Box.from_points(world_vertices)
-        obb.xsize += inflate
-        obb.ysize += inflate
-        obb.zsize += inflate
-        obb.transform(Transformation.from_frame_to_frame(Frame.worldXY(), self.frame))
-        return obb
 
-    def rotate(self):
-        assert self.frame
-        self.outline = Polyline(self.outline.points[1:] + [self.outline.points[1]])
-        assert self.outline.is_closed
-        self.frame = Slab._frame_from_polyline(self.outline, self.frame.normal)
-        assert len(self.outline) == 5
+        # TODO: consider if Brep.from_curves(curves) is faster/better
+        return self.shape()
+
 
     def __repr__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline, self.thickness)
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
 
-    @classmethod
-    def from_boundary(cls, outline, thickness, vector = None, openings=None, **kwargs):
-        """Creates a wall from a boundary outline and a thickness.
-
-        Parameters
-        ----------
-        outline : :class:`compas.geometry.Polyline`
-            The outline of the wall.
-        thickness : float
-            The thickness of the wall.
-        vector : :class:`compas.geometry.Vector`
-            The vector in which the wall is extruded.(optional)
-        openings : list[:class:`compas_timber.elements.Opening`]
-            The openings in the wall. (optional)
-        kwargs : dict
-            Additional keyword arguments.
-            These are passed to the :class:`compas_timber.elements.Slab` constructor.
-        """
-
-        if TOL.is_zero(thickness):
-            thickness = TOL.absolute
-        thickness_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal
-        if vector and thickness_vector.dot(vector) < 0:
-            thickness_vector = -thickness_vector
-        thickness_vector.unitize()
-        thickness_vector *= thickness
-        outline_b = Polyline(outline).translated(thickness_vector)
-        return cls(outline, outline_b, openings, **kwargs)
-
-    @classmethod
-    def from_brep(cls, brep, thickness, vector = None, **kwargs):
-        """Creates a wall from a brep with a single planar face.
+    def __str__(self):
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
 
 
-        Parameters
-        ----------
-        brep : :class:`compas.geometry.Brep`
-            The brep to create the wall from. must be as single planar face.
-        thickness : float
-            The thickness of the wall.
-        vector : :class:`compas.geometry.Vector`
-            The vector in which the wall is extruded.(optional)
-        kwargs : dict
-            Additional keyword arguments.
-            These are passed to the :class:`compas_timber.elements.Slab` constructor.
-        """
-
-        if len(brep.faces) > 1:
-            raise ValueError("Can only single-face breps to create a Wall. This brep has {}".format(len(brep.faces)))
-
-        # trims are oriented consistently, depending on the face orientation
-        face = brep.faces[0]
-        trims = face.boundary.trims
-        winding_direction = "cw" if face.is_reversed else "ccw"
-
-        # separate the outline from the cutouts (concave)
-        # these are still part of the boundary loop but we cound them as openings (doors)
-        boundary = Polyline([t.start_vertex.point for t in trims] + [trims[-1].end_vertex.point])
-        face_frame = face.frame_at(0, 0)
-        outline_vertices, internal_groups = classify_polyline_segments(boundary, normal=face_frame.normal, direction=winding_direction)
-        outline = Polyline([boundary[i] for i in outline_vertices])
-
-        openings = []
-        for group in internal_groups:
-            points = [boundary[i] for i in group]
-            openings.append(Opening(Polyline(points), OpeningType.DOOR))
-
-        # internal cuts (windows) are not part of the outline and can be fetched from the loops that are not boundary
-        for hole in face.holes:
-            points = [t.start_vertex.point for t in hole.trims] + [hole.trims[-1].end_vertex.point]
-            openings.append(Opening(Polyline(points), OpeningType.WINDOW))
-
-        return cls.from_boundary(outline, face_frame.normal, thickness, openings, **kwargs)
 
 
-def _oriented_polyline(polyline, normal):
-    # returns a polyline that is oriented consistently ccw around the normal
-    # ^  3 ---- 2
-    # |  |      |
-    # z  0 ---- 1
-    #    x -->
-    sorted_points = sorted(polyline.points[:4], key=lambda pt: pt.z)
-    bottom_points = sorted_points[:2]
-    top_points = sorted_points[2:]
 
-    # Ensure counterclockwise order
-    if normal.cross(bottom_points[1] - bottom_points[0]).z < 0:
-        bottom_points.reverse()
-
-    if normal.cross(top_points[1] - top_points[0]).z > 0:
-        top_points.reverse()
-
-    return Polyline(bottom_points + top_points + [bottom_points[0]])

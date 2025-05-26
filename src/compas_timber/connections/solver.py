@@ -2,6 +2,10 @@ import itertools
 import math
 
 from compas.geometry import Point
+from compas.geometry import Plane
+from compas.geometry import Line
+from compas.geometry import intersection_plane_plane
+from compas.geometry import is_colinear_line_line
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import closest_point_on_line
@@ -264,3 +268,67 @@ class ConnectionSolver(object):
     @staticmethod
     def _is_near_end(t, length, max_distance, tol):
         return abs(t) * length < max_distance + tol or abs(1.0 - t) * length < max_distance + tol
+
+    @staticmethod
+    def find_plate_plate_topology(plate_a, plate_b, tol=TOLERANCE, max_distance=None):
+        """Calculates the topology of the intersection between two plates.
+
+        parameters
+        ----------
+        plate_a : :class:`~compas_timber.elements.Plate`
+            First potential intersecting plate.
+        plate_b : :class:`~compas_timber.elements.Plate`
+            Second potential intersecting plate.
+        tol : float
+            General tolerance to use for mathematical computations.
+        max_distance : float, optional
+            Maximum distance, in desigen units, at which two plates are considered intersecting.
+
+        Returns
+        -------
+        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.element.Plate`, :class:`~compas_timber.element.Plate`)
+            The topology of the intersection between the two plates and the two plates themselves.
+        """
+
+        lines = []
+        # find intersection lines
+        for pair in itertools.product(plate_a.planes, plate_b.planes):
+            lines.append(intersection_plane_plane(*pair))
+
+        which_plate_a_polyline = None
+        which_plate_b_polyline = None
+
+
+        #get segment of plate_a.outline that is colinear with an intersection line
+        plate_a_segment = None
+        for i, pline in enumerate([plate_a.outline_a, plate_a.outline_b]):
+            plate_a_segment = ConnectionSolver.find_colinear_segment(pline, lines)
+            if plate_a_segment is not None:
+                which_plate_a_polyline = i
+                break
+
+        #get segment of plate_b.outline that is colinear with an intersection line
+        plate_b_segment = None
+        for i, pline in enumerate([plate_b.outline_a, plate_b.outline_b]):
+            plate_b_segment = ConnectionSolver.find_colinear_segment(pline, lines)
+            if plate_b_segment is not None:
+                which_plate_b_polyline = i
+                break
+
+        if plate_a_segment is None and plate_b_segment is None:
+            return JointTopology.TOPO_UNKNOWN, (plate_a, which_plate_a_polyline, plate_a_segment), (plate_b, which_plate_b_polyline, plate_b_segment)
+        if plate_a_segment is not None and plate_b_segment is None:
+            return JointTopology.TOPO_T, (plate_a, which_plate_a_polyline, plate_a_segment), (plate_b, which_plate_b_polyline, plate_b_segment)
+        if plate_a_segment is None and plate_b_segment is not None:
+            return JointTopology.TOPO_T, (plate_b, which_plate_b_polyline, plate_b_segment), (plate_a, which_plate_a_polyline, plate_a_segment)
+        if plate_a_segment is not None and plate_b_segment is not None:
+            return JointTopology.TOPO_L, (plate_a, which_plate_a_polyline, plate_a_segment), (plate_b, which_plate_b_polyline, plate_b_segment)
+
+
+    @staticmethod
+    def find_colinear_segment(polyline, lines):
+        for i, seg in enumerate(polyline.lines):
+            for line in lines:
+                if is_colinear_line_line(seg, line):        #TODO: make TOL more flexible and discrete
+                    return i
+        return None
