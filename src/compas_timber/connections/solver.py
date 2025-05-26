@@ -295,15 +295,20 @@ class ConnectionSolver(object):
         for pair in itertools.product(plate_a.planes, plate_b.planes):
             lines.append(intersection_plane_plane(*pair))
 
+
         #get segment of plate_a.outline that is colinear with an intersection line
         plate_a_segment = None
         for pline in [plate_a.outline_a, plate_a.outline_b]:
             plate_a_segment = ConnectionSolver.find_colinear_segment(pline, lines)
+            if plate_a_segment is not None:
+                break
 
         #get segment of plate_b.outline that is colinear with an intersection line
         plate_b_segment = None
         for pline in [plate_b.outline_a, plate_b.outline_b]:
             plate_b_segment = ConnectionSolver.find_colinear_segment(pline, lines)
+            if plate_b_segment is not None:
+                break
 
         if plate_a_segment is None and plate_b_segment is None:
             return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment), (plate_b, plate_b_segment)
@@ -319,7 +324,7 @@ class ConnectionSolver(object):
     def find_colinear_segment(polyline, lines):
         for i, seg in enumerate(polyline.lines):
             for line in lines:
-                if is_colinear_line_line(seg, line) != None:        #TODO: make TOL more flexible and discrete
+                if is_colinear_line_line(seg, line):        #TODO: make TOL more flexible and discrete
                     return i
         return None
 

@@ -52,10 +52,9 @@ class PlateToPlateInterface(object):
 
     """
 
-    def __init__(self, interface_polyline, frame, interface_type, interface_role, topology):
+    def __init__(self, interface_polyline, frame, interface_role, topology):
         self.interface_polyline = interface_polyline
         self.frame = frame
-        self.interface_type = interface_type
         self.interface_role = interface_role
         self.topology = topology  # TODO: don't like this here
 
@@ -169,7 +168,6 @@ class PlateJoint(Joint):
         else:
             for plane in self.main_planes:
                 pts = intersection_polyline_plane(self.cross_outlines[0], plane)
-                print("pts: ", pts)
                 if len(pts) == 2:
                     points.extend(pts)
         return Polyline([points[0], points[1], points[3], points[2], points[0]])
@@ -250,7 +248,6 @@ class PlateJoint(Joint):
             self._main_plate_interface = PlateToPlateInterface(
                 self.main_interface_polyline,
                 frame,
-                main_interface_type,
                 InterfaceRole.MAIN,
                 self.topology,
             )
@@ -266,7 +263,6 @@ class PlateJoint(Joint):
             self._cross_plate_interface = PlateToPlateInterface(
                 self.cross_interface_polyline,
                 frame,
-                cross_interface_type,
                 InterfaceRole.CROSS,
                 self.topology,
             )
