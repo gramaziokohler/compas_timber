@@ -10,6 +10,7 @@ from compas.geometry import dot_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_polyline_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_colinear_line_line
@@ -59,7 +60,7 @@ class SlabToSlabInterface(object):
         self.topology = topology  # TODO: don't like this here
 
     def __repr__(self):
-        return "SlabToSlabInterface({0}, {1}, {2})".format(
+        return "PlateToPlateInterface({0}, {1}, {2})".format(
             self.interface_type,
             self.interface_role,
             JointTopology.get_name(self.topology),
@@ -76,20 +77,20 @@ class SlabToSlabInterface(object):
         return Plane.from_three_points(*self.interface_polyline.points[:3])
 
 
-class SlabJoint(Joint):
-    """Models a slab to slab interaction.
+class PlateJoint(Joint):
+    """Models a plate to plate interaction.
 
     TODO:First in a very minimal way until we know where this is going.
 
 
     Parameters
     ----------
-    slab_a : :class:`compas_timber.elements.Slab`
-        The first slab.
-    slab_b : :class:`compas_timber.elements.Slab`
-        The second slab.
+    plate_a : :class:`compas_timber.elements.Slab`
+        The first plate.
+    plate_b : :class:`compas_timber.elements.Slab`
+        The second plate.
     topology : literal(JointTopology)
-        The topology in which the slabs are connected.
+        The topology in which the plates are connected.
 
     Attributes
     ----------
@@ -108,28 +109,25 @@ class SlabJoint(Joint):
         data["main_slab_guid"] = self._main_slab_guid
         data["cross_slab_guid"] = self._cross_slab_guid
         data["topology"] = self.topology
+        data["main_segment_index"] = self.main_segment_index
+        data["cross_segment_index"] = self.cross_segment_index
         return data
 
     def __init__(self, topology_result, **kwargs):
         super(SlabJoint, self).__init__(**kwargs)
         self.topology = topology_result[0]
         self.main_slab = topology_result[1][0]
-        self.main_plane_index = topology_result[1][1]
         self.main_segment_index = topology_result[1][2]
         self.cross_slab = topology_result[2][0]
-        self.cross_plane_index = topology_result[2][1]
         self.cross_segment_index = topology_result[2][2]
-
-        print("slabs: ", self.main_slab, self.cross_slab)
 
 
         self._main_slab_guid = kwargs.get("main_slab_guid", None) or str(self.main_slab.guid)  # type: ignore
         self._cross_slab_guid = kwargs.get("cross_slab_guid", None) or str(self.cross_slab.guid)  # type: ignore
 
-        self.main_slab_interface = None
-        self.cross_slab_interface = None
         if self.main_slab and self.cross_slab:
-            self._calculate_interfaces()
+            self.reorder_planes_and_outlines()
+            self._adjust_slab_outlines()
 
     def __repr__(self):
         return "SlabJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
@@ -148,22 +146,31 @@ class SlabJoint(Joint):
         return self.main_slab_interface.interface_polyline
 
     @property
-    def main_slab_interface(self)
+    def main_slab_interface(self):
         """The interface of the main slab."""
-        return Polyline(self.main_slab.outline_a[self.main_segment_index],
+        return Polyline([self.main_slab.outline_a[self.main_segment_index],
         self.main_slab.outline_a[self.main_segment_index+1],
         self.main_slab.outline_b[self.main_segment_index+1],
         self.main_slab.outline_b[self.main_segment_index],
-        self.main_slab.outline_a[self.main_segment_index])
+        self.main_slab.outline_a[self.main_segment_index]])
 
     @property
     def cross_slab_interface(self):
-        """The interface of the cross slab."""
-        return Polyline(self.cross_slab.outline_a[self.cross_segment_index],
-        self.cross_slab.outline_a[self.cross_segment_index+1],
-        self.cross_slab.outline_b[self.cross_segment_index+1],
-        self.cross_slab.outline_b[self.cross_segment_index],
-        self.cross_slab.outline_a[self.cross_segment_index])
+        points = []
+        if self.topology == JointTopology.TOPO_L:
+            for index in [self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_slab.outline_a.lines)]:
+                seg = self.cross_outlines[0].lines[index]
+                for plane in self.main_slab.planes:
+                    pt =  intersection_line_plane(seg, plane)
+                    if pt:
+                        points.append(pt)
+        else:
+            for plane in self.main_slab.planes:
+                pts = intersection_polyline_plane(self.cross_outlines[0], plane)
+                print("pts: ", pts)
+                if len(pts) == 2:
+                    points.extend(pts)
+        return Polyline([points[0], points[1], points[3], points[2], points[0]])
 
 
     @property
@@ -178,64 +185,50 @@ class SlabJoint(Joint):
         else:
             raise ValueError("Slab not part of this joint.")
 
-    def _calculate_interfaces(self):
-        # from cross get the face that is closest to main with normal pointing towards main
-        # from main we then need the four envelope faces
+    def reorder_planes_and_outlines(self):
+        if dot_vectors(self.cross_slab.frame.normal, SlabJoint.get_polyline_segment_perpendicular_vector(self.main_slab.outline_a, self.main_segment_index)) < 0:
+            self.cross_planes = self.cross_slab.planes[::-1]
+            self.cross_outlines = self.cross_slab.outlines[::-1]
+        else:
+            self.cross_planes = self.cross_slab.planes
+            self.cross_outlines = self.cross_slab.outlines
+
+        self.main_planes = self.main_slab.planes
+        self.main_outlines = self.main_slab.outlines
+        if self.topology == JointTopology.TOPO_L:
+            if dot_vectors(self.main_slab.frame.normal, SlabJoint.get_polyline_segment_perpendicular_vector(self.cross_slab.outline_a, self.cross_segment_index)) < 0:
+                self.main_planes = self.main_slab.planes[::-1]
+                self.main_outlines = self.main_slab.outlines[::-1]
+
+
+
+
+    def _adjust_slab_outlines(self):
+        """Adjust the outlines of the slabs to match the joint."""
+
         assert self.main_slab
         assert self.cross_slab
 
+
+        for polyline in self.main_outlines:
+            for i, index in enumerate([self.main_segment_index-1, (self.main_segment_index+1)% len(self.main_slab.outline_a.lines)]):      #for each adjacent segment in the main slab outline
+                seg = polyline.lines[index] # get the segment
+                pt = intersection_line_plane(seg, self.cross_planes[0])
+                if pt:
+                    if i == 0:
+                        polyline[self.main_segment_index] = pt
+                        if self.main_segment_index == 0:
+                            polyline[-1] = pt
+                    else:
+                        polyline[self.main_segment_index+1] = pt
+                        if self.main_segment_index+1 == len(polyline.lines):
+                            polyline[0] = pt
+
         if self.topology == JointTopology.TOPO_L:
-            main_adjacent_indices = [self.main_segment_index-1, (self.main_segment_index+1)% len(self.main_slab.outline_a.lines)]
-            cross_adjacent_indices = [self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_slab.outline_a.lines)]
-
-
-            reverse_main_planes = False
-            if dot_vectors(self.main_slab.frame.normal, SlabJoint.get_polyline_segment_perpendicular_vector(self.cross_slab.outline_a, self.cross_segment_index)) < 0:
-                reverse_main_planes = True
-            reverse_cross_planes = False
-            if dot_vectors(self.cross_slab.frame.normal, SlabJoint.get_polyline_segment_perpendicular_vector(self.main_slab.outline_a, self.main_segment_index)) < 0:
-                reverse_cross_planes = True
-
-
-
-            if reverse_cross_planes:
-                close_cross_plane = self.cross_slab.planes[1]
-                close_cross_outline = self.cross_slab.outlines[1]
-            else:
-                close_cross_plane = self.cross_slab.planes[0]
-                close_cross_outline = self.cross_slab.outlines[0]
-
-            main_interface_points = []
-            for polyline in self.main_slab.outlines:
-                for i, index in enumerate(main_adjacent_indices):      #for each adjacent segment in the main slab outline
+            for polyline in self.cross_outlines:
+                for i, index in enumerate([self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_slab.outline_a.lines)]):      #for each adjacent segment in the main slab outline
                     seg = polyline.lines[index] # get the segment
-                    pt = intersection_line_plane(seg, close_cross_plane)
-                    print("pt is ", pt, "for segment", seg, "and plane", close_cross_plane)
-                    if pt:
-                        if i == 0:
-                            polyline[self.main_segment_index] = pt
-                            if self.main_segment_index == 0:
-                                polyline[-1] = pt
-                        else:
-                            polyline[self.main_segment_index+1] = pt
-                            if self.main_segment_index+1 == len(polyline.lines):
-                                polyline[0] = pt
-                        main_interface_points.append(pt)
-
-            assert len(main_interface_points) == 4, "Expected 4 intersection points, got {}".format(len(main_interface_points))
-
-            if reverse_main_planes:
-                far_main_plane = self.main_slab.planes[0]
-                close_main_outline = self.main_slab.outlines[1]
-            else:
-                far_main_plane = self.main_slab.planes[1]
-                close_main_outline = self.main_slab.outlines[0]
-
-
-            for polyline in self.cross_slab.outlines:
-                for i, index in enumerate(cross_adjacent_indices):      #for each adjacent segment in the main slab outline
-                    seg = polyline.lines[index] # get the segment
-                    pt = intersection_line_plane(seg, far_main_plane)
+                    pt = intersection_line_plane(seg, self.main_planes[1])
                     if pt:
                         if i == 0:
                             polyline[self.cross_segment_index] = pt
@@ -246,22 +239,8 @@ class SlabJoint(Joint):
                             if self.cross_segment_index+1 == len(polyline.lines):
                                 polyline[0] = pt
 
-            cross_interface_points = []
-            for i, index in enumerate(cross_adjacent_indices):
-                seg = close_cross_outline.lines[index]
-                for plane in self.main_slab.planes:
-                    pt =  intersection_line_plane(seg, plane)
-                    if pt:
-                        cross_interface_points.append(pt)
-            assert len(cross_interface_points) == 4, "Expected 4 intersection points, got {}".format(len(cross_interface_points))
-
-            print("main_interface_points", main_interface_points)
-            print("cross_interface_points", cross_interface_points)
-
-
-
-
-
+    def _calculate_interfaces(self):
+        return
 
         # self.main_slab_interface = SlabToSlabInterface(
         #     interface,
