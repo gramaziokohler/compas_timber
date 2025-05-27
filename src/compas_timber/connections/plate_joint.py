@@ -1,22 +1,12 @@
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import Polyline
 from compas.geometry import Polygon
-from compas.geometry import Vector
-from compas.geometry import angle_vectors
-from compas.geometry import dot_vectors
-from compas.geometry import cross_vectors
-from compas.geometry import intersection_line_line
-from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_polyline_plane
-from compas.geometry import intersection_plane_plane
-from compas.geometry import intersection_segment_polyline
-from compas.geometry import is_colinear_line_line
-from compas.geometry import is_point_in_polygon_xy
+from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.itertools import pairwise
+from compas.geometry import Vector
+from compas.geometry import cross_vectors
+from compas.geometry import dot_vectors
+from compas.geometry import is_point_in_polygon_xy
 from compas.tolerance import TOL
 
 from .joint import Joint
@@ -33,11 +23,13 @@ class InterfaceRole(object):
         The interface is the main interface.
     CROSS : literal(1)
         The interface is the cross interface.
+    NONE : literal(2)
+        The interface has no specific role. E.g. when a miter joint is used.
     """
 
     MAIN = "MAIN"
     CROSS = "CROSS"
-
+    NONE = "NONE"
 
 
 class PlateToPlateInterface(object):
@@ -87,6 +79,12 @@ class PlateJoint(Joint):
         The second plate.
     topology : literal(JointTopology)
         The topology in which the plates are connected.
+    a_segment_index : int
+        The index of the segment in plate_a's outline where the plates are connected.
+    b_segment_index : int
+        The index of the segment in plate_b's outline where the plates are connected.
+    **kwargs : dict, optional
+        Additional keyword arguments to pass to the parent class.
 
     Attributes
     ----------
@@ -102,34 +100,32 @@ class PlateJoint(Joint):
     @property
     def __data__(self):
         data = super(PlateJoint, self).__data__
-        data["main_plate_guid"] = self._main_plate_guid
-        data["cross_plate_guid"] = self._cross_plate_guid
+        data["plate_a_guid"] = self._plate_a_guid
+        data["plate_b_guid"] = self._plate_b_guid
         data["topology"] = self.topology
-        data["main_segment_index"] = self.main_segment_index
-        data["cross_segment_index"] = self.cross_segment_index
+        data["a_segment_index"] = self.a_segment_index
+        data["b_segment_index"] = self.b_segment_index
         return data
 
-    def __init__(self, topology_result, **kwargs):
+    def __init__(self, plate_a, plate_b, topology, a_segment_index, b_segment_index, **kwargs):
         super(PlateJoint, self).__init__(**kwargs)
-        self.topology = topology_result[0]
-        self.main_plate = topology_result[1][0]
-        self.main_segment_index = topology_result[1][1]
-        self.cross_plate = topology_result[2][0]
-        self.cross_segment_index = topology_result[2][1]
-        self._main_plate_interface = None
-        self._cross_plate_interface = None
+        self.topology = topology
+        self.plate_a = plate_a
+        self.a_segment_index = a_segment_index
+        self.plate_b = plate_b
+        self.b_segment_index = b_segment_index
+        self._plate_a_interface = None
+        self._plate_b_interface = None
 
+        self._plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid)  # type: ignore
+        self._plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid)  # type: ignore
 
-        self._main_plate_guid = kwargs.get("main_plate_guid", None) or str(self.main_plate.guid)  # type: ignore
-        self._cross_plate_guid = kwargs.get("cross_plate_guid", None) or str(self.cross_plate.guid)  # type: ignore
-
-        if self.main_plate and self.cross_plate:
+        if self.plate_a and self.plate_b:
             self.reorder_planes_and_outlines()
             self._adjust_plate_outlines()
 
     def __repr__(self):
-        return "PlateJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
-
+        return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
 
     @property
     def plates(self):
@@ -137,97 +133,97 @@ class PlateJoint(Joint):
 
     @property
     def elements(self):
-        return self.main_plate, self.cross_plate
+        return self.plate_a, self.plate_b
 
     @property
     def geometry(self):
-        assert self.main_plate_interface
-        return self.main_plate_interface.interface_polyline
+        assert self.plate_a_interface
+        return self.plate_a_interface.interface_polyline
 
     @property
-    def main_interface_polyline(self):
-        """The interface of the main plate."""
-        return Polyline([self.main_outlines[0][self.main_segment_index],
-        self.main_outlines[0][self.main_segment_index+1],
-        self.main_outlines[1][self.main_segment_index+1],
-        self.main_outlines[1][self.main_segment_index],
-        self.main_outlines[0][self.main_segment_index]])
+    def a_interface_polyline(self):
+        """The interface of the a plate."""
+        return Polyline(
+            [
+                self.a_outlines[0][self.a_segment_index],
+                self.a_outlines[0][self.a_segment_index + 1],
+                self.a_outlines[1][self.a_segment_index + 1],
+                self.a_outlines[1][self.a_segment_index],
+                self.a_outlines[0][self.a_segment_index],
+            ]
+        )
 
     @property
-    def cross_interface_polyline(self):
-        return Polyline([self.main_outlines[1][self.main_segment_index],
-        self.main_outlines[1][self.main_segment_index+1],
-        self.main_outlines[0][self.main_segment_index+1],
-        self.main_outlines[0][self.main_segment_index],
-        self.main_outlines[1][self.main_segment_index]])
-
+    def b_interface_polyline(self):
+        return Polyline(
+            [
+                self.a_outlines[1][self.a_segment_index],
+                self.a_outlines[1][self.a_segment_index + 1],
+                self.a_outlines[0][self.a_segment_index + 1],
+                self.a_outlines[0][self.a_segment_index],
+                self.a_outlines[1][self.a_segment_index],
+            ]
+        )
 
     @property
     def interfaces(self):
-        return self.main_plate_interface, self.cross_plate_interface
+        return self.plate_a_interface, self.plate_b_interface
 
     @classmethod
     def create(cls, model, plates, **kwargs):
         # TODO: this is just a placeholder. The actual creation logic should be implemented.
         pass
 
-
     def get_interface_for_plate(self, plate):
-        if plate is self.main_plate:
-            return self.main_plate_interface
-        elif plate is self.cross_plate:
-            return self.cross_plate_interface
+        if plate is self.plate_a:
+            return self.plate_a_interface
+        elif plate is self.plate_b:
+            return self.plate_b_interface
         else:
             raise ValueError("Plate not part of this joint.")
 
     def reorder_planes_and_outlines(self):
-        if dot_vectors(self.cross_plate.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.main_plate.outline_a, self.main_segment_index)) < 0:
-            self.cross_planes = self.cross_plate.planes[::-1]
-            self.cross_outlines = self.cross_plate.outlines[::-1]
+        if dot_vectors(self.plate_b.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
+            self.b_planes = self.plate_b.planes[::-1]
+            self.b_outlines = self.plate_b.outlines[::-1]
         else:
-            self.cross_planes = self.cross_plate.planes
-            self.cross_outlines = self.cross_plate.outlines
+            self.b_planes = self.plate_b.planes
+            self.b_outlines = self.plate_b.outlines
 
-        self.main_planes = self.main_plate.planes
-        self.main_outlines = self.main_plate.outlines
+        self.a_planes = self.plate_a.planes
+        self.a_outlines = self.plate_a.outlines
         if self.topology == JointTopology.TOPO_L:
-            if dot_vectors(self.main_plate.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.cross_plate.outline_a, self.cross_segment_index)) < 0:
-                self.main_planes = self.main_plate.planes[::-1]
-                self.main_outlines = self.main_plate.outlines[::-1]
-
-
+            if dot_vectors(self.plate_a.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
+                self.a_planes = self.plate_a.planes[::-1]
+                self.a_outlines = self.plate_a.outlines[::-1]
 
     @property
-    def main_plate_interface(self):
-        if not self._main_plate_interface:
-            frame = Frame.from_points(self.main_interface_polyline.points[0], self.main_interface_polyline.points[1], self.main_interface_polyline.points[-2])
-            if dot_vectors(frame.normal, Vector.from_start_end(self.cross_planes[1].point, self.cross_planes[0].point)) < 0:
-                frame = Frame.from_points(self.main_interface_polyline.points[1], self.main_interface_polyline.points[0], self.main_interface_polyline.points[2])
-            self._main_plate_interface = PlateToPlateInterface(
-                self.main_interface_polyline,
+    def plate_a_interface(self):
+        if not self._plate_a_interface:
+            frame = Frame.from_points(self.a_interface_polyline.points[0], self.a_interface_polyline.points[1], self.a_interface_polyline.points[-2])
+            if dot_vectors(frame.normal, Vector.from_start_end(self.b_planes[1].point, self.b_planes[0].point)) < 0:
+                frame = Frame.from_points(self.a_interface_polyline.points[1], self.a_interface_polyline.points[0], self.a_interface_polyline.points[2])
+            self._plate_a_interface = PlateToPlateInterface(
+                self.a_interface_polyline,
                 frame,
                 InterfaceRole.MAIN,
                 self.topology,
             )
-        return self._main_plate_interface
-
+        return self._plate_a_interface
 
     @property
-    def cross_plate_interface(self):
-        if not self._cross_plate_interface:
-            frame = Frame.from_points(self.cross_interface_polyline.points[0], self.cross_interface_polyline.points[1], self.cross_interface_polyline.points[-2])
-            if dot_vectors(frame.normal, Vector.from_start_end(self.cross_planes[0].point, self.cross_planes[1].point)) < 0:
-                frame = Frame.from_points(self.cross_interface_polyline.points[1], self.cross_interface_polyline.points[0], self.cross_interface_polyline.points[2])
-            self._cross_plate_interface = PlateToPlateInterface(
-                self.cross_interface_polyline,
+    def plate_b_interface(self):
+        if not self._plate_b_interface:
+            frame = Frame.from_points(self.b_interface_polyline.points[0], self.b_interface_polyline.points[1], self.b_interface_polyline.points[-2])
+            if dot_vectors(frame.normal, Vector.from_start_end(self.b_planes[0].point, self.b_planes[1].point)) < 0:
+                frame = Frame.from_points(self.b_interface_polyline.points[1], self.b_interface_polyline.points[0], self.b_interface_polyline.points[2])
+            self._plate_b_interface = PlateToPlateInterface(
+                self.b_interface_polyline,
                 frame,
                 InterfaceRole.CROSS,
                 self.topology,
             )
-        return self._cross_plate_interface
-
-
-
+        return self._plate_b_interface
 
     @staticmethod
     def get_polyline_segment_perpendicular_vector(polyline, segment_index):
@@ -254,7 +250,6 @@ class PlateJoint(Joint):
             return Vector.from_start_end(point, pt)
         return Vector.from_start_end(pt, point)
 
-
     @staticmethod
     def is_point_in_polyline(point, polyline):
         """Check if a point is inside a polyline. Polyline must be closed.
@@ -277,19 +272,18 @@ class PlateJoint(Joint):
         pt = point.transformed(xform)
         return TOL.is_close(pt[2], 0.0) and is_point_in_polygon_xy(pt, pgon)
 
-
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
         self.restore_plates_from_keys(*args, **kwargs)
 
     def restore_plates_from_keys(self, model):
-        self.main_plate = model.element_by_guid(self._main_plate_guid)
-        self.cross_plate = model.element_by_guid(self._cross_plate_guid)
+        self.plate_a = model.element_by_guid(self._plate_a_guid)
+        self.plate_b = model.element_by_guid(self._plate_b_guid)
         self._calculate_interfaces()
 
     def flip_roles(self):
-        self.main_plate, self.cross_plate = self.cross_plate, self.main_plate
-        self._main_plate_guid, self._cross_plate_guid = self._cross_plate_guid, self._main_plate_guid
+        self.plate_a, self.plate_b = self.plate_b, self.plate_a
+        self._plate_a_guid, self._plate_b_guid = self._plate_b_guid, self._plate_a_guid
         self._calculate_interfaces()
 
     def add_features(self):

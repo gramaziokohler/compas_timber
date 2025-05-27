@@ -1,22 +1,21 @@
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import NurbsCurve
 from compas.geometry import PlanarSurface
+from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.geometry import is_point_behind_plane
-from compas.geometry import distance_point_plane
 from compas.geometry import closest_point_on_plane
-
+from compas.geometry import distance_point_plane
+from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
-from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
 
@@ -117,7 +116,6 @@ class Plate(TimberElement):
             self._blank.ysize += 2 * self.attributes.get("blank_extension", 0.0)
         return self._blank
 
-
     @property
     def thickness(self):
         if self._thickness is None:
@@ -173,7 +171,7 @@ class Plate(TimberElement):
         if not self._outline_feature:
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:
-            self._opening_features=[FreeContour.from_polyline_and_element(o, self, interior=True) for o in self.openings]
+            self._opening_features = [FreeContour.from_polyline_and_element(o, self, interior=True) for o in self.openings]
         return [self._outline_feature] + self._opening_features + self._features
 
     @features.setter
@@ -192,8 +190,6 @@ class Plate(TimberElement):
             if is_point_behind_plane(self.outline_b[0], Plane.from_frame(self._frame)):
                 self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
         return self._frame
-
-
 
     def check_outlines(outline_a, outline_b):
         # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
@@ -241,12 +237,13 @@ class Plate(TimberElement):
             xsize = self.width
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
+
     # ==========================================================================
     # Alternate constructors
     # ==========================================================================
 
     @classmethod
-    def from_outline_thickness(cls, outline, thickness, vector=None, openings = None, **kwargs):
+    def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
         """
         Constructs a plate from a polyline outline and a thickness.
         The outline is the top face of the plate, and the thickness is the distance to the bottom face.
@@ -277,19 +274,19 @@ class Plate(TimberElement):
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-        offset_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal       #gets frame perpendicular to outline
+        offset_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal  # gets frame perpendicular to outline
         if vector:
-            if vector.dot(offset_vector) < 0:            #if vector is given and points in the opposite direction
+            if vector.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
                 offset_vector = -offset_vector
-        elif not is_polyline_clockwise(outline, offset_vector):     #if no vector and outline is not clockwise, flip the offset vector
+        elif not is_polyline_clockwise(outline, offset_vector):  # if no vector and outline is not clockwise, flip the offset vector
             offset_vector = -offset_vector
         offset_vector.unitize()
         offset_vector *= thickness
         outline_b = Polyline(outline).translated(offset_vector)
-        return cls(outline, outline_b, openings = openings, **kwargs)
+        return cls(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep, thickness, vector = None, **kwargs):
+    def from_brep(cls, brep, thickness, vector=None, **kwargs):
         """Creates a wall from a brep.
         Parameters
         ----------
@@ -319,6 +316,7 @@ class Plate(TimberElement):
             else:
                 inner_polylines.append(Polyline(polyline_points))
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
+
     # ==========================================================================
     #  methods
     # ==========================================================================
@@ -350,7 +348,7 @@ class Plate(TimberElement):
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for pline in self.openings:
-            if not TOL.is_allclose(pline[0],pline[-1]):
+            if not TOL.is_allclose(pline[0], pline[-1]):
                 raise ValueError("Opening polyline is not closed.")
             polyline = correct_polyline_direction(pline, self.frame.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline]

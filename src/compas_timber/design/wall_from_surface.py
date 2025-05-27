@@ -1,6 +1,5 @@
 import math
 
-from compas import get
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -20,7 +19,6 @@ from compas.geometry import intersection_line_segment
 from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.tolerance import Tolerance
-
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
@@ -90,8 +88,8 @@ class SurfaceModel(object):
         self,
         outer_polyline,
         normal,
-        inner_polylines = [],
-        stud_spacing = None,
+        inner_polylines=[],
+        stud_spacing=None,
         beam_width=None,
         frame_depth=None,
         z_axis=None,
@@ -103,10 +101,9 @@ class SurfaceModel(object):
         custom_dimensions=None,
         joint_overrides=None,
     ):
-
         self.outer_polyline = Polyline(correct_polyline_direction(Polyline(outer_polyline), normal))
 
-        self.inner_polylines = [Polyline(correct_polyline_direction(Polyline(pline), normal, clockwise = True)) for pline in inner_polylines]
+        self.inner_polylines = [Polyline(correct_polyline_direction(Polyline(pline), normal, clockwise=True)) for pline in inner_polylines]
 
         self.normal = normal
         self.beam_width = beam_width
@@ -141,7 +138,6 @@ class SurfaceModel(object):
                         self.beam_dimensions[key][1] = value[1]
         self.generate_frame()
         self.generate_plates()
-
 
     @property
     def z_axis(self):
@@ -205,7 +201,6 @@ class SurfaceModel(object):
     @property
     def points(self):
         return self.outer_polyline.points
-
 
     @property
     def panel_length(self):
@@ -273,13 +268,10 @@ class SurfaceModel(object):
         normal = surface.native_brep.Faces[0].NormalAt(0.5, 0.5)
         return cls(outer_polyline, normal, inner_polylines, stud_spacing, beam_width, frame_depth, z_axis, **kwargs)
 
-
-
     def generate_frame(self):
         self.generate_perimeter_beams()
         self.generate_windows()
         self.generate_studs()
-
 
     def create_model(self):
         model = TimberModel()
@@ -611,7 +603,6 @@ class SurfaceModel(object):
                     offset = (self.parent.beam_dimensions["jack_stud"][0] + self.parent.beam_dimensions["king_stud"][0]) / 2
                     king_line = offset_line(beam_def.centerline, offset, self.normal)
                     self._beam_definitions.append(self.parent.BeamDefinition(king_line, type="king_stud", parent=self))
-
 
     class BeamDefinition(object):
         """

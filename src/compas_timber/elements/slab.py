@@ -1,31 +1,12 @@
 from compas.data import Data
-from compas.geometry import Box
-from compas.geometry import Point
-from compas.geometry import Brep
-from compas.geometry import Frame
-from compas.geometry import Line
-from compas.geometry import Polyline
-from compas.geometry import bounding_box
-from compas.geometry import dot_vectors
-from compas.geometry import distance_point_plane
-from compas.tolerance import TOL
-from compas.geometry import Transformation
-from compas.geometry import Vector
-from compas.geometry import Plane
-from compas.geometry import NurbsCurve
-from compas.geometry import closest_point_on_plane
 
-from compas_timber.utils import classify_polyline_segments
-from compas_timber.utils import is_polyline_clockwise
-from compas_timber.utils import correct_polyline_direction
-
-from .timber import TimberElement
 from .plate import Plate
 
 
 class OpeningType(object):
     DOOR = "door"
     WINDOW = "window"
+    GENERIC = "generic"
 
 
 class Opening(Data):
@@ -70,10 +51,15 @@ class Slab(Plate):
 
     def __init__(self, outline_a, outline_b, openings=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(outline_a, outline_b, name=name, **kwargs)
-        self.openings = openings
+        super(Slab, self).__init__(outline_a, outline_b, openings = openings, name=name, **kwargs)
         self.attributes = {}
         self.attributes.update(kwargs)
+
+    def __repr__(self):
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
+
+    def __str__(self):
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
 
     @property
     def is_slab(self):
@@ -82,8 +68,6 @@ class Slab(Plate):
     @property
     def is_group_element(self):
         return True
-
-
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
@@ -103,15 +87,3 @@ class Slab(Plate):
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
         return self.shape()
-
-
-    def __repr__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
-
-    def __str__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
-
-
-
-
-

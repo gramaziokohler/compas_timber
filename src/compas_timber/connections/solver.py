@@ -2,16 +2,14 @@ import itertools
 import math
 
 from compas.geometry import Point
-from compas.geometry import Plane
-from compas.geometry import Line
-from compas.geometry import intersection_plane_plane
-from compas.geometry import is_colinear_line_line
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import closest_point_on_line
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane
+from compas.geometry import is_colinear_line_line
 from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
@@ -222,30 +220,6 @@ class ConnectionSolver(object):
         # X-joint (both meeting somewhere along the line)
         return JointTopology.TOPO_X, beam_a, beam_b
 
-    def find_wall_wall_topology(self, wall_a, wall_b, tol=TOLERANCE, max_distance=None):
-        """Calculates the topology of the intersection between two walls.
-
-        TODO: Passes-through to the beam topology calculation. This should be reworked.
-
-        Parameters
-        ----------
-        wall_a : :class:`~compas_timber.elements.Wall`
-            First potential intersecting wall.
-        wall_b : :class:`~compas_timber.elements.Wall`
-            Second potential intersecting wall.
-        tol : float
-            General tolerance to use for mathematical computations.
-        max_distance : float, optional
-            Maximum distance, in desigen units, at which two fs are considered intersecting.
-
-        Returns
-        -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.element.Wall`, :class:`~compas_timber.element.Wall`)
-
-        """
-        # TODO: make find topology more generic. break down to find_line_line_topo etc.
-        return self.find_topology(wall_a, wall_b, tol, max_distance)
-
     @staticmethod
     def _calc_t(line, plane):
         a, b = line
@@ -295,15 +269,14 @@ class ConnectionSolver(object):
         for pair in itertools.product(plate_a.planes, plate_b.planes):
             lines.append(intersection_plane_plane(*pair))
 
-
-        #get segment of plate_a.outline that is colinear with an intersection line
+        # get segment of plate_a.outline that is colinear with an intersection line
         plate_a_segment = None
         for pline in [plate_a.outline_a, plate_a.outline_b]:
             plate_a_segment = ConnectionSolver.find_colinear_segment(pline, lines)
             if plate_a_segment is not None:
                 break
 
-        #get segment of plate_b.outline that is colinear with an intersection line
+        # get segment of plate_b.outline that is colinear with an intersection line
         plate_b_segment = None
         for pline in [plate_b.outline_a, plate_b.outline_b]:
             plate_b_segment = ConnectionSolver.find_colinear_segment(pline, lines)
@@ -319,13 +292,10 @@ class ConnectionSolver(object):
         if plate_a_segment is not None and plate_b_segment is not None:
             return JointTopology.TOPO_L, (plate_a, plate_a_segment), (plate_b, plate_b_segment)
 
-
     @staticmethod
     def find_colinear_segment(polyline, lines):
         for i, seg in enumerate(polyline.lines):
             for line in lines:
-                if is_colinear_line_line(seg, line):        #TODO: make TOL more flexible and discrete
+                if is_colinear_line_line(seg, line):  # TODO: make TOL more flexible and discrete
                     return i
         return None
-
-
