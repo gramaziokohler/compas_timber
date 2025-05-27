@@ -185,7 +185,7 @@ class Window(object):
 
     Parameters
     ----------
-    outline : :class:`compas.geometry.Polyline`
+    outline : :class:`compas.geometry.Polyline` TODO; define with 2 polylines(inside and outside)
         The outline of the window.
     sill_height : float, optional
         The height of the sill.
@@ -308,7 +308,7 @@ class Window(object):
 
         beam_definitions = [header, sill] + studs
 
-        offset_elements(beam_definitions, offset_inside=False)
+        offset_perimeter_elements(beam_definitions, offset_inside=False)
 
         shorten_edges_to_fit_between_plates(studs, [header, sill])
 
@@ -331,7 +331,7 @@ class Door(Window):
         return [e for e in elements if e.type != "sill"]
 
 
-class WallPopulatorConfigurationSet(object):
+class SlabPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
     wall_selector can be used to apply different configurations to different walls based on e.g. their name.
@@ -390,14 +390,14 @@ class WallPopulatorConfigurationSet(object):
         self.connection_details = connection_details or {}
 
     def __str__(self):
-        return "WallPopulatorConfigurationSet({}, {}, {})".format(self.stud_spacing, self.beam_width, self.z_axis)
+        return "SlabPopulatorConfigurationSet({}, {}, {})".format(self.stud_spacing, self.beam_width, self.z_axis)
 
     @classmethod
     def default(cls, stud_spacing, beam_width):
         return cls(stud_spacing, beam_width)
 
 
-class WallPopulator(object):
+class SlabPopulator(object):
     """Create a timber assembly from a surface.
 
     Parameters
@@ -443,8 +443,8 @@ class WallPopulator(object):
 
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate", "header", "sill", "detail"]
 
-    def __init__(self, configuration_set, wall, interfaces=None):
-        self._wall = wall
+    def __init__(self, configuration_set, slab, interfaces=None):
+        self._slab = slab
         self._config_set = configuration_set
         self._z_axis = wall.frame.yaxis  # up
         self.normal = wall.frame.zaxis  # out
@@ -458,9 +458,9 @@ class WallPopulator(object):
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
 
-        self.frame = wall.frame
-        self.panel_length = wall.length
-        self.panel_height = wall.height
+        self.frame = slab.frame
+        self.panel_length = slab.length
+        self.panel_height = slab.height
 
         self._interfaces = interfaces or []
         self._adjusted_segments = {}
@@ -478,7 +478,7 @@ class WallPopulator(object):
                     self.beam_dimensions[key] = value
 
     def __repr__(self):
-        return "WallPopulator({}, {})".format(self._config_set, self._wall)
+        return "SlabPopulator({}, {})".format(self._config_set, self._wall)
 
     @property
     def z_axis(self):
@@ -635,70 +635,49 @@ class WallPopulator(object):
         return joint_definitions
 
     def generate_perimeter_beams(self):
-        # for each interface, find the appropriate connection detail (depending on the topology)
-        # first the interfaces are handled, then the remaining sides are handled by the default connection details
-        handled_sides = set()
-
-        # TODO: move to Wall
-        # add any remaining sides if have not been handled by any of the connection details
-        # ^  3 ---- 2
-        # |  |      |
-        # z  0 ---- 1
-        #    x -->
-        front_segment = Line(self.points[1], self.points[2])
-        back_segment = Line(self.points[3], self.points[0])
-        top_segment = Line(self.points[2], self.points[3])
-        bottom_segment = Line(self.points[0], self.points[1])
-        self._adjusted_segments = {"front": front_segment, "back": back_segment, "top": top_segment, "bottom": bottom_segment}
-
-        perimeter_beams = []
-        for interface in self._interfaces:
-            connection_detail = self._config_set.connection_details.get(interface.topology, None)
-
-            if connection_detail:
-                if interface.interface_role == InterfaceRole.MAIN:
-                    perimeter_beams.extend(connection_detail.create_elements_main(interface, self._wall, self._config_set))
-                    connection_detail.adjust_segments_main(interface, self._wall, self._config_set, self._adjusted_segments)
-                elif interface.interface_role == InterfaceRole.CROSS:
-                    connection_detail.adjust_segments_cross(interface, self._wall, self._config_set, self._adjusted_segments)
-                    perimeter_beams.extend(connection_detail.create_elements_cross(interface, self._wall, self._config_set))
-
-                handled_sides.add(interface.interface_type)
-
-        top_segment = self._adjusted_segments["top"]
-        bottom_segment = self._adjusted_segments["bottom"]
-        front_segment = self._adjusted_segments["front"]
-        back_segment = self._adjusted_segments["back"]
-
-        if InterfaceLocation.FRONT not in handled_sides:
-            perimeter_beams.append(BeamDefinition(front_segment, parent=self, type="edge_stud"))
-
-        if InterfaceLocation.BACK not in handled_sides:
-            perimeter_beams.append(BeamDefinition(back_segment, parent=self, type="edge_stud"))
-
-        if InterfaceLocation.TOP not in handled_sides:
-            perimeter_beams.append(BeamDefinition(top_segment, parent=self, type="plate"))
-
-        if InterfaceLocation.BOTTOM not in handled_sides:
-            perimeter_beams.append(BeamDefinition(bottom_segment, parent=self, type="plate"))
-
-        edge_studs = [beam_def for beam_def in perimeter_beams if beam_def.type == "edge_stud"]
-        plate_beams = [beam_def for beam_def in perimeter_beams if beam_def.type == "plate"]
-
-        if self._wall.is_wall:
-            offset_elements(edge_studs + plate_beams)
-        else:
-            # HACK alert! slabs seem to want it differently, get to the bottom of this
-            if self.normal.z < 0:
-                offset_elements(edge_studs + plate_beams, offset_inside=False)
+        interior_indices = self.get_interior_segment_indices(self.outer_polyline)
+        for i, segment in enumerate(self.outer_polyline.lines):
+            beam_def = self.BeamDefinition(segment, parent=self)
+            if i in interior_indices:
+                if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
+                    if self.lintel_posts:
+                        beam_def.type = "jack_stud"
+                    else:
+                        beam_def.type = "king_stud"
+                else:
+                    beam_def.type = "header"
             else:
-                offset_elements(edge_studs + plate_beams)
+                if angle_vectors(segment.direction, self.z_axis, deg=True) < 45 or angle_vectors(segment.direction, self.z_axis, deg=True) > 135:
+                    beam_def.type = "edge_stud"
+                else:
+                    beam_def.type = "plate"
+            self._beam_definitions.append(beam_def)
+        self._beam_definitions = self.offset_perimeter_elements(self._beam_definitions)
+        if self.lintel_posts:
+            for beam_def in self._beam_definitions:
+                if beam_def.type == "jack_stud":
+                    offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
+                    king_line = offset_line(beam_def.centerline, offset, self.normal)
+                    self._beam_definitions.append(self.BeamDefinition(king_line, type="king_stud", parent=self))
 
-        shorten_edges_to_fit_between_plates(edge_studs, plate_beams, self.dist_tolerance)
+    def get_edge_beam_definition(self, segment_index, min_width= None):
+        vector = get_polyline_segment_perpendicular_vector(self.outer_polyline, segment_index)
+        vector = vector.normalized()
+        seg_a = self.slab.outline_a.lines[segment_index]
+        seg_b = self.slab.outline_b.lines[segment_index]
+        pt = closest_point_on_segment(seg_a.point_at(0.5), seg_b)
+        dot = dot_vectors(vector, Vector.from_start_end(seg_a.point_at(0.5), pt))
+        if dot == 0:
+            return self.BeamDefinition(seg_a, parent=self)
+        elif dot < 0: # seg_b is closer to the middle
+            beam_width = abs(dot) + min_width
+            return self.BeamDefinition(seg_a, width=beam_width, parent=self)
+        else:  # seg_a is closer to the middle
+            beam_width = abs(dot) + min_width
+            seg_offset = seg_a.translated(vector * dot)
+            return self.BeamDefinition(seg_offset, width=beam_width, parent=self)
 
-        self._beam_definitions.extend(perimeter_beams)
 
-        # TODO: handle lintel posts
 
     def get_interior_segment_indices(self, polyline):
         points = polyline.points[0:-1]
@@ -889,7 +868,7 @@ def shorten_edges_to_fit_between_plates(beams_to_fit, beams_to_fit_between, dist
             stud.centerline = Line(start_point, end_point)
 
 
-def offset_elements(element_loop, edge_stud_offset=None, offset_inside=True):
+def offset_perimeter_elements(element_loop, edge_stud_offset=None, offset_inside=True):
     """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
 
     Parameters
