@@ -213,7 +213,7 @@ class Plate(TimberElement):
         if not TOL.is_allclose(outline_b[0], outline_b[-1]):
             raise ValueError("The outline_b is not closed.")
         if len(outline_a) != len(outline_b):
-            raise ValueError("The outlines have different number of points.")
+            raise ValueError("The outlines must have the same number of points.")
 
     def side_as_surface(self, side_index):
         # type: (int) -> compas.geometry.PlanarSurface
@@ -377,9 +377,7 @@ class Plate(TimberElement):
         plate_geo = self.shape()
         if include_features:
             for feature in self._features:
-                print("applying feature", feature)
                 try:
-                    print("applying feature", feature)
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
