@@ -149,19 +149,19 @@ class PlateJoint(Joint):
     @property
     def main_interface_polyline(self):
         """The interface of the main plate."""
-        return Polyline([self.main_plate.outline_a[self.main_segment_index],
-        self.main_plate.outline_a[self.main_segment_index+1],
-        self.main_plate.outline_b[self.main_segment_index+1],
-        self.main_plate.outline_b[self.main_segment_index],
-        self.main_plate.outline_a[self.main_segment_index]])
+        return Polyline([self.main_outlines[0][self.main_segment_index],
+        self.main_outlines[0][self.main_segment_index+1],
+        self.main_outlines[1][self.main_segment_index+1],
+        self.main_outlines[1][self.main_segment_index],
+        self.main_outlines[0][self.main_segment_index]])
 
     @property
     def cross_interface_polyline(self):
         points = []
         if self.topology == JointTopology.TOPO_L:
-            for index in [self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_plate.outline_a.lines)]:
-                seg = self.cross_outlines[0].lines[index]
-                for plane in self.main_planes:
+            for plane in self.main_planes:
+                for index in [self.cross_segment_index-1, (self.cross_segment_index+1)% len(self.cross_plate.outline_a.lines)]:
+                    seg = self.cross_outlines[0].lines[index]
                     pt =  intersection_line_plane(seg, plane)
                     if pt:
                         points.append(pt)
