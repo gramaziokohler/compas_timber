@@ -83,17 +83,7 @@ class Slab(Plate):
     def is_group_element(self):
         return True
 
-    @property
-    def width(self):
-        return self.obb.xsize
 
-    @property
-    def length(self):
-        return self.obb.ysize
-
-    @property
-    def height(self):
-        return self.thickness
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
