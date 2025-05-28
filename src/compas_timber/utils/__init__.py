@@ -20,6 +20,7 @@ from compas.geometry import Projection
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_line_line
+from compas.tolerance import TOL
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
@@ -307,7 +308,7 @@ def angle_vectors_projected(vector_a, vector_b, normal):
     Returns
     -------
     float
-        The angle between the two projected vectors
+        The angle between the two projected vectors. If any of the projections results in a zero vector, None is returned.
     """
     if isinstance(normal, (Plane, Frame)):
         normal = normal.normal
@@ -315,6 +316,8 @@ def angle_vectors_projected(vector_a, vector_b, normal):
     projection = Projection.from_plane(Plane(Point(0, 0, 0), normal))
     proj_vect_a = vector_a.transformed(projection)
     proj_vect_b = vector_b.transformed(projection)
+    if TOL.is_zero(proj_vect_a.length) or TOL.is_zero(proj_vect_b.length):
+        return None
     return angle_vectors_signed(proj_vect_a, proj_vect_b, normal, deg=True)
 
 
