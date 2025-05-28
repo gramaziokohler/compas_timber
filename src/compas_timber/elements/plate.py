@@ -6,7 +6,6 @@ from compas.geometry import PlanarSurface
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.tolerance import TOL
-from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
@@ -84,7 +83,10 @@ class Plate(TimberElement):
         self.debug_info = []
         self._ref_frame = None
         self._blank = None
-        self._features = []
+
+        # The base feature is expected to be the first as it's treated differently than the others
+        # therefore, if there are any feature passed to __init__, they should appear after the base feature
+        self._features.insert(0, FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False))
 
     def __repr__(self):
         # type: () -> str
@@ -172,16 +174,6 @@ class Plate(TimberElement):
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
 
     @property
-    def features(self):
-        if not self._outline_feature:
-            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
-        return [self._outline_feature] + self._features
-
-    @features.setter
-    def features(self, features):
-        self._features = features
-
-    @property
     def key(self):
         # type: () -> int | None
         return self.graph_node
@@ -245,18 +237,6 @@ class Plate(TimberElement):
     #  methods
     # ==========================================================================
 
-    def add_feature(self, feature):
-        # type: (compas_timber.parts.Feature) -> None
-        """Adds a feature to the plate.
-
-        Parameters
-        ----------
-        feature : :class:`~compas_timber.parts.Feature`
-            The feature to be added.
-
-        """
-        self._features.append(feature)
-
     def shape(self):
         # type: () -> compas.geometry.Brep
         """The shape of the plate before other features area applied.
@@ -269,6 +249,8 @@ class Plate(TimberElement):
         """
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (self.outline_a, self.outline_b)])
         plate_geo.cap_planar_holes()
+        if plate_geo.volume < 0:
+            plate_geo.flip()
         return plate_geo
 
     def compute_geometry(self, include_features=True):
@@ -290,7 +272,9 @@ class Plate(TimberElement):
         # TODO: consider if Brep.from_curves(curves) is faster/better
         plate_geo = self.shape()
         if include_features:
-            for feature in self._features:
+            # Skip the first feature. This base feature is indirectly considered by self.shape() so not needed for visualization.
+            # it is however used by the BTLx logic.
+            for feature in self._features[1:]:
                 try:
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
@@ -351,38 +335,3 @@ class Plate(TimberElement):
 
         """
         return self.obb.to_mesh()
-
-    # ==========================================================================
-    # Features
-    # ==========================================================================
-
-    @reset_computed
-    def add_features(self, features):
-        """Adds one or more features to the plate.
-
-        Parameters
-        ----------
-        features : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be added.
-
-        """
-        if not isinstance(features, list):
-            features = [features]
-        self._features.extend(features)
-
-    @reset_computed
-    def remove_features(self, features=None):
-        """Removes a feature from the plate.
-
-        Parameters
-        ----------
-        feature : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be removed. If None, all features will be removed.
-
-        """
-        if features is None:
-            self._features = []
-        else:
-            if not isinstance(features, list):
-                features = [features]
-            self._features = [f for f in self._features if f not in features]
