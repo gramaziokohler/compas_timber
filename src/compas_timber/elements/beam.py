@@ -13,7 +13,6 @@ from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
-from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
@@ -98,7 +97,6 @@ class Beam(TimberElement):
         self.width = width
         self.height = height
         self.length = length
-        self.features = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self._blank_extensions = {}
@@ -428,39 +426,6 @@ class Beam(TimberElement):
     # ==========================================================================
     # Featrues
     # ==========================================================================
-
-    @reset_computed
-    def add_features(self, features):
-        # type: (Feature | list[Feature]) -> None
-        """Adds one or more features to the beam.
-
-        Parameters
-        ----------
-        features : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be added.
-
-        """
-        if not isinstance(features, list):
-            features = [features]
-        self.features.extend(features)  # type: ignore
-
-    @reset_computed
-    def remove_features(self, features=None):
-        # type: (None | Feature | list[Feature]) -> None
-        """Removes a feature from the beam.
-
-        Parameters
-        ----------
-        feature : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be removed. If None, all features will be removed.
-
-        """
-        if features is None:
-            self.features = []
-        else:
-            if not isinstance(features, list):
-                features = [features]
-            self.features = [f for f in self.features if f not in features]
 
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
