@@ -3,8 +3,6 @@ import System
 import rhinoscriptsyntax as rs
 from ghpythonlib.componentbase import executingcomponent as component
 
-from compas.geometry import Line
-from compas.scene import Scene
 from compas_rhino.conversions import frame_to_rhino
 
 

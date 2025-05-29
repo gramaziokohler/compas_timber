@@ -9,10 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
+
+### Changed
+
+* Fixed `TypeError` when deepcopying beams with `debug_info` on them.
+* Processings which are not the result of joinery are now serialized with `TimberElement`.
+* Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
+* Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+
+### Removed
+
+
+## [0.16.2] 2025-05-07
+
+### Added
+
+### Changed
+
+* Fixed max recursion depth error when copying `TimberModel`/`Beam` with proxy processings.
+
+### Removed
+
+
+## [0.16.1] 2025-04-30
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.16.0] 2025-04-30
+
+### Added
+
 * Added new `compas_timber.fabrication.Pocket`.
 * Added `front_side`, `back_side`, `opp_side` methods to the `Beam` class for retrieving specific sides relative to a reference side.
 * Added processing `Text` to `compas_timber.fabrication`.
 * Added `TextParams` to `compas_timber.fabrication`.
+* Added new Grasshopper components for Rhino8/cpython. 
+* Added new methods to handle adaptive GH_component parameters using cpython.
 
 ### Changed
 

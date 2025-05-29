@@ -1,0 +1,56 @@
+{
+    "name": "SurfaceModelOptions",
+    "nickname": "SurfaceModelOptions",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Defines options for the SurfaceModel component.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "sheeting_outside",
+                "description": "(optional) Thickness of sheeting on the side of assembly closest to input surface. If zero, no sheeting will be added.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "sheeting_inside",
+                "description": "(optional) Thickness of sheeting on the side of assembly furthest from input surface. If zero, no sheeting will be added.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "lintel_posts",
+                "description": "(optional) If False, jack studs will not be generated and headers will butt directly onto king studs.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "edge_stud_offset",
+                "description": "(optional) Distance to offset the studs at the edge of the assembly. If zero, the studs will be flush with the edge of the assembly.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "custom_dimensions",
+                "description": "(optional) From beam dimension component. Beam dimensions must either be defined here or in with beam_width and frame_depth inputs.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "joint_overrides",
+                "description": "(optional) From joint overrides component. Allows user to specify joints between specific beam types in surface model.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Options",
+                "description": "Model from Surface options."
+            }
+        ]
+    }
+}
