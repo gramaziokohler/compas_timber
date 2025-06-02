@@ -1,6 +1,5 @@
 from compas.geometry import Frame
 from compas.geometry import Plane
-from compas.geometry import Polygon
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
@@ -8,6 +7,8 @@ from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import is_point_in_polygon_xy
 from compas.tolerance import TOL
+
+from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 from .joint import Joint
 from .joint import JointTopology
@@ -174,6 +175,9 @@ class PlateJoint(Joint):
         # TODO: this is just a placeholder. The actual creation logic should be implemented.
         pass
 
+    def _adjust_plate_outlines(self):
+        raise NotImplementedError
+
     def get_interface_for_plate(self, plate):
         if plate is self.plate_a:
             return self.plate_a_interface
@@ -183,7 +187,7 @@ class PlateJoint(Joint):
             raise ValueError("Plate not part of this joint.")
 
     def reorder_planes_and_outlines(self):
-        if dot_vectors(self.plate_b.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
+        if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
             self.b_planes = self.plate_b.planes[::-1]
             self.b_outlines = self.plate_b.outlines[::-1]
         else:
@@ -193,7 +197,7 @@ class PlateJoint(Joint):
         self.a_planes = self.plate_a.planes
         self.a_outlines = self.plate_a.outlines
         if self.topology == JointTopology.TOPO_L:
-            if dot_vectors(self.plate_a.frame.normal, PlateJoint.get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
+            if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
                 self.a_planes = self.plate_a.planes[::-1]
                 self.a_outlines = self.plate_a.outlines[::-1]
 
@@ -224,53 +228,6 @@ class PlateJoint(Joint):
                 self.topology,
             )
         return self._plate_b_interface
-
-    @staticmethod
-    def get_polyline_segment_perpendicular_vector(polyline, segment_index):
-        """Get the vector perpendicular to a polyline segment. This vector points outside of the polyline.
-        The polyline must be closed.
-
-        Parameters
-        ----------
-        polyline : :class:`compas.geometry.Polyline`
-            The polyline to check. Must be closed.
-        segment_index : int
-            The index of the segment in the polyline.
-
-        Returns
-        -------
-        int
-            The index of the point in the polyline, or None if not found.
-        """
-        plane = Plane.from_points(polyline.points)
-        pt = polyline.lines[segment_index].point_at(0.5)
-        perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
-        point = pt + (perp_vector * 0.1)
-        if PlateJoint.is_point_in_polyline(point, polyline):
-            return Vector.from_start_end(point, pt)
-        return Vector.from_start_end(pt, point)
-
-    @staticmethod
-    def is_point_in_polyline(point, polyline):
-        """Check if a point is inside a polyline. Polyline must be closed.
-
-        Parameters
-        ----------
-        point : :class:`compas.geometry.Point`
-            The point to check.
-        polyline : :class:`compas.geometry.Polyline`
-            The polyline to check against.
-
-        Returns
-        -------
-        bool
-            True if the point is inside the polyline, False otherwise.
-        """
-        frame = Frame.from_points(*polyline.points[:3])
-        xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-        pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
-        pt = point.transformed(xform)
-        return TOL.is_close(pt[2], 0.0) and is_point_in_polygon_xy(pt, pgon)
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.

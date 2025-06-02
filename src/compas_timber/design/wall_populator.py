@@ -6,6 +6,7 @@ from compas.geometry import Line
 from compas.geometry import NurbsCurve
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import closest_point_on_segment
 from compas.geometry import cross_vectors
@@ -28,6 +29,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
+from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 from .workflow import JointDefinition
 
@@ -116,7 +118,6 @@ class BeamDefinition(object):
         centerline,
         width=None,
         height=None,
-        z_axis=None,  # TODO: remove
         normal=None,
         type=None,
         parent=None,
@@ -446,10 +447,10 @@ class SlabPopulator(object):
     def __init__(self, configuration_set, slab, interfaces=None):
         self._slab = slab
         self._config_set = configuration_set
-        self._z_axis = wall.frame.yaxis  # up
-        self.normal = wall.frame.zaxis  # out
-        self.outer_polyline = wall.outline
-        self.inner_polylines = wall.openings
+        self._z_axis = slab.frame.yaxis  # up/direction of the studs/internal beams. 
+        self.normal = slab.frame.zaxis  # out
+        self.outer_polyline = slab.outline
+        self.inner_polylines = slab.openings
         self.edges = []
         self._elements = []
         self._beam_definitions = []
@@ -469,7 +470,7 @@ class SlabPopulator(object):
         self._openings = []
 
         for key in self.BEAM_CATEGORY_NAMES:
-            self.beam_dimensions[key] = (configuration_set.beam_width, wall.thickness)
+            self.beam_dimensions[key] = (configuration_set.beam_width, slab.thickness)
 
         if self._config_set.custom_dimensions:
             dimensions = self._config_set.custom_dimensions
@@ -580,7 +581,7 @@ class SlabPopulator(object):
 
     @classmethod
     def beam_category_names(cls):
-        return WallPopulator.BEAM_CATEGORY_NAMES
+        return SlabPopulator.BEAM_CATEGORY_NAMES
 
     @classmethod
     def from_model(cls, model, configuration_sets):

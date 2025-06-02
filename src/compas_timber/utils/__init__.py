@@ -5,6 +5,8 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.geometry import Polygon
+from compas.geometry import is_point_in_polygon_xy
 from compas.geometry import angle_vectors_signed
 from compas.geometry import add_vectors
 from compas.geometry import cross_vectors
@@ -366,6 +368,53 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
     if cw ^ clockwise:
         return Polyline(polyline[::-1])
     return polyline
+
+
+def get_polyline_segment_perpendicular_vector(polyline, segment_index):
+    """Get the vector perpendicular to a polyline segment. This vector points outside of the polyline.
+    The polyline must be closed.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to check. Must be closed.
+    segment_index : int
+        The index of the segment in the polyline.
+
+    Returns
+    -------
+    int
+        The index of the point in the polyline, or None if not found.
+    """
+    plane = Plane.from_points(polyline.points)
+    pt = polyline.lines[segment_index].point_at(0.5)
+    perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
+    point = pt + (perp_vector * 0.1)
+    if PlateJoint.is_point_in_polyline(point, polyline):
+        return Vector.from_start_end(point, pt)
+    return Vector.from_start_end(pt, point)
+
+
+def is_point_in_polyline(point, polyline):
+    """Check if a point is inside a polyline. Polyline must be closed.
+
+    Parameters
+    ----------
+    point : :class:`compas.geometry.Point`
+        The point to check.
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to check against.
+
+    Returns
+    -------
+    bool
+        True if the point is inside the polyline, False otherwise.
+    """
+    frame = Frame.from_points(*polyline.points[:3])
+    xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+    pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
+    pt = point.transformed(xform)
+    return TOL.is_close(pt[2], 0.0) and is_point_in_polygon_xy(pt, pgon)
 
 
 __all__ = [
