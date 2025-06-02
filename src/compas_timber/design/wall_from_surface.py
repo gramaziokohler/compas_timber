@@ -463,11 +463,11 @@ class SurfaceModel(object):
 
     def generate_plates(self):
         if self.sheeting_inside:
-            self._elements.append(Plate(self.outer_polyline, self.sheeting_inside))
+            self._elements.append(Plate.from_polyline_thickness(self.outer_polyline, self.sheeting_inside))
         if self.sheeting_outside:
             pline = self.outer_polyline.copy()
             pline.translate(self.frame.zaxis * (self.frame_depth + self.sheeting_outside))
-            self._elements.append(Plate(pline, self.sheeting_outside))
+            self._elements.append(Plate.from_polyline_thickness(pline, self.sheeting_outside))
         for window in self.windows:
             for plate in self.plate_elements:
                 window.apply_contour_to_plate(plate)

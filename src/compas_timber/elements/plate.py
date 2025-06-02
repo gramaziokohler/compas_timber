@@ -10,7 +10,6 @@ from compas.geometry import closest_point_on_plane
 from compas.geometry import distance_point_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
@@ -238,6 +237,20 @@ class Plate(TimberElement):
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
 
+    @property
+    def key(self):
+        # type: () -> int | None
+        return self.graph_node
+
+    @property
+    def frame(self):
+        if not self._frame:
+            self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
+            if is_polyline_clockwise(self.outline_a, self._frame.normal):
+                self._frame = Frame(self._frame.point, self._frame.xaxis, -self._frame.yaxis)
+        return self._frame
+        # flips the frame if the frame.point is at an interior corner
+
     # ==========================================================================
     # Alternate constructors
     # ==========================================================================
@@ -321,18 +334,6 @@ class Plate(TimberElement):
     #  methods
     # ==========================================================================
 
-    def add_feature(self, feature):
-        # type: (compas_timber.parts.Feature) -> None
-        """Adds a feature to the plate.
-
-        Parameters
-        ----------
-        feature : :class:`~compas_timber.parts.Feature`
-            The feature to be added.
-
-        """
-        self._features.append(feature)
-
     def shape(self):
         # type: () -> compas.geometry.Brep
         """The shape of the plate before other features area applied.
@@ -376,7 +377,9 @@ class Plate(TimberElement):
         # TODO: consider if Brep.from_curves(curves) is faster/better
         plate_geo = self.shape()
         if include_features:
-            for feature in self._features:
+            # Skip the first feature. This base feature is indirectly considered by self.shape() so not needed for visualization.
+            # it is however used by the BTLx logic.
+            for feature in self._features[1:]:
                 try:
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
@@ -437,38 +440,3 @@ class Plate(TimberElement):
 
         """
         return self.obb.to_mesh()
-
-    # ==========================================================================
-    # Features
-    # ==========================================================================
-
-    @reset_computed
-    def add_features(self, features):
-        """Adds one or more features to the plate.
-
-        Parameters
-        ----------
-        features : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be added.
-
-        """
-        if not isinstance(features, list):
-            features = [features]
-        self._features.extend(features)
-
-    @reset_computed
-    def remove_features(self, features=None):
-        """Removes a feature from the plate.
-
-        Parameters
-        ----------
-        feature : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be removed. If None, all features will be removed.
-
-        """
-        if features is None:
-            self._features = []
-        else:
-            if not isinstance(features, list):
-                features = [features]
-            self._features = [f for f in self._features if f not in features]
