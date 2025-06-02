@@ -10,6 +10,7 @@ from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_projected
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
@@ -19,7 +20,6 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import angle_vectors_projected
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -354,17 +354,17 @@ class Pocket(BTLxProcessing):
         yyaxis = Vector.from_start_end(start_point, back_point)
 
         # calculate the angle of the pocket
-        angle = angle_vectors_projected(ref_side.xaxis, xxaxis, ref_side.normal)
+        angle = angle_vectors_projected(ref_side.xaxis, xxaxis, ref_side.normal, deg=True)
 
         # x'-axis and y'-axis (see BTLx Documentation p.46)
         xaxis = ref_side.xaxis.rotated(math.radians(angle), ref_side.normal)
         yaxis = ref_side.yaxis.rotated(math.radians(angle), ref_side.normal)
 
         # calculate the inclination of the pocket
-        inclination = angle_vectors_projected(xaxis, xxaxis, yaxis)
+        inclination = angle_vectors_projected(xaxis, xxaxis, yaxis, deg=True)
 
         # calculate the slope of the pocket
-        slope = angle_vectors_projected(yaxis, yyaxis, xxaxis)
+        slope = angle_vectors_projected(yaxis, yyaxis, xxaxis, deg=True)
 
         # calculate internal_angle
         internal_angle = angle_vectors_signed(xxaxis, yyaxis, ref_side.normal, deg=True)
