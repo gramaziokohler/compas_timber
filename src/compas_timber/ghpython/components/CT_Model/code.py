@@ -1,6 +1,9 @@
+import Rhino
 from compas.scene import Scene
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
 from compas_timber.connections import JointTopology
@@ -39,7 +42,17 @@ class ModelComponent(component):
         # clear Nones
         Containers = [c for c in Containers if c is not None]
 
-        Model = TimberModel()
+        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
+        tol = None
+        if units == "m":
+            tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
+        elif units == "mm":
+            tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            self.AddRuntimeMessage(Error, "Unsupported unit: {}".format(units))
+            return
+
+        Model = TimberModel(tolerance=tol)
         debug_info = DebugInfomation()
 
         ##### Adding elements #####
