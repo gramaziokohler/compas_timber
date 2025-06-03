@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
+
 
 ## [0.16.2] 2025-05-07
 

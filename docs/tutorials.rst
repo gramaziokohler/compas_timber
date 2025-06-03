@@ -27,6 +27,7 @@ Then, the following sections explain in detail the concepts and tools:
     :maxdepth: 1
     :titlesonly:
 
+    tutorials/grasshopper/installation
     tutorials/grasshopper/workflow
     tutorials/grasshopper/attributes
     tutorials/grasshopper/beams
