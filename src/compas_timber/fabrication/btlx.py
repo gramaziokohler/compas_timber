@@ -292,6 +292,10 @@ class BTLxPart(object):
     ----------
     element : :class:`~compas_model.elements.Element`  # TODO: not really, make BTLx Element parent class
         The element object.
+    order_num : int
+        The order number of the part.
+    scale_factor : float, optional
+        The scale factor to apply to the part's dimensions. Used when the design unit is anything other than mm. Defaults to 1.0.
 
     Attributes
     ----------
@@ -299,8 +303,6 @@ class BTLxPart(object):
         The attributes of the BTLx part.
     element : :class:`~compas_model.elements.Element`
         The element object.
-    key : str
-        The key of the element object.
     length : float
         The length of the element.
     width : float
@@ -309,12 +311,6 @@ class BTLxPart(object):
         The height of the element.
     frame : :class:`~compas.geometry.Frame`
         The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
-    blank : :class:`~compas.geometry.Box`
-        The blank of the element.
-    blank_frame : :class:`~compas.geometry.Frame`
-        The frame of the blank.
-    blank_length : float
-        The blank length of the element.
     processings : list
         A list of the processings applied to the element.
 
