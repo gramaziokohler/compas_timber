@@ -10,7 +10,7 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
-from compas_timber.connections import WallJoint
+from compas_timber.connections import PlateJoint
 from compas_timber.errors import BeamJoiningError
 
 
@@ -398,11 +398,11 @@ class TimberModel(Model):
             # assume wall_a is the main, unless wall_b is explicitly marked as main
             # TODO: use the Rule system? this isn't good enough, a wall can totally be main and cross at the same time (in two different interactions)
             if wall_b.attributes.get("role", "cross") == "main":
-                WallJoint.create(self, wall_b, wall_a, topology=topology)
+                PlateJoint.create(self, wall_b, wall_a, topology=topology)
             else:
-                WallJoint.create(self, wall_a, wall_b, topology=topology)
+                PlateJoint.create(self, wall_a, wall_b, topology=topology)
 
     def _clear_wall_joints(self):
         for joint in self.joints:
-            if isinstance(joint, WallJoint):
+            if isinstance(joint, PlateJoint):
                 self.remove_joint(joint)

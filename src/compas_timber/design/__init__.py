@@ -10,8 +10,8 @@ from .workflow import guess_joint_topology_2beams
 from .workflow import set_default_joints
 
 from .wall_from_surface import SurfaceModel
-from .wall_populator import WallPopulator
-from .wall_populator import WallPopulatorConfigurationSet
+from .wall_populator import SlabPopulator
+from .wall_populator import SlabPopulatorConfigurationSet
 from .wall_populator import WallSelector
 from .wall_populator import AnyWallSelector
 from .wall_details import LConnectionDetailA
@@ -27,8 +27,8 @@ __all__ = [
     "FeatureDefinition",
     "DebugInfomation",
     "SurfaceModel",
-    "WallPopulator",
-    "WallPopulatorConfigurationSet",
+    "SlabPopulator",
+    "SlabPopulatorConfigurationSet",
     "WallSelector",
     "AnyWallSelector",
     "LConnectionDetailA",

@@ -1,4 +1,5 @@
 from compas.geometry import Box
+from compas.geometry import Vector
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -8,7 +9,7 @@ from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import closest_point_on_plane
 from compas.geometry import distance_point_plane
-from compas.geometry import is_point_behind_plane
+from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -186,7 +187,7 @@ class Plate(TimberElement):
     def frame(self):
         if not self._frame:
             self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
-            if is_point_behind_plane(self.outline_b[0], Plane.from_frame(self._frame)):
+            if dot_vectors(Vector.from_start_end(self.outline_a[0], self.outline_b[0]), self._frame.normal) < 0:
                 self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
         return self._frame
 
@@ -241,15 +242,6 @@ class Plate(TimberElement):
     def key(self):
         # type: () -> int | None
         return self.graph_node
-
-    @property
-    def frame(self):
-        if not self._frame:
-            self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
-            if is_polyline_clockwise(self.outline_a, self._frame.normal):
-                self._frame = Frame(self._frame.point, self._frame.xaxis, -self._frame.yaxis)
-        return self._frame
-        # flips the frame if the frame.point is at an interior corner
 
     # ==========================================================================
     # Alternate constructors

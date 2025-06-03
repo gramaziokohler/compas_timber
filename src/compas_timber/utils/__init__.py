@@ -22,6 +22,7 @@ from compas.geometry import Projection
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_line_line
+from compas.tolerance import TOL
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
@@ -390,7 +391,7 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
     pt = polyline.lines[segment_index].point_at(0.5)
     perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
     point = pt + (perp_vector * 0.1)
-    if PlateJoint.is_point_in_polyline(point, polyline):
+    if is_point_in_polyline(point, polyline):
         return Vector.from_start_end(point, pt)
     return Vector.from_start_end(pt, point)
 
@@ -426,4 +427,6 @@ __all__ = [
     "angle_vectors_projected",
     "is_polyline_clockwise",
     "correct_polyline_direction",
+    "get_polyline_segment_perpendicular_vector",
+    "is_point_in_polyline",
 ]

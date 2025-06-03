@@ -21,9 +21,8 @@ from .oligina import TOliGinaJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
-from .wall_joint import WallJoint
-from .wall_joint import InterfaceLocation
-from .wall_joint import InterfaceRole
+from .plate_joint import PlateJoint
+from .plate_joint import InterfaceRole
 
 __all__ = [
     "Joint",
@@ -50,7 +49,7 @@ __all__ = [
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
-    "WallJoint",
+    "PlateJoint",
     "InterfaceLocation",
     "InterfaceRole",
 ]
