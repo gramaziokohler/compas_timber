@@ -35,7 +35,7 @@ def _get_package_name() -> str:
 
     name = pyproject_data.get("project", {}).get("name", None)
     if not name:
-        raise Exit("Failed to get package name from pyproject.toml. Please provide a version number.")
+        raise Exit("Failed to get package name from pyproject.toml.")
     return name
 
 
@@ -44,7 +44,7 @@ def update_gh_header(ctx, version=None):
     """Update the minimum version header of all CPython Grasshopper components."""
     version = version or _get_version_from_toml()
     package_name = _get_package_name()
-    new_header = f"#r: {package_name}>={version}"
+    new_header = f"# r: {package_name}>={version}"
 
     for file in Path(ctx.ghuser_cpython.source_dir).glob("**/code.py"):
         try:
