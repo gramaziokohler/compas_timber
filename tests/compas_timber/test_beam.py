@@ -1,12 +1,15 @@
 import copy
 
 import pytest
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import close
 
-from compas_timber.elements.beam import Beam
+from compas_timber.elements import Beam
+from compas_timber.fabrication import JackRafterCut
 
 
 @pytest.fixture
@@ -77,3 +80,29 @@ def test_reset_computed(mocker):
     b.add_features(mocker.Mock())
 
     assert b._geometry is None
+
+
+def test_serialization_beam_with_joinery_processings():
+    beam = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2)
+
+    cut = JackRafterCut()
+
+    beam.add_feature(cut)
+
+    deserialized = json_loads(json_dumps(beam))
+
+    assert isinstance(deserialized, Beam)
+    assert len(deserialized.features) == 0
+
+
+def test_serialization_beam_with_nonjoinery_processings():
+    beam = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2)
+
+    cut = JackRafterCut(is_joinery=False)
+
+    beam.add_feature(cut)
+
+    deserialized = json_loads(json_dumps(beam))
+
+    assert isinstance(deserialized, Beam)
+    assert len(deserialized.features) == 1
