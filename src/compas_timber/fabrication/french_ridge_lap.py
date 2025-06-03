@@ -428,6 +428,23 @@ class FrenchRidgeLap(BTLxProcessing):
             subtraction_volume += Brep.from_cylinder(drill_cylinder)
         return subtraction_volume
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        # type: (float) -> None
+        self.start_x *= factor
+        self.drillhole_diam *= factor
+
 
 class FrenchRidgeLapParams(BTLxProcessingParams):
     """A class to store the parameters of a French Ridge Lap feature.
