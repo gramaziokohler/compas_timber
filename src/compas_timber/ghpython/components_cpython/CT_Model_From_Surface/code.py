@@ -12,6 +12,7 @@ from Rhino.Geometry import Vector3d as RhinoVector
 
 from compas_timber.design import DebugInfomation
 from compas_timber.design import SurfaceModel
+from compas_timber.ghpython import error
 
 
 class SurfaceModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
@@ -35,10 +36,10 @@ class SurfaceModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         tol = None
         if units == "m":
             tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
-        elif units == "cm":
-            tol = Tolerance(unit="CM", absolute=1e-4, relative=1e-4)
         elif units == "mm":
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            error(ghenv.Component, f"Unsupported unit: {units}")
 
         if not stud_spacing:
             ghenv.Component.AddRuntimeMessage(
