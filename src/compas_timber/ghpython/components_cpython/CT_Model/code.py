@@ -16,6 +16,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.model import TimberModel
+from compas_timber.ghpython import error
 from compas_timber.ghpython import warning
 
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
@@ -58,10 +59,11 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         tol = None
         if units == "m":
             tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
-        elif units == "cm":
-            tol = Tolerance(unit="CM", absolute=1e-4, relative=1e-4)
         elif units == "mm":
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            error(self.component, f"Unsupported unit: {units}")
+            return
 
         Model = TimberModel(tolerance=tol)
         debug_info = DebugInfomation()

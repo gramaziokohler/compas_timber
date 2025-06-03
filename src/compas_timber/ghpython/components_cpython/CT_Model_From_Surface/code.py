@@ -40,6 +40,7 @@ class SurfaceModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
         else:
             error(ghenv.Component, f"Unsupported unit: {units}")
+            return
 
         if not stud_spacing:
             ghenv.Component.AddRuntimeMessage(
