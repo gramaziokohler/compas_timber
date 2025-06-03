@@ -13,6 +13,7 @@ from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Pocket
+from compas_timber.fabrication import MachiningLimits
 from compas_timber.connections import LapJoint
 
 
@@ -271,14 +272,7 @@ def test_pocket_with_5_faces(beam):
 
 
 def test_pocket_scaled():
-    machining_limits = {
-        "FaceLimitedBack": False,
-        "FaceLimitedStart": True,
-        "FaceLimitedBottom": True,
-        "FaceLimitedTop": False,
-        "FaceLimitedEnd": True,
-        "FaceLimitedFront": False,
-    }
+    limits = MachiningLimits().limits
 
     instance = Pocket(
         2289.328,
@@ -294,7 +288,7 @@ def test_pocket_scaled():
         90.0,
         50.0,
         90.0,
-        machining_limits,
+        machining_limits=limits,
         ref_side_index=0,
     )
 
