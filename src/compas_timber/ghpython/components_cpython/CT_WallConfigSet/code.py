@@ -24,8 +24,28 @@ class WallPopulatorConfigSetComponent(Grasshopper.Kernel.GH_ScriptInstance):
         custom_dimensions: System.Collections.Generic.List[object],
         joint_overrides: System.Collections.Generic.List[object],
     ):
-        if not item_input_valid_cpython(ghenv, stud_spacing, "Stud Spacing") or not item_input_valid_cpython(ghenv, beam_width, "Beam Width"):
-            return
+        """default values for stud spacing and beam width"""
+        if not item_input_valid_cpython(ghenv, stud_spacing, "Stud Spacing"):
+            unit_system = Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem
+            if unit_system == Rhino.UnitSystem.Meters:
+                stud_spacing = 0.625
+            elif unit_system == Rhino.UnitSystem.Centimeters:
+                stud_spacing = 62.5
+            elif unit_system == Rhino.UnitSystem.Millimeters:
+                stud_spacing = 625.0
+            else:
+                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "No default stud_spacing for freedom units, silly billy!")
+
+        if not item_input_valid_cpython(ghenv, beam_width, "Beam Width"):
+            unit_system = Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem
+            if unit_system == Rhino.UnitSystem.Meters:
+                beam_width = 0.06
+            elif unit_system == Rhino.UnitSystem.Centimeters:
+                beam_width = 6.0
+            elif unit_system == Rhino.UnitSystem.Millimeters:
+                beam_width = 60.0
+            else:
+                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, "No default beam_width for freedom units, silly billy!")
 
         dims = {}
         for item in custom_dimensions:
