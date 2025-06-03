@@ -372,7 +372,7 @@ class Lap(BTLxProcessing):
                    ref_side_index=ref_side_index)
 
     @classmethod
-    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None):
+    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None, **kwargs):
         """Construct a Lap feature from a volume and a Beam.
 
         Parameters
@@ -473,21 +473,24 @@ class Lap(BTLxProcessing):
         else:
             machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
 
-        return cls(orientation,
-                   start_x,
-                   start_y,
-                   angle,
-                   inclination,
-                   slope,
-                   length,
-                   width,
-                   depth,
-                   lead_angle_parallel,
-                   lead_angle,
-                   lead_inclination_parallel,
-                   lead_inclination,
-                   machining_limits=machining_limits,
-                   ref_side_index=ref_side_index)
+        return cls(
+            orientation,
+            start_x,
+            start_y,
+            angle,
+            inclination,
+            slope,
+            length,
+            width,
+            depth,
+            lead_angle_parallel,
+            lead_angle,
+            lead_inclination_parallel,
+            lead_inclination,
+            machining_limits=machining_limits,
+            ref_side_index=ref_side_index,
+            **kwargs
+        )
 
     @classmethod
     def from_shapes_and_element(cls, volume, element, **kwargs):

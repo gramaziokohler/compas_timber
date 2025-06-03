@@ -177,7 +177,7 @@ class DoubleCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, ref_side_index=None):
+    def from_planes_and_beam(cls, planes, beam, ref_side_index=None, **kwargs):
         """Create a DoubleCut instance from two cutting planes and the beam they should cut.
 
         Parameters
@@ -230,7 +230,7 @@ class DoubleCut(BTLxProcessing):
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
 
         # TODO: evaluate if the planes should be cached for use in geometry creation.
-        return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index)
+        return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index, **kwargs)
 
 
     @staticmethod
