@@ -596,7 +596,7 @@ document.write(`
 <h1>Pocket</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.Pocket">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">Pocket</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0284616/src/compas_timber/fabrication/pocket.py#L29"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">Pocket</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/a7e1228/src/compas_timber/fabrication/pocket.py#L29"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.fabrication.BTLxProcessing.html#compas_timber.fabrication.BTLxProcessing" title="compas_timber.fabrication.btlx.BTLxProcessing"><code class="xref py py-class docutils literal notranslate"><span class="pre">BTLxProcessing</span></code></a></p>
 <p>Represents a Pocket feature to be made on a beam.</p>
 <dl class="field-list simple">
@@ -645,7 +645,10 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.from_volume_and_element.html#compas_timber.fabrication.Pocket.from_volume_and_element" title="compas_timber.fabrication.Pocket.from_volume_and_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_volume_and_element</span></code></a></p></td>
 <td><p>Construct a Pocket feature from a volume and a TimberElement.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.volume_from_params_and_element.html#compas_timber.fabrication.Pocket.volume_from_params_and_element" title="compas_timber.fabrication.Pocket.volume_from_params_and_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">volume_from_params_and_element</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.scale.html#compas_timber.fabrication.Pocket.scale" title="compas_timber.fabrication.Pocket.scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scale</span></code></a></p></td>
+<td><p>Scale the parameters of this processing by a given factor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.volume_from_params_and_element.html#compas_timber.fabrication.Pocket.volume_from_params_and_element" title="compas_timber.fabrication.Pocket.volume_from_params_and_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">volume_from_params_and_element</span></code></a></p></td>
 <td><p>Calculates the subtracting volume from the machining parameters in this instance and the given element, ensuring correct face orientation.</p></td>
 </tr>
 </tbody>
@@ -668,16 +671,19 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.from_jsonstring.html#compas_timber.fabrication.Pocket.from_jsonstring" title="compas_timber.fabrication.Pocket.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.sha256.html#compas_timber.fabrication.Pocket.sha256" title="compas_timber.fabrication.Pocket.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.scaled.html#compas_timber.fabrication.Pocket.scaled" title="compas_timber.fabrication.Pocket.scaled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaled</span></code></a></p></td>
+<td><p>Returns a new instance of the processing with the parameters scaled by a given factor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.sha256.html#compas_timber.fabrication.Pocket.sha256" title="compas_timber.fabrication.Pocket.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.to_json.html#compas_timber.fabrication.Pocket.to_json" title="compas_timber.fabrication.Pocket.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.to_json.html#compas_timber.fabrication.Pocket.to_json" title="compas_timber.fabrication.Pocket.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.to_jsonstring.html#compas_timber.fabrication.Pocket.to_jsonstring" title="compas_timber.fabrication.Pocket.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.to_jsonstring.html#compas_timber.fabrication.Pocket.to_jsonstring" title="compas_timber.fabrication.Pocket.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.validate_data.html#compas_timber.fabrication.Pocket.validate_data" title="compas_timber.fabrication.Pocket.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Pocket.validate_data.html#compas_timber.fabrication.Pocket.validate_data" title="compas_timber.fabrication.Pocket.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>

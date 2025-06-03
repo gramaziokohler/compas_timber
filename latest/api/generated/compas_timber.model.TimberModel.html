@@ -596,7 +596,7 @@ document.write(`
 <h1>TimberModel</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0284616/src/compas_timber/model/model.py#L17"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/a7e1228/src/compas_timber/model/model.py#L20"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Represents a timber model containing different elements such as walls, beams and joints.</p>
 <p>The timber model allows expressing the hierarchy and interactions between the different elements it contains.</p>
@@ -615,6 +615,8 @@ document.write(`
 </dd>
 <dt><strong>topologies</strong><span class="classifier">list(dict)</span></dt><dd><p>A list of JointTopology for model. dict is: {“detected_topo”: detected_topo, “beam_a_key”: beam_a_key, “beam_b_key”:beam_b_key}
 See <a class="reference internal" href="compas_timber.connections.JointTopology.html#compas_timber.connections.JointTopology" title="compas_timber.connections.JointTopology"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointTopology</span></code></a>.</p>
+</dd>
+<dt><strong>tolerance</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.tolerance.Tolerance.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tolerance</span></code></a></span></dt><dd><p>The tolerance configuration used for this model. TOL if none provided.</p>
 </dd>
 <dt><strong>volume</strong><span class="classifier">float</span></dt><dd><p>The calculated total volume of the model.</p>
 </dd>

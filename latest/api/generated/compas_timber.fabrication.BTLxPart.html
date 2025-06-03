@@ -596,13 +596,17 @@ document.write(`
 <h1>BTLxPart</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.BTLxPart">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxPart</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0284616/src/compas_timber/fabrication/btlx.py#L274"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxPart</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/a7e1228/src/compas_timber/fabrication/btlx.py#L288"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Class representing a BTLx part. This acts as a wrapper for an Element object.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
 <dt><strong>element</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>  # TODO: not really, make BTLx Element parent class</span></dt><dd><p>The element object.</p>
+</dd>
+<dt><strong>order_num</strong><span class="classifier">int</span></dt><dd><p>The order number of the part.</p>
+</dd>
+<dt><strong>scale_factor</strong><span class="classifier">float, optional</span></dt><dd><p>The scale factor to apply to the part’s dimensions. Used when the design unit is anything other than mm. Defaults to 1.0.</p>
 </dd>
 </dl>
 </dd>
@@ -612,8 +616,6 @@ document.write(`
 </dd>
 <dt><strong>element</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></span></dt><dd><p>The element object.</p>
 </dd>
-<dt><strong>key</strong><span class="classifier">str</span></dt><dd><p>The key of the element object.</p>
-</dd>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>The length of the element.</p>
 </dd>
 <dt><strong>width</strong><span class="classifier">float</span></dt><dd><p>The width of the element.</p>
@@ -621,12 +623,6 @@ document.write(`
 <dt><strong>height</strong><span class="classifier">float</span></dt><dd><p>The height of the element.</p>
 </dd>
 <dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.</p>
-</dd>
-<dt><strong>blank</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>The blank of the element.</p>
-</dd>
-<dt><strong>blank_frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of the blank.</p>
-</dd>
-<dt><strong>blank_length</strong><span class="classifier">float</span></dt><dd><p>The blank length of the element.</p>
 </dd>
 <dt><strong>processings</strong><span class="classifier">list</span></dt><dd><p>A list of the processings applied to the element.</p>
 </dd>
