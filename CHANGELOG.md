@@ -18,9 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
-* Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
 
 ### Removed
+
+* Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
 
 
 ## [0.16.2] 2025-05-07
