@@ -300,7 +300,7 @@ class JackRafterCut(BTLxProcessing):
         return Plane(cutting_plane.point, plane_normal)
 
     def scale(self, factor):
-        """Scale the parameters of the this processing by a given factor.
+        """Scale the parameters of this processing by a given factor.
 
         Note
         ----
@@ -366,6 +366,12 @@ class JackRafterCutProxy(object):
         The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
 
     """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
 
     def __init__(self, plane, beam, ref_side_index=0):
         self.plane = plane

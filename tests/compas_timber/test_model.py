@@ -200,3 +200,69 @@ def test_model_tolerance_provided():
     model = TimberModel(tolerance=meters)
 
     assert model.tolerance == meters
+
+
+def test_copy_model_with_processing_jackraftercut_proxy():
+    from compas_timber.fabrication import JackRafterCutProxy
+    from compas_timber.fabrication import JackRafterCut
+
+    # Create a TimberModel instance
+    model = TimberModel()
+
+    # Add a beam to the model
+    height, width, length = 200.11, 100.05, 2001.12
+    frame = Frame(point=Point(x=390.000, y=780.000, z=0.000), xaxis=Vector(x=0.989, y=0.145, z=0.000), yaxis=Vector(x=-0.145, y=0.989, z=-0.000))
+    beam = Beam(frame, length=length, width=width, height=height)
+    model.add_element(beam)
+
+    cutting_plane = Frame(point=Point(x=627.517, y=490.000, z=-187.681), xaxis=Vector(x=0.643, y=0.000, z=0.766), yaxis=Vector(x=0.000, y=1.000, z=-0.000))
+
+    # Create a processing proxy for the model
+    beam.add_feature(JackRafterCutProxy.from_plane_and_beam(cutting_plane, beam))
+
+    copied_model = model.copy()
+
+    copied_beams = list(copied_model.beams)
+    assert len(copied_beams) == 1
+    assert len(copied_beams[0].features) == 1
+    assert isinstance(copied_beams[0].features[0], JackRafterCut)
+
+
+def test_error_deepcopy_feature():
+    from copy import deepcopy
+    from compas_timber.errors import FeatureApplicationError
+
+    error = FeatureApplicationError("mama", "papa", "dog")
+
+    error = deepcopy(error)
+
+    assert error.feature_geometry == "mama"
+    assert error.element_geometry == "papa"
+    assert error.message == "dog"
+
+
+def test_error_deepcopy_fastener():
+    from copy import deepcopy
+    from compas_timber.errors import FastenerApplicationError
+
+    error = FastenerApplicationError("mama", "papa", "dog")
+
+    error = deepcopy(error)
+
+    assert error.elements == "mama"
+    assert error.fastener == "papa"
+    assert error.message == "dog"
+
+
+def test_error_deepcopy_joint():
+    from copy import deepcopy
+    from compas_timber.errors import BeamJoiningError
+
+    error = BeamJoiningError("mama", "papa", "dog", "cucumber")
+
+    error = deepcopy(error)
+
+    assert error.beams == "mama"
+    assert error.joint == "papa"
+    assert error.debug_info == "dog"
+    assert error.debug_geometries == "cucumber"
