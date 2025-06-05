@@ -807,24 +807,6 @@ class AlignmentType(object):
     CENTER = "center"
 
 
-class ToolPositionType(object):
-    """Enum for the tool position of the cut.
-
-    Attributes
-    ----------
-    LEFT : literal("left")
-        The tool is positioned on the left side of the element.
-    CENTER : literal("center")
-        The tool is positioned in the center of the element.
-    RIGHT : literal("right")
-        The tool is positioned on the right side of the element.
-    """
-
-    LEFT = "left"
-    CENTER = "center"
-    RIGHT = "right"
-
-
 class Contour(Data):
     """Represens the generic contour for specific free contour processings.
 
