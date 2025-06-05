@@ -1,12 +1,13 @@
 import math
 from collections import OrderedDict
 
+from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Rotation
-from compas.geometry import Vector
+from compas.geometry import Polyline
+from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
@@ -14,10 +15,9 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
+from .btlx import AlignmentType
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
-from .btlx import OrientationType
-from .btlx import ToolPositionType
 
 
 class LongitudinalCut(BTLxProcessing):
@@ -45,7 +45,7 @@ class LongitudinalCut(BTLxProcessing):
         The angle at the start of the cut in degrees. 0.1 < angle_start < 179.9.
     angle_end : float
         The angle at the end of the cut in degrees. 0.1 < angle_end < 179.9.
-    tool_position : :class:`~compas_timber.fabrication.ToolPositionType`
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'.
 
     """
@@ -80,7 +80,7 @@ class LongitudinalCut(BTLxProcessing):
         depth=0.0,
         angle_start=90.0,
         angle_end=90.0,
-        tool_position=ToolPositionType.LEFT,
+        tool_position=AlignmentType.LEFT,
         **kwargs,
     ):
         super(LongitudinalCut, self).__init__(**kwargs)
@@ -222,7 +222,7 @@ class LongitudinalCut(BTLxProcessing):
 
     @tool_position.setter
     def tool_position(self, tool_position):
-        if tool_position not in [ToolPositionType.LEFT, ToolPositionType.CENTER, ToolPositionType.RIGHT]:
+        if tool_position not in [AlignmentType.LEFT, AlignmentType.CENTER, AlignmentType.RIGHT]:
             raise ValueError("tool_position must be one of 'left', 'center', or 'right'.")
         self._tool_position = tool_position
 
@@ -231,7 +231,9 @@ class LongitudinalCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, start_x=None, length=None, ref_side_index=0, **kwargs):
+    def from_plane_and_beam(
+        cls, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None, **kwargs
+    ):
         """Create a LongitudinalCut instance from a cutting plane and the beam it should cut.
 
         Parameters
@@ -240,30 +242,41 @@ class LongitudinalCut(BTLxProcessing):
             The cutting plane.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
+        start_x : float, optional
+            The start x-coordinate of the cut in parametric space of the reference side. Default is 0.0.
+        length : float, optional
+            The length of the cut in parametric space of the reference side. Default is the minimum length so that the cut goes through the entire beam..
+        depth : float, optional
+            The depth of the cut in parametric space of the reference side. Default is the minimum depth so that the cut goes through the entire beam.
+        angle_start : float, optional
+            The chamfered angle at the start of the cut in degrees. Default is 90.0.
+        angle_end : float, optional
+            The chanfered angle at the end of the cut in degrees. Default is 90.0.
+        tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+            The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Default is 'left'.
         ref_side_index : int, optional
-            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Longitudinal`
+            The reference side index of the beam to be cut. The default ref_side_index is calculated based on the angle between the plane's normal and each ref_side's normal.
 
         """
-        # type: (Plane | Frame, Beam, int) -> Longitudinal
+        # type: (Plane | Frame, Beam, float, float, float, float, float, str, int)  -> LongitudinalCut
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
 
-        ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
-        start_edge = Line.from_point_and_vector(ref_side.point, ref_side.yaxis)
-        front_edge = Line.from_point_and_vector(ref_side.point, -ref_side.zaxis)
+        # get the reference side index if not provided
+        if ref_side_index is None:
+            ref_side_index = cls._get_default_ref_side_index(plane, beam)
+
+        ref_side = beam.ref_sides[ref_side_index]
 
         # calculate start_x
         start_x = 0.0 if start_x is None else start_x
 
         # calculate start_y
+        start_edge = Line.from_point_and_vector(ref_side.point, ref_side.yaxis)
         point_start_y = intersection_line_plane(start_edge, plane)
         if point_start_y is None:
-            raise ValueError("Plane does not intersect with beam.")  # TODO: update error message
-        start_y = distance_point_point(start_edge.point, point_start_y)
+            raise ValueError("Plane is parallel to the ref_side. Consider trying a different ref_side_index")
+        start_y = distance_point_point(ref_side.point, point_start_y)
 
         # calculate inclination
         inclination = angle_vectors_signed(ref_side.zaxis, plane.normal, ref_side.xaxis, deg=True)
@@ -271,33 +284,37 @@ class LongitudinalCut(BTLxProcessing):
         # calculate length
         length = beam.length - start_x if length is None else length
 
-        # calculate start_limited
-        start_limited = False if start_x == 0.0 else True
-
-        # calculate end_limited
-        end_limited = False if length + start_x >= beam.length else True
+        # calculate start_limited and end_limited
+        start_limited = start_x != 0.0
+        end_limited = length + start_x < beam.length
 
         # calculate depth
-        point_depth = intersection_line_plane(front_edge, plane)
-        if point_depth is None:
-            raise ValueError("Plane does not intersect with beam.")  # TODO: update error message
-        depth = distance_point_point(ref_side.point, point_depth)
+        if inclination > 0:
+            max_depth = start_y * math.tan(math.radians(inclination))
+        else:
+            max_depth = (beam.width - start_y) * math.tan(math.radians(-inclination))
+        depth = max_depth if max_depth is None else depth
+        depth_limited = depth < max_depth
 
         return cls(
-            start_x=start_x,
-            start_y=start_y,
-            inclination=inclination,
-            start_limited=start_limited,
-            end_limited=end_limited,
-            length=length,
-            depth=depth,
+            start_x,
+            start_y,
+            inclination,
+            start_limited,
+            end_limited,
+            length,
+            depth,
+            depth_limited,
+            angle_start,
+            angle_end,
+            tool_position=tool_position,
             ref_side_index=ref_side_index,
             **kwargs,
         )
 
     @classmethod
     def from_shapes_and_element(cls, plane, element, **kwargs):
-        """Construct a drilling process from a shape and a beam.
+        """Construct a Longitudinal Cut process from a shape and a beam.
 
         Parameters
         ----------
@@ -308,13 +325,42 @@ class LongitudinalCut(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas_timber.fabrication.JackRafterCut`
-            The constructed Jack Rafter Cut process.
+        :class:`compas_timber.fabrication.LongitudinalCut`
+            The constructed Logitudinal Cut process.
 
         """
         if isinstance(plane, list):
             plane = plane[0]
         return cls.from_plane_and_beam(plane, element, **kwargs)
+
+    @staticmethod
+    def _get_default_ref_side_index(plane, beam):
+        """Get the default reference side index for the given cutting plane and beam.
+        This method calculates the angle between the plane's normal and each reference side's normal,
+        and returns the index of the reference side with the smallest angle.
+
+        # TODO: This duplicates logic from `connections.utilities._beam_ref_side_incidence_with_vector`.
+        # TODO: Should it be moved from the connections package and be reused since the function is connection-agnostic.
+
+        Parameters
+        ----------
+        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+            The cutting plane.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        int
+            The default ref_side_index for the given cutting plane and beam.
+
+        """
+        # type: (Plane | Frame, Beam) -> int
+        angles = {}
+        for index, ref_side in enumerate(beam.ref_sides):
+            angle = angle_vectors(plane.normal, ref_side.normal)
+            angles[index] = angle
+        return min(angles, key=angles.get)
 
     ########################################################################
     # Methods
@@ -342,18 +388,15 @@ class LongitudinalCut(BTLxProcessing):
 
         """
         # type: (Brep, Beam) -> Brep
-        cutting_plane = self.plane_from_params_and_beam(beam)
-        try:
-            return geometry.trimmed(cutting_plane)
-        except BrepTrimmingError:
-            raise FeatureApplicationError(
-                cutting_plane,
-                geometry,
-                "The cutting plane does not intersect with beam geometry.",
-            )
+        neg_vol = self.volume_from_params_and_beam(beam)
 
-    def plane_from_params_and_beam(self, beam):
-        """Calculates the cutting plane from the machining parameters in this instance and the given beam
+        try:
+            return geometry - neg_vol
+        except IndexError:
+            raise FeatureApplicationError(neg_vol, geometry, "The boolean difference between the cutting volume and the beam geometry failed.")
+
+    def _frame_from_params_and_beam(self, beam):
+        """Calculates the cutting plane frame from the machining parameters in this instance and the given beam
 
         Parameters
         ----------
@@ -362,38 +405,73 @@ class LongitudinalCut(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Plane`
-            The cutting plane.
+        :class:`compas.geometry.Frame`
+            The cutting plane frame.
 
         """
-        # type: (Beam) -> Plane
-        assert self.angle is not None
+        # type: (Beam) -> Frame
+        assert self.start_x is not None
+        assert self.start_y is not None
         assert self.inclination is not None
 
-        # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, 0.0)
-        cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+        p_origin = ref_side.point_at(self.start_x, self.start_y)
 
-        # normal pointing towards xaxis so just need the delta
-        if self.orientation == OrientationType.END:
-            horizontal_angle = math.radians(90 - self.angle)
-            vertical_angle = math.radians(90 - self.inclination)
-        else:
-            horizontal_angle = math.radians(self.angle - 90)
-            vertical_angle = math.radians(self.inclination - 90)
+        frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
+        frame.rotate(math.radians(self.inclination), ref_side.xaxis, p_origin)
 
-        rot_a = Rotation.from_axis_and_angle(cutting_plane.zaxis, horizontal_angle, point=p_origin)
-        rot_b = Rotation.from_axis_and_angle(cutting_plane.yaxis, vertical_angle, point=p_origin)
+        if self.inclination < 0:
+            frame.xaxis = -frame.xaxis
+        return frame
 
-        cutting_plane.transform(rot_a * rot_b)
-        # for simplicity, we always start with normal pointing towards xaxis.
-        # if start is cut, we need to flip the normal
-        if self.orientation == OrientationType.END:
-            plane_normal = cutting_plane.xaxis
-        else:
-            plane_normal = -cutting_plane.xaxis
-        return Plane(cutting_plane.point, plane_normal)
+    def volume_from_params_and_beam(self, beam):
+        """Calculates the negative volume representing the cut from the machining parameters in this instance and the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The negative volume representing the cut.
+
+        """
+        # type: (Beam) -> Brep
+        assert self.start_y is not None
+        assert self.length is not None
+        assert self.inclination is not None
+        assert self.depth is not None
+        assert self.angle_start is not None
+        assert self.angle_end is not None
+
+        frame = self._frame_from_params_and_beam(beam)
+
+        # calculate the start and end points of the top edge of the cut
+        p_origin = frame.point
+        length = self.length if self.inclination > 0 else -self.length
+        p_end = p_origin + frame.xaxis * length
+
+        # calculate the start and end points of the bottom edge of the cut
+        start_vector = frame.xaxis.rotated(math.radians(self.angle_start), frame.normal, p_origin)
+        p_angle_start = p_origin - start_vector * self.depth / (math.sin(math.radians(self.inclination)))
+
+        end_vector = frame.xaxis.rotated(math.radians(180 - self.angle_end), frame.normal, p_end)
+        p_angle_end = p_end - end_vector * self.depth / (math.sin(math.radians(self.inclination)))
+
+        # create a polyline that represents the cut
+        polyline = Polyline([p_origin, p_angle_start, p_angle_end, p_end, p_origin])
+
+        # get the extrusion length based on the inclination
+        start_y = self.start_y if self.inclination > 0 else beam.width - self.start_y
+        extrusion_length = math.sin(math.radians(self.inclination)) * start_y
+
+        # create the negative volume by extruding the polyline along the frame's normal
+        neg_vol = Brep.from_extrusion(polyline, frame.normal * extrusion_length)
+        if TOL.is_negative(neg_vol.volume):
+            neg_vol.flip()
+        return neg_vol
 
 
 class LongitudinalCutParams(BTLxProcessingParams):
@@ -403,6 +481,7 @@ class LongitudinalCutParams(BTLxProcessingParams):
     ----------
     instance : :class:`~compas_timber.fabrication.LongitudinalCut`
         The instance of the Longitudinal Cut feature.
+
     """
 
     def __init__(self, instance):
@@ -416,6 +495,7 @@ class LongitudinalCutParams(BTLxProcessingParams):
         -------
         dict
             The parameters of the Longitudinal Cut feature as a dictionary.
+
         """
         # type: () -> OrderedDict
         result = OrderedDict()
@@ -429,12 +509,18 @@ class LongitudinalCutParams(BTLxProcessingParams):
         result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
         result["AngleStart"] = "{:.{prec}f}".format(float(self._instance.angle_start), prec=TOL.precision)
         result["AngleEnd"] = "{:.{prec}f}".format(float(self._instance.angle_end), prec=TOL.precision)
-        result["ToolPosition"] = self._instance.tool_position.value
         return result
 
+    @property
+    def header_attributes(self):
+        # Returns the header attributes for the Longitudinal Cut feature
+        attrs = super().header_attributes.copy()
+        attrs["ToolPosition"] = self._instance.tool_position
+        return attrs
 
-class JackRafterCutProxy(object):
-    """This object behaves like a JackRafterCut except it only calculates the machining parameters once unproxified.
+
+class LongitudinalCutProxy(object):
+    """This object behaves like a LongitudinalCut except it only calculates the machining parameters once unproxified.
     Can also be used to defer the creation of the processing instance until it is actually needed.
 
     Until then, it can be used to visualize the machining operation.
@@ -446,8 +532,20 @@ class JackRafterCutProxy(object):
         The cutting plane.
     beam : :class:`~compas_timber.elements.Beam`
         The beam that is cut by this instance.
+    start_x : float, optional
+        The start x-coordinate of the cut in parametric space of the reference side. Default is 0.0.
+    length : float, optional
+        The length of the cut in parametric space of the reference side. Default is the minimum length so that the cut goes through the entire beam.
+    depth : float, optional
+        The depth of the cut in parametric space of the reference side. Default is the minimum depth so that the cut goes through the entire beam.
+    angle_start : float, optional
+        The chamfered angle at the start of the cut in degrees. Default is 90.0.
+    angle_end : float, optional
+        The chamfered angle at the end of the cut in degrees. Default is 90.0.
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+        The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Default is 'left'.
     ref_side_index : int, optional
-        The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+        The reference side index of the beam to be cut. The default ref_side_index is calculated based on the angle between the plane's normal and each ref_side's normal.
 
     """
 
@@ -457,9 +555,15 @@ class JackRafterCutProxy(object):
         # for now just return the unproxified version
         return self.unproxified()
 
-    def __init__(self, plane, beam, ref_side_index=0):
+    def __init__(self, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None):
         self.plane = plane
         self.beam = beam
+        self.start_x = start_x
+        self.length = length
+        self.depth = depth
+        self.angle_start = angle_start
+        self.angle_end = angle_end
+        self.tool_position = tool_position
         self.ref_side_index = ref_side_index
         self._processing = None
 
@@ -468,16 +572,29 @@ class JackRafterCutProxy(object):
 
         Returns
         -------
-        :class:`~compas_timber.fabrication.JackRafterCut`
+        :class:`~compas_timber.fabrication.LongitudinalCut`
+            The unproxified LongitudinalCut instance.
 
         """
         if not self._processing:
-            self._processing = JackRafterCut.from_plane_and_beam(self.plane, self.beam, self.ref_side_index)
+            self._processing = LongitudinalCut.from_plane_and_beam(
+                self.plane,
+                self.beam,
+                self.start_x,
+                self.length,
+                self.depth,
+                self.angle_start,
+                self.angle_end,
+                self.tool_position,
+                self.ref_side_index,
+            )
         return self._processing
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
-        """Create a JackRafterCutProxy instance from a cutting plane and the beam it should cut.
+    def from_plane_and_beam(
+        cls, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None, **kwargs
+    ):
+        """Create a LongitudinalCutProxy instance from a cutting plane and the beam it should cut.
 
         Parameters
         ----------
@@ -485,18 +602,33 @@ class JackRafterCutProxy(object):
             The cutting plane.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
+        start_x : float, optional
+            The start x-coordinate of the cut in parametric space of the reference side. Default is 0.0.
+        length : float, optional
+            The length of the cut in parametric space of the reference side. Default is the minimum length so that the cut goes through the entire beam.
+        depth : float, optional
+            The depth of the cut in parametric space of the reference side. Default is the minimum depth so that the cut goes through the entire beam.
+        angle_start : float, optional
+            The chamfered angle at the start of the cut in degrees. Default is 90.0.
+        angle_end : float, optional
+            The chamfered angle at the end of the cut in degrees. Default is 90.0.
+        tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+            The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Default is 'left'.
         ref_side_index : int, optional
-            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+            The reference side index of the beam to be cut. The default ref_side_index is calculated based on the angle between the plane's normal and each ref_side's normal.
 
         Returns
         -------
-        :class:`~compas_timber.fabrication.JackRafterCutProxy`
+        :class:`~compas_timber.fabrication.LongitudinalCutProxy`
 
         """
-        return cls(plane, beam, ref_side_index)
+        if isinstance(plane, Frame):
+            plane = Plane.from_frame(plane)
+        return cls(plane, beam, start_x, length, depth, angle_start, angle_end, tool_position, ref_side_index)
 
     def apply(self, geometry, _):
         """Apply the feature to the beam geometry.
+        The resulting geometry might differ from the unproxified version, based on the parameters set in this instance.
 
         Parameters
         ----------
@@ -513,19 +645,13 @@ class JackRafterCutProxy(object):
         Returns
         -------
         :class:`~compas.geometry.Brep`
-            The resulting geometry after processing
+            The resulting geometry after processing.
 
         """
-        # type: (Brep, Beam) -> Brep
-        cutting_plane = self.plane
         try:
-            return geometry.trimmed(cutting_plane)
+            return geometry.trimmed(self.plane)
         except BrepTrimmingError:
-            raise FeatureApplicationError(
-                cutting_plane,
-                geometry,
-                "The cutting plane does not intersect with beam geometry.",
-            )
+            raise FeatureApplicationError(self.plane, geometry, "The trimming operation failed. The cutting plane does not intersect with beam geometry.")
 
     def __getattr__(self, attr):
         # any unknown calls are passed through to the processing instance
