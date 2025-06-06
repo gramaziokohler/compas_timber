@@ -393,14 +393,23 @@ class LongitudinalCut(BTLxProcessing):
 
         """
         # type: (Brep, Beam) -> Brep
-        neg_vol = self.volume_from_params_and_beam(beam)
-        try:
-            return geometry - neg_vol
-        except TypeError:
-            raise FeatureApplicationError(neg_vol, geometry, "The boolean difference between the cutting volume and the beam geometry failed.")
+        if not any([self.start_limited, self.end_limited, self.depth_limited]):
+            # if the cut is not limited, trim the geometry with the cutting plane
+            cutting_plane = self.plane_from_params_and_beam(beam)
+            try:
+                return geometry.trimmed(cutting_plane)
+            except BrepTrimmingError:
+                raise FeatureApplicationError(cutting_plane, geometry, "The trimming operation failed. The cutting plane does not intersect with beam geometry.")
+        else:
+            # if the cut is limited, calculate the negative volume representing the cut and subtract it from the geometry
+            neg_vol = self.volume_from_params_and_beam(beam)
+            try:
+                return geometry - neg_vol
+            except IndexError:
+                raise FeatureApplicationError(neg_vol, geometry, "The boolean difference between the cutting volume and the beam geometry failed.")
 
-    def _frame_from_params_and_beam(self, beam):
-        """Calculates the cutting plane frame from the machining parameters in this instance and the given beam
+    def plane_from_params_and_beam(self, beam):
+        """Calculates the cutting plane from the machining parameters in this instance and the given beam
 
         Parameters
         ----------
@@ -409,8 +418,8 @@ class LongitudinalCut(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Frame`
-            The cutting plane frame.
+        :class:`compas.geometry.Plane`
+            The cutting plane plane.
 
         """
         # type: (Beam) -> Frame
@@ -424,9 +433,7 @@ class LongitudinalCut(BTLxProcessing):
         frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
         frame.rotate(math.radians(self.inclination), ref_side.xaxis, p_origin)
 
-        if TOL.is_negative(self.inclination):
-            frame.xaxis = -frame.xaxis
-        return frame
+        return Plane.from_frame(frame)
 
     def volume_from_params_and_beam(self, beam):
         """Calculates the negative volume representing the cut from the machining parameters in this instance and the given beam.
@@ -450,31 +457,37 @@ class LongitudinalCut(BTLxProcessing):
         assert self.angle_start is not None
         assert self.angle_end is not None
 
-        frame = self._frame_from_params_and_beam(beam)
+        # get the cutting plane from the parameters and the beam
+        plane = self.plane_from_params_and_beam(beam)
 
         # calculate the start and end points of the top edge of the cut
-        p_origin = frame.point
-        length = self.length if TOL.is_positive(self.inclination) else -self.length
-        p_end = p_origin + frame.xaxis * length
+        xaxis = beam.frame.xaxis
+        p_start = plane.point
+        p_end = p_start + xaxis * self.length
+
+        # calculate the start_y position relative to the reference side
+        width, height = beam.get_dimensions_relative_to_side(self.ref_side_index)
+        start_y = self.start_y
+        if TOL.is_negative(self.inclination):
+            start_y -= width + TOL.approximation  # adjust start_y for negative inclination
 
         # calculate the start and end points of the bottom edge of the cut
-        start_vector = frame.xaxis.rotated(math.radians(self.angle_start), frame.normal, p_origin)
-        p_angle_start = p_origin - start_vector * (self.depth / (math.sin(math.radians(self.inclination))))
+        extr_length = start_y / math.cos(math.radians(self.inclination))
+        if TOL.is_close(abs(self.inclination), 90.0):
+            extr_length = height  # avoid infinite extrusion length
+        start_vector = xaxis.rotated(math.radians(self.angle_start), plane.normal, p_start)
+        p_angle_start = p_start - start_vector * extr_length
 
-        end_vector = frame.xaxis.rotated(math.radians(180 - self.angle_end), frame.normal, p_end)
-        p_angle_end = p_end - end_vector * (self.depth / (math.sin(math.radians(self.inclination))))
+        end_vector = xaxis.rotated(math.radians(180 - self.angle_end), plane.normal, p_end)
+        p_angle_end = p_end - end_vector * extr_length
 
         # create a polyline that represents the cut
-        polyline = Polyline([p_origin, p_angle_start, p_angle_end, p_end, p_origin])
+        polyline = Polyline([p_start, p_angle_start, p_angle_end, p_end, p_start])
         polyline.scale(1 + TOL.relative)  # tolerance issue
 
-        # get the extrusion length based on the inclination
-        width, _ = beam.get_dimensions_relative_to_side(self.ref_side_index)
-        start_y = self.start_y if TOL.is_positive(self.inclination) else width - self.start_y
-        extrusion_length = math.sin(math.radians(self.inclination)) * start_y + TOL.approximation
-
         # create the negative volume by extruding the polyline along the frame's normal
-        neg_vol = Brep.from_extrusion(polyline, frame.normal * extrusion_length)
+        extr_vect = plane.normal * math.sin(math.radians(self.inclination)) * start_y
+        neg_vol = Brep.from_extrusion(polyline, extr_vect)
         if TOL.is_negative(neg_vol.volume):
             neg_vol.flip()
         return neg_vol
