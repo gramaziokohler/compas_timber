@@ -50,6 +50,10 @@ class TimberElement(Element):
     @property
     def is_fastener(self):
         return False
+    
+    @property
+    def is_linear_service(self):
+        return False
 
     @property
     def features(self):
