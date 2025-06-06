@@ -4,6 +4,8 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
@@ -184,6 +186,20 @@ def test_type_properties():
     assert not beam.is_plate
     assert not wall.is_plate
     assert not wall.is_beam
+
+
+def test_model_tolerance_default():
+    model = TimberModel()
+
+    assert model.tolerance == TOL
+
+
+def test_model_tolerance_provided():
+    meters = Tolerance(unit="M", absolute=1e-6, relative=1e-3)
+
+    model = TimberModel(tolerance=meters)
+
+    assert model.tolerance == meters
 
 
 def test_copy_model_with_processing_jackraftercut_proxy():
