@@ -471,7 +471,7 @@ class LongitudinalCut(BTLxProcessing):
         # get the extrusion length based on the inclination
         width, _ = beam.get_dimensions_relative_to_side(self.ref_side_index)
         start_y = self.start_y if TOL.is_positive(self.inclination) else width - self.start_y
-        extrusion_length = math.sin(math.radians(self.inclination)) * start_y
+        extrusion_length = math.sin(math.radians(self.inclination)) * start_y + TOL.approximation
 
         # create the negative volume by extruding the polyline along the frame's normal
         neg_vol = Brep.from_extrusion(polyline, frame.normal * extrusion_length)
