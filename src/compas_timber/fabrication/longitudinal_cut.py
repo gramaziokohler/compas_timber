@@ -11,6 +11,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -265,7 +266,6 @@ class LongitudinalCut(BTLxProcessing):
         # get the reference side index if not provided
         if ref_side_index is None:
             ref_side_index = cls._get_default_ref_side_index(plane, beam)
-
         ref_side = beam.ref_sides[ref_side_index]
 
         # calculate start_x
@@ -285,15 +285,18 @@ class LongitudinalCut(BTLxProcessing):
         length = beam.length - start_x if length is None else length
 
         # calculate start_limited and end_limited
-        start_limited = start_x != 0.0
+        start_limited = not TOL.is_zero(start_x)
         end_limited = length + start_x < beam.length
 
         # calculate depth
-        if inclination > 0:
+        width, height = beam.get_dimensions_relative_to_side(ref_side_index)
+        if abs(inclination) == 90.0:
+            max_depth = height
+        elif TOL.is_positive(inclination):
             max_depth = start_y * math.tan(math.radians(inclination))
         else:
-            max_depth = (beam.width - start_y) * math.tan(math.radians(-inclination))
-        depth = max_depth if max_depth is None else depth
+            max_depth = abs((width - start_y) * math.tan(math.radians(inclination)))
+        depth = max_depth if depth is None else depth
         depth_limited = depth < max_depth
 
         return cls(
@@ -303,8 +306,8 @@ class LongitudinalCut(BTLxProcessing):
             start_limited,
             end_limited,
             length,
-            depth,
             depth_limited,
+            depth,
             angle_start,
             angle_end,
             tool_position=tool_position,
@@ -336,11 +339,10 @@ class LongitudinalCut(BTLxProcessing):
     @staticmethod
     def _get_default_ref_side_index(plane, beam):
         """Get the default reference side index for the given cutting plane and beam.
-        This method calculates the angle between the plane's normal and each reference side's normal,
-        and returns the index of the reference side with the smallest angle.
+        This method checks if the cutting plane intersects with the reference sides of the beam
+        and returns the index of the reference side with the smallest angle to the plane's normal.
 
-        # TODO: This duplicates logic from `connections.utilities._beam_ref_side_incidence_with_vector`.
-        # TODO: Should it be moved from the connections package and be reused since the function is connection-agnostic.
+        # NOTE: Consider moving all connection-agnostic utilities (including this one) to a shared location for reuse in fabrication and other modules.
 
         Parameters
         ----------
@@ -357,9 +359,12 @@ class LongitudinalCut(BTLxProcessing):
         """
         # type: (Plane | Frame, Beam) -> int
         angles = {}
-        for index, ref_side in enumerate(beam.ref_sides):
-            angle = angle_vectors(plane.normal, ref_side.normal)
-            angles[index] = angle
+        for i, ref_side in enumerate(beam.ref_sides[:4]):
+            width, _ = beam.get_dimensions_relative_to_side(i)
+            y_seg = Line.from_point_and_vector(ref_side.point, ref_side.yaxis * width)
+            if intersection_segment_plane(y_seg, plane):  # check if the plane intersects with the reference side
+                angle = angle_vectors(plane.normal, ref_side.normal)
+                angles[i] = angle
         return min(angles, key=angles.get)
 
     ########################################################################
@@ -389,10 +394,9 @@ class LongitudinalCut(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         neg_vol = self.volume_from_params_and_beam(beam)
-
         try:
             return geometry - neg_vol
-        except IndexError:
+        except TypeError:
             raise FeatureApplicationError(neg_vol, geometry, "The boolean difference between the cutting volume and the beam geometry failed.")
 
     def _frame_from_params_and_beam(self, beam):
@@ -420,7 +424,7 @@ class LongitudinalCut(BTLxProcessing):
         frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
         frame.rotate(math.radians(self.inclination), ref_side.xaxis, p_origin)
 
-        if self.inclination < 0:
+        if TOL.is_negative(self.inclination):
             frame.xaxis = -frame.xaxis
         return frame
 
@@ -450,21 +454,23 @@ class LongitudinalCut(BTLxProcessing):
 
         # calculate the start and end points of the top edge of the cut
         p_origin = frame.point
-        length = self.length if self.inclination > 0 else -self.length
+        length = self.length if TOL.is_positive(self.inclination) else -self.length
         p_end = p_origin + frame.xaxis * length
 
         # calculate the start and end points of the bottom edge of the cut
         start_vector = frame.xaxis.rotated(math.radians(self.angle_start), frame.normal, p_origin)
-        p_angle_start = p_origin - start_vector * self.depth / (math.sin(math.radians(self.inclination)))
+        p_angle_start = p_origin - start_vector * (self.depth / (math.sin(math.radians(self.inclination))))
 
         end_vector = frame.xaxis.rotated(math.radians(180 - self.angle_end), frame.normal, p_end)
-        p_angle_end = p_end - end_vector * self.depth / (math.sin(math.radians(self.inclination)))
+        p_angle_end = p_end - end_vector * (self.depth / (math.sin(math.radians(self.inclination))))
 
         # create a polyline that represents the cut
         polyline = Polyline([p_origin, p_angle_start, p_angle_end, p_end, p_origin])
+        polyline.scale(1 + TOL.relative)  # tolerance issue
 
         # get the extrusion length based on the inclination
-        start_y = self.start_y if self.inclination > 0 else beam.width - self.start_y
+        width, _ = beam.get_dimensions_relative_to_side(self.ref_side_index)
+        start_y = self.start_y if TOL.is_positive(self.inclination) else width - self.start_y
         extrusion_length = math.sin(math.radians(self.inclination)) * start_y
 
         # create the negative volume by extruding the polyline along the frame's normal
