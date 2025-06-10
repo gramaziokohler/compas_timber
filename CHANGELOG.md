@@ -9,7 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added attribute `tolerance` to `TimberModel`.
+* Added `scaled` method to `compas_timber.fabrication.BTLxProcessing` to scale the BTLx parameters.
+* Added `scaled` method to `compas_timber.fabrication.BTLxPart` to scale the BTLx parameters.
+* Added `scale` method to `compas_timber.fabrication.JackRafterCut`.
+* Added `scale` method to `compas_timber.fabrication.Drilling`.
+* Added `scale` method to `compas_timber.fabrication.DoubleCut`.
+* Added `scale` method to `compas_timber.fabrication.Lap`.
+* Added `scale` method to `compas_timber.fabrication.FrenchRidgeLap`.
+* Added `scale` method to `compas_timber.fabrication.Tenon`.
+* Added `scale` method to `compas_timber.fabrication.Mortise`.
+* Added `scale` method to `compas_timber.fabrication.StepJoint`.
+* Added `scale` method to `compas_timber.fabrication.StepJointNotch`.
+* Added `scale` method to `compas_timber.fabrication.DovetailTenon`.
+* Added `scale` method to `compas_timber.fabrication.DovetailMortise`.
+* Added `scale` method to `compas_timber.fabrication.Slot`.
+* Added `scale` method to `compas_timber.fabrication.Pocket`.
+* Added `scale` method to `compas_timber.fabrication.Text`.
 * Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
+* Added tasks `update-gh-header` to update the version in the header of the GH components.
 * Added `PlateJoint`.
 * Added `PlateButtJoint`.
 * Added `PlateMiterJoint`.
@@ -17,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.
+* Added missing `__data__` to `compas_timber.fabrication.Drilling`.
+* Added missing `__data__` to `compas_timber.fabrication.Slot`.
 * Fixed `TypeError` when deepcopying beams with `debug_info` on them.
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.

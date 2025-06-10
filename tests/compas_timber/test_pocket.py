@@ -13,6 +13,7 @@ from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Pocket
+from compas_timber.fabrication import MachiningLimits
 from compas_timber.connections import LapJoint
 
 
@@ -268,3 +269,41 @@ def test_pocket_with_5_faces(beam):
     except Exception as e:
         assert isinstance(e, ValueError)
         assert "Volume must have 6 faces." in str(e)
+
+
+def test_pocket_scaled():
+    limits = MachiningLimits().limits
+
+    instance = Pocket(
+        2289.328,
+        0.0,
+        22.0,
+        111.603,
+        90.0,
+        0.0,
+        80.0,
+        60.0,
+        22.0,
+        100.0,
+        90.0,
+        50.0,
+        90.0,
+        machining_limits=limits,
+        ref_side_index=0,
+    )
+
+    scaled_instance = instance.scaled(2.0)
+
+    assert scaled_instance.start_x == instance.start_x * 2.0
+    assert scaled_instance.start_y == instance.start_y * 2.0
+    assert scaled_instance.start_depth == instance.start_depth * 2.0
+    assert scaled_instance.angle == instance.angle
+    assert scaled_instance.inclination == instance.inclination
+    assert scaled_instance.slope == instance.slope
+    assert scaled_instance.length == instance.length * 2.0
+    assert scaled_instance.width == instance.width * 2.0
+    assert scaled_instance.internal_angle == instance.internal_angle
+    assert scaled_instance.tilt_ref_side == instance.tilt_ref_side
+    assert scaled_instance.tilt_end_side == instance.tilt_end_side
+    assert scaled_instance.tilt_opp_side == instance.tilt_opp_side
+    assert scaled_instance.tilt_start_side == instance.tilt_start_side

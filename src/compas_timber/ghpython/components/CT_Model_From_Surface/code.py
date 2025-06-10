@@ -5,6 +5,7 @@ from compas.geometry import Brep
 from compas.scene import Scene
 from compas.tolerance import Tolerance
 from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from Rhino.Geometry import Brep as RhinoBrep
 from Rhino.Geometry import Vector3d as RhinoVector
@@ -25,10 +26,11 @@ class SurfaceModelComponent(component):
         tol = None
         if units == "m":
             tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
-        elif units == "cm":
-            tol = Tolerance(unit="CM", absolute=1e-4, relative=1e-4)
         elif units == "mm":
             tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            self.AddRuntimeMessage(Error, "Unsupported unit: {}".format(units))
+            return
 
         if not stud_spacing:
             self.AddRuntimeMessage(Warning, "Input parameter 'stud_spacing' failed to collect data, using default value of 625mm")
