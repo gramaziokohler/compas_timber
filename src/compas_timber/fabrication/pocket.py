@@ -758,3 +758,116 @@ class PocketParams(BTLxProcessingParams):
         result["TiltStartSide"] = "{:.{prec}f}".format(float(self._instance.tilt_start_side), prec=TOL.precision)
         result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
         return result
+
+
+class PocketProxy(object):
+    """This object behaves like a Pocket except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the pocket. Must have 6 faces.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The Pocket feature.
+
+    """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxy as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
+
+    def __init__(self, volume, element, machining_limits=None, ref_side_index=None):
+        self.volume = volume
+        self.element = element
+        self.machining_limits = machining_limits
+        self.ref_side_index = ref_side_index
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+
+        """
+        if not self._processing:
+            self._processing = Pocket.from_volume_and_element(self.volume, self.element, self.machining_limits, self.ref_side_index)
+        return self._processing
+
+    @classmethod
+    def from_volume_and_element(cls, volume, element, machining_limits=None, ref_side_index=None):
+        """Construct a Pocket feature from a volume and a TimberElement.
+
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the pocket. Must have 6 faces.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The Pocket feature.
+
+        """
+        if isinstance(volume, Polyhedron):
+            volume = Brep.from_mesh(volume.to_mesh())
+        if TOL.is_negative(volume.volume):
+            volume.flip()
+        return cls(volume, element, machining_limits, ref_side_index)
+
+    def apply(self, geometry, _):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to apply the pocket to.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the pocket volume does not intersect with element geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Element) -> Brep
+        try:
+            return geometry - self.volume
+        except IndexError:
+            raise FeatureApplicationError(
+                self.volume,
+                geometry,
+                "The volume to subtract does not intersect with element geometry.",
+            )
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)

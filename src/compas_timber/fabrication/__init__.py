@@ -17,6 +17,7 @@ from .tenon import Tenon
 from .mortise import Mortise
 from .slot import Slot
 from .pocket import Pocket
+from .pocket import PocketProxy
 from .free_contour import FreeContour
 from .text import Text
 from .btlx import TenonShapeType
@@ -49,6 +50,7 @@ __all__ = [
     "Mortise",
     "Slot",
     "Pocket",
+    "PocketProxy",
     "FreeContour",
     "Text",
     "TenonShapeType",
