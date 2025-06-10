@@ -329,7 +329,7 @@ class Pocket(BTLxProcessing):
             raise ValueError("Volume must have 6 faces.")
 
         # get ref_side of the element
-        if not ref_side_index:
+        if ref_side_index is None:
             ref_side_index = cls._get_optimal_ref_side_index(element, volume)
         ref_side = element.ref_sides[ref_side_index]
 
@@ -380,10 +380,7 @@ class Pocket(BTLxProcessing):
         tilt_start_side = cls._calculate_tilt_angle(bottom_plane, start_plane)
 
         # define machining limits
-        if machining_limits:
-            if not isinstance(machining_limits, dict):
-                raise ValueError("machining_limits must be a dictionary.")
-        else:
+        if not machining_limits:
             machining_limits = cls._define_machining_limits(planes, element, ref_side_index)
 
         return cls(
@@ -643,7 +640,7 @@ class Pocket(BTLxProcessing):
         if self.machining_limits["FaceLimitedFront"]:
             front_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.yaxis, point=bottom_frame.point)
         else:
-            front_frame = element.ref_sides[(self.ref_side_index+1)%4]
+            front_frame = element.front_side(self.ref_side_index)
             front_frame.translate(front_frame.normal * tol.absolute)
 
         # tilt back frame
@@ -651,7 +648,7 @@ class Pocket(BTLxProcessing):
             back_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.yaxis, point=bottom_frame.point)
             back_frame.translate(back_frame.normal * self.width)
         else:
-            back_frame = element.ref_sides[(self.ref_side_index-1)%4]
+            back_frame = element.back_side(self.ref_side_index)
             back_frame.translate(back_frame.normal * tol.absolute)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
