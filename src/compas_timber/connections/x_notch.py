@@ -24,7 +24,7 @@ class XNotchJoint(Joint):
     main_beam : :class:`~compas_timber.parts.Beam`
         The first beam to be joined. This beam will have a notch applied to it.
     cross_beam : :class:`~compas_timber.parts.Beam`
-        The second beam to be joined.
+        The second beam to be joined. No features are applied to this beam.
 
     Attributes
     ----------
