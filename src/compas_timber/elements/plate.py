@@ -74,9 +74,10 @@ class Plate(TimberElement):
     def __init__(self, outline_a=None, outline_b=None, openings=None, **kwargs):
         super(Plate, self).__init__(**kwargs)
         Plate.check_outlines(outline_a, outline_b)
+        self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
         self.outline_a = outline_a
         self.outline_b = outline_b
-        self.openings = openings
+        self.openings = openings or []
         self._outline_feature = None
         self._opening_features = None
         self._frame = None
@@ -190,6 +191,15 @@ class Plate(TimberElement):
             if dot_vectors(Vector.from_start_end(self.outline_a[0], self.outline_b[0]), self._frame.normal) < 0:
                 self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
         return self._frame
+
+    def reset(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self._features = []
+        self._outline_feature = None
+        self._opening_features = None
+        self.outline_a = self._input_outlines[0]
+        self.outline_b = self._input_outlines[1]
+        self.debug_info = []
 
     def check_outlines(outline_a, outline_b):
         # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool

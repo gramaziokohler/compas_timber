@@ -370,12 +370,12 @@ class ConnectionSolver(object):
         bool
             True if the segments overlap, False otherwise.
         """
-        for pt_a in [segment_a.start, segment_a.end]:
+        for pt_a in [segment_a.start, segment_a.end, segment_a.point_at(0.5)]:
             dot_start = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, pt_a))
             dot_end = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.end, pt_a))
             if dot_start > 0 and dot_end < 0:
                 return True
-        for pt_b in [segment_b.start, segment_b.end]:
+        for pt_b in [segment_b.start, segment_b.end, segment_b.point_at(0.5)]:
             dot_start = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt_b))
             dot_end = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.end, pt_b))
             if dot_start > 0 and dot_end < 0:
