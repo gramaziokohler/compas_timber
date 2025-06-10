@@ -75,8 +75,8 @@ class Plate(TimberElement):
         super(Plate, self).__init__(**kwargs)
         Plate.check_outlines(outline_a, outline_b)
         self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
-        self.outline_a = outline_a
-        self.outline_b = outline_b
+        self.outline_a = Polyline(outline_a.points)
+        self.outline_b = Polyline(outline_b.points)
         self.openings = openings or []
         self._outline_feature = None
         self._opening_features = None
@@ -179,6 +179,23 @@ class Plate(TimberElement):
     def features(self, features):
         self._features = features
 
+    def add_feature(self, feature):
+        # type: (Feature) -> None
+        """Add a feature to the list of features of the lement.
+
+        Parameters
+        ----------
+        feature : :class:`Feature`
+            A feature
+
+        Returns
+        -------
+        None
+
+        """
+        self._features.append(feature)
+
+
     @property
     def key(self):
         # type: () -> int | None
@@ -197,8 +214,8 @@ class Plate(TimberElement):
         self._features = []
         self._outline_feature = None
         self._opening_features = None
-        self.outline_a = self._input_outlines[0]
-        self.outline_b = self._input_outlines[1]
+        self.outline_a = Polyline(self._input_outlines[0].points)
+        self.outline_b = Polyline(self._input_outlines[1].points)
         self.debug_info = []
 
     def check_outlines(outline_a, outline_b):
@@ -279,7 +296,7 @@ class Plate(TimberElement):
         # this ensure the plate's geometry can always be computed
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-
+        print(kwargs)
         # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
         if TOL.is_zero(thickness):
