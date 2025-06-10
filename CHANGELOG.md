@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
+* Added `PlateJoint`.
+* Added `PlateButtJoint`.
+* Added `PlateMiterJoint`.
+* Added `find_plate_plate_topology` method to `ConnectionSolver`.
 
 ### Changed
 
@@ -17,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+* Changed how input `Polyline`s are handled in `Plate`.
 
 ### Removed
 

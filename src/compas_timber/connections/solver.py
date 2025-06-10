@@ -273,7 +273,7 @@ class ConnectionSolver(object):
     def _is_near_end(t, length, max_distance, tol):
         return abs(t) * length < max_distance + tol or abs(1.0 - t) * length < max_distance + tol
 
-    def find_plate_plate_topology(self,plate_a, plate_b, tol=TOLERANCE):
+    def find_plate_plate_topology(self, plate_a, plate_b, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
 
         parameters
@@ -328,9 +328,9 @@ class ConnectionSolver(object):
             max_distance = max(plate_a.thickness, plate_b.thickness)
         for pair in itertools.product(plate_a.outlines, plate_b.outlines):
             for i, seg_a in enumerate(pair[0].lines):
-                for j, seg_b in enumerate(pair[1].lines):
+                for j, seg_b in enumerate(pair[1].lines):   #TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), seg_b) <= max_distance:
-                        if is_parallel_line_line(seg_a, seg_b, tol=tol):  # TODO: make TOL more flexible and discrete
+                        if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if ConnectionSolver.do_segments_overlap(seg_a, seg_b):
                                 return i, j
         return None, None
@@ -345,9 +345,9 @@ class ConnectionSolver(object):
         for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
                 line = intersection_plane_plane(plane_a, plane_b, tol=tol)
-                for i, seg_a in enumerate(pline_a.lines):
+                for i, seg_a in enumerate(pline_a.lines):   #TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
-                        if is_parallel_line_line(seg_a, line, tol=tol):  # TODO: make TOL more flexible and discrete
+                        if is_parallel_line_line(seg_a, line, tol=tol):
                             if ConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
                                 return i
         return None
