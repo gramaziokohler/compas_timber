@@ -45,7 +45,7 @@ def test_plate_blank_reversed():
 def test_plate_blank_extension():
     pline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     plate = Plate.from_outline_thickness(pline, 10.0)
-    plate.attributes["blank_extension"]=5.0
+    plate.attributes["blank_extension"] = 5.0
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)

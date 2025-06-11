@@ -108,8 +108,8 @@ class PlateJoint(Joint):
         super(PlateJoint, self).__init__(**kwargs)
         self.topology = topology
         self.plate_a = plate_a
-        self.a_segment_index = a_segment_index
         self.plate_b = plate_b
+        self.a_segment_index = a_segment_index
         self.b_segment_index = b_segment_index
         self._plate_a_interface = None
         self._plate_b_interface = None

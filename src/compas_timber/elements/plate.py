@@ -195,7 +195,6 @@ class Plate(TimberElement):
         """
         self._features.append(feature)
 
-
     @property
     def key(self):
         # type: () -> int | None
