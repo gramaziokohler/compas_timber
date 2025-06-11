@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `scale` method to `compas_timber.fabrication.Text`.
 * Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
+* Added `topology` to class `Joint`.
+* Added `location` to class `Joint`.
 
 ### Changed
 
@@ -38,8 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+* Renamed `NullJoint` to `GenericJoint`.
 
 ### Removed
+
+* Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
 
 
 ## [0.16.2] 2025-05-07
@@ -52,7 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-* Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
 
 
 ## [0.16.1] 2025-04-30
