@@ -241,7 +241,7 @@ class LongitudinalCut(BTLxProcessing):
         Parameters
         ----------
         plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
-            The cutting plane.
+            The cutting plane. The normal of the plane must be perpendicular to the beam's x-axis.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
         start_x : float, optional
@@ -268,6 +268,10 @@ class LongitudinalCut(BTLxProcessing):
         if ref_side_index is None:
             ref_side_index = cls._get_default_ref_side_index(plane, beam)
         ref_side = beam.ref_sides[ref_side_index]
+
+        # check if the cutting plane's normal is perpendicular to the beam's x-axis
+        if not TOL.is_zero(plane.normal.dot(ref_side.xaxis)):
+            raise ValueError("The cutting plane's normal must be perpendicular to the beam's x-axis.")
 
         # calculate start_x
         start_x = 0.0 if start_x is None else start_x
