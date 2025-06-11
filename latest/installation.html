@@ -510,6 +510,7 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/installation.html">Installation Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/workflow.html">Workflow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/attributes.html">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/beams.html">Beams</a></li>
@@ -587,14 +588,16 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="installation">
-<h1>Installation</h1>
-<section id="stable">
-<h2>Stable</h2>
-<section id="install-with-conda">
-<h3>Install with conda</h3>
-<p>In an new environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>&lt;myenvname&gt;<span class="w"> </span>compas_timber<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>--yes
-conda<span class="w"> </span>activate<span class="w"> </span>&lt;myenvname&gt;
+<span id="lib-installation"></span><h1>Installation</h1>
+<section id="user">
+<h2>User</h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>While there are many similar tools, we recommend using <cite>mamba</cite> to manage your Python environments.
+It can be installed from <a class="reference external" href="https://github.com/conda-forge/miniforge/releases/tag/25.3.0-3">here</a>.</p>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>&lt;myenvname&gt;<span class="w"> </span>compas_timber<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>--yes
+mamba<span class="w"> </span>activate<span class="w"> </span>&lt;myenvname&gt;
 </pre></div>
 </div>
 <p>Install to Rhino 7.0</p>
@@ -602,26 +605,28 @@ conda<span class="w"> </span>activate<span class="w"> </span>&lt;myenvname&gt;
 </pre></div>
 </div>
 </section>
-</section>
-<section id="development">
-<h2>Development</h2>
-<p>To get the latest development version, <a class="reference external" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo">fork the repository</a> and clone the fork</p>
+<section id="developer">
+<h2>Developer</h2>
+<p>If you wish to contribute to or modify COMPAS Timber, <a class="reference external" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo">fork the repository</a> and clone the fork</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;yourgithub_username&gt;/compas_timber.git
 <span class="nb">cd</span><span class="w"> </span>compas_timber
 </pre></div>
 </div>
 <p>Create a new environment if necessary</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>&lt;myenvname&gt;<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
-conda<span class="w"> </span>activate<span class="w"> </span>&lt;myenvname&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>&lt;myenvname&gt;<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10<span class="w"> </span>--yes
+mamba<span class="w"> </span>activate<span class="w"> </span>&lt;myenvname&gt;
 </pre></div>
 </div>
 <p>Install the package in editable mode with its development dependencies</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
 </pre></div>
 </div>
-<p>Compile the Grasshopper components</p>
+<p>To compile the Rhino7 Grasshopper components</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>invoke<span class="w"> </span>build-ghuser-components
-python<span class="w"> </span>-m<span class="w"> </span>compas_rhino.install<span class="w"> </span>-v7.0
+</pre></div>
+</div>
+<p>To compile the Rhino8 Grasshopper components</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>invoke<span class="w"> </span>build-cpython-ghuser-components
 </pre></div>
 </div>
 </section>
@@ -648,11 +653,8 @@ python<span class="w"> </span>-m<span class="w"> </span>compas_rhino.install<spa
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stable">Stable</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#install-with-conda">Install with conda</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">Development</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#user">User</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#developer">Developer</a></li>
 </ul>
   </nav></div>
 
