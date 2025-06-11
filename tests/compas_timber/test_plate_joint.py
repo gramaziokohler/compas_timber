@@ -125,7 +125,7 @@ def test_simple_joint_and_reset():
     plate_b = Plate.from_outline_thickness(Polyline(polyline_b.points), 1)
 
     joint = PlateMiterJoint(plate_a, plate_b, JointTopology.TOPO_L, 1, 0)
-    joint._adjust_plate_outlines()
+    joint.add_features()
     assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
     assert any([plate_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to change outline_a"
     plate_a.reset()

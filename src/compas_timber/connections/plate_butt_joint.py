@@ -111,5 +111,3 @@ class PlateButtJoint(PlateJoint):
                             polyline[self.cross_segment_index + 1] = pt
                             if self.cross_segment_index + 1 == len(polyline.lines):
                                 polyline[0] = pt
-
-

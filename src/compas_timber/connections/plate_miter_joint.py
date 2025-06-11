@@ -47,4 +47,3 @@ class PlateMiterJoint(PlateJoint):
                             polyline[self.b_segment_index + 1] = pt
                             if self.b_segment_index + 1 == len(polyline.lines):
                                 polyline[0] = pt
-

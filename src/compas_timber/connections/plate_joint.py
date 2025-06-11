@@ -105,7 +105,7 @@ class PlateJoint(Joint):
         data["b_segment_index"] = self.b_segment_index
         return data
 
-    def __init__(self, plate_a = None, plate_b = None, topology = None, a_segment_index = None, b_segment_index = None, **kwargs):
+    def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(PlateJoint, self).__init__(**kwargs)
         self.plate_a = plate_a
         self.plate_b = plate_b
@@ -115,10 +115,13 @@ class PlateJoint(Joint):
         self._plate_a_interface = None
         self._plate_b_interface = None
 
+        self.a_outlines = None
+        self.b_outlines = None
+        self.a_planes = None
+        self.b_planes = None
+
         self._plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid)  # type: ignore
         self._plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid)  # type: ignore
-
-
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -193,10 +196,8 @@ class PlateJoint(Joint):
             )
         return self._plate_b_interface
 
-
     def add_features(self):
         """Add features to the plates based on the joint."""
-        print("Adding features to plates in PlateJoint...")
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 topo_results = ConnectionSolver.find_plate_plate_topology(self.plate_a, self.plate_b)
@@ -207,8 +208,9 @@ class PlateJoint(Joint):
                 self.b_segment_index = topo_results[2][1]
 
             self.reorder_planes_and_outlines()
+            print("a_outlines:", self.a_outlines)
+            print("b_outlines:", self.b_outlines)
             self._adjust_plate_outlines()
-
 
     def _adjust_plate_outlines(self):
         raise NotImplementedError
@@ -236,8 +238,6 @@ class PlateJoint(Joint):
                 self.a_planes = self.plate_a.planes[::-1]
                 self.a_outlines = self.plate_a.outlines[::-1]
 
-
-
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
         self.restore_plates_from_keys(*args, **kwargs)
@@ -251,6 +251,3 @@ class PlateJoint(Joint):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self._plate_a_guid, self._plate_b_guid = self._plate_b_guid, self._plate_a_guid
         self._calculate_interfaces()
-
-    def add_features(self):
-        pass
