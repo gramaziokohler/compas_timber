@@ -7,7 +7,9 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.tolerance import TOL
 
+from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
 from compas_timber.connections import TButtJoint
@@ -226,3 +228,30 @@ if not compas.IPY:
         assert len(expected_result) == len(result)
         for pair in key_sets:
             assert pair in expected_result
+
+
+def test_generic_joint():
+    w, h = 20, 20
+
+    lines = [
+        Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=300.0, y=200.0, z=0.0)),
+        Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=-40.0, y=270.0, z=0.0)),
+        Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=0.0, y=20.0, z=160.0)),
+        Line(Point(x=45.89488087618746, y=234.15459672257862, z=0.0), Point(x=168.58797240614388, y=-95.31137353132192, z=0.0)),
+    ]
+
+    model = TimberModel()
+    model.add_elements([Beam.from_centerline(line, w, h) for line in lines])
+
+    model.connect_adjacent_beams()
+
+    assert len(model.joints) == 4
+    l_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_L]
+    x_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_X]
+    assert len(l_joints) == 3
+    assert len(x_joints) == 1
+
+    for j in l_joints:
+        assert TOL.is_allclose(j.location, Point(x=-10.0, y=-10.0, z=0.0))
+    for j in x_joints:
+        assert TOL.is_allclose(j.location, Point(x=107.24142664116566, y=69.42161159562835, z=0.0))
