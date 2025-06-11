@@ -569,7 +569,7 @@ class LongitudinalCutProxy(object):
     """
 
     def __deepcopy__(self, *args, **kwargs):
-        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # not sure there's value in copying the proxy as it's more of a performance hack.
         # plus it references a beam so it would be a bit of a mess to copy it.
         # for now just return the unproxified version
         return self.unproxified()
