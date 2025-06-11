@@ -7,6 +7,7 @@ from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.geometry import closest_point_on_plane
 from compas.geometry import distance_point_plane
 from compas.geometry import dot_vectors
@@ -74,9 +75,10 @@ class Plate(TimberElement):
     def __init__(self, outline_a=None, outline_b=None, openings=None, **kwargs):
         super(Plate, self).__init__(**kwargs)
         Plate.check_outlines(outline_a, outline_b)
-        self.outline_a = outline_a
-        self.outline_b = outline_b
-        self.openings = openings
+        self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
+        self.outline_a = Polyline(outline_a.points)
+        self.outline_b = Polyline(outline_b.points)
+        self.openings = openings or []
         self._outline_feature = None
         self._opening_features = None
         self._frame = None
@@ -178,6 +180,22 @@ class Plate(TimberElement):
     def features(self, features):
         self._features = features
 
+    def add_feature(self, feature):
+        # type: (Feature) -> None
+        """Add a feature to the list of features of the lement.
+
+        Parameters
+        ----------
+        feature : :class:`Feature`
+            A feature
+
+        Returns
+        -------
+        None
+
+        """
+        self._features.append(feature)
+
     @property
     def key(self):
         # type: () -> int | None
@@ -190,6 +208,15 @@ class Plate(TimberElement):
             if dot_vectors(Vector.from_start_end(self.outline_a[0], self.outline_b[0]), self._frame.normal) < 0:
                 self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
         return self._frame
+
+    def reset(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self._features = []
+        self._outline_feature = None
+        self._opening_features = None
+        self.outline_a = Polyline(self._input_outlines[0].points)
+        self.outline_b = Polyline(self._input_outlines[1].points)
+        self.debug_info = []
 
     def check_outlines(outline_a, outline_b):
         # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
@@ -238,11 +265,6 @@ class Plate(TimberElement):
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
 
-    @property
-    def key(self):
-        # type: () -> int | None
-        return self.graph_node
-
     # ==========================================================================
     # Alternate constructors
     # ==========================================================================
@@ -274,7 +296,7 @@ class Plate(TimberElement):
         # this ensure the plate's geometry can always be computed
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-
+        print(kwargs)
         # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
         if TOL.is_zero(thickness):

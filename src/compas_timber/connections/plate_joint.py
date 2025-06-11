@@ -1,17 +1,14 @@
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
-from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
-from compas.geometry import is_point_in_polygon_xy
-from compas.tolerance import TOL
 
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 from .joint import Joint
 from .joint import JointTopology
+from .solver import ConnectionSolver
 
 
 class InterfaceRole(object):
@@ -108,22 +105,23 @@ class PlateJoint(Joint):
         data["b_segment_index"] = self.b_segment_index
         return data
 
-    def __init__(self, plate_a, plate_b, topology, a_segment_index, b_segment_index, **kwargs):
+    def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(PlateJoint, self).__init__(**kwargs)
-        self.topology = topology
         self.plate_a = plate_a
-        self.a_segment_index = a_segment_index
         self.plate_b = plate_b
+        self.topology = topology
+        self.a_segment_index = a_segment_index
         self.b_segment_index = b_segment_index
         self._plate_a_interface = None
         self._plate_b_interface = None
 
+        self.a_outlines = None
+        self.b_outlines = None
+        self.a_planes = None
+        self.b_planes = None
+
         self._plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid)  # type: ignore
         self._plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid)  # type: ignore
-
-        if self.plate_a and self.plate_b:
-            self.reorder_planes_and_outlines()
-            self._adjust_plate_outlines()
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -170,37 +168,6 @@ class PlateJoint(Joint):
     def interfaces(self):
         return self.plate_a_interface, self.plate_b_interface
 
-    @classmethod
-    def create(cls, model, plates, **kwargs):
-        # TODO: this is just a placeholder. The actual creation logic should be implemented.
-        pass
-
-    def _adjust_plate_outlines(self):
-        raise NotImplementedError
-
-    def get_interface_for_plate(self, plate):
-        if plate is self.plate_a:
-            return self.plate_a_interface
-        elif plate is self.plate_b:
-            return self.plate_b_interface
-        else:
-            raise ValueError("Plate not part of this joint.")
-
-    def reorder_planes_and_outlines(self):
-        if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
-            self.b_planes = self.plate_b.planes[::-1]
-            self.b_outlines = self.plate_b.outlines[::-1]
-        else:
-            self.b_planes = self.plate_b.planes
-            self.b_outlines = self.plate_b.outlines
-
-        self.a_planes = self.plate_a.planes
-        self.a_outlines = self.plate_a.outlines
-        if self.topology == JointTopology.TOPO_L:
-            if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
-                self.a_planes = self.plate_a.planes[::-1]
-                self.a_outlines = self.plate_a.outlines[::-1]
-
     @property
     def plate_a_interface(self):
         if not self._plate_a_interface:
@@ -229,6 +196,48 @@ class PlateJoint(Joint):
             )
         return self._plate_b_interface
 
+    def add_features(self):
+        """Add features to the plates based on the joint."""
+        if self.plate_a and self.plate_b:
+            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
+                topo_results = ConnectionSolver.find_plate_plate_topology(self.plate_a, self.plate_b)
+                if not topo_results:
+                    raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
+                self.topology = topo_results[0]
+                self.a_segment_index = topo_results[1][1]
+                self.b_segment_index = topo_results[2][1]
+
+            self.reorder_planes_and_outlines()
+            print("a_outlines:", self.a_outlines)
+            print("b_outlines:", self.b_outlines)
+            self._adjust_plate_outlines()
+
+    def _adjust_plate_outlines(self):
+        raise NotImplementedError
+
+    def get_interface_for_plate(self, plate):
+        if plate is self.plate_a:
+            return self.plate_a_interface
+        elif plate is self.plate_b:
+            return self.plate_b_interface
+        else:
+            raise ValueError("Plate not part of this joint.")
+
+    def reorder_planes_and_outlines(self):
+        if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
+            self.b_planes = self.plate_b.planes[::-1]
+            self.b_outlines = self.plate_b.outlines[::-1]
+        else:
+            self.b_planes = self.plate_b.planes
+            self.b_outlines = self.plate_b.outlines
+
+        self.a_planes = self.plate_a.planes
+        self.a_outlines = self.plate_a.outlines
+        if self.topology == JointTopology.TOPO_L:
+            if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
+                self.a_planes = self.plate_a.planes[::-1]
+                self.a_outlines = self.plate_a.outlines[::-1]
+
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
         self.restore_plates_from_keys(*args, **kwargs)
@@ -242,6 +251,3 @@ class PlateJoint(Joint):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self._plate_a_guid, self._plate_b_guid = self._plate_b_guid, self._plate_a_guid
         self._calculate_interfaces()
-
-    def add_features(self):
-        pass

@@ -294,6 +294,23 @@ class Text(BTLxProcessing):
                 pt.transform(Transformation.from_frame_to_frame(Frame.worldXY(), face))
         return string_curves
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.text_height *= factor
+
 
 class TextParams(BTLxProcessingParams):
     def __init__(self, instance):

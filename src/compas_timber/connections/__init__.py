@@ -23,6 +23,9 @@ from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
 from .plate_joint import PlateJoint
 from .plate_joint import InterfaceRole
+from .plate_joint import PlateJoint
+from .plate_butt_joint import PlateButtJoint
+from .plate_miter_joint import PlateMiterJoint
 
 __all__ = [
     "Joint",
@@ -52,4 +55,7 @@ __all__ = [
     "PlateJoint",
     "InterfaceLocation",
     "InterfaceRole",
+    "PlateJoint",
+    "PlateButtJoint",
+    "PlateMiterJoint",
 ]

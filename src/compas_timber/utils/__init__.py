@@ -396,7 +396,7 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
     return Vector.from_start_end(pt, point)
 
 
-def is_point_in_polyline(point, polyline):
+def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     """Check if a point is inside a polyline. Polyline must be closed.
 
     Parameters
@@ -405,6 +405,10 @@ def is_point_in_polyline(point, polyline):
         The point to check.
     polyline : :class:`compas.geometry.Polyline`
         The polyline to check against.
+    in_plane : bool, optional
+        If True, the point must be in the same plane as the polyline. Default is True.
+    tol : float, optional
+        The tolerance used for calculation. Default is TOL.
 
     Returns
     -------
@@ -415,7 +419,9 @@ def is_point_in_polyline(point, polyline):
     xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
     pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
     pt = point.transformed(xform)
-    return TOL.is_close(pt[2], 0.0) and is_point_in_polygon_xy(pt, pgon)
+    if in_plane and not tol.is_close(pt[2], 0.0):
+        return False
+    return is_point_in_polygon_xy(pt, pgon)
 
 
 __all__ = [
