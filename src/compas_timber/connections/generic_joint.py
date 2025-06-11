@@ -1,8 +1,7 @@
 from .joint import Joint
-from .solver import JointTopology
 
 
-class NullJoint(Joint):
+class GenericJoint(Joint):
     """A null joint is a joint that does not have any features.
 
     Can be used to join to beams which shouldn't join.
@@ -25,15 +24,13 @@ class NullJoint(Joint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L  # TODO: this really supports all..
-
     @property
     def __data__(self):
         data_dict = {
             "beam_a_key": self.beam_a_guid,
             "beam_b_key": self.beam_b_guid,
         }
-        data_dict.update(super(NullJoint, self).__data__)
+        data_dict.update(super(GenericJoint, self).__data__)
         return data_dict
 
     @classmethod
@@ -44,7 +41,7 @@ class NullJoint(Joint):
         return instance
 
     def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(NullJoint, self).__init__(**kwargs)
+        super(GenericJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_guid = str(beam_a.guid) if beam_a else None
