@@ -7,10 +7,12 @@ if not compas.IPY:
     from compas.tolerance import Tolerance  # noqa: F401
 
 from compas.geometry import Point
+from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import GenericJoint
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import WallJoint
@@ -377,19 +379,22 @@ class TimberModel(Model):
                 self.remove_joint(joint)
 
         max_distance = max_distance or TOL.relative
-        beams = self.beams
+        beams = list(self.beams)
         solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         for pair in pairs:
             beam_a, beam_b = pair
-            result = solver.find_wall_wall_topology(beam_a, beam_b, tol=TOL.relative, max_distance=max_distance)
+            result = solver.find_topology(beam_a, beam_b, tol=TOL.relative, max_distance=max_distance)
 
             topology, beam_a, beam_b = result
             if topology == JointTopology.TOPO_UNKNOWN:
                 continue
 
             assert beam_a and beam_b
-            Joint.create(self, beam_a, beam_b, topology=topology)
+            p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
+            p1 = Point(*p1) if p1 else None
+
+            GenericJoint.create(self, beam_a, beam_b, topology=topology, location=p1)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.
