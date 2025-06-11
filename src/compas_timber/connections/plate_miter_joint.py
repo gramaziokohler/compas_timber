@@ -12,7 +12,7 @@ class PlateMiterJoint(PlateJoint):
 
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""
-
+        print("Adjusting plate outlines for PlateMiterJoint...")
         assert self.plate_a
         assert self.plate_b
 
@@ -47,3 +47,4 @@ class PlateMiterJoint(PlateJoint):
                             polyline[self.b_segment_index + 1] = pt
                             if self.b_segment_index + 1 == len(polyline.lines):
                                 polyline[0] = pt
+
