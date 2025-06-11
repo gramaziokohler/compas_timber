@@ -1,5 +1,6 @@
 from itertools import combinations
 
+from compas.geometry import Point
 from compas.geometry import distance_point_line
 from compas_model.interactions import Interaction
 
@@ -38,8 +39,8 @@ class Joint(Interaction):
 
     def __init__(self, topology=None, location=None, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
-        self._topology = topology or JointTopology.TOPO_UNKNOWN
-        self._location = location
+        self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
+        self._location = location or Point(0, 0, 0)
 
     @property
     def topology(self):
