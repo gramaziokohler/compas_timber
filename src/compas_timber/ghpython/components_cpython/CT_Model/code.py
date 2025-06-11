@@ -1,11 +1,12 @@
 # r: compas_timber>=0.15.3
 """Creates an Model"""
 
-# flake8: noqa
 import Grasshopper
+import Rhino
 import System
 from compas.scene import Scene
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
@@ -13,8 +14,9 @@ from compas_timber.design import WallPopulator
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.model import TimberModel
+from compas_timber.ghpython import error
 from compas_timber.ghpython import warning
+from compas_timber.model import TimberModel
 
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
 TOL.absolute = 1e-6
@@ -52,7 +54,17 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         # clear Nones
         Containers = [c for c in Containers if c is not None]
 
-        Model = TimberModel()
+        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
+        tol = None
+        if units == "m":
+            tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
+        elif units == "mm":
+            tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            error(self.component, f"Unsupported unit: {units}")
+            return
+
+        Model = TimberModel(tolerance=tol)
         debug_info = DebugInfomation()
 
         ##### Adding elements #####
@@ -75,7 +87,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         handled_pairs = []
         wall_joint_definitions = []
-        for populator, slab in zip(populators, Model.slabs):
+        for populator, slab in zip(populators, list(Model.slabs)):  # Model.slabs calls Model.elements, which is changed in the loop, therefore we need to use list()
             elements = populator.create_elements()
             Model.add_elements(elements, parent=slab.name)
             joint_definitions = populator.create_joint_definitions(elements, MaxDistance)
@@ -119,8 +131,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
                     except FeatureApplicationError as ex:
                         feature_errors.append(ex)
 
-            for error in feature_errors:
-                debug_info.add_feature_error(error)
+            debug_info.add_feature_error(feature_errors)
 
         ##### Visualization #####
         Geometry = None

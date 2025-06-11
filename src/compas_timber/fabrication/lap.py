@@ -372,7 +372,7 @@ class Lap(BTLxProcessing):
                    ref_side_index=ref_side_index)
 
     @classmethod
-    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None):
+    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None, **kwargs):
         """Construct a Lap feature from a volume and a Beam.
 
         Parameters
@@ -473,21 +473,24 @@ class Lap(BTLxProcessing):
         else:
             machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
 
-        return cls(orientation,
-                   start_x,
-                   start_y,
-                   angle,
-                   inclination,
-                   slope,
-                   length,
-                   width,
-                   depth,
-                   lead_angle_parallel,
-                   lead_angle,
-                   lead_inclination_parallel,
-                   lead_inclination,
-                   machining_limits=machining_limits,
-                   ref_side_index=ref_side_index)
+        return cls(
+            orientation,
+            start_x,
+            start_y,
+            angle,
+            inclination,
+            slope,
+            length,
+            width,
+            depth,
+            lead_angle_parallel,
+            lead_angle,
+            lead_inclination_parallel,
+            lead_inclination,
+            machining_limits=machining_limits,
+            ref_side_index=ref_side_index,
+            **kwargs
+        )
 
     @classmethod
     def from_shapes_and_element(cls, volume, element, **kwargs):
@@ -818,6 +821,25 @@ class Lap(BTLxProcessing):
             faces = [face[::-1] for face in faces]
         return Polyhedron(vertices, faces)
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.length *= factor
+        self.width *= factor
+        self.depth *= factor
+
 
 class LapParams(BTLxProcessingParams):
     """A class to store the parameters of a Lap feature.
@@ -878,6 +900,12 @@ class LapProxy(object):
         The reference side index for the Lap.
 
     """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
 
     def __init__(self, volume, beam, machining_limits=None, ref_side_index=None):
         self.volume = volume

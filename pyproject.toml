@@ -56,7 +56,7 @@ where = ["src"]
 # ============================================================================
 
 [tool.bumpversion]
-current_version = "0.16.1"
+current_version = "0.16.2"
 message = "Bump version to {new_version}"
 commit = true
 tag = true
