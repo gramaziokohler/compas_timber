@@ -69,6 +69,7 @@ class LongitudinalCut(BTLxProcessing):
         data["tool_position"] = self.tool_position
         return data
 
+    # fmt: off
     def __init__(
         self,
         start_x=0.0,
@@ -82,7 +83,7 @@ class LongitudinalCut(BTLxProcessing):
         angle_start=90.0,
         angle_end=90.0,
         tool_position=AlignmentType.LEFT,
-        **kwargs,
+        **kwargs
     ):
         super(LongitudinalCut, self).__init__(**kwargs)
         self._start_x = None
