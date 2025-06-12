@@ -4,7 +4,7 @@ from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
-from .null_joint import NullJoint
+from .generic_joint import GenericJoint
 from .solver import ConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
@@ -25,6 +25,12 @@ from .utilities import point_centerline_towards_joint
 from .wall_joint import WallJoint
 from .wall_joint import InterfaceLocation
 from .wall_joint import InterfaceRole
+from .analyzers import NBeamKDTreeAnalyzer
+from .analyzers import TripletAnalyzer
+from .analyzers import QuadAnalyzer
+from .analyzers import CompositeAnalyzer
+from .analyzers import Cluster
+from .analyzers import BeamGroupAnalyzer
 
 __all__ = [
     "Joint",
@@ -39,7 +45,7 @@ __all__ = [
     "XNotchJoint",
     "TLapJoint",
     "LLapJoint",
-    "NullJoint",
+    "GenericJoint",
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
@@ -55,4 +61,10 @@ __all__ = [
     "WallJoint",
     "InterfaceLocation",
     "InterfaceRole",
+    "NBeamKDTreeAnalyzer",
+    "TripletAnalyzer",
+    "QuadAnalyzer",
+    "CompositeAnalyzer",
+    "Cluster",
+    "BeamGroupAnalyzer",
 ]
