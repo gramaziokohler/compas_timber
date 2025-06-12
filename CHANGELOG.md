@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
 * Added new `compas_timber.fabrication.LongitudinalCut`.
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
+* Added new `compas_timber.connections.XNotchJoint`.
+* Added a proxy class for `Pocket` BTLx processing for performance optimization. 
 
 ### Changed
 
