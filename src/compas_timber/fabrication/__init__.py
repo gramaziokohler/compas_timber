@@ -28,6 +28,7 @@ from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
 from .btlx import Contour
 from .btlx import DualContour
+from .longitudinal_cut import LongitudinalCut
 
 __all__ = [
     "BTLxWriter",
@@ -60,4 +61,5 @@ __all__ = [
     "BTLxFromGeometryDefinition",
     "Contour",
     "DualContour",
+    "LongitudinalCut",
 ]
