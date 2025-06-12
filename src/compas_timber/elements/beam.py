@@ -87,7 +87,6 @@ class Beam(TimberElement):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
-        data["frame"] = self.frame
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
@@ -272,15 +271,17 @@ class Beam(TimberElement):
     # Implementations of abstract methods
     # ==========================================================================
 
-    def compute_geometry(self, include_features=True):
+    def compute_elementgeometry(self, include_features=True):
         # type: (bool) -> compas.geometry.Brep
-        """Compute the geometry of the element.
+        """Compute the geometry of the element in local coordinates.
+
+        This is the parametric representation of the element,
+        without considering its location in the model or its interaction(s) with connected elements.
 
         Parameters
         ----------
         include_features : bool, optional
-            If ``True``, include the features in the computed geometry.
-            If ``False``, return only the base geometry.
+            If True, the features should be included in the element geometry.
 
         Returns
         -------
