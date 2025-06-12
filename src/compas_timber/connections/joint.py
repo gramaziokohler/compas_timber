@@ -1,15 +1,15 @@
 from itertools import combinations
 
+from compas.data import Data
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import intersection_line_line
-from compas_model.modifiers import Modifier
 
 from .solver import JointTopology
 
 
-class Joint(Modifier):
+class Joint(Data):
     """Base class for a joint connecting two beams.
 
     This is a base class and should not be instantiated directly.
