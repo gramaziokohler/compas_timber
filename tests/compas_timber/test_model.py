@@ -33,6 +33,20 @@ def test_add_element():
     assert len(list(A.beams)) == 1
 
 
+def test_add_elements():
+    model = TimberModel()
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+
+    model.add_elements([b1, b2])
+
+    assert len(list(model.beams)) == 2
+    assert list(model.beams)[0] is b1
+    assert list(model.beams)[1] is b2
+    assert len(list(model.graph.nodes())) == 2
+    assert len(list(model.graph.edges())) == 0
+
+
 def test_add_joint():
     model = TimberModel()
     b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)

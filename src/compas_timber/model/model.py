@@ -160,6 +160,28 @@ class TimberModel(Model):
             parent = next((group for group in self._tree.groups if group.name == parent))
         return super(TimberModel, self).add_element(element, parent, **kwargs)
 
+    def add_elements(self, elements, parent=None):
+        # type: (list[Element], GroupNode | None) -> list[ElementNode]
+        """Add multiple elements to the model.
+
+        Parameters
+        ----------
+        elements : list[:class:`Element`]
+            The model elements.
+        parent : :class:`GroupNode`, optional
+            The parent group node of the elements.
+            If ``None``, the elements will be added directly under the root node.
+
+        Returns
+        -------
+        list[:class:`ElementNode`]
+
+        """
+        nodes = []
+        for element in elements:
+            nodes.append(self.add_element(element, parent=parent))
+        return nodes
+
     def add_group_element(self, element, name=None):
         """Add an element which shall contain other elements.
 
