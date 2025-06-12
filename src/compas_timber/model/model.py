@@ -47,7 +47,7 @@ class TimberModel(Model):
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
-        for interaction in model.interactions():
+        for interaction in model.interactions:
             interaction.restore_beams_from_keys(model)  # type: ignore
         return model
 
@@ -55,7 +55,7 @@ class TimberModel(Model):
         super(TimberModel, self).__init__()
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
-        self._graph.update_default_edge_attributes(interactions=None)
+        # self._graph.update_default_edge_attributes(interactions=None) # is it necessary?
 
     def __str__(self):
         # type: () -> str
@@ -65,6 +65,16 @@ class TimberModel(Model):
     def tolerance(self):
         # type: () -> Tolerance
         return self._tolerance
+
+    @property
+    def interactions(self):
+        # type: () -> Generator[Data]
+        """Yield all edge-level relationships: joints, contacts, etc."""
+        for (u, v), attr in self._graph.edges(data=True):
+            for joint in attr.get("joints") or []:
+                yield joint
+            for contact in attr.get("contacts") or []:  # TODO: should contacts be part of interactions?
+                yield contact
 
     @property
     def beams(self):
@@ -87,9 +97,9 @@ class TimberModel(Model):
         # type: () -> set[Joint]
         joints = set()  # some joints might apear on more than one interaction
         for (u, v), attr in self._graph.edges(data=True):
-            for interaction in attr.get("interactions") or []:
-                if isinstance(interaction, Joint):
-                    joints.add(interaction)
+            for joint in attr.get("joints") or []:
+                assert isinstance(joint, Joint), "Expected joint to be an instance of Joint, got {}".format(type(joint))
+                joints.add(joint)
         return joints
 
     @property
@@ -327,9 +337,9 @@ class TimberModel(Model):
         for interaction in joint.interactions:
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
-            interactions = self._graph.edge_attribute(edge, "interactions") or []  # explicitly add the joint to the "interactions" attribute
-            interactions.append(joint)
-            self._graph.edge_attribute(edge, "interactions", value=interactions)
+            joints = self._graph.edge_attribute(edge, "joints") or []  # explicitly add the joint to the "joints" attribute
+            joints.append(joint)
+            self._graph.edge_attribute(edge, "joints", value=joints)
             # TODO: should we create a bidirectional interaction here?
 
     def remove_joint(self, joint):
