@@ -115,6 +115,17 @@ class TimberModel(Model):
     def topologies(self):
         return self._topologies
 
+    def interactions(self):
+        # type: () -> Generator[Interaction]
+        """Yield all interactions between all elements in the model.
+
+        Yields
+        ------
+        :class:`Interaction`
+
+        """
+        return self._graph.interactions()
+
     @property
     def center_of_mass(self):
         # type: () -> Point
@@ -149,7 +160,7 @@ class TimberModel(Model):
             The element with the specified GUID.
 
         """
-        return self._guid_element[guid]
+        return self._elements[guid]
 
     def add_element(self, element, parent=None, **kwargs):
         # resolve parent name to GroupNode object
