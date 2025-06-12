@@ -23,11 +23,13 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
+        data["frame"] = self.frame
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
     def __init__(self, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
+        self._frame = kwargs.get("frame", None)
         self._features = features or []
         self.debug_info = []
 
@@ -52,13 +54,30 @@ class TimberElement(Element):
         return False
 
     @property
+    def frame(self):
+        # type: () -> Frame
+        """The local coordinate frame of the element."""
+        return self._frame
+
+    @frame.setter
+    def frame(self, frame):
+        self._frame = frame
+
+    @property
     def features(self):
         # type: () -> list[Feature]
+        """A list of features applied to the element."""
         return self._features
 
     @features.setter
     def features(self, features):
         self._features = features
+
+    @property
+    def geometry(self):
+        if self._geometry is None:
+            self._geometry = self.compute_elementgeometry()
+        return self._geometry
 
     def remove_blank_extension(self):
         pass
