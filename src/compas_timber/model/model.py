@@ -55,6 +55,7 @@ class TimberModel(Model):
         super(TimberModel, self).__init__()
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
+        self._graph.update_default_edge_attributes(interactions=None)
 
     def __str__(self):
         # type: () -> str
@@ -86,9 +87,9 @@ class TimberModel(Model):
         # type: () -> set[Joint]
         joints = set()  # some joints might apear on more than one interaction
         for (u, v), attr in self._graph.edges(data=True):
-            for modifier in attr.get("modifiers") or []:
-                if isinstance(modifier, Joint):
-                    joints.add(modifier)
+            for interaction in attr.get("interactions") or []:
+                if isinstance(interaction, Joint):
+                    joints.add(interaction)
         return joints
 
     @property
@@ -326,9 +327,9 @@ class TimberModel(Model):
         for interaction in joint.interactions:
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
-            modifiers = self._graph.edge_attribute(edge, "modifiers") or []  # explicitly add the joint to the "modifiers" attribute
-            modifiers.append(joint)
-            self._graph.edge_attribute(edge, "modifiers", value=modifiers)
+            interactions = self._graph.edge_attribute(edge, "interactions") or []  # explicitly add the joint to the "interactions" attribute
+            interactions.append(joint)
+            self._graph.edge_attribute(edge, "interactions", value=interactions)
             # TODO: should we create a bidirectional interaction here?
 
     def remove_joint(self, joint):
