@@ -24,7 +24,9 @@ from .utilities import point_centerline_towards_joint
 from .wall_joint import WallJoint
 from .wall_joint import InterfaceLocation
 from .wall_joint import InterfaceRole
+from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
+from .analyzers import QuadAnalyzer
 
 __all__ = [
     "Joint",
@@ -54,5 +56,7 @@ __all__ = [
     "WallJoint",
     "InterfaceLocation",
     "InterfaceRole",
+    "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",
+    "QuadAnalyzer",
 ]

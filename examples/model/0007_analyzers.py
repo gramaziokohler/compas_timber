@@ -4,11 +4,13 @@ from compas.colors import Color
 from compas.geometry import KDTree
 from compas.geometry import Line
 from compas.geometry import Point
+from compas.tolerance import Tolerance
 from compas_viewer.scene import Tag
 from compas_viewer.viewer import Viewer
 
 from compas_timber.connections import JointTopology
 from compas_timber.connections import TripletAnalyzer
+from compas_timber.connections import QuadAnalyzer
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -27,7 +29,16 @@ def create_viewer():
 
 
 def main():
-    # Load centerlines from file
+    # lines = [
+    #     Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=300.0, y=200.0, z=0.0)),
+    #     Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=-40.0, y=270.0, z=0.0)),
+    #     Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=0.0, y=20.0, z=160.0)),
+    #     Line(Point(x=45.89488087618746, y=234.15459672257862, z=0.0), Point(x=168.58797240614388, y=-95.31137353132192, z=0.0)),
+    #     Line(Point(x=45.89488087618746, y=234.15459672257862, z=0.0), Point(x=330.0, y=350.0, z=0.0)),
+    #     Line(Point(x=300.0, y=200.0, z=0.0), Point(x=500.0, y=0.0, z=0.0)),
+    #     Line(Point(x=300.0, y=200.0, z=0.0), Point(x=220.0, y=170.0, z=-120.0)),
+    # ]
+
     lines = [
         Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=300.0, y=200.0, z=0.0)),
         Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=-40.0, y=270.0, z=0.0)),
@@ -36,6 +47,9 @@ def main():
         Line(Point(x=45.89488087618746, y=234.15459672257862, z=0.0), Point(x=330.0, y=350.0, z=0.0)),
         Line(Point(x=300.0, y=200.0, z=0.0), Point(x=500.0, y=0.0, z=0.0)),
         Line(Point(x=300.0, y=200.0, z=0.0), Point(x=220.0, y=170.0, z=-120.0)),
+        Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=90.0, y=-220.0, z=0.0)),
+        Line(Point(x=45.89488087618746, y=234.15459672257862, z=0.0), Point(x=0.0, y=220.0, z=130.0)),
+        Line(Point(x=45.89488087618746, y=234.15459672257862, z=0.0), Point(x=0.0, y=260.0, z=-120.0)),
     ]
 
     model = TimberModel()
@@ -56,13 +70,16 @@ def main():
         #     # viewer.scene.add(joint.location)
         topo_name = JointTopology.get_name(joint.topology).split("_")[-1]
         viewer.scene.add(Tag(text=topo_name, position=joint.location, height=40, color=Color.blue()))
+        print(f"{joint} - {[b.graph_node for b in joint.elements]} - {joint.location}")
 
     # draw centerline
     for beam in model.beams:
         viewer.scene.add(beam.centerline)
         viewer.scene.add(beam.geometry)
+        viewer.scene.add(Tag(text=str(beam.graph_node), position=beam.centerline.midpoint, height=40, color=Color.black()))
 
-    anazlyzer = TripletAnalyzer(model)
+    anazlyzer = TripletAnalyzer(model, tolerance=Tolerance(absolute=0.01))
+    # anazlyzer = QuadAnalyzer(model, tolerance=Tolerance(absolute=0.01))
     clusters = anazlyzer.find()
 
     for cluster in clusters:
@@ -70,6 +87,7 @@ def main():
         print([j.location for j in cluster])
         print("==========================")
 
+    print(model.graph)
     viewer.show()
 
 
