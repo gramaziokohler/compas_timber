@@ -87,6 +87,7 @@ class Beam(TimberElement):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
+        data["frame"] = self.frame
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
