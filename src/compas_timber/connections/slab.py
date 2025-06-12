@@ -1,7 +1,4 @@
 from compas.data import Data
-from compas.geometry import Plane
-from compas.geometry import dot_vectors
-from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 from .plate import Plate
 
@@ -53,18 +50,6 @@ class Slab(Plate):
         super(Slab, self).__init__(outline_a, outline_b, openings = openings, name=name, **kwargs)
         self.attributes = {}
         self.attributes.update(kwargs)
-        self._edge_planes = []
-
-    @property
-    def edge_planes(self):
-        if not self._edge_planes:
-            for i in range(len(self.outline_a) - 1):
-                plane = Plane.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
-                if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a,i)) < 0:
-                    plane = Plane(plane.point, -plane.normal)
-                self._edge_planes.append(plane)
-        return self._edge_planes
-
 
     def __repr__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)

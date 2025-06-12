@@ -1,4 +1,5 @@
 import math
+from unicodedata import category
 
 from compas.geometry import Transformation
 from compas.geometry import Box
@@ -28,160 +29,15 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.elements import Beam
+from compas_timber.elements import Beam, beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
-from compas_timber.elements.features import BrepSubtraction
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import is_polyline_clockwise
 from compas_timber.fabrication import FreeContour
 
-
 from .workflow import JointDefinition
-
-
-class WallSelector(object):
-    """Selects walls based on their attributes."""
-
-    def __init__(self, wall_attr, attr_vlaue):
-        self._wall_attr = wall_attr
-        self._attr_value = attr_vlaue
-
-    def select(self, wall):
-        value = getattr(wall, self._wall_attr, None)
-        if value is None:
-            return False
-        else:
-            return value == self._attr_value
-
-
-class AnyWallSelector(object):
-    def select(self, _):
-        return True
-
-
-class WallToWallInterface(object):
-    """
-
-    Parameters
-    ----------
-    face : :class:`compas.geometry.PlanarSurface`
-        Planar surface representing the portion of the wall which touches the other wall.
-        The face's normal points towards the other wall.
-    topology : :class:`compas_timber.connections.JointTopology`
-        The topology of the joint between the two walls.
-
-    """
-
-    def __init__(self, face, topology):
-        self.face = face
-        self.topology = topology
-
-
-class BeamDefinition(object):
-    """
-    TODO: Move this to a separate module (potentially into workflow.py)
-
-    Container for Beam attributes before beam is instantiated.
-
-    Parameters
-    ----------
-    centerline : :class:`compas.geometry.Line`
-        The centerline of the beam.
-    width : float, optional
-        The width of the beam.
-    height : float, optional
-        The height of the beam.
-    z_axis : :class:`compas.geometry.Vector`, optional
-        The z axis of the beam.
-    normal : :class:`compas.geometry.Vector`, optional
-        The normal of the beam.
-    type : str, optional
-        The type of the beam.
-    polyline : :class:`compas.geometry.Polyline`, optional
-        The polyline of the beam.
-    parent : :class:`compas_timber.model.SurfaceAssembly` or :class:`compas_timber.model.SurfaceAssembly.Window`
-        The parent of the beam.
-
-    Attributes
-    ----------
-    centerline : :class:`compas.geometry.Line`
-        The centerline of the beam element.
-    width : float
-        The width of the beam element.
-    height : float
-        The height of the beam element.
-    z_axis : :class:`compas.geometry.Vector`
-        The z axis of the parent (Not the Beam).
-    normal : :class:`compas.geometry.Vector`
-        The normal of the parent.
-
-
-    """
-
-    def __init__(
-        self,
-        centerline,
-        width=None,
-        height=None,
-        normal=None,
-        type=None,
-        parent=None,
-    ):
-        self.original_centerline = centerline
-        self.centerline = Line(centerline[0], centerline[1])
-        self._width = width
-        self._height = height
-        self._normal = normal
-        self.type = type
-        self.parent = parent  # TODO: remove
-
-    def __repr__(self):
-        return "BeamDefinition({}, {}, {}, {})".format(self.centerline, self.width, self.height, self.type)
-
-    @property
-    def width(self):
-        # TODO: provide this upon creation
-        return self._width if self._width else self.parent.beam_dimensions[self.type][0]
-
-    @property
-    def height(self):
-        # TODO: provide this upon creation
-        return self._height if self._height else self.parent.beam_dimensions[self.type][1]
-
-    @property
-    def z_aligned_centerline(self):
-        # TODO: provide this upon creation
-        if dot_vectors(self.centerline.direction, self.parent.stud_direction) < 0:
-            return Line(self.centerline.end, self.centerline.start)
-        else:
-            return self.centerline
-
-    @property
-    def normal(self):
-        # TODO: provide this upon creation
-        return self._normal if self._normal else self.parent.normal
-
-    def offset(self, distance, reverse_dir=False):
-        normal = self.normal if not reverse_dir else -self.normal
-        line = offset_line(self.centerline, distance, normal)
-        self.centerline = Line(line[0], line[1])
-
-    def translate(self, vector):
-        self.centerline.translate(vector)
-
-    def to_beam(self):
-        # TODO: this is quite stiff, if I know the corner, I can just create beam using Beam(...)
-        centerline = Line(*self.centerline)
-        centerline.translate(self.normal * 0.5 * self.height)
-        beam = Beam.from_centerline(centerline, self.width, self.height, self.normal)
-        beam.name = "{}_{}".format(self.type, beam.guid)
-        beam.attributes["category"] = self.type
-        return beam
-
-    def set_centerline(self, line):
-        self.centerline = line
-
 
 class Window(object):
     """
@@ -240,7 +96,7 @@ class Window(object):
         self.header_height = self.beam_dimensions["header"][0]
         self.stud_direction = stud_direction
         self.normal = self._slab_frame.zaxis
-        self._beam_definitions = []
+        self._beams = []
         self._length = None
         self._height = None
         self._frame = None
@@ -261,16 +117,16 @@ class Window(object):
         return Polyline([self.obb.corner(0), self.obb.corner(1), self.obb.corner(2), self.obb.corner(3), self.obb.corner(0)])
 
     @property
-    def jack_studs(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "jack_stud"]
+    def studs(self):
+        return [beam for beam in self._beams if beam.attributes["category"] == "jack_stud" or beam.attributes["category"] == "king_stud"]
 
     @property
     def sills(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "sill"]
+        return [beam for beam in self._beams if beam.attributes["category"] == "sill"]
 
     @property
     def headers(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "header"]
+        return [beam for beam in self._beams if beam.attributes["category"] == "header"]
 
     @property
     def length(self):
@@ -293,31 +149,37 @@ class Window(object):
         # |  |      |
         # z  0 ---- 1
         #    x -->
-        top_segment = self.outline.lines[2]
-        bottom_segment = self.outline.lines[0]
-        left_segment = self.outline.lines[3]
-        right_segment = self.outline.lines[1]
+        top_segment = self.frame_polyline.lines[3]
+        bottom_segment = self.frame_polyline.lines[1]
+        left_segment = self.frame_polyline.lines[0]
+        right_segment = self.frame_polyline.lines[2]
 
-        header = BeamDefinition(top_segment, parent=self, type="header")
-        sill = BeamDefinition(bottom_segment, parent=self, type="sill")
-
-        stud_roles = "jack_stud" if self._lintel_posts else "king_stud"
-        studs = []
-        studs.append(BeamDefinition(left_segment, parent=self, type=stud_roles))
-        studs.append(BeamDefinition(right_segment, parent=self, type=stud_roles))
-
-        beam_definitions = [header, sill] + studs
-
-        offset_perimeter_elements(beam_definitions, offset_inside=False)
-
-        shorten_edges_to_fit_between_plate_beams(studs, [header, sill])
+        header = Beam.from_centerline( top_segment, self.beam_dimensions["header"][0], self.beam_dimensions["header"][1],z_vector= self.normal, category = "header")
+        header.attributes["edge_index"] = 2
+        sill = Beam.from_centerline( bottom_segment, self.beam_dimensions["sill"][0], self.beam_dimensions["sill"][1], z_vector= self.normal, category = "sill")
+        sill.attributes["edge_index"] = 0
+        left_king = Beam.from_centerline( left_segment, self.beam_dimensions["king_stud"][0], self.beam_dimensions["king_stud"][1], z_vector= self.normal,category = "king_stud")
+        left_king.attributes["edge_index"] = 3
+        right_king = Beam.from_centerline( right_segment, self.beam_dimensions["king_stud"][0], self.beam_dimensions["king_stud"][1], z_vector= self.normal, category = "king_stud")
+        right_king.attributes["edge_index"] = 1
+        self._beams = [header, sill, left_king, right_king]
 
         if self._lintel_posts:
-            for beam_def in self.jack_studs:
-                offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-                king_line = offset_line(beam_def.centerline, offset, self.normal)
-                beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
-        return beam_definitions
+            left_jack = Beam.from_centerline(left_segment, self.beam_dimensions["jack_stud"][0], self.beam_dimensions["jack_stud"][1], z_vector= self.normal, category = "jack_stud")
+            left_jack.attributes["edge_index"] = 3
+            right_jack = Beam.from_centerline(right_segment, self.beam_dimensions["jack_stud"][0], self.beam_dimensions["jack_stud"][1], z_vector= self.normal, category = "jack_stud")
+            right_jack.attributes["edge_index"] = 1
+            self._beams.append(left_jack)
+            self._beams.append(right_jack)
+
+            left_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 3) * self.beam_dimensions["jack_stud"][0])
+            right_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 1) * self.beam_dimensions["jack_stud"][0])
+        for beam in self._beams:
+            vector = get_polyline_segment_perpendicular_vector(self.frame_polyline, beam.attributes["edge_index"])
+            beam.frame.translate(vector * self.beam_dimensions[beam.attributes["category"]][0] * 0.5)
+        return self._beams
+
+
 
 
 class Door(Window):
@@ -425,19 +287,19 @@ class SlabPopulator(object):
         The height of the panel.
     frame : :class:`compas.geometry.Frame`
         The frame of the assembly.
-    jack_studs : list of :class:`BeamDefinition`
+    jack_studs : list of :class:`compas_timber.elements.Beam`
         The jack studs of the assembly.
-    king_studs : list of :class:`BeamDefinition`
+    king_studs : list of :class:`compas_timber.elements.Beam`
         The king studs of the assembly.
-    edge_studs : list of :class:`BeamDefinition`
+    edge_studs : list of :class:`compas_timber.elements.Beam`
         The edge studs of the assembly.
-    studs : list of :class:`BeamDefinition`
+    studs : list of :class:`compas_timber.elements.Beam`
         The studs of the assembly.
-    sills : list of :class:`BeamDefinition`
+    sills : list of :class:`compas_timber.elements.Beam`
         The sills of the assembly.
-    headers : list of :class:`BeamDefinition`
+    headers : list of :class:`compas_timber.elements.Beam`
         The headers of the assembly.
-    plate_beams : list of :class:`BeamDefinition`
+    plate_beams : list of :class:`compas_timber.elements.Beam`
 
     """
 
@@ -453,11 +315,13 @@ class SlabPopulator(object):
         self.inner_polylines = slab.openings
         self.edges = []
         self._elements = []
-        self._beam_definitions = []
+        self._beams = []
+        self._plates = []
         self._rules = []
         self._features = []
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
+        self._edge_perpendicular_vectors = []
 
         self.frame = slab.frame
         self._interfaces = interfaces or []
@@ -523,13 +387,7 @@ class SlabPopulator(object):
 
     @property
     def elements(self):
-        elements = []
-        print("Creating elements for slab populator with {} beam definitions".format(len(self._beam_definitions)))
-        for beam_def in self._beam_definitions:
-            beam_def.translate(self.normal * self._config_set.sheeting_inside)
-            elements.append(beam_def.to_beam())
-        elements.extend(self._elements)
-        return elements
+        return self._beams + self._plates
 
     @property
     def features(self):
@@ -542,40 +400,47 @@ class SlabPopulator(object):
                 yield plate
 
     @property
+    def edge_perpendicular_vectors(self):
+        """Returns the perpendicular vectors for the edges of the slab."""
+        if not self._edge_perpendicular_vectors:
+            self._edge_perpendicular_vectors = [get_polyline_segment_perpendicular_vector(self.outline_a, i) for i in range(len(self.outline_a.lines))]
+        return self._edge_perpendicular_vectors
+
+    @property
     def points(self):
         return self.outer_polyline.points
 
     @property
     def jack_studs(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "jack_stud"]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "jack_stud"]
 
     @property
     def king_studs(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "king_stud"]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "king_stud"]
 
     @property
     def edge_studs(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "edge_stud"]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "edge_stud"]
 
     @property
     def studs(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "stud"]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "stud"]
 
     @property
     def sills(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "sill"]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "sill"]
 
     @property
     def headers(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "header"]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "header"]
 
     @property
     def plate_beams(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type == "plate_beam"]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "plate_beam"]
 
     @property
     def edge_studs(self):
-        return [beam_def for beam_def in self._beam_definitions if beam_def.type in ["edge_stud", "plate_beam"]]
+        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) in ["edge_stud"]]
 
     @classmethod
     def beam_category_names(cls):
@@ -605,10 +470,13 @@ class SlabPopulator(object):
         """
         self.generate_perimeter_beams()
         self.generate_openings()
-        self.generate_studs()
+        # for beam in self._beams:
+        #     print("Beam {}".format(beam.attributes["category"]))
+        self.generate_stud_beams()
         self.generate_plates()
-        elements = self.elements
-        return elements
+        for beam in self._beams:
+            beam.frame.translate((self.normal*self.beam_dimensions[beam.attributes["category"]][1] * 0.5))
+        return self.elements
 
     def create_joint_definitions(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
@@ -634,33 +502,26 @@ class SlabPopulator(object):
 
     def generate_perimeter_beams(self):
         interior_indices = self.get_interior_segment_indices(self.outline_a)
-
-        print("Interior indices:", interior_indices)
-        self._beam_definitions = self.get_edge_beam_defs()
-        for i, beam_def in enumerate(self._beam_definitions):
+        self._beams = self.get_edge_beams()
+        for i, beam in enumerate(self._beams):
+            beam.attributes["edge_index"] = i
             if i in interior_indices:
-                if angle_vectors(beam_def.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam_def.centerline.direction, self.stud_direction, deg=True) > 135:
-                    if self._config_set.lintel_posts:
-                        beam_def.type = "jack_stud"
-                    else:
-                        beam_def.type = "king_stud"
+                if angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) > 135:
+                    beam.attributes["category"] = "king_stud"
                 else:
-                    beam_def.type = "header"
+                    beam.attributes["category"] = "header"
             else:
-                if angle_vectors(beam_def.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam_def.centerline.direction, self.stud_direction, deg=True) > 135:
-                    beam_def.type = "edge_stud"
+                if angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) > 135:
+                    beam.attributes["category"] = "edge_stud"
                 else:
-                    beam_def.type = "plate_beam"
-        offset_perimeter_elements(self._beam_definitions)
+                    beam.attributes["category"] = "plate_beam"
+        self.offset_perimeter_elements()
 
         if self._config_set.lintel_posts:
-            for beam_def in self._beam_definitions:
-                if beam_def.type == "jack_stud":
-                    offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) / 2
-                    king_line = offset_line(beam_def.centerline, offset, self.normal)
-                    self._beam_definitions.append(BeamDefinition(king_line, type="king_stud", parent=self))
+            self.add_jack_studs()
 
-    def get_edge_beam_defs(self, min_width= 60):
+
+    def get_edge_beams(self, min_width= 60):
         """Get the edge beam definitions for the outer polyline of the slab."""
         edge_segs = []
         edge_beam_widths = []
@@ -673,7 +534,7 @@ class SlabPopulator(object):
             pts.append(intersection_line_line(edge_segs[i-1], edge_segs[i])[0])
         pts.append(pts[0])  # close the loop
         bounding_pline = Polyline(pts)
-        return [BeamDefinition(seg, width=width + min_width, parent=self) for seg, width in zip(bounding_pline.lines, edge_beam_widths)]
+        return [Beam.from_centerline(seg, width=width + min_width, height = self.frame_thickness, z_vector=self.normal) for seg, width in zip(bounding_pline.lines, edge_beam_widths)]
 
 
     def get_outer_segment_and_offset(self, segment_index):
@@ -705,6 +566,17 @@ class SlabPopulator(object):
             out.insert(0, out[0] - 1)
         return set(out)
 
+
+    def add_jack_studs(self):
+        for beam in self.king_studs:
+                offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) *0.5
+                vector = self.edge_perpendicular_vectors[beam.attributes["edge_index"]]
+                print("offset", offset, "vector", vector, "edge_index", beam.attributes["edge_index"])
+                beam.frame.translate(-vector*offset)
+                jack_stud = Beam.from_centerline(Line(beam.centerline.start, beam.centerline.end), width=self.beam_dimensions["jack_stud"][0], height=self.beam_dimensions["jack_stud"][1], z_vector=self.normal, category="jack_stud")
+                jack_stud.attributes["edge_index"] = beam.attributes["edge_index"]
+                self._beams.append(jack_stud)
+
     def generate_openings(self):
         for opening in self.inner_polylines:
             element = Window(
@@ -720,64 +592,74 @@ class SlabPopulator(object):
                 # self._config_set.lintel_posts,
             )
 
-            self._beam_definitions.extend(element.create_elements())
+            self._beams.extend(element.create_elements())
             self._openings.append(element)
 
-    def generate_studs(self):
-        self.generate_stud_lines()
-        print("stud count = ", len(self._beam_definitions))
+    def generate_stud_beams(self):
+        print("beam count before stud generation:", len(self._beams))
+        self.generate_studs()
+        print("beam count after stud generation:", len(self._beams))
         self.trim_jack_studs()
+        print("beam count after jack stud trimming:", len(self._beams))
         self.trim_king_studs()
+        print("beam count after king stud trimming:", len(self._beams))
         self.trim_studs()
+        print("beam count after stud trimming:", len(self._beams))
         self.cull_overlaps()
+        print("beam count after culling overlaps:", len(self._beams))
 
-    def generate_stud_lines(self):
-        print("Generating stud lines")
+    def generate_studs(self):
         x_position = self._config_set.stud_spacing
         frame = Frame(self._slab.frame.point, cross_vectors(self.stud_direction, self.normal), self.stud_direction)
-        rebase = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-        pts = [pt.transformed(rebase) for pt in self.outline_a.points + self.outline_b.points]
+        to_world = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+        pts = [pt.transformed(to_world) for pt in self.outline_a.points + self.outline_b.points]
         box = Box.from_points(pts)
         x_position = box.xmin + self._config_set.stud_spacing
-        while x_position < box.xmax - self._config_set.beam_width:
+        to_local = Transformation.from_frame_to_frame(Frame.worldXY(), frame)
+        while x_position < box.xmax - self.beam_dimensions["stud"][0]:
             start_point = Point(x_position, 0, 0)
-            start_point.transform(Transformation.from_frame_to_frame(Frame.worldXY(),frame))
+            start_point.transform(to_local)
             line = Line.from_point_and_vector(start_point, self.stud_direction)
-            print("line: ", line)
-            self._beam_definitions.append(BeamDefinition(line, type="stud", parent=self))
+            self._beams.append(
+                Beam.from_centerline(
+                    line,
+                    width=self.beam_dimensions["stud"][0],
+                    height=self.beam_dimensions["stud"][1],
+                    z_vector=self.normal,
+                    category="stud",
+                )
+            )
             x_position += self._config_set.stud_spacing
 
-    def get_beam_intersections(self, beam_def, *element_lists_to_intersect):
+    def get_beam_intersections(self, beam, elements_to_intersect):
         intersections = []
         dots = []
-        for element_list in element_lists_to_intersect:
-            for element_to_intersect in element_list:
-                point = intersection_line_segment(beam_def.z_aligned_centerline, element_to_intersect.centerline, 0.01)[0]
-                print(element_to_intersect.type)
-                if point:
-                    print("intersected with beam type: ", element_to_intersect.type)
-                    intersections.append(point)
+        for element_to_intersect in elements_to_intersect:
+            point = intersection_line_segment(beam.centerline, element_to_intersect.centerline)[0]
+            if point:
+                print("found intersection with", element_to_intersect.attributes["category"], "at", point)
+                intersections.append(point)
         if len(intersections) > 1:
             intersections.sort(key=lambda x: dot_vectors(x, self.stud_direction))
-            dots = [dot_vectors(Vector.from_start_end(beam_def.z_aligned_centerline.start, x), self.stud_direction) / beam_def.centerline.length for x in intersections]
+            dots = [dot_vectors(Vector.from_start_end(beam.centerline.start, x), self.stud_direction) / beam.centerline.length for x in intersections]
         return intersections, dots
 
     def trim_jack_studs(self):
-        for beam_def in self.jack_studs:
-            intersections, dots = self.get_beam_intersections(beam_def, self.plate_beams, self.headers)
+        for beam in self.jack_studs:
+            intersections, dots = self.get_beam_intersections(beam, self.plate_beams+self.headers)
             if len(intersections) > 1:
                 bottom = None
                 for i, dot in enumerate(dots):
                     if dot < 0:
                         bottom = intersections[i]
-                top = beam_def.z_aligned_centerline.end
+                top = beam.centerline.end
                 if not bottom:
-                    bottom = beam_def.z_aligned_centerline.start
-            beam_def.set_centerline(Line(bottom, top))
+                    bottom = beam.centerline.start
+            beam.centerline = Line(bottom, top)
 
     def trim_king_studs(self):
-        for beam_def in self.king_studs:
-            intersections, dots = self.get_beam_intersections(beam_def, self.plate_beams, self.headers, self.sills)
+        for beam in self.king_studs:
+            intersections, dots = self.get_beam_intersections(beam, self.plate_beams+self.headers+self.sills)
             if len(intersections) > 1:
                 bottom, top = None, None
                 for i, dot in enumerate(dots):
@@ -787,48 +669,34 @@ class SlabPopulator(object):
                         top = intersections[i]  # first intersection above header
                         break
                 if not bottom:
-                    bottom = beam_def.z_aligned_centerline.start
+                    bottom = beam.centerline.start
                 if not top:
-                    top = beam_def.z_aligned_centerline.end
-                beam_def.set_centerline(Line(bottom, top))
+                    top = beam.centerline.end
+                beam.centerline = Line(bottom, top)
 
     def trim_studs(self):
-        stud_elements = []
+        new_studs = []
         while len(self.studs) > 0:
-            for beam_def in self._beam_definitions:
-                if beam_def.type == "stud":
-                    intersections, _ = self.get_beam_intersections(beam_def, self.edge_studs, self.king_studs, self.plate_beams, self.headers, self.sills)
-                    print("intersections: ", intersections)
-                    while len(intersections) > 1:
-                        top = intersections.pop()
-                        bottom = intersections.pop()
-                        stud_elements.append(BeamDefinition(Line(bottom, top), type="stud", parent=self))
-                    self._beam_definitions.remove(beam_def)
-        self._beam_definitions.extend(stud_elements)
+            for i, beam in enumerate(self.studs):
+                print("NEXT STUD #:", i)
+                intersections, _ = self.get_beam_intersections(beam, self.plate_beams+self.edge_studs+self.headers+self.sills)
+                print("intersections", intersections)
+                while len(intersections) > 1:
+                    top = intersections.pop()
+                    bottom = intersections.pop()
+                    new_studs.append(Beam.from_centerline(Line(bottom, top),self.beam_dimensions["stud"][0], self.beam_dimensions["stud"][1], z_vector=self.normal, category="stud"))
+                self._beams.remove(beam)
+        self._beams.extend(new_studs)
+
 
     def cull_overlaps(self):
         studs = self.studs
         for beam_def in studs:
             for other_element in self.king_studs + self.jack_studs + self.edge_studs:
-                if self.distance_between_elements(beam_def, other_element) < (self.beam_dimensions[beam_def.type][0] + self.beam_dimensions[other_element.type][0]) / 2:
-                    self._beam_definitions.remove(beam_def)
+                if self.distance_between_elements(beam_def, other_element) < (self.beam_dimensions[beam_def.attributes["category"]][0] + self.beam_dimensions[other_element.attributes["category"]][0]) / 2:
+                    self._beams.remove(beam_def)
                     break
 
-        # # removed studs that are inside details
-        # for beam_def in studs:
-        #     for interface in self._interfaces:
-        #         detail = self._config_set.connection_details.get(interface.topology, None)
-        #         if not detail:
-        #             continue
-
-        #         if interface.interface_role == InterfaceRole.MAIN:
-        #             detail_obb = detail.get_detail_obb_main(interface, self._config_set, self._wall)
-        #         else:
-        #             detail_obb = detail.get_detail_obb_cross(interface, self._config_set, self._wall)
-
-        #         if detail_obb.contains_point(beam_def.centerline.midpoint):
-        #             self._beam_definitions.remove(beam_def)
-        #             break
 
     def distance_between_elements(self, element_one, element_two):
         pt = element_one.centerline.point_at(0.5)
@@ -849,6 +717,21 @@ class SlabPopulator(object):
                 projected_outline = Polyline([closest_point_on_plane(pt, Plane.from_frame(plate.frame)) for pt in opening.outline])
                 plate.add_feature(FreeContour.from_polyline_and_element(projected_outline, plate, interior = True))
         self._elements.extend(plates)
+
+    def offset_perimeter_elements(self):
+        """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
+
+        Parameters
+        ----------
+        element_loop : list of :class:`BeamDefinition`
+            The elements to offset.
+
+        """
+        beams = [beam for beam in self._beams if beam.attributes.get("edge_index", None) is not None]
+        print("perimeter_beam_count", len(beams))
+        for beam in beams:
+            vector = self.edge_perpendicular_vectors[beam.attributes["edge_index"]]
+            beam.frame.translate(-vector* (beam.width / 2))
 
 
 def shorten_edges_to_fit_between_plate_beams(beams_to_fit, beams_to_fit_between, dist_tolerance=None):
@@ -874,28 +757,11 @@ def shorten_edges_to_fit_between_plate_beams(beams_to_fit, beams_to_fit_between,
             stud.centerline = Line(start_point, end_point)
 
 
-def offset_perimeter_elements(element_loop, edge_stud_offset=None, offset_inside=True):
-    """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
-
-    Parameters
-    ----------
-    element_loop : list of :class:`BeamDefinition`
-        The elements to offset.
-    edge_stud_offset : float, optional
-        The additional offset for edge studs towards the inside of the wall to account for bending.
-        Default is ``0.0``.
-    offset_inside : bool, optional
-        Offset the elements towards the inside of the wall.
-        Default is ``True``. If ``False``, the elements are offset towards the outside.
-
-    """
-    # TODO: rename to offset_perimeter_elements
-    edge_studs = [beam_def for beam_def in element_loop if beam_def.type in "edge_stud"]
-    edge_stud_offset = edge_stud_offset or 0.0
-    for beam_def in element_loop:
-        # polyline is at the center of the beam's face, push it towards the inside
-        beam_def.offset(beam_def.width / 2, reverse_dir= offset_inside)
-
-    for stud in edge_studs:
-        # configurable additional offset for edge studs towards the inside of the wall to account for bending
-        stud.offset(edge_stud_offset)
+# def beam_from_category(group, segment, category, **kwargs):
+#     width = group.beam_dimensions[category][0]
+#     height = group.beam_dimensions[category][1]
+#     beam = Beam.from_centerline(segment, width=width, height=height, z_vector=group.normal)
+#     for key, value in kwargs.items():
+#         beam.attributes[key] = value
+#     group._beams.append(beam)
+#     return beam

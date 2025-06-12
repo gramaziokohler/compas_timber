@@ -12,7 +12,6 @@ class PlateMiterJoint(PlateJoint):
 
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""
-        print("Adjusting plate outlines for PlateMiterJoint...")
         assert self.plate_a
         assert self.plate_b
 

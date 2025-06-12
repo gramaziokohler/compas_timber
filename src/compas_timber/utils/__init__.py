@@ -388,12 +388,11 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
         The index of the point in the polyline, or None if not found.
     """
     plane = Plane.from_points(polyline.points)
-    pt = polyline.lines[segment_index].point_at(0.5)
-    perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
-    point = pt + (perp_vector * 0.1)
-    if is_point_in_polyline(point, polyline):
-        return Vector.from_start_end(point, pt)
-    return Vector.from_start_end(pt, point)
+    if is_polyline_clockwise(polyline, plane.normal):
+        return Vector(*cross_vectors(plane.normal, polyline.lines[segment_index].direction))
+    else:
+        return Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
+
 
 
 def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):

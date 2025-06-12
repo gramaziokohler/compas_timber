@@ -208,8 +208,6 @@ class PlateJoint(Joint):
                 self.b_segment_index = topo_results[2][1]
 
             self.reorder_planes_and_outlines()
-            print("a_outlines:", self.a_outlines)
-            print("b_outlines:", self.b_outlines)
             self._adjust_plate_outlines()
 
     def _adjust_plate_outlines(self):
