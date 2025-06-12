@@ -27,6 +27,7 @@ from .wall_joint import InterfaceRole
 from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
 from .analyzers import QuadAnalyzer
+from .analyzers import CompositeAnalyzer
 
 __all__ = [
     "Joint",
@@ -59,4 +60,5 @@ __all__ = [
     "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",
     "QuadAnalyzer",
+    "CompositeAnalyzer",
 ]

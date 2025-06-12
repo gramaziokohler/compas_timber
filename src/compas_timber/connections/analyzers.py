@@ -1,50 +1,106 @@
 import math
 from typing import List
 
+import compas.geometry
+import compas.tolerance  # noqa: F401
+import compas_model.elements  # noqa: F401
 from compas.geometry import KDTree
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
-from compas_timber.connections import Joint
-from compas_timber.model import TimberModel
+import compas_timber.connections  # noqa: F401
+import compas_timber.elements  # noqa: F401
 
 
 class Cluster(object):
-    """
-    one result of an analyzer, groups together the clustered joints and offers access to the beams
+    """One result of an analyzer, groups together the clustered joints and offers access to the beams
+
+    Parameters
+    ----------
+    joints : list[:class:`~compas_timber.connections.Joint`]
+        The joints that are part of this cluster.
+
+    Attributes
+    ----------
+    joints : list[:class:`~compas_timber.connections.Joint`]
+        The joints that are part of this cluster.
+    elements : set[:class:`~compas_timber.elements.Element`]
+        List of unique instances of elements that are part of this cluster.
+    location : :class:`~compas.geometry.Point`
+        The approximated location of the cluster, effectively the location of the first joint.
     """
 
     def __init__(self, joints):
         self.joints = joints
+        self._elements = None
+
+    def __iter__(self):
+        return iter(self.elements)
+
+    def __len__(self):
+        return len(self.elements)
 
     @property
     def elements(self):
-        return set([joint.element for joint in self.joints])
+        # type: () -> set[compas_model.elements.Element]
+        if not self._elements:
+            self._elements = set()
+            for joint in self.joints:
+                self._elements.update(joint.elements)
+        return self._elements
+
+    @property
+    def location(self):
+        # type: () -> compas.geometry.Point
+        return self.joints[0].location
 
 
 class BeamGroupAnalyzer(object):
+    """Interface for a beam group analyzer."""
+
     def find(self, exclude=None):
-        """Returns a list of beam groups (each group is a list of beams)"""
+        """Finds clusters of beams connected pairwise at the same point within a given tolerance."""
         raise NotImplementedError
 
 
 class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
-    """Finds clusters of N beams connected pairwise at the same point within a given tolerance."""
+    """Finds clusters of N beams connected pairwise at the same point within a given tolerance.
 
-    # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
+    Parameters
+    ----------
+    model : :class:`~compas_timber.model.TimberModel`
+        The TimberModel to analyze.
+    n : int
+        The desired cluster size, i.e. the number of beams in a cluster.
+    tolerance : :class:`~compas.tolerance.Tolerance` | None
+        The tolerance to use for the analysis. If None, a default tolerance is used.
+    """
+
     def __init__(self, model, n=2, tolerance=None):
         super(NBeamKDTreeAnalyzer, self).__init__()
         self._joints = list(model.joints)
         if not self._joints:
             raise ValueError("The model has no joints to analyze.")
 
-        self.graph = model.graph
         self._kdtree = KDTree([joint.location for joint in self._joints])
         self._n = n
         self._tolerance = tolerance or TOL
 
+        # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
+
     def find(self, exclude=None) -> List[Cluster]:
-        # type: (list(Joint) | None) -> list(Cluster)
+        """Finds clusters of N beams connected pairwise at the same point within a given tolerance.
+
+        Parameters
+        ----------
+        exclude : set[:class:`~compas_timber.connections.Joint`] | None
+            A set of joints to exclude from the analysis. Defaults to None.
+
+        Returns
+        -------
+        clusters : list[:class:`Cluster`]
+            A list of clusters found in the model. Each cluster contains joints that are connected pairwise at the same point.
+        """
+        # type: (set[compas_timber.connections.Joint] | None) -> list[Cluster]
         exclude = exclude or set()  # TODO: uuid clusters so that they can be excluded
         tol = self._tolerance.absolute
         visited = set()
@@ -52,9 +108,7 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
         clusters = []
 
         for index, joint in enumerate(self._joints):
-            print(f"analyzing joint {[e.graph_node for e in joint.elements]}")
-            if index in visited:
-                print("skipping already visited joint")
+            if index in visited or joint in exclude:
                 continue
 
             result = []
@@ -65,46 +119,86 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
             for _, idx, distance in neighbors:
                 n_joint = self._joints[idx]
-                n_joint_id = [e.graph_node for e in n_joint.elements]
-                print(f"inspecting neighbor: {n_joint_id}")
 
                 if idx in visited or distance > tol or idx == index:
-                    print("skipping visited neighbor")
                     continue
-                print(f"adding neighbor to result: {n_joint_id}")
+
                 result.append(n_joint)
                 visited.add(idx)
 
-            print(f"finished cluster with {len(result)} joints")
             # TODO: should we take triplets from e.g. quads as well? AKA clusters.append(result[:self._n])
             if len(result) == neighbors_count - 1:
-                print("adding cluster")
-                clusters.append(result)
+                clusters.append(Cluster(result))
 
         return clusters
 
 
 def TripletAnalyzer(model, tolerance=None):
-    # type: (TimberModel, Tolerance | None) -> BeamGroupAnalyzer
+    """Finds clusters of 3 beams connected pairwise at the same point within a given tolerance."""
+    # type: (compas_timber.model.TimberModel, compas.tolerance.Tolerance | None) -> BeamGroupAnalyzer
     return NBeamKDTreeAnalyzer(model, n=3, tolerance=tolerance)
 
 
 def QuadAnalyzer(model, tolerance=None):
-    # type: (TimberModel, Tolerance | None) -> BeamGroupAnalyzer
+    """Finds clusters of 4 beams connected pairwise at the same point within a given tolerance."""
+    # type: (compas_timber.model.TimberModel, compas.tolerance.Tolerance | None) -> BeamGroupAnalyzer
     return NBeamKDTreeAnalyzer(model, n=4, tolerance=tolerance)
 
 
 class CompositeAnalyzer:
+    """CompositeAnalyzer combines multiple analyzers to find clusters of beams.
+
+    Parameters
+    ----------
+    analyzers : list[BeamGroupAnalyzer]
+        A list of analyzers to use for finding clusters.
+
+    Notes
+    -----
+    Prefer using :meth:`CompositeAnalyzer.from_model` to create an instance, to avoid error-prone manual instantiation.
+
+    """
+
     def __init__(self, analyzers):
-        self.analyzers = analyzers
+        self._analyzers = analyzers
 
     def find(self, exclude=None):
+        """Finds clusters of beams using all analyzers in the composite.
+
+        Parameters
+        ----------
+        exclude : set[:class:`~compas_timber.connections.Joint`] | None
+            A set of joints to exclude from the analysis. Defaults to None.
+        """
         exclude = exclude or set()
         results = []
 
-        for analyzer in self.analyzers:
-            groups = analyzer.find(exclude=exclude)
-            exclude.update([g.joints for g in groups])
-            results.extend(groups)
+        for analyzer in self._analyzers:
+            clusters = analyzer.find(exclude=exclude)
+            for cluster in clusters:
+                exclude.update(cluster.joints)
+            results.extend(clusters)
 
         return results
+
+    @classmethod
+    def from_model(cls, model, analyzers_cls, tolerance=None):
+        """Create a CompositeAnalyzer from a TimberModel and a list of analyzers.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The TimberModel to analyze.
+        analyzers_cls : list[type[BeamGroupAnalyzer]] | type[BeamGroupAnalyzer]
+            A list of analyzer classes to use for finding clusters.
+        tolerance : :class:`~compas.tolerance.Tolerance` | None
+            The tolerance to use for the analysis. If None, a default tolerance is used.
+
+        Returns
+        -------
+        CompositeAnalyzer
+            An instance of CompositeAnalyzer with the specified analyzers.
+        """
+        if not isinstance(analyzers_cls, list):
+            analyzers_cls = [analyzers_cls]
+        return cls([analyzer(model, tolerance) for analyzer in analyzers_cls])
