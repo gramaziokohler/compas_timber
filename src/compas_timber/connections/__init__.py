@@ -29,6 +29,8 @@ from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
 from .analyzers import QuadAnalyzer
 from .analyzers import CompositeAnalyzer
+from .analyzers import Cluster
+from .analyzers import BeamGroupAnalyzer
 
 __all__ = [
     "Joint",
@@ -63,4 +65,6 @@ __all__ = [
     "TripletAnalyzer",
     "QuadAnalyzer",
     "CompositeAnalyzer",
+    "Cluster",
+    "BeamGroupAnalyzer",
 ]
