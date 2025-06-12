@@ -71,7 +71,7 @@ def test_extension_to_plane():
 
 
 def test_reset_computed(mocker):
-    mocker.patch("compas_timber.elements.Beam.compute_geometry", return_value=mocker.Mock())
+    mocker.patch("compas_timber.elements.Beam.compute_elementgeometry", return_value=mocker.Mock())
     b = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2)
 
     b.geometry

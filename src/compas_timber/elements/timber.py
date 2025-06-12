@@ -60,6 +60,7 @@ class TimberElement(Element):
         return self._frame
 
     @frame.setter
+    @reset_computed
     def frame(self, frame):
         self._frame = frame
 
@@ -70,6 +71,7 @@ class TimberElement(Element):
         return self._features
 
     @features.setter
+    @reset_computed
     def features(self, features):
         self._features = features
 
@@ -102,6 +104,7 @@ class TimberElement(Element):
         if not isinstance(features, list):
             features = [features]
         self._features.extend(features)  # type: ignore
+        self._geometry = None  # reset geometry cache TODO: should we do that?
 
     @reset_computed
     def remove_features(self, features=None):
@@ -120,3 +123,4 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
+        self._geometry = None  # reset geometry cache TODO: should we do that?
