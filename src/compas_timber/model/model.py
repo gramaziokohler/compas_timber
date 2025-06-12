@@ -85,9 +85,10 @@ class TimberModel(Model):
     def joints(self):
         # type: () -> set[Joint]
         joints = set()  # some joints might apear on more than one interaction
-        for interaction in self.interactions():
-            if isinstance(interaction, Joint):
-                joints.add(interaction)
+        for (u, v), attr in self._graph.edges(data=True):
+            for modifier in attr.get("modifiers") or []:
+                if isinstance(modifier, Joint):
+                    joints.add(modifier)
         return joints
 
     @property
@@ -114,17 +115,6 @@ class TimberModel(Model):
     @property
     def topologies(self):
         return self._topologies
-
-    def interactions(self):
-        # type: () -> Generator[Interaction]
-        """Yield all interactions between all elements in the model.
-
-        Yields
-        ------
-        :class:`Interaction`
-
-        """
-        return self._graph.interactions()
 
     @property
     def center_of_mass(self):
@@ -335,7 +325,10 @@ class TimberModel(Model):
         self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
             element_a, element_b = interaction
-            _ = self.add_interaction(element_a, element_b, joint)
+            edge = self.add_interaction(element_a, element_b)
+            modifiers = self._graph.edge_attribute(edge, "modifiers") or []  # explicitly add the joint to the "modifiers" attribute
+            modifiers.append(joint)
+            self._graph.edge_attribute(edge, "modifiers", value=modifiers)
             # TODO: should we create a bidirectional interaction here?
 
     def remove_joint(self, joint):
