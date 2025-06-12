@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
 * Added `topology` to class `Joint`.
 * Added `location` to class `Joint`.
+* Added `NBeamKDTreeAnalyzer` to `compas_timber.connections`.
+* Added `TripletAnalyzer` to `compas_timber.connections`.
+* Added `QuadAnalyzer` to `compas_timber.connections`.
+* Added `CompositeAnalyzer` to `compas_timber.connections`.
 
 ### Changed
 

@@ -156,6 +156,7 @@ class CompositeAnalyzer:
     Notes
     -----
     Prefer using :meth:`CompositeAnalyzer.from_model` to create an instance, to avoid error-prone manual instantiation.
+    Element pairs handled by a previous analyzer will be excluded from subsequent analyzers.
 
     """
 
