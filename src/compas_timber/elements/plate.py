@@ -70,6 +70,7 @@ class Plate(TimberElement):
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
         data["blank_extension"] = self.blank_extension
+        data["openings"] = self.openings
         return data
 
     def __init__(self, outline_a=None, outline_b=None, openings=None, **kwargs):
@@ -89,7 +90,6 @@ class Plate(TimberElement):
         self._blank = None
         self._planes = None
         self._thickness = None
-        self._features = []
 
     def __repr__(self):
         # type: () -> str
@@ -178,23 +178,9 @@ class Plate(TimberElement):
 
     @features.setter
     def features(self, features):
+        # type: (list[FreeContour]) -> None
+        """Sets the features of the plate."""
         self._features = features
-
-    def add_feature(self, feature):
-        # type: (Feature) -> None
-        """Add a feature to the list of features of the lement.
-
-        Parameters
-        ----------
-        feature : :class:`Feature`
-            A feature
-
-        Returns
-        -------
-        None
-
-        """
-        self._features.append(feature)
 
     @property
     def key(self):
@@ -296,7 +282,6 @@ class Plate(TimberElement):
         # this ensure the plate's geometry can always be computed
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-        print(kwargs)
         # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
         if TOL.is_zero(thickness):
@@ -314,28 +299,33 @@ class Plate(TimberElement):
 
     @classmethod
     def from_brep(cls, brep, thickness, vector=None, **kwargs):
-        """Creates a wall from a brep.
+        """Creates a plate from a brep.
         Parameters
         ----------
         brep : :class:`compas.geometry.Brep`
-            The brep of the wall.
+            The brep of the plate.
         thickness : float
-            The thickness of the wall.
+            The thickness of the plate.
         vector : :class:`compas.geometry.Vector`
-            The vector in which the wall is extruded.(optional)
+            The vector in which the plate is extruded.(optional)
         kwargs : dict
             Additional keyword arguments.
             These are passed to the :class:`compas_timber.elements.Slab` constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Plate`
+            A Plate object representing the plate with the given brep and thickness.
         """
 
         if len(brep.faces) > 1:
-            raise ValueError("Can only use single-face breps to create a Slab. This brep has {}".format(len(brep.faces)))
+            raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
         face = brep.faces[0]
         outer_polyline = None
         inner_polylines = []
         for loop in face.loops:
             polyline_points = []
-            for _, edge in enumerate(loop.edges):
+            for edge in loop.edges:
                 polyline_points.append(edge.start_vertex.point)
             polyline_points.append(loop.edges[-1].end_vertex.point)
             if loop.is_outer:
@@ -348,6 +338,7 @@ class Plate(TimberElement):
     #  methods
     # ==========================================================================
 
+    @property
     def shape(self):
         # type: () -> compas.geometry.Brep
         """The shape of the plate before other features area applied.
@@ -391,9 +382,7 @@ class Plate(TimberElement):
         # TODO: consider if Brep.from_curves(curves) is faster/better
         plate_geo = self.shape()
         if include_features:
-            # Skip the first feature. This base feature is indirectly considered by self.shape() so not needed for visualization.
-            # it is however used by the BTLx logic.
-            for feature in self._features[1:]:
+            for feature in self._features:
                 try:
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:

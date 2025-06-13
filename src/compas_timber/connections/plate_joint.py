@@ -17,11 +17,11 @@ class InterfaceRole(object):
 
     Attributes
     ----------
-    MAIN : literal(0)
+    MAIN : literal("MAIN")
         The interface is the main interface.
-    CROSS : literal(1)
+    CROSS : literal("CROSS")
         The interface is the cross interface.
-    NONE : literal(2)
+    NONE : literal("NONE")
         The interface has no specific role. E.g. when a miter joint is used.
     """
 
@@ -32,13 +32,18 @@ class InterfaceRole(object):
 
 class PlateToPlateInterface(object):
     """
-    interface : :class:`compas.geometry.Polyline`
+    interface_polyline : :class:`compas.geometry.Polyline`
         The outline of the interface area.
     frame : :class:`compas.geometry.Frame`
         The frame of the interface area.
         xaxis : interface normal (towards other plate)
         yaxis : up along the interface side
         normal: width direction, perpendicular to the interface
+    interface_role : literal(InterfaceRole)
+        The role of the interface in the joint.
+    topology : literal(JointTopology)
+        The topology of the joint in which the interface is used.
+        E.g. L or T
 
     """
 
@@ -210,9 +215,6 @@ class PlateJoint(Joint):
             self.reorder_planes_and_outlines()
             self._adjust_plate_outlines()
 
-    def _adjust_plate_outlines(self):
-        raise NotImplementedError
-
     def get_interface_for_plate(self, plate):
         if plate is self.plate_a:
             return self.plate_a_interface
@@ -243,9 +245,11 @@ class PlateJoint(Joint):
     def restore_plates_from_keys(self, model):
         self.plate_a = model.element_by_guid(self._plate_a_guid)
         self.plate_b = model.element_by_guid(self._plate_b_guid)
-        self._calculate_interfaces()
+        self._plate_a_interface = None
+        self._plate_b_interface = None
 
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self._plate_a_guid, self._plate_b_guid = self._plate_b_guid, self._plate_a_guid
-        self._calculate_interfaces()
+        self._plate_a_interface = None
+        self._plate_b_interface = None

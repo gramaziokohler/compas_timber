@@ -82,7 +82,7 @@ def test_plate_aperture_contour():
     plate = Plate.from_outline_thickness(plate_pline, thickness)
     aperture_pline = Polyline([Point(25, 50, 0), Point(25, 150, 0), Point(75, 150, 0), Point(75, 50, 0), Point(25, 50, 0)])
     contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth, interior=True)
-    plate.add_feature(contour)
+    plate.add_features(contour)
 
     assert len(plate.features) == 2
     assert plate.features[1] == contour
@@ -100,7 +100,7 @@ def test_plate_aperture_contour_serialization():
     contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth, interior=True)
 
     contour_copy = json_loads(json_dumps(contour))
-    plate.add_feature(contour_copy)
+    plate.add_features(contour_copy)
 
     assert len(plate.features) == 2
     assert plate.features[1] == contour_copy
@@ -118,7 +118,7 @@ def test_plate_aperture_BTLx():
     contour = FreeContour.from_polyline_and_element(aperture_pline, plate, depth=depth)
 
     contour_copy = json_loads(json_dumps(contour))
-    plate.add_feature(contour_copy)
+    plate.add_features(contour_copy)
 
     processing_element = BTLxWriter()._create_processing(contour)
 

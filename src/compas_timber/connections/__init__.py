@@ -6,6 +6,7 @@ from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .null_joint import NullJoint
 from .solver import ConnectionSolver
+from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
 from .t_butt import TButtJoint
@@ -13,6 +14,7 @@ from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
 from .t_lap import TLapJoint
 from .x_lap import XLapJoint
+from .x_notch import XNotchJoint
 from .t_dovetail import TDovetailJoint
 from .t_tenon_mortise import TenonMortiseJoint
 from .ball_node import BallNodeJoint
@@ -38,12 +40,14 @@ __all__ = [
     "TBirdsmouthJoint",
     "LMiterJoint",
     "XLapJoint",
+    "XNotchJoint",
     "TLapJoint",
     "LLapJoint",
     "NullJoint",
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
+    "PlateConnectionSolver",
     "find_neighboring_elements",
     "TDovetailJoint",
     "BallNodeJoint",

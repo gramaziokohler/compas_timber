@@ -7,7 +7,6 @@ DATA = os.path.abspath(os.path.join(HERE, "..", "..", "data"))
 
 
 __all_plugins__ = [
-    "compas_timber.ghpython.install",
     "compas_timber.rhino",
     "compas_timber.rhino.install",
     "compas_timber.utils.r_tree",

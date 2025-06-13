@@ -1,4 +1,4 @@
-from compas.geometry import intersection_line_plane
+from compas_timber.connections import PlateConnectionSolver
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
@@ -80,34 +80,8 @@ class PlateButtJoint(PlateJoint):
         assert self.cross_plate
 
         for polyline in self.main_outlines:
-            for i, index in enumerate(
-                [self.main_segment_index - 1, (self.main_segment_index + 1) % len(self.main_plate.outline_a.lines)]
-            ):  # for each adjacent segment in the main plate outline
-                seg = polyline.lines[index]  # get the segment
-                pt = intersection_line_plane(seg, self.cross_planes[0])
-                if pt:
-                    if i == 0:
-                        polyline[self.main_segment_index] = pt
-                        if self.main_segment_index == 0:
-                            polyline[-1] = pt
-                    else:
-                        polyline[self.main_segment_index + 1] = pt
-                        if self.main_segment_index + 1 == len(polyline.lines):
-                            polyline[0] = pt
+            PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
 
         if self.topology == JointTopology.TOPO_L:
             for polyline in self.cross_outlines:
-                for i, index in enumerate(
-                    [self.cross_segment_index - 1, (self.cross_segment_index + 1) % len(self.cross_plate.outline_a.lines)]
-                ):  # for each adjacent segment in the main plate outline
-                    seg = polyline.lines[index]  # get the segment
-                    pt = intersection_line_plane(seg, self.main_planes[1])
-                    if pt:
-                        if i == 0:
-                            polyline[self.cross_segment_index] = pt
-                            if self.cross_segment_index == 0:
-                                polyline[-1] = pt
-                        else:
-                            polyline[self.cross_segment_index + 1] = pt
-                            if self.cross_segment_index + 1 == len(polyline.lines):
-                                polyline[0] = pt
+                PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])

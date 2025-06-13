@@ -10,6 +10,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_line_line
@@ -249,6 +250,12 @@ class ConnectionSolver(object):
     def _is_near_end(t, length, max_distance, tol):
         return abs(t) * length < max_distance + tol or abs(1.0 - t) * length < max_distance + tol
 
+
+class PlateConnectionSolver(ConnectionSolver):
+    """Provides tools for detecting plate intersections and joint topologies."""
+
+    TOLERANCE = 1e-6
+
     def find_plate_plate_topology(self, plate_a, plate_b, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
 
@@ -265,11 +272,12 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.element.Plate`, :class:`~compas_timber.element.Plate`)
-            The topology of the intersection between the two plates and the two plates themselves.
+        tuple(:class:`~compas_timber.connections.JointTopology`, tuple(:class:`~compas_timber.element.Plate`, int), tuple(`:class:`~compas_timber.element.Plate`, int))
+            The topology of the intersection between the two plates and the two plates themselves, and the indices of the outline segments where the intersection occurs.
+            Format: JointTopology, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
         """
 
-        plate_a_segment_index, plate_b_segment_index = self.find_slab_segment_indices(plate_a, plate_b, tol=tol)
+        plate_a_segment_index, plate_b_segment_index = self._find_plate_segment_indices(plate_a, plate_b, tol=tol)
 
         if plate_a_segment_index is None and plate_b_segment_index is None:
             return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
@@ -281,22 +289,22 @@ class ConnectionSolver(object):
             return JointTopology.TOPO_L, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
 
     @staticmethod
-    def find_slab_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
+    def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b`. used to determine connection Topology"""
 
-        indices = ConnectionSolver.get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        indices = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if indices[0] is not None:
             return indices
-        index = ConnectionSolver.get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        index = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if index is not None:
             return index, None
-        index = ConnectionSolver.get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+        index = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
         if index is not None:
             return None, index
         return None, None
 
     @staticmethod
-    def get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
+    def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
         Used to find segments that join in L_TOPO Topology"""
 
@@ -307,12 +315,12 @@ class ConnectionSolver(object):
                 for j, seg_b in enumerate(pair[1].lines):  # TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), seg_b) <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
-                            if ConnectionSolver.do_segments_overlap(seg_a, seg_b):
+                            if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
                                 return i, j
         return None, None
 
     @staticmethod
-    def get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, tol=TOL):
+    def _get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
         Used to find segments that join in L_TOPO Topology"""
 
@@ -324,7 +332,7 @@ class ConnectionSolver(object):
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
-                            if ConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
+                            if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
                                 return i
         return None
 
@@ -379,3 +387,17 @@ class ConnectionSolver(object):
         if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
             return True
         return is_point_in_polyline(segment.start, polyline, in_plane=False, tol=tol)
+
+    @staticmethod
+    def move_polyline_segment_to_plane(polyline, segment_index, plane):
+        """Move a segment of a polyline to the intersection with a plane."""
+        start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
+        if start_pt:
+            polyline[segment_index] = start_pt
+            if segment_index == 0:
+                polyline[-1] = start_pt
+        end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
+        if end_pt:
+            polyline[segment_index + 1] = end_pt
+            if segment_index + 1 == len(polyline.lines):
+                polyline[0] = end_pt
