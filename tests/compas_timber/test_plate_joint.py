@@ -1,5 +1,5 @@
 from compas_timber.elements import Plate
-from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateMiterJoint
 from compas_timber.connections import PlateButtJoint
@@ -15,7 +15,7 @@ def test_plate_L_topos():
 
     plate_b = Plate.from_outline_thickness(polyline_b, 1)
 
-    cs = ConnectionSolver()
+    cs = PlateConnectionSolver()
 
     topo_results = cs.find_plate_plate_topology(plate_a, plate_b)
     assert topo_results[0] == JointTopology.TOPO_L, "Expected L-joint topology"
@@ -34,7 +34,7 @@ def test_plate_T_topos():
 
     plate_b = Plate.from_outline_thickness(polyline_b, 1)
 
-    cs = ConnectionSolver()
+    cs = PlateConnectionSolver()
 
     topo_results = cs.find_plate_plate_topology(plate_a, plate_b)
     assert topo_results[0] == JointTopology.TOPO_T, "Expected T-joint topology"
@@ -53,7 +53,7 @@ def test_reversed_plate_T_topos():
 
     plate_b = Plate.from_outline_thickness(polyline_b, 1)
 
-    cs = ConnectionSolver()
+    cs = PlateConnectionSolver()
 
     topo_results = cs.find_plate_plate_topology(plate_b, plate_a)
     assert topo_results[0] == JointTopology.TOPO_T, "Expected T-joint topology"
@@ -78,7 +78,7 @@ def test_three_plate_topos():
 
     topo_results = []
 
-    cs = ConnectionSolver()
+    cs = PlateConnectionSolver()
 
     topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
     topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))
@@ -103,7 +103,7 @@ def test_three_plate_mix_topos():
 
     topo_results = []
 
-    cs = ConnectionSolver()
+    cs = PlateConnectionSolver()
 
     topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
     topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))
@@ -145,7 +145,7 @@ def test_three_plate_joints():
 
     plate_c = Plate.from_outline_thickness(polyline_c, 1)
 
-    cs = ConnectionSolver()
+    cs = PlateConnectionSolver()
     topo_results = []
     topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
     topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))
@@ -177,7 +177,7 @@ def test_three_plate_joints_mix_topo():
 
     plate_c = Plate.from_outline_thickness(polyline_c, 1)
 
-    cs = ConnectionSolver()
+    cs = PlateConnectionSolver()
     topo_results = []
     topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
     topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))

@@ -6,6 +6,7 @@ from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .null_joint import NullJoint
 from .solver import ConnectionSolver
+from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
 from .t_butt import TButtJoint
@@ -44,6 +45,7 @@ __all__ = [
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
+    "PlateConnectionSolver",
     "find_neighboring_elements",
     "TDovetailJoint",
     "BallNodeJoint",
