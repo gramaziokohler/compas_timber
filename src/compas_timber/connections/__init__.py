@@ -14,6 +14,7 @@ from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
 from .t_lap import TLapJoint
 from .x_lap import XLapJoint
+from .x_notch import XNotchJoint
 from .t_dovetail import TDovetailJoint
 from .t_tenon_mortise import TenonMortiseJoint
 from .ball_node import BallNodeJoint
@@ -39,6 +40,7 @@ __all__ = [
     "TBirdsmouthJoint",
     "LMiterJoint",
     "XLapJoint",
+    "XNotchJoint",
     "TLapJoint",
     "LLapJoint",
     "NullJoint",

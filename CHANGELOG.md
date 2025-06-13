@@ -27,7 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `scale` method to `compas_timber.fabrication.Pocket`.
 * Added `scale` method to `compas_timber.fabrication.Text`.
 * Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
+* Added new `compas_timber.fabrication.LongitudinalCut`.
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
+* Added new `compas_timber.connections.XNotchJoint`.
+* Added a proxy class for `Pocket` BTLx processing for performance optimization. 
 * Added `PlateJoint`.
 * Added `PlateButtJoint`.
 * Added `PlateMiterJoint`.
@@ -45,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed how input `Polyline`s are handled in `Plate`.
 
 ### Removed
+
+* Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
 
 
 ## [0.16.2] 2025-05-07
