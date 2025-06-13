@@ -12,6 +12,7 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_segment_plane
+from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -367,7 +368,10 @@ class LongitudinalCut(BTLxProcessing):
         for i, ref_side in enumerate(beam.ref_sides[:4]):
             width, _ = beam.get_dimensions_relative_to_side(i)
             y_seg = Line.from_point_and_vector(ref_side.point, ref_side.yaxis * width)
-            if intersection_segment_plane(y_seg, plane):  # check if the plane intersects with the reference side
+            print(y_seg)
+            pt = intersection_segment_plane(y_seg, plane)
+            print(pt)
+            if intersection_segment_plane(y_seg, plane) and dot_vectors(ref_side.normal, plane.normal) > 0:  # check if the plane intersects with the reference side
                 angle = angle_vectors(plane.normal, ref_side.normal)
                 angles[i] = angle
         return min(angles, key=angles.get)
