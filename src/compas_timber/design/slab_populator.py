@@ -28,17 +28,19 @@ from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import InterfaceRole
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
+from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam, beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
+from compas_timber.fabrication.longitudinal_cut import LongitudinalCutProxy
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.fabrication import FreeContour
 from compas_timber.fabrication import LongitudinalCut
-from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import JackRafterCutProxy
 
 from .workflow import JointDefinition
 
@@ -317,6 +319,7 @@ class SlabPopulator(object):
         self.edges = []
         self._elements = []
         self._beams = []
+        self._edge_beams = []
         self._plates = []
         self._rules = []
         self._features = []
@@ -330,6 +333,7 @@ class SlabPopulator(object):
         self._plate_segments = {}
         self._detail_obbs = []
         self._openings = []
+        self._joint_definitions = []
         self._interior_corner_indices = []
         self.frame_thickness = slab.thickness
         if configuration_set.sheeting_inside:
@@ -485,6 +489,7 @@ class SlabPopulator(object):
         creates and returns all the elements in the wall, returns also the joint definitions
         """
         self.generate_perimeter_beams()
+        self.generate_perimeter_joints()
         # self.generate_joining_beams()
         self.generate_openings()
         self.generate_stud_beams()
@@ -493,30 +498,31 @@ class SlabPopulator(object):
         #     beam.frame.translate((self.normal*self.beam_dimensions[beam.attributes["category"]][1] * 0.5))
         return self.elements
 
-    def create_joint_definitions(self, elements, max_distance=None):
-        beams = [element for element in elements if element.is_beam]
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
+    def create_joint_definitions(self):
+        # beams = [element for element in elements if element.is_beam]
+        # solver = ConnectionSolver()
+        # found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
 
-        joint_definitions = []
-        max_distance = max_distance or 0.0
-        max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
-            if detected_topo == JointTopology.TOPO_UNKNOWN:
-                continue
+        # joint_definitions = []
+        # max_distance = max_distance or 0.0
+        # max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
+        # for pair in found_pairs:
+        #     beam_a, beam_b = pair
+        #     detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
+        #     if detected_topo == JointTopology.TOPO_UNKNOWN:
+        #         continue
 
-            for rule in self.rules:
-                if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
-                    if rule.joint_type == LButtJoint:
-                        beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                    joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
-                    # break # ?
-        return joint_definitions
+        #     for rule in self.rules:
+        #         if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
+        #             if rule.joint_type == LButtJoint:
+        #                 beam_a, beam_b = rule.reorder([beam_a, beam_b])
+        #             joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+        #             # break # ?
+        return self._joint_definitions
 
     def generate_perimeter_beams(self):
-        self._beams = self.get_edge_beams()
+        self._edge_beams = self.get_edge_beams()
+        self._beams.extend(self._edge_beams)
         for i, beam in enumerate(self._beams):
             beam.attributes["edge_index"] = i
             if i in self.interior_segment_indices:
@@ -529,6 +535,8 @@ class SlabPopulator(object):
                     beam.attributes["category"] = "edge_stud"
                 else:
                     beam.attributes["category"] = "plate_beam"
+
+
         self.offset_perimeter_elements()
         self.trim_edge_beams()
         if self._config_set.lintel_posts:
@@ -544,6 +552,34 @@ class SlabPopulator(object):
             if not(cw ^ (angle < 0)):
                 out.append(i)
         return out
+
+    def generate_perimeter_joints(self):
+        for i in range(len(self._edge_beams)):
+            beam_a = self._edge_beams[i-1]
+            beam_b = self._edge_beams[i]
+
+            beam_a_angle = angle_vectors(beam_a.centerline.direction, self.stud_direction)
+            beam_a_angle = min(beam_a_angle, math.pi - beam_a_angle)  # get the smallest angle to the stud direction
+            beam_b_angle = angle_vectors(beam_b.centerline.direction, self.stud_direction)
+            beam_b_angle = min(beam_b_angle, math.pi - beam_b_angle)  # get the smallest angle to the stud direction
+            if i in self.interior_corner_indices:
+                if beam_a_angle < beam_b_angle:
+                    plane = Plane(self._slab.edge_planes[i].point, -self._slab.edge_planes[i].normal)
+                    joint_def = JointDefinition(LButtJoint, [beam_a, beam_b], butt_plane=plane)
+                else:
+                    plane = Plane(self._slab.edge_planes[i-1].point, -self._slab.edge_planes[i-1].normal)
+                    joint_def = JointDefinition(LButtJoint, [beam_b, beam_a], butt_plane=plane)
+            else:
+                if beam_a_angle < beam_b_angle:
+                    joint_def = JointDefinition(LButtJoint, [beam_a, beam_b])
+                    b_cut = JackRafterCutProxy.from_plane_and_beam(self._slab.edge_planes[i-1], beam_b)
+                    beam_b.add_features(b_cut)
+                else:
+                    joint_def = JointDefinition(LButtJoint, [beam_b, beam_a])
+                    a_cut = JackRafterCutProxy.from_plane_and_beam(self._slab.edge_planes[i], beam_a)
+                    beam_a.add_features(a_cut)
+            self._joint_definitions.append(joint_def)
+
 
 
     def get_edge_beams(self, min_width= 60):
@@ -567,18 +603,8 @@ class SlabPopulator(object):
             if beam.attributes.get("edge_index", None) is not None:
                 plane = self._slab.edge_planes[beam.attributes["edge_index"]]
                 if not TOL.is_zero(dot_vectors(self.normal, plane.normal)):
-
-
-                    print(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
-
-                    long_cut = LongitudinalCut.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
+                    long_cut = LongitudinalCutProxy.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
                     beam.add_features(long_cut)
-
-
-                # start_cut = JackRafterCut.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]-1], beam)
-                # beam.add_features(start_cut)
-                # end_cut = JackRafterCut.from_plane_and_beam(self._slab.edge_planes[(beam.attributes["edge_index"]+1)%len(self._slab.edge_planes)], beam)
-                # beam.add_features(end_cut)
 
     def get_outer_segment_and_offset(self, segment_index):
         vector = get_polyline_segment_perpendicular_vector(self.outline_a, segment_index)

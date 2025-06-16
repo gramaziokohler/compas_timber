@@ -118,7 +118,21 @@ class LButtJoint(Joint):
         assert self.main_beam and self.cross_beam
 
         # extend the main beam
-        if self.mill_depth:
+        if self.butt_plane:
+            try:
+                cutting_plane_main = self.butt_plane
+                start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
+                extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+                self.main_beam.add_blank_extension(
+                    start_main + extension_tolerance,
+                    end_main + extension_tolerance,
+                    self.guid,
+                )
+            except AttributeError as ae:
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main])
+            except Exception as ex:
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
+        elif self.mill_depth:
             try:
                 cutting_plane_main = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
                 if self.mill_depth:
