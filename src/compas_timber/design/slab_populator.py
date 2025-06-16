@@ -22,6 +22,7 @@ from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.geometry import closest_point_on_plane
 from compas.tolerance import TOL
+from numpy import dot
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import InterfaceRole
@@ -329,6 +330,7 @@ class SlabPopulator(object):
         self._plate_segments = {}
         self._detail_obbs = []
         self._openings = []
+        self._interior_corner_indices = []
         self.frame_thickness = slab.thickness
         if configuration_set.sheeting_inside:
             self.frame_thickness -= configuration_set.sheeting_inside
@@ -442,6 +444,20 @@ class SlabPopulator(object):
     def edge_studs(self):
         return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) in ["edge_stud"]]
 
+    @property
+    def interior_corner_indices(self):
+        """Get the indices of the interior corners of the slab outline."""
+        if not self._interior_corner_indices:
+            self._interior_corner_indices = self.get_interior_corner_indices()
+        return self._interior_corner_indices
+
+    @property
+    def interior_segment_indices(self):
+        """Get the indices of the interior segments of the slab outline."""
+        for i in range(len(self.outline_a.lines)):
+            if i in self.interior_corner_indices and (i+1)%len(self.outline_a.lines) in self.interior_corner_indices:
+                yield i
+
     @classmethod
     def beam_category_names(cls):
         return SlabPopulator.BEAM_CATEGORY_NAMES
@@ -500,11 +516,10 @@ class SlabPopulator(object):
         return joint_definitions
 
     def generate_perimeter_beams(self):
-        interior_indices = self.get_interior_segment_indices(self.outline_a)
         self._beams = self.get_edge_beams()
         for i, beam in enumerate(self._beams):
             beam.attributes["edge_index"] = i
-            if i in interior_indices:
+            if i in self.interior_segment_indices:
                 if angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) > 135:
                     beam.attributes["category"] = "king_stud"
                 else:
@@ -519,6 +534,16 @@ class SlabPopulator(object):
         if self._config_set.lintel_posts:
             self.add_jack_studs()
 
+    def get_interior_corner_indices(self):
+        """Get the indices of the interior corners of the slab outline."""
+        points = self.outline_a.points[0:-1]
+        cw = is_polyline_clockwise(self.outline_a, self.normal)
+        out = []
+        for i in range(len(points)):
+            angle = angle_vectors_signed(points[i-1] - points[i], points[(i+1)%len(points)] - points[i], self.normal, deg=True)
+            if not(cw ^ (angle < 0)):
+                out.append(i)
+        return out
 
 
     def get_edge_beams(self, min_width= 60):
@@ -540,12 +565,20 @@ class SlabPopulator(object):
         """Trim the edge beams to fit between the plate beams."""
         for beam in self._beams:
             if beam.attributes.get("edge_index", None) is not None:
-                long_cut = LongitudinalCut.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
-                beam.add_features(long_cut)
-                start_cut = JackRafterCut.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]-1], beam)
-                beam.add_features(start_cut)
-                end_cut = JackRafterCut.from_plane_and_beam(self._slab.edge_planes[(beam.attributes["edge_index"]+1)%len(self._slab.edge_planes)], beam)
-                beam.add_features(end_cut)
+                plane = self._slab.edge_planes[beam.attributes["edge_index"]]
+                if not TOL.is_zero(dot_vectors(self.normal, plane.normal)):
+
+
+                    print(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
+
+                    long_cut = LongitudinalCut.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
+                    beam.add_features(long_cut)
+
+
+                # start_cut = JackRafterCut.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]-1], beam)
+                # beam.add_features(start_cut)
+                # end_cut = JackRafterCut.from_plane_and_beam(self._slab.edge_planes[(beam.attributes["edge_index"]+1)%len(self._slab.edge_planes)], beam)
+                # beam.add_features(end_cut)
 
     def get_outer_segment_and_offset(self, segment_index):
         vector = get_polyline_segment_perpendicular_vector(self.outline_a, segment_index)
