@@ -1,4 +1,5 @@
 import math
+from re import L
 from unicodedata import category
 
 from compas.geometry import Transformation
@@ -503,7 +504,6 @@ class SlabPopulator(object):
         interior_indices = self.get_interior_segment_indices(self.outline_a)
         self._beams = self.get_edge_beams()
         for i, beam in enumerate(self._beams):
-            beam.attributes["edge_index"] = i
             if i in interior_indices:
                 if angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) > 135:
                     beam.attributes["category"] = "king_stud"
@@ -519,7 +519,16 @@ class SlabPopulator(object):
         if self._config_set.lintel_posts:
             self.add_jack_studs()
 
-
+    def get_edge_joint(self, beam_a, beam_b):
+        """Get the joint definition for the edge beams."""
+        beam_a_angle =  angle_vectors(beam_a.centerline.direction, self.stud_direction, deg=True)
+        beam_b_angle =  angle_vectors(beam_b.centerline.direction, self.stud_direction, deg=True)
+        beam_a_angle = min(beam_a_angle, 180 - beam_a_angle)  # get the smallest angle
+        beam_b_angle = min(beam_b_angle, 180 - beam_b_angle)  # get the smallest angle
+        if beam_a_angle < beam_b_angle:
+            return LButtJoint(beam_a, beam_b)
+        else:
+            return LButtJoint(beam_b, beam_a)
 
     def get_edge_beams(self, min_width= 60):
         """Get the edge beam definitions for the outer polyline of the slab."""
@@ -534,7 +543,13 @@ class SlabPopulator(object):
             pts.append(intersection_line_line(edge_segs[i-1], edge_segs[i])[0])
         pts.append(pts[0])  # close the loop
         bounding_pline = Polyline(pts)
-        return [Beam.from_centerline(seg, width=width + min_width, height = self.frame_thickness, z_vector=self.normal) for seg, width in zip(bounding_pline.lines, edge_beam_widths)]
+        beams=[]
+        for i, (seg, width) in enumerate(zip(bounding_pline.lines, edge_beam_widths)):
+            beam = Beam.from_centerline(seg, width=width + min_width, height=self.frame_thickness, z_vector=self.normal)
+            beam.attributes["category"] = "edge_beam"
+            beam.attributes["edge_index"] = i
+            beams.append(beam)
+        return beams
 
     def trim_edge_beams(self):
         """Trim the edge beams to fit between the plate beams."""
