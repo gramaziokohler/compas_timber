@@ -57,9 +57,10 @@ class LButtJoint(Joint):
         data["small_beam_butts"] = self.small_beam_butts
         data["modify_cross"] = self.modify_cross
         data["reject_i"] = self.reject_i
+        data["butt_plane"] = self.butt_plane
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None,**kwargs):
         super(LButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -69,6 +70,7 @@ class LButtJoint(Joint):
         self.small_beam_butts = small_beam_butts
         self.modify_cross = modify_cross
         self.reject_i = reject_i
+        self.butt_plane = butt_plane
         self.features = []
 
         # update the main and cross beams based on the joint parameters
@@ -158,10 +160,13 @@ class LButtJoint(Joint):
             self.cross_beam.remove_features(self.features)
 
         # get the cutting plane for the main beam
-        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        cutting_plane.xaxis = -cutting_plane.xaxis
-        if self.mill_depth:
-            cutting_plane.translate(cutting_plane.normal * self.mill_depth)
+        if self.butt_plane:
+            cutting_plane = self.butt_plane
+        else:
+            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            cutting_plane.xaxis = -cutting_plane.xaxis
+            if self.mill_depth:
+                cutting_plane.translate(cutting_plane.normal * self.mill_depth)
 
         # apply the cut on the main beam
         main_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
@@ -170,7 +175,7 @@ class LButtJoint(Joint):
         self.features = [main_feature]
 
         # apply the pocket on the cross beam
-        if self.mill_depth:
+        if self.mill_depth and not self.butt_plane:
             cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
             lap_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
             cross_feature = Lap.from_plane_and_beam(

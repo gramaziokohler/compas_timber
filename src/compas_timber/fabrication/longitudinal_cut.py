@@ -368,9 +368,6 @@ class LongitudinalCut(BTLxProcessing):
         for i, ref_side in enumerate(beam.ref_sides[:4]):
             width, _ = beam.get_dimensions_relative_to_side(i)
             y_seg = Line.from_point_and_vector(ref_side.point, ref_side.yaxis * width)
-            print(y_seg)
-            pt = intersection_segment_plane(y_seg, plane)
-            print(pt)
             if intersection_segment_plane(y_seg, plane) and dot_vectors(ref_side.normal, plane.normal) > 0:  # check if the plane intersects with the reference side
                 angle = angle_vectors(plane.normal, ref_side.normal)
                 angles[i] = angle
