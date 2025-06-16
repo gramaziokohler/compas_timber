@@ -489,42 +489,17 @@ class SlabPopulator(object):
         creates and returns all the elements in the wall, returns also the joint definitions
         """
         self.generate_perimeter_beams()
-        self.generate_perimeter_joints()
         # self.generate_joining_beams()
+        self.generate_perimeter_joint_definitions()
         self.generate_openings()
         self.generate_stud_beams()
         self.generate_plates()
-        # for beam in self._beams:
-        #     beam.frame.translate((self.normal*self.beam_dimensions[beam.attributes["category"]][1] * 0.5))
         return self.elements
 
-    def create_joint_definitions(self):
-        # beams = [element for element in elements if element.is_beam]
-        # solver = ConnectionSolver()
-        # found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
-
-        # joint_definitions = []
-        # max_distance = max_distance or 0.0
-        # max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
-        # for pair in found_pairs:
-        #     beam_a, beam_b = pair
-        #     detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
-        #     if detected_topo == JointTopology.TOPO_UNKNOWN:
-        #         continue
-
-        #     for rule in self.rules:
-        #         if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
-        #             if rule.joint_type == LButtJoint:
-        #                 beam_a, beam_b = rule.reorder([beam_a, beam_b])
-        #             joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
-        #             # break # ?
-        return self._joint_definitions
 
     def generate_perimeter_beams(self):
         self._edge_beams = self.get_edge_beams()
-        self._beams.extend(self._edge_beams)
-        for i, beam in enumerate(self._beams):
-            beam.attributes["edge_index"] = i
+        for i, beam in enumerate(self._edge_beams):
             if i in self.interior_segment_indices:
                 if angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) > 135:
                     beam.attributes["category"] = "king_stud"
@@ -536,11 +511,11 @@ class SlabPopulator(object):
                 else:
                     beam.attributes["category"] = "plate_beam"
 
-
         self.offset_perimeter_elements()
         self.trim_edge_beams()
         if self._config_set.lintel_posts:
             self.add_jack_studs()
+        self._beams.extend(self._edge_beams)
 
     def get_interior_corner_indices(self):
         """Get the indices of the interior corners of the slab outline."""
@@ -553,7 +528,7 @@ class SlabPopulator(object):
                 out.append(i)
         return out
 
-    def generate_perimeter_joints(self):
+    def generate_perimeter_joint_definitions(self):
         for i in range(len(self._edge_beams)):
             beam_a = self._edge_beams[i-1]
             beam_b = self._edge_beams[i]
@@ -582,8 +557,10 @@ class SlabPopulator(object):
 
 
 
-    def get_edge_beams(self, min_width= 60):
+    def get_edge_beams(self, min_width = None):
         """Get the edge beam definitions for the outer polyline of the slab."""
+        if min_width is None:
+            min_width = self._config_set.beam_width
         edge_segs = []
         edge_beam_widths = []
         for i in range(len(self.outline_a.lines)):
@@ -595,11 +572,16 @@ class SlabPopulator(object):
             pts.append(intersection_line_line(edge_segs[i-1], edge_segs[i])[0])
         pts.append(pts[0])  # close the loop
         bounding_pline = Polyline(pts)
-        return [Beam.from_centerline(seg, width=width + min_width, height = self.frame_thickness, z_vector=self.normal) for seg, width in zip(bounding_pline.lines, edge_beam_widths)]
+        beams = []
+        for i, (seg, width) in enumerate(zip(bounding_pline.lines, edge_beam_widths)):
+            beam = Beam.from_centerline(seg, width=width + min_width, height=self.frame_thickness, z_vector=self.normal)
+            beam.attributes["edge_index"] = i
+            beams.append(beam)
+        return beams
 
     def trim_edge_beams(self):
         """Trim the edge beams to fit between the plate beams."""
-        for beam in self._beams:
+        for beam in self._edge_beams:
             if beam.attributes.get("edge_index", None) is not None:
                 plane = self._slab.edge_planes[beam.attributes["edge_index"]]
                 if not TOL.is_zero(dot_vectors(self.normal, plane.normal)):
@@ -640,6 +622,7 @@ class SlabPopulator(object):
         for beam in self.king_studs:
                 offset = (self.beam_dimensions["jack_stud"][0] + self.beam_dimensions["king_stud"][0]) *0.5
                 vector = self.edge_perpendicular_vectors[beam.attributes["edge_index"]]
+
                 beam.frame.translate(-vector*offset)
                 jack_stud = Beam.from_centerline(Line(beam.centerline.start, beam.centerline.end), width=self.beam_dimensions["jack_stud"][0], height=self.beam_dimensions["jack_stud"][1], z_vector=self.normal, category="jack_stud")
                 jack_stud.attributes["edge_index"] = beam.attributes["edge_index"]
@@ -786,11 +769,10 @@ class SlabPopulator(object):
             The elements to offset.
 
         """
-        beams = [beam for beam in self._beams if beam.attributes.get("edge_index", None) is not None]
-        for beam in beams:
-            vector = self.edge_perpendicular_vectors[beam.attributes["edge_index"]]
-            beam.frame.translate(-vector* (beam.width / 2))
-            beam.frame.translate(self.normal* (beam.height / 2))
+        for beam in self._edge_beams:
+            vector = -self.edge_perpendicular_vectors[beam.attributes["edge_index"]]
+            beam.frame.translate(vector * beam.width*0.5)
+            beam.frame.translate(self.normal* beam.height*0.5)
 
 
 def shorten_edges_to_fit_between_plate_beams(beams_to_fit, beams_to_fit_between, dist_tolerance=None):
