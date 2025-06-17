@@ -4,8 +4,8 @@ from compas.geometry import Plane
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 
-
 from .wall_populator import BeamDefinition
+from .wall_populator import InterfaceLocation
 
 
 def _get_furthest_line(lines, point):

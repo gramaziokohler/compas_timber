@@ -54,8 +54,7 @@ class PlateToPlateInterface(object):
         self.topology = topology  # TODO: don't like this here
 
     def __repr__(self):
-        return "PlateToPlateInterface({0}, {1}, {2})".format(
-            self.interface_type,
+        return "PlateToPlateInterface({0}, {1})".format(
             self.interface_role,
             JointTopology.get_name(self.topology),
         )
@@ -211,9 +210,10 @@ class PlateJoint(Joint):
                 self.topology = topo_results[0]
                 self.a_segment_index = topo_results[1][1]
                 self.b_segment_index = topo_results[2][1]
-
             self.reorder_planes_and_outlines()
             self._adjust_plate_outlines()
+            self.plate_a.interfaces.append(self.plate_a_interface)
+            self.plate_b.interfaces.append(self.plate_b_interface)
 
     def get_interface_for_plate(self, plate):
         if plate is self.plate_a:

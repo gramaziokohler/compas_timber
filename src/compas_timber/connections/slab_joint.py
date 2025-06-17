@@ -1,14 +1,7 @@
-from compas.geometry import Frame
-from compas.geometry import Plane
-from compas.geometry import Polyline
-from compas.geometry import Vector
-from compas.geometry import dot_vectors
 
-from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
-from .plate_joint import PlateJoint
 from .joint import JointTopology
-from .solver import ConnectionSolver
+from .plate_joint import PlateJoint
 
 
 class SlabJoint(PlateJoint):
@@ -80,7 +73,6 @@ class SlabJoint(PlateJoint):
 
     def add_features(self):
         super(SlabJoint, self).add_features()
-        self.add_elements()
 
 
     def restore_beams_from_keys(self, *args, **kwargs):

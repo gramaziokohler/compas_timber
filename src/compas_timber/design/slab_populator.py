@@ -1,48 +1,38 @@
 import math
-from unicodedata import category
 
-from compas.geometry import Transformation
 from compas.geometry import Box
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Line
-from compas.geometry import Polyline
-from compas.geometry import intersection_line_line
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
+from compas.geometry import closest_point_on_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import cross_vectors
-from compas.geometry import distance_point_point_sqrd
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
 from compas.geometry import intersection_segment_segment
-from compas.geometry import matrix_from_frame_to_frame
-from compas.geometry import offset_line
-from compas.geometry import closest_point_on_plane
 from compas.tolerance import TOL
-from numpy import dot
 
-from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import InterfaceRole
-from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
-from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.elements import Beam, beam
-from compas_timber.elements import OpeningType
+from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.fabrication.longitudinal_cut import LongitudinalCutProxy
-from compas_timber.utils import get_polyline_segment_perpendicular_vector
-from compas_timber.utils import correct_polyline_direction
-from compas_timber.utils import is_polyline_clockwise
 from compas_timber.fabrication import FreeContour
-from compas_timber.fabrication import LongitudinalCut
 from compas_timber.fabrication import JackRafterCutProxy
+from compas_timber.fabrication.longitudinal_cut import LongitudinalCutProxy
+from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import get_polyline_segment_perpendicular_vector
+from compas_timber.utils import is_polyline_clockwise
 
 from .workflow import JointDefinition
+
 
 class Window(object):
     """
@@ -155,7 +145,7 @@ class Window(object):
         # z  0 ---- 1
         #    x -->
 
-        segments = [l for l in self.frame_polyline.lines]
+        segments = [ln for ln in self.frame_polyline.lines]
         segments.sort(key=lambda x: dot_vectors(x.point_at(0.5), self.stud_direction))  # sort by stud direction
 
         top_segment = segments[3]
@@ -251,7 +241,7 @@ class SlabPopulatorConfigurationSet(object):
         self.edge_stud_offset = edge_stud_offset or 0.0
         self.custom_dimensions = custom_dimensions
         self.joint_overrides = joint_overrides
-        self.wall_selector = wall_selector or AnyWallSelector()
+        self.wall_selector = wall_selector
         self.connection_details = connection_details or {}
 
     def __str__(self):
@@ -418,35 +408,32 @@ class SlabPopulator(object):
 
     @property
     def jack_studs(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "jack_stud"]
+        return [beam for beam in self._beams if beam.attributes.get("category", None) == "jack_stud"]
 
     @property
     def king_studs(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "king_stud"]
+        return [beam for beam in self._beams if beam.attributes.get("category", None) == "king_stud"]
 
     @property
     def edge_studs(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "edge_stud"]
+        return [beam for beam in self._beams if beam.attributes.get("category", None) == "edge_stud"]
 
     @property
     def studs(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "stud"]
+        return [beam for beam in self._beams if beam.attributes.get("category", None) == "stud"]
 
     @property
     def sills(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "sill"]
+        return [beam for beam in self._beams if beam.attributes.get("category", None) == "sill"]
 
     @property
     def headers(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "header"]
+        return [beam for beam in self._beams if beam.attributes.get("category", None) == "header"]
 
     @property
     def plate_beams(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) == "plate_beam"]
+        return [beam for beam in self._beams if beam.attributes.get("category", None) == "plate_beam"]
 
-    @property
-    def edge_studs(self):
-        return [beam_def for beam_def in self._beams if beam_def.attributes.get("category", None) in ["edge_stud"]]
 
     @property
     def interior_corner_indices(self):

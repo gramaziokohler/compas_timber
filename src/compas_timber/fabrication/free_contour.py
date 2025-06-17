@@ -17,11 +17,11 @@ from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import offset_polyline
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.geometry import intersection_line_line
+from compas.geometry import offset_polyline
 from compas.tolerance import TOL
 
 from compas_timber.utils import correct_polyline_direction

@@ -10,9 +10,9 @@ from compas.geometry import Polyline
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_segment_plane
-from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError

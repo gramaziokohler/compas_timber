@@ -1,5 +1,4 @@
 from compas.geometry import Box
-from compas.geometry import Vector
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -90,6 +89,7 @@ class Plate(TimberElement):
         self._blank = None
         self._planes = None
         self._thickness = None
+        self.interfaces = []
 
     def __repr__(self):
         # type: () -> str
