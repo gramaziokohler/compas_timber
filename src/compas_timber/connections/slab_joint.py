@@ -26,7 +26,6 @@ class SlabToSlabInterface(PlateToPlateInterface):
 
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None, beams=None):
         super(SlabToSlabInterface, self).__init__(polyline, frame, edge_index, topology, interface_role)
-        print("SlabToSlabInterface.__init__")  # DEBUG
         self.beams = beams if beams else []
 
 

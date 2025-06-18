@@ -1,5 +1,4 @@
 import math
-from turtle import back
 
 from compas.geometry import Box
 from compas.geometry import Frame
@@ -8,6 +7,7 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Projection
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
@@ -141,11 +141,6 @@ class Window(object):
         return self._frame
 
     def create_elements(self):
-        # ^  3 ---- 2
-        # |  |      |
-        # z  0 ---- 1
-        #    x -->
-
         segments = [ln for ln in self.frame_polyline.lines]
         segments.sort(key=lambda x: dot_vectors(x.point_at(0.5), self.stud_direction))  # sort by stud direction
 
@@ -161,13 +156,13 @@ class Window(object):
         self._beams = [header, sill, left_king, right_king]
 
         if self._lintel_posts:
-            left_jack = beam_from_category(self, left_segment, "jack_stud", edge_index = 3)
-            right_jack = beam_from_category(self, right_segment, "jack_stud", edge_index = 1)
+            left_jack = beam_from_category(self, left_segment, "jack_stud", edge_index = 1)
+            right_jack = beam_from_category(self, right_segment, "jack_stud", edge_index = 2)
             self._beams.append(left_jack)
             self._beams.append(right_jack)
 
-            left_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 3) * self.beam_dimensions["jack_stud"][0])
-            right_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 1) * self.beam_dimensions["jack_stud"][0])
+            left_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 1) * self.beam_dimensions["jack_stud"][0])
+            right_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 2) * self.beam_dimensions["jack_stud"][0])
         for beam in self._beams:
             vector = get_polyline_segment_perpendicular_vector(self.frame_polyline, beam.attributes["edge_index"])
             beam.frame.translate(vector * self.beam_dimensions[beam.attributes["category"]][0] * 0.5)
@@ -302,7 +297,11 @@ class SlabPopulator(object):
     def __init__(self, configuration_set, slab, interfaces=None):
         self._slab = slab
         self._config_set = configuration_set
-        self.stud_direction = configuration_set.stud_direction or slab.frame.yaxis  # up/direction of the studs/internal beams.
+        if configuration_set.stud_direction:
+            proj = Projection.from_plane(Plane.from_frame(slab.frame))
+            self.stud_direction = configuration_set.stud_direction.transformed(proj)
+        else:
+            self.stud_direction = slab.frame.yaxis
         self.normal = slab.frame.zaxis  # out
         self.outline_a = slab.outline_a
         self.outline_b = slab.outline_b
@@ -379,10 +378,6 @@ class SlabPopulator(object):
         return self._rules
 
     @property
-    def centerlines(self):
-        return [beam_def.centerline for beam_def in self.beam_definitions]
-
-    @property
     def elements(self):
         return self._beams + self._plates
 
@@ -435,12 +430,17 @@ class SlabPopulator(object):
     def plate_beams(self):
         return [beam for beam in self._beams if beam.attributes.get("category", None) == "plate_beam"]
 
-
     @property
     def interior_corner_indices(self):
         """Get the indices of the interior corners of the slab outline."""
         if not self._interior_corner_indices:
-            self._interior_corner_indices = self.get_interior_corner_indices()
+            """Get the indices of the interior corners of the slab outline."""
+            points = self.outline_a.points[0:-1]
+            cw = is_polyline_clockwise(self.outline_a, self.normal)
+            for i in range(len(points)):
+                angle = angle_vectors_signed(points[i-1] - points[i], points[(i+1)%len(points)] - points[i], self.normal, deg=True)
+                if not(cw ^ (angle < 0)):
+                    self._interior_corner_indices.append(i)
         return self._interior_corner_indices
 
     @property
@@ -464,12 +464,9 @@ class SlabPopulator(object):
         """Get the face interfaces of the slab."""
         return [i for i in self._interfaces if i.edge_index is None]
 
-
     @classmethod
     def beam_category_names(cls):
         return SlabPopulator.BEAM_CATEGORY_NAMES
-
-
 
     @classmethod
     def from_model(cls, model, configuration_sets):
@@ -489,41 +486,25 @@ class SlabPopulator(object):
                     break
         return wall_populators
 
-
-
-
-
-
     def create_elements(self):
         """Does the actual populating of the wall
         creates and returns all the elements in the wall, returns also the joint definitions
         """
-        self.generate_edges()
-        self.generate_interfaces()
+        self.generate_edge_beams()
+        self.generate_interface_beams()
         self.generate_edge_joint_definitions()
-        self.generate_openings()
-        self.generate_stud_beams()
-        self.generate_plates()
+        self.generate_face_joint_definitions()
+        # self.generate_openings()
+        # self.generate_stud_beams()
+        # self.generate_plates()
         return self.elements
 
     # ==========================================================================
     # methods for edge beams
     # ==========================================================================
 
-    def get_interior_corner_indices(self):
-        """Get the indices of the interior corners of the slab outline."""
-        points = self.outline_a.points[0:-1]
-        cw = is_polyline_clockwise(self.outline_a, self.normal)
-        out = []
-        for i in range(len(points)):
-            angle = angle_vectors_signed(points[i-1] - points[i], points[(i+1)%len(points)] - points[i], self.normal, deg=True)
-            if not(cw ^ (angle < 0)):
-                out.append(i)
-        return out
-
     def generate_edges(self):
         self.generate_edge_beams()
-        self._beams.extend(self._edge_beams)
 
     def generate_edge_beams(self, min_width = None):
         """Get the edge beam definitions for the outer polyline of the slab."""
@@ -537,6 +518,7 @@ class SlabPopulator(object):
             self.offset_edge_beam(beam)
             self.trim_edge_beam(beam)
             self._edge_beams.append(beam)
+        self._beams.extend(self._edge_beams)
 
     def get_bounding_polyline_and_widths(self):
         edge_segs = []
@@ -552,7 +534,7 @@ class SlabPopulator(object):
         return Polyline(pts), edge_beam_widths
 
     def get_outer_segment_and_offset(self, segment_index):
-        vector = get_polyline_segment_perpendicular_vector(self.outline_a, segment_index)
+        vector = self.edge_perpendicular_vectors[segment_index]
         vector.unitize()
         seg_a = self.outline_a.lines[segment_index]
         seg_b = self.outline_b.lines[segment_index]
@@ -582,7 +564,6 @@ class SlabPopulator(object):
             long_cut = LongitudinalCutProxy.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
             beam.add_features(long_cut)
 
-
     def offset_edge_beam(self, beam):
         """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
 
@@ -596,6 +577,54 @@ class SlabPopulator(object):
         beam.frame.translate(vector * beam.width*0.5)
         beam.frame.translate(self.normal* beam.height*0.5)
 
+    def generate_interface_beams(self):
+        """Generate the beams for the interface."""
+        for interface in self._slab.interfaces:
+            if interface.interface_role == "CROSS":
+                if interface.topology == JointTopology.TOPO_T :
+                    self.generate_t_cross_beams(interface)
+
+                elif interface.topology == JointTopology.TOPO_L:
+                    self.generate_l_cross_beams(interface)
+
+            elif interface.interface_role == "MAIN":
+                if interface.topology == JointTopology.TOPO_T or interface.topology == JointTopology.TOPO_L:
+                    interface.beams.append(self._edge_beams[interface.edge_index])
+
+            else:
+                raise ValueError("either topology: {} or interface role: {} is invalid".format(interface.topology, interface))
+
+    def generate_t_cross_beams(self, interface):
+        """Generate the beams for a T-cross interface."""
+        edge = interface.polyline.lines[0]
+        edge.translate(interface.frame.yaxis * interface.width * 0.5)
+        flat_beam = Beam.from_centerline(edge, width=self.beam_dimensions["stud"][1], height=self.beam_dimensions["stud"][0], z_vector=self.normal)
+        flat_beam.frame.translate(interface.frame.zaxis * self.beam_dimensions["stud"][0] * 0.5)
+        stud_edge_a = edge.translated(interface.frame.yaxis * (self.beam_dimensions["stud"][0]+self.beam_dimensions["stud"][1]) * 0.5)
+        stud_edge_b = edge.translated(-interface.frame.yaxis * (self.beam_dimensions["stud"][0]+self.beam_dimensions["stud"][1]) * 0.5)
+        beam_a = Beam.from_centerline(stud_edge_a, width=self.beam_dimensions["stud"][0], height=self.beam_dimensions["stud"][1], z_vector=self.normal)
+        beam_b = Beam.from_centerline(stud_edge_b, width=self.beam_dimensions["stud"][0], height=self.beam_dimensions["stud"][1], z_vector=self.normal)
+        beam_a.frame.translate(interface.frame.zaxis * self.beam_dimensions["stud"][1] * 0.5)
+        beam_b.frame.translate(interface.frame.zaxis * self.beam_dimensions["stud"][1] * 0.5)
+        interface.beams = [beam_a, flat_beam, beam_b]
+        self._beams.extend([beam_a, flat_beam, beam_b])
+
+    def generate_l_cross_beams(self, interface):
+        """Generate the beams for a T-cross interface."""
+        edge_beam = self._edge_beams[interface.edge_index]
+        edge = edge_beam.centerline
+        flat_line = edge.translated(interface.frame.yaxis * (edge_beam.width + self.beam_dimensions["stud"][1]) * 0.5)
+        inner_line = flat_line.translated(interface.frame.yaxis * (self.beam_dimensions["stud"][0] + self.beam_dimensions["stud"][1]) * 0.5)
+        flat_line.translate(interface.frame.zaxis * (self.beam_dimensions["stud"][0] - edge_beam.height) * 0.5)
+        edge.translate(interface.frame.yaxis * self.beam_dimensions["stud"][1] * 0.5)
+        flat_beam = Beam.from_centerline(flat_line, width=self.beam_dimensions["stud"][1], height=self.beam_dimensions["stud"][0], z_vector=self.normal)
+        inner_beam = Beam.from_centerline(inner_line, width=self.beam_dimensions["stud"][0], height=self.beam_dimensions["stud"][1], z_vector=self.normal)
+        interface.beams = [edge_beam, flat_beam, inner_beam]
+        self._beams.extend([flat_beam, inner_beam])
+
+    # ==========================================================================
+    # methods for beam joints
+    # ==========================================================================
 
     def generate_edge_joint_definitions(self):
         for i in range(len(self._edge_beams)):
@@ -604,25 +633,18 @@ class SlabPopulator(object):
             else:
                 edge_interface_a = self.edge_interfaces.get(i-1, None)
             edge_interface_b = self.edge_interfaces.get(i, None)
-
-            if edge_interface_a and len(edge_interface_a.beams) > 0 and edge_interface_b and len(edge_interface_b.beams) > 0:
+            if edge_interface_a and len(edge_interface_a.beams) > 1 and edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is an interface, we use the interface to create the joint definition
-                print("interface-interface")
                 self.get_edge_interface_edge_interface_joint_definition(edge_interface_a, edge_interface_b)
-
-            elif edge_interface_a and len(edge_interface_a.beams) > 0:
-                print("interface-beam")
+            elif edge_interface_a and len(edge_interface_a.beams) > 1:
                 # if there is only an interface on the previous edge, we use that to create the joint definition
                 self.get_edge_interface_beam_joint_definition(edge_interface_a, self._edge_beams[i])
-            elif edge_interface_b and len(edge_interface_b.beams) > 0:
-                print("beam-interface")
+            elif edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is only an interface on the next edge, we use that to create the joint definition
                 self.get_edge_interface_beam_joint_definition(edge_interface_b, self._edge_beams[i-1])
             else:
-                print("beam-beam")
                 # if there is no interface, we create a joint definition between the two edge beams
                 self.get_edge_beam_joint_definition(i)
-
 
     def get_edge_interface_edge_interface_joint_definition(self, interface_a, interface_b):
         edge_index = interface_b.edge_index
@@ -661,8 +683,6 @@ class SlabPopulator(object):
                 self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[1], interface_a.beams[2]]))
                 self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[2], interface_a.beams[2]]))
 
-
-
     def get_edge_interface_beam_joint_definition(self, interface, beam):
         beam_index = beam.attributes["edge_index"]
         interface_index= interface.edge_index
@@ -678,7 +698,6 @@ class SlabPopulator(object):
             self._joint_definitions.append(JointDefinition(LButtJoint, [interface.beams[0], beam], back_plane=self._slab.edge_planes[interface_index]))
             self._joint_definitions.append(JointDefinition(TButtJoint, [interface.beams[1], beam]))
             self._joint_definitions.append(JointDefinition(TButtJoint, [interface.beams[2], beam]))
-
 
     def get_edge_beam_joint_definition(self, edge_index):
         beam_a = self._edge_beams[edge_index-1]
@@ -702,63 +721,29 @@ class SlabPopulator(object):
                 joint_def = JointDefinition(LButtJoint, [beam_b, beam_a], back_plane=self._slab.edge_planes[edge_index])
         self._joint_definitions.append(joint_def)
 
-
-
+    def generate_face_joint_definitions(self):
+        """Generate the joint definitions for the face interfaces."""
+        for interface in self.face_interfaces:
+            for beam in interface.beams:
+                pts = {}
+                for i, seg in enumerate(self.outline_a.lines):
+                    pt = intersection_line_segment(beam.centerline, seg)[0]
+                    if pt:
+                        pts[i] = pt
+                if len(pts.values()) != 2:
+                    raise ValueError("Could not find intersection points between beam {} and outline segments: {}".format(beam, pts))
+                else:
+                    for i in pts.keys():
+                        if self.edge_interfaces.get(i, None) and len(self.edge_interfaces[i].beams) > 0:
+                            # if there is an interface with beams, we use the last interface beam to create the joint definition
+                            self._joint_definitions.append(JointDefinition(TButtJoint, [beam, self.edge_interfaces[i].beams[-1]]))
+                        else:
+                            # if there is no interface, we create a joint definition between the edge beam and the beam
+                            self._joint_definitions.append(JointDefinition(TButtJoint, [beam, self._edge_beams[i]]))
 
     # ==========================================================================
-    # methods for interface beams
+    # methods for stud beams
     # ==========================================================================
-
-    def generate_interfaces(self):
-        for interface in self._slab.interfaces:
-            self.generate_interface_beams(interface)
-
-
-    def generate_interface_beams(self, interface):
-        """Generate the beams for the interface."""
-        if interface.topology == JointTopology.TOPO_T and interface.interface_role == "CROSS":
-            self.generate_t_cross_beams(interface)
-        elif interface.topology == JointTopology.TOPO_T and interface.interface_role == "MAIN":
-            pass
-        elif interface.topology == JointTopology.TOPO_L and interface.interface_role == "CROSS":
-            self.generate_l_cross_beams(interface)
-        elif interface.topology == JointTopology.TOPO_L and interface.interface_role == "MAIN":
-            pass
-        elif interface.topology == JointTopology.TOPO_L and interface.interface_role == "NONE":
-            pass
-        else:
-            raise ValueError("Unknown interface topology: {}".format(interface.topology))
-        print("interface beam count: {}".format(len(interface.beams)))
-
-    def generate_t_cross_beams(self, interface):
-        """Generate the beams for a T-cross interface."""
-        edge = interface.polyline.lines[0]
-        edge.translate(interface.frame.yaxis * interface.width * 0.5)
-        beam = Beam.from_centerline(edge, width=self.beam_dimensions["stud"][1], height=self.beam_dimensions["stud"][0], z_vector=self.normal)
-        beam.frame.translate(interface.frame.zaxis * self.beam_dimensions["stud"][0] * 0.5)
-        stud_edge_a = edge.translated(interface.frame.yaxis * (self.beam_dimensions["stud"][0]+self.beam_dimensions["stud"][1]) * 0.5)
-        stud_edge_b = edge.translated(-interface.frame.yaxis * (self.beam_dimensions["stud"][0]+self.beam_dimensions["stud"][1]) * 0.5)
-        beam_a = Beam.from_centerline(stud_edge_a, width=self.beam_dimensions["stud"][0], height=self.beam_dimensions["stud"][1], z_vector=self.normal)
-        beam_b = Beam.from_centerline(stud_edge_b, width=self.beam_dimensions["stud"][0], height=self.beam_dimensions["stud"][1], z_vector=self.normal)
-        beam_a.frame.translate(interface.frame.zaxis * self.beam_dimensions["stud"][1] * 0.5)
-        beam_b.frame.translate(interface.frame.zaxis * self.beam_dimensions["stud"][1] * 0.5)
-        interface.beams = [beam_a, beam, beam_b]
-        self._beams.extend([beam_a, beam, beam_b])
-
-    def generate_l_cross_beams(self, interface):
-        """Generate the beams for a T-cross interface."""
-        edge_beam = self._edge_beams[interface.edge_index]
-        edge = edge_beam.centerline
-        flat_line = edge.translated(interface.frame.yaxis * (edge_beam.width + self.beam_dimensions["stud"][1]) * 0.5)
-        inner_line = flat_line.translated(interface.frame.yaxis * (self.beam_dimensions["stud"][0] + self.beam_dimensions["stud"][1]) * 0.5)
-        flat_line.translate(interface.frame.zaxis * (self.beam_dimensions["stud"][0] - edge_beam.height) * 0.5)
-        edge.translate(interface.frame.yaxis * self.beam_dimensions["stud"][1] * 0.5)
-        flat_beam = Beam.from_centerline(flat_line, width=self.beam_dimensions["stud"][1], height=self.beam_dimensions["stud"][0], z_vector=self.normal)
-        inner_beam = Beam.from_centerline(inner_line, width=self.beam_dimensions["stud"][0], height=self.beam_dimensions["stud"][1], z_vector=self.normal)
-        interface.beams = [edge_beam, flat_beam, inner_beam]
-        self._beams.extend([flat_beam, inner_beam])
-
-
 
     def add_jack_studs(self):
         for beam in self.king_studs:
@@ -787,7 +772,7 @@ class SlabPopulator(object):
             self._openings.append(element)
 
     def generate_stud_beams(self):
-        # self.generate_studs()
+        self.generate_studs()
         self.trim_jack_studs()
         self.trim_king_studs()
         self.trim_studs()

@@ -117,7 +117,6 @@ class LButtJoint(Joint):
 
         """
         assert self.main_beam and self.cross_beam
-        print("LButtJoint.add_extensions")  # DEBUG
         # extend the main beam
         if self.butt_plane:
             try:
