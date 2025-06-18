@@ -60,7 +60,7 @@ class LButtJoint(Joint):
         data["butt_plane"] = self.butt_plane
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None,**kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
         super(LButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -71,6 +71,7 @@ class LButtJoint(Joint):
         self.modify_cross = modify_cross
         self.reject_i = reject_i
         self.butt_plane = butt_plane
+        self.back_plane = back_plane
         self.features = []
 
         # update the main and cross beams based on the joint parameters
@@ -116,7 +117,7 @@ class LButtJoint(Joint):
 
         """
         assert self.main_beam and self.cross_beam
-
+        print("LButtJoint.add_extensions")  # DEBUG
         # extend the main beam
         if self.butt_plane:
             try:
@@ -132,7 +133,7 @@ class LButtJoint(Joint):
                 raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main])
             except Exception as ex:
                 raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
-        elif self.mill_depth:
+        else:
             try:
                 cutting_plane_main = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
                 if self.mill_depth:
@@ -150,7 +151,10 @@ class LButtJoint(Joint):
             )
         # extend the cross beam
         try:
-            cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
+            if self.back_plane:
+                cutting_plane_cross = self.back_plane
+            else:
+                cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross])
@@ -204,7 +208,10 @@ class LButtJoint(Joint):
 
         # apply a refinement cut on the cross beam
         if self.modify_cross:
-            modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
+            if self.back_plane:
+                modification_plane = self.back_plane
+            else:
+                modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)

@@ -27,6 +27,10 @@ from .wall_joint import InterfaceLocation
 from .plate_joint import PlateJoint
 from .plate_joint import InterfaceRole
 from .plate_joint import PlateToPlateInterface
+from .slab_joint import SlabToSlabInterface
+from .slab_joint import SlabJoint
+from .slab_butt_joint import SlabButtJoint
+from .slab_miter_joint import SlabMiterJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_miter_joint import PlateMiterJoint
 
@@ -62,6 +66,10 @@ __all__ = [
     "InterfaceRole",
     "PlateJoint",
     "PlateToPlateInterface",
+    "SlabToSlabInterface",
+    "SlabJoint",
+    "SlabButtJoint",
+    "SlabMiterJoint",
     "PlateButtJoint",
     "PlateMiterJoint",
 ]

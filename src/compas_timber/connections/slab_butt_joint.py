@@ -1,8 +1,9 @@
 from .joint import JointTopology
+from .slab_joint import SlabJoint
 from .plate_butt_joint import PlateButtJoint
 
 
-class SlabButtJoint(PlateButtJoint):
+class SlabButtJoint(SlabJoint, PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
     @property

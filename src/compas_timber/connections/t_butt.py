@@ -45,7 +45,7 @@ class TButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, butt_plane=None, **kwargs):
         super(TButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -54,6 +54,7 @@ class TButtJoint(Joint):
         self.mill_depth = mill_depth
         self.features = []
         self.fasteners = []
+        self.butt_plane = butt_plane
         if fastener:
             if fastener.outline is None:
                 fastener = fastener.copy()  # make a copy to avoid modifying the original fastener
@@ -110,9 +111,12 @@ class TButtJoint(Joint):
         """
         assert self.main_beam and self.cross_beam
         try:
-            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            if self.mill_depth:
-                cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
+            if self.butt_plane:
+                cutting_plane = self.butt_plane
+            else:
+                cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+                if self.mill_depth:
+                    cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -138,10 +142,13 @@ class TButtJoint(Joint):
             self.cross_beam.remove_features(self.features)
 
         # get the cutting plane for the main beam
-        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        cutting_plane.xaxis = -cutting_plane.xaxis
-        if self.mill_depth:
-            cutting_plane.translate(cutting_plane.normal * self.mill_depth)
+        if self.butt_plane:
+            cutting_plane = self.butt_plane
+        else:
+            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            cutting_plane.xaxis = -cutting_plane.xaxis
+            if self.mill_depth:
+                cutting_plane.translate(cutting_plane.normal * self.mill_depth)
 
         # apply the cut on the main beam
         main_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)

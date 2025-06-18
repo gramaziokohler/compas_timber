@@ -204,6 +204,9 @@ class Plate(TimberElement):
         self.outline_b = Polyline(self._input_outlines[1].points)
         self.debug_info = []
 
+    def add_interface(self, interface):
+        self.interfaces.append(interface)
+
     def check_outlines(outline_a, outline_b):
         # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
         """Checks if the outlines are valid.

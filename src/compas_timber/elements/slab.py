@@ -55,16 +55,17 @@ class Slab(Plate):
         self.attributes = {}
         self.attributes.update(kwargs)
         self._edge_planes = []
+        self.interfaces = []  # type: list[SlabToSlabInterface]
 
     @property
     def edge_planes(self):
-        if not self._edge_planes:
-            for i in range(len(self.outline_a) - 1):
-                plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
-                if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a,i)) < 0:
-                    plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
-                self._edge_planes.append(plane)
-        return self._edge_planes
+        _edge_planes=[]
+        for i in range(len(self.outline_a) - 1):
+            plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
+            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a,i)) < 0:
+                plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
+            _edge_planes.append(plane)
+        return _edge_planes
 
 
     def __repr__(self):
@@ -80,6 +81,7 @@ class Slab(Plate):
     @property
     def is_group_element(self):
         return True
+
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
