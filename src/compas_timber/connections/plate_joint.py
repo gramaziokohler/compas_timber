@@ -161,7 +161,7 @@ class PlateJoint(Joint):
                 self.a_outlines[1][self.a_segment_index],
                 self.a_outlines[0][self.a_segment_index],
             ]
-            )
+        )
 
         frame = Frame.from_points(a_interface_polyline.points[0], a_interface_polyline.points[1], a_interface_polyline.points[-2])
         if dot_vectors(frame.normal, Vector.from_start_end(self.b_planes[1].point, self.b_planes[0].point)) < 0:
@@ -172,7 +172,6 @@ class PlateJoint(Joint):
             self.a_segment_index,
             self.topology,
         )
-
 
     @property
     def interface_b(self):
@@ -241,8 +240,6 @@ class PlateJoint(Joint):
         self.plate_a = model.element_by_guid(self._plate_a_guid)
         self.plate_b = model.element_by_guid(self._plate_b_guid)
 
-
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self._plate_a_guid, self._plate_b_guid = self._plate_b_guid, self._plate_a_guid
-

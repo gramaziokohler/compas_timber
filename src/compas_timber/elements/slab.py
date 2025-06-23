@@ -29,6 +29,7 @@ class Opening(Data):
     def __repr__(self):
         return "Opening(type={})".format(self.opening_type)
 
+
 class Slab(Plate):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
@@ -51,7 +52,7 @@ class Slab(Plate):
 
     def __init__(self, outline_a, outline_b, openings=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(outline_a, outline_b, openings = openings, name=name, **kwargs)
+        super(Slab, self).__init__(outline_a, outline_b, openings=openings, name=name, **kwargs)
         self.attributes = {}
         self.attributes.update(kwargs)
         self._edge_planes = []
@@ -59,14 +60,13 @@ class Slab(Plate):
 
     @property
     def edge_planes(self):
-        _edge_planes=[]
+        _edge_planes = []
         for i in range(len(self.outline_a) - 1):
             plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
-            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a,i)) < 0:
+            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a, i)) < 0:
                 plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
             _edge_planes.append(plane)
         return _edge_planes
-
 
     def __repr__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
@@ -81,7 +81,6 @@ class Slab(Plate):
     @property
     def is_group_element(self):
         return True
-
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep

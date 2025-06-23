@@ -394,7 +394,6 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
         return Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
 
 
-
 def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     """Check if a point is inside a polyline. Polyline must be closed. The polyline must be closed, planar, and not self-intersecting.
 

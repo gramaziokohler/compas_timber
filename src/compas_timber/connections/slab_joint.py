@@ -1,5 +1,3 @@
-
-
 from .joint import JointTopology
 from .solver import PlateConnectionSolver
 from .plate_joint import PlateJoint
@@ -27,7 +25,6 @@ class SlabToSlabInterface(PlateToPlateInterface):
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None, beams=None):
         super(SlabToSlabInterface, self).__init__(polyline, frame, edge_index, topology, interface_role)
         self.beams = beams if beams else []
-
 
 
 class SlabJoint(PlateJoint):
@@ -70,7 +67,7 @@ class SlabJoint(PlateJoint):
         return data
 
     def __init__(self, slab_a=None, slab_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
-        super(SlabJoint, self).__init__(slab_a, slab_b,topology,a_segment_index,b_segment_index,**kwargs)
+        super(SlabJoint, self).__init__(slab_a, slab_b, topology, a_segment_index, b_segment_index, **kwargs)
 
         self._slab_a_guid = kwargs.get("slab_a_guid", None) or str(self.slab_a.guid)  # type: ignore
         self._slab_b_guid = kwargs.get("slab_b_guid", None) or str(self.slab_b.guid)  # type: ignore
@@ -102,12 +99,10 @@ class SlabJoint(PlateJoint):
         print("slab.interfaces", self.interface_a, self.interface_b)  # DEBUG
         return [self.interface_a, self.interface_b]
 
-
     def add_features(self):
         super(SlabJoint, self).add_features()
         self.slab_a.add_interface(self.interface_a)
         self.slab_b.add_interface(self.interface_b)
-
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
@@ -148,7 +143,6 @@ class SlabJoint(PlateJoint):
             topology=self.topology,
             interface_role=interface.interface_role,
         )
-
 
     def add_features(self):
         """Add features to the plates based on the joint."""

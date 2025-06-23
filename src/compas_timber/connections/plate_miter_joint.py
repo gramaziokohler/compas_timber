@@ -20,4 +20,3 @@ class PlateMiterJoint(PlateJoint):
 
         for polyline, plane in zip(self.b_outlines, self.a_planes):
             PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.b_segment_index, plane)
-
