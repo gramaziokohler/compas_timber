@@ -1,3 +1,7 @@
+from compas.geometry import intersection_line_line
+from compas.geometry import dot_vectors
+from compas.geometry import Polyline
+from compas.geometry import Point
 from .joint import JointTopology
 from .solver import PlateConnectionSolver
 from .plate_joint import PlateJoint
@@ -26,6 +30,29 @@ class SlabToSlabInterface(PlateToPlateInterface):
         super(SlabToSlabInterface, self).__init__(polyline, frame, edge_index, topology, interface_role)
         self.beams = beams if beams else []
 
+
+    def __repr__(self):
+        return "SlabToSlabInterface({0}, {1}, {2})".format(
+            self.polyline, self.frame, JointTopology.get_name(self.topology)
+        )
+    
+    @property
+    def beam_polyline(self):
+        """Return the polyline of the interface."""
+        if len(self.beams)>1:
+            points = []
+            for base_line in [self.polyline.lines[1], self.polyline.lines[3]]:
+                pts = []
+                for beam in self.beams:
+                    int_pt = Point(*intersection_line_line(beam.centerline, base_line)[1])
+                    if int_pt:
+                        pts.append(int_pt)
+                if pts:
+                    pts.sort(key=lambda pt: dot_vectors(pt - base_line.start, base_line.direction))
+                    points.extend([pts[0], pts[-1]])
+            return Polyline([points[0], points[1], points[2], points[3], points[0]])
+        else:
+            return self.polyline
 
 class SlabJoint(PlateJoint):
     """Models a plate to plate interaction.

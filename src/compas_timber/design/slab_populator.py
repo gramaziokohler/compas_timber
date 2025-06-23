@@ -19,6 +19,7 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
 from compas.geometry import intersection_segment_segment
 from compas.geometry import is_parallel_vector_vector
+from compas.geometry import distance_point_point
 from compas.tolerance import TOL
 from compas.itertools import pairwise
 
@@ -36,7 +37,6 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import is_point_in_polyline
 
-from .workflow import JointDefinition
 
 
 class Window(object):
@@ -103,7 +103,7 @@ class Window(object):
         self.dist_tolerance = tolerance
         self.sill = None
         self.header = None
-        self.joint_definitions = []
+        self.joints = []
 
     @classmethod
     def from_outline_and_slab_populator(cls, slab_populator, outline):
@@ -184,15 +184,15 @@ class Window(object):
 
         return self._beams
 
-    def create_joint_definitions(self):
-        self.joint_definitions.extend([JointDefinition(TButtJoint, [self.header, king])for king in self.king_studs])
+    def create_joints(self):
+        self.joints.extend([TButtJoint(self.header, king) for king in self.king_studs])
         if self._lintel_posts:
-            self.joint_definitions.extend([JointDefinition(TButtJoint, [self.sill, jack])for jack in self.jack_studs])
-            self.joint_definitions.extend([JointDefinition(LButtJoint, [jack, self.header])for jack in self.jack_studs])
+            self.joints.extend([TButtJoint(self.sill, jack) for jack in self.jack_studs])
+            self.joints.extend([LButtJoint(jack, self.header) for jack in self.jack_studs])
         else:
-            self.joint_definitions.extend([JointDefinition(TButtJoint, [self.sill, king])for king in self.king_studs])
+            self.joints.extend([TButtJoint(self.sill, king) for king in self.king_studs])
 
-        return self.joint_definitions
+        return self.joints
 
 
 
@@ -351,7 +351,7 @@ class SlabPopulator(object):
         self._plate_segments = {}
         self._detail_obbs = []
         self._openings = []
-        self._joint_definitions = []
+        self._joints = []
         self._interior_corner_indices = []
         self.frame_thickness = slab.thickness
         self.sheeting_inside = configuration_set.sheeting_inside or 0
@@ -529,12 +529,14 @@ class SlabPopulator(object):
         self.generate_edge_beams()
         self.generate_interface_beams()
 
-        self.generate_edge_joint_definitions()
+        self.generate_edge_joints()
 
-        self.generate_face_joint_definitions()
+        self.generate_face_joints()
 
         self.generate_openings()
         self.extend_beams()
+
+
         self.generate_stud_beams()
         self.generate_plates()
         return self.elements
@@ -672,7 +674,7 @@ class SlabPopulator(object):
     # methods for beam joints
     # ==========================================================================
 
-    def generate_edge_joint_definitions(self):
+    def generate_edge_joints(self):
         for i in range(len(self._edge_beams)):
             if i == 0:
                 edge_interface_a = self.edge_interfaces.get(len(self._edge_beams) - 1, None)
@@ -681,18 +683,18 @@ class SlabPopulator(object):
             edge_interface_b = self.edge_interfaces.get(i, None)
             if edge_interface_a and len(edge_interface_a.beams) > 1 and edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is an interface, we use the interface to create the joint definition
-                self.get_edge_interface_edge_interface_joint_definition(edge_interface_a, edge_interface_b)
+                self.get_edge_interface_edge_interface_joint(edge_interface_a, edge_interface_b)
             elif edge_interface_a and len(edge_interface_a.beams) > 1:
                 # if there is only an interface on the previous edge, we use that to create the joint definition
-                self.get_edge_interface_beam_joint_definition(edge_interface_a, self._edge_beams[i])
+                self.get_edge_interface_beam_joint(edge_interface_a, self._edge_beams[i])
             elif edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is only an interface on the next edge, we use that to create the joint definition
-                self.get_edge_interface_beam_joint_definition(edge_interface_b, self._edge_beams[i - 1])
+                self.get_edge_interface_beam_joint(edge_interface_b, self._edge_beams[i - 1])
             else:
                 # if there is no interface, we create a joint definition between the two edge beams
-                self.get_edge_beam_joint_definition(i)
+                self.get_edge_beam_joint(i)
 
-    def get_edge_interface_edge_interface_joint_definition(self, interface_a, interface_b):
+    def get_edge_interface_edge_interface_joint(self, interface_a, interface_b):
         edge_index = interface_b.edge_index
         interface_a_angle = angle_vectors(interface_a.frame.xaxis, self.stud_direction)
         interface_a_angle = min(interface_a_angle, math.pi - interface_a_angle)
@@ -702,50 +704,50 @@ class SlabPopulator(object):
         if edge_index in self.interior_corner_indices:
             if interface_a_angle < interface_b_angle:
                 plane = Plane(self._slab.edge_planes[edge_index].point, -self._slab.edge_planes[edge_index].normal)  # a: main, b: cross
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[0], interface_b.beams[0]], butt_plane=plane))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[1], interface_b.beams[0]], butt_plane=plane))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[0], interface_a.beams[2]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[1], interface_a.beams[2]]))
-                self._joint_definitions.append(JointDefinition(LButtJoint, [interface_b.beams[2], interface_a.beams[2]]))
+                self._joints.append(TButtJoint(interface_a.beams[0], interface_b.beams[0], butt_plane=plane))
+                self._joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[0], butt_plane=plane))
+                self._joints.append(TButtJoint(interface_b.beams[0], interface_a.beams[2]))
+                self._joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[2]))
+                self._joints.append(LButtJoint(interface_b.beams[2], interface_a.beams[2]))
             else:
                 plane = Plane(self._slab.edge_planes[edge_index - 1].point, -self._slab.edge_planes[edge_index - 1].normal)  # b: main, a: cross
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[0], interface_a.beams[0]], butt_plane=plane))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[1], interface_a.beams[0]], butt_plane=plane))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[0], interface_b.beams[2]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[1], interface_b.beams[2]]))
-                self._joint_definitions.append(JointDefinition(LButtJoint, [interface_a.beams[2], interface_b.beams[2]]))
+                self._joints.append(TButtJoint(interface_b.beams[0], interface_a.beams[0], butt_plane=plane))
+                self._joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[0], butt_plane=plane))
+                self._joints.append(TButtJoint(interface_a.beams[0], interface_b.beams[2]))
+                self._joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[2]))
+                self._joints.append(LButtJoint(interface_a.beams[2], interface_b.beams[2]))
         else:
             if interface_a_angle < interface_b_angle:
-                self._joint_definitions.append(JointDefinition(LButtJoint, [interface_b.beams[0], interface_a.beams[0]], back_plane=self._slab.edge_planes[edge_index]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[1], interface_a.beams[0]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[2], interface_a.beams[0]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[1], interface_b.beams[2]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[2], interface_b.beams[2]]))
+                self._joints.append(LButtJoint(interface_b.beams[0], interface_a.beams[0], back_plane=self._slab.edge_planes[edge_index]))
+                self._joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[0]))
+                self._joints.append(TButtJoint(interface_b.beams[2], interface_a.beams[0]))
+                self._joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[2]))
+                self._joints.append(TButtJoint(interface_a.beams[2], interface_b.beams[2]))
 
             else:
-                self._joint_definitions.append(JointDefinition(LButtJoint, [interface_a.beams[0], interface_b.beams[0]], back_plane=self._slab.edge_planes[edge_index - 1]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[1], interface_b.beams[0]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_a.beams[2], interface_b.beams[0]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[1], interface_a.beams[2]]))
-                self._joint_definitions.append(JointDefinition(TButtJoint, [interface_b.beams[2], interface_a.beams[2]]))
+                self._joints.append(LButtJoint(interface_a.beams[0], interface_b.beams[0], back_plane=self._slab.edge_planes[edge_index - 1]))
+                self._joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[0]))
+                self._joints.append(TButtJoint(interface_a.beams[2], interface_b.beams[0]))
+                self._joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[2]))
+                self._joints.append(TButtJoint(interface_b.beams[2], interface_a.beams[2]))
 
-    def get_edge_interface_beam_joint_definition(self, interface, beam):
+    def get_edge_interface_beam_joint(self, interface, beam):
         beam_index = beam.attributes["edge_index"]
         interface_index = interface.edge_index
         corner_index = max(interface_index, beam_index)
 
         if corner_index in self.interior_corner_indices:
             plane = Plane(self._slab.edge_planes[beam_index].point, -self._slab.edge_planes[beam_index].normal)
-            self._joint_definitions.append(JointDefinition(TButtJoint, [interface.beams[0], beam], butt_plane=plane))
-            self._joint_definitions.append(JointDefinition(TButtJoint, [interface.beams[1], beam], butt_plane=plane))
-            self._joint_definitions.append(JointDefinition(LButtJoint, [interface.beams[2], beam], butt_plane=plane))
+            self._joints.append(TButtJoint(interface.beams[0], beam, butt_plane=plane))
+            self._joints.append(TButtJoint(interface.beams[1], beam, butt_plane=plane))
+            self._joints.append(LButtJoint(interface.beams[2], beam, butt_plane=plane))
         else:
             plane = Plane(self._slab.edge_planes[interface_index].point, -self._slab.edge_planes[interface_index].normal)
-            self._joint_definitions.append(JointDefinition(LButtJoint, [interface.beams[0], beam], back_plane=self._slab.edge_planes[interface_index]))
-            self._joint_definitions.append(JointDefinition(TButtJoint, [interface.beams[1], beam]))
-            self._joint_definitions.append(JointDefinition(TButtJoint, [interface.beams[2], beam]))
+            self._joints.append(LButtJoint(interface.beams[0], beam, back_plane=self._slab.edge_planes[interface_index]))
+            self._joints.append(TButtJoint(interface.beams[1], beam))
+            self._joints.append(TButtJoint(interface.beams[2], beam))
 
-    def get_edge_beam_joint_definition(self, edge_index):
+    def get_edge_beam_joint(self, edge_index):
         beam_a = self._edge_beams[edge_index - 1]
         beam_b = self._edge_beams[edge_index]
         beam_a_angle = angle_vectors(beam_a.centerline.direction, self.stud_direction)
@@ -756,18 +758,18 @@ class SlabPopulator(object):
         if edge_index in self.interior_corner_indices:
             if beam_a_angle < beam_b_angle:
                 plane = Plane(self._slab.edge_planes[edge_index].point, -self._slab.edge_planes[edge_index].normal)
-                joint_def = JointDefinition(LButtJoint, [beam_a, beam_b], butt_plane=plane)
+                joint_def = LButtJoint(beam_a, beam_b, butt_plane=plane)
             else:
                 plane = Plane(self._slab.edge_planes[edge_index - 1].point, -self._slab.edge_planes[edge_index - 1].normal)
-                joint_def = JointDefinition(LButtJoint, [beam_b, beam_a], butt_plane=plane)
+                joint_def = LButtJoint(beam_b, beam_a, butt_plane=plane)
         else:
             if beam_a_angle < beam_b_angle:
-                joint_def = JointDefinition(LButtJoint, [beam_a, beam_b], back_plane=self._slab.edge_planes[edge_index - 1])
+                joint_def = LButtJoint(beam_a, beam_b, back_plane=self._slab.edge_planes[edge_index - 1])
             else:
-                joint_def = JointDefinition(LButtJoint, [beam_b, beam_a], back_plane=self._slab.edge_planes[edge_index])
-        self._joint_definitions.append(joint_def)
+                joint_def = LButtJoint(beam_b, beam_a, back_plane=self._slab.edge_planes[edge_index])
+        self._joints.append(joint_def)
 
-    def generate_face_joint_definitions(self):
+    def generate_face_joints(self):
         """Generate the joint definitions for the face interfaces."""
         for interface in self.face_interfaces:
             for beam in interface.beams:
@@ -782,10 +784,10 @@ class SlabPopulator(object):
                     for i in pts.keys():
                         if self.edge_interfaces.get(i, None) and len(self.edge_interfaces[i].beams) > 0:
                             # if there is an interface with beams, we use the last interface beam to create the joint definition
-                            self._joint_definitions.append(JointDefinition(TButtJoint, [beam, self.edge_interfaces[i].beams[-1]]))
+                            self._joints.append(TButtJoint(beam, self.edge_interfaces[i].beams[-1]))
                         else:
                             # if there is no interface, we create a joint definition between the edge beam and the beam
-                            self._joint_definitions.append(JointDefinition(TButtJoint, [beam, self._edge_beams[i]]))
+                            self._joints.append(TButtJoint(beam, self._edge_beams[i]))
 
     # ==========================================================================
     # methods for stud beams
@@ -797,16 +799,25 @@ class SlabPopulator(object):
             element = Window.from_outline_and_slab_populator(self, opening)
             self._openings.append(element)
             self._beams.extend(element.create_elements())
-            self._joint_definitions.extend(element.create_joint_definitions())
+            self._joints.extend(element.create_joints())
 
     def extend_beams(self):
-        for joint in self._joint_definitions
-
-
+        for i in range(len(self._edge_beams)):
+            if i in self.interior_corner_indices:
+                previous_interface = self.edge_interfaces.get((i-1)%len(self._edge_beams), None)
+                current_interface = self.edge_interfaces.get(i, None)
+                if (previous_interface and len(previous_interface.beams) > 0) and (current_interface and len(current_interface.beams) > 0):
+                    ip,ic = intersection_line_line(previous_interface.beams[-1].centerline, current_interface.beams[-1].centerline)
+                    if ip and ic:
+                        # if the previous and current edge beams intersect, we extend the previous beam to the intersection point
+                        previous_interface.beams[-1].length = previous_interface.beams[-1].frame.point.distance_to_point(ip)
+                        current_interface.beams[-1].length = current_interface.beams[-1].centerline.end.distance_to_point(ic)
+                        current_interface.beams[-1].frame.point = ic
+                        
+ 
 
     def generate_stud_beams(self):
         self.generate_studs()
-        self.join_studs()
         self.join_jack_studs()
         self.join_king_studs()
         self.cull_overlaps()
@@ -831,109 +842,68 @@ class SlabPopulator(object):
 
 
     def generate_studs(self):
+        print("opening count = ", len(self._openings))
         stud_lines = self.get_stud_lines()
         for line in stud_lines:
             intersections = []
-            #get intersections with outline
-            for i, segment in enumerate(self.outline_a.lines):
-                point = intersection_line_segment(line, segment)[0]
-                if point:
-                    print("intersection with outline segment {}: {}".format(i, point))
-                    intersection = {}
-                    intersection["point"] = point
-                    intersection["dot"] = dot_vectors(Vector.from_start_end(line.point_at(0.5), point), self.stud_direction)
-                    intersection["edge_index"] = i
-                    intersections.append(intersection)
-            #get intersections with openings
+            ints = self.get_beam_intersections(line, self._edge_beams, max_distance = self.beam_dimensions["stud"][0])
+            if ints:
+                intersections.extend(ints)
             for opening in self._openings:
-                for beam in [opening.sill, opening.header]:
-                    point = intersection_line_segment(line, beam.centerline)[0]
-                    if point:
-                        intersection = {}
-                        intersection["point"] = point
-                        intersection["dot"] = dot_vectors(Vector.from_start_end(line.point_at(0.5), point), self.stud_direction)
-                        intersection["beam"] = beam
-                        intersections.append(intersection)
-            #get intersections with interfaces
+                ints = self.get_beam_intersections(line, [opening.sill, opening.header], max_distance = self.beam_dimensions["stud"][0])
+                if ints:
+                    intersections.extend(ints)
             for interface in self._slab.interfaces:
-                if interface.interface_role == "CROSS":
-                    for segment in interface.polyline.lines:
-                        point = intersection_line_segment(line, segment)[0]
-                        if point:
-                            intersection = {}
-                            intersection["point"] = point
-                            intersection["dot"] = dot_vectors(Vector.from_start_end(line.point_at(0.5), point), self.stud_direction)
-                            intersection["edge_index"] = interface.edge_index
-                            intersections.append(intersection)
-            intersections.sort(key=lambda x: x["dot"])
+                # self.test_out.append(interface.beam_polyline)
+                if interface.interface_role == "CROSS" and does_line_intersect_polyline(line, interface.beam_polyline):
+                    ints = self.get_beam_intersections(line, [interface.beams[0], interface.beams[-1]], max_distance = self.beam_dimensions["stud"][0])
+                    if ints:
+                        intersections.extend(ints)
 
+            intersections = sorted(intersections, key=lambda x: x.get("dot"))
+            
             for pair in pairwise(intersections):
-                make_beam = True
                 line = Line(pair[0]["point"], pair[1]["point"])
                 if TOL.is_zero(line.length):
-                    make_beam = False
+                    continue
                 if not is_point_in_polyline(line.point_at(0.5), self.outline_a):
-
-                    make_beam = False
-                for i in self._slab.interfaces:
-                    if is_point_in_polyline(line.point_at(0.5), i.polyline):
-                        make_beam = False
-                for o in self._openings:
-                    if is_point_in_polyline(line.point_at(0.5), o.frame_polyline):
-                        make_beam = False
-                if make_beam:
-                    stud_segment = beam_from_category(self, line, "stud")
-                    for intersection in pair:
-                        beam = intersection.get("beam", None)
-                        if beam:
-                            self.test_out.append(beam.blank)
-                            self._joint_definitions.append(JointDefinition(TButtJoint, [stud_segment, beam]))
-                            break
-                        edge_index = intersection.get("edge_index", None)
-                        print("edge_index", edge_index)
-                        if edge_index is not None:
-                            interface = self.edge_interfaces.get(edge_index, None)
-                            if interface:
-                                print("interface found for edge index {}: {}".format(edge_index, interface))
-                                print("interface beams = {}".format(interface.beams))
-                                self._joint_definitions.append(JointDefinition(TButtJoint, [stud_segment, interface.beams[-1]]))
-                                break
-                            else:
-                                print("edge_beam_no_interface", self._edge_beams[edge_index])
-                                self._joint_definitions.append(JointDefinition(TButtJoint, [stud_segment, self._edge_beams[edge_index]]))
-                                break
-                    self._beams.append(stud_segment)
+                    continue
+                if self.is_line_in_interface(line):
+                    continue
+                if self.is_line_in_opening(line):
+                    continue
+                stud_segment = beam_from_category(self, line, "stud")
+                for intersection in pair:
+                    beam = intersection.get("beam", None)
+                    if beam:
+                        self._joints.append(TButtJoint(stud_segment, beam))
+                self._beams.append(stud_segment)
 
 
+    def is_line_in_interface(self, line):
+        for i in self._slab.interfaces:
+            if i.interface_role == "CROSS" and is_point_in_polyline(line.point_at(0.5), i.beam_polyline, in_plane = False):
+                return True
+        return False
+    
+    def is_line_in_opening(self, line):
+        for opening in self._openings:
+            if is_point_in_polyline(line.point_at(0.5), opening.frame_polyline, in_plane=False):
+                return True
+        return False
 
-            # if len(intersections) == 0 or len(intersections) % 2 != 0:
-            #     raise ValueError("The number of intersection points between the stud line and the outline segments is not even: {}".format(intersections))
-            # if len(intersections)% 2 == 0:
-            #     intersections.sort(key=lambda x: x["dot"])
-            #     int_pts = [x["point"] for x in intersections]
-            #     beams = [x["beam"] for x in intersections]
-            #     while len(int_pts)>=2:
-            #         start = int_pts.pop()
-            #         start_beam = beams.pop()
-            #         end = int_pts.pop()
-            #         end_beam = beams.pop()
-            #         new_line = Line(start, end)
+    def get_beam_intersections(self, line, beams_to_intersect, max_distance = 0.0):
+        intersections = []
+        for beam in beams_to_intersect:
+            point, _ = intersection_line_segment(line, beam.centerline)
+            if point:
+                intersection = {}
+                intersection["point"] = point
+                intersection["dot"] = dot_vectors(Vector.from_start_end(line.point_at(0.5), Point(*point)), line.direction)
+                intersection["beam"] = beam
+                intersections.append(intersection)
+        return intersections
 
-            #         stud_segment = beam_from_category(self, new_line, "stud")
-            #         self._beams.append(stud_segment)
-
-
-    def join_studs(self):
-        rules = [
-            CategoryRule(TButtJoint, "stud", "plate_beam"),
-            CategoryRule(TButtJoint, "stud", "header"),
-            CategoryRule(TButtJoint, "stud", "sill"),
-            CategoryRule(TButtJoint, "stud", "detail"),
-            CategoryRule(TButtJoint, "stud", "edge_stud"),
-        ]
-        stud_joint_defs = JointRule.joints_from_beams_and_rules(self._beams, rules, handled_pairs = [jdef.elements for jdef in self._joint_definitions])[0]
-        print([[jdef.joint_type, jdef.elements[0].attributes["category"],jdef.elements[1].attributes["category"]] for jdef in stud_joint_defs])
-        self._joint_definitions.extend(stud_joint_defs)
 
     def join_jack_studs(self):
         for jack_stud in self.jack_studs:
@@ -948,7 +918,6 @@ class SlabPopulator(object):
                         intersection["beam"] = self.edge_interfaces[i].beams[-1]
                     else:
                         intersection["beam"] = self._edge_beams[i]
-                    print("Jack stud intersection with edge beam: {}".format(intersection))
                     intersections.append(intersection)
             for opening in self._openings:
                 point = intersection_line_segment(jack_stud.centerline,opening.header.centerline)[0]
@@ -960,7 +929,7 @@ class SlabPopulator(object):
             negatives = [x for x in intersections if x["dot"] < 0]
             negatives.sort(key=lambda x: x["dot"])
             beam = negatives[-1]["beam"]
-            self._joint_definitions.append(JointDefinition(TButtJoint, [jack_stud, beam]))
+            self._joints.append(TButtJoint(jack_stud, beam))
 
 
     def join_king_studs(self):
@@ -986,11 +955,11 @@ class SlabPopulator(object):
             negatives = [x for x in intersections if x["dot"] < 0]
             negatives.sort(key=lambda x: x["dot"])
             bottom_beam = negatives[-1]["beam"]
-            self._joint_definitions.append(JointDefinition(TButtJoint, [king_stud, bottom_beam]))
+            self._joints.append(TButtJoint(king_stud, bottom_beam))
             positives = [x for x in intersections if x["dot"] > 0]
             positives.sort(key=lambda x: x["dot"])
             top_beam = positives[0]["beam"]
-            self._joint_definitions.append(JointDefinition(TButtJoint, [king_stud, top_beam]))
+            self._joints.append(TButtJoint(king_stud, top_beam))
 
 
     def cull_overlaps(self):
@@ -1058,16 +1027,44 @@ def beam_from_category(parent, segment, category, normal_offset=True, **kwargs):
         beam.attributes[key] = value
     return beam
 
-def distance_segment_segment(segment_a, segment_b):
-    pts = []
-    for intersection, segment in zip(intersection_line_line(segment_a,segment_b), [segment_a, segment_b]):
-        if intersection is None:
-            return None
-        dot = dot_vectors(Vector.from_start_end(segment.start, segment.end), Vector.from_start_end(segment.start, intersection))/segment.length
-        if dot>1:
-            pts.append(segment.end)
-        elif dot<0:
-            pts.append(segment.start)
-        else:
-            pts.append(intersection)
-    return pts[0].distance_to_point(pts[1])
+def closest_points_line_segment_projected(line, segment, plane, max_distance = None):
+    intersections = intersection_line_line(line,segment)
+    if intersections[0] is None:
+        return None
+    dot = dot_vectors((segment.end-segment.start), (Point(*intersections[1])-segment.start))/segment.length
+    pt = None
+    if dot>1:
+        pt = segment.end
+    elif dot<0:
+        pt = segment.start
+    else:
+        pt = intersections[1] 
+    proj = Projection.from_plane(plane)
+    if max_distance is not None and distance_point_point(intersections[0], pt) > max_distance:
+        return None
+    return intersections[0], pt
+    
+
+def does_line_intersect_polyline(line, polyline):
+    """Find the intersection points between a line and a polyline.
+
+    Parameters
+    ----------
+    line : :class:`Line`
+        The line to intersect with the polyline.
+    polyline : :class:`Polyline`
+        The polyline to intersect with the line.
+    in_plane : bool, optional
+        If True, the intersection is computed in the plane of the polyline.
+        Default is True.
+
+    Returns
+    -------
+    list of :class:`Point`
+        The intersection points between the line and the polyline.
+    """
+    for segment in polyline.lines:
+        intersection = intersection_line_segment(line, segment)
+        if intersection:
+            return True
+    return False
