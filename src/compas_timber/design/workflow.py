@@ -3,10 +3,13 @@ from itertools import combinations
 from compas.tolerance import TOL
 
 from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
+from compas_timber.elements.beam import Beam
+from compas_timber.elements.plate import Plate
 from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import intersection_line_line_param
 
@@ -202,12 +205,24 @@ class DirectRule(JointRule):
             max_distance = self.max_distance
         else:
             max_distance = model_max_distance
-        try:
-            for pair in combinations(list(elements), 2):
-                return distance_segment_segment(pair[0].centerline, pair[1].centerline) <= max_distance
-        except TypeError:
-            raise UserWarning("unable to comply direct joint element sets")
-
+        if all(isinstance(e, Beam) for e in elements):
+            try:
+                for pair in combinations(list(elements), 2):
+                    return distance_segment_segment(pair[0].centerline, pair[1].centerline) <= max_distance
+            except TypeError:
+                raise UserWarning("unable to comply direct joint beam sets")
+        elif all(isinstance(e, Plate) for e in self.elements):
+            try:
+                for pair in combinations(list(elements), 2):
+                    for segment_a in pair[0].outline_a.lines + pair[0].outline_b.lines:
+                        for segment_b in pair[1].outline_a.lines + pair[1].outline_b.lines:
+                            if distance_segment_segment(segment_a, segment_b) <= max_distance:
+                                return True
+                return False
+            except TypeError:
+                raise UserWarning("unable to comply direct joint plate sets")
+        else:
+            raise UserWarning("unable to comply direct joint element sets, only Beam-Beam and Plate-Plate joints are currently supported")
 
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the elements, this rule assigns
@@ -274,8 +289,14 @@ class CategoryRule(JointRule):
             comply = False
             elements = list(elements)
             if element_cats == set([self.category_a, self.category_b]):
-                solver = ConnectionSolver()
-                found_topology = solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
+                if all(isinstance(e, Beam) for e in elements):
+                    solver = ConnectionSolver()
+                    found_topology = solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
+                elif all(isinstance(e, Plate) for e in elements):
+                    solver = PlateConnectionSolver()
+                    found_topology = solver.find_plate_plate_topology(elements[0], elements[1], max_distance=max_distance)[0]
+                else:
+                    raise UserWarning("unable to comply category joint element sets, only Beam-Beam and Plate-Plate joints are currently supported")
                 supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
                 if not isinstance(supported_topo, list):
                     supported_topo = [supported_topo]
@@ -369,12 +390,22 @@ class TopologyRule(JointRule):
             max_distance = model_max_distance
         try:
             elements = list(elements)
-            solver = ConnectionSolver()
-            topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
-            return (
-                self.topology_type == topo_results[0],
-                [topo_results[1], topo_results[2]],
-            )  # comply, if topologies match, reverse if the element order should be switched
+            if all(isinstance(e, Beam) for e in elements):
+                solver = ConnectionSolver()
+                topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
+                return (
+                    self.topology_type == topo_results[0],
+                    [topo_results[1], topo_results[2]],
+                    )  # comply, if topologies match, reverse if the element order should be switched
+            elif all(isinstance(e, Plate) for e in elements):
+                solver = PlateConnectionSolver()
+                topo_results = solver.find_plate_plate_topology(elements[0], elements[1], max_distance=max_distance)
+                return (
+                    self.topology_type == topo_results[0],
+                    [topo_results[1][0], topo_results[2][0]],
+                    )
+            else:
+                raise UserWarning("unable to comply topology joint element sets, only Beam-Beam and Plate-Plate joints are currently supported")
         except KeyError:
             return False
 

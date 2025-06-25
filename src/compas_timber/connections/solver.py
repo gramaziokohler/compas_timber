@@ -3,6 +3,7 @@ import math
 
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Line
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import closest_point_on_line
@@ -256,7 +257,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     TOLERANCE = 1e-6
 
-    def find_plate_plate_topology(self, plate_a, plate_b, tol=TOLERANCE):
+    def find_plate_plate_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
 
         parameters
@@ -277,7 +278,7 @@ class PlateConnectionSolver(ConnectionSolver):
             Format: JointTopology, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
         """
 
-        plate_a_segment_index, plate_b_segment_index = self._find_plate_segment_indices(plate_a, plate_b, tol=tol)
+        plate_a_segment_index, plate_b_segment_index = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
 
         if plate_a_segment_index is None and plate_b_segment_index is None:
             return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
@@ -328,11 +329,17 @@ class PlateConnectionSolver(ConnectionSolver):
             max_distance = min(main_plate.thickness, cross_plate.thickness)
         for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
-                line = intersection_plane_plane(plane_a, plane_b, tol=tol)
+                print("plane_a", plane_a)
+                print("plane_b", plane_b)
+                line = Line(*intersection_plane_plane(plane_a, plane_b))
+                print("line", line)
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
+                        print("distance ok")
                         if is_parallel_line_line(seg_a, line, tol=tol):
+                            print("parallel ok")
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
+                                print("intersects ok")
                                 return i
         return None
 
@@ -385,8 +392,9 @@ class PlateConnectionSolver(ConnectionSolver):
             True if the segment intersects with the outline of the polyline, False otherwise.
         """
         if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
+            print("Segment intersects polyline outline")
             return True
-        return is_point_in_polyline(segment.start, polyline, in_plane=False, tol=tol)
+        return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
 
     @staticmethod
     def move_polyline_segment_to_plane(polyline, segment_index, plane):

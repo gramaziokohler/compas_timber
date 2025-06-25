@@ -1,5 +1,7 @@
 import compas
 
+from compas_timber.connections.solver import PlateConnectionSolver
+
 if not compas.IPY:
     from typing import Generator  # noqa: F401
     from typing import List  # noqa: F401
@@ -412,6 +414,50 @@ class TimberModel(Model):
                 PlateJoint.create(self, wall_b, wall_a, topology=topology)
             else:
                 PlateJoint.create(self, wall_a, wall_b, topology=topology)
+
+
+    def connect_adjacent_slabs(self, max_distance=None):
+        """Connects adjacent slabs in the model.
+
+        Parameters
+        ----------
+        max_distance : float, optional
+            The maximum distance between slabs to consider them adjacent. Default is 0.0.
+
+        """
+        self._clear_slab_joints()
+
+        slabs = list(self.slabs)
+
+        if not slabs:
+            return
+
+        if max_distance is None:
+            max_distance = max(slab.thickness for slab in slabs)
+
+        solver = PlateConnectionSolver()
+        pairs = solver.find_intersecting_pairs(slabs, rtree=True, max_distance=max_distance)
+        for pair in pairs:
+            slab_a, slab_b = pair
+            result = solver.find_plate_plate_topology(slab_a, slab_b, tol=self._tolerance.absolute, max_distance=max_distance)
+
+            topology = result[0]
+
+            unsupported_topos = (JointTopology.TOPO_UNKNOWN, JointTopology.TOPO_I, JointTopology.TOPO_X)
+            if topology in unsupported_topos:
+                continue
+
+            slab_a, slab_b = result[1], result[2]
+
+            assert slab_a[0] and slab_b[0]
+
+
+            # # assume slab_a is the main, unless slab_b is explicitly marked as main
+            # # TODO: use the Rule system? this isn't good enough, a slab can totally be main and cross at the same time (in two different interactions)
+            # if slab_b.attributes.get("role", "cross") == "main":
+            #     PlateJoint.create(self, slab_b, slab_a, topology=topology)
+            # else:
+            #     PlateJoint.create(self, slab_a, slab_b, topology=topology)
 
     def _clear_wall_joints(self):
         for joint in self.joints:
