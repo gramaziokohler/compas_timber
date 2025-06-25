@@ -11,7 +11,6 @@ from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import WallJoint
 from compas_timber.errors import BeamJoiningError
@@ -47,7 +46,7 @@ class TimberModel(Model):
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
-        for interaction in model.interactions:
+        for interaction in model.interactions(kind="joint"):  # TODO: allow for contacts as well once they are implemented in compas_timber
             interaction.restore_beams_from_keys(model)  # type: ignore
         return model
 
@@ -55,26 +54,22 @@ class TimberModel(Model):
         super(TimberModel, self).__init__()
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
-        # self._graph.update_default_edge_attributes(interactions=None) # is it necessary?
+        self._graph.update_default_edge_attributes(joints=None, contacts=None)  # update the default edge attributes to include joints and contacts
 
-    def __str__(self):
+    def __str__(self):  # TODO: add groups and contacts or use the parent method instead?
         # type: () -> str
-        return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
+        return "TimberModel ({}) with {} elements(s), {} joint(s) and {} contact(s).".format(
+            str(self.guid), len(list(self.elements())), len(list(self.joints)), len(list(self.contacts))
+        )
+
+    # =============================================================================
+    # Attributes
+    # =============================================================================
 
     @property
     def tolerance(self):
         # type: () -> Tolerance
         return self._tolerance
-
-    @property
-    def interactions(self):
-        # type: () -> Generator[Data]
-        """Yield all edge-level relationships: joints, contacts, etc."""
-        for (u, v), attr in self._graph.edges(data=True):
-            for joint in attr.get("joints") or []:
-                yield joint
-            for contact in attr.get("contacts") or []:  # TODO: should contacts be part of interactions?
-                yield contact
 
     @property
     def beams(self):
@@ -96,10 +91,8 @@ class TimberModel(Model):
     def joints(self):
         # type: () -> set[Joint]
         joints = set()  # some joints might apear on more than one interaction
-        for (u, v), attr in self._graph.edges(data=True):
-            for joint in attr.get("joints") or []:
-                assert isinstance(joint, Joint), "Expected joint to be an instance of Joint, got {}".format(type(joint))
-                joints.add(joint)
+        for interaction in self.interactions(kind="joint"):
+            joints.add(interaction)
         return joints
 
     @property
@@ -146,6 +139,10 @@ class TimberModel(Model):
         # type: () -> float
         return sum([element.obb.volume for element in self.elements()])
 
+    # =============================================================================
+    # Elements
+    # =============================================================================
+
     def element_by_guid(self, guid):
         # type: (str) -> Beam
         """Get a beam by its unique identifier.
@@ -173,7 +170,7 @@ class TimberModel(Model):
         return super(TimberModel, self).add_element(element, parent, **kwargs)
 
     def add_elements(self, elements, parent=None):
-        # type: (list[Element], GroupNode | None) -> list[ElementNode]
+        # type: (list[Element], GroupNode | None) -> list[Element]
         """Add multiple elements to the model.
 
         Parameters
@@ -186,13 +183,19 @@ class TimberModel(Model):
 
         Returns
         -------
-        list[:class:`ElementNode`]
+        list[:class:`Element`]
+            The list of elements that were added to the model.
 
         """
-        nodes = []
+        if not isinstance(elements, list):
+            elements = [elements]
         for element in elements:
-            nodes.append(self.add_element(element, parent=parent))
-        return nodes
+            self.add_element(element, parent=parent)
+        return elements
+
+    # =============================================================================
+    # Groups
+    # =============================================================================
 
     def add_group_element(self, element, name=None):
         """Add an element which shall contain other elements.
@@ -295,6 +298,32 @@ class TimberModel(Model):
         elements = (node.element for node in group.children)
         return filter(filter_, elements)
 
+    # =============================================================================
+    # Interactions
+    # =============================================================================
+
+    def interactions(self, kind=None):
+        # type: (str | None) -> Generator
+        """Yield edge-level relationships, optionally filtered by kind.
+
+        Parameters
+        ----------
+        kind : str or None, optional
+            Filter interactions by type: "joint", "contact", or None for all.
+
+        Yields
+        ------
+        Joint or Contact
+            The interactions of the specified kind.
+        """
+        for (u, v), attr in self._graph.edges(data=True):
+            if kind in (None, "joint"):
+                for joint in attr.get("joints") or []:
+                    yield joint
+            if kind in (None, "contact"):
+                for contact in attr.get("contacts") or []:
+                    yield contact
+
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
         try:
@@ -357,6 +386,10 @@ class TimberModel(Model):
             self.remove_interaction(element_a, element_b)
         for element in joint.generated_elements:
             self.remove_element(element)
+
+    # =============================================================================
+    # Other Methods
+    # =============================================================================
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
