@@ -151,7 +151,7 @@ class LapJoint(Joint):
         test_face_normal = Vector.cross(test_face_vector1, test_face_vector2)
         check_vector = Vector.from_start_end(int_points[0], int_points[1])
         # Flip int_points Order if needed
-        if angle_vectors(test_face_normal, check_vector, deg=True) < 1:
+        if angle_vectors(test_face_normal, check_vector) < 1:
             a, b, c, d, e, f, g, h = int_points
             int_points = b, a, d, c, f, e, h, g
 
