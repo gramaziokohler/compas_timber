@@ -1,14 +1,15 @@
+import random
+
 from compas.colors import Color
+from compas.colors import ColorMap
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.tolerance import Tolerance
 from compas_viewer.scene import Tag
 from compas_viewer.viewer import Viewer
 
-from compas_timber.connections import CompositeAnalyzer
 from compas_timber.connections import JointTopology
-from compas_timber.connections import QuadAnalyzer
-from compas_timber.connections import TripletAnalyzer
+from compas_timber.connections import MaxNCompositeAnalyzer
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -61,16 +62,29 @@ def main():
         viewer.scene.add(beam.geometry)
         viewer.scene.add(Tag(text=str(beam.graph_node), position=beam.centerline.midpoint, height=40, color=Color.black()))
 
-    # anazlyzer = TripletAnalyzer(model, tolerance=Tolerance(absolute=0.01))
-    # anazlyzer = QuadAnalyzer(model, tolerance=Tolerance(absolute=0.01))
-    analyzer = CompositeAnalyzer.from_model(model=model, analyzers_cls=[QuadAnalyzer, TripletAnalyzer], tolerance=Tolerance(absolute=0.01))
+    tol = Tolerance(absolute=0.01)
+    num_of_beams = len(list(model.beams))
+
+    ### find triplets only
+    # analyzer = TripletAnalyzer(model, tolerance=Tolerance(absolute=0.01))
+
+    ### find quads only
+    # analyzer = QuadAnalyzer(model, tolerance=Tolerance(absolute=0.01))
+
+    ### find all clusters up to n beams, then n-1 beams, then n-2 beams, etc.
+    analyzer = MaxNCompositeAnalyzer(model, n=num_of_beams, tolerance=tol)
+
     clusters = analyzer.find()
 
+    cluster_sizes = list(sorted({len(cluster) for cluster in clusters}))
+    cmap = ColorMap.from_palette("acton")
+
+    size_to_color = {size: cmap(random.random()) for size in cluster_sizes}
+
     for cluster in clusters:
-        if len(cluster) == 3:
-            viewer.scene.add(cluster.location, pointsize=50, pointcolor=Color.red())
-        elif len(cluster) == 4:
-            viewer.scene.add(cluster.location, pointsize=50, pointcolor=Color.green())
+        size = len(cluster)
+        color = size_to_color[size]
+        viewer.scene.add(cluster.location, pointsize=50, color=color)
 
     viewer.show()
 

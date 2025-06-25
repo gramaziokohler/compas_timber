@@ -118,10 +118,10 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
             neighbors = self._kdtree.nearest_neighbors(joint.location, neighbors_count, distance_sort=True)
 
             for _, idx, distance in neighbors:
-                n_joint = self._joints[idx]
-
-                if idx in visited or distance > tol or idx == index:
+                if idx is None or idx in visited or distance > tol or idx == index:
                     continue
+
+                n_joint = self._joints[idx]
 
                 result.append(n_joint)
                 visited.add(idx)
@@ -203,3 +203,25 @@ class CompositeAnalyzer:
         if not isinstance(analyzers_cls, list):
             analyzers_cls = [analyzers_cls]
         return cls([analyzer(model, tolerance) for analyzer in analyzers_cls])
+
+
+def MaxNCompositeAnalyzer(model, n, tolerance=None):
+    """Finds clusters of up to n beams (minimum 2), preferring larger clusters first.
+
+    Parameters
+    ----------
+    model : :class:`~compas_timber.model.TimberModel`
+        The TimberModel to analyze.
+    n : int
+        The maximum cluster size.
+    tolerance : :class:`~compas.tolerance.Tolerance` | None
+        The tolerance to use for the analysis. If None, a default tolerance is used.
+
+    Returns
+    -------
+    CompositeAnalyzer
+        An instance of CompositeAnalyzer that finds clusters of size n down to 2.
+    """
+    analyzers_cls = [lambda m, t, k=k: NBeamKDTreeAnalyzer(m, n=k, tolerance=t) for k in range(n, 1, -1)]
+    # Use lambdas to capture k at each step
+    return CompositeAnalyzer([cls(model, tolerance) for cls in analyzers_cls])

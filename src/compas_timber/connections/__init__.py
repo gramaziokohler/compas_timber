@@ -31,6 +31,7 @@ from .analyzers import QuadAnalyzer
 from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
+from .analyzers import MaxNCompositeAnalyzer
 
 __all__ = [
     "Joint",
@@ -67,4 +68,5 @@ __all__ = [
     "CompositeAnalyzer",
     "Cluster",
     "BeamGroupAnalyzer",
+    "MaxNCompositeAnalyzer",
 ]
