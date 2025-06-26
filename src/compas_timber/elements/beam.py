@@ -219,15 +219,6 @@ class Beam(TimberElement):
         # type: () -> Line
         return Line(self.centerline_start, self.centerline_end)
 
-    @centerline.setter
-    def centerline(self, line):
-        # type: (Line) -> None
-        """Set the centerline of the beam."""
-        if line.length < TOL.absolute:
-            raise ValueError("The given centerline has zero length. Check your endpoints.")
-        self.frame = Frame(line.start, line.vector, self.frame.yaxis)
-        self.length = line.length
-
     @property
     def centerline_start(self):
         # type: () -> Point
@@ -364,7 +355,7 @@ class Beam(TimberElement):
     # ==========================================================================
 
     @classmethod
-    def from_centerline(cls, centerline, width, height, z_vector=None, category=None):
+    def from_centerline(cls, centerline, width, height, z_vector=None):
         """Define the beam from its centerline.
 
         Parameters
@@ -395,10 +386,8 @@ class Beam(TimberElement):
             raise ValueError("The given z_vector seems to be parallel to the given centerline.")
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
-        beam = cls(frame, length, width, height)
-        if category:
-            beam.attributes["category"] = category
-        return beam
+
+        return cls(frame, length, width, height)
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
