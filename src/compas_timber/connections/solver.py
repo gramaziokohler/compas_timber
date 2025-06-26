@@ -1,9 +1,9 @@
 import itertools
 import math
 
+from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import Line
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import closest_point_on_line

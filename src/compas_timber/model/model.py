@@ -415,7 +415,6 @@ class TimberModel(Model):
             else:
                 PlateJoint.create(self, wall_a, wall_b, topology=topology)
 
-
     def connect_adjacent_slabs(self, max_distance=None):
         """Connects adjacent slabs in the model.
 
@@ -450,7 +449,6 @@ class TimberModel(Model):
             slab_a, slab_b = result[1], result[2]
 
             assert slab_a[0] and slab_b[0]
-
 
             # # assume slab_a is the main, unless slab_b is explicitly marked as main
             # # TODO: use the Rule system? this isn't good enough, a slab can totally be main and cross at the same time (in two different interactions)

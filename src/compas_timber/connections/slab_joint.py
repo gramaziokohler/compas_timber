@@ -1,9 +1,9 @@
-from compas.geometry import intersection_line_line
-from compas.geometry import dot_vectors
-from compas.geometry import Polyline
 from compas.geometry import Point
+from compas.geometry import Polyline
+from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_line
+
 from .joint import JointTopology
-from .solver import PlateConnectionSolver
 from .plate_joint import PlateJoint
 from .plate_joint import PlateToPlateInterface
 
@@ -30,16 +30,13 @@ class SlabToSlabInterface(PlateToPlateInterface):
         super(SlabToSlabInterface, self).__init__(polyline, frame, edge_index, topology, interface_role)
         self.beams = beams if beams else []
 
-
     def __repr__(self):
-        return "SlabToSlabInterface({0}, {1}, {2})".format(
-            self.polyline, self.frame, JointTopology.get_name(self.topology)
-        )
-    
+        return "SlabToSlabInterface({0}, {1}, {2})".format(self.polyline, self.frame, JointTopology.get_name(self.topology))
+
     @property
     def beam_polyline(self):
-        """Return the polyline of the interface."""
-        if len(self.beams)>1:
+        """Return the polyline bounding the centerlines of the interface beams."""
+        if len(self.beams) > 1:
             points = []
             for base_line in [self.polyline.lines[1], self.polyline.lines[3]]:
                 pts = []
@@ -53,6 +50,7 @@ class SlabToSlabInterface(PlateToPlateInterface):
             return Polyline([points[0], points[1], points[2], points[3], points[0]])
         else:
             return self.polyline
+
 
 class SlabJoint(PlateJoint):
     """Models a plate to plate interaction.
@@ -123,13 +121,7 @@ class SlabJoint(PlateJoint):
     @property
     def interfaces(self):
         """Return the interfaces of the slabs."""
-        print("slab.interfaces", self.interface_a, self.interface_b)  # DEBUG
         return [self.interface_a, self.interface_b]
-
-    def add_features(self):
-        super(SlabJoint, self).add_features()
-        self.slab_a.add_interface(self.interface_a)
-        self.slab_b.add_interface(self.interface_b)
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
@@ -148,7 +140,6 @@ class SlabJoint(PlateJoint):
     @property
     def interface_a(self):
         """Return the interface surface of slab_a where it meets slab_b."""
-        print("SlabJoint.interface_a")  # DEBUG
         interface = super(SlabJoint, self).interface_a
         return SlabToSlabInterface(
             polyline=interface.polyline,
@@ -161,7 +152,6 @@ class SlabJoint(PlateJoint):
     @property
     def interface_b(self):
         """Return the interface surface of slab_b where it meets slab_a."""
-        print("SlabJoint.interface_b")  # DEBUG
         interface = super(SlabJoint, self).interface_b
         return SlabToSlabInterface(
             polyline=interface.polyline,
@@ -170,18 +160,3 @@ class SlabJoint(PlateJoint):
             topology=self.topology,
             interface_role=interface.interface_role,
         )
-
-    def add_features(self):
-        """Add features to the plates based on the joint."""
-        if self.slab_a and self.slab_b:
-            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                topo_results = PlateConnectionSolver.find_plate_plate_topology(self.slab_a, self.slab_b)
-                if not topo_results:
-                    raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.slab_a, self.slab_b))
-                self.topology = topo_results[0]
-                self.a_segment_index = topo_results[1][1]
-                self.b_segment_index = topo_results[2][1]
-            self.reorder_planes_and_outlines()
-            self._adjust_plate_outlines()
-            self.slab_a.add_interface(self.interface_a)
-            self.slab_b.add_interface(self.interface_b)

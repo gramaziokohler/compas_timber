@@ -239,7 +239,7 @@ class FreeContour(BTLxProcessing):
         xform = Transformation.from_frame_to_frame(Frame.worldXY(), ref_side)
         pts = [pt.transformed(xform) for pt in self.contour_param_object.polyline]
         pts = correct_polyline_direction(pts, -ref_side.normal, clockwise=True)
-        pln = Polyline(offset_polyline(Polyline(pts), 0.001, normal=-ref_side.normal)) #This is the only way I could get the boolean difference to work
+        pln = Polyline(offset_polyline(Polyline(pts), 0.001, normal=-ref_side.normal))  # This is the only way I could get the boolean difference to work
         pt = intersection_line_line(pln.lines[0], pln.lines[-1])
         pln[0] = pt[0]
         pln[-1] = pt[0]

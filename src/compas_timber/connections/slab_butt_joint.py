@@ -1,6 +1,6 @@
 from .joint import JointTopology
-from .slab_joint import SlabJoint
 from .plate_butt_joint import PlateButtJoint
+from .slab_joint import SlabJoint
 
 
 class SlabButtJoint(SlabJoint, PlateButtJoint):

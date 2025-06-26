@@ -3,9 +3,9 @@ from itertools import combinations
 from compas.tolerance import TOL
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
+from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.elements.beam import Beam
@@ -224,6 +224,7 @@ class DirectRule(JointRule):
         else:
             raise UserWarning("unable to comply direct joint element sets, only Beam-Beam and Plate-Plate joints are currently supported")
 
+
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the elements, this rule assigns
 
@@ -396,14 +397,14 @@ class TopologyRule(JointRule):
                 return (
                     self.topology_type == topo_results[0],
                     [topo_results[1], topo_results[2]],
-                    )  # comply, if topologies match, reverse if the element order should be switched
+                )  # comply, if topologies match, reverse if the element order should be switched
             elif all(isinstance(e, Plate) for e in elements):
                 solver = PlateConnectionSolver()
                 topo_results = solver.find_plate_plate_topology(elements[0], elements[1], max_distance=max_distance)
                 return (
                     self.topology_type == topo_results[0],
                     [topo_results[1][0], topo_results[2][0]],
-                    )
+                )
             else:
                 raise UserWarning("unable to comply topology joint element sets, only Beam-Beam and Plate-Plate joints are currently supported")
         except KeyError:
