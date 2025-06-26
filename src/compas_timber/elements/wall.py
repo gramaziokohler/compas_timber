@@ -23,10 +23,12 @@ class Wall(Slab):
 
     def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
         super(Wall, self).__init__(outline, thickness, openings, frame, name, **kwargs)
+        self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
         self.attributes = {}
         self.attributes.update(kwargs)
+
         self._faces = None
         self._corners = None
 
@@ -41,19 +43,3 @@ class Wall(Slab):
     @property
     def is_wall(self):
         return True
-
-    class WallJustificationType(object):
-        """Enum for the alignment of the cut.
-        Attributes
-        ----------
-        RIGHT : literal("right")
-            Inside alignment. Wall volume offsets to the z-direction when using right-handed outline curve.
-        LEFT : literal("left")
-            Outside alignment. Wall volume offsets to the z-direction when using left-handed outline curve.
-        CENTER : literal("center")
-            Center alignment.
-        """
-
-        INSIDE = "inside"
-        OUTSIDE = "outside"
-        CENTER = "center"
