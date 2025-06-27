@@ -257,7 +257,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     TOLERANCE = 1e-6
 
-    def find_plate_plate_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
+    def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
 
         parameters
