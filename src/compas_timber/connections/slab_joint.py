@@ -26,9 +26,10 @@ class SlabToSlabInterface(PlateToPlateInterface):
 
     """
 
-    def __init__(self, polyline, frame, edge_index, topology, interface_role=None, beams=None):
+    def __init__(self, polyline, frame, edge_index, topology, interface_role=None, beams=None, detail_set=None):
         super(SlabToSlabInterface, self).__init__(polyline, frame, edge_index, topology, interface_role)
         self.beams = beams if beams else []
+        self.detail_set = detail_set
 
     def __repr__(self):
         return "SlabToSlabInterface({0}, {1}, {2})".format(self.polyline, self.frame, JointTopology.get_name(self.topology))
@@ -91,11 +92,12 @@ class SlabJoint(PlateJoint):
         data["b_segment_index"] = self.b_segment_index
         return data
 
-    def __init__(self, slab_a=None, slab_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
+    def __init__(self, slab_a=None, slab_b=None, topology=None, a_segment_index=None, b_segment_index=None, detail_sets=None, **kwargs):
         super(SlabJoint, self).__init__(slab_a, slab_b, topology, a_segment_index, b_segment_index, **kwargs)
 
         self._slab_a_guid = kwargs.get("slab_a_guid", None) or str(self.slab_a.guid)  # type: ignore
         self._slab_b_guid = kwargs.get("slab_b_guid", None) or str(self.slab_b.guid)  # type: ignore
+        self.detail_sets = detail_sets if detail_sets else []
 
     def __repr__(self):
         return "SlabJoint({0}, {1}, {2})".format(self.slab_a, self.slab_b, JointTopology.get_name(self.topology))

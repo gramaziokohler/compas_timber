@@ -210,9 +210,7 @@ class Window(object):
             self.joints.extend([LButtJoint(jack, self.header) for jack in self.jack_studs])
         else:
             self.joints.extend([TButtJoint(self.sill, king) for king in self.king_studs])
-
         return self.joints
-
 
 class Door(Window):
     """TODO: revise when we know where this is going, maybe no need for classes here beyond Opening"""
@@ -537,6 +535,21 @@ class SlabPopulator(object):
                     slab_populators.append(cls(config_set, slab, interfaces))
                     break
         return slab_populators
+
+    # def create_elements(self):
+    #     """Does the actual populating of the wall
+    #     creates and returns all the elements in the wall, returns also the joint definitions
+    #     """
+    #     self._generate_edge_beams()
+    #     self._generate_interface_beams()
+    #     self._generate_edge_joints()
+    #     self._generate_face_joints()
+    #     self._generate_openings()
+    #     self._extend_interface_beams()
+    #     self._generate_stud_beams()
+    #     self._generate_plates()
+    #     return self.elements
+
 
     def create_elements(self):
         """Does the actual populating of the wall
