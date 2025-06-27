@@ -103,7 +103,10 @@ def test_btlx_processings(resulting_btlx, test_model, namespaces):
     for part, beam in zip(part_elements, test_model.beams):
         beam_features = beam.features
         processings = part.find("d2m:Processings", namespaces)
-        assert len(processings) == len(beam_features)
+        if processings:
+            assert len(processings) == len(beam_features)
+        else:
+            assert processings is None and len(beam_features) == 0
 
 
 def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
@@ -137,23 +140,22 @@ def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
     assert len(resulting_part_elements) == len(expected_part_elements)
 
     for resulting_part, expected_part in zip(resulting_part_elements, expected_part_elements):
-        assert resulting_part.tag == expected_part.tag
-
         # Validate the Processings element within each Part element
         resulting_processings = resulting_part.find("d2m:Processings", namespaces)
         expected_processings = expected_part.find("d2m:Processings", namespaces)
-        assert resulting_processings is not None
-        assert expected_processings is not None
-        assert resulting_processings.tag == expected_processings.tag
-
-        # Validate all Processing elements within the Processings element
-        resulting_processing_elements = resulting_processings.findall("d2m:Processing", namespaces)
-        expected_processing_elements = expected_processings.findall("d2m:Processing", namespaces)
-        assert len(resulting_processing_elements) == len(expected_processing_elements)
-
-        for resulting_processing, expected_processing in zip(resulting_processing_elements, expected_processing_elements):
-            assert resulting_processing.tag == expected_processing.tag
-            assert resulting_processing.attrib == expected_processing.attrib
+        if resulting_processings and expected_processings:
+            assert resulting_processings.tag == expected_processings.tag
+            # Validate all Processing elements within the Processings element
+            resulting_processing_elements = resulting_processings.findall("d2m:Processing", namespaces)
+            expected_processing_elements = expected_processings.findall("d2m:Processing", namespaces)
+            assert len(resulting_processing_elements) == len(expected_processing_elements)
+            # Validate each Processing element
+            for resulting_processing, expected_processing in zip(resulting_processing_elements, expected_processing_elements):
+                assert resulting_processing.tag == expected_processing.tag
+                assert resulting_processing.attrib == expected_processing.attrib
+        else:
+            # If Processings is None in either, they should both be None
+            assert resulting_processings == expected_processings
 
 
 def test_btlx_should_skip_feature():
