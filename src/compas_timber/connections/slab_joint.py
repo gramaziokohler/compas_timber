@@ -6,6 +6,8 @@ from compas.geometry import intersection_line_line
 from .joint import JointTopology
 from .plate_joint import PlateJoint
 from .plate_joint import PlateToPlateInterface
+from compas_timber.design.slab_details import LButtDetailB
+from compas_timber.design.slab_details import TButtDetailB
 
 
 class SlabToSlabInterface(PlateToPlateInterface):
@@ -97,7 +99,7 @@ class SlabJoint(PlateJoint):
 
         self._slab_a_guid = kwargs.get("slab_a_guid", None) or str(self.slab_a.guid)  # type: ignore
         self._slab_b_guid = kwargs.get("slab_b_guid", None) or str(self.slab_b.guid)  # type: ignore
-        self.detail_sets = detail_sets if detail_sets else []
+        self.detail_sets = detail_sets if detail_sets else {JointTopology.TOPO_L: LButtDetailB, JointTopology.TOPO_T: TButtDetailB}
 
     def __repr__(self):
         return "SlabJoint({0}, {1}, {2})".format(self.slab_a, self.slab_b, JointTopology.get_name(self.topology))
@@ -149,6 +151,7 @@ class SlabJoint(PlateJoint):
             edge_index=interface.edge_index,
             topology=self.topology,
             interface_role=interface.interface_role,
+            detail_set=self.detail_sets.get(self.topology, None)
         )
 
     @property
@@ -161,4 +164,5 @@ class SlabJoint(PlateJoint):
             edge_index=interface.edge_index,
             topology=self.topology,
             interface_role=interface.interface_role,
+            detail_set=self.detail_sets.get(self.topology, None)
         )

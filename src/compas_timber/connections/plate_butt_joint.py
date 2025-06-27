@@ -166,6 +166,5 @@ class PlateTButtJoint(PlateButtJoint):
         for polyline in self.main_outlines:
             PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
 
-    def interface_a
 
 
