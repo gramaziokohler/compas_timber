@@ -1,421 +1,178 @@
 <?xml version="1.0" ?>
-<BTLx Language="en" Version="2.0.0" xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
+<BTLx xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.0.0" Language="en" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
    <FileHistory>
-      <InitialExportProgram Comment="" CompanyName="Gramazio Kohler Research" ComputerName="PAPACHAP" Date="2024-12-30" FileName="" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.5.0" Time="11:12:00" UserName="kapso"/>
+      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.13.0" ComputerName="PAPACHAP" UserName="kapso" FileName="" Date="2025-06-27" Time="10:57:31" Comment=""/>
    </FileHistory>
-   <Project Name="testProject">
+   <Project Name="COMPAS Timber Project">
       <Parts>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="120.000" Layer="0" Length="3000.000" Material="" ModuleNumber="" OrderNumber="0" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="0" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="60.000">
+      <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1785.101" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{d945beb7-236e-432a-a781-2e48da88dde5}">
+               <Transformation GUID="{a6497aff-ec8a-4658-9f75-ae57cd2c8d61}">
                   <Position>
-                     <ReferencePoint X="30782.430" Y="-3227.668" Z="-60.000"/>
-                     <XVector X="1.000" Y="-0.000" Z="0.000"/>
+                     <ReferencePoint X="979.657" Y="-375.207" Z="404.196"/>
+                     <XVector X="0.425" Y="-0.862" Z="0.277"/>
+                     <YVector X="-0.123" Y="0.248" Z="0.961"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>120.818</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>154.621</Angle>
+                  <Inclination>97.037</Inclination>
+                  <Slope>-14.480</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>91.511</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>1272.402</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>62.808</Angle>
+                  <Inclination>104.369</Inclination>
+                  <Slope>7.266</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>23.886</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1594.730" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{18ea316c-30a5-4b7d-914a-c69c09b855e4}">
+                  <Position>
+                     <ReferencePoint X="283.028" Y="-233.039" Z="732.132"/>
+                     <XVector X="0.666" Y="0.703" Z="-0.250"/>
+                     <YVector X="0.172" Y="0.181" Z="0.968"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>25.817</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>104.471</Angle>
+                  <Inclination>38.535</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1368.443" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{8564b704-e9bd-4774-b385-a58fc85ff13f}">
+                  <Position>
+                     <ReferencePoint X="227.878" Y="-903.447" Z="612.704"/>
+                     <XVector X="0.084" Y="0.981" Z="0.173"/>
+                     <YVector X="-0.015" Y="-0.172" Z="0.985"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+         </Part>
+         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2097.426" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{b99ad050-91fc-4027-bc5d-9f9b166f90ba}">
+                  <Position>
+                     <ReferencePoint X="1091.051" Y="544.597" Z="449.990"/>
+                     <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
                </Transformation>
             </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <DovetailMortise Name="DovetailMortise" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="3">
-                  <StartX>1959.223</StartX>
-                  <StartY>45.684</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>125.092</Angle>
-                  <Slope>90.000</Slope>
-                  <LimitationTop>unlimited</LimitationTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Depth>28.000</Depth>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailMortise>
-               <DovetailMortise Name="DovetailMortise" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
-                  <StartX>2937.983</StartX>
-                  <StartY>61.368</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>-102.576</Angle>
-                  <Slope>90.000</Slope>
-                  <LimitationTop>unlimited</LimitationTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Depth>28.000</Depth>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailMortise>
-               <DovetailMortise Name="DovetailMortise" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
-                  <StartX>2531.023</StartX>
-                  <StartY>21.887</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>105.787</Angle>
-                  <Slope>90.000</Slope>
-                  <LimitationTop>unlimited</LimitationTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Depth>28.000</Depth>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailMortise>
-               <DovetailMortise Name="DovetailMortise" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
-                  <StartX>311.178</StartX>
-                  <StartY>110.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>-90.000</Angle>
-                  <Slope>90.000</Slope>
-                  <LimitationTop>unlimited</LimitationTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Depth>28.000</Depth>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailMortise>
-               <DovetailMortise Name="DovetailMortise" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
-                  <StartX>956.532</StartX>
-                  <StartY>39.257</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>139.501</Angle>
-                  <Slope>90.000</Slope>
-                  <LimitationTop>unlimited</LimitationTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Depth>28.000</Depth>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailMortise>
-               <DovetailMortise Name="DovetailMortise" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
-                  <StartX>549.716</StartX>
-                  <StartY>110.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>-90.000</Angle>
-                  <Slope>90.000</Slope>
-                  <LimitationTop>unlimited</LimitationTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Depth>28.000</Depth>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailMortise>
-               <DovetailMortise Name="DovetailMortise" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
-                  <StartX>1494.381</StartX>
-                  <StartY>19.558</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>84.471</Angle>
-                  <Slope>90.000</Slope>
-                  <LimitationTop>unlimited</LimitationTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Depth>28.000</Depth>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailMortise>
-            </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
-         </Part>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="100.000" Layer="0" Length="1477.063" Material="" ModuleNumber="" OrderNumber="1" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="1" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="80.000">
-            <Transformations>
-               <Transformation GUID="{7099eee1-8e35-456e-9045-125d0e26026c}">
-                  <Position>
-                     <ReferencePoint X="31020.102" Y="-4733.408" Z="-50.000"/>
-                     <XVector X="0.023" Y="1.000" Z="0.000"/>
-                     <YVector X="-0.000" Y="0.000" Z="1.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
-            <Processings>
-               <DovetailTenon Name="DovetailTenon" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>end</Orientation>
-                  <StartX>1447.055</StartX>
-                  <StartY>40.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>88.673</Angle>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>1023.908</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>153.725</Angle>
                   <Inclination>90.000</Inclination>
-                  <Rotation>90.000</Rotation>
-                  <LengthLimitedTop>yes</LengthLimitedTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
+                  <Slope>0.000</Slope>
                   <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Height>28.000</Height>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailTenon>
-            </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
-         </Part>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="100.000" Layer="0" Length="843.733" Material="" ModuleNumber="" OrderNumber="2" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="2" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="80.000">
-            <Transformations>
-               <Transformation GUID="{16d654eb-a339-4601-9c86-1d620710a772}">
-                  <Position>
-                     <ReferencePoint X="33702.641" Y="-3025.657" Z="-813.658"/>
-                     <XVector X="0.071" Y="-0.319" Z="0.945"/>
-                     <YVector X="-0.206" Y="0.922" Z="0.327"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
-            <Processings>
-               <DovetailTenon Name="DovetailTenon" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
+                  <Width>60.000</Width>
+                  <Depth>17.126</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>end</Orientation>
-                  <StartX>797.549</StartX>
-                  <StartY>40.000</StartY>
+                  <StartX>2045.750</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>130.737</Angle>
+                  <Inclination>68.942</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>75.288</StartX>
+                  <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
-                  <Inclination>70.903</Inclination>
-                  <Rotation>90.000</Rotation>
-                  <LengthLimitedTop>yes</LengthLimitedTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Height>28.000</Height>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailTenon>
+                  <Inclination>136.549</Inclination>
+               </JackRafterCut>
             </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
          </Part>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="100.000" Layer="0" Length="609.609" Material="" ModuleNumber="" OrderNumber="3" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="3" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="80.000">
+         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1056.996" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{40fc1593-09a4-445c-bf0f-e6d5f2f0c23f}">
+               <Transformation GUID="{9881ce95-ad21-4002-b9cd-6c5a9638f254}">
                   <Position>
-                     <ReferencePoint X="33109.353" Y="-2983.639" Z="249.385"/>
-                     <XVector X="-0.709" Y="-0.498" Z="-0.499"/>
-                     <YVector X="-0.408" Y="-0.287" Z="0.867"/>
+                     <ReferencePoint X="1060.620" Y="-1471.583" Z="441.682"/>
+                     <XVector X="0.861" Y="0.000" Z="0.508"/>
+                     <YVector X="-0.508" Y="0.000" Z="0.861"/>
                   </Position>
                </Transformation>
             </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <DovetailTenon Name="DovetailTenon" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>end</Orientation>
-                  <StartX>483.955</StartX>
-                  <StartY>40.000</StartY>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
-                  <Angle>29.920</Angle>
+                  <Angle>135.000</Angle>
                   <Inclination>90.000</Inclination>
-                  <Rotation>90.000</Rotation>
-                  <LengthLimitedTop>yes</LengthLimitedTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
+               </JackRafterCut>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>550.136</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>60.179</Angle>
+                  <Inclination>62.893</Inclination>
+                  <Slope>-14.637</Slope>
                   <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Height>28.000</Height>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailTenon>
+                  <Width>60.000</Width>
+                  <Depth>22.530</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
             </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
-         </Part>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="100.000" Layer="0" Length="986.778" Material="" ModuleNumber="" OrderNumber="4" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="4" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="80.000">
-            <Transformations>
-               <Transformation GUID="{35d20ff3-0530-4442-9e49-be867af3765a}">
-                  <Position>
-                     <ReferencePoint X="33575.053" Y="-3996.884" Z="501.889"/>
-                     <XVector X="-0.321" Y="0.747" Z="-0.582"/>
-                     <YVector X="-0.230" Y="0.534" Z="0.813"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
-            <Processings>
-               <DovetailTenon Name="DovetailTenon" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>end</Orientation>
-                  <StartX>928.129</StartX>
-                  <StartY>40.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>62.120</Angle>
-                  <Inclination>57.693</Inclination>
-                  <Rotation>90.000</Rotation>
-                  <LengthLimitedTop>yes</LengthLimitedTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Height>28.000</Height>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailTenon>
-            </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
-         </Part>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="100.000" Layer="0" Length="1793.729" Material="" ModuleNumber="" OrderNumber="5" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="5" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="80.000">
-            <Transformations>
-               <Transformation GUID="{6bde2f40-a285-4d84-9f57-995b8eb8b0c3}">
-                  <Position>
-                     <ReferencePoint X="32039.049" Y="-1740.913" Z="-863.926"/>
-                     <XVector X="0.163" Y="-0.870" Z="0.465"/>
-                     <YVector X="-0.086" Y="0.457" Z="0.885"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
-            <Processings>
-               <DovetailTenon Name="DovetailTenon" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>end</Orientation>
-                  <StartX>1753.070</StartX>
-                  <StartY>40.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>101.948</Angle>
-                  <Inclination>62.778</Inclination>
-                  <Rotation>90.000</Rotation>
-                  <LengthLimitedTop>yes</LengthLimitedTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Height>28.000</Height>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailTenon>
-            </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
-         </Part>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="100.000" Layer="0" Length="1786.382" Material="" ModuleNumber="" OrderNumber="6" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="6" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="80.000">
-            <Transformations>
-               <Transformation GUID="{6aa3aa85-8ebd-411b-bfcf-f67826da1191}">
-                  <Position>
-                     <ReferencePoint X="32446.884" Y="-4219.018" Z="-1289.472"/>
-                     <XVector X="-0.461" Y="0.540" Z="0.704"/>
-                     <YVector X="0.457" Y="-0.535" Z="0.710"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
-            <Processings>
-               <DovetailTenon Name="DovetailTenon" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1706.235</StartX>
-                  <StartY>40.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>44.743</Angle>
-                  <Inclination>90.000</Inclination>
-                  <Rotation>90.000</Rotation>
-                  <LengthLimitedTop>yes</LengthLimitedTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Height>28.000</Height>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailTenon>
-            </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
-         </Part>
-         <Part Annotation="" AssemblyNumber="" Count="1" Designation="" ElementNumber="00" Group="" Height="100.000" Layer="0" Length="1797.917" Material="" ModuleNumber="" OrderNumber="7" Package="" ProcessingQuality="automatic" QualityGrade="" SingleMemberNumber="7" Storey="" StoreyType="" TimberGrade="" Weight="0" Width="80.000">
-            <Transformations>
-               <Transformation GUID="{4a9c5834-52a9-4807-9cdf-1b2bec391863}">
-                  <Position>
-                     <ReferencePoint X="29859.353" Y="-2487.975" Z="-50.000"/>
-                     <XVector X="0.904" Y="-0.427" Z="0.000"/>
-                     <YVector X="0.000" Y="0.000" Z="1.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection Align="no" X="1" Y="0" Z="0"/>
-            <ReferenceSide Align="no" Side="1"/>
-            <Processings>
-               <DovetailTenon Name="DovetailTenon" Priority="0" Process="yes" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>end</Orientation>
-                  <StartX>1647.623</StartX>
-                  <StartY>40.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>25.277</Angle>
-                  <Inclination>90.000</Inclination>
-                  <Rotation>90.000</Rotation>
-                  <LengthLimitedTop>yes</LengthLimitedTop>
-                  <LengthLimitedBottom>yes</LengthLimitedBottom>
-                  <Length>60.000</Length>
-                  <Width>44.995</Width>
-                  <Height>28.000</Height>
-                  <ConeAngle>10.000</ConeAngle>
-                  <UseFlankAngle>no</UseFlankAngle>
-                  <FlankAngle>15.000</FlankAngle>
-                  <Shape>radius</Shape>
-                  <ShapeRadius>22.497</ShapeRadius>
-               </DovetailTenon>
-            </Processings>
-            <Shape>
-               <IndexedFaceSet convex="true" coordIndex=" ">
-                  <Coordinate/>
-               </IndexedFaceSet>
-            </Shape>
          </Part>
       </Parts>
    </Project>
