@@ -109,6 +109,7 @@ class PlateButtJoint(PlateJoint):
 
 class PlateLButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     @property
     def __data__(self):
@@ -141,10 +142,11 @@ class PlateLButtJoint(PlateButtJoint):
 
 class PlateTButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     @property
     def __data__(self):
-        data = super(PlateJoint, self).__data__
+        data = super(PlateTButtJoint, self).__data__
         data["main_plate_guid"] = self._main_plate_guid
         data["cross_plate_guid"] = self._cross_plate_guid
         data["topology"] = self.topology

@@ -45,7 +45,6 @@ class SlabButtJoint(SlabJoint, PlateButtJoint):
 
 class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
-
     @property
     def __data__(self):
         data = super(SlabLButtJoint, self).__data__
@@ -66,6 +65,7 @@ class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
 
 class SlabTButtJoint(SlabButtJoint,  PlateTButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     @property
     def __data__(self):
