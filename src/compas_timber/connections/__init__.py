@@ -33,7 +33,11 @@ from .slab_joint import SlabJoint
 from .slab_butt_joint import SlabButtJoint
 from .slab_miter_joint import SlabMiterJoint
 from .plate_butt_joint import PlateButtJoint
+from .plate_butt_joint import PlateLButtJoint
+from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
+from .plate_joint import PlateToPlateInterface
+
 
 __all__ = [
     "Joint",
@@ -73,5 +77,8 @@ __all__ = [
     "SlabButtJoint",
     "SlabMiterJoint",
     "PlateButtJoint",
+    "PlateLButtJoint",
+    "PlateTButtJoint",
     "PlateMiterJoint",
+    "PlateToPlateInterface",
 ]

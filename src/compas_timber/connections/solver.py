@@ -2,6 +2,7 @@ import itertools
 import math
 
 from compas.geometry import Line
+from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import add_vectors
@@ -257,7 +258,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     TOLERANCE = 1e-6
 
-    def find_plate_plate_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
+    def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
 
         parameters
@@ -329,10 +330,7 @@ class PlateConnectionSolver(ConnectionSolver):
             max_distance = min(main_plate.thickness, cross_plate.thickness)
         for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
-                print("plane_a", plane_a)
-                print("plane_b", plane_b)
                 line = Line(*intersection_plane_plane(plane_a, plane_b))
-                print("line", line)
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
                         print("distance ok")
