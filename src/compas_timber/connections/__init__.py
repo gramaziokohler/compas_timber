@@ -36,7 +36,6 @@ from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
-from .plate_joint import PlateToPlateInterface
 
 
 __all__ = [

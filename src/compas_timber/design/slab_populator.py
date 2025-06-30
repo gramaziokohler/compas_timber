@@ -101,8 +101,8 @@ class Window(object):
     frame : :class:`compas.geometry.Frame`
         The frame of the window.
     """
-    #TODO: consider make opening generate an interface. it shares a lot of characteristics, e.g. it adds beams, joints, etc.
 
+    # TODO: consider make opening generate an interface. it shares a lot of characteristics, e.g. it adds beams, joints, etc.
 
     def __init__(self, outline, beam_dimensions, slab_frame, wall_thickness, stud_direction, tolerance, sheeting_inside=None, sheeting_outside=None, lintel_posts=None):
         self.beam_dimensions = beam_dimensions
@@ -212,6 +212,7 @@ class Window(object):
         else:
             self.joints.extend([TButtJoint(self.sill, king) for king in self.king_studs])
         return self.joints
+
 
 class Door(Window):
     """TODO: revise when we know where this is going, maybe no need for classes here beyond Opening"""
@@ -551,7 +552,6 @@ class SlabPopulator(object):
     #     self._generate_plates()
     #     return self.elements
 
-
     def create_elements(self):
         """Does the actual populating of the wall
         creates and returns all the elements in the wall, returns also the joint definitions
@@ -664,7 +664,7 @@ class SlabPopulator(object):
             # if i == 0:
             #     edge_interface_a = self.edge_interfaces.get(len(self._edge_beams) - 1, None)
             # else:
-            edge_interface_a = self.edge_interfaces.get((i - 1)%len(self._edge_beams), None)
+            edge_interface_a = self.edge_interfaces.get((i - 1) % len(self._edge_beams), None)
             edge_interface_b = self.edge_interfaces.get(i, None)
             interior_corner = i in self.interior_corner_indices
             if edge_interface_a and len(edge_interface_a.beams) > 1 and edge_interface_b and len(edge_interface_b.beams) > 1:
@@ -675,10 +675,9 @@ class SlabPopulator(object):
                 self._joints.extend(edge_interface_a.detail_set.create_interface_beam_joint(edge_interface_a, self._edge_beams[i], self, interior_corner))
             elif edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is only an interface on the next edge, we use that to create the joint definition
-                self._joints.extend(edge_interface_b.detail_set.create_interface_beam_joint(edge_interface_b, self._edge_beams[i-1], self, interior_corner))
-            else:       # if there is no interface, we create a joint definition between the two edge beams
+                self._joints.extend(edge_interface_b.detail_set.create_interface_beam_joint(edge_interface_b, self._edge_beams[i - 1], self, interior_corner))
+            else:  # if there is no interface, we create a joint definition between the two edge beams
                 self._get_edge_beam_joint(i, interior_corner)
-
 
     def _get_edge_beam_joint(self, edge_index, interior_corner):
         beam_a = self._edge_beams[edge_index - 1]
@@ -718,7 +717,6 @@ class SlabPopulator(object):
             self._openings.append(element)
             self._beams.extend(element.create_elements())
             self._joints.extend(element.create_joints())
-
 
     def _generate_stud_beams(self):
         self._generate_studs(min_length=self.beam_dimensions["stud"][0])
@@ -946,6 +944,7 @@ def beam_from_category(parent, segment, category, normal_offset=True, **kwargs):
     for key, value in kwargs.items():
         beam.attributes[key] = value
     return beam
+
 
 def _closest_points_line_segment_projected(line, segment, normal, max_distance=None):
     x_line, x_seg = intersection_line_line(line, segment)

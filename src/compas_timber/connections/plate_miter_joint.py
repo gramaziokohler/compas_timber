@@ -6,6 +6,7 @@ from .plate_joint import PlateJoint
 
 class PlateMiterJoint(PlateJoint):
     """Creates a mitered edge plate-to-plate connection."""
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L

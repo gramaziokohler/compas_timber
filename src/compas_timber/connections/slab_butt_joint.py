@@ -1,5 +1,7 @@
 from .joint import JointTopology
-from .plate_butt_joint import PlateButtJoint, PlateLButtJoint, PlateTButtJoint
+from .plate_butt_joint import PlateButtJoint
+from .plate_butt_joint import PlateLButtJoint
+from .plate_butt_joint import PlateTButtJoint
 from .slab_joint import SlabJoint
 
 
@@ -45,6 +47,7 @@ class SlabButtJoint(SlabJoint, PlateButtJoint):
 
 class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+
     @property
     def __data__(self):
         data = super(SlabLButtJoint, self).__data__
@@ -63,8 +66,9 @@ class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
         return "SlabLButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
 
 
-class SlabTButtJoint(SlabButtJoint,  PlateTButtJoint):
+class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     @property

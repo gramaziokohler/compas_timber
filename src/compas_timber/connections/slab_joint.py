@@ -3,11 +3,12 @@ from compas.geometry import Polyline
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 
+from compas_timber.design.slab_details import LButtDetailB
+from compas_timber.design.slab_details import TButtDetailB
+
 from .joint import JointTopology
 from .plate_joint import PlateJoint
 from .plate_joint import PlateToPlateInterface
-from compas_timber.design.slab_details import LButtDetailB
-from compas_timber.design.slab_details import TButtDetailB
 
 
 class SlabToSlabInterface(PlateToPlateInterface):
@@ -151,7 +152,7 @@ class SlabJoint(PlateJoint):
             edge_index=interface.edge_index,
             topology=self.topology,
             interface_role=interface.interface_role,
-            detail_set=self.detail_sets.get(self.topology, None)
+            detail_set=self.detail_sets.get(self.topology, None),
         )
 
     @property
@@ -164,5 +165,5 @@ class SlabJoint(PlateJoint):
             edge_index=interface.edge_index,
             topology=self.topology,
             interface_role=interface.interface_role,
-            detail_set=self.detail_sets.get(self.topology, None)
+            detail_set=self.detail_sets.get(self.topology, None),
         )

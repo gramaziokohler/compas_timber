@@ -1,19 +1,15 @@
 import math
 
-from compas.geometry import Box
-from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import distance_point_point
-from compas.geometry import intersection_line_plane
+from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
-from compas.geometry import angle_vectors
 
-from compas_timber.connections import InterfaceLocation
-from compas_timber.connections import TButtJoint
 from compas_timber.connections import LButtJoint
-from .slab_populator import beam_from_category
+from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
+
+from .slab_populator import beam_from_category
 
 
 class LDetailBase(object):
@@ -24,6 +20,7 @@ class LDetailBase(object):
     interface : :class:`compas_timber.connections.SlabToSlabInterface`
         The interface for which the detail set is created.
     """
+
     @staticmethod
     def create_elements_main(interface, slab_populator):
         """Generate the beams for a main interface."""
@@ -41,6 +38,8 @@ class LDetailBase(object):
         """Generate the beams for a none interface."""
         interface.beams.append(slab_populator._edge_beams[interface.edge_index])
         return []
+
+
 class TDetailBase(object):
     """Base class for L-butt detail sets.
 
@@ -49,6 +48,7 @@ class TDetailBase(object):
     interface : :class:`compas_timber.connections.SlabToSlabInterface`
         The interface for which the detail set is created.
     """
+
     @staticmethod
     def create_elements_main(interface, slab_populator):
         """Generate the beams for a main interface."""
@@ -65,12 +65,14 @@ class TDetailBase(object):
         """Generate the beams for a none interface."""
         raise ValueError("TDetailBase does not support NONE interfaces. Must be MAIN or CROSS interface role.")
 
+
 class LButtDetailB(LDetailBase):
     """
     Parameters
     ----------
     interface : :class:`compas_timber.connections.SlabToSlabInterface`
     """
+
     @staticmethod
     def create_elements_cross(interface, slab_populator):
         """Generate the beams for a T-cross interface."""
@@ -152,12 +154,12 @@ class LButtDetailB(LDetailBase):
 
     @staticmethod
     def _extend_interface_beams(interface_a, interface_b):
-            ip, ic = intersection_line_line(interface_a.beams[-1].centerline, interface_b.beams[-1].centerline)
-            if ip and ic:
-                # if the previous and current edge beams intersect, we extend the previous beam to the intersection point
-                interface_a.beams[-1].length = interface_a.beams[-1].frame.point.distance_to_point(ip)
-                interface_b.beams[-1].length = interface_b.beams[-1].centerline.end.distance_to_point(ic)
-                interface_b.beams[-1].frame.point = ic
+        ip, ic = intersection_line_line(interface_a.beams[-1].centerline, interface_b.beams[-1].centerline)
+        if ip and ic:
+            # if the previous and current edge beams intersect, we extend the previous beam to the intersection point
+            interface_a.beams[-1].length = interface_a.beams[-1].frame.point.distance_to_point(ip)
+            interface_b.beams[-1].length = interface_b.beams[-1].centerline.end.distance_to_point(ic)
+            interface_b.beams[-1].frame.point = ic
 
 
 class TButtDetailB(TDetailBase):
@@ -166,6 +168,7 @@ class TButtDetailB(TDetailBase):
     ----------
     interface : :class:`compas_timber.connections.SlabToSlabInterface`
     """
+
     @staticmethod
     def create_elements_cross(interface, slab_populator):
         """Generate the beams for a T-cross interface."""
@@ -210,9 +213,11 @@ class TButtDetailB(TDetailBase):
     @staticmethod
     def create_interface_interface_joints(interface_main, interface_cross, slab_populator):
         """Generate the joints between T_TOPO interfaces."""
-        #NOTE: untested
+        # NOTE: untested
         joints = []
-        cross_beam = min(sorted(interface_cross.beams, key=lambda b: b.midpoint.distance_to_point(sum(interface_main.polyline.points[:-1])/len(interface_main.polyline.points[:-1]))))[0]
+        cross_beam = min(
+            sorted(interface_cross.beams, key=lambda b: b.midpoint.distance_to_point(sum(interface_main.polyline.points[:-1]) / len(interface_main.polyline.points[:-1])))
+        )[0]
         for beam in interface_main.beams:
             joints.append(TButtJoint(beam, cross_beam))
         return joints

@@ -2,7 +2,6 @@ import itertools
 import math
 
 from compas.geometry import Line
-from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import add_vectors

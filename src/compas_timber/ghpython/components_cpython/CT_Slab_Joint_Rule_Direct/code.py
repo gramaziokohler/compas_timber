@@ -5,9 +5,7 @@ import inspect
 
 import Grasshopper  # type: ignore
 
-from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import SlabJoint
-from compas_timber.connections import JointTopology
 from compas_timber.design import DirectRule
 from compas_timber.ghpython import error
 from compas_timber.ghpython import get_leaf_subclasses
