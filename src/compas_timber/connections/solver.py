@@ -2,6 +2,7 @@ import itertools
 import math
 
 from compas.geometry import Line
+from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import add_vectors
@@ -329,17 +330,11 @@ class PlateConnectionSolver(ConnectionSolver):
             max_distance = min(main_plate.thickness, cross_plate.thickness)
         for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
-                print("plane_a", plane_a)
-                print("plane_b", plane_b)
                 line = Line(*intersection_plane_plane(plane_a, plane_b))
-                print("line", line)
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
-                        print("distance ok")
                         if is_parallel_line_line(seg_a, line, tol=tol):
-                            print("parallel ok")
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                print("intersects ok")
                                 return i
         return None
 
@@ -392,7 +387,6 @@ class PlateConnectionSolver(ConnectionSolver):
             True if the segment intersects with the outline of the polyline, False otherwise.
         """
         if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
-            print("Segment intersects polyline outline")
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
 
