@@ -333,11 +333,8 @@ class PlateConnectionSolver(ConnectionSolver):
                 line = Line(*intersection_plane_plane(plane_a, plane_b))
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
-                        print("distance ok")
                         if is_parallel_line_line(seg_a, line, tol=tol):
-                            print("parallel ok")
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                print("intersects ok")
                                 return i
         return None
 
@@ -390,7 +387,6 @@ class PlateConnectionSolver(ConnectionSolver):
             True if the segment intersects with the outline of the polyline, False otherwise.
         """
         if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
-            print("Segment intersects polyline outline")
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
 
