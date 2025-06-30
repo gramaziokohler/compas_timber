@@ -67,12 +67,8 @@ class Window(object):
 
     Parameters
     ----------
-    outline : :class:`compas.geometry.Polyline` TODO; define with 2 polylines(inside and outside)
+    outline : :class:`compas.geometry.Polyline` TODO: define with 2 polylines(inside and outside)
         The outline of the window.
-    sill_height : float, optional
-        The height of the sill.
-    header_height : float, optional
-        The height of the header.
     parent : :class:`compas_timber.model.SurfaceAssembly`
         The parent of the window.
 
@@ -80,10 +76,6 @@ class Window(object):
     ----------
     outline : :class:`compas.geometry.Polyline`
         The outline of the window.
-    sill_height : float
-        The height of the sill.
-    header_height : float
-        The height of the header.
     parent : :class:`compas_timber.model.SurfaceAssembly`
         The parent of the window.
     stud_direction : :class:`compas.geometry.Vector`
@@ -104,48 +96,61 @@ class Window(object):
 
     # TODO: consider make opening generate an interface. it shares a lot of characteristics, e.g. it adds beams, joints, etc.
 
-    def __init__(self, outline, beam_dimensions, slab_frame, wall_thickness, stud_direction, tolerance, sheeting_inside=None, sheeting_outside=None, lintel_posts=None):
-        self.beam_dimensions = beam_dimensions
-        self._slab_frame = slab_frame
-        self._sheeting_inside = sheeting_inside
-        self._sheeting_outside = sheeting_outside
-        self._lintel_posts = lintel_posts
-        self._wall_thickness = wall_thickness
+    def __init__(self, outline, slab_populator, lintel_posts=None):
         self.outline = outline
-        self.sill_height = self.beam_dimensions["sill"][0]
-        self.header_height = self.beam_dimensions["header"][0]
-        self.stud_direction = stud_direction
-        self.normal = self._slab_frame.zaxis
+        self.slab_populator = slab_populator
+        self._lintel_posts = lintel_posts or slab_populator._config_set.lintel_posts
         self._beams = []
-        self._length = None
-        self._height = None
-        self._frame = None
-        self.dist_tolerance = tolerance
+        self.joints = []
         self.sill = None
         self.header = None
-        self.joints = []
+        self._frame = None
 
-    @classmethod
-    def from_outline_and_slab_populator(cls, slab_populator, outline):
-        """Create a window in the slab and return it."""
-        window = cls(
-            outline,
-            slab_populator.beam_dimensions,
-            slab_populator.frame,
-            slab_populator.frame_thickness,
-            slab_populator.stud_direction,
-            slab_populator.dist_tolerance,
-            slab_populator.sheeting_inside,
-            slab_populator.sheeting_outside,
-            slab_populator.lintel_posts,
-        )
-        return window
+    @property
+    def default_rules(self):
+        return [
+            CategoryRule(TButtJoint, "header", "king_stud"),
+            CategoryRule(TButtJoint, "sill", "king_stud"),
+            CategoryRule(TButtJoint, "sill", "jack_stud"),
+            CategoryRule(LButtJoint, "jack_stud", "header"),
+            ]
+
+
+    @property
+    def wall_thickness(self):
+        """The wall thickness of the slab."""
+        return self.slab_populator.frame_thickness
+
+    @property
+    def stud_direction(self):
+        """The stud direction of the slab."""
+        return self.slab_populator.stud_direction
+
+    @property
+    def frame(self):
+        """Frame of the window, aligned with the slab frame."""
+        if self._frame is None:
+            self._frame = Frame(self.outline[0], cross_vectors(self.stud_direction, self.normal), self.stud_direction)
+        return self._frame
+
+    @property
+    def normal(self):
+        return self.slab_populator.normal
+
+    @property
+    def tolerance(self):
+        """The tolerance of the slab populator."""
+        return self.slab_populator.dist_tolerance
+
+    @property
+    def beam_dimensions(self):
+        """Beam dimensions of the window, based on the slab populator."""
+        return self.slab_populator.beam_dimensions
 
     @property
     def obb(self):
         """Oriented bounding box of the window. used for creating framing elements around non-standard window shapes."""
-        frame = Frame(self._slab_frame.point, cross_vectors(self.stud_direction, self.normal), self.stud_direction)
-        rebase = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+        rebase = Transformation.from_frame_to_frame(self.frame, Frame.worldXY())
         box = Box.from_points(self.outline.transformed(rebase))
         rebase.invert()
         box.transform(rebase)
@@ -153,11 +158,12 @@ class Window(object):
 
     @property
     def frame_polyline(self):
+        """Bounding rectangle aligned orthogonal to the slab.stud_direction."""
         return Polyline([self.obb.corner(0), self.obb.corner(1), self.obb.corner(2), self.obb.corner(3), self.obb.corner(0)])
 
     @property
     def studs(self):
-        return [beam for beam in self._beams if beam.attributes["category"] == "jack_stud" or beam.attributes["category"] == "king_stud"]
+        return [beam for beam in self._beams if beam.attributes["category"] == "stud" or beam.attributes["category"] == "jack_stud" or beam.attributes["category"] == "king_stud"]
 
     @property
     def jack_studs(self):
@@ -166,22 +172,6 @@ class Window(object):
     @property
     def king_studs(self):
         return [beam for beam in self._beams if beam.attributes["category"] == "king_stud"]
-
-    @property
-    def length(self):
-        if not self._length:
-            _ = self.frame
-        return self._length
-
-    @property
-    def height(self):
-        if not self._height:
-            _ = self.frame
-        return self._height
-
-    @property
-    def frame(self):
-        return self._frame
 
     def create_elements(self):
         segments = self.frame_polyline.lines
@@ -201,29 +191,26 @@ class Window(object):
         for beam in self._beams:
             vector = get_polyline_segment_perpendicular_vector(self.frame_polyline, beam.attributes["edge_index"])
             beam.frame.translate(vector * beam.width * 0.5)
-
         return self._beams
 
     def create_joints(self):
-        self.joints.extend([TButtJoint(self.header, king) for king in self.king_studs])
+        self.joints.extend([self.slab_populator.get_joint_from_elements(self.header, king, self.default_rules) for king in self.king_studs])
         if self._lintel_posts:
-            self.joints.extend([TButtJoint(self.sill, jack) for jack in self.jack_studs])
-            self.joints.extend([LButtJoint(jack, self.header) for jack in self.jack_studs])
+            self.joints.extend([self.slab_populator.get_joint_from_elements(self.sill, jack, self.default_rules) for jack in self.jack_studs])
+            self.joints.extend([self.slab_populator.get_joint_from_elements(jack, self.header, self.default_rules) for jack in self.jack_studs])
         else:
-            self.joints.extend([TButtJoint(self.sill, king) for king in self.king_studs])
+            self.joints.extend([self.slab_populator.get_joint_from_elements(self.sill, king, self.default_rules) for king in self.king_studs])
         return self.joints
-
 
 class Door(Window):
     """TODO: revise when we know where this is going, maybe no need for classes here beyond Opening"""
 
-    def __init__(self, outline, beam_dimensions, wall_frame, wall_thickness, tolerance, sheeting_inside=None, sheeting_outside=None, lintel_posts=None):
-        super(Door, self).__init__(outline, beam_dimensions, wall_frame, wall_thickness, tolerance, sheeting_inside, sheeting_outside, lintel_posts)
+    def __init__(self, outline, slab_populator, lintel_posts=None):
+        super(Door, self).__init__(outline, slab_populator, lintel_posts)
 
     def create_elements(self):
         elements = super(Door, self).create_elements()
         return [e for e in elements if e.type != "sill"]
-
 
 class SlabPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
@@ -268,7 +255,6 @@ class SlabPopulatorConfigurationSet(object):
         custom_dimensions=None,
         joint_overrides=None,
         wall_selector=None,
-        connection_details=None,
     ):
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
@@ -281,7 +267,6 @@ class SlabPopulatorConfigurationSet(object):
         self.custom_dimensions = custom_dimensions
         self.joint_overrides = joint_overrides
         self.wall_selector = wall_selector
-        self.connection_details = connection_details or {}
 
     def __str__(self):
         return "SlabPopulatorConfigurationSet({}, {}, {})".format(self.stud_spacing, self.beam_width, self.stud_direction)
@@ -300,8 +285,6 @@ class SlabPopulator(object):
         The configuration for this wall populator.
     wall : :class:`compas_timber.elements.Wall`
         The wall for this populater to fill with beams.
-    interfaces : optional, list of :class:`WallToWallInterface`
-        The interfaces of the wall.
 
     Attributes
     ----------
@@ -337,7 +320,7 @@ class SlabPopulator(object):
 
     BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "plate_beam", "header", "sill", "detail"]
 
-    def __init__(self, configuration_set, slab, interfaces=None):
+    def __init__(self, configuration_set, slab):
         self._slab = slab
         self._config_set = configuration_set
         if configuration_set.stud_direction:
@@ -387,47 +370,11 @@ class SlabPopulator(object):
             for key, value in dimensions.items():
                 if value:
                     self.beam_dimensions[key] = value
+        self.test_out = []  # DEBUG used for debugging, to see if the slab is correctly populated
+
 
     def __repr__(self):
         return "SlabPopulator({}, {})".format(self._config_set, self._wall)
-
-    @property
-    def default_rules(self):
-        edge_plate_joint = LButtJoint if TOL.is_zero(self._config_set.edge_stud_offset) else TButtJoint
-        return [
-            CategoryRule(edge_plate_joint, "edge_stud", "plate_beam"),
-            CategoryRule(TButtJoint, "detail", "plate_beam"),  # TODO: have the details define this
-            CategoryRule(LButtJoint, "detail_edge", "plate_beam"),  # TODO: have the details define this
-            CategoryRule(TButtJoint, "stud", "plate_beam"),
-            CategoryRule(TButtJoint, "stud", "header"),
-            CategoryRule(TButtJoint, "stud", "sill"),
-            CategoryRule(LButtJoint, "jack_stud", "plate_beam"),
-            CategoryRule(TButtJoint, "jack_stud", "plate_beam"),
-            CategoryRule(LButtJoint, "jack_stud", "header"),
-            CategoryRule(TButtJoint, "jack_stud", "header"),
-            CategoryRule(TButtJoint, "king_stud", "plate_beam"),
-            CategoryRule(LButtJoint, "king_stud", "plate_beam"),
-            CategoryRule(TButtJoint, "king_stud", "sill"),
-            CategoryRule(TButtJoint, "king_stud", "header"),
-            CategoryRule(TButtJoint, "sill", "jack_stud"),
-            CategoryRule(TButtJoint, "stud", "detail"),
-            CategoryRule(TButtJoint, "jack_stud", "detail"),
-            CategoryRule(TButtJoint, "king_stud", "detail"),
-        ]
-
-    @property
-    def rules(self):
-        if not self._rules:
-            self._rules = self.default_rules
-            if self._config_set.joint_overrides:
-                for rule in self._config_set.joint_overrides:
-                    rule_set = set([rule.category_a, rule.category_b])
-                    for i, _rule in enumerate(self._rules):
-                        _set = set([_rule.category_a, _rule.category_b])
-                        if rule_set == _set:
-                            self._rules[i] = rule
-                            break
-        return self._rules
 
     @property
     def elements(self):
@@ -512,6 +459,44 @@ class SlabPopulator(object):
         return interfaces
 
     @property
+    def default_rules(self):
+        return [
+            CategoryRule(TButtJoint, "stud", "plate_beam"),
+            CategoryRule(TButtJoint, "jack_stud", "plate_beam"),
+            CategoryRule(TButtJoint, "king_stud", "plate_beam"),
+            CategoryRule(LButtJoint, "edge_stud", "plate_beam"),
+
+            CategoryRule(TButtJoint, "stud", "header"),
+            CategoryRule(TButtJoint, "king_stud", "header"),
+            CategoryRule(TButtJoint, "jack_stud", "header"),
+
+            CategoryRule(TButtJoint, "king_stud", "sill"),
+            CategoryRule(TButtJoint, "stud", "sill"),
+
+            CategoryRule(LButtJoint, "stud", "edge_stud"),
+            CategoryRule(LButtJoint, "king_stud", "edge_stud"),
+            CategoryRule(LButtJoint, "jack_stud", "edge_stud"),
+
+            CategoryRule(TButtJoint, "stud", "detail"),
+            CategoryRule(TButtJoint, "jack_stud", "detail"),
+            CategoryRule(TButtJoint, "king_stud", "detail"),
+        ]
+
+    @property
+    def rules(self):
+        if not self._rules:
+            self._rules = self.default_rules
+            if self._config_set.joint_overrides:
+                for rule in self._config_set.joint_overrides:
+                    rule_set = set([rule.category_a, rule.category_b])
+                    for i, _rule in enumerate(self._rules):
+                        _set = set([_rule.category_a, _rule.category_b])
+                        if rule_set == _set:
+                            self._rules[i] = rule
+                            break
+        return self._rules
+
+    @property
     def face_interfaces(self):
         """Get the face interfaces of the slab."""
         return [i for i in self._interfaces if i.edge_index is None]
@@ -538,20 +523,6 @@ class SlabPopulator(object):
                     break
         return slab_populators
 
-    # def create_elements(self):
-    #     """Does the actual populating of the wall
-    #     creates and returns all the elements in the wall, returns also the joint definitions
-    #     """
-    #     self._generate_edge_beams()
-    #     self._generate_interface_beams()
-    #     self._generate_edge_joints()
-    #     self._generate_face_joints()
-    #     self._generate_openings()
-    #     self._extend_interface_beams()
-    #     self._generate_stud_beams()
-    #     self._generate_plates()
-    #     return self.elements
-
     def create_elements(self):
         """Does the actual populating of the wall
         creates and returns all the elements in the wall, returns also the joint definitions
@@ -564,6 +535,19 @@ class SlabPopulator(object):
         self._generate_stud_beams()
         self._generate_plates()
         return self.elements
+
+    def get_joint_from_elements(self, element_a, element_b, rules=None, **kwargs):
+        """Get the joint type for the given elements."""
+        if rules is None:
+            rules = self.rules
+        for rule in rules:
+            if (rule.category_a == element_a.attributes["category"] and rule.category_b == element_b.attributes["category"]):
+               rule.kwargs.update(kwargs)
+               return rule.joint_type(element_a, element_b, **rule.kwargs)
+            # elif (rule.category_a == element_b.attributes["category"] and rule.category_b == element_a.attributes["category"]):
+            #     rule.kwargs.update(kwargs)
+            #     return rule.joint_type(element_b, element_a, **rule.kwargs)
+        raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
 
     # ==========================================================================
     # methods for edge beams
@@ -688,15 +672,16 @@ class SlabPopulator(object):
         if interior_corner:
             if beam_a_angle < beam_b_angle:
                 plane = Plane(self._slab.edge_planes[edge_index].point, -self._slab.edge_planes[edge_index].normal)
-                joint_def = LButtJoint(beam_a, beam_b, butt_plane=plane)
+                joint_def = self.get_joint_from_elements(beam_a, beam_b, butt_plane=plane)
             else:
                 plane = Plane(self._slab.edge_planes[edge_index - 1].point, -self._slab.edge_planes[edge_index - 1].normal)
-                joint_def = LButtJoint(beam_b, beam_a, butt_plane=plane)
+                joint_def = self.get_joint_from_elements(beam_b, beam_a, butt_plane=plane)
         else:
             if beam_a_angle < beam_b_angle:
-                joint_def = LButtJoint(beam_a, beam_b, back_plane=self._slab.edge_planes[edge_index - 1])
+                joint_def = self.get_joint_from_elements(beam_a, beam_b, back_plane=self._slab.edge_planes[edge_index - 1])
             else:
-                joint_def = LButtJoint(beam_b, beam_a, back_plane=self._slab.edge_planes[edge_index])
+                joint_def = self.get_joint_from_elements(beam_b, beam_a, back_plane=self._slab.edge_planes[edge_index])
+
         self._joints.append(joint_def)
 
     def _generate_face_joints(self):
@@ -711,10 +696,10 @@ class SlabPopulator(object):
 
     def _generate_openings(self):
         for opening in self.inner_polylines:
-            element = Window.from_outline_and_slab_populator(self, opening)
-            self._openings.append(element)
-            self._beams.extend(element.create_elements())
-            self._joints.extend(element.create_joints())
+            window = Window(opening, self)
+            self._openings.append(window)
+            self._beams.extend(window.create_elements())
+            self._joints.extend(window.create_joints())
 
     def _generate_stud_beams(self):
         self._generate_studs(min_length=self.beam_dimensions["stud"][0])
@@ -789,12 +774,12 @@ class SlabPopulator(object):
             studs.append(beam_from_category(self, seg, "stud"))
             while len(intersecting_beams) > 0:
                 beam = intersecting_beams.pop()
-                self._joints.append(TButtJoint(studs[-1], beam))
+                self._joints.append(self.get_joint_from_elements(studs[-1], beam))
 
         if len(studs) > 0:  # add joints with any leftover beams
             while len(intersecting_beams) > 0:
                 beam = intersecting_beams.pop()
-                self._joints.append(TButtJoint(studs[-1], beam))
+                self._joints.append(self.get_joint_from_elements(studs[-1], beam))
             self._beams.extend(studs)
 
     def _is_line_in_interface(self, line):
@@ -845,7 +830,7 @@ class SlabPopulator(object):
             negatives = [x for x in intersections if x["dot"] < 0]
             negatives.sort(key=lambda x: x["dot"])
             beam = negatives[-1]["beam"]
-            self._joints.append(TButtJoint(jack_stud, beam))
+            self._joints.append(self.get_joint_from_elements(jack_stud, beam))
 
     def _join_king_studs(self):
         for king_stud in self.king_studs:
@@ -871,11 +856,11 @@ class SlabPopulator(object):
             negatives = [x for x in intersections if x["dot"] < 0]
             negatives.sort(key=lambda x: x["dot"])
             bottom_beam = negatives[-1]["beam"]
-            self._joints.append(TButtJoint(king_stud, bottom_beam))
+            self._joints.append(self.get_joint_from_elements(king_stud, bottom_beam))
             positives = [x for x in intersections if x["dot"] > 0]
             positives.sort(key=lambda x: x["dot"])
             top_beam = positives[0]["beam"]
-            self._joints.append(TButtJoint(king_stud, top_beam))
+            self._joints.append(self.get_joint_from_elements(king_stud, top_beam))
 
     def _cull_overlaps(self):
         not_studs = [beam for beam in self._beams if beam.attributes.get("category", None) != "stud"]

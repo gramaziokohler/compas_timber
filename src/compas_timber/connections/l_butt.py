@@ -26,6 +26,10 @@ class LButtJoint(Joint):
         If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
+    butt_plane : :class:`~compas.geometry.Plane`, optional
+        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    back_plane : :class:`~compas.geometry.Plane`, optional
+        The plane used to cut the cross beam. If not provided, the back side of the main beam will be used.
     reject_i : bool, default False
         If True, the joint will reject beams in I topology.
 
@@ -58,6 +62,7 @@ class LButtJoint(Joint):
         data["modify_cross"] = self.modify_cross
         data["reject_i"] = self.reject_i
         data["butt_plane"] = self.butt_plane
+        data["back_plane"] = self.back_plane
         return data
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
