@@ -107,8 +107,10 @@ class PlateButtJoint(PlateJoint):
         self._plate_b_interface.interface_role = InterfaceRole.CROSS
         return self._plate_b_interface
 
+
 class PlateLButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     @property
@@ -142,6 +144,7 @@ class PlateLButtJoint(PlateButtJoint):
 
 class PlateTButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     @property
@@ -167,6 +170,3 @@ class PlateTButtJoint(PlateButtJoint):
 
         for polyline in self.main_outlines:
             PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
-
-
-

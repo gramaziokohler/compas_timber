@@ -9,7 +9,7 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 from .joint import Joint
 from .joint import JointTopology
-from .solver import ConnectionSolver
+from .solver import PlateConnectionSolver
 
 
 class InterfaceRole(object):
@@ -198,7 +198,7 @@ class PlateJoint(Joint):
         """Add features to the plates based on the joint."""
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                topo_results = ConnectionSolver.find_plate_plate_topology(self.plate_a, self.plate_b)
+                topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
                 if not topo_results:
                     raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
                 self.topology = topo_results[0]

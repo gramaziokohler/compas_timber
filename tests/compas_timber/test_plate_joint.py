@@ -17,7 +17,7 @@ def test_plate_L_topos():
 
     cs = PlateConnectionSolver()
 
-    topo_results = cs.find_plate_plate_topology(plate_a, plate_b)
+    topo_results = cs.find_topology(plate_a, plate_b)
     assert topo_results[0] == JointTopology.TOPO_L, "Expected L-joint topology"
     assert topo_results[1][0] == plate_a, "Expected plate_a as first plate in topology result"
     assert topo_results[2][0] == plate_b, "Expected plate_b as second plate in topology result"
@@ -36,7 +36,7 @@ def test_plate_T_topos():
 
     cs = PlateConnectionSolver()
 
-    topo_results = cs.find_plate_plate_topology(plate_a, plate_b)
+    topo_results = cs.find_topology(plate_a, plate_b)
     assert topo_results[0] == JointTopology.TOPO_T, "Expected T-joint topology"
     assert topo_results[1][0] == plate_b, "Expected plate_a as first plate in topology result"
     assert topo_results[2][0] == plate_a, "Expected plate_b as second plate in topology result"
@@ -55,7 +55,7 @@ def test_reversed_plate_T_topos():
 
     cs = PlateConnectionSolver()
 
-    topo_results = cs.find_plate_plate_topology(plate_b, plate_a)
+    topo_results = cs.find_topology(plate_b, plate_a)
     assert topo_results[0] == JointTopology.TOPO_T, "Expected T-joint topology"
     assert topo_results[1][0] == plate_b, "Expected plate_a as first plate in topology result"
     assert topo_results[2][0] == plate_a, "Expected plate_b as second plate in topology result"
@@ -80,9 +80,9 @@ def test_three_plate_topos():
 
     cs = PlateConnectionSolver()
 
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_c))
+    topo_results.append(cs.find_topology(plate_a, plate_b))
+    topo_results.append(cs.find_topology(plate_c, plate_b))
+    topo_results.append(cs.find_topology(plate_a, plate_c))
 
     assert len(topo_results) == 3, "Expected three topology results"
     assert all(tr[0] == JointTopology.TOPO_L for tr in topo_results), "Expected all topology results to be L-joints"
@@ -105,9 +105,9 @@ def test_three_plate_mix_topos():
 
     cs = PlateConnectionSolver()
 
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_c))
+    topo_results.append(cs.find_topology(plate_a, plate_b))
+    topo_results.append(cs.find_topology(plate_c, plate_b))
+    topo_results.append(cs.find_topology(plate_a, plate_c))
 
     assert len(topo_results) == 3, "Expected three topology results"
     assert topo_results[0][0] == JointTopology.TOPO_T, "Expected first topology result to be T-joint"
@@ -147,9 +147,9 @@ def test_three_plate_joints():
 
     cs = PlateConnectionSolver()
     topo_results = []
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_c))
+    topo_results.append(cs.find_topology(plate_a, plate_b))
+    topo_results.append(cs.find_topology(plate_c, plate_b))
+    topo_results.append(cs.find_topology(plate_a, plate_c))
 
     joints = []
     for tr in topo_results:
@@ -179,9 +179,9 @@ def test_three_plate_joints_mix_topo():
 
     cs = PlateConnectionSolver()
     topo_results = []
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_c, plate_b))
-    topo_results.append(cs.find_plate_plate_topology(plate_a, plate_c))
+    topo_results.append(cs.find_topology(plate_a, plate_b))
+    topo_results.append(cs.find_topology(plate_c, plate_b))
+    topo_results.append(cs.find_topology(plate_a, plate_c))
 
     joints = []
     for tr in topo_results:
