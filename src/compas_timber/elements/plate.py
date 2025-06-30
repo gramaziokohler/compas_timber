@@ -89,6 +89,7 @@ class Plate(TimberElement):
         self._blank = None
         self._planes = None
         self._thickness = None
+        self.interfaces = []
 
     def __repr__(self):
         # type: () -> str
@@ -202,6 +203,9 @@ class Plate(TimberElement):
         self.outline_a = Polyline(self._input_outlines[0].points)
         self.outline_b = Polyline(self._input_outlines[1].points)
         self.debug_info = []
+
+    def add_interface(self, interface):
+        self.interfaces.append(interface)
 
     def check_outlines(outline_a, outline_b):
         # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
@@ -326,7 +330,7 @@ class Plate(TimberElement):
             polyline_points = []
             for edge in loop.edges:
                 polyline_points.append(edge.start_vertex.point)
-            polyline_points.append(loop.edges[-1].end_vertex.point)
+            polyline_points.append(polyline_points[0])
             if loop.is_outer:
                 outer_polyline = Polyline(polyline_points)
             else:
@@ -354,7 +358,7 @@ class Plate(TimberElement):
         plate_geo.cap_planar_holes()
         for pline in self.openings:
             if not TOL.is_allclose(pline[0], pline[-1]):
-                raise ValueError("Opening polyline is not closed.")
+                raise ValueError("Opening polyline is not closed.", pline[0], pline[-1])
             polyline = correct_polyline_direction(pline, self.frame.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline, polyline_b)])

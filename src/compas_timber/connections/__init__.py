@@ -29,6 +29,8 @@ from .wall_joint import InterfaceRole
 from .plate_joint import PlateJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_miter_joint import PlateMiterJoint
+from .plate_joint import PlateToPlateInterface
+
 
 __all__ = [
     "Joint",
@@ -63,4 +65,5 @@ __all__ = [
     "PlateJoint",
     "PlateButtJoint",
     "PlateMiterJoint",
+    "PlateToPlateInterface",
 ]
