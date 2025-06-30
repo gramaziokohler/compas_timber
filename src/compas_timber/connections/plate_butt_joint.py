@@ -1,5 +1,4 @@
 from compas_timber.connections import InterfaceRole
-from compas_timber.connections import InterfaceRole
 from compas_timber.connections import PlateConnectionSolver
 
 from .joint import JointTopology
