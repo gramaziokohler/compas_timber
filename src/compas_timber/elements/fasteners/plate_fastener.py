@@ -296,7 +296,7 @@ class PlateFastener(Fastener):
                     self._shape += shape
         return self._shape
 
-    def compute_geometry(self):
+    def compute_elementgeometry(self):
         """Constructs the geometry of the fastener as oriented in space.
 
         Returns
