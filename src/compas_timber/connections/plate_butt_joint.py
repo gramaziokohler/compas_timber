@@ -93,7 +93,7 @@ class PlateButtJoint(PlateJoint):
 
     @property
     def interface_cross(self):
-        return self.interface_a
+        return self.interface_b
 
     @property
     def interface_a(self):
