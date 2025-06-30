@@ -24,6 +24,15 @@ def create_viewer():
     return viewer
 
 
+def create_color_map(keys):
+    # map cluster sizes to random colors which are hopefully visually distinct
+    cmap = ColorMap.from_palette("imola")
+    n = len(keys)
+    values = [i / max(n - 1, 1) for i in range(n)]
+    random.shuffle(values)
+    return {key: cmap(val) for key, val in zip(keys, values)}
+
+
 def main():
     lines = [
         Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=300.0, y=200.0, z=0.0)),
@@ -76,11 +85,7 @@ def main():
 
     clusters = analyzer.find()
 
-    cluster_sizes = list(sorted({len(cluster) for cluster in clusters}))
-    cmap = ColorMap.from_palette("acton")
-
-    size_to_color = {size: cmap(random.random()) for size in cluster_sizes}
-
+    size_to_color = create_color_map(list(sorted({len(cluster) for cluster in clusters})))
     for cluster in clusters:
         size = len(cluster)
         color = size_to_color[size]
