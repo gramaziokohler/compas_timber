@@ -9,7 +9,7 @@ from .workflow import ContainerDefinition
 from .workflow import guess_joint_topology_2beams
 from .workflow import set_default_joints
 
-from .wall_from_surface import SurfaceModel
+# from .wall_from_surface import SurfaceModel
 from .slab_populator import SlabPopulator
 from .slab_populator import SlabPopulatorConfigurationSet
 from .wall_populator import WallSelector
@@ -26,7 +26,7 @@ __all__ = [
     "JointDefinition",
     "FeatureDefinition",
     "DebugInfomation",
-    "SurfaceModel",
+    # "SurfaceModel",
     "SlabPopulator",
     "SlabPopulatorConfigurationSet",
     "WallSelector",

@@ -205,6 +205,7 @@ class Plate(TimberElement):
         self.debug_info = []
 
     def add_interface(self, interface):
+        print("Adding interface", interface)
         self.interfaces.append(interface)
 
     def check_outlines(outline_a, outline_b):
