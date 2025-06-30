@@ -1,23 +1,23 @@
 {
-    "name": "Direct Joint Rules",
-    "nickname": "DirectJoints",
+    "name": "Direct Slab Joint Rules",
+    "nickname": "DirectSlabJoints",
     "category": "COMPAS Timber",
     "subcategory": "Joint Rules",
-    "description": "Generates a direct joint between two elements. This overrides other joint rules.",
+    "description": "Generates a direct joint between two Slabs. This overrides other joint rules.",
     "exposure": 8,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "element_a",
-                "description": "Element A.",
+                "name": "slab_a",
+                "description": "Slab A.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             },
             {
-                "name": "element_b",
-                "description": "Element B.",
+                "name": "slab_b",
+                "description": "Slab B.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
             }

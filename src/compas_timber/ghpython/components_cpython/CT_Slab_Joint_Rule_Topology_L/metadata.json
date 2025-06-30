@@ -1,9 +1,9 @@
 {
-    "name": "L Topological Joint Rules",
-    "nickname": "L_Topo_Joint",
+    "name": "L Topological Slab Joint Rules",
+    "nickname": "L_Topo_Slab_Joint",
     "category": "COMPAS Timber",
     "subcategory": "Joint Rules",
-    "description": "makes rule to apply joint type to L topology. Defualts to LMiterJoint",
+    "description": "makes rule to apply joint type to L topology slabs. Defualts to LMiterJoint",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
