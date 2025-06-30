@@ -79,5 +79,4 @@ __all__ = [
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
-    "PlateToPlateInterface",
 ]

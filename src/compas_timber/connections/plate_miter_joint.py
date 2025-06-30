@@ -9,8 +9,6 @@ class PlateMiterJoint(PlateJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
-
     def __repr__(self):
         return "PlateMiterJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
 

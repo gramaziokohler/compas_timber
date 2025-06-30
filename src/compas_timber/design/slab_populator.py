@@ -644,9 +644,7 @@ class SlabPopulator(object):
         """Generate the beams for the interface."""
         for interface in self._slab.interfaces:
             if interface.topology == JointTopology.TOPO_T or interface.topology == JointTopology.TOPO_L:
-                print(interface.interface_role, interface.topology)
                 if interface.interface_role == "CROSS":
-                    print(interface.detail_set)
                     self._beams.extend(interface.detail_set.create_elements_cross(interface, self))
                 elif interface.interface_role == "MAIN":
                     self._beams.extend(interface.detail_set.create_elements_main(interface, self))
