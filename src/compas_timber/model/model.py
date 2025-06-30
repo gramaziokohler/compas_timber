@@ -58,9 +58,7 @@ class TimberModel(Model):
 
     def __str__(self):  # TODO: add groups and contacts or use the parent method instead?
         # type: () -> str
-        return "TimberModel ({}) with {} elements(s), {} joint(s) and {} contact(s).".format(
-            str(self.guid), len(list(self.elements())), len(list(self.joints)), len(list(self.contacts))
-        )
+        return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
 
     # =============================================================================
     # Attributes
@@ -160,30 +158,22 @@ class TimberModel(Model):
         """
         return self._elements[guid]
 
-    def add_element(self, element, parent=None, **kwargs):
-        # resolve parent name to GroupNode object
-        # TODO: upstream this to compas_model
-        if parent and isinstance(parent, str):
-            if not self.has_group(parent):
-                raise ValueError("Group {} not found in model.".format(parent))
-            parent = next((group for group in self._tree.groups if group.name == parent))
-        return super(TimberModel, self).add_element(element, parent, **kwargs)
-
     def add_elements(self, elements, parent=None):
         # type: (list[Element], GroupNode | None) -> list[Element]
         """Add multiple elements to the model.
 
         Parameters
         ----------
-        elements : list[:class:`Element`]
+        elements : list[:class:`~compas_model.elements.Element`]
             The model elements.
-        parent : :class:`GroupNode`, optional
-            The parent group node of the elements.
+        parent : :class:`~compas_model.elements.Element`, optional
+            The parent element of the elements to be added to the model.
+            This can be a group element or any other element that can contain other elements.
             If ``None``, the elements will be added directly under the root node.
 
         Returns
         -------
-        list[:class:`Element`]
+        list[:class:`~compas_model.elements.Element`]
             The list of elements that were added to the model.
 
         """
@@ -213,12 +203,13 @@ class TimberModel(Model):
 
         Returns
         -------
-        :class:`~compas_model.models.GroupNode`
-            The group node containing the element.
+        :class:`~compas_model.elements.Group`
+            The group element that was created and to which the element was added.
 
         Raises
         ------
         ValueError
+            If the element is not a group element.
             If the group name is not provided and the element has no name.
             If a group with same name already exists in the model.
 
@@ -234,7 +225,7 @@ class TimberModel(Model):
         True
 
         """
-        # type: (TimberElement, str) -> GroupNode
+        # type: (TimberElement, str) -> Group
         group_name = name or element.name
 
         if not element.is_group_element:
@@ -243,59 +234,56 @@ class TimberModel(Model):
         if not group_name:
             raise ValueError("Group name must be provided or group element must have a name.")
 
-        if self.has_group(group_name):
+        if self.has_group(element):
             raise ValueError("Group {} already exists in model.".format(group_name))
 
-        group_node = self.add_group(group_name)
-        self.add_element(element, parent=group_node)
+        group = self.add_group(group_name)  # TODO: should this allow for a parent? or should a group always be added to the root?
+        self.add_element(element, parent=group)
 
         element.name = group_name
-        return group_node
+        return group
 
-    def has_group(self, group_name):
-        # type: (str) -> bool
-        """Check if a group with `group_name` exists in the model.
-
-        TODO: upstream this to compas_model
+    def has_group(self, group_element):
+        # type: (TimberElement) -> bool
+        """Check if a group with `group_element` exists in the model.
 
         Parameters
         ----------
-        group_name : str
-            The name of the group to query.
+        group_element : class:`~compas_timber.elements.TimberElement`
+            The group element to check for existence.
 
         Returns
         -------
         bool
-            True if the group exists in the model.
+            True if the group element exists in the model.
         """
-        return group_name in (group.name for group in self._tree.groups)
+        return self.has_element(group_element)
 
-    def get_elements_in_group(self, group_name, filter_=None):
-        """Get all elements in a group with `group_name`.
+    def get_elements_in_group(self, group_element, filter_=None):
+        """Get all elements in a group element.
 
         TODO: upstream this to compas_model
 
         Parameters
         ----------
-        group_name : str
-            The name of the group to query.
+        group_element : :class:`~compas_timber.elements.TimberElement`
+            The group element to query.
         filter_ : callable, optional
             A filter function to apply to the elements.
 
         Returns
         -------
-        Generator[:class:`~compas_model.elements.Element`]
+        Generator[:class:`~compas_timber.elements.TimberElement`]
             A generator of elements in the group.
 
         """
-        # type: (str, Optional[callable]) -> Generator[Element, None, None]
-        if not self.has_group(group_name):
-            raise ValueError("Group {} not found in model.".format(group_name))
+        # type: (TimberElement, callable | None) -> Generator[TimberElement, None, None]
+        if not self.has_group(group_element):
+            raise ValueError("Group {} not found in model.".format(group_element.name))
 
         filter_ = filter_ or (lambda _: True)
-
-        group = next((group for group in self._tree.groups if group.name == group_name))
-        elements = (node.element for node in group.children)
+        group = self._elements[str(group_element.guid)]
+        elements = group.children
         return filter(filter_, elements)
 
     # =============================================================================
@@ -327,7 +315,7 @@ class TimberModel(Model):
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
         try:
-            return self._graph.edge_interactions(node_pair)
+            return self._graph.edge_attribute(node_pair, "joints")  # TODO: should this be "contacts" as well?
         except KeyError:
             return []
 
