@@ -26,14 +26,14 @@ def test_model(mocker):
     return model
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def expected_btlx():
     btlx_path = os.path.join(compas_timber.DATA, "model_test.btlx")
     with open(btlx_path, "r", encoding="utf-8") as btlx:
         return ET.fromstring(btlx.read())
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def resulting_btlx(test_model):
     writer = BTLxWriter()
     resulting_btlx_str = writer.model_to_xml(test_model)
