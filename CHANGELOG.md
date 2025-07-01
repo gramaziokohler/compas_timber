@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateJoint`.
 * Added `PlateButtJoint`.
 * Added `PlateMiterJoint`.
-* Added `find_plate_plate_topology` method to `ConnectionSolver`.
+* Added `PlateConnectionSolver`.
 
 ### Changed
 
@@ -45,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
-* Changed how input `Polyline`s are handled in `Plate`.
 
 ### Removed
 

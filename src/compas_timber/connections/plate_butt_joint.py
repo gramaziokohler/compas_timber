@@ -1,8 +1,8 @@
 from compas_timber.connections import InterfaceRole
-from compas_timber.connections import PlateConnectionSolver
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
+from .plate_joint import move_polyline_segment_to_plane
 
 
 class PlateButtJoint(PlateJoint):
@@ -81,11 +81,11 @@ class PlateButtJoint(PlateJoint):
         assert self.cross_plate
 
         for polyline in self.main_outlines:
-            PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
+            move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
 
         if self.topology == JointTopology.TOPO_L:
             for polyline in self.cross_outlines:
-                PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
+                move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
 
     @property
     def interface_main(self):
@@ -136,10 +136,10 @@ class PlateLButtJoint(PlateButtJoint):
         assert self.cross_plate
 
         for polyline in self.main_outlines:
-            PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
+            move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
 
         for polyline in self.cross_outlines:
-            PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
+            move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
 
 
 class PlateTButtJoint(PlateButtJoint):
@@ -169,4 +169,4 @@ class PlateTButtJoint(PlateButtJoint):
         assert self.cross_plate
 
         for polyline in self.main_outlines:
-            PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
+            move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])

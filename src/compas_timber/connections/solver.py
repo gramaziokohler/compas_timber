@@ -11,7 +11,6 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_line_line
@@ -412,17 +411,3 @@ class PlateConnectionSolver(ConnectionSolver):
         if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
-
-    @staticmethod
-    def move_polyline_segment_to_plane(polyline, segment_index, plane):
-        """Move a segment of a polyline to the intersection with a plane."""
-        start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
-        if start_pt:
-            polyline[segment_index] = start_pt
-            if segment_index == 0:
-                polyline[-1] = start_pt
-        end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
-        if end_pt:
-            polyline[segment_index + 1] = end_pt
-            if segment_index + 1 == len(polyline.lines):
-                polyline[0] = end_pt

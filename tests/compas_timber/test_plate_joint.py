@@ -193,6 +193,6 @@ def test_three_plate_joints_mix_topo():
             joints.append(PlateButtJoint(tr[1][0], tr[2][0], tr[0], tr[1][1], tr[2][1]))
 
     assert len(joints) == 3, "Expected three joints"
-    assert isinstance(joints[0], PlateButtJoint), "Expected L-joints to be PlateMiterJoint"
+    assert isinstance(joints[0], PlateButtJoint), "Expected L-joints to be PlateButtJoint"
     assert isinstance(joints[1], PlateMiterJoint), "Expected L-joints to be PlateMiterJoint"
     assert isinstance(joints[2], PlateMiterJoint), "Expected L-joints to be PlateMiterJoint"
