@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `scale` method to `compas_timber.fabrication.Text`.
 * Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
+* Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
+* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `interactions()` method to `TimberModel` for iterating over edge-level joints and contacts in the model graph.
 
 ### Changed
 
@@ -38,10 +43,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Beam` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Fastener` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Plate` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Slab` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.PlateFastener` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.BallNodeFastener` following the renaming in `compas_model`.
+* Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
+* Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
+* Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
+* Updated default edge attributes in the model graph to include `joints` and `contacts`.
+* Updated `compas_model` version pinning from `0.4.4` to `0.8.0` to align with the latest development.
 
 ### Removed
 
 * Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
+* Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 
 
 ## [0.16.2] 2025-05-07
