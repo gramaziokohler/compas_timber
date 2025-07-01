@@ -17,11 +17,9 @@ from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
 
 
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(autouse=True)
 def mock_brep_backend(mocker):
     mocker.patch("compas.geometry.Brep.from_mesh", return_value=None)
-    mocker.patch("compas.geometry.Brep.from_box", return_value=None)
-    mocker.patch("compas.geometry.Brep.from_polyhedron", return_value=None)
     yield
 
 
