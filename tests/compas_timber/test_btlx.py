@@ -17,7 +17,7 @@ from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_model(mocker):
     mocker.patch("compas_timber.connections.Joint.add_features")
     model_path = os.path.join(compas_timber.DATA, "model_test.json")
