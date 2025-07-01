@@ -28,6 +28,7 @@ Classes
     TStepJoint
     TenonMortiseJoint
     XLapJoint
+    XNotchJoint
     YButtJoint
 
 Functions
