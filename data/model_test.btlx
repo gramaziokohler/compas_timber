@@ -1,62 +1,15 @@
 <?xml version="1.0" ?>
 <BTLx xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.0.0" Language="en" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
    <FileHistory>
-      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.13.0" ComputerName="PAPACHAP" UserName="kapso" FileName="" Date="2025-06-27" Time="10:57:31" Comment=""/>
+      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.13.0" ComputerName="PAPACHAP" UserName="kapso" FileName="" Date="2025-07-01" Time="16:08:05" Comment=""/>
    </FileHistory>
    <Project Name="COMPAS Timber Project">
       <Parts>
-      <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1785.101" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1592.637" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{a6497aff-ec8a-4658-9f75-ae57cd2c8d61}">
+               <Transformation GUID="{df1a3316-1e09-4a51-b210-ddc0a9ba9d5e}">
                   <Position>
-                     <ReferencePoint X="979.657" Y="-375.207" Z="404.196"/>
-                     <XVector X="0.425" Y="-0.862" Z="0.277"/>
-                     <YVector X="-0.123" Y="0.248" Z="0.961"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
-               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>start</Orientation>
-                  <StartX>120.818</StartX>
-                  <StartY>-0.000</StartY>
-                  <Angle>154.621</Angle>
-                  <Inclination>97.037</Inclination>
-                  <Slope>-14.480</Slope>
-                  <Length>60.000</Length>
-                  <Width>60.000</Width>
-                  <Depth>91.511</Depth>
-                  <LeadAngleParallel>yes</LeadAngleParallel>
-                  <LeadAngle>90.000</LeadAngle>
-                  <LeadInclinationParallel>yes</LeadInclinationParallel>
-                  <LeadInclination>90.000</LeadInclination>
-                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
-               </Lap>
-               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>start</Orientation>
-                  <StartX>1272.402</StartX>
-                  <StartY>0.000</StartY>
-                  <Angle>62.808</Angle>
-                  <Inclination>104.369</Inclination>
-                  <Slope>7.266</Slope>
-                  <Length>60.000</Length>
-                  <Width>60.000</Width>
-                  <Depth>23.886</Depth>
-                  <LeadAngleParallel>yes</LeadAngleParallel>
-                  <LeadAngle>90.000</LeadAngle>
-                  <LeadInclinationParallel>yes</LeadInclinationParallel>
-                  <LeadInclination>90.000</LeadInclination>
-                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
-               </Lap>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1594.730" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{18ea316c-30a5-4b7d-914a-c69c09b855e4}">
-                  <Position>
-                     <ReferencePoint X="283.028" Y="-233.039" Z="732.132"/>
+                     <ReferencePoint X="284.415" Y="-231.574" Z="731.611"/>
                      <XVector X="0.666" Y="0.703" Z="-0.250"/>
                      <YVector X="0.172" Y="0.181" Z="0.968"/>
                   </Position>
@@ -65,34 +18,39 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>25.817</StartX>
-                  <StartY>0.000</StartY>
+                  <StartX>92.027</StartX>
+                  <StartY>63.147</StartY>
+                  <Angle1>75.529</Angle1>
+                  <Inclination1>141.465</Inclination1>
+                  <Angle2>157.726</Angle2>
+                  <Inclination2>83.828</Inclination2>
+               </DoubleCut>
+               <DovetailMortise Name="DovetailMortise" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <StartX>1077.492</StartX>
+                  <StartY>90.501</StartY>
                   <StartDepth>0.000</StartDepth>
-                  <Angle>104.471</Angle>
-                  <Inclination>38.535</Inclination>
-               </JackRafterCut>
+                  <Angle>-75.529</Angle>
+                  <Slope>90.000</Slope>
+                  <LimitationTop>unlimited</LimitationTop>
+                  <LengthLimitedBottom>yes</LengthLimitedBottom>
+                  <Length>60.000</Length>
+                  <Width>44.995</Width>
+                  <Depth>28.000</Depth>
+                  <ConeAngle>10.000</ConeAngle>
+                  <UseFlankAngle>no</UseFlankAngle>
+                  <FlankAngle>15.000</FlankAngle>
+                  <Shape>radius</Shape>
+                  <ShapeRadius>22.497</ShapeRadius>
+               </DovetailMortise>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1368.443" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2126.195" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{8564b704-e9bd-4774-b385-a58fc85ff13f}">
+               <Transformation GUID="{1d6df130-8c9c-4f6e-9584-cdce8649f020}">
                   <Position>
-                     <ReferencePoint X="227.878" Y="-903.447" Z="612.704"/>
-                     <XVector X="0.084" Y="0.981" Z="0.173"/>
-                     <YVector X="-0.015" Y="-0.172" Z="0.985"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-         </Part>
-         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2097.426" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{b99ad050-91fc-4027-bc5d-9f9b166f90ba}">
-                  <Position>
-                     <ReferencePoint X="1091.051" Y="544.597" Z="449.990"/>
+                     <ReferencePoint X="1091.051" Y="573.366" Z="449.990"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -101,43 +59,38 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+               <DovetailTenon Name="DovetailTenon" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>1023.908</StartX>
-                  <StartY>0.000</StartY>
-                  <Angle>153.725</Angle>
+                  <StartX>72.390</StartX>
+                  <StartY>30.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>136.549</Angle>
                   <Inclination>90.000</Inclination>
-                  <Slope>0.000</Slope>
+                  <Rotation>90.000</Rotation>
+                  <LengthLimitedTop>yes</LengthLimitedTop>
+                  <LengthLimitedBottom>yes</LengthLimitedBottom>
                   <Length>60.000</Length>
-                  <Width>60.000</Width>
-                  <Depth>17.126</Depth>
-                  <LeadAngleParallel>yes</LeadAngleParallel>
-                  <LeadAngle>90.000</LeadAngle>
-                  <LeadInclinationParallel>yes</LeadInclinationParallel>
-                  <LeadInclination>90.000</LeadInclination>
-                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
-               </Lap>
+                  <Width>44.995</Width>
+                  <Height>28.000</Height>
+                  <ConeAngle>10.000</ConeAngle>
+                  <UseFlankAngle>no</UseFlankAngle>
+                  <FlankAngle>15.000</FlankAngle>
+                  <Shape>radius</Shape>
+                  <ShapeRadius>22.497</ShapeRadius>
+               </DovetailTenon>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>end</Orientation>
-                  <StartX>2045.750</StartX>
+                  <StartX>2074.519</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>130.737</Angle>
                   <Inclination>68.942</Inclination>
                </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>start</Orientation>
-                  <StartX>75.288</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>136.549</Inclination>
-               </JackRafterCut>
             </Processings>
          </Part>
          <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1056.996" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{9881ce95-ad21-4002-b9cd-6c5a9638f254}">
+               <Transformation GUID="{9951960d-21d7-4049-9f40-fe3d50d86463}">
                   <Position>
                      <ReferencePoint X="1060.620" Y="-1471.583" Z="441.682"/>
                      <XVector X="0.861" Y="0.000" Z="0.508"/>
@@ -156,23 +109,20 @@
                   <Angle>135.000</Angle>
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
-               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>start</Orientation>
-                  <StartX>550.136</StartX>
-                  <StartY>0.000</StartY>
-                  <Angle>60.179</Angle>
-                  <Inclination>62.893</Inclination>
-                  <Slope>-14.637</Slope>
-                  <Length>60.000</Length>
-                  <Width>60.000</Width>
-                  <Depth>22.530</Depth>
-                  <LeadAngleParallel>yes</LeadAngleParallel>
-                  <LeadAngle>90.000</LeadAngle>
-                  <LeadInclinationParallel>yes</LeadInclinationParallel>
-                  <LeadInclination>90.000</LeadInclination>
-                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
-               </Lap>
             </Processings>
+         </Part>
+         <Part SingleMemberNumber="3" AssemblyNumber="" OrderNumber="3" Designation="" Annotation="" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1368.443" Height="100.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="00" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{b7c41b37-3728-4159-b2a4-a6474d4868e5}">
+                  <Position>
+                     <ReferencePoint X="227.878" Y="-903.447" Z="612.704"/>
+                     <XVector X="0.084" Y="0.981" Z="0.173"/>
+                     <YVector X="-0.015" Y="-0.172" Z="0.985"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
          </Part>
       </Parts>
    </Project>
