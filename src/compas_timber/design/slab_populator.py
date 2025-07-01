@@ -163,7 +163,7 @@ class Window(object):
 
     @property
     def studs(self):
-        return [beam for beam in self._beams if beam.attributes["category"] == "stud" or beam.attributes["category"] == "jack_stud" or beam.attributes["category"] == "king_stud"]
+        return [beam for beam in self._beams if beam.attributes["category"] == "jack_stud" or beam.attributes["category"] == "king_stud"]
 
     @property
     def jack_studs(self):
