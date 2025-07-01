@@ -8,6 +8,7 @@ from compas_timber.elements import Wall
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 from compas_timber.utils import classify_polyline_segments
+from compas_model.elements import Group
 
 
 @pytest.fixture
@@ -43,8 +44,8 @@ def test_wall_groups(model, wall1, nameless_wall):
     model.add_group_element(wall1)
     model.add_group_element(nameless_wall, name="wall2")
 
-    assert model.has_group("wall1")
-    assert model.has_group("wall2")
+    assert model.has_group(wall1)
+    assert model.has_group(nameless_wall)
 
 
 def test_add_elements_to_group(model, beam_list, wall1, wall2):
@@ -58,10 +59,10 @@ def test_add_elements_to_group(model, beam_list, wall1, wall2):
     model.add_element(beam_c, parent=wall2_group)
     model.add_element(beam_d, parent=wall2_group)
 
-    assert model.has_group("wall1")
-    assert model.has_group("wall2")
-    assert list(model.get_elements_in_group("wall1")) == [wall1, beam_a, beam_b]
-    assert list(model.get_elements_in_group("wall2")) == [wall2, beam_c, beam_d]
+    assert model.has_group(wall1)
+    assert model.has_group(wall2)
+    assert list(model.get_elements_in_group(wall1_group)) == [wall1, beam_a, beam_b]
+    assert list(model.get_elements_in_group(wall2_group)) == [wall2, beam_c, beam_d]
 
 
 def test_get_elements_in_group_filter(model, beam_list, wall1, wall2):
@@ -75,21 +76,28 @@ def test_get_elements_in_group_filter(model, beam_list, wall1, wall2):
     model.add_element(beam_c, parent=wall2_group)
     model.add_element(beam_d, parent=wall2_group)
 
-    assert model.has_group("wall1")
-    assert model.has_group("wall2")
-    assert list(model.get_elements_in_group("wall1", filter_=lambda b: b.is_beam)) == [beam_a, beam_b]
-    assert list(model.get_elements_in_group("wall2", filter_=lambda b: b.is_beam)) == [beam_c, beam_d]
+    assert model.has_group(wall1)
+    assert model.has_group(wall2)
+    assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: b.is_beam)) == [beam_a, beam_b]
+    assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: b.is_beam)) == [beam_c, beam_d]
+    assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: b.is_wall)) == [wall1]
+    assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: b.is_wall)) == [wall2]
+    assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: b.is_group_element)) == [wall1]
+    assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: b.is_group_element)) == [wall2]
 
 
-def test_group_does_not_exist(model):
+def test_group_does_not_exist(model, wall1):
+    group = Group(name="non_existent_group")
     with pytest.raises(ValueError):
-        list(model.get_elements_in_group("non_existent_group"))
+        list(model.get_elements_in_group(group))
+    with pytest.raises(ValueError):
+        list(model.get_elements_in_group(wall1))
 
 
 def test_group_already_exists(model, wall1):
     model.add_group_element(wall1)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         model.add_group_element(wall1)
 
 

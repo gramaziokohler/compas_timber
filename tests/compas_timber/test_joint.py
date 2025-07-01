@@ -221,7 +221,7 @@ if not compas.IPY:
         key_sets = []
         for pair in result:
             a, b = pair
-            key_sets.append({a.graph_node, b.graph_node})
+            key_sets.append({a.graphnode, b.graphnode})
 
         assert len(expected_result) == len(result)
         for pair in key_sets:
