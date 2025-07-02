@@ -87,6 +87,10 @@ class ButtJoint(Joint):
         return [self.main_beam, self.cross_beam]
 
     @property
+    def beams(self):
+        return [self.main_beam, self.cross_beam]
+
+    @property
     def cross_beam_ref_side_index(self):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)

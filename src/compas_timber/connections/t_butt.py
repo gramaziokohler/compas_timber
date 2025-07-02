@@ -18,6 +18,10 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
+    butt_plane : :class:`~compas.geometry.Plane`, optional
+        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    fastener : :class:`~compas_timber.parts.Fastener`, optional
+        The fastener to be used in the joint.
 
     Attributes
     ----------
@@ -62,10 +66,6 @@ class TButtJoint(ButtJoint):
     @property
     def elements(self):
         return self.beams + self.fasteners
-
-    @property
-    def beams(self):
-        return [self.main_beam, self.cross_beam]
 
     @property
     def generated_elements(self):
