@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateButtJoint`.
 * Added `PlateMiterJoint`.
 * Added `PlateConnectionSolver`.
+* Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 
 ### Changed
 
