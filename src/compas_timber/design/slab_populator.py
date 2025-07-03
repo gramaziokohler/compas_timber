@@ -1,4 +1,5 @@
 import math
+import itertools
 
 from compas.geometry import Box
 from compas.geometry import Frame
@@ -21,13 +22,17 @@ from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
 from compas.geometry import intersection_segment_segment
+from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_vector_vector
+from compas.geometry import is_parallel_line_line
+from compas.geometry import distance_point_line
 from compas.itertools import pairwise
 from compas.tolerance import TOL
 
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import PlateConnectionSolver
 from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
@@ -209,8 +214,69 @@ class Door(Window):
         super(Door, self).__init__(outline, slab_populator, lintel_posts)
 
     def create_elements(self):
-        elements = super(Door, self).create_elements()
-        return [e for e in elements if e.type != "sill"]
+        segments = self.frame_polyline.lines[0:3]
+        for door_frame_seg, slab_outline in itertools.product(segments, [self.slab_populator.outline_a, self.slab_populator.outline_b]):
+            if not is_point_in_polyline(door_frame_seg.point_at(0.5), slab_outline):
+                raise ValueError("door cannot be placed outside slab outline")
+        
+        stud_segs = [segments[0], segments[2]]
+        for i, beam in enumerate(self.slab_populator.edge_beams):
+            ints = []
+            for seg in segments:
+                ints.append(intersection_segment_segment(seg, beam.centerline))
+                if not is_point_in_polyline(seg.point_at(0.5), self.slab_populator.outline_a):
+                    continue
+            if len(ints) == 0:  
+                continue
+            if self.slab_populator.edge_interfaces.get(i, None):
+                raise ValueError("door cannot intersect with a slab edge {} because that edge has a connection interface ".format(i))
+            if distance_point_line(seg.point_at(0.5), beam.centerline) < beam.width * 0.5 + self.beam_dimensions["jack_stud"][0]:
+                raise ValueError("door is too close to slab edge {}".format(i))
+
+        self.header = beam_from_category(self, segments[1], "header", edge_index=1)
+        left_king = beam_from_category(self, segments[2], "king_stud", edge_index=2)
+        right_king = beam_from_category(self, segments[0], "king_stud", edge_index=0)
+
+            ints.extend([beam.centerline.start, beam.centerline.end])
+            ints.sort(key = lambda x: dot_vectors(beam.centerline.direction, x))
+            for pair in pairwise(ints):
+                if is_point_in_polyline((pair[0]+pair[1])*0.5,  self.frame_polyline):
+                    continue
+
+
+
+        for pair in itertools.product(segments, self.slab_populator.outline_a.lines):
+            intersection = intersection_segment_segment(pair[0], pair[1])
+
+
+
+            if TOL.is_zero(distance_point_line(pair[0].point_at(0.5), pair[1])):
+                if is_parallel_line_line(pair[0], pair[1], tol=tol):
+                    if PlateConnectionSolver.do_segments_overlap(pair[0], pair[1]):
+
+
+
+
+
+
+
+        self.header = beam_from_category(self, segments[1], "header", edge_index=1)
+        left_king = beam_from_category(self, segments[2], "king_stud", edge_index=2)
+        right_king = beam_from_category(self, segments[0], "king_stud", edge_index=0)
+        self.sill = beam_from_category(self, segments[3], "sill", edge_index=3)
+        self._beams = [self.header, self.sill, left_king, right_king]
+
+        if self._lintel_posts:
+            left_jack = beam_from_category(self, left_king.centerline, "jack_stud", edge_index=2, normal_offset=False)
+            right_jack = beam_from_category(self, right_king.centerline, "jack_stud", edge_index=0, normal_offset=False)
+            self._beams.extend([left_jack, right_jack])
+            left_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 2) * self.beam_dimensions["jack_stud"][0])
+            right_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 0) * self.beam_dimensions["jack_stud"][0])
+
+        for beam in self._beams:
+            vector = get_polyline_segment_perpendicular_vector(self.frame_polyline, beam.attributes["edge_index"])
+            beam.frame.translate(vector * beam.width * 0.5)
+        return self._beams
 
 class SlabPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
