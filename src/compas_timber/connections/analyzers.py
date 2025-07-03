@@ -9,6 +9,7 @@ from compas.tolerance import TOL
 
 import compas_timber.connections  # noqa: F401
 import compas_timber.elements  # noqa: F401
+from compas_timber.connections import GenericJoint
 
 
 class Cluster(object):
@@ -77,9 +78,10 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
     def __init__(self, model, n=2, tolerance=None):
         super(NBeamKDTreeAnalyzer, self).__init__()
-        self._joints = list(model.joints)
+        # ignore any joints that are not GenericJoint as we cannot guarantee they old the appropriate information
+        self._joints = list(filter(lambda joint: isinstance(joint, GenericJoint), model.joints))
         if not self._joints:
-            raise ValueError("The model has no joints to analyze.")
+            raise ValueError("The model has no joints to analyze. Forgot to call `model.connect_adjacent_beams()`?")
 
         self._kdtree = KDTree([joint.location for joint in self._joints])
         self._n = n
