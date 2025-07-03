@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
 * Added new `compas_timber.connections.XNotchJoint`.
 * Added a proxy class for `Pocket` BTLx processing for performance optimization. 
+* Added `PlateJoint`.
+* Added `PlateButtJoint`.
+* Added `PlateMiterJoint`.
+* Added `PlateConnectionSolver`.
 
 ### Changed
 
