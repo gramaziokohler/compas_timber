@@ -5,7 +5,7 @@ from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
-from .null_joint import NullJoint
+from .generic_joint import GenericJoint
 from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
@@ -37,7 +37,13 @@ from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
-
+from .analyzers import NBeamKDTreeAnalyzer
+from .analyzers import TripletAnalyzer
+from .analyzers import QuadAnalyzer
+from .analyzers import CompositeAnalyzer
+from .analyzers import Cluster
+from .analyzers import BeamGroupAnalyzer
+from .analyzers import MaxNCompositeAnalyzer
 
 __all__ = [
     "Joint",
@@ -53,7 +59,7 @@ __all__ = [
     "XNotchJoint",
     "TLapJoint",
     "LLapJoint",
-    "NullJoint",
+    "GenericJoint",
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
@@ -81,4 +87,11 @@ __all__ = [
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
+    "NBeamKDTreeAnalyzer",
+    "TripletAnalyzer",
+    "QuadAnalyzer",
+    "CompositeAnalyzer",
+    "Cluster",
+    "BeamGroupAnalyzer",
+    "MaxNCompositeAnalyzer",
 ]

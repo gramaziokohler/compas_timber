@@ -4,23 +4,21 @@ compas_timber.connections
 
 .. currentmodule:: compas_timber.connections
 
-Classes
-=======
+Joints
+======
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
     BallNodeJoint
-    ConnectionSolver
     Joint
-    JointTopology
     LapJoint
     LButtJoint
     LFrenchRidgeLapJoint
     LLapJoint
     LMiterJoint
-    NullJoint
+    GenericJoint
     TBirdsmouthJoint
     TButtJoint
     TDovetailJoint
@@ -30,6 +28,22 @@ Classes
     XLapJoint
     XNotchJoint
     YButtJoint
+
+Solvers
+=======
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ConnectionSolver
+    JointTopology
+    Cluster
+    BeamGroupAnalyzer
+    NBeamKDTreeAnalyzer
+    TripletAnalyzer
+    QuadAnalyzer
+    CompositeAnalyzer
 
 Functions
 =========

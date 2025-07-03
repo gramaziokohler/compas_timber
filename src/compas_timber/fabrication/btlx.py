@@ -570,7 +570,7 @@ class BTLxProcessing(Data):
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6.
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6. Defaults to 0 (RS1).
     priority : int
         The priority of the process.
     process_id : int
@@ -588,11 +588,23 @@ class BTLxProcessing(Data):
 
     def __init__(self, ref_side_index=None, priority=0, process_id=0, is_joinery=True):
         super(BTLxProcessing, self).__init__()
-        self.ref_side_index = ref_side_index
+        self._ref_side_index = None
         self._priority = priority
         self._process_id = process_id
+        self.ref_side_index = ref_side_index or 0
         self.subprocessings = None
         self._is_joinery = is_joinery
+
+    @property
+    def ref_side_index(self):
+        return self._ref_side_index
+
+    @ref_side_index.setter
+    def ref_side_index(self, value):
+        value_ = int(value)
+        if value_ < 0 or value_ > 5:
+            raise ValueError("Reference side index must be between 0 and 5, inclusive.")
+        self._ref_side_index = value_
 
     @property
     def is_joinery(self):

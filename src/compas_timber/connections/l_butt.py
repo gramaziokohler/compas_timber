@@ -1,4 +1,3 @@
-
 from .butt_joint import ButtJoint
 from .solver import JointTopology
 
@@ -52,3 +51,28 @@ class LButtJoint(ButtJoint):
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+
+    @property
+    def __data__(self):
+        data = super(LButtJoint, self).__data__
+        data["small_beam_butts"] = self.small_beam_butts
+        data["back_plane"] = self.back_plane
+        data["reject_i"] = self.reject_i
+        return data
+
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=False, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
+        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane=butt_plane, **kwargs)
+        self.small_beam_butts = small_beam_butts
+        self.reject_i = reject_i
+        self.back_plane = back_plane
+        self.update_beam_roles()
+
+    def update_beam_roles(self):
+        """Flips the main and cross beams based on the joint parameters.
+        Prioritizes the beam with the smaller cross-section if `small_beam_butts` is True.
+
+        """
+        if self.small_beam_butts:
+            if self.main_beam.width * self.main_beam.height > self.cross_beam.width * self.cross_beam.height:
+                self.main_beam, self.cross_beam = self.cross_beam, self.main_beam
+                self.main_beam_guid, self.cross_beam_guid = self.cross_beam_guid, self.main_beam_guid
