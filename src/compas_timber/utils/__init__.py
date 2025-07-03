@@ -384,8 +384,9 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
 
     Returns
     -------
-    int
-        The index of the point in the polyline, or None if not found.
+    :class:`compas.geometry.Vector`
+        The vector perpendicular to the segment, pointing outside of the polyline.
+
     """
     plane = Plane.from_points(polyline.points)
     if is_polyline_clockwise(polyline, plane.normal):
@@ -417,7 +418,7 @@ def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
     pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
     pt = point.transformed(xform)
-    if in_plane and not tol.is_close(pt[2], 0.0):
+    if in_plane and not tol.is_zero(pt[2]):
         return False
     return is_point_in_polygon_xy(pt, pgon)
 

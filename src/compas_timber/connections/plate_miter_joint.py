@@ -1,7 +1,6 @@
-from compas_timber.connections import PlateConnectionSolver
-
 from .joint import JointTopology
 from .plate_joint import PlateJoint
+from .plate_joint import move_polyline_segment_to_plane
 
 
 class PlateMiterJoint(PlateJoint):
@@ -18,7 +17,7 @@ class PlateMiterJoint(PlateJoint):
         assert self.plate_b
 
         for polyline, plane in zip(self.a_outlines, self.b_planes):
-            PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.a_segment_index, plane)
+            move_polyline_segment_to_plane(polyline, self.a_segment_index, plane)
 
         for polyline, plane in zip(self.b_outlines, self.a_planes):
-            PlateConnectionSolver.move_polyline_segment_to_plane(polyline, self.b_segment_index, plane)
+            move_polyline_segment_to_plane(polyline, self.b_segment_index, plane)
