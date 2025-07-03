@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="LButtJoint.add_extensions" href="compas_timber.connections.LButtJoint.add_extensions.html" />
+    <link rel="next" title="LButtJoint.update_beam_roles" href="compas_timber.connections.LButtJoint.update_beam_roles.html" />
     <link rel="prev" title="LapJoint.validate_data" href="compas_timber.connections.LapJoint.validate_data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -597,8 +597,8 @@ document.write(`
 <h1>LButtJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.LButtJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0785041/src/compas_timber/connections/l_butt.py#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/6a43bfb/src/compas_timber/connections/l_butt.py#L5"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ButtJoint</span></code></p>
 <p>Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.</p>
 <p>This joint type is compatible with beams in L topology.</p>
 <p>Please use <cite>LButtJoint.create()</cite> to properly create an instance of this class and associate it with a model.</p>
@@ -609,11 +609,15 @@ document.write(`
 </dd>
 <dt><strong>cross_beam</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The cross beam to be joined.</p>
 </dd>
-<dt><strong>mill_depth</strong><span class="classifier">float</span></dt><dd><p>The depth of the pocket to be milled in the cross beam.</p>
+<dt><strong>mill_depth</strong><span class="classifier">float</span></dt><dd><p>The depth of the pocket to be milled in the cross beam. This will be ignored if <cite>butt_plane</cite> is provided.</p>
 </dd>
 <dt><strong>small_beam_butts</strong><span class="classifier">bool, default False</span></dt><dd><p>If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.</p>
 </dd>
 <dt><strong>modify_cross</strong><span class="classifier">bool, default False</span></dt><dd><p>If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.</p>
+</dd>
+<dt><strong>butt_plane</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Plane.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plane</span></code></a>, optional</span></dt><dd><p>The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.</p>
+</dd>
+<dt><strong>back_plane</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Plane.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plane</span></code></a>, optional</span></dt><dd><p>The plane used to cut the cross beam. If not provided, the back side of the main beam will be used.</p>
 </dd>
 <dt><strong>reject_i</strong><span class="classifier">bool, default False</span></dt><dd><p>If True, the joint will reject beams in I topology.</p>
 </dd>
@@ -631,6 +635,10 @@ document.write(`
 </dd>
 <dt><strong>modify_cross</strong><span class="classifier">bool, default False</span></dt><dd><p>If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.</p>
 </dd>
+<dt><strong>butt_plane</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Plane.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plane</span></code></a>, optional</span></dt><dd><p>The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.</p>
+</dd>
+<dt><strong>back_plane</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Plane.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plane</span></code></a>, optional</span></dt><dd><p>The plane used to cut the cross beam. If not provided, the back side of the main beam will be used.</p>
+</dd>
 <dt><strong>reject_i</strong><span class="classifier">bool, default False</span></dt><dd><p>If True, the joint will reject beams in I topology.</p>
 </dd>
 </dl>
@@ -639,16 +647,7 @@ document.write(`
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.add_extensions.html#compas_timber.connections.LButtJoint.add_extensions" title="compas_timber.connections.LButtJoint.add_extensions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_extensions</span></code></a></p></td>
-<td><p>Calculates and adds the necessary extensions to the beams.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.add_features.html#compas_timber.connections.LButtJoint.add_features" title="compas_timber.connections.LButtJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
-<td><p>Adds the required extension and trimming features to both beams.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.restore_beams_from_keys.html#compas_timber.connections.LButtJoint.restore_beams_from_keys" title="compas_timber.connections.LButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
-<td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.update_beam_roles.html#compas_timber.connections.LButtJoint.update_beam_roles" title="compas_timber.connections.LButtJoint.update_beam_roles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_beam_roles</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.update_beam_roles.html#compas_timber.connections.LButtJoint.update_beam_roles" title="compas_timber.connections.LButtJoint.update_beam_roles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_beam_roles</span></code></a></p></td>
 <td><p>Flips the main and cross beams based on the joint parameters.</p></td>
 </tr>
 </tbody>
@@ -658,6 +657,12 @@ document.write(`
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.ToString.html#compas_timber.connections.LButtJoint.ToString" title="compas_timber.connections.LButtJoint.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
 <td><p>Converts the instance to a string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.add_extensions.html#compas_timber.connections.LButtJoint.add_extensions" title="compas_timber.connections.LButtJoint.add_extensions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_extensions</span></code></a></p></td>
+<td><p>Calculates and adds the necessary extensions to the beams.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.add_features.html#compas_timber.connections.LButtJoint.add_features" title="compas_timber.connections.LButtJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
+<td><p>Adds the required extension and trimming features to both beams.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.check_elements_compatibility.html#compas_timber.connections.LButtJoint.check_elements_compatibility" title="compas_timber.connections.LButtJoint.check_elements_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_elements_compatibility</span></code></a></p></td>
 <td><p>Checks if the beams are compatible for the creation of the joint.</p></td>
@@ -677,16 +682,19 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.from_jsonstring.html#compas_timber.connections.LButtJoint.from_jsonstring" title="compas_timber.connections.LButtJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.sha256.html#compas_timber.connections.LButtJoint.sha256" title="compas_timber.connections.LButtJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.restore_beams_from_keys.html#compas_timber.connections.LButtJoint.restore_beams_from_keys" title="compas_timber.connections.LButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.sha256.html#compas_timber.connections.LButtJoint.sha256" title="compas_timber.connections.LButtJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.to_json.html#compas_timber.connections.LButtJoint.to_json" title="compas_timber.connections.LButtJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.to_json.html#compas_timber.connections.LButtJoint.to_json" title="compas_timber.connections.LButtJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.to_jsonstring.html#compas_timber.connections.LButtJoint.to_jsonstring" title="compas_timber.connections.LButtJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.to_jsonstring.html#compas_timber.connections.LButtJoint.to_jsonstring" title="compas_timber.connections.LButtJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.validate_data.html#compas_timber.connections.LButtJoint.validate_data" title="compas_timber.connections.LButtJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LButtJoint.validate_data.html#compas_timber.connections.LButtJoint.validate_data" title="compas_timber.connections.LButtJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
