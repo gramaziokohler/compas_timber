@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `QuadAnalyzer` to `compas_timber.connections`.
 * Added `CompositeAnalyzer` to `compas_timber.connections`.
 * Added method `connect_adjacent_beams` to `TimberModel`.
+* Added `PlateJoint`.
+* Added `PlateButtJoint`.
+* Added `PlateMiterJoint`.
+* Added `PlateConnectionSolver`.
 
 ### Changed
 
@@ -49,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
 * Renamed `NullJoint` to `GenericJoint`.
+* Fixed bug in show_ref_faces GH component.
 
 ### Removed
 
