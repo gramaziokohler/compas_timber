@@ -2,33 +2,33 @@ from .joint import Joint
 
 
 class GenericJoint(Joint):
-    """A null joint is a joint that does not have any features.
+    """A GenericJoint is an information-only joint, which does not add any features to the elements it connects.
 
-    Can be used to join to beams which shouldn't join.
+    It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
 
-    Please use `NullJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `GenericJoint.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
-        First beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
-        Second beam to be joined.
+    element_a : :class:`~compas_timber.elements.TimberElement`
+        First element to be joined.
+    element_b : :class:`~compas_timber.elements.TimberElement`
+        Second element to be joined.
 
     Attributes
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
-        First beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
-        Second beam to be joined.
+    element_a : :class:`~compas_timber.elements.TimberElement`
+        First element to be joined.
+    element_b : :class:`~compas_timber.elements.TimberElement`
+        Second element to be joined.
 
     """
 
     @property
     def __data__(self):
         data_dict = {
-            "beam_a_key": self.beam_a_guid,
-            "beam_b_key": self.beam_b_guid,
+            "element_a_guid": self.element_a_guid,
+            "element_b_guid": self.element_b_guid,
         }
         data_dict.update(super(GenericJoint, self).__data__)
         return data_dict
@@ -36,26 +36,26 @@ class GenericJoint(Joint):
     @classmethod
     def __from_data__(cls, value):
         instance = cls(**value)
-        instance.beam_a_guid = value["main_beam_key"]
-        instance.beam_b_guid = value["cross_beam_key"]
+        instance.element_a_guid = value["main_beam_key"]
+        instance.element_b_guid = value["cross_beam_key"]
         return instance
 
-    def __init__(self, beam_a=None, beam_b=None, **kwargs):
+    def __init__(self, element_a=None, element_b=None, **kwargs):
         super(GenericJoint, self).__init__(**kwargs)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_guid = str(beam_a.guid) if beam_a else None
-        self.beam_b_guid = str(beam_b.guid) if beam_b else None
+        self.element_a = element_a
+        self.element_b = element_b
+        self.element_a_guid = str(element_a.guid) if element_a else None
+        self.element_b_guid = str(element_b.guid) if element_b else None
 
     @property
     def elements(self):
-        return [self.beam_a, self.beam_b]
+        return [self.element_a, self.element_b]
 
     def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.beam_by_guid(self.beam_a_guid)
-        self.beam_b = model.beam_by_guid(self.beam_b_guid)
+        """After de-serialization, restores references to elements saved in the model."""
+        self.element_a = model.element_by_guid(self.element_a_guid)
+        self.element_b = model.element_by_guid(self.element_b_guid)
 
     def add_features(self):
-        """This joint does not add any features to the beams."""
+        """This joint does not add any features."""
         pass
