@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+* `BTLxProcessing.ref_side_index` defaults to `0` if not set, insead of the invalid `None`.
 
 ### Removed
 

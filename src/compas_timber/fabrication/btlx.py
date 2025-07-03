@@ -570,7 +570,7 @@ class BTLxProcessing(Data):
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6.
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6. Defaults to 0 (RS1).
     priority : int
         The priority of the process.
     process_id : int
