@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
 * Fixed bug in show_ref_faces GH component.
-* `BTLxProcessing.ref_side_index` defaults to `0` if not set, insead of the invalid `None`.
+* `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
 
 ### Removed
 
