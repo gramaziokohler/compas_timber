@@ -51,7 +51,6 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
             for arg, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
                 if arg is None:
                     warning(self.component, f"Input parameter {arg_name} failed to collect data")
-            print(args)
             geometries = []
             for geo, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
                 if isinstance(geo, System.Guid):
