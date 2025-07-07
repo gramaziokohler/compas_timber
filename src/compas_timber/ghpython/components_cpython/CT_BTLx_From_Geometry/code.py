@@ -1,3 +1,4 @@
+"""Generates a feature from BTLx type and input geometry."""
 # r: compas_timber>=0.15.3
 # flake8: noqa
 import inspect
@@ -49,11 +50,11 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
             for arg, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
                 if arg is None:
                     warning(self.component, f"Input parameter {arg_name} failed to collect data")
-
+            print(args)
             geometries = []
             for geo, arg_name in zip(args, self.arg_names()[0 : self.geometry_count]):
-                geo = rs.coercegeometry(geo)  # guid to geometry
-
+                if isinstance(geo, System.Guid):
+                    geo = rs.coercegeometry(geo)  # guid to geometry
                 if isinstance(geo, rg.LineCurve):
                     geometries.append(Line(geo.PointAtStart, geo.PointAtEnd))
                 elif isinstance(geo, rg.Plane):
@@ -76,7 +77,7 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
             return BTLxFromGeometryDefinition(self.processing_type, **kwargs)
 
     def arg_names(self):
-        names = inspect.getargspec(self.processing_type.from_shapes_and_element)[0][1:]
+        names = inspect.getfullargspec(self.processing_type.from_shapes_and_element)[0][1:]
         count = 0
         for name in names:
             if name == "element":
