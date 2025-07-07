@@ -15,11 +15,9 @@ from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self,
-            Top: System.Collections.Generic.List[object],
-            Bottom: System.Collections.Generic.List[object],
-            category: System.Collections.Generic.List[str],
-            updateRefObj: bool):
+    def RunScript(
+        self, Top: System.Collections.Generic.List[object], Bottom: System.Collections.Generic.List[object], category: System.Collections.Generic.List[str], updateRefObj: bool
+    ):
         # minimum inputs required
 
         if not list_input_valid_cpython(ghenv, Top, "Outline") or not list_input_valid_cpython(ghenv, Bottom, "Thickness"):
