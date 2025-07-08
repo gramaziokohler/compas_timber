@@ -441,7 +441,7 @@ class Lap(BTLxProcessing):
         angle = angle_vectors_signed(-yyaxis, ref_side.xaxis, ref_side.normal, deg=True)
 
         # calculate the inclination of the lap
-        if TOL.is_zero(abs(yyaxis.dot(zzaxis))) or TOL.is_zero(abs(yyaxis.dot(front_plane.normal))):  # TODO: follow changes in compas.geometry and update this acordingly
+        if TOL.is_zero(abs(yyaxis.dot(zzaxis))) or TOL.is_zero(abs(yyaxis.dot(front_plane.normal))):  # TODO: follow changes in compas.geometry and update this accordingly
             inclination = angle_vectors_signed(zzaxis, ref_side.xaxis, ref_side.normal, deg=True)
         else:
             inclination = angle_vectors_projected(zzaxis, front_plane.normal, yyaxis, deg=True)
