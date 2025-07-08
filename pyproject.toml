@@ -12,7 +12,7 @@ authors = [
     { name = "Jonas Haldemann", email = "haldemann@arch.ethz.ch" },
     { name = "Oliver Appling Bucklin", email = "bucklin@arch.ethz.ch" },
     { name = "Aurèle L. Gheyselinck", email = "gheyselinck@arch.ethz.ch" },
-    { name = "Panayiotis Papacharalambous", email = "papacharalambous@arch.ethz.ch" }
+    { name = "Panayiotis Papacharalambous", email = "papacharalambous@arch.ethz.ch" },
     { name = "Anastasiia Stryzhevska", email = "astryzhevska@arch.ethz.ch" }
 ]
 license = { file = "LICENSE" }
