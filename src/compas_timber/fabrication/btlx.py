@@ -14,6 +14,7 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
@@ -60,6 +61,7 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
+        self._tolerance = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
     def write(self, model, file_path):
         """Writes the BTLx file to the given file path.
@@ -106,6 +108,10 @@ class BTLxWriter(object):
         :meth:`BTLxWriter.write`
 
         """
+        self._tolerance = model.tolerance
+        if self._tolerance.unit != "M":
+            warn("Model units are set to {} and will auto-scale to mm for BTLx. Please design in mm if you intend to use BTLx.".format(self._tolerance.unit))
+
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history
         file_history_element = self._create_file_history()
@@ -183,8 +189,11 @@ class BTLxWriter(object):
             The part element.
 
         """
+        assert self._tolerance
         # create part element
-        part = BTLxPart(element, order_num=order_num)
+        scale_factor = 1000.0 if self._tolerance.unit == "M" else 1.0
+        part = BTLxPart(element, order_num=order_num, scale_factor=scale_factor)
+
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # create processings element for the part if there are any
@@ -217,6 +226,11 @@ class BTLxWriter(object):
             The processing element.
 
         """
+        assert self._tolerance
+        # BTLx always uses mm
+        if self._tolerance.unit == "M":
+            processing = processing.scaled(1000.0)
+
         processing_params = processing.params
         params_dict = processing_params.as_dict()
 
@@ -278,6 +292,10 @@ class BTLxPart(object):
     ----------
     element : :class:`~compas_model.elements.Element`  # TODO: not really, make BTLx Element parent class
         The element object.
+    order_num : int
+        The order number of the part.
+    scale_factor : float, optional
+        The scale factor to apply to the part's dimensions. Used when the design unit is anything other than mm. Defaults to 1.0.
 
     Attributes
     ----------
@@ -285,8 +303,6 @@ class BTLxPart(object):
         The attributes of the BTLx part.
     element : :class:`~compas_model.elements.Element`
         The element object.
-    key : str
-        The key of the element object.
     length : float
         The length of the element.
     width : float
@@ -295,27 +311,22 @@ class BTLxPart(object):
         The height of the element.
     frame : :class:`~compas.geometry.Frame`
         The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
-    blank : :class:`~compas.geometry.Box`
-        The blank of the element.
-    blank_frame : :class:`~compas.geometry.Frame`
-        The frame of the blank.
-    blank_length : float
-        The blank length of the element.
     processings : list
         A list of the processings applied to the element.
 
     """
 
-    def __init__(self, element, order_num):
+    def __init__(self, element, order_num, scale_factor=1.0):
         self.element = element
         self.order_num = order_num
-        self.length = element.blank_length
-        self.width = element.width
-        self.height = element.height
-        self.frame = element.ref_frame
+        self.length = element.blank_length * scale_factor
+        self.width = element.width * scale_factor
+        self.height = element.height * scale_factor
+        self.frame = element.ref_frame.scaled(scale_factor)
         self.processings = []
         self._et_element = None
         self._shape_strings = None
+        self._scale_factor = scale_factor
 
     @property
     def part_guid(self):
@@ -428,7 +439,8 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            for face in self.element.geometry.faces:
+            scaled_geometry = self.element.geometry.scaled(self._scale_factor)
+            for face in scaled_geometry.faces:
                 pts = []
                 frame = face.surface.frame_at(0.5, 0.5)
                 edges = face.boundary.edges[1:]
@@ -558,7 +570,7 @@ class BTLxProcessing(Data):
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6.
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6. Defaults to 0 (RS1).
     priority : int
         The priority of the process.
     process_id : int
@@ -576,11 +588,23 @@ class BTLxProcessing(Data):
 
     def __init__(self, ref_side_index=None, priority=0, process_id=0, is_joinery=True):
         super(BTLxProcessing, self).__init__()
-        self.ref_side_index = ref_side_index
+        self._ref_side_index = None
         self._priority = priority
         self._process_id = process_id
+        self.ref_side_index = ref_side_index or 0
         self.subprocessings = None
         self._is_joinery = is_joinery
+
+    @property
+    def ref_side_index(self):
+        return self._ref_side_index
+
+    @ref_side_index.setter
+    def ref_side_index(self, value):
+        value_ = int(value)
+        if value_ < 0 or value_ > 5:
+            raise ValueError("Reference side index must be between 0 and 5, inclusive.")
+        self._ref_side_index = value_
 
     @property
     def is_joinery(self):
@@ -603,6 +627,25 @@ class BTLxProcessing(Data):
         if not self.subprocessings:
             self.subprocessings = []
         self.subprocessings.append(subprocessing)
+
+    def scaled(self, factor):
+        """Returns a new instance of the processing with the parameters scaled by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.BTLxProcessing`
+            A new instance of the processing with the parameters scaled by the given factor.
+
+        """
+        # type: (float) -> BTLxProcessing
+        new_instance = self.copy()
+        new_instance.scale(factor)
+        return new_instance
 
 
 class BTLxProcessingParams(object):
@@ -835,6 +878,38 @@ class Contour(Data):
     def __data__(self):
         return {"polyline": self.polyline, "depth": self.depth, "depth_bounded": self.depth_bounded, "inclination": self.inclination}
 
+    def scale(self, factor):
+        """Scale the contour by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        """
+        self.polyline.scale(factor)
+        if self.depth is not None:
+            self.depth *= factor
+
+    def scaled(self, factor):
+        """Returns a new instance of the contour with the parameters scaled by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Contour`
+            A new instance of the contour with the parameters scaled by the given factor.
+
+        """
+        # type: (float) -> Contour
+        new_instance = self.copy()
+        new_instance.scale(factor)
+        return new_instance
+
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
 
@@ -863,6 +938,39 @@ class DualContour(Data):
     @property
     def __data__(self):
         return {"principal_contour": self.principal_contour, "associated_contour": self.associated_contour, "depth_bounded": self.depth_bounded}
+
+    def scale(self, factor):
+        """Scale the dual contour by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        """
+        self.principal_contour.scaled(factor)
+        self.associated_contour.scaled(factor)
+        if self.depth_bounded is not None:
+            self.depth_bounded *= factor
+
+    def scaled(self, factor):
+        """Returns a new instance of the dual contour with the parameters scaled by a given factor.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.DualContour`
+            A new instance of the dual contour with the parameters scaled by the given factor.
+
+        """
+        # type: (float) -> DualContour
+        new_instance = self.copy()
+        new_instance.scale(factor)
+        return new_instance
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)

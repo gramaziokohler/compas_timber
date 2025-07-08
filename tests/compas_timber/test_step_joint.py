@@ -8,6 +8,8 @@ from compas.geometry import Line
 from compas_timber.elements import Beam
 from compas_timber.fabrication import StepJointNotch
 from compas_timber.fabrication import StepJoint
+from compas_timber.fabrication import StepShapeType
+from compas_timber.fabrication import OrientationType
 
 
 @pytest.fixture
@@ -251,3 +253,31 @@ def test_stepjoint_params(
     generated_params.update(step_joint.params.as_dict())
     for key, value in expected_step_params.items():
         assert generated_params[key] == value
+
+
+def test_stepjoint_scaled():
+    step_joint = StepJoint(
+        orientation=OrientationType.START,
+        start_x=0.0,
+        strut_inclination=92.0,
+        step_depth=20.0,
+        heel_depth=20.0,
+        step_shape=StepShapeType.DOUBLE,
+        tenon=False,
+        tenon_width=40.0,
+        tenon_height=40.0,
+        ref_side_index=1,
+    )
+
+    scaled = step_joint.scaled(2.0)
+
+    assert scaled.orientation == step_joint.orientation
+    assert scaled.start_x == step_joint.start_x * 2.0
+    assert scaled.strut_inclination == step_joint.strut_inclination
+    assert scaled.step_depth == step_joint.step_depth * 2.0
+    assert scaled.heel_depth == step_joint.heel_depth * 2.0
+    assert scaled.step_shape == step_joint.step_shape
+    assert scaled.tenon == step_joint.tenon
+    assert scaled.tenon_width == step_joint.tenon_width * 2.0
+    assert scaled.tenon_height == step_joint.tenon_height * 2.0
+    assert scaled.ref_side_index == step_joint.ref_side_index

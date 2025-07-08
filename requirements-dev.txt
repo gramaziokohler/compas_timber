@@ -11,3 +11,4 @@ wheel
 pytest-mock
 build
 pythonnet
+tomlkit

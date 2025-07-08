@@ -21,6 +21,7 @@ Classes
     FrenchRidgeLap
     JackRafterCut
     Lap
+    LongitudinalCut
     Pocket
     Slot
     StepJoint
