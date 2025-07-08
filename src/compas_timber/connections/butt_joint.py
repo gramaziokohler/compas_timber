@@ -64,7 +64,7 @@ class ButtJoint(Joint):
         self.butt_plane = butt_plane
         self.features = []
 
-        self.reject_i=False
+        self.reject_i = False
 
     @property
     def elements(self):
