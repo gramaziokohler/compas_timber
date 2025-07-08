@@ -114,7 +114,6 @@ class PlateJoint(Joint):
         data["plate_b_guid"] = self._plate_b_guid
         data["topology"] = self.topology
         data["a_segment_index"] = self.a_segment_index
-        data["b_segment_index"] = self.b_segment_index
         return data
 
     def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):

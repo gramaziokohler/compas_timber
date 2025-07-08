@@ -2,7 +2,7 @@ from compas_timber.elements import Plate
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateMiterJoint
-from compas_timber.connections import PlateButtJoint
+from compas_timber.connections import PlateTButtJoint
 from compas.geometry import Polyline, Point
 
 
@@ -158,7 +158,7 @@ def test_three_plate_joints():
         elif tr[0] == JointTopology.TOPO_L:
             joints.append(PlateMiterJoint(tr[1][0], tr[2][0], tr[0], tr[1][1], tr[2][1]))
         elif tr[0] == JointTopology.TOPO_T:
-            joints.append(PlateButtJoint(tr[1][0], tr[2][0], tr[0], tr[1][1], tr[2][1]))
+            joints.append(PlateTButtJoint(tr[1][0], tr[2][0], tr[0], tr[1][1], tr[2][1]))
 
     assert len(joints) == 3, "Expected three joints"
     assert all(isinstance(j, PlateMiterJoint) for j in joints), "Expected L-joints to be PlateMiterJoint"
@@ -190,9 +190,9 @@ def test_three_plate_joints_mix_topo():
         elif tr[0] == JointTopology.TOPO_L:
             joints.append(PlateMiterJoint(tr[1][0], tr[2][0], tr[0], tr[1][1], tr[2][1]))
         elif tr[0] == JointTopology.TOPO_T:
-            joints.append(PlateButtJoint(tr[1][0], tr[2][0], tr[0], tr[1][1], tr[2][1]))
+            joints.append(PlateTButtJoint(tr[1][0], tr[2][0], tr[0], tr[1][1]))
 
     assert len(joints) == 3, "Expected three joints"
-    assert isinstance(joints[0], PlateButtJoint), "Expected L-joints to be PlateButtJoint"
+    assert isinstance(joints[0], PlateTButtJoint), "Expected L-joints to be PlateButtJoint"
     assert isinstance(joints[1], PlateMiterJoint), "Expected L-joints to be PlateMiterJoint"
     assert isinstance(joints[2], PlateMiterJoint), "Expected L-joints to be PlateMiterJoint"

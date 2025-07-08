@@ -282,6 +282,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
+        When T-Topology is found, the plates will be returned in a consistent order, with the main plate first and the cross plate second.
 
         parameters
         ----------
