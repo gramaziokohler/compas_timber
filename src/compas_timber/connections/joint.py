@@ -34,7 +34,7 @@ class Joint(Interaction):
         A list of tuples containing the elements that are interacting with each other through this joint.
     features : list(:class:`~compas_timber.fabrication.BTLxProcessing`)
         A list of features that were added to the elements by this joint.
-    topology : literal, one of JointTopology.TOPO_UNKNOWN, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_I
+    topology : literal, one of :class:`JointTopology`
         The topology by which the two elements connected with this joint interact.
     location : :class:`~compas.geometry.Point`
         The estimated location of the interaction point of the two elements connected with this joint.
@@ -85,6 +85,18 @@ class Joint(Interaction):
 
     @classmethod
     def element_count_complies(cls, elements):
+        """Checks if the number of elements complies with the joint's requirements.
+
+        Parameters
+        ----------
+        elements : list(:class:`~compas_model.elements.Element`)
+            The elements to be checked.
+
+        Returns
+        -------
+        bool
+
+        """
         if cls.MAX_ELEMENT_COUNT:
             return len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT
         else:
@@ -130,14 +142,14 @@ class Joint(Interaction):
         pass
 
     def restore_beams_from_keys(self, model):
-        """Restores the reference to the beams associate with this joint.
+        """Restores the reference to the elements associate with this joint.
 
         During serialization, :class:`compas_timber.parts.Beam` objects
-        are serialized by :class:`compas_timber.model`. To avoid circular references, Joint only stores the keys
-        of the respective beams.
+        are serialized by :class:`compas_timber.model.Model`. To avoid circular references, Joint only stores the keys
+        of the respective elements.
 
-        This method is called by :class:`compas_timber.model` during de-serialization to restore the references.
-        Since the roles of the beams are joint specific (e.g. main/cross beam) this method should be implemented by
+        This method is called by :class:`compas_timber.model.TimberModel` during de-serialization to restore the references.
+        Since the roles of the elements are joint specific (e.g. main/cross beam) this method should be implemented by
         the concrete implementation.
 
         Examples
@@ -151,19 +163,20 @@ class Joint(Interaction):
     def create(cls, model, *elements, **kwargs):
         """Creates an instance of this joint and creates the new connection in `model`.
 
-        `beams` are expected to have been added to `model` before calling this method.
+        `elements` are expected to have been added to `model` before calling this method.
 
-        This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
+        This code does not verify that the given elements are adjacent and/or lie in a topology which allows connecting
         them. This is the responsibility of the calling code.
-
-        A `ValueError` is raised if `beams` contains less than two `Beam` objects.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joing belong.
-        beams : list(:class:`~compas_timber.parts.Beam`)
-            A list containing two beams that whould be joined together
+            The model to which the elements and this joing belong.
+        *elements : :class:`~compas_model.elements.Element`
+            The elements to be connected by this joint. The number of elements must comply with the `Joint` class's
+            `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` attributes.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
 
         Returns
         -------
