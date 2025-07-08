@@ -64,7 +64,7 @@ class ButtJoint(Joint):
         self.butt_plane = butt_plane
         self.features = []
 
-        # update the main and cross beams based on the joint parameters
+        self.reject_i=False
 
     @property
     def elements(self):
