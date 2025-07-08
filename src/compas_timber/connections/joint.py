@@ -171,7 +171,7 @@ class Joint(Interaction):
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
-            The model to which the elements and this joing belong.
+            The model to which the elements and this joint belong.
         *elements : :class:`~compas_model.elements.Element`
             The elements to be connected by this joint. The number of elements must comply with the `Joint` class's
             `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` attributes.
