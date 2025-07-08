@@ -142,7 +142,7 @@ class Joint(Interaction):
         pass
 
     def restore_beams_from_keys(self, model):
-        """Restores the reference to the elements associate with this joint.
+        """Restores the reference to the elements associated with this joint.
 
         During serialization, :class:`compas_timber.parts.Beam` objects
         are serialized by :class:`compas_timber.model.Model`. To avoid circular references, Joint only stores the keys
