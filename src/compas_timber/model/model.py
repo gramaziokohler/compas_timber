@@ -49,6 +49,13 @@ class TimberModel(Model):
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
+
+        # TODO: this is a workaround to ensure that the graph nodes are not lost during deserialization
+        # TODO: this was fixed in later compas_model release, remove after migrating
+        for graphnode in model._graph.nodes():
+            element = model._graph.node_element(graphnode)  # type: ignore
+            element.graph_node = graphnode  # type: ignore
+
         for interaction in model.interactions():
             interaction.restore_beams_from_keys(model)  # type: ignore
         return model
