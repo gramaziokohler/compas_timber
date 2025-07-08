@@ -274,11 +274,11 @@ def test_beam_graph_node_available_after_serialization():
     beam = Beam(frame, length=1.0, width=0.1, height=0.1)
     model.add_element(beam)
 
-    grap_node = beam.graph_node
+    graph_node = beam.graph_node
     deserialized_model = json_loads(json_dumps(model))
 
-    assert grap_node is not None
-    assert list(deserialized_model.beams)[0].graph_node == grap_node
+    assert graph_node is not None
+    assert list(deserialized_model.beams)[0].graph_node == graph_node
 
 
 def test_beam_graph_node_available_after_deepcopying():
