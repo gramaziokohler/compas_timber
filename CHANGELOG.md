@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `NullJoint` to `GenericJoint`.
 * Fixed bug in show_ref_faces GH component.
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Fixed a bug by setting a default value `False` for `regect_i` in generic `ButtJoint`.
 
 ### Removed
 
