@@ -303,6 +303,7 @@ class Plate(TimberElement):
     @classmethod
     def from_brep(cls, brep, thickness, vector=None, **kwargs):
         """Creates a plate from a brep.
+
         Parameters
         ----------
         brep : :class:`compas.geometry.Brep`
