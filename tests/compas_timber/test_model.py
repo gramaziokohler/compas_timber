@@ -1,3 +1,4 @@
+from copy import deepcopy
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
@@ -255,7 +256,6 @@ def test_error_deepcopy_fastener():
 
 
 def test_error_deepcopy_joint():
-    from copy import deepcopy
     from compas_timber.errors import BeamJoiningError
 
     error = BeamJoiningError("mama", "papa", "dog", "cucumber")
@@ -266,3 +266,29 @@ def test_error_deepcopy_joint():
     assert error.joint == "papa"
     assert error.debug_info == "dog"
     assert error.debug_geometries == "cucumber"
+
+
+def test_beam_graph_node_available_after_serialization():
+    model = TimberModel()
+    frame = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    beam = Beam(frame, length=1.0, width=0.1, height=0.1)
+    model.add_element(beam)
+
+    graph_node = beam.graph_node
+    deserialized_model = json_loads(json_dumps(model))
+
+    assert graph_node is not None
+    assert list(deserialized_model.beams)[0].graph_node == graph_node
+
+
+def test_beam_graph_node_available_after_deepcopying():
+    model = TimberModel()
+    frame = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    beam = Beam(frame, length=1.0, width=0.1, height=0.1)
+    model.add_element(beam)
+
+    grap_node = beam.graph_node
+    deserialized_model = deepcopy(model)
+
+    assert grap_node is not None
+    assert list(deserialized_model.beams)[0].graph_node == grap_node
