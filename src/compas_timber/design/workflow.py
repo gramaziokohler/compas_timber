@@ -313,7 +313,6 @@ class DirectRule(JointRule):
         max_distance = self.max_distance or model_max_distance
 
         if all([isinstance(e, Beam) for e in self.elements]) and not issubclass(self.joint_type, PlateJoint):
-            print("Trying to get joint for beams")
             try:
                 for pair in combinations(list(self.elements), 2):
                     if distance_segment_segment(pair[0].centerline, pair[1].centerline) > max_distance:
@@ -322,7 +321,6 @@ class DirectRule(JointRule):
             except TypeError:
                 raise UserWarning("unable to comply direct joint element sets")
         elif all([isinstance(e, Plate) for e in self.elements]) and issubclass(self.joint_type, PlateJoint):
-            print("Trying to get joint for plates")
             if len(self.elements) != 2:
                 raise UserWarning("DirectRule for Plates requires exactly two elements.")
 
@@ -442,13 +440,11 @@ class CategoryRule(JointRule):
         max_distance = self.max_distance or model_max_distance
 
         if all([isinstance(e, Beam) for e in elements]) and not issubclass(self.joint_type, PlateJoint):
-            print("CATEGORY Trying to get joint for beams")
             solver = ConnectionSolver()
             if (self.joint_type.SUPPORTED_TOPOLOGY, elements[0], elements[1]) != solver.find_topology(elements[0], elements[1], max_distance=max_distance):
                 return None
             return self.joint_type(*elements, **self.kwargs)
         elif all([isinstance(e, Plate) for e in elements]) and issubclass(self.joint_type, PlateJoint):
-            print("CATEGORY Trying to get joint for plates")
             solver = PlateConnectionSolver()
             topo, plate_a, plate_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
             if topo is not None:
@@ -576,21 +572,14 @@ class TopologyRule(JointRule):
 
         """
 
-        print("TopoRule joint type:", self.joint_type.__name__)
         max_distance = self.max_distance or model_max_distance
         elements = list(elements)
-        if all([isinstance(e, Plate) for e in elements]):
-            print("both elements are plates")
-            print("is {} a PlateJoint subclass: {}".format(self.joint_type.__name__, issubclass(self.joint_type, PlateJoint)))
-
         if all([isinstance(e, Beam) for e in elements]) and not issubclass(self.joint_type, PlateJoint):
-            print("TOPO Trying to get joint for beams")
             solver = ConnectionSolver()
             found_topology, beam_a, beam_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
             if found_topology == self.joint_type.SUPPORTED_TOPOLOGY:
                 return self.joint_type(beam_a, beam_b, **self.kwargs)
         elif all([isinstance(e, Plate) for e in elements]) and issubclass(self.joint_type, PlateJoint):
-            print("TOPO Trying to get joint for plates")
             solver = PlateConnectionSolver()
             topo, plate_a, plate_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
             if topo is not None:
