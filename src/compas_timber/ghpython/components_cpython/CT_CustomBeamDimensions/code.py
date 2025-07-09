@@ -23,7 +23,7 @@ class CustomBeamDimensions(Grasshopper.Kernel.GH_ScriptInstance):
 
         if ghenv.Component.Params.Output[0].NickName != "Dimensions":
             dims[ghenv.Component.Params.Output[0].NickName] = (width or 0, height or 0)
-        return (dims,)  # return a tuple to allow passing dict between components
+        return Grasshopper.Kernel.Types.GH_ObjectWrapper(dims)
 
     def AppendAdditionalMenuItems(self, menu):
         for name in beam_category_names:
