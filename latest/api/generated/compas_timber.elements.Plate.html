@@ -597,7 +597,7 @@ document.write(`
 <h1>Plate</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Plate">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Plate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/fce8808/src/compas_timber/elements/plate.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Plate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d686f0f/src/compas_timber/elements/plate.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.timber.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></p>
 <p>A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.</p>
 <dl class="field-list">
@@ -667,10 +667,13 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.from_outline_thickness.html#compas_timber.elements.Plate.from_outline_thickness" title="compas_timber.elements.Plate.from_outline_thickness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_outline_thickness</span></code></a></p></td>
 <td><p>Constructs a plate from a polyline outline and a thickness.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.reset.html#compas_timber.elements.Plate.reset" title="compas_timber.elements.Plate.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.opp_side.html#compas_timber.elements.Plate.opp_side" title="compas_timber.elements.Plate.opp_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">opp_side</span></code></a></p></td>
+<td><p>Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.reset.html#compas_timber.elements.Plate.reset" title="compas_timber.elements.Plate.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
 <td><p>Resets the element to its initial state by removing all features, extensions, and debug_info.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.side_as_surface.html#compas_timber.elements.Plate.side_as_surface" title="compas_timber.elements.Plate.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.side_as_surface.html#compas_timber.elements.Plate.side_as_surface" title="compas_timber.elements.Plate.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
 <td><p>Returns the requested side of the beam as a parametric planar surface.</p></td>
 </tr>
 </tbody>
