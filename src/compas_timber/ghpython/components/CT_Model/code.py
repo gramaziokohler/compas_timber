@@ -1,73 +1,121 @@
+# r: compas_timber>=0.15.3
+"""Creates an Model"""
+
+import Grasshopper
 import Rhino
+import System
 from compas.scene import Scene
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
-from ghpythonlib.componentbase import executingcomponent as component
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
-from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import JointTopology
-from compas_timber.connections import LMiterJoint
-from compas_timber.connections import TButtJoint
-from compas_timber.connections import XLapJoint
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRule
 from compas_timber.design import WallPopulator
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.ghpython import error
+from compas_timber.ghpython import warning
 from compas_timber.model import TimberModel
-
-JOINT_DEFAULTS = {
-    JointTopology.TOPO_X: XLapJoint,
-    JointTopology.TOPO_T: TButtJoint,
-    JointTopology.TOPO_L: LMiterJoint,
-}
 
 # workaround for https://github.com/gramaziokohler/compas_timber/issues/280
 TOL.absolute = 1e-6
 
 
-class ModelComponent(component):
-    def RunScript(self, Elements, Containers, JointRules, Features, MaxDistance, CreateGeometry):
+class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
+    @property
+    def component(self):
+        return ghenv.Component  # type: ignore
+
+    def get_tol(self):
+        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
+        if units == "m":
+            return Tolerance(unit="M", absolute=1e-6, relative=1e-6)
+        elif units == "mm":
+            return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            error(self.component, f"Unsupported unit: {units}")
+            return
+
+    def RunScript(
+        self,
+        Elements: System.Collections.Generic.List[object],
+        Containers: System.Collections.Generic.List[object],
+        JointRules: System.Collections.Generic.List[object],
+        Features: System.Collections.Generic.List[object],
+        MaxDistance: float,
+        CreateGeometry: bool,
+    ):
+        # this used to be default behavior in Rhino7.. I think..
+        Elements = Elements or []
+        Containers = Containers or []
+        JointRules = JointRules or []
+        Features = Features or []
+
         if not Elements:
-            self.AddRuntimeMessage(Warning, "Input parameter Beams failed to collect data")
+            warning(self.component, "Input parameter Beams failed to collect data")
         if not JointRules:
-            self.AddRuntimeMessage(Warning, "Input parameter JointRules failed to collect data")
+            warning(self.component, "Input parameter JointRules failed to collect data")
         if not (Elements or Containers):  # shows beams even if no joints are found
             return
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
 
-        # clear Nones
-        Containers = [c for c in Containers if c is not None]
-
-        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
-        tol = None
-        if units == "m":
-            tol = Tolerance(unit="M", absolute=1e-6, relative=1e-6)
-        elif units == "mm":
-            tol = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
-        else:
-            self.AddRuntimeMessage(Error, "Unsupported unit: {}".format(units))
-            return
-
+        tol = self.get_tol()
         Model = TimberModel(tolerance=tol)
         debug_info = DebugInfomation()
 
         ##### Adding elements #####
-        for element in Elements:
-            # prepare elements for downstream processing
-            element.reset()
-            Model.add_element(element)
-
-        for index, c_def in enumerate(Containers):
-            slab = c_def.slab
-            Model.add_group_element(slab, name=slab.name + str(index))
-
-        Model.connect_adjacent_walls()
+        self.add_elements_to_model(Model, Elements, Containers)
 
         ##### Wall populating #####
+        handled_pairs, wall_joint_definitions = self.handle_populators(Model, Containers, MaxDistance)
+
+        ##### Handle joinery #####
+        # checks elements compatibility and generates Joints
+        joints = JointRule.joints_from_rules_and_elements(Model.elements(), JointRules, MaxDistance, handled_pairs)
+        for joint in joints:
+            Model.add_joint(joint)
+
+        for j_def in wall_joint_definitions:
+            j_def.joint_type.create(Model, *j_def.elements, **j_def.kwargs)
+
+        # applies extensions and features resulting from joints
+        bje = Model.process_joinery()
+        if bje:
+            debug_info.add_joint_error(bje)
+
+        ##### Handle user features #####
+        if Features:
+            feature_errors = self.handle_features(Features)
+            debug_info.add_feature_error(feature_errors)
+
+        ##### Visualization #####
+        Geometry, errors = self.handle_geometry(Model, CreateGeometry)
+        for geo_error in errors:
+            debug_info.add_feature_error(geo_error)
+
+        ##### Error Handling #####
+        if debug_info.has_errors:
+            warning(self.component, "Error found during joint creation. See DebugInfo output for details.")
+
+        return Model, Geometry, debug_info
+
+    def add_elements_to_model(self, model, elements, containers):
+        """Adds elements to the model and groups them by slab."""
+        for element in elements:
+            element.reset()
+            model.add_element(element)
+
+        containers = [c for c in containers if c is not None]
+
+        for index, c_def in enumerate(containers):
+            slab = c_def.slab
+            model.add_group_element(slab, name=slab.name + str(index))
+
+    def handle_populators(self, Model, Containers, MaxDistance):
+        # Handle wall populators
+        Model.connect_adjacent_walls()
         config_sets = [c_def.config_set for c_def in Containers]
         populators = []
         if any(config_sets):
@@ -75,7 +123,7 @@ class ModelComponent(component):
 
         handled_pairs = []
         wall_joint_definitions = []
-        for populator, slab in zip(populators, Model.slabs):
+        for populator, slab in zip(populators, list(Model.slabs)):
             elements = populator.create_elements()
             Model.add_elements(elements, parent=slab.name)
             joint_definitions = populator.create_joint_definitions(elements, MaxDistance)
@@ -84,58 +132,36 @@ class ModelComponent(component):
                 element_a, element_b = j_def.elements
                 handled_pairs.append({element_a, element_b})
 
-        ##### Handle joinery #####
-        joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
-        if unmatched_pairs:
-            for pair in unmatched_pairs:
-                self.AddRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info
+        return handled_pairs, wall_joint_definitions
 
-        if wall_joint_definitions:
-            joint_defs += wall_joint_definitions
+    def handle_features(self, features):
+        feature_errors = []
+        features = [f for f in features if f is not None]
+        for f_def in features:
+            if not f_def.elements:
+                warning(self.component, "Features defined in model must have elements defined. Features without elements will be ignored")
+                continue
 
-        # apply reversed. later joints in orginal list override ealier ones
-        for joint_def in joint_defs[::-1]:
-            joint_def.joint_type.create(Model, *joint_def.elements, **joint_def.kwargs)
+            for element in f_def.elements:
+                try:
+                    element.add_features(f_def.feature_from_element(element))
+                except FeatureApplicationError as ex:
+                    feature_errors.append(ex)
+        return feature_errors
 
-        # checks elements compatibility and applies extensions and features resulting from joints
-        bje = Model.process_joinery()
-        if bje:
-            debug_info.add_joint_error(bje)
-
-        ##### Handle user features #####
-        if Features:
-            feature_errors = []
-            features = [f for f in Features if f is not None]
-            for f_def in features:
-                if not f_def.elements:
-                    self.AddRuntimeMessage(Warning, "Features defined in model must have elements defined. Features without elements will be ignored")
-                    continue
-
-                for element in f_def.elements:
-                    try:
-                        element.add_features(f_def.feature_from_element(element))
-                    except FeatureApplicationError as ex:
-                        feature_errors.append(ex)
-
-            for error in feature_errors:
-                debug_info.add_feature_error(error)
-
-        ##### Visualization #####
-        Geometry = None
+    def handle_geometry(self, Model, CreateGeometry):
         scene = Scene()
+        errors = []
         for element in Model.elements():
             if CreateGeometry:
                 scene.add(element.geometry)
                 if getattr(element, "debug_info", False):
-                    debug_info.add_feature_error(element.debug_info)
+                    errors.append(element.debug_info)
             else:
-                if isinstance(element, Beam) or isinstance(element, Plate):
+                if isinstance(element, Beam):
                     scene.add(element.blank)
+                elif isinstance(element, Plate):
+                    scene.add(element.shape)
                 else:
                     scene.add(element.geometry)
-
-        if debug_info.has_errors:
-            self.AddRuntimeMessage(Warning, "Error found during joint creation. See DebugInfo output for details.")
-
-        Geometry = scene.draw()
-        return Model, Geometry, debug_info
+        return scene.draw(), errors

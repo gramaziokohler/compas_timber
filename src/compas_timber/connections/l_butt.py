@@ -1,7 +1,8 @@
+from compas_timber.errors import BeamJoiningError
+
 from .butt_joint import ButtJoint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
-from compas_timber.errors import BeamJoiningError
 
 
 class LButtJoint(ButtJoint):

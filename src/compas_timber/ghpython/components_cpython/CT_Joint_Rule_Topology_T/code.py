@@ -38,7 +38,6 @@ class L_TopologyPlateJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 item.Checked = True
         menu.Items.Add(ToolStripSeparator())
 
-
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
         rename_cpython_gh_output(self.joint_type.__name__, 0, ghenv)

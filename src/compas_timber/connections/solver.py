@@ -67,6 +67,8 @@ class JointTopology(object):
     TOPO_L = 2
     TOPO_T = 3
     TOPO_X = 4
+    TOPO_EDGE_EDGE = 5
+    TOPO_EDGE_FACE = 6
 
     @classmethod
     def get_name(cls, value):
@@ -77,12 +79,13 @@ class JointTopology(object):
         Parameters
         ----------
         value : int
-            One of [JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_UNKNOWN]
+            One of [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X,
+            JointTopology.TOPO_EDGE_EDGE, JointTopology.TOPO_EDGE_FACE, JointTopology.TOPO_UNKNOWN]
 
         Returns
         -------
         str
-            One of ["TOPO_L", "TOPO_T", "TOPO_X", "TOPO_UNKNOWN"]
+            One of ["TOPO_I", "TOPO_L", "TOPO_T", "TOPO_X", "TOPO_EDGE_EDGE", "TOPO_EDGE_FACE", "TOPO_UNKNOWN"]
 
         """
         try:
@@ -307,11 +310,11 @@ class PlateConnectionSolver(ConnectionSolver):
         if plate_a_segment_index is None and plate_b_segment_index is None:
             return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
         if plate_a_segment_index is not None and plate_b_segment_index is None:
-            return JointTopology.TOPO_T, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+            return JointTopology.TOPO_EDGE_FACE, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
         if plate_a_segment_index is None and plate_b_segment_index is not None:
-            return JointTopology.TOPO_T, (plate_b, plate_b_segment_index), (plate_a, plate_a_segment_index)
+            return JointTopology.TOPO_EDGE_FACE, (plate_b, plate_b_segment_index), (plate_a, plate_a_segment_index)
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
-            return JointTopology.TOPO_L, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+            return JointTopology.TOPO_EDGE_EDGE, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
 
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):

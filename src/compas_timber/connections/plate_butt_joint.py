@@ -36,14 +36,10 @@ class PlateButtJoint(PlateJoint):
         """Return the index of the segment in the main plate outline."""
         return self.a_segment_index
 
-
-
     @property
     def _main_plate_guid(self):
         """Return the GUID of the main plate."""
         return self.plate_a.guid if self.plate_a else None
-
-
 
     @property
     def main_planes(self):
@@ -105,7 +101,7 @@ class PlateButtJoint(PlateJoint):
 class PlateLButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_EDGE
 
     @property
     def __data__(self):
@@ -135,7 +131,6 @@ class PlateLButtJoint(PlateButtJoint):
         """Return the GUID of the cross plate."""
         return self.plate_b.guid if self.plate_b else None
 
-
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""
 
@@ -152,7 +147,7 @@ class PlateLButtJoint(PlateButtJoint):
 class PlateTButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_FACE
 
     def __init__(self, main_plate, cross_plate, topology, main_segment_index, **kwargs):
         super(PlateTButtJoint, self).__init__(main_plate, cross_plate, topology, main_segment_index, **kwargs)
