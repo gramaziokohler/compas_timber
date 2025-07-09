@@ -602,18 +602,20 @@ document.write(`
 <h1>LButtJoint.create</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.LButtJoint.create">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">LButtJoint.</span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d686f0f/src/compas_timber/connections/joint.py#L125"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">LButtJoint.</span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b8237eb/src/compas_timber/connections/joint.py#L162"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Creates an instance of this joint and creates the new connection in <cite>model</cite>.</p>
-<p><cite>beams</cite> are expected to have been added to <cite>model</cite> before calling this method.</p>
-<p>This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
+<p><cite>elements</cite> are expected to have been added to <cite>model</cite> before calling this method.</p>
+<p>This code does not verify that the given elements are adjacent and/or lie in a topology which allows connecting
 them. This is the responsibility of the calling code.</p>
-<p>A <cite>ValueError</cite> is raised if <cite>beams</cite> contains less than two <cite>Beam</cite> objects.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>model</strong><span class="classifier"><a class="reference internal" href="compas_timber.model.TimberModel.html#compas_timber.model.TimberModel" title="compas_timber.model.TimberModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberModel</span></code></a></span></dt><dd><p>The model to which the beams and this joing belong.</p>
+<dt><strong>model</strong><span class="classifier"><a class="reference internal" href="compas_timber.model.TimberModel.html#compas_timber.model.TimberModel" title="compas_timber.model.TimberModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberModel</span></code></a></span></dt><dd><p>The model to which the elements and this joint belong.</p>
 </dd>
-<dt><strong>beams</strong><span class="classifier">list(<code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>)</span></dt><dd><p>A list containing two beams that whould be joined together</p>
+<dt><strong>*elements</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></span></dt><dd><p>The elements to be connected by this joint. The number of elements must comply with the <cite>Joint</cite> class’s
+<cite>MIN_ELEMENT_COUNT</cite> and <cite>MAX_ELEMENT_COUNT</cite> attributes.</p>
+</dd>
+<dt><strong>**kwargs</strong><span class="classifier">dict</span></dt><dd><p>Additional keyword arguments that are passed to the joint’s constructor.</p>
 </dd>
 </dl>
 </dd>

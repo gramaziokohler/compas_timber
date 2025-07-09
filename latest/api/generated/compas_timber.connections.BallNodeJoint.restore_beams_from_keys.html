@@ -602,13 +602,13 @@ document.write(`
 <h1>BallNodeJoint.restore_beams_from_keys</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.BallNodeJoint.restore_beams_from_keys">
-<span class="sig-prename descclassname"><span class="pre">BallNodeJoint.</span></span><span class="sig-name descname"><span class="pre">restore_beams_from_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d686f0f/src/compas_timber/connections/ball_node.py#L141"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Restores the reference to the beams associate with this joint.</p>
+<span class="sig-prename descclassname"><span class="pre">BallNodeJoint.</span></span><span class="sig-name descname"><span class="pre">restore_beams_from_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b8237eb/src/compas_timber/connections/ball_node.py#L141"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Restores the reference to the elements associated with this joint.</p>
 <p>During serialization, <code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.parts.Beam</span></code> objects
-are serialized by <code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.model</span></code>. To avoid circular references, Joint only stores the keys
-of the respective beams.</p>
-<p>This method is called by <code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.model</span></code> during de-serialization to restore the references.
-Since the roles of the beams are joint specific (e.g. main/cross beam) this method should be implemented by
+are serialized by <code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.model.Model</span></code>. To avoid circular references, Joint only stores the keys
+of the respective elements.</p>
+<p>This method is called by <a class="reference internal" href="compas_timber.model.TimberModel.html#compas_timber.model.TimberModel" title="compas_timber.model.TimberModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.model.TimberModel</span></code></a> during de-serialization to restore the references.
+Since the roles of the elements are joint specific (e.g. main/cross beam) this method should be implemented by
 the concrete implementation.</p>
 <p class="rubric">Examples</p>
 <p>See <a class="reference internal" href="compas_timber.connections.TButtJoint.html#compas_timber.connections.TButtJoint" title="compas_timber.connections.TButtJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.connections.TButtJoint</span></code></a>.</p>

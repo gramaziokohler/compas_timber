@@ -602,26 +602,24 @@ document.write(`
 <h1>Plate.from_brep</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.Plate.from_brep">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">from_brep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">brep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d686f0f/src/compas_timber/elements/plate.py#L303"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Creates a plate from a brep.
-Parameters
-———-
-brep : <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Brep.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Brep</span></code></a></p>
-<blockquote>
-<div><p>The brep of the plate.</p>
-</div></blockquote>
-<dl>
-<dt>thickness<span class="classifier">float</span></dt><dd><p>The thickness of the plate.</p>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">from_brep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">brep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b8237eb/src/compas_timber/elements/plate.py#L303"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Creates a plate from a brep.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>brep</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Brep.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Brep</span></code></a></span></dt><dd><p>The brep of the plate.</p>
 </dd>
-<dt>vector<span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Vector.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Vector</span></code></a></span></dt><dd><p>The vector in which the plate is extruded.(optional)</p>
+<dt><strong>thickness</strong><span class="classifier">float</span></dt><dd><p>The thickness of the plate.</p>
 </dd>
-<dt>kwargs<span class="classifier">dict</span></dt><dd><p>Additional keyword arguments.
+<dt><strong>vector</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Vector.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Vector</span></code></a></span></dt><dd><p>The vector in which the plate is extruded.(optional)</p>
+</dd>
+<dt><strong>kwargs</strong><span class="classifier">dict</span></dt><dd><p>Additional keyword arguments.
 These are passed to the <code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.elements.Slab</span></code> constructor.</p>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt><a class="reference internal" href="compas_timber.elements.Plate.html#compas_timber.elements.Plate" title="compas_timber.elements.Plate"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plate</span></code></a></dt><dd><p>A Plate object representing the plate with the given brep and thickness.</p>
 </dd>
 </dl>
