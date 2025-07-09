@@ -1,6 +1,7 @@
 # compas_timber
 
 [![Github Actions Build Status](https://github.com/gramaziokohler/compas_timber/workflows/build/badge.svg)](https://github.com/gramaziokohler/compas_timber/actions)
+[![codecov](https://codecov.io/gh/gramaziokohler/compas_timber/graph/badge.svg?token=EFI7G1T18Z)](https://codecov.io/gh/gramaziokohler/compas_timber)
 [![License](https://img.shields.io/github/license/gramaziokohler/compas_timber.svg)](https://pypi.python.org/pypi/compas_timber)
 [![pip downloads](https://img.shields.io/pypi/dm/compas_timber)](https://pypi.python.org/project/compas_timber)
 [![PyPI Package latest release](https://img.shields.io/pypi/v/compas_timber.svg)](https://pypi.python.org/pypi/compas_timber)
