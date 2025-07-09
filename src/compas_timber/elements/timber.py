@@ -1,3 +1,4 @@
+from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -23,13 +24,11 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
-        data["frame"] = self.frame
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, features=None, **kwargs):
-        super(TimberElement, self).__init__(**kwargs)
-        self._frame = kwargs.get("frame", None)
+    def __init__(self, features=None, frame=None, **kwargs):
+        super(TimberElement, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self._features = features or []
         self.debug_info = []
 
@@ -52,17 +51,6 @@ class TimberElement(Element):
     @property
     def is_fastener(self):
         return False
-
-    @property
-    def frame(self):
-        # type: () -> Frame
-        """The local coordinate frame of the element."""
-        return self._frame
-
-    @frame.setter
-    @reset_computed
-    def frame(self, frame):
-        self._frame = frame
 
     @property
     def features(self):

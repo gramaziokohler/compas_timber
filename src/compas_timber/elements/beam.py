@@ -134,23 +134,19 @@ class Beam(TimberElement):
     @property
     def blank_frame(self):
         # type: () -> Frame
-        # TODO: could be replaced by `ref_frame`?
+        # TODO: unlike `frame` this may me translated by the start extension.
+        # TODO: could be replaced by `ref_frame` (which is also affected by extension)?
+        #
         assert self.frame
         start, _ = self._resolve_blank_extensions()
         frame = self.frame.copy()
         frame.point += -frame.xaxis * start  # "extension" to the start edge
         return frame
 
-    @property
-    def ref_frame(self):
-        # type: () -> Frame
-        ref_point = self.blank_frame.point.copy()
-        ref_point += self.blank_frame.yaxis * self.width * 0.5
-        ref_point -= self.blank_frame.zaxis * self.height * 0.5
-        return Frame(ref_point, self.blank_frame.xaxis, self.blank_frame.zaxis)
 
     @property
     def faces(self):
+        # TODO: this should be removed! see if used anywhere, replace with `ref_sides` and DESTROY!
         # type: () -> list[Frame]
         assert self.frame
         return [
@@ -181,6 +177,19 @@ class Beam(TimberElement):
                 self.frame.zaxis,
             ),  # small face at end point
         ]
+
+
+    ########################################################################
+    # BTLx properties
+    # TODO: move these to TimberElement.
+    ########################################################################
+    @property
+    def ref_frame(self):
+        # type: () -> Frame
+        ref_point = self.blank_frame.point.copy()
+        ref_point += self.blank_frame.yaxis * self.width * 0.5
+        ref_point -= self.blank_frame.zaxis * self.height * 0.5
+        return Frame(ref_point, self.blank_frame.xaxis, self.blank_frame.zaxis)
 
     @property
     def ref_sides(self):
@@ -233,6 +242,7 @@ class Beam(TimberElement):
 
     @property
     def long_edges(self):
+        # TODO: can we replace this with `ref_edges`?
         # type: () -> list[Line]
         assert self.frame
         y = self.frame.yaxis
@@ -256,6 +266,7 @@ class Beam(TimberElement):
 
     @property
     def key(self):
+        # TODO: should be removed, this was just for compatibility with old code.
         # type: () -> int | None
         return self.graph_node
 
@@ -420,7 +431,7 @@ class Beam(TimberElement):
     @staticmethod
     def _create_shape(frame, xsize, ysize, zsize):
         # type: (Frame, float, float, float) -> Box
-        boxframe = frame.copy()
+        boxframe = Frame.worldXY()
         depth_offset = boxframe.xaxis * xsize * 0.5
         boxframe.point += depth_offset
         return Box(xsize, ysize, zsize, frame=boxframe)
