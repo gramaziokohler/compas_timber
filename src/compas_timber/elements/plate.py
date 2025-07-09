@@ -199,7 +199,6 @@ class Plate(TimberElement):
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        print("Resetting plate element.")
         self._features = []
         self._outline_feature = None
         self._opening_features = None

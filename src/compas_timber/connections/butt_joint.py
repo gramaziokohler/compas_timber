@@ -84,9 +84,6 @@ class ButtJoint(Joint):
     def main_beam_ref_side_index(self):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-
-        if self.reject_i and ref_side_index in [4, 5]:
-            raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
         return ref_side_index
 
     def add_extensions(self):

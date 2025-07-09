@@ -85,7 +85,7 @@ class ModelComponent(component):
                 handled_pairs.append({element_a, element_b})
 
         ##### Handle joinery #####
-        joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
+        joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
         if unmatched_pairs:
             for pair in unmatched_pairs:
                 self.AddRuntimeMessage(Warning, "No joint rule found for beams {} and {}".format(list(pair)[0].key, list(pair)[1].key))  # TODO: add to debug_info

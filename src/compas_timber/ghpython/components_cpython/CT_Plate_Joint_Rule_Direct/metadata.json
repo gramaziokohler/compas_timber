@@ -1,0 +1,32 @@
+{
+    "name": "Direct Plate Joint Rules",
+    "nickname": "DirectPlateJoints",
+    "category": "COMPAS Timber",
+    "subcategory": "Joint Rules",
+    "description": "Generates a direct joint between two plates. This overrides other joint rules.",
+    "exposure": 8,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "plate_a",
+                "description": "Plate A.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "plate_b",
+                "description": "Plate B.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Rule",
+                "description": "Direct Joint Rule."
+            }
+        ]
+    }
+}

@@ -1,5 +1,7 @@
 from .butt_joint import ButtJoint
 from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
+from compas_timber.errors import BeamJoiningError
 
 
 class LButtJoint(ButtJoint):
@@ -60,12 +62,21 @@ class LButtJoint(ButtJoint):
         data["reject_i"] = self.reject_i
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=False, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
         super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane=butt_plane, **kwargs)
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
         self.back_plane = back_plane
         self.update_beam_roles()
+
+    @property
+    def main_beam_ref_side_index(self):
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+
+        if self.reject_i and ref_side_index in [4, 5]:
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
+        return ref_side_index
 
     def update_beam_roles(self):
         """Flips the main and cross beams based on the joint parameters.

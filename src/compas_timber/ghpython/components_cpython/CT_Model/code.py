@@ -97,12 +97,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
                 handled_pairs.append({element_a, element_b})
 
         ##### Handle joinery #####
-        print(Model.beams)
-        joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
-        if unmatched_pairs:
-            for pair in unmatched_pairs:
-                e_a, e_b = pair
-                warning(self.component, f"No joint rule found for beams {e_a.key} and {e_b.key}")  # TODO: add to debug_info
+        joint_defs = JointRule.joint_defs_from_beams_and_rules(Model.beams, JointRules, MaxDistance, handled_pairs=handled_pairs)
 
         if wall_joint_definitions:
             joint_defs += wall_joint_definitions

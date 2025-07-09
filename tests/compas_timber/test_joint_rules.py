@@ -101,7 +101,7 @@ def test_joints_from_beams_and_topo_rules(beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(beams, rules)
+    joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(beams, rules)
     assert len(joint_defs) == 4
     assert len(unmatched_pairs) == 0
     names = set([joint_def.joint_type.__name__ for joint_def in joint_defs])
@@ -114,7 +114,7 @@ def test_joints_from_beams_and_rules_with_max_distance(separated_beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(separated_beams, rules)
+    joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(separated_beams, rules)
     assert len(joint_defs) == 0
     assert len(unmatched_pairs) == 4
 
@@ -123,7 +123,7 @@ def test_joints_from_beams_and_rules_with_max_distance(separated_beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint, max_distance=0.15),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(separated_beams, rules)
+    joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(separated_beams, rules)
     assert len(joint_defs) == 1
     assert len(unmatched_pairs) == 3
 
@@ -132,7 +132,7 @@ def test_joints_from_beams_and_rules_with_max_distance(separated_beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint, max_distance=0.05),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(separated_beams, rules, max_distance=0.15)
+    joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(separated_beams, rules, max_distance=0.15)
     assert len(joint_defs) == 3
     assert len(unmatched_pairs) == 1
 
@@ -183,7 +183,7 @@ def test_different_rules(L_beams):
         beam.attributes["category"] = "A"
     L_beams[1].attributes["category"] = "B"
     rules = [DirectRule(LLapJoint, L_beams[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
-    joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(L_beams, rules)
+    joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(L_beams, rules)
     joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs])
     assert joints_names == set(["LLapJoint", "LButtJoint", "LMiterJoint"])
     assert len(joint_defs) == 3
@@ -194,12 +194,12 @@ def test_different_rules_max_distance(L_beams_separated):
         beam.attributes["category"] = "A"
     L_beams_separated[1].attributes["category"] = "B"
     rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
-    joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(L_beams_separated, rules)
+    joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(L_beams_separated, rules)
     joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs])
     assert len(joint_defs) == 0
 
     rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint, max_distance=0.15)]
-    joint_defs, unmatched_pairs = JointRule.joints_from_beams_and_rules(L_beams_separated, rules)
+    joint_defs, unmatched_pairs = JointRule.joint_defs_from_beams_and_rules(L_beams_separated, rules)
     joints_names = set([joint_def.joint_type.__name__ for joint_def in joint_defs])
     assert joints_names == set(["LMiterJoint"])
     assert len(joint_defs) == 3
