@@ -29,8 +29,6 @@ from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
 
-from .workflow import JointDefinition
-
 
 class WallSelector(object):
     """Selects walls based on their attributes."""
@@ -617,7 +615,7 @@ class WallPopulator(object):
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
 
-        joint_definitions = []
+        joints = []
         max_distance = max_distance or 0.0
         max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
         for pair in found_pairs:
@@ -630,9 +628,9 @@ class WallPopulator(object):
                 if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
                     if rule.joint_type == LButtJoint:
                         beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                    joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+                    joints.append(rule.joint_type([beam_a, beam_b], **rule.kwargs))
                     # break # ?
-        return joint_definitions
+        return joints
 
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)

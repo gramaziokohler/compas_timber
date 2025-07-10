@@ -69,16 +69,13 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         self.add_elements_to_model(Model, Elements, Containers)
 
         ##### Wall populating #####
-        handled_pairs, wall_joint_definitions = self.handle_populators(Model, Containers, MaxDistance)
+        handled_pairs, wall_joints = self.handle_populators(Model, Containers, MaxDistance)
 
         ##### Handle joinery #####
         # checks elements compatibility and generates Joints
         joints = JointRule.joints_from_rules_and_elements(JointRules, Model.elements(), MaxDistance, handled_pairs)
-        for joint in joints:
+        for joint in joints + wall_joints:
             Model.add_joint(joint)
-
-        for j_def in wall_joint_definitions:
-            j_def.joint_type.create(Model, *j_def.elements, **j_def.kwargs)
 
         # applies extensions and features resulting from joints
         bje = Model.process_joinery()
