@@ -1,3 +1,5 @@
+from compas_timber.errors import BeamJoiningError
+
 from .butt_joint import ButtJoint
 from .solver import JointTopology
 
@@ -72,7 +74,7 @@ class LButtJoint(ButtJoint):
         ref_side_index = super(LButtJoint, self).main_beam_ref_side_index
 
         beam_meet_at_ends = ref_side_index in (4, 5)
-        
+
         if self.reject_i and beam_meet_at_ends:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
         
