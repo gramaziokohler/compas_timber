@@ -367,7 +367,7 @@ class Plate(TimberElement):
             plate_geo -= brep
         return plate_geo
 
-    def compute_geometry(self, include_features=True):
+    def compute_elementgeometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
         """Compute the geometry of the element.
 
