@@ -1,3 +1,4 @@
+from email import errors
 from itertools import combinations
 
 from compas.tolerance import TOL
@@ -12,6 +13,7 @@ from compas_timber.connections import XLapJoint
 from compas_timber.connections.plate_butt_joint import PlateButtJoint
 from compas_timber.connections.plate_butt_joint import PlateTButtJoint
 from compas_timber.connections.plate_miter_joint import PlateMiterJoint
+from compas_timber.errors import BeamJoiningError
 from compas_timber.elements.beam import Beam
 from compas_timber.elements.plate import Plate
 from compas_timber.utils import distance_segment_segment
@@ -153,7 +155,7 @@ class JointRule(object):
         return joint_defs, unmatched_pairs
 
     @staticmethod
-    def joints_from_rules_and_elements(elements, rules, max_distance=TOL.absolute, handled_pairs=None):
+    def joints_from_rules_and_elements(rules, elements, max_distance=TOL.absolute, handled_pairs=None):
         handled_pairs = handled_pairs or []
         elements = elements if isinstance(elements, list) else list(elements)
         direct_rules = JointRule.get_direct_rules(rules)
@@ -172,10 +174,13 @@ class JointRule(object):
 
         direct_joints = []
         joints = []
+        joining_errors = []
         for rule in direct_rules:
-            joint = rule.try_get_joint(model_max_distance=max_distance)  # try to get the joint from the rule
-            if joint:
+            try:
+                joint = rule.get_joint(model_max_distance=max_distance)  # try to get the joint from the rule
                 direct_joints.append(joint)
+            except BeamJoiningError as e:
+                joining_errors.append(e)
 
         while element_pairs:
             pair = element_pairs.pop()
@@ -201,7 +206,7 @@ class JointRule(object):
                     joints.append(joint)
                     break
 
-        return direct_joints + joints
+        return direct_joints + joints, joining_errors
 
 
 class DirectRule(JointRule):
@@ -290,7 +295,7 @@ class DirectRule(JointRule):
             except TypeError:
                 raise UserWarning("unable to comply direct joint element sets")
 
-    def try_get_joint(self, model_max_distance=TOL.absolute):
+    def get_joint(self, model_max_distance=TOL.absolute):
         """Returns True if the given elements comply with this DirectRule.
         Checks if the distance between the centerlines of the elements is less than the max_distance.
         Does not check for JointTopology compliance.
@@ -316,18 +321,24 @@ class DirectRule(JointRule):
             try:
                 for pair in combinations(list(self.elements), 2):
                     if distance_segment_segment(pair[0].centerline, pair[1].centerline) > max_distance:
-                        raise ValueError("Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance))
+                        raise BeamJoiningError(pair,
+                                               self.joint_type,
+                                               "Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance),
+                                               [e.shape for e in pair])
                 return self.joint_type(*self.elements, **self.kwargs)
             except TypeError:
                 raise UserWarning("unable to comply direct joint element sets")
         elif all([isinstance(e, Plate) for e in self.elements]) and issubclass(self.joint_type, PlateJoint):
             if len(self.elements) != 2:
-                raise UserWarning("DirectRule for Plates requires exactly two elements.")
+                raise BeamJoiningError(self.elements, self.joint_type, "DirectRule for Plates requires exactly two elements.", [e.shape for e in self.elements])
 
             topo, plate_a, plate_b = PlateConnectionSolver().find_topology(self.elements[0], self.elements[1], max_distance=max_distance)
             if topo is not None:
                 if topo != self.joint_type.SUPPORTED_TOPOLOGY:
-                    raise ValueError("Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(topo)))
+                    raise BeamJoiningError(self.elements,
+                                           self.joint_type,
+                                           "Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(topo)),
+                                           [e.shape for e in self.elements])
                     # TODO: implement error handling a la FeatureApplicationError.
                 if topo == JointTopology.TOPO_EDGE_EDGE:
                     return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], plate_b[1], **self.kwargs)

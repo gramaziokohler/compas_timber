@@ -73,7 +73,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         ##### Handle joinery #####
         # checks elements compatibility and generates Joints
-        joints = JointRule.joints_from_rules_and_elements(Model.elements(), JointRules, MaxDistance, handled_pairs)
+        joints = JointRule.joints_from_rules_and_elements(JointRules, Model.elements(), MaxDistance, handled_pairs)
         for joint in joints:
             Model.add_joint(joint)
 
