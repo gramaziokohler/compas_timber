@@ -13,3 +13,4 @@ build
 pythonnet
 tomlkit
 compas_viewer
+pytest-cov

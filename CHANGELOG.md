@@ -36,6 +36,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
 * Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
 * Added `interactions()` method to `TimberModel` for iterating over edge-level joints and contacts in the model graph.
+* Added `topology` to class `Joint`.
+* Added `location` to class `Joint`.
+* Added `NBeamKDTreeAnalyzer` to `compas_timber.connections`.
+* Added `TripletAnalyzer` to `compas_timber.connections`.
+* Added `QuadAnalyzer` to `compas_timber.connections`.
+* Added `CompositeAnalyzer` to `compas_timber.connections`.
+* Added method `connect_adjacent_beams` to `TimberModel`.
+* Added `PlateJoint`.
+* Added `PlateButtJoint`.
+* Added `PlateMiterJoint`.
+* Added `PlateConnectionSolver`.
+* Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 
 ### Changed
 
@@ -46,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+* Renamed `NullJoint` to `GenericJoint`.
 * Fixed bug in show_ref_faces GH component.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
 * Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Beam` following the renaming in `compas_model`.
@@ -59,11 +72,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
 * Updated default edge attributes in the model graph to include `joints` and `contacts`.
 * Updated `compas_model` version pinning from `0.4.4` to `0.8.0` to align with the latest development.
+* `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Fixed several GH Components for Rhino8 compatibility.
+* Fixed `graph_node` is `None` after deserializing a `TimberModel`.
 
 ### Removed
 
 * Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
+* Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
+* Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
 
 
 ## [0.16.2] 2025-05-07
@@ -75,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed max recursion depth error when copying `TimberModel`/`Beam` with proxy processings.
 
 ### Removed
+
 
 
 ## [0.16.1] 2025-04-30

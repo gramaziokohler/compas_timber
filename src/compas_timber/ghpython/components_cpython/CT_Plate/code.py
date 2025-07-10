@@ -7,7 +7,7 @@ import Rhino
 import rhinoscriptsyntax as rs
 import System
 from compas.scene import Scene
-from compas_rhino.conversions import curve_to_compas
+from compas_rhino.conversions import polyline_to_compas
 
 from compas_timber.elements import Plate as CTPlate
 from compas_timber.ghpython.rhino_object_name_attributes import update_rhobj_attributes_name
@@ -58,9 +58,9 @@ class Plate(Grasshopper.Kernel.GH_ScriptInstance):
             for line, t, v, c in zip(outline, thickness, vector, category):
                 guid, geometry = self._get_guid_and_geometry(line)
                 rhino_polyline = rs.coercecurve(geometry)
-                line = curve_to_compas(rhino_polyline)
+                line = polyline_to_compas(rhino_polyline.ToPolyline())
 
-                plate = CTPlate(line, t, v)
+                plate = CTPlate.from_outline_thickness(line, t, v)
                 plate.attributes["rhino_guid"] = str(guid) if guid else None
                 plate.attributes["category"] = c
 

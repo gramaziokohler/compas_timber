@@ -1,3 +1,4 @@
+import Grasshopper
 from ghpythonlib.componentbase import executingcomponent as component
 
 
@@ -24,4 +25,4 @@ class SurfaceModelOptions(component):
             "joint_overrides": joint_overrides,
         }
 
-        return (dict,)
+        return Grasshopper.Kernel.Types.GH_ObjectWrapper(dict)

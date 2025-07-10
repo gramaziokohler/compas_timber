@@ -1,11 +1,13 @@
 from .joint import Joint
+from .butt_joint import ButtJoint
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
-from .null_joint import NullJoint
+from .generic_joint import GenericJoint
 from .solver import ConnectionSolver
+from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
 from .t_butt import TButtJoint
@@ -25,10 +27,24 @@ from .utilities import point_centerline_towards_joint
 from .wall_joint import WallJoint
 from .wall_joint import InterfaceLocation
 from .wall_joint import InterfaceRole
+from .plate_joint import PlateJoint
+from .plate_butt_joint import PlateButtJoint
+from .plate_butt_joint import PlateLButtJoint
+from .plate_butt_joint import PlateTButtJoint
+from .plate_miter_joint import PlateMiterJoint
+from .plate_joint import PlateToPlateInterface
+from .analyzers import NBeamKDTreeAnalyzer
+from .analyzers import TripletAnalyzer
+from .analyzers import QuadAnalyzer
+from .analyzers import CompositeAnalyzer
+from .analyzers import Cluster
+from .analyzers import BeamGroupAnalyzer
+from .analyzers import MaxNCompositeAnalyzer
 
 __all__ = [
     "Joint",
     "LapJoint",
+    "ButtJoint",
     "TButtJoint",
     "LButtJoint",
     "TButtJoint",
@@ -39,10 +55,11 @@ __all__ = [
     "XNotchJoint",
     "TLapJoint",
     "LLapJoint",
-    "NullJoint",
+    "GenericJoint",
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
+    "PlateConnectionSolver",
     "find_neighboring_elements",
     "TDovetailJoint",
     "BallNodeJoint",
@@ -55,4 +72,17 @@ __all__ = [
     "WallJoint",
     "InterfaceLocation",
     "InterfaceRole",
+    "PlateJoint",
+    "PlateButtJoint",
+    "PlateLButtJoint",
+    "PlateTButtJoint",
+    "PlateMiterJoint",
+    "PlateToPlateInterface",
+    "NBeamKDTreeAnalyzer",
+    "TripletAnalyzer",
+    "QuadAnalyzer",
+    "CompositeAnalyzer",
+    "Cluster",
+    "BeamGroupAnalyzer",
+    "MaxNCompositeAnalyzer",
 ]
