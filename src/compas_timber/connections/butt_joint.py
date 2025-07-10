@@ -64,7 +64,6 @@ class ButtJoint(Joint):
         self.butt_plane = butt_plane
         self.features = []
 
-
     @property
     def elements(self):
         return [self.main_beam, self.cross_beam]

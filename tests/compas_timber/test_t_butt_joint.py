@@ -39,7 +39,8 @@ def test_create_with_fastener():
     assert instance.cross_beam == B2
     assert len(list(A.interactions())) == 5
     assert len(list(A.copy().elements())) == 4
-    
+
+
 def test_create_t_butt_with_depth():
     beam_a = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), z_vector=Vector(0, 0, 1), width=0.100, height=0.200)
     beam_b = Beam.from_endpoints(Point(0, 0.0, 0), Point(0, 1.0, 0), z_vector=Vector(0, 0, 1), width=0.100, height=0.200)

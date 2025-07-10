@@ -77,7 +77,7 @@ class LButtJoint(ButtJoint):
 
         if self.reject_i and beam_meet_at_ends:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
-        
+
         return ref_side_index
 
     def update_beam_roles(self):
