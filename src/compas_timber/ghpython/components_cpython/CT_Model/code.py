@@ -63,9 +63,12 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         ##### Handle joinery #####
         # checks elements compatibility and generates Joints
-        joints = JointRule.joints_from_rules_and_elements(JointRules, Model.elements(), MaxDistance, handled_pairs)
+        joints, joint_errors = JointRule.joints_from_rules_and_elements(JointRules, Model.elements(), MaxDistance, handled_pairs)
         for joint in joints + wall_joints:
             Model.add_joint(joint)
+
+        for je in joint_errors:
+            debug_info.add_joint_error(je)
 
         # applies extensions and features resulting from joints
         bje = Model.process_joinery()
@@ -87,6 +90,17 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             warning(self.component, "Error found during joint creation. See DebugInfo output for details.")
 
         return Model, Geometry, debug_info
+
+    def get_tol(self):
+        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
+        if units == "m":
+            return Tolerance(unit="M", absolute=1e-6, relative=1e-6)
+        elif units == "mm":
+            return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            error(self.component, f"Unsupported unit: {units}")
+            return
+
 
     def add_elements_to_model(self, model, elements, containers):
         """Adds elements to the model and groups them by slab."""
