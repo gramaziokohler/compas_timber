@@ -305,6 +305,7 @@ class Plate(TimberElement):
     @classmethod
     def from_brep(cls, brep, thickness, vector=None, **kwargs):
         """Creates a plate from a brep.
+
         Parameters
         ----------
         brep : :class:`compas.geometry.Brep`
@@ -448,3 +449,20 @@ class Plate(TimberElement):
 
         """
         return self.obb.to_mesh()
+
+    def opp_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the opposite side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the opposite side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 2) % 4]

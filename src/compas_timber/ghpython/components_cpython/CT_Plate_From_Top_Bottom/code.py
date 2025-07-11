@@ -16,15 +16,11 @@ from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(
-        self,
-        top: System.Collections.Generic.List[object],
-        bottom: System.Collections.Generic.List[float],
-        category: System.Collections.Generic.List[str],
-        updateRefObj: bool,
+        self, Top: System.Collections.Generic.List[object], Bottom: System.Collections.Generic.List[object], category: System.Collections.Generic.List[str], updateRefObj: bool
     ):
         # minimum inputs required
 
-        if not list_input_valid_cpython(ghenv, top, "Outline") or not list_input_valid_cpython(ghenv, bottom, "Thickness"):
+        if not list_input_valid_cpython(ghenv, Top, "Outline") or not list_input_valid_cpython(ghenv, Bottom, "Thickness"):
             return
         else:
             if not category:
@@ -32,9 +28,9 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
             plates = []
             scene = Scene()
             # check list lengths for consistency
-            if len(top) != len(bottom):
+            if len(Top) != len(Bottom):
                 ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " `Top` and `Bottom` must have the same number of elements.")
-            if len(category) not in (0, 1, len(top)):
+            if len(category) not in (0, 1, len(Top)):
                 ghenv.Component.AddRuntimeMessage(
                     Grasshopper.Kernel.GH_RuntimeMessageLevel.Error, " In 'Category' I need either none, one or the same number of inputs as the `Top` parameter."
                 )
@@ -43,7 +39,7 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
             if len(category) != len(top):
                 category = [category[0] for _ in range(len(top))]
 
-            for top_line, bottom_line, c in zip(top, bottom, category):
+            for top_line, bottom_line, c in zip(Top, Bottom, category):
                 t_guid, t_geometry = self._get_guid_and_geometry(top_line)
                 b_guid, b_geometry = self._get_guid_and_geometry(bottom_line)
                 t_rhino_polyline = rs.coercecurve(t_geometry)
