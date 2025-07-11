@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
 * Fixed several GH Components for Rhino8 compatibility.
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
+* Fixed a bug in `BeamsFromMesh` GH Component.
 * Fixed attribute error when creating a `TButtJoint`.
 * Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.joints_from_rules_and_elements` which now returns Joint instances instead of `JointDefinition`s.
 * Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
