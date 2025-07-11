@@ -4,10 +4,9 @@
 import inspect
 
 import Grasshopper  # type: ignore
+from System.Windows.Forms import ToolStripSeparator
 
-from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import Joint
-from compas_timber.connections import JointTopology
+from compas_timber.connections import PlateJoint
 from compas_timber.design import DirectRule
 from compas_timber.ghpython import error
 from compas_timber.ghpython import get_leaf_subclasses
@@ -17,18 +16,15 @@ from compas_timber.ghpython import rename_cpython_gh_output
 from compas_timber.ghpython import warning
 
 
-class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
+class DirectPlateJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
-        super(DirectJointRule, self).__init__()
+        super(DirectPlateJointRule, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
+        for cls in get_leaf_subclasses(PlateJoint):
             if cls.MAX_ELEMENT_COUNT == 2:
                 self.classes[cls.__name__] = cls
 
-        if self.component.Params.Output[0].NickName == "Rule":
-            self.joint_type = None
-        else:
-            self.joint_type = self.classes.get(self.component.Params.Output[0].NickName, None)
+        self.joint_type = self.classes.get(self.component.Params.Output[0].NickName, None)
 
     @property
     def component(self):
@@ -41,41 +37,32 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             return None
         else:
             self.component.Message = self.joint_type.__name__
-            beam_a = args[0]
-            beam_b = args[1]
-            kwargs = {}
-            for i, val in enumerate(args[2:]):
-                if val is not None:
-                    kwargs[self.arg_names()[i + 2]] = val
+            plate_a = args[0]
+            plate_b = args[1]
 
-            if not item_input_valid_cpython(ghenv, beam_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, beam_b, self.arg_names()[1]):
+            if not item_input_valid_cpython(ghenv, plate_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, plate_b, self.arg_names()[1]):
                 return
-            if not hasattr(beam_a, "__iter__"):
-                beam_a = [beam_a]
-            if not hasattr(beam_b, "__iter__"):
-                beam_b = [beam_b]
-            if len(beam_a) != len(beam_b):
+            if not hasattr(plate_a, "__iter__"):
+                plate_a = [plate_a]
+            if not hasattr(plate_b, "__iter__"):
+                plate_b = [plate_b]
+            if len(plate_a) != len(plate_b):
                 error(self.component, f"Number of items in {self.arg_names()[0]} and {self.arg_names()[1]} must match!")
                 return
             Rules = []
-            for main, secondary in zip(beam_a, beam_b):
-                topology, _, _ = ConnectionSolver().find_topology(main, secondary)
-                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-                if not hasattr(supported_topo, "__iter__"):
-                    supported_topo = [supported_topo]
-                if topology not in supported_topo:
-                    warning(self.component, f"Beams meet with topology: {JointTopology.get_name(topology)} which does not agree with joint of type: {self.joint_type.__name__}")
-                Rules.append(DirectRule(self.joint_type, [main, secondary], **kwargs))
+            for main, secondary in zip(plate_a, plate_b):
+                Rules.append(DirectRule(self.joint_type, [secondary, main]))
             return Rules
 
     def arg_names(self):
-        return inspect.getargspec(self.joint_type.__init__)[0][1:] + ["max_distance"]
+        return inspect.getargspec(self.joint_type.__init__)[0][1:3] + ["max_distance"]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():
             item = menu.Items.Add(name, None, self.on_item_click)
             if self.joint_type and name == self.joint_type.__name__:
                 item.Checked = True
+        menu.Items.Add(ToolStripSeparator())
 
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]

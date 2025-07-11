@@ -23,15 +23,10 @@ class L_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 supported_topo = [supported_topo]
             if JointTopology.TOPO_L in supported_topo:
                 self.classes[cls.__name__] = cls
-        if ghenv.Component.Params.Output[0].NickName == "Rule":
-            self.joint_type = LMiterJoint
-            self.clicked = False
-        else:
-            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
-            self.clicked = True
+        self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
     def RunScript(self, *args):
-        if not self.clicked:
+        if not self.joint_type:
             ghenv.Component.Message = "Default: LMiterJoint"
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "LMiterJoint is default, change in context menu (right click)")
             return TopologyRule(JointTopology.TOPO_L, LMiterJoint)
@@ -59,7 +54,6 @@ class L_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 item.Checked = True
 
     def on_item_click(self, sender, event_info):
-        self.clicked = True
         self.joint_type = self.classes[str(sender)]
         rename_cpython_gh_output(self.joint_type.__name__, 0, ghenv)
         manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=0)

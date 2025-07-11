@@ -11,6 +11,7 @@ from compas.geometry import closest_point_on_plane
 from compas.geometry import distance_point_plane
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
+from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
@@ -195,6 +196,7 @@ class Plate(TimberElement):
                 self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
         return self._frame
 
+    @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self._features = []
