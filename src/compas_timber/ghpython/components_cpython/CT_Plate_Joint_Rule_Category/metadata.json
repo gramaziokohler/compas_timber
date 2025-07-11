@@ -12,15 +12,22 @@
             {
                 "name": "plate_a_category",
                 "description": "Plate A category.",
-                "typeHintID": "string",
-                "scriptParamAccess": 1
+                "typeHintID": "str",
+                "scriptParamAccess": 0
             },
             {
                 "name": "plate_b_category",
                 "description": "Plate B category.",
-                "typeHintID": "string",
-                "scriptParamAccess": 1
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "max_distance",
+                "description": "Maximum distance between plates to be considered connected.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
             }
+
         ],
         "outputParameters": [
             {

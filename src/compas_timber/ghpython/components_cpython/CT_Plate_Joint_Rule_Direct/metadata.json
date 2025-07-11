@@ -20,6 +20,12 @@
                 "description": "Plate B.",
                 "typeHintID": "none",
                 "scriptParamAccess": 1
+            },
+            {
+                "name": "max_distance",
+                "description": "Maximum distance between plates to be considered connected.",
+                "typeHintID": "float",
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [

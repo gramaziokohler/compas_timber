@@ -40,8 +40,8 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
                 )
 
             # duplicate data if None or single value
-            if len(category) != N:
-                category = [category[0] for _ in range(N)]
+            if len(category) != len(top):
+                category = [category[0] for _ in range(len(top))]
 
             for top_line, bottom_line, c in zip(top, bottom, category):
                 t_guid, t_geometry = self._get_guid_and_geometry(top_line)

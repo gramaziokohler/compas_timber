@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateConnectionSolver`.
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 
+
 ### Changed
 
 * BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.
