@@ -25,7 +25,7 @@ Creating a New Joint
 
    - **X-joints**: Elements both interacting somewhere along their lengths
    - **L-joints**: Elements meeting at their ends at an angle
-   - **T-joints**: One elements end intersecting another element along its length
+   - **T-joints**: One element's end intersecting another element along its length
    - **I-joints**: Elements joined end-to-end in a straight line
 
    **Define Element Roles**: Assign specific roles to each participating element:
