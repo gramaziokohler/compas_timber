@@ -7,5 +7,5 @@ Welcome to the COMPAS Timber contribution guide. This section provides comprehen
 .. toctree::
     :maxdepth: 1
 
-    contribution/BTLx Contribution Guide
-    contribution/Joint Contribution Guide
+    contribution/BTLx_contribution_guide
+    contribution/joints_contribution_guide
