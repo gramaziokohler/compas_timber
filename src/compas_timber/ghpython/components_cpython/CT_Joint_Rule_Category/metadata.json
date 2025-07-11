@@ -8,7 +8,20 @@
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
-        "inputParameters": [],
+        "inputParameters": [
+                        {
+                "name": "beam_a_category",
+                "description": "Beam A category.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "beam_b_category",
+                "description": "Beam B category.",
+                "typeHintID": "str",
+                "scriptParamAccess": 0
+            }
+        ],
         "outputParameters": [
             {
                 "name": "Rule",
