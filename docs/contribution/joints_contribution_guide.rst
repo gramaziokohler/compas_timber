@@ -23,7 +23,7 @@ Creating a New Joint
 
    **Identify Joint Topology**: Determine the connection topology using standard notation:
 
-   - **X-joints**: Elements both interacting somwhere along their lengths
+   - **X-joints**: Elements both interacting somewhere along their lengths
    - **L-joints**: Elements meeting at their ends at an angle
    - **T-joints**: One elements end intersecting another element along its length
    - **I-joints**: Elements joined end-to-end in a straight line
