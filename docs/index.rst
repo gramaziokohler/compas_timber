@@ -47,6 +47,7 @@ Table of Contents
    api
    examples
    tutorials
+   contribution
    license
    citing
 
