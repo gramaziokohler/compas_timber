@@ -45,20 +45,6 @@ class ContainerDefinition(object):
 
 
 class JointRule(object):
-    def comply(self, elements):
-        """Returns True if the provided elements comply with the rule defined by this instance. False otherwise.
-
-        Parameters
-        ----------
-        elements : list(:class:`~compas_timber.elements.TimberElement`)
-
-        Returns
-        -------
-        bool
-
-        """
-        raise NotImplementedError
-
     @staticmethod
     def get_direct_rules(rules):
         return [rule for rule in rules if rule.__class__.__name__ == "DirectRule"]
@@ -173,57 +159,6 @@ class DirectRule(JointRule):
         except TypeError:
             raise UserWarning("unable to comply direct joint element sets")
 
-    def comply(self, elements, model_max_distance=TOL.absolute):
-        """Returns True if the given elements comply with this DirectRule.
-        Checks if the distance between the centerlines of the elements is less than the max_distance.
-        Does not check for JointTopology compliance.
-
-        Parameters
-        ----------
-        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
-            A tuple containing two elements to check.
-        model_max_distance : float, optional
-            The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
-            This is only used if the rule does not already have a max_distance set.
-
-        Returns
-        -------
-        bool
-            True if the elements comply with the rule, False otherwise.
-
-        """
-
-        if self.max_distance is not None:
-            max_distance = self.max_distance
-        else:
-            max_distance = model_max_distance
-        if all([isinstance(e, Beam) for e in elements]):
-            try:
-                for pair in combinations(list(elements), 2):
-                    return distance_segment_segment(pair[0].centerline, pair[1].centerline) <= max_distance
-            except TypeError:
-                raise UserWarning("unable to comply direct joint element sets")
-        elif all([isinstance(e, Plate) for e in elements]):
-            if len(elements) != 2:
-                raise UserWarning("DirectRule for Plates requires exactly two elements.")
-            try:
-                topo_results = PlateConnectionSolver().find_topology(elements[0], elements[1], max_distance=max_distance)
-                if topo_results[0] is not None:
-                    self.kwargs["topology"] = topo_results[0]
-                    if topo_results[0] != self.joint_type.SUPPORTED_TOPOLOGY:
-                        raise ValueError("Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(topo_results[0])))
-                        # TODO: implement error handling a la FeatureApplicationError.
-                    if issubclass(self.joint_type, PlateButtJoint):
-                        self.kwargs["main_segment_index"] = topo_results[1][1]
-                        if topo_results[0] == JointTopology.TOPO_EDGE_EDGE:
-                            self.kwargs["cross_segment_index"] = topo_results[2][1]
-                    else:
-                        self.kwargs["a_segment_index"] = topo_results[1][1]
-                        self.kwargs["b_segment_index"] = topo_results[2][1]
-                    return True
-            except TypeError:
-                raise UserWarning("unable to comply direct joint element sets")
-
     def get_joint(self, model_max_distance=TOL.absolute):
         """Returns True if the given elements comply with this DirectRule.
         Checks if the distance between the centerlines of the elements is less than the max_distance.
@@ -274,7 +209,6 @@ class DirectRule(JointRule):
                 else:
                     return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], **self.kwargs)
 
-
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the elements, this rule assigns
 
@@ -308,48 +242,6 @@ class CategoryRule(JointRule):
 
     def __repr__(self):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
-
-    def comply(self, elements, model_max_distance=TOL.absolute):
-        """Checks if the given elements comply with this CategoryRule.
-        It checks:
-        that the elements have the expected category attribute,
-        that the max_distance is not exceeded,
-        that the joint supports the topology of the elements.
-
-
-        Parameters
-        ----------
-        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
-            A tuple containing two elements to check.
-        model_max_distance : float, optional
-            The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
-            This is only used if the rule does not already have a max_distance set.
-
-        Returns
-        -------
-        bool
-            True if the elements comply with the rule, False otherwise.
-
-        """
-        if self.max_distance is not None:
-            max_distance = self.max_distance
-        else:
-            max_distance = model_max_distance
-        try:
-            element_cats = set([e.attributes["category"] for e in elements])
-            comply = False
-            elements = list(elements)
-            if element_cats == set([self.category_a, self.category_b]):
-                solver = ConnectionSolver()
-                found_topology = solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
-                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-                if not isinstance(supported_topo, list):
-                    supported_topo = [supported_topo]
-                if found_topology in supported_topo:
-                    comply = True
-            return comply
-        except KeyError:
-            return False
 
     def try_get_joint(self, elements, model_max_distance=TOL.absolute):
         """Checks if the given elements comply with this CategoryRule.
@@ -454,40 +346,6 @@ class TopologyRule(JointRule):
             self.topology_type,
             self.joint_type,
         )
-
-    def comply(self, elements, model_max_distance=TOL.absolute):
-        """Checks if the given elements comply with this TopologyRule.
-        It checks that the max_distance is not exceeded and that the topology of the elements matches the rule.
-        If the elements are not in the correct order, they are reversed.
-
-        Parameters
-        ----------
-        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
-            A tuple containing two elements to check.
-        model_max_distance : float, optional
-            The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
-            This is only used if the rule does not already have a max_distance set.
-
-        Returns
-        -------
-        bool
-            True if the elements comply with the rule, False otherwise.
-        list(:class:`~compas_timber.elements.TimberElement`)
-            The elements in the correct order.
-
-        """
-        max_distance = self.max_distance or model_max_distance
-
-        try:
-            elements = list(elements)
-            solver = ConnectionSolver()
-            topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
-            return (
-                self.topology_type == topo_results[0],
-                [topo_results[1], topo_results[2]],
-            )  # comply, if topologies match, reverse if the element order should be switched
-        except KeyError:
-            return False
 
     def try_get_joint(self, elements, model_max_distance=TOL.absolute):
         """Checks if the given elements comply with this CategoryRule.

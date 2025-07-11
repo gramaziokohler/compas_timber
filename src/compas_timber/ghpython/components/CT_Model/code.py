@@ -73,9 +73,13 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         ##### Handle joinery #####
         # checks elements compatibility and generates Joints
-        joints = JointRule.joints_from_rules_and_elements(JointRules, Model.elements(), MaxDistance, handled_pairs)
+        JointRules = [j for j in JointRules if j is not None]
+        joints, joint_errors = JointRule.joints_from_rules_and_elements(JointRules, Model.elements(), MaxDistance, handled_pairs)
         for joint in joints + wall_joints:
             Model.add_joint(joint)
+
+        for je in joint_errors:
+            debug_info.add_joint_error(je)
 
         # applies extensions and features resulting from joints
         bje = Model.process_joinery()
@@ -98,8 +102,20 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         return Model, Geometry, debug_info
 
+    def get_tol(self):
+        units = Rhino.RhinoDoc.ActiveDoc.GetUnitSystemName(True, True, True, True)
+        if units == "m":
+            return Tolerance(unit="M", absolute=1e-6, relative=1e-6)
+        elif units == "mm":
+            return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        else:
+            error(self.component, f"Unsupported unit: {units}")
+            return
+
+
     def add_elements_to_model(self, model, elements, containers):
         """Adds elements to the model and groups them by slab."""
+        elements = [e for e in elements if e is not None]
         for element in elements:
             element.reset()
             model.add_element(element)
@@ -110,20 +126,21 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             slab = c_def.slab
             model.add_group_element(slab, name=slab.name + str(index))
 
-    def handle_populators(self, Model, Containers, MaxDistance):
+
+    def handle_populators(self, model, containers, max_distance):
         # Handle wall populators
-        Model.connect_adjacent_walls()
-        config_sets = [c_def.config_set for c_def in Containers]
+        model.connect_adjacent_walls()
+        config_sets = [c_def.config_set for c_def in containers]
         populators = []
         if any(config_sets):
-            populators = WallPopulator.from_model(Model, config_sets)
+            populators = WallPopulator.from_model(model, config_sets)
 
         handled_pairs = []
         wall_joint_definitions = []
-        for populator, slab in zip(populators, list(Model.slabs)):
+        for populator, slab in zip(populators, list(model.slabs)):
             elements = populator.create_elements()
-            Model.add_elements(elements, parent=slab.name)
-            joint_definitions = populator.create_joint_definitions(elements, MaxDistance)
+            model.add_elements(elements, parent=slab.name)
+            joint_definitions = populator.create_joint_definitions(elements, max_distance)
             wall_joint_definitions.extend(joint_definitions)
             for j_def in joint_definitions:
                 element_a, element_b = j_def.elements

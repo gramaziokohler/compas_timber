@@ -42,6 +42,11 @@ class PlateButtJoint(PlateJoint):
         return self.plate_a.guid if self.plate_a else None
 
     @property
+    def _cross_plate_guid(self):
+        """Return the GUID of the cross plate."""
+        return self.plate_b.guid if self.plate_b else None
+
+    @property
     def main_planes(self):
         """Return the ordered planes of the main plate."""
         return self.a_planes
@@ -125,11 +130,6 @@ class PlateLButtJoint(PlateButtJoint):
     def cross_segment_index(self, value):
         """Set the index of the segment in the main plate outline."""
         self.b_segment_index = value
-
-    @property
-    def _cross_plate_guid(self):
-        """Return the GUID of the cross plate."""
-        return self.plate_b.guid if self.plate_b else None
 
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""

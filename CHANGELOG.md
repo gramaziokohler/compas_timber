@@ -338,6 +338,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `errors` directory and `__init__.py` module.
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
+* Added `DirectRule.get_joint()`.
+* Added `TopologyRule.try_get_joint`.
+* Added `CategoryRule.try_get_rule`.
+* Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
+* Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
+* Added `CategoryPlateJointRule`, `DirectPlateJointRule`, `EdgeEdgeTopologyPlateJointRule`, and `EdgeFaceTopologyPlateJointRule` Plate joint rule GH components.
+ 
 
 ### Changed
 
@@ -366,6 +373,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in `JointRule.joints_from_beams_and_rules()` that caused failures when topology was not recognized.
 * Implemented `max_distance` parameter in `JointRule.joints_from_beams_and_rules()` and `JointRule.comply` methods.
 * Bux fixes from extra comma argument and `max_distance` not implemented in `DirectRule.comply`.
+* Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.joints_from_rules_and_elements` which now returns Joint instances instead of `JointDefinition`s.
+* Changed `PlateConnectionSolver.get
+* Fixed element order in `DirectJointRule` GH component.
+* Reworked `Model` GH component.
+
 
 ### Removed
 
@@ -377,6 +389,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed module `compas_timber.connections.french_ridge_lap`.
 * Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
 * Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
+* Removed `comply()` from JointRule and its child classes.
+* Removed `JointDefinition`. 
+* Removed redundant checks in `TopologyRule` GH components.
+*
 
 
 

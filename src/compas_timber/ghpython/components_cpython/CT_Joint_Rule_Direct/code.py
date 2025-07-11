@@ -65,7 +65,7 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                     supported_topo = [supported_topo]
                 if topology not in supported_topo:
                     warning(self.component, f"Beams meet with topology: {JointTopology.get_name(topology)} which does not agree with joint of type: {self.joint_type.__name__}")
-                Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
+                Rules.append(DirectRule(self.joint_type, [main, secondary], **kwargs))
             return Rules
 
     def arg_names(self):
