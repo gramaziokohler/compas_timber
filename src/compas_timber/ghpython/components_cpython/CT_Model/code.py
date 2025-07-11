@@ -126,17 +126,17 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             populators = WallPopulator.from_model(model, config_sets)
 
         handled_pairs = []
-        wall_joint_definitions = []
+        wall_joints = []
         for populator, slab in zip(populators, list(model.slabs)):
             elements = populator.create_elements()
             model.add_elements(elements, parent=slab.name)
-            joint_definitions = populator.create_joint_definitions(elements, max_distance)
-            wall_joint_definitions.extend(joint_definitions)
+            joint_definitions = populator.create_joints(elements, max_distance)
+            wall_joints.extend(joint_definitions)
             for j_def in joint_definitions:
                 element_a, element_b = j_def.elements
                 handled_pairs.append({element_a, element_b})
 
-        return handled_pairs, wall_joint_definitions
+        return handled_pairs, wall_joints
 
     def handle_features(self, features):
         feature_errors = []

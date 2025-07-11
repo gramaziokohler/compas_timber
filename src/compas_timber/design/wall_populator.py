@@ -610,7 +610,7 @@ class WallPopulator(object):
         elements = self.elements
         return elements
 
-    def create_joint_definitions(self, elements, max_distance=None):
+    def create_joints(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)

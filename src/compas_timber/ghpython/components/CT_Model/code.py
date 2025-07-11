@@ -140,7 +140,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         for populator, slab in zip(populators, list(model.slabs)):
             elements = populator.create_elements()
             model.add_elements(elements, parent=slab.name)
-            joint_definitions = populator.create_joint_definitions(elements, max_distance)
+            joint_definitions = populator.create_joints(elements, max_distance)
             wall_joint_definitions.extend(joint_definitions)
             for j_def in joint_definitions:
                 element_a, element_b = j_def.elements
