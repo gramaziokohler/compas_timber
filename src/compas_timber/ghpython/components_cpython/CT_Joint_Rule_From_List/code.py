@@ -1,66 +1,64 @@
 # r: compas_timber>=0.15.3
-"""Generates a direct joint between two elements. This overrides other joint rules."""
-
+# flake8: noqa
 import inspect
 
-import Grasshopper  # type: ignore
+import Grasshopper
+import System
 
-from compas_timber.connections import PlateJoint
+from compas_timber.connections import Joint
 from compas_timber.design import DirectRule
-from compas_timber.ghpython import error
-from compas_timber.ghpython import get_leaf_subclasses
-from compas_timber.ghpython import item_input_valid_cpython
-from compas_timber.ghpython import manage_cpython_dynamic_params
-from compas_timber.ghpython import rename_cpython_gh_output
-from compas_timber.ghpython import warning
+from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
+from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
+from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
-class DirectSlabJointRule(Grasshopper.Kernel.GH_ScriptInstance):
+class JointRuleFromList(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
-        super(DirectSlabJointRule, self).__init__()
+        super(JointRuleFromList, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(PlateJoint):
+        for cls in get_leaf_subclasses(Joint):
             self.classes[cls.__name__] = cls
 
-        if self.component.Params.Output[0].NickName not in self.classes.keys():
+        if ghenv.Component.Params.Output[0].NickName == "Rule":
             self.joint_type = None
         else:
-            self.joint_type = self.classes.get(self.component.Params.Output[0].NickName, None)
+            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
-    @property
-    def component(self):
-        return ghenv.Component  # type: ignore  # noqa: F821
-
-    def RunScript(self, *args):
+    def RunScript(self, elements: System.Collections.Generic.List[object], *args):
         if not self.joint_type:
-            self.component.Message = "Select joint type from context menu (right click)"
-            warning(self.component, "Select joint type from context menu (right click)")
+            ghenv.Component.Message = "Select joint type from context menu (right click)"
+            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Select joint type from context menu (right click)")
             return None
         else:
-            self.component.Message = self.joint_type.__name__
-            slab_a = args[0]
-            slab_b = args[1]
+            ghenv.Component.Message = self.joint_type.__name__
+            if not list_input_valid_cpython(ghenv, elements, self.arg_names[0]):
+                return
+            if not self.joint_type.element_count_complies(elements):
+                ghenv.Component.AddRuntimeMessage(
+                    Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning,
+                    "{} requires at least {} and at most {} elements.".format(self.joint_type.__name__, self.joint_type.MIN_ELEMENT_COUNT, self.joint_type.MAX_ELEMENT_COUNT),
+                )
+                return
             kwargs = {}
-            for i, val in enumerate(args[2:]):
+            for i, val in enumerate(args[1:]):
                 if val is not None:
-                    kwargs[self.arg_names()[i + 2]] = val
+                    kwargs[self.arg_names[i]] = val
 
-            if not item_input_valid_cpython(ghenv, slab_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, slab_b, self.arg_names()[1]):
-                return
-            if not hasattr(slab_a, "__iter__"):
-                slab_a = [slab_a]
-            if not hasattr(slab_b, "__iter__"):
-                slab_b = [slab_b]
-            if len(slab_a) != len(slab_b):
-                error(self.component, f"Number of items in {self.arg_names()[0]} and {self.arg_names()[1]} must match!")
-                return
-            Rules = []
-            for main, secondary in zip(slab_a, slab_b):
-                Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
-            return Rules
+            return DirectRule(self.joint_type, elements, **kwargs)
 
+    @property
+    def arg_start_index(self):
+        if self.joint_type.MAX_ELEMENT_COUNT is None:
+            return 2
+        elif self.joint_type.MAX_ELEMENT_COUNT == self.joint_type.MIN_ELEMENT_COUNT:
+            return self.joint_type.MAX_ELEMENT_COUNT + 1
+        else:
+            raise Error("I don't know how to handle this joint type")
+
+    @property
     def arg_names(self):
-        return inspect.getargspec(self.joint_type.__init__)[0][1:3] + ["max_distance"]
+        return inspect.getargspec(self.joint_type.__init__)[0][self.arg_start_index :] + ["max_distance"]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():
@@ -71,5 +69,5 @@ class DirectSlabJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
         rename_cpython_gh_output(self.joint_type.__name__, 0, ghenv)
-        manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=2, permanent_param_count=0)
-        self.component.ExpireSolution(True)
+        manage_cpython_dynamic_params(self.arg_names, ghenv, permanent_param_count=1)
+        ghenv.Component.ExpireSolution(True)
