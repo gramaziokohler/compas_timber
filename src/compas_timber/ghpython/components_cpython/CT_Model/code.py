@@ -102,7 +102,6 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             error(self.component, f"Unsupported unit: {units}")
             return
 
-
     def add_elements_to_model(self, model, elements, containers):
         """Adds elements to the model and groups them by slab."""
         elements = [e for e in elements if e is not None]
@@ -115,7 +114,6 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         for index, c_def in enumerate(containers):
             slab = c_def.slab
             model.add_group_element(slab, name=slab.name + str(index))
-
 
     def handle_populators(self, model, containers, max_distance):
         # Handle wall populators

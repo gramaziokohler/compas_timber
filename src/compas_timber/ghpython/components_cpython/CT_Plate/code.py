@@ -15,12 +15,14 @@ from compas_timber.ghpython.ghcomponent_helpers import list_input_valid_cpython
 
 
 class Plate(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self,
-            outline: System.Collections.Generic.List[object],
-            thickness: System.Collections.Generic.List[float],
-            vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
-            category: System.Collections.Generic.List[str],
-            updateRefObj: bool):
+    def RunScript(
+        self,
+        outline: System.Collections.Generic.List[object],
+        thickness: System.Collections.Generic.List[float],
+        vector: System.Collections.Generic.List[Rhino.Geometry.Vector3d],
+        category: System.Collections.Generic.List[str],
+        updateRefObj: bool,
+    ):
         # minimum inputs required
 
         if not list_input_valid_cpython(ghenv, outline, "Outline") or not list_input_valid_cpython(ghenv, thickness, "Thickness"):

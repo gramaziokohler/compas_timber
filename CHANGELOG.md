@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
 * Removed `comply()` from JointRule and its child classes.
 * Removed `JointDefinition`. 
+* Removed `FeatureDefinition`. 
 * Removed redundant checks in `TopologyRule` GH components.
 
 ## [0.16.2] 2025-05-07

@@ -1,4 +1,3 @@
-from email import errors
 from itertools import combinations
 
 from compas.tolerance import TOL
@@ -10,12 +9,11 @@ from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections.plate_butt_joint import PlateButtJoint
 from compas_timber.connections.plate_butt_joint import PlateTButtJoint
 from compas_timber.connections.plate_miter_joint import PlateMiterJoint
-from compas_timber.errors import BeamJoiningError
 from compas_timber.elements.beam import Beam
 from compas_timber.elements.plate import Plate
+from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import intersection_line_line_param
 
@@ -71,6 +69,26 @@ class JointRule(object):
 
     @staticmethod
     def joints_from_rules_and_elements(rules, elements, max_distance=TOL.absolute, handled_pairs=None):
+        """Returns a list of joints based on the given rules and elements.
+
+        Parameters
+        ----------
+        rules : list(:class:`~compas_timber.connections.JointRule`)
+            A list of joint rules to consider.
+        elements : list(:class:`~compas_timber.elements.TimberElement`)
+            A list of elements to join.
+        max_distance : float
+            The maximum distance to consider for joining elements.
+        handled_pairs : list(set(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)), optional
+            A list of already handled element pairs.
+
+        Returns
+        -------
+        tuple(list(:class:`~compas_timber.connections.Joint`), list(:class:`~compas_timber.connections.BeamJoiningError`))
+            A tuple containing a list of joints and a list of joining errors.
+
+        """
+
         handled_pairs = handled_pairs or []
         elements = elements if isinstance(elements, list) else list(elements)
         direct_rules = JointRule.get_direct_rules(rules)
@@ -160,22 +178,26 @@ class DirectRule(JointRule):
             raise UserWarning("unable to comply direct joint element sets")
 
     def get_joint(self, model_max_distance=TOL.absolute):
-        """Returns True if the given elements comply with this DirectRule.
+        """Returns a Joint if the given elements comply with this DirectRule.
         Checks if the distance between the centerlines of the elements is less than the max_distance.
         Does not check for JointTopology compliance.
+        TODO: Consider how to do Topology check when there are more than 2 elements.
 
         Parameters
         ----------
-        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
-            A tuple containing two elements to check.
         model_max_distance : float, optional
             The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
             This is only used if the rule does not already have a max_distance set.
 
         Returns
         -------
-        bool
-            True if the elements comply with the rule, False otherwise.
+        :class:`~compas_timber.connections.Joint`
+            The joint created from the elements and the joint type.
+
+        Raises
+        ------
+        BeamJoiningError
+            If the distance between the elements is greater than the max_distance.
 
         """
 
@@ -185,10 +207,12 @@ class DirectRule(JointRule):
             try:
                 for pair in combinations(list(self.elements), 2):
                     if distance_segment_segment(pair[0].centerline, pair[1].centerline) > max_distance:
-                        raise BeamJoiningError(pair,
-                                               self.joint_type,
-                                               "Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance),
-                                               [e.shape for e in pair])
+                        raise BeamJoiningError(
+                            pair,
+                            self.joint_type,
+                            "Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance),
+                            [e.shape for e in pair],
+                        )
                 return self.joint_type(*self.elements, **self.kwargs)
             except TypeError:
                 raise UserWarning("unable to comply direct joint element sets")
@@ -199,15 +223,18 @@ class DirectRule(JointRule):
             topo, plate_a, plate_b = PlateConnectionSolver().find_topology(self.elements[0], self.elements[1], max_distance=max_distance)
             if topo is not None:
                 if topo != self.joint_type.SUPPORTED_TOPOLOGY:
-                    raise BeamJoiningError(self.elements,
-                                           self.joint_type,
-                                           "Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(topo)),
-                                           [e.shape for e in self.elements])
+                    raise BeamJoiningError(
+                        self.elements,
+                        self.joint_type,
+                        "Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(topo)),
+                        [e.shape for e in self.elements],
+                    )
                     # TODO: implement error handling a la FeatureApplicationError.
                 if topo == JointTopology.TOPO_EDGE_EDGE:
                     return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], plate_b[1], **self.kwargs)
                 else:
                     return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], **self.kwargs)
+
 
 class CategoryRule(JointRule):
     """Based on the category attribute attached to the elements, this rule assigns
@@ -244,12 +271,12 @@ class CategoryRule(JointRule):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
     def try_get_joint(self, elements, model_max_distance=TOL.absolute):
-        """Checks if the given elements comply with this CategoryRule.
+        """Returns a Joint if the given elements comply with this CategoryRule.
         It checks:
-        that the elements have the expected category attribute,
-        that the max_distance is not exceeded,
-        that the joint supports the topology of the elements.
-
+        -that the elements have the expected category attribute,
+        -that the max_distance is not exceeded,
+        -that the joint supports the topology of the elements.
+        -that the element order is not reversed to meet the topology requirements.
 
         Parameters
         ----------
@@ -261,8 +288,8 @@ class CategoryRule(JointRule):
 
         Returns
         -------
-        bool
-            True if the elements comply with the rule, False otherwise.
+        :class:`~compas_timber.connections.Joint` or None
+            The joint created from the elements.
 
         """
         if not set([e.attributes["category"] for e in elements]) == set([self.category_a, self.category_b]):
@@ -348,12 +375,10 @@ class TopologyRule(JointRule):
         )
 
     def try_get_joint(self, elements, model_max_distance=TOL.absolute):
-        """Checks if the given elements comply with this CategoryRule.
+        """Returns a Joint if the given elements comply with this TopologyRule.
         It checks:
-        that the elements have the expected category attribute,
         that the max_distance is not exceeded,
         that the joint supports the topology of the elements.
-
 
         Parameters
         ----------
@@ -365,8 +390,8 @@ class TopologyRule(JointRule):
 
         Returns
         -------
-        bool
-            True if the elements comply with the rule, False otherwise.
+        :class:`~compas_timber.connections.Joint` or None
+            The joint created from the elements if the elements comply with the rule,
 
         """
 
@@ -388,65 +413,6 @@ class TopologyRule(JointRule):
                 else:
                     return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], **self.kwargs)
         return None
-
-
-class JointDefinition(object):
-    """Container for a joint type and the elements that shall be joined.
-
-    This allows delaying the actual joining of the elements to a downstream component.
-
-    """
-
-    def __init__(self, joint_type, elements, **kwargs):
-        # if not issubclass(joint_type, Joint):
-        #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-
-        if len(elements) < 2:
-            raise UserWarning("Joint requires at least two Elements, got {}.".format(len(elements)))
-
-        self.joint_type = joint_type
-        self.elements = elements
-        self.kwargs = kwargs
-
-    def __repr__(self):
-        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.elements, self.kwargs)
-
-    def ToString(self):
-        return repr(self)
-
-    def __hash__(self):
-        return hash((self.joint_type, self.elements))
-
-    def is_identical(self, other):
-        return isinstance(other, JointDefinition) and self.joint_type == other.joint_type and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
-
-    def match(self, elements):
-        """Returns True if elements are defined within this JointDefinition."""
-        set_a = set([id(e) for e in elements])
-        set_b = set([id(e) for e in self.elements])
-        return set_a == set_b
-
-
-class FeatureDefinition(object):
-    """Container linking a feature to the elements on which it should be applied.
-
-    This allows delaying the actual applying of features to a downstream component.
-
-    TODO: this needs to be adapted to in order to create processings.
-    TODO: There needs to be a way for this to call a named alternative constructor with the required arguments.
-    TODO: There needs to be a possibility to transform the elements before converting this to a processing.
-
-    """
-
-    def __init__(self, feature, elements=None):
-        self.feature = feature
-        self.elements = elements
-
-    def __repr__(self):
-        return "{}({}, {})".format(FeatureDefinition.__name__, repr(self.feature), self.elements)
-
-    def ToString(self):
-        return repr(self)
 
 
 class Attribute:

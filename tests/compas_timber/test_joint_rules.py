@@ -1,4 +1,3 @@
-from email import errors
 import pytest
 from compas.geometry import Line
 from compas.geometry import Point
@@ -19,6 +18,7 @@ from compas_timber.design import JointRule
 from compas_timber.design import DirectRule
 from compas_timber.design import CategoryRule
 from compas_timber.design import TopologyRule
+from compas_timber.errors import BeamJoiningError
 
 
 @pytest.fixture
@@ -107,7 +107,7 @@ def test_joints_from_beams_and_topo_rules(beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints,errors = JointRule.joints_from_rules_and_elements(rules, beams)
+    joints, errors = JointRule.joints_from_rules_and_elements(rules, beams)
     assert len(joints) == 4
     assert set([joint.__class__.__name__ for joint in joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
 
@@ -118,7 +118,7 @@ def test_joints_from_beams_and_rules_with_max_distance(separated_beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints,errors = JointRule.joints_from_rules_and_elements(rules, separated_beams)
+    joints, errors = JointRule.joints_from_rules_and_elements(rules, separated_beams)
     assert len(joints) == 0
 
     rules = [
@@ -126,7 +126,7 @@ def test_joints_from_beams_and_rules_with_max_distance(separated_beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint, max_distance=0.15),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints,errors = JointRule.joints_from_rules_and_elements(rules, separated_beams)
+    joints, errors = JointRule.joints_from_rules_and_elements(rules, separated_beams)
     assert len(joints) == 1
 
     rules = [
@@ -134,8 +134,9 @@ def test_joints_from_beams_and_rules_with_max_distance(separated_beams):
         TopologyRule(JointTopology.TOPO_T, TButtJoint, max_distance=0.05),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints,errors = JointRule.joints_from_rules_and_elements(rules, separated_beams, max_distance=0.15)
+    joints, errors = JointRule.joints_from_rules_and_elements(rules, separated_beams, max_distance=0.15)
     assert len(joints) == 3
+
 
 def test_direct_rule_contains(beams):
     rule = DirectRule(LMiterJoint, beams[:2])
@@ -145,37 +146,39 @@ def test_direct_rule_contains(beams):
     assert rule.contains([beams[0], beams[3]]) is False
 
 
-def test_direct_rule_comply(beams):
+def test_direct_rule_get_joint(beams):
     rule = DirectRule(LMiterJoint, [beams[0], beams[1]])
-    assert rule.comply([beams[0], beams[1]]) is True
-    assert rule.comply([beams[2], beams[3]]) is True
-    assert rule.comply([beams[1], beams[2]]) is True
-    assert rule.comply([beams[3], beams[0]]) is True
+    assert rule.get_joint() is not None
+    rule = DirectRule(LMiterJoint, [beams[2], beams[3]])
+    assert rule.get_joint() is not None
+    rule = DirectRule(LMiterJoint, [beams[1], beams[2]])
+    assert rule.get_joint() is not None
+    rule = DirectRule(LMiterJoint, [beams[3], beams[0]])
+    assert rule.get_joint() is not None
 
 
-def test_direct_rule_comply_max_distance(separated_beams):
+def test_direct_rule_get_joint_max_distance(separated_beams):
     rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.05)
-    assert rule.comply([separated_beams[0], separated_beams[1]]) is False
-    assert rule.comply([separated_beams[2], separated_beams[3]]) is False
-    assert rule.comply([separated_beams[1], separated_beams[2]]) is False
-    assert rule.comply([separated_beams[3], separated_beams[0]]) is False
+    with pytest.raises(BeamJoiningError):
+        rule.get_joint()
+    rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.15)
+    assert rule.get_joint() is not None
 
-
-def test_category_rule_comply(beams):
+def test_category_rule_try_get_joint(beams):
     for beam in beams:
         beam.attributes["category"] = "A"
     beams[1].attributes["category"] = "B"
     rule = CategoryRule(LMiterJoint, "A", "B")
-    assert rule.comply(beams[:2]) is True
-    assert rule.comply(beams[2:]) is False
+    assert rule.try_get_joint(beams[:2]) is not None
+    assert rule.try_get_joint(beams[2:]) is None
 
 
-def test_topology_rule_comply(beams):
+def test_topology_rule_try_get_joint(beams):
     rule = TopologyRule(JointTopology.TOPO_L, LMiterJoint)
-    assert rule.comply([beams[0], beams[1]])[0] is True
-    assert rule.comply([beams[1], beams[2]])[0] is False
-    assert rule.comply([beams[2], beams[3]])[0] is True
-    assert rule.comply([beams[3], beams[0]])[0] is False
+    assert rule.try_get_joint([beams[0], beams[1]]) is not None
+    assert rule.try_get_joint([beams[1], beams[2]]) is None
+    assert rule.try_get_joint([beams[2], beams[3]]) is not None
+    assert rule.try_get_joint([beams[3], beams[0]]) is None
 
 
 def test_different_rules(L_beams):
@@ -202,6 +205,7 @@ def test_different_rules_max_distance(L_beams_separated):
     assert len(joints) == 3
     assert set([joint.__class__.__name__ for joint in joints]) == set(["LMiterJoint"])
 
+
 def test_plate_topo_rules():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
 
@@ -219,8 +223,9 @@ def test_plate_topo_rules():
         TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
         TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
     ]
-    joints,errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
+    joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 3, "Expected three joints"
+
 
 def test_plate_category_rules():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -254,6 +259,7 @@ def test_plate_category_rules():
     ]
     joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
 
+
 def test_plate_rules_priority():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
@@ -277,7 +283,9 @@ def test_plate_rules_priority():
     ]
     joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 3, "Expected three joints"
-    assert set([j.__class__.__name__ for j in joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
+    assert set([j.__class__.__name__ for j in joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), (
+        "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
+    )
 
     rules = [
         CategoryRule(PlateTButtJoint, "B", "A"),
@@ -298,4 +306,6 @@ def test_plate_rules_priority():
     ]
     joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 3, "Expected three joints"
-    assert set([j.__class__.__name__ for j in joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
+    assert set([j.__class__.__name__ for j in joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), (
+        "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
+    )
