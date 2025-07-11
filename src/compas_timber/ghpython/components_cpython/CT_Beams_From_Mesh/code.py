@@ -31,7 +31,7 @@ class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
         normals = rs.MeshFaceNormals(mesh)
 
         points, pt_map = set_map(points)
-        faces=[[pt_map[i] for i in face]for face in faces]
+        faces = [[pt_map[i] for i in face] for face in faces]
 
         for face in faces:  # get all the edges of the mesh
             for ind in range(len(face) - 1):
@@ -74,6 +74,7 @@ class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
 
         blanks = scene.draw()
         return beam_list, dt, blanks
+
 
 def set_map(points):
     pts_out = []
