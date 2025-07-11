@@ -164,6 +164,7 @@ def test_direct_rule_get_joint_max_distance(separated_beams):
     rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.15)
     assert rule.get_joint() is not None
 
+
 def test_category_rule_try_get_joint(beams):
     for beam in beams:
         beam.attributes["category"] = "A"
