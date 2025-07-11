@@ -64,8 +64,6 @@ class ButtJoint(Joint):
         self.butt_plane = butt_plane
         self.features = []
 
-        # update the main and cross beams based on the joint parameters
-
     @property
     def elements(self):
         return [self.main_beam, self.cross_beam]
@@ -84,6 +82,7 @@ class ButtJoint(Joint):
     def main_beam_ref_side_index(self):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+
         return ref_side_index
 
     def add_extensions(self):
