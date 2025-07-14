@@ -70,7 +70,7 @@ class BallNodeJoint(Joint):
 
     @property
     def elements(self):
-        return self.beams + [self.generated_elements]
+        return list(self.beams) + self.generated_elements
 
     @property
     def interactions(self):
@@ -78,13 +78,11 @@ class BallNodeJoint(Joint):
             yield (beam, self.fastener)
 
     @classmethod
-    def create(cls, model, *elements, **kwargs):
-        """Creates an instance of the BallNodeJoint and creates the new connection in `model`.
+    def from_element_list(cls, elements, **kwargs):
+        """Creates an instance of the BallNodeJoint.
 
         This differs fom the generic `Joint.create()` method in that it passes the `beams` to
         the constructor of the BallNodeJoint as a list instead of as separate arguments.
-
-        `beams` are expected to have been added to `model` before calling this method.
 
         This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
         them. This is the responsibility of the calling code.
@@ -93,8 +91,6 @@ class BallNodeJoint(Joint):
 
         Parameters
         ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joing belong.
         beams : list(:class:`~compas_timber.parts.Beam`)
             A list containing beams that whould be joined together
 
@@ -104,10 +100,8 @@ class BallNodeJoint(Joint):
             The instance of the created joint.
 
         """
-        elements = list(elements)
-        joint = cls(elements, **kwargs)
-        model.add_joint(joint)
-        return joint
+        return cls(elements, **kwargs)
+
 
     @property
     def node_point(self):
