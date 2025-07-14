@@ -3,7 +3,7 @@
     "nickname": "EdgeFaceTopo",
     "category": "COMPAS Timber",
     "subcategory": "Joint Rules",
-    "description": "makes rule to apply joint type to edge-face topology. Defualts to PlateTButtJoint",
+    "description": "makes rule to apply joint type to edge-face topology. Defaults to PlateTButtJoint",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
