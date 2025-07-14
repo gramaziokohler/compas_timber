@@ -57,12 +57,7 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 return
             Rules = []
             for main, secondary in zip(beam_a, beam_b):  # TODO: grasshopper should handle this
-                topology, _, _ = ConnectionSolver().find_topology(main, secondary)
-                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-                if not hasattr(supported_topo, "__iter__"):
-                    supported_topo = [supported_topo]
-                if topology not in supported_topo:
-                    warning(self.component, f"Beams meet with topology: {JointTopology.get_name(topology)} which does not agree with joint of type: {self.joint_type.__name__}")
+                # TODO: figure out where to do TOPO checks. I think in JointRules.
                 Rules.append(DirectRule(self.joint_type, [main, secondary], **kwargs))
             return Rules
 
