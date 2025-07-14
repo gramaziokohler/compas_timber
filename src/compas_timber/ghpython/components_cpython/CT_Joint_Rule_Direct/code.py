@@ -7,8 +7,8 @@ import Grasshopper  # type: ignore
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
-from compas_timber.connections import PlateJoint
 from compas_timber.connections import JointTopology
+from compas_timber.connections import PlateJoint
 from compas_timber.design import DirectRule
 from compas_timber.ghpython import error
 from compas_timber.ghpython import get_leaf_subclasses
@@ -56,7 +56,7 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 error(self.component, f"Number of items in {self.arg_names()[0]} and {self.arg_names()[1]} must match!")
                 return
             Rules = []
-            for main, secondary in zip(beam_a, beam_b): #TODO: grasshopper should handle this
+            for main, secondary in zip(beam_a, beam_b):  # TODO: grasshopper should handle this
                 topology, _, _ = ConnectionSolver().find_topology(main, secondary)
                 supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
                 if not hasattr(supported_topo, "__iter__"):
