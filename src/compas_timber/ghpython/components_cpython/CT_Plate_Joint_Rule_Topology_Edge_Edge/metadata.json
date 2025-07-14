@@ -3,7 +3,7 @@
     "nickname": "EdgeEdgeTopo",
     "category": "COMPAS Timber",
     "subcategory": "Joint Rules",
-    "description": "makes rule to apply joint type to edge-edge topology. Defualts to PlateMiterJoint",
+    "description": "makes rule to apply joint type to edge-edge topology. Defaults to PlateMiterJoint",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
