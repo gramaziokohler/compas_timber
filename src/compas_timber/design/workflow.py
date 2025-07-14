@@ -2,7 +2,7 @@ from itertools import combinations
 
 from compas.tolerance import TOL
 
-from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import ConnectionSolver, solver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import PlateConnectionSolver
@@ -205,12 +205,24 @@ class DirectRule(JointRule):
 
         if all([isinstance(e, Beam) for e in self.elements]) and not issubclass(self.joint_type, PlateJoint):
             try:
-                for pair in combinations(list(self.elements), 2):
-                    if distance_segment_segment(pair[0].centerline, pair[1].centerline) > max_distance:
+                if len(self.elements) == 2:
+                    solver = ConnectionSolver()
+                    found_topology, beam_a, _ = solver.find_topology(*self.elements, max_distance=max_distance)
+                    supported_topo = self.joint_type.SUPPORTED_TOPOLOGY if isinstance(self.joint_type.SUPPORTED_TOPOLOGY, list) else [self.joint_type.SUPPORTED_TOPOLOGY]
+                    if found_topology not in supported_topo or self.elements[0] != beam_a:
                         raise BeamJoiningError(
-                            pair,
+                            self.elements,
                             self.joint_type,
-                            "Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance),
+                            "Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(found_topology)),
+                            [e.shape for e in self.elements],
+                        )
+                else:
+                    for pair in combinations(list(self.elements), 2):
+                        if distance_segment_segment(pair[0].centerline, pair[1].centerline) > max_distance: #TODO: can we do topo checks for 3+ elements?
+                            raise BeamJoiningError(
+                                pair,
+                                self.joint_type,
+                                "Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance),
                             [e.shape for e in pair],
                         )
                 return self.joint_type.from_element_list(self.elements, **self.kwargs)
