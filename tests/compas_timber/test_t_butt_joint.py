@@ -14,7 +14,7 @@ def test_create():
     A = TimberModel()
     A.add_element(B1)
     A.add_element(B2)
-    instance = TButtJoint.create(A, B1, B2)
+    instance = TButtJoint.create(B1, B2, model=A)
 
     assert len(instance.elements) == 2
     assert isinstance(instance, TButtJoint)
@@ -31,7 +31,7 @@ def test_create_with_fastener():
     I1 = FastenerTimberInterface()
     I2 = FastenerTimberInterface()
     F = PlateFastener(interfaces=[I1, I2])
-    instance = TButtJoint.create(A, B1, B2, fastener=F)
+    instance = TButtJoint.create(B1, B2, model=A, fastener=F)
 
     assert len(instance.elements) == 4
     assert isinstance(instance, TButtJoint)

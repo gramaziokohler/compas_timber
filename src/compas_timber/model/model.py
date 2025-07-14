@@ -401,7 +401,7 @@ class TimberModel(Model):
             p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             p1 = Point(*p1) if p1 else None
 
-            GenericJoint.create(self, beam_a, beam_b, topology=topology, location=p1)
+            GenericJoint.create(beam_a, beam_b, model=self, topology=topology, location=p1)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.
@@ -441,9 +441,9 @@ class TimberModel(Model):
             # assume wall_a is the main, unless wall_b is explicitly marked as main
             # TODO: use the Rule system? this isn't good enough, a wall can totally be main and cross at the same time (in two different interactions)
             if wall_b.attributes.get("role", "cross") == "main":
-                WallJoint.create(self, wall_b, wall_a, topology=topology)
+                WallJoint.create(wall_b, wall_a, model=self, topology=topology)
             else:
-                WallJoint.create(self, wall_a, wall_b, topology=topology)
+                WallJoint.create(wall_a, wall_b, model=self, topology=topology)
 
     def _clear_wall_joints(self):
         for joint in self.joints:

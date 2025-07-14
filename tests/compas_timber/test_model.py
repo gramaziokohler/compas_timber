@@ -41,7 +41,7 @@ def test_add_joint():
 
     model.add_element(b1)
     model.add_element(b2)
-    _ = LButtJoint.create(model, b1, b2)
+    _ = LButtJoint.create(b1, b2, model=model)
 
     assert len(list(model.beams)) == 2
     assert len(list(model.joints)) == 1
@@ -54,7 +54,7 @@ def test_get_joint_from_interaction():
 
     model.add_element(b1)
     model.add_element(b2)
-    joint = LButtJoint.create(model, b1, b2)
+    joint = LButtJoint.create(b1, b2, model=model)
 
     assert joint is list(model.joints)[0]
 
@@ -68,7 +68,7 @@ def test_copy(mocker):
     A = TimberModel()
     A.add_element(B1)
     A.add_element(B2)
-    _ = LButtJoint.create(A, B1, B2)
+    _ = LButtJoint.create(B1, B2, model=A)
 
     A_copy = A.copy()
     assert A_copy is not A
@@ -84,7 +84,7 @@ def test_deepcopy(mocker):
     A = TimberModel()
     A.add_element(B1)
     A.add_element(B2)
-    _ = LButtJoint.create(A, B1, B2)
+    _ = LButtJoint.create(B1, B2, model=A)
 
     A_copy = A.copy()
     assert A_copy is not A
@@ -115,7 +115,7 @@ def test_serialization_with_l_butt_joints(mocker):
     A = TimberModel()
     A.add_element(B1)
     A.add_element(B2)
-    _ = LButtJoint.create(A, B1, B2)
+    _ = LButtJoint.create(B1, B2, model=A)
 
     A = json_loads(json_dumps(A))
 
@@ -127,7 +127,7 @@ def test_serialization_with_t_butt_joints(mocker):
     b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
     a.add_element(b1)
     a.add_element(b2)
-    _ = TButtJoint.create(a, b1, b2)
+    _ = TButtJoint.create(b1, b2, model=a)
 
     a = json_loads(json_dumps(a))
 

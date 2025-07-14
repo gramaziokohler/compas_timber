@@ -27,7 +27,7 @@ def test_create_lap(beam_a, beam_b):
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    joint = LLapJoint.create(model, beam_a, beam_b, lap_length=100.0, lap_depth=20.0, cut_plane_bias=0.5)
+    joint = LLapJoint.create(beam_a, beam_b, model=model, lap_length=100.0, lap_depth=20.0, cut_plane_bias=0.5)
 
     assert len(model.joints) == 1
     assert isinstance(joint, LLapJoint)
@@ -38,7 +38,7 @@ def test_create_lap_serialize(beam_a, beam_b):
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    joint = LLapJoint.create(model, beam_a, beam_b, lap_length=100.0, lap_depth=20.0, cut_plane_bias=0.5)
+    joint = LLapJoint.create(beam_a, beam_b, model=model, lap_length=100.0, lap_depth=20.0, cut_plane_bias=0.5)
 
     model = json_loads(json_dumps(model))
 

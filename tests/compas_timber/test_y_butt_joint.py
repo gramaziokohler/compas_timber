@@ -20,7 +20,7 @@ def test_create():
     model = TimberModel()
     for b in beams:
         model.add_element(b)
-    instance = YButtJoint.create(model, *beams, mill_depth=10.0)
+    instance = YButtJoint.create(*beams, model=model, mill_depth=10.0)
     model.process_joinery()
     model_copy = json_loads(json_dumps(model))
 

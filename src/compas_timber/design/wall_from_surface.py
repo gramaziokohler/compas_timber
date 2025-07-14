@@ -283,7 +283,7 @@ class SurfaceModel(object):
                     else:
                         if rule.joint_type == LButtJoint:
                             beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                        rule.joint_type.create(model, beam_a, beam_b, **rule.kwargs)
+                        rule.joint_type.create(beam_a, beam_b, model=model, **rule.kwargs)
         model.set_topologies(topologies)
         return model
 

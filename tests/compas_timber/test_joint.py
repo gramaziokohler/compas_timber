@@ -73,7 +73,7 @@ def test_create(mocker):
     b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
     model.add_element(b1)
     model.add_element(b2)
-    _ = TButtJoint.create(model, b1, b2)
+    _ = TButtJoint.create(b1, b2, model=model)
 
     assert len(list(model.elements())) == 2
     assert len(list(model.joints)) == 1
@@ -85,7 +85,7 @@ def test_deepcopy(mocker, t_topo_beams):
     beam_a, beam_b = t_topo_beams
     model.add_element(beam_a)
     model.add_element(beam_b)
-    t_butt = TButtJoint.create(model, beam_a, beam_b)
+    t_butt = TButtJoint.create(beam_a, beam_b, model=model)
     model_copy = model.copy()
 
     assert model_copy is not model
@@ -102,7 +102,7 @@ def test_joint_create_t_butt(t_topo_beams):
     main_beam, cross_beam = t_topo_beams
     model.add_element(main_beam)
     model.add_element(cross_beam)
-    joint = TButtJoint.create(model, main_beam, cross_beam)
+    joint = TButtJoint.create(main_beam, cross_beam, model=model)
 
     assert joint.main_beam is main_beam
     assert joint.cross_beam is cross_beam
@@ -114,7 +114,7 @@ def test_joint_create_l_butt(l_topo_beams):
     beam_a, beam_b = l_topo_beams
     model.add_element(beam_a)
     model.add_element(beam_b)
-    joint = LButtJoint.create(model, beam_a, beam_b)
+    joint = LButtJoint.create(beam_a, beam_b, model=model)
 
     assert joint.main_beam is beam_a
     assert joint.cross_beam is beam_b
@@ -126,7 +126,7 @@ def test_joint_create_x_lap(x_topo_beams):
     main_beam, cross_beam = x_topo_beams
     model.add_element(main_beam)
     model.add_element(cross_beam)
-    joint = XLapJoint.create(model, main_beam, cross_beam)
+    joint = XLapJoint.create(main_beam, cross_beam, model=model)
 
     assert joint.main_beam is main_beam
     assert joint.cross_beam is cross_beam
@@ -138,7 +138,7 @@ def test_joint_create_t_lap(t_topo_beams):
     main_beam, cross_beam = t_topo_beams
     model.add_element(main_beam)
     model.add_element(cross_beam)
-    joint = TLapJoint.create(model, main_beam, cross_beam)
+    joint = TLapJoint.create(main_beam, cross_beam, model=model)
 
     assert joint.main_beam is main_beam
     assert joint.cross_beam is cross_beam
@@ -150,7 +150,7 @@ def test_joint_create_l_lap(l_topo_beams):
     main_beam, cross_beam = l_topo_beams
     model.add_element(main_beam)
     model.add_element(cross_beam)
-    joint = LLapJoint.create(model, main_beam, cross_beam)
+    joint = LLapJoint.create(main_beam, cross_beam, model=model)
 
     assert joint.main_beam is main_beam
     assert joint.cross_beam is cross_beam
@@ -165,28 +165,28 @@ def test_joint_create_kwargs_passthrough_lbutt():
     model.add_element(large)
 
     # main beam butts by default, first beam is by default main, they are swapped if necessary when small_beam_butts=True
-    joint_a = LButtJoint.create(model, small, large, small_beam_butts=True)
+    joint_a = LButtJoint.create(small, large, model=model, small_beam_butts=True)
 
     assert joint_a.main_beam is small
     assert joint_a.cross_beam is large
 
     model.remove_joint(joint_a)
 
-    joint_b = LButtJoint.create(model, small, large, small_beam_butts=False)
+    joint_b = LButtJoint.create(small, large, model=model, small_beam_butts=False)
 
     assert joint_b.main_beam is small
     assert joint_b.cross_beam is large
 
     model.remove_joint(joint_b)
 
-    joint_c = LButtJoint.create(model, large, small, small_beam_butts=True)
+    joint_c = LButtJoint.create(large, small, model=model, small_beam_butts=True)
 
     assert joint_c.main_beam is small
     assert joint_c.cross_beam is large
 
     model.remove_joint(joint_c)
 
-    joint_d = LButtJoint.create(model, large, small, small_beam_butts=False)
+    joint_d = LButtJoint.create(large, small, model=model, small_beam_butts=False)
 
     assert joint_d.main_beam is large
     assert joint_d.cross_beam is small
@@ -199,7 +199,7 @@ def test_joint_create_kwargs_passthrough_xhalflap():
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    joint = XLapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.4)
+    joint = XLapJoint.create(beam_a, beam_b, model=model, cut_plane_bias=0.4)
 
     assert joint.cut_plane_bias == 0.4
 
