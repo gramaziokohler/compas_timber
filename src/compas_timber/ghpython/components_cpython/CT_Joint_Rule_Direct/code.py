@@ -7,6 +7,7 @@ import Grasshopper  # type: ignore
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
+from compas_timber.connections import PlateJoint
 from compas_timber.connections import JointTopology
 from compas_timber.design import DirectRule
 from compas_timber.ghpython import error
@@ -22,13 +23,10 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         super(DirectJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            if cls.MAX_ELEMENT_COUNT == 2:
+            if cls.MAX_ELEMENT_COUNT == 2 and not issubclass(cls, PlateJoint):
                 self.classes[cls.__name__] = cls
 
-        if self.component.Params.Output[0].NickName == "Rule":
-            self.joint_type = None
-        else:
-            self.joint_type = self.classes.get(self.component.Params.Output[0].NickName, None)
+        self.joint_type = self.classes.get(self.component.Params.Output[0].NickName, None)
 
     @property
     def component(self):
@@ -58,14 +56,14 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 error(self.component, f"Number of items in {self.arg_names()[0]} and {self.arg_names()[1]} must match!")
                 return
             Rules = []
-            for main, secondary in zip(beam_a, beam_b):
+            for main, secondary in zip(beam_a, beam_b): #TODO: grasshopper should handle this
                 topology, _, _ = ConnectionSolver().find_topology(main, secondary)
                 supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
                 if not hasattr(supported_topo, "__iter__"):
                     supported_topo = [supported_topo]
                 if topology not in supported_topo:
                     warning(self.component, f"Beams meet with topology: {JointTopology.get_name(topology)} which does not agree with joint of type: {self.joint_type.__name__}")
-                Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
+                Rules.append(DirectRule(self.joint_type, [main, secondary], **kwargs))
             return Rules
 
     def arg_names(self):

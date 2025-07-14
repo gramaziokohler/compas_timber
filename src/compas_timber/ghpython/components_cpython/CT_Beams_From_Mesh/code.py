@@ -1,18 +1,15 @@
-# r: compas_timber>=0.15.3
 """Creates a Beam from a LineCurve."""
 
-# flake8: noqa
-import Grasshopper
-import Rhino
 import rhinoscriptsyntax as rs
 from compas.geometry import Line
 from compas.geometry import Vector
 from compas.scene import Scene
+import Grasshopper
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 
 from compas_timber.elements import Beam
-from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
+from compas_timber.ghpython import item_input_valid_cpython
 
 
 class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
@@ -29,6 +26,9 @@ class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
         points = rs.MeshVertices(mesh)
         faces = rs.MeshFaceVertices(mesh)
         normals = rs.MeshFaceNormals(mesh)
+
+        points, pt_map = set_map(points)
+        faces = [[pt_map[i] for i in face] for face in faces]
 
         for face in faces:  # get all the edges of the mesh
             for ind in range(len(face) - 1):
@@ -71,3 +71,13 @@ class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
 
         blanks = scene.draw()
         return beam_list, dt, blanks
+
+
+def set_map(points):
+    pts_out = []
+    inds_out = []
+    for i, pt in enumerate(points):
+        if pt not in pts_out:
+            pts_out.append(pt)
+        inds_out.append(pts_out.index(pt))
+    return pts_out, inds_out
