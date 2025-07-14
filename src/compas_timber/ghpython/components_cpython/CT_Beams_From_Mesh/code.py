@@ -1,10 +1,10 @@
-"""Creates a Beam from a LineCurve."""
+"""Creates a data-tree structure of Beams from edges of a Mesh."""
 
+import Grasshopper
 import rhinoscriptsyntax as rs
 from compas.geometry import Line
 from compas.geometry import Vector
 from compas.scene import Scene
-import Grasshopper
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 
