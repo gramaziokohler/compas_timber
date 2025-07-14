@@ -17,12 +17,12 @@ from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.tolerance import TOL
 
-from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import InterfaceLocation
 from compas_timber.connections import InterfaceRole
-from compas_timber.connections import JointTopology
+from compas_timber.connections import joints_from_rules_and_elements
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
+
 from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
@@ -612,25 +612,7 @@ class WallPopulator(object):
 
     def create_joints(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
-
-        joints = []
-        max_distance = max_distance or 0.0
-        max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
-        for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
-            if detected_topo == JointTopology.TOPO_UNKNOWN:
-                continue
-
-            for rule in self.rules:
-                if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
-                    if rule.joint_type == LButtJoint:
-                        beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                    joints.append(rule.joint_type([beam_a, beam_b], **rule.kwargs))
-                    # break # ?
-        return joints
+        return joints_from_rules_and_elements(self.rules, beams, max_distance=max_distance)
 
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)
