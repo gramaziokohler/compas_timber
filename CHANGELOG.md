@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateMiterJoint`.
 * Added `PlateConnectionSolver`.
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
+* Added generic alternate constructor `Joint.from_element_list` to allow joints to override construction without reference to model. 
 
 ### Changed
 
@@ -59,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed several GH Components for Rhino8 compatibility.
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
 * Fixed attribute error when creating a `TButtJoint`.
+* Fixed geometry creation for `BallNodeJoint`.
+* `BallNodeJoint` overrides instantiation with `BallNodeJoint.from_element_list` instead of create.
 
 ### Removed
 

@@ -153,7 +153,7 @@ class BallNodeFastener(Fastener):
         """Generate a plate from outline_points, thickness, and holes."""
         if not self.base_interface.outline_points:
             return None
-        outline_points = correct_polyline_direction(self.base_interface.outline_points, Vector(0, 0, 1))
+        outline_points = correct_polyline_direction(self.base_interface.outline_points, Vector(0, 0, 1), clockwise=True)
         outline = NurbsCurve.from_points(outline_points, degree=1)
         holes = self.base_interface.holes
         thickness = self.base_interface.thickness
