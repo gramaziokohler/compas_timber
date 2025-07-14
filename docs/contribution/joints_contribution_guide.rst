@@ -30,12 +30,12 @@ Creating a New Joint
 
    **Define Element Roles**: Assign specific roles to each participating element:
 
-   - **Main beam**: The primary or continuous element in the joint
-   - **Cross beam**: The secondary element that connects to the main beam
+   - **Cross beam**: The primary or continuous element in the joint
+   - **Main beam**: The secondary element that connects to the cross beam
 
    **Extract Geometric Information**: Identify the spatial relationships and dimensional data needed for BTLx processing alternative constructors:
 
-   - **Intersection geometry**: Cutting planes, intersection lines, contact surfaces
+   - **Intersection geometry**: Cutting planes, intersection lines, subtracting volumes
 
    This geometric analysis directly informs the parameters passed to BTLx processing alternative constructors (e.g., ``from_plane_and_beam()``, ``from_volume_and_beam()``).
 
