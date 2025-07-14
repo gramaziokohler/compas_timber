@@ -1,6 +1,9 @@
+# r: compas_timber>=0.15.3
 """Creates a data-tree structure of Beams from edges of a Mesh."""
 
+# flake8: noqa
 import Grasshopper
+import Rhino
 import rhinoscriptsyntax as rs
 from compas.geometry import Line
 from compas.geometry import Vector
@@ -9,7 +12,7 @@ from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 
 from compas_timber.elements import Beam
-from compas_timber.ghpython import item_input_valid_cpython
+from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class BeamTreeFromMesh(Grasshopper.Kernel.GH_ScriptInstance):
