@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateMiterJoint`.
 * Added `PlateConnectionSolver`.
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
+* Added `joints_contribution_guide` in docs.
 
 ### Changed
 
@@ -56,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `NullJoint` to `GenericJoint`.
 * Fixed bug in show_ref_faces GH component.
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Updated `BTLx_contribution_guide` in docs.
 
 ### Removed
 
