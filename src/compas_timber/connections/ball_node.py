@@ -102,7 +102,6 @@ class BallNodeJoint(Joint):
         """
         return cls(elements, **kwargs)
 
-
     @property
     def node_point(self):
         """Returns the point at which the beams are joined, essentially the average of their intersection points."""

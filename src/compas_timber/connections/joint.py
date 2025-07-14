@@ -189,13 +189,12 @@ class Joint(Interaction):
         model.add_joint(joint)
         return joint
 
-
     @classmethod
     def from_element_list(cls, elements, **kwargs):
         """Creates an instance of this joint from a list of elements. This should be overridden when a joint type takes a list of elements.
 
         This code does not verify that the given elements are adjacent and/or lie in a topology which allows connecting
-        them. This is the responsibility of the calling code.
+        them. This is the responsibility of the calling code. TODO: evaluate whose responsibility this is.
 
         Parameters
         ----------
