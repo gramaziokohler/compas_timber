@@ -12,8 +12,8 @@ class PlateButtJoint(PlateJoint):
     def __data__(self):
         data = super(PlateJoint, self).__data__
         dict = {}
-        dict["main_plate_guid"] = data.plate_a_guid
-        dict["cross_plate_guid"] = data.plate_b_guid
+        dict["main_plate_guid"] = data['plate_a_guid']
+        dict["cross_plate_guid"] = data['plate_b_guid']
         dict["topology"] = data.topology
         dict["main_segment_index"] = self.a_segment_index
         return dict
