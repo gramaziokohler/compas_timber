@@ -213,7 +213,7 @@ class DirectRule(JointRule):
                             "Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance),
                             [e.shape for e in pair],
                         )
-                return self.joint_type(*self.elements, **self.kwargs)
+                return self.joint_type.from_element_list(self.elements, **self.kwargs)
             except TypeError:
                 raise UserWarning("unable to comply direct joint element sets")
         elif all([isinstance(e, Plate) for e in self.elements]) and issubclass(self.joint_type, PlateJoint):
@@ -302,7 +302,7 @@ class CategoryRule(JointRule):
             solver = ConnectionSolver()
             if (self.joint_type.SUPPORTED_TOPOLOGY, elements[0], elements[1]) != solver.find_topology(elements[0], elements[1], max_distance=max_distance):
                 return None
-            return self.joint_type(*elements, **self.kwargs)
+            return self.joint_type.from_element_list(elements, **self.kwargs)
         elif all([isinstance(e, Plate) for e in elements]) and issubclass(self.joint_type, PlateJoint):
             solver = PlateConnectionSolver()
             topo, plate_a, plate_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
@@ -401,7 +401,7 @@ class TopologyRule(JointRule):
             solver = ConnectionSolver()
             found_topology, beam_a, beam_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
             if found_topology == self.joint_type.SUPPORTED_TOPOLOGY:
-                return self.joint_type(beam_a, beam_b, **self.kwargs)
+                return self.joint_type.from_element_list([beam_a, beam_b], **self.kwargs)
         elif all([isinstance(e, Plate) for e in elements]) and issubclass(self.joint_type, PlateJoint):
             solver = PlateConnectionSolver()
             topo, plate_a, plate_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
