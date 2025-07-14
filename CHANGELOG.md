@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
 * Fixed several GH Components for Rhino8 compatibility.
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
+* Fixed attribute error when creating a `TButtJoint`.
 * Fixed a bug in `BeamsFromMesh` GH Component.
 
 ### Removed
