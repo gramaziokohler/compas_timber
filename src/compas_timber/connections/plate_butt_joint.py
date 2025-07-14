@@ -11,12 +11,12 @@ class PlateButtJoint(PlateJoint):
     @property
     def __data__(self):
         data = super(PlateJoint, self).__data__
-        dict = {}
-        dict["main_plate_guid"] = data['plate_a_guid']
-        dict["cross_plate_guid"] = data['plate_b_guid']
-        dict["topology"] = data.topology
-        dict["main_segment_index"] = self.a_segment_index
-        return dict
+        data_dict = {}
+        data_dict["main_plate_guid"] = data['plate_a_guid']
+        data_dict["cross_plate_guid"] = data['plate_b_guid']
+        data_dict["topology"] = data.topology
+        data_dict["main_segment_index"] = self.a_segment_index
+        return data_dict
 
     def __init__(self, main_plate, cross_plate, topology, main_segment_index, **kwargs):
         super(PlateButtJoint, self).__init__(main_plate, cross_plate, topology, main_segment_index, **kwargs)
