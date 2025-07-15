@@ -4,10 +4,15 @@ if not compas.IPY:
     from typing import Generator  # noqa: F401
     from typing import List  # noqa: F401
 
+    from compas.tolerance import Tolerance  # noqa: F401
+
 from compas.geometry import Point
+from compas.geometry import intersection_line_line
+from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import GenericJoint
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import WallJoint
@@ -34,6 +39,8 @@ class TimberModel(Model):
     topologies :  list(dict)
         A list of JointTopology for model. dict is: {"detected_topo": detected_topo, "beam_a_key": beam_a_key, "beam_b_key":beam_b_key}
         See :class:`~compas_timber.connections.JointTopology`.
+    tolerance : :class:`~compas.tolerance.Tolerance`
+        The tolerance configuration used for this model. TOL if none provided.
     volume : float
         The calculated total volume of the model.
 
@@ -42,17 +49,30 @@ class TimberModel(Model):
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
+
+        # TODO: this is a workaround to ensure that the graph nodes are not lost during deserialization
+        # TODO: this was fixed in later compas_model release, remove after migrating
+        for graphnode in model._graph.nodes():
+            element = model._graph.node_element(graphnode)  # type: ignore
+            element.graph_node = graphnode  # type: ignore
+
         for interaction in model.interactions():
             interaction.restore_beams_from_keys(model)  # type: ignore
         return model
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._topologies = []  # added to avoid calculating multiple times
+        self._tolerance = tolerance or TOL
 
     def __str__(self):
         # type: () -> str
         return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
+
+    @property
+    def tolerance(self):
+        # type: () -> Tolerance
+        return self._tolerance
 
     @property
     def beams(self):
@@ -333,6 +353,7 @@ class TimberModel(Model):
         """
         errors = []
         joints = self.joints
+
         for joint in joints:
             try:
                 joint.check_elements_compatibility()
@@ -349,7 +370,38 @@ class TimberModel(Model):
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje
+            # TODO: should we be handling the BTLxProcessing application errors differently?
+            # TODO: Maybe a ProcessingApplicationError raised for the processing(s) that failed when adding the features to the elements?
+            # TODO: This would allow us to catch the processing that failed with the necessary info, while applying the rest of the required by the joint processings that were sucessfull.  # noqa: E501
+            except ValueError as ve:
+                bje = BeamJoiningError(joint.elements, joint, debug_info=str(ve))
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
         return errors
+
+    def connect_adjacent_beams(self, max_distance=None):
+        for joint in self.joints:
+            if not isinstance(joint, WallJoint):
+                self.remove_joint(joint)
+
+        max_distance = max_distance or TOL.relative
+        beams = list(self.beams)
+        solver = ConnectionSolver()
+        pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+        for pair in pairs:
+            beam_a, beam_b = pair
+            result = solver.find_topology(beam_a, beam_b, tol=TOL.relative, max_distance=max_distance)
+
+            topology, beam_a, beam_b = result
+            if topology == JointTopology.TOPO_UNKNOWN:
+                continue
+
+            assert beam_a and beam_b
+            p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
+            p1 = Point(*p1) if p1 else None
+
+            GenericJoint.create(self, beam_a, beam_b, topology=topology, location=p1)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.
@@ -374,7 +426,7 @@ class TimberModel(Model):
         pairs = solver.find_intersecting_pairs(walls, rtree=True, max_distance=max_distance)
         for pair in pairs:
             wall_a, wall_b = pair
-            result = solver.find_wall_wall_topology(wall_a, wall_b, tol=1e-6, max_distance=max_distance)
+            result = solver.find_wall_wall_topology(wall_a, wall_b, tol=self._tolerance.absolute, max_distance=max_distance)
 
             topology = result[0]
 

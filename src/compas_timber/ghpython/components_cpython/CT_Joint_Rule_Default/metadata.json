@@ -1,0 +1,20 @@
+{
+    "name": "Default Joint Rules",
+    "nickname": "DefaultJoints",
+    "category": "COMPAS Timber",
+    "subcategory": "Joint Rules",
+    "description": "makes default rules to apply joints based on connection topology. To override with other rules, use the 'L_Topo_Joint' 'T_Topo_Joint' or 'X_Topo_Joint' components.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+        ],
+        "outputParameters": [
+            {
+                "name": "Rules",
+                "description": "List of JointDefinitions."
+            }
+        ]
+    }
+}

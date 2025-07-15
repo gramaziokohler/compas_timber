@@ -11,10 +11,13 @@ from .step_joint import StepJoint
 from .dovetail_tenon import DovetailTenon
 from .dovetail_mortise import DovetailMortise
 from .lap import Lap
+from .lap import LapProxy
 from .french_ridge_lap import FrenchRidgeLap
 from .tenon import Tenon
 from .mortise import Mortise
 from .slot import Slot
+from .pocket import Pocket
+from .pocket import PocketProxy
 from .free_contour import FreeContour
 from .text import Text
 from .btlx import TenonShapeType
@@ -24,6 +27,9 @@ from .btlx import AlignmentType
 from .btlx import MachiningLimits
 from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
+from .btlx import Contour
+from .btlx import DualContour
+from .longitudinal_cut import LongitudinalCut
 
 __all__ = [
     "BTLxWriter",
@@ -39,10 +45,13 @@ __all__ = [
     "DovetailTenon",
     "DovetailMortise",
     "Lap",
+    "LapProxy",
     "FrenchRidgeLap",
     "Tenon",
     "Mortise",
     "Slot",
+    "Pocket",
+    "PocketProxy",
     "FreeContour",
     "Text",
     "TenonShapeType",
@@ -52,4 +61,7 @@ __all__ = [
     "MachiningLimits",
     "StepShapeType",
     "BTLxFromGeometryDefinition",
+    "Contour",
+    "DualContour",
+    "LongitudinalCut",
 ]

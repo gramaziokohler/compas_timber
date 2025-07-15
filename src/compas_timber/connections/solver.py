@@ -1,16 +1,25 @@
 import itertools
 import math
 
+from compas.geometry import Line
 from compas.geometry import Point
+from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import closest_point_on_line
 from compas.geometry import cross_vectors
+from compas.geometry import distance_point_line
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane
+from compas.geometry import intersection_segment_polyline
+from compas.geometry import is_parallel_line_line
 from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
+from compas.tolerance import TOL
+
+from compas_timber.utils import is_point_in_polyline
 
 
 @pluggable(category="solvers")
@@ -264,3 +273,141 @@ class ConnectionSolver(object):
     @staticmethod
     def _is_near_end(t, length, max_distance, tol):
         return abs(t) * length < max_distance + tol or abs(1.0 - t) * length < max_distance + tol
+
+
+class PlateConnectionSolver(ConnectionSolver):
+    """Provides tools for detecting plate intersections and joint topologies."""
+
+    TOLERANCE = 1e-6
+
+    def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
+        """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
+
+        parameters
+        ----------
+        plate_a : :class:`~compas_timber.elements.Plate`
+            First potential intersecting plate.
+        plate_b : :class:`~compas_timber.elements.Plate`
+            Second potential intersecting plate.
+        tol : float
+            General tolerance to use for mathematical computations.
+        max_distance : float, optional
+            Maximum distance, in desigen units, at which two plates are considered intersecting.
+
+        Returns
+        -------
+        tuple(:class:`~compas_timber.connections.JointTopology`, tuple(:class:`~compas_timber.element.Plate`, int), tuple(`:class:`~compas_timber.element.Plate`, int))
+            The topology of the intersection between the two plates and the two plates themselves, and the indices of the outline segments where the intersection occurs.
+            Format: JointTopology, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+        """
+
+        plate_a_segment_index, plate_b_segment_index = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+
+        if plate_a_segment_index is None and plate_b_segment_index is None:
+            return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+        if plate_a_segment_index is not None and plate_b_segment_index is None:
+            return JointTopology.TOPO_T, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+        if plate_a_segment_index is None and plate_b_segment_index is not None:
+            return JointTopology.TOPO_T, (plate_b, plate_b_segment_index), (plate_a, plate_a_segment_index)
+        if plate_a_segment_index is not None and plate_b_segment_index is not None:
+            return JointTopology.TOPO_L, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+
+    @staticmethod
+    def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
+        """Finds the indices of the outline segments of `polyline_a` and `polyline_b`. used to determine connection Topology"""
+
+        indices = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if indices[0] is not None:
+            return indices
+        index = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if index is not None:
+            return index, None
+        index = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+        if index is not None:
+            return None, index
+        return None, None
+
+    @staticmethod
+    def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
+        """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
+        Used to find segments that join in L_TOPO Topology"""
+
+        if max_distance is None:
+            max_distance = max(plate_a.thickness, plate_b.thickness)
+        for pair in itertools.product(plate_a.outlines, plate_b.outlines):
+            for i, seg_a in enumerate(pair[0].lines):
+                for j, seg_b in enumerate(pair[1].lines):  # TODO: use rtree?
+                    if distance_point_line(seg_a.point_at(0.5), seg_b) <= max_distance:
+                        if is_parallel_line_line(seg_a, seg_b, tol=tol):
+                            if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
+                                return i, j
+        return None, None
+
+    @staticmethod
+    def _get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, tol=TOL):
+        """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
+        Used to find segments that join in L_TOPO Topology"""
+
+        if max_distance is None:
+            max_distance = min(main_plate.thickness, cross_plate.thickness)
+        for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
+            for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
+                line = Line(*intersection_plane_plane(plane_a, plane_b))
+                for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
+                    if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
+                        if is_parallel_line_line(seg_a, line, tol=tol):
+                            if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
+                                return i
+        return None
+
+    @staticmethod
+    def do_segments_overlap(segment_a, segment_b):
+        """Checks if two segments overlap.
+
+        Parameters
+        ----------
+        seg_a : :class:`~compas.geometry.Segment`
+            The first segment.
+        seg_b : :class:`~compas.geometry.Segment`
+            The second segment.
+        tol : float, optional
+            Tolerance for overlap check.
+
+        Returns
+        -------
+        bool
+            True if the segments overlap, False otherwise.
+        """
+        for pt_a in [segment_a.start, segment_a.end, segment_a.point_at(0.5)]:
+            dot_start = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, pt_a))
+            dot_end = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.end, pt_a))
+            if dot_start > 0 and dot_end < 0:
+                return True
+        for pt_b in [segment_b.start, segment_b.end, segment_b.point_at(0.5)]:
+            dot_start = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt_b))
+            dot_end = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.end, pt_b))
+            if dot_start > 0 and dot_end < 0:
+                return True
+        return False
+
+    @staticmethod
+    def does_segment_intersect_outline(segment, polyline, tol=TOL):
+        """Checks if a segment intersects with the outline of a polyline.
+
+        Parameters
+        ----------
+        segment : :class:`~compas.geometry.Segment`
+            The segment to check for intersection.
+        polyline : :class:`~compas.geometry.Polyline`
+            The polyline whose outline is checked for intersection.
+        tol : float, optional
+            Tolerance for intersection check.
+
+        Returns
+        -------
+        bool
+            True if the segment intersects with the outline of the polyline, False otherwise.
+        """
+        if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
+            return True
+        return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)

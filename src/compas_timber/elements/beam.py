@@ -13,7 +13,6 @@ from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
-from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
@@ -85,15 +84,6 @@ class Beam(TimberElement):
 
     """
 
-    OPPOSING_SIDE_MAP = {
-        0: 2,
-        2: 0,
-        1: 3,
-        3: 1,
-        4: 5,
-        5: 4,
-    }
-
     @property
     def __data__(self):
         data = super(Beam, self).__data__
@@ -107,7 +97,6 @@ class Beam(TimberElement):
         self.width = width
         self.height = height
         self.length = length
-        self.features = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self._blank_extensions = {}
@@ -438,39 +427,6 @@ class Beam(TimberElement):
     # Featrues
     # ==========================================================================
 
-    @reset_computed
-    def add_features(self, features):
-        # type: (Feature | list[Feature]) -> None
-        """Adds one or more features to the beam.
-
-        Parameters
-        ----------
-        features : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be added.
-
-        """
-        if not isinstance(features, list):
-            features = [features]
-        self.features.extend(features)  # type: ignore
-
-    @reset_computed
-    def remove_features(self, features=None):
-        # type: (None | Feature | list[Feature]) -> None
-        """Removes a feature from the beam.
-
-        Parameters
-        ----------
-        feature : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be removed. If None, all features will be removed.
-
-        """
-        if features is None:
-            self.features = []
-        else:
-            if not isinstance(features, list):
-                features = [features]
-            self.features = [f for f in self.features if f not in features]
-
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
         """Adds a blank extension to the beam.
@@ -527,23 +483,6 @@ class Beam(TimberElement):
             xsize = self.width
             ysize = self.height
         return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
-
-    def opposing_side_index(self, side_index):
-        # type: (int) -> int
-        """Returns the index of reference side opposing the given side index.
-
-        Parameters
-        ----------
-        side_index : int
-            The index of the reference side to be returned. 0 to 5.
-
-        Returns
-        -------
-        int
-            The index of the opposing side.
-
-        """
-        return self.OPPOSING_SIDE_MAP[side_index]
 
     def _resolve_blank_extensions(self):
         # type: () -> tuple[float, float]
@@ -631,6 +570,7 @@ class Beam(TimberElement):
             return "end", pe
 
     def get_dimensions_relative_to_side(self, ref_side_index):
+        # type: (int) -> tuple[float, float]
         """Returns the perpendicular and parallel dimensions of the beam to the given reference side.
 
         Parameters
@@ -642,9 +582,60 @@ class Beam(TimberElement):
         -------
         tuple(float, float)
             The perpendicular and parallel dimensions of the beam to the reference side.
-                - Perpendicular dimension: The measurement at a right angle to the reference side.
-                - Parallel dimension: The measurement along the same direction as the reference side.
+                - Perpendicular dimension: The measurement normal to the reference side.
+                - Parallel dimension: The measurement along y-axis of reference side.
         """
         if ref_side_index in [1, 3]:
             return self.height, self.width
         return self.width, self.height
+
+    def front_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the front side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the front side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 1) % 4]
+
+    def back_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the back side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the back side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index - 1) % 4]
+
+    def opp_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the opposite side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the opposite side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 2) % 4]

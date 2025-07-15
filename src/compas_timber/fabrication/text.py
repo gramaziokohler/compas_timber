@@ -19,30 +19,31 @@ class Text(BTLxProcessing):
 
     Parameters
     ----------
-    start_x : float
-        The start x-coordinate of the cut in parametric space of the reference side. -100000.0 < start_x < 100000.0.
-    start_y : float
-        The start y-coordinate of the cut in parametric space of the reference side. 0.0 < start_y < 50000.0.
-    angle : float
-        The horizontal angle of the first cut. -179.9 < angle < 179.9.
-    alignment_vertical : int
-        The vertical alignment of the text. Should be either AlignmentType.TOP, AlignmentType.CENTER ot AlignmentType.BOTTOM.
-    alignment_horizontal : int
-        The horizontal alignment of the text. Should be either AlignmentType.LEFT, AlignmentType.CENTER or AlignmentType.RIGHT.
-    alignment_multiline : int
-        The alignment of the text in multiline mode. Should be either AlignmentType.LEFT, AlignmentType.CENTER or AlignmentType.RIGHT.
-    stacked_marking : bool
-        If the text is a stacked marking.
-    text_height_auto : bool
-        If the text height is automatically calculated.
-    text_height : float
-        The height of the text. 0.1 < text_height < 5000.0.
     text : str
         The text to be engraved on the beam.
+    start_x : float, optional
+        The start x-coordinate of the cut in parametric space of the reference side. -100000.0 < start_x < 100000.0. Default is 0.0.
+    start_y : float, optional
+        The start y-coordinate of the cut in parametric space of the reference side. -50000.0 < start_y < 50000.0. Default is 0.0.
+    angle : float, optional
+        The horizontal angle of the first cut. -180.0 < angle < 180.0. Default is 0.0.
+    alignment_vertical : {`AlignmentType.BOTTOM`, `AlignmentType.CENTER` or `AlignmentType.TOP`}, optional
+        The vertical alignment of the text. Default is `AlignmentType.BOTTOM`.
+    alignment_horizontal : {`AlignmentType.LEFT`, `AlignmentType.CENTER` or `AlignmentType.RIGHT`}, optional
+        The horizontal alignment of the text. Default is `AlignmentType.LEFT`.
+    alignment_multiline : {`AlignmentType.LEFT`, `AlignmentType.CENTER` or `AlignmentType.RIGHT`}, optional
+        The alignment of the text in multiline mode. Default is `AlignmentType.LEFT`.
+    stacked_marking : bool, optional
+        If the text is a stacked marking. Default is False.
+    text_height_auto : bool, optional
+        If the text height is automatically calculated. Default is True.
+    text_height : float, optional
+        The height of the text. 0 < text_height < 50000.0. Default is 20.0.
 
     """
 
     PROCESSING_NAME = "Text"  # type: ignore
+    _CHARACTER_DICT = {}
 
     @property
     def __data__(self):
@@ -62,6 +63,7 @@ class Text(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
+        text,
         start_x=0.0,
         start_y=0.0,
         angle=0.0,
@@ -71,7 +73,6 @@ class Text(BTLxProcessing):
         stacked_marking=False,
         text_height_auto=True,
         text_height=20.0,
-        text="",
         **kwargs
     ):
         super(Text, self).__init__(**kwargs)
@@ -96,6 +97,13 @@ class Text(BTLxProcessing):
         self.text_height_auto = text_height_auto
         self.text_height = text_height
         self.text = text
+
+
+    @staticmethod
+    def _load_character_dict():
+        if not Text._CHARACTER_DICT:
+            character_dict_path = os.path.join(DATA, "basic_characters.zip")
+            Text._CHARACTER_DICT = json_loadz(character_dict_path)  # type: ignore
 
 
     ########################################################################
@@ -145,7 +153,7 @@ class Text(BTLxProcessing):
 
     @alignment_vertical.setter
     def alignment_vertical(self, value):
-        if value not in ["bottom", "center", "top"]:
+        if value not in ("bottom", "center", "top"):
             raise ValueError("AlignmentVertical should be one of 'bottom', 'center', 'top'. Got: {}".format(value))
         self._alignment_vertical = value
 
@@ -155,7 +163,7 @@ class Text(BTLxProcessing):
 
     @alignment_horizontal.setter
     def alignment_horizontal(self, value):
-        if value not in ["left", "center", "right"]:
+        if value not in ("left", "center", "right"):
             raise ValueError("AlignmentHorizontal should be one of 'left', 'center', 'right'. Got: {}".format(value))
         self._alignment_horizontal = value
 
@@ -165,7 +173,7 @@ class Text(BTLxProcessing):
 
     @alignment_multiline.setter
     def alignment_multiline(self, value):
-        if value not in ["left", "center", "right"]:
+        if value not in ("left", "center", "right"):
             raise ValueError("AlignmentMultiline should be one of 'left', 'center', 'right'. Got: {}".format(value))
         self._alignment_multiline = value
 
@@ -175,7 +183,7 @@ class Text(BTLxProcessing):
 
     @stacked_marking.setter
     def stacked_marking(self, value):
-        if value not in [True, False]:
+        if value not in (True, False):
             raise ValueError("StackedMarking should be a Boolean. Got: {}".format(value))
         self._stacked_marking = value
 
@@ -185,7 +193,7 @@ class Text(BTLxProcessing):
 
     @text_height_auto.setter
     def text_height_auto(self, value):
-        if value not in [True, False]:
+        if value not in (True, False):
             raise ValueError("TextHeightAuto should be a Boolean. Got: {}".format(value))
         self._text_height_auto = value
 
@@ -195,11 +203,10 @@ class Text(BTLxProcessing):
 
     @text_height.setter
     def text_height(self, value):
-        if 0 > value or value > 50000:
-            raise ValueError("TextHeight should be between 0 and 50000. Got: {}".format(value))
-        else:
+        if 0 <= value <= 50000:
             self._text_height = value
-
+        else:
+            raise ValueError("TextHeight should be between 0 and 50000. Got: {}".format(value))
 
     @property
     def text(self):
@@ -207,6 +214,8 @@ class Text(BTLxProcessing):
 
     @text.setter
     def text(self, value):
+        if value == "":
+            raise ValueError("Text should not be empty.")
         self._text = value
 
 
@@ -214,7 +223,7 @@ class Text(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry, beam):
+    def apply(self, geometry, _):
         """Apply the feature to the beam geometry.
 
         Raises
@@ -226,47 +235,54 @@ class Text(BTLxProcessing):
             The resulting geometry after processing. #TODO: think about ways to display text curves from `draw_string_on_element()`
 
         """
+        # NOTE: this currently does nothing due to the fact the visualizing the text as a brep subtraction is very heavy and usually unnecessary.
         return geometry
 
-    def draw_string_on_element(self, element):
-        """Draws the text on the element using polylines.
+    def create_text_curves_for_element(self, element):
+        """This returns translated and scaled curves which correspond to the text and the element the text is engraved on.
+
         Parameters
         ----------
-        element : :class:`compas.datastructures.Mesh`
-            The element on which to draw the text.
+        element : :class:`compas_timber.elements.Beam`
+            The beam on which the text is engraved.
+
         Returns
         -------
-        list of :class:`compas.geometry.Curve`
+        list[:class:`compas.geometry.Curve`]
             The curves representing the text.
         """
+        assert self.text
+        assert self.text_height is not None
+        assert self.start_x is not None
+        assert self.start_y is not None
 
-        face = element.ref_sides[self.ref_side_index]
-        character_dict_path = os.path.join(DATA, "basic_characters_zip")
+        self._load_character_dict()
 
-        character_dict = json_loadz(character_dict_path)
+        ref_side_index = self.ref_side_index or 0
+        face = element.ref_sides[ref_side_index]
         string_curves = []
         x_pos = 0
         spacing = 0.1
         for char in self.text:
-            crvs = character_dict[char]["curves"]
+            curves = Text._CHARACTER_DICT[char]["curves"]
             translated_crvs = []
-            for crv in crvs:
-                translated_crvs.append(crv.translated([x_pos+spacing,0,0]))
+            for crv in curves:
+                translated_crvs.append(crv.translated([x_pos + spacing,0,0]))
             string_curves.extend(translated_crvs)
-            x_pos += spacing + character_dict[char]["width"]
+            x_pos += spacing + Text._CHARACTER_DICT[char]["width"]
         x_pos *= self.text_height
 
         if self.alignment_vertical == AlignmentType.BOTTOM:
             y_offset = 0
         elif self.alignment_vertical == AlignmentType.CENTER:
-            y_offset = -self.text_height/2
+            y_offset = -self.text_height / 2
         elif self.alignment_vertical == AlignmentType.TOP:
             y_offset = -self.text_height
 
         if self.alignment_horizontal == AlignmentType.LEFT:
             x_offset = 0
         elif self.alignment_horizontal == AlignmentType.CENTER:
-            x_offset = -x_pos/2
+            x_offset = -x_pos / 2
         elif self.alignment_horizontal == AlignmentType.RIGHT:
             x_offset = -x_pos
 
@@ -277,6 +293,23 @@ class Text(BTLxProcessing):
                 pt.translate([self.start_x+x_offset, self.start_y+y_offset, 0])
                 pt.transform(Transformation.from_frame_to_frame(Frame.worldXY(), face))
         return string_curves
+
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.text_height *= factor
 
 
 class TextParams(BTLxProcessingParams):

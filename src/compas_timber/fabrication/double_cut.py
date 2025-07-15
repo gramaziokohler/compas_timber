@@ -177,7 +177,7 @@ class DoubleCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, ref_side_index=None):
+    def from_planes_and_beam(cls, planes, beam, ref_side_index=None, **kwargs):
         """Create a DoubleCut instance from two cutting planes and the beam they should cut.
 
         Parameters
@@ -200,8 +200,12 @@ class DoubleCut(BTLxProcessing):
 
         # convert all frames to planes
         planes = [Plane.from_frame(plane) if isinstance(plane, Frame) else plane for plane in planes]
-        """ get the intersection line of cutting planes, which is used to determine whether the planes cut a concave or convex shape"""
+
+        # get the intersection line of cutting planes, which is used to determine whether the planes cut a concave or convex shape
         ln = intersection_plane_plane(planes[0], planes[1])
+        if not ln:
+            raise ValueError("The two cutting planes are parallel consider using a JackRafterCut")
+
         line = Line(Point(*ln[0]), Point(*ln[1]))
         intersection_points, face_indices = intersection_line_beam_param(line, beam)
         if not intersection_points:
@@ -226,7 +230,7 @@ class DoubleCut(BTLxProcessing):
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
 
         # TODO: evaluate if the planes should be cached for use in geometry creation.
-        return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index)
+        return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index, **kwargs)
 
 
     @staticmethod
@@ -394,6 +398,25 @@ class DoubleCut(BTLxProcessing):
         )
         cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
         return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
+
+    def scale(self, factor):
+        """Scale the parameters of the processing by the given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        # type: (float) -> None
+        assert self.start_x is not None
+        assert self.start_y is not None
+        self._start_x *= factor
+        self._start_y *= factor
 
 
 class DoubleCutParams(BTLxProcessingParams):

@@ -5,6 +5,8 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.geometry import Polygon
+from compas.geometry import is_point_in_polygon_xy
 from compas.geometry import angle_vectors_signed
 from compas.geometry import add_vectors
 from compas.geometry import cross_vectors
@@ -16,9 +18,12 @@ from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.geometry import Frame
 from compas.geometry import Transformation
+from compas.geometry import Projection
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_line_line
+
+from compas.tolerance import TOL
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
@@ -291,13 +296,41 @@ def distance_segment_segment(segment_a, segment_b):
     return distance_point_point(pt_seg_a, pt_seg_b)
 
 
+def angle_vectors_projected(vector_a, vector_b, normal):
+    """Computes the angle between two vectors projected onto a plane defined by a normal vector.
+
+    Parameters
+    ----------
+    vector_a : :class:`compas.geometry.Vector`
+        The first vector.
+    vector_b : :class:`compas.geometry.Vector`
+        The second vector.
+    normal : :class:`compas.geometry.Vector` or :class:`compas.geometry.Plane` or :class:`compas.geometry.Frame`
+        The normal vector of the plane to project the vectors onto.
+
+    Returns
+    -------
+    float
+        The angle between the two projected vectors
+    """
+    if isinstance(normal, (Plane, Frame)):
+        normal = normal.normal
+
+    projection = Projection.from_plane(Plane(Point(0, 0, 0), normal))
+    proj_vect_a = vector_a.transformed(projection)
+    proj_vect_b = vector_b.transformed(projection)
+    return angle_vectors_signed(proj_vect_a, proj_vect_b, normal, deg=True)
+
+
 def is_polyline_clockwise(polyline, normal_vector):
-    """Check if a polyline is clockwise.
+    """Check if a polyline is clockwise. If the polyline is open, it is closed before the check.
 
     Parameters
     ----------
     polyline : :class:`compas.geometry.Polyline`
         The polyline to check.
+    normal_vector : :class:`compas.geometry.Vector`
+        The normal vector to use for the angle calculation.
 
     Returns
     -------
@@ -305,7 +338,11 @@ def is_polyline_clockwise(polyline, normal_vector):
         True if the polyline is clockwise, False otherwise.
 
     """
-    assert polyline[0] == polyline[-1], "Polyline should be closed"
+    # make sure the polyline is closed
+    if not polyline[0] == polyline[-1]:
+        polyline = polyline[:]  # create a copy
+        polyline.append(polyline[0])
+
     angle_sum = 0
     for i in range(len(polyline) - 1):
         u = Vector.from_start_end(polyline[i - 1], polyline[i])
@@ -335,12 +372,69 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
     return polyline
 
 
+def get_polyline_segment_perpendicular_vector(polyline, segment_index):
+    """Get the vector perpendicular to a polyline segment. This vector points outside of the polyline.
+    The polyline must be closed.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to check. Must be closed.
+    segment_index : int
+        The index of the segment in the polyline.
+
+    Returns
+    -------
+    :class:`compas.geometry.Vector`
+        The vector perpendicular to the segment, pointing outside of the polyline.
+
+    """
+    plane = Plane.from_points(polyline.points)
+    pt = polyline.lines[segment_index].point_at(0.5)
+    perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
+    point = pt + (perp_vector * 0.1)
+    if is_point_in_polyline(point, polyline):
+        return Vector.from_start_end(point, pt)
+    return Vector.from_start_end(pt, point)
+
+
+def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
+    """Check if a point is inside a polyline. Polyline must be closed. The polyline must be closed, planar, and not self-intersecting.
+
+    Parameters
+    ----------
+    point : :class:`compas.geometry.Point`
+        The point to check.
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to check against.
+    in_plane : bool, optional
+        If True, the point must be in the same plane as the polyline. Default is True.
+    tol : float, optional
+        The tolerance used for calculation. Default is TOL.
+
+    Returns
+    -------
+    bool
+        True if the point is inside the polyline, False otherwise.
+    """
+    frame = Frame.from_points(*polyline.points[:3])
+    xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+    pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
+    pt = point.transformed(xform)
+    if in_plane and not tol.is_zero(pt[2]):
+        return False
+    return is_point_in_polygon_xy(pt, pgon)
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
     "intersection_line_beam_param",
     "classify_polyline_segments",
     "distance_segment_segment",
+    "angle_vectors_projected",
     "is_polyline_clockwise",
     "correct_polyline_direction",
+    "get_polyline_segment_perpendicular_vector",
+    "is_point_in_polyline",
 ]

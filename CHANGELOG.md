@@ -11,13 +11,130 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Text` `BTLxProcessing` class, module and a corresponding `Label_Beams` GH Component.
 * Added `Label` and `DeferredLabel` classes
 
+* Added attribute `tolerance` to `TimberModel`.
+* Added `scaled` method to `compas_timber.fabrication.BTLxProcessing` to scale the BTLx parameters.
+* Added `scaled` method to `compas_timber.fabrication.BTLxPart` to scale the BTLx parameters.
+* Added `scale` method to `compas_timber.fabrication.JackRafterCut`.
+* Added `scale` method to `compas_timber.fabrication.Drilling`.
+* Added `scale` method to `compas_timber.fabrication.DoubleCut`.
+* Added `scale` method to `compas_timber.fabrication.Lap`.
+* Added `scale` method to `compas_timber.fabrication.FrenchRidgeLap`.
+* Added `scale` method to `compas_timber.fabrication.Tenon`.
+* Added `scale` method to `compas_timber.fabrication.Mortise`.
+* Added `scale` method to `compas_timber.fabrication.StepJoint`.
+* Added `scale` method to `compas_timber.fabrication.StepJointNotch`.
+* Added `scale` method to `compas_timber.fabrication.DovetailTenon`.
+* Added `scale` method to `compas_timber.fabrication.DovetailMortise`.
+* Added `scale` method to `compas_timber.fabrication.Slot`.
+* Added `scale` method to `compas_timber.fabrication.Pocket`.
+* Added `scale` method to `compas_timber.fabrication.Text`.
+* Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
+* Added new `compas_timber.fabrication.LongitudinalCut`.
+* Added tasks `update-gh-header` to update the version in the header of the GH components.
+* Added new `compas_timber.connections.XNotchJoint`.
+* Added a proxy class for `Pocket` BTLx processing for performance optimization. 
+* Added `topology` to class `Joint`.
+* Added `location` to class `Joint`.
+* Added `NBeamKDTreeAnalyzer` to `compas_timber.connections`.
+* Added `TripletAnalyzer` to `compas_timber.connections`.
+* Added `QuadAnalyzer` to `compas_timber.connections`.
+* Added `CompositeAnalyzer` to `compas_timber.connections`.
+* Added method `connect_adjacent_beams` to `TimberModel`.
+* Added `PlateJoint`.
+* Added `PlateButtJoint`.
+* Added `PlateMiterJoint`.
+* Added `PlateConnectionSolver`.
+* Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
+
+### Changed
+
+* BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.
+* Added missing `__data__` to `compas_timber.fabrication.Drilling`.
+* Added missing `__data__` to `compas_timber.fabrication.Slot`.
+* Fixed `TypeError` when deepcopying beams with `debug_info` on them.
+* Processings which are not the result of joinery are now serialized with `TimberElement`.
+* Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
+* Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+* Renamed `NullJoint` to `GenericJoint`.
+* Fixed bug in show_ref_faces GH component.
+* `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Fixed several GH Components for Rhino8 compatibility.
+* Fixed `graph_node` is `None` after deserializing a `TimberModel`.
+* Fixed attribute error when creating a `TButtJoint`.
+* Fixed a bug in `BeamsFromMesh` GH Component.
+* Changed default value for `modify_cross` to `True` for `LButtJoint`.
+
+### Removed
+
+* Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
+* Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
+* Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
+
+
+## [0.16.2] 2025-05-07
+
+### Added
+
+### Changed
+
+* Fixed max recursion depth error when copying `TimberModel`/`Beam` with proxy processings.
+
+### Removed
+
+
+
+## [0.16.1] 2025-04-30
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.16.0] 2025-04-30
+
+### Added
+
+* Added new `compas_timber.fabrication.Pocket`.
+* Added `front_side`, `back_side`, `opp_side` methods to the `Beam` class for retrieving specific sides relative to a reference side.
+* Added processing `Text` to `compas_timber.fabrication`.
+* Added `TextParams` to `compas_timber.fabrication`.
+* Added new Grasshopper components for Rhino8/cpython. 
+* Added new methods to handle adaptive GH_component parameters using cpython.
+
+### Changed
+
+* Fixed `AttributeError` when deserializing a model with Lap joints.
+### Removed
+
+
+## [0.15.3] 2025-03-25
+
+### Added
+
+* Added `DualContour` BTLx Contour type for ruled surface Swarf contours.
+
 ### Changed
 
 * Removed `main_ref_side_index` property from `TBirdsmouthJoint` since it's now defined in the `DoubleCut` BTLxProcessing.
 * Added `mill_depth` argument in `TBirdsmouthJoint` for creating pockets on the cross_beam if asked.
+* Refactored the `check_element_compatibility` method in `YButtJoint` so that it checks for coplanarity and dimensioning of the cross elements.
+* Enhanced `DoubleCut.from_planes_and_beam` to verify that provided planes are not parallel and raise a `ValueError` if they are.
+* Adjusted `process_joinery` method to catch `ValueError` exceptions during `BTLxProcessing` generation and wrap them in `BeamJoiningError` objects.
+* Refactored and renamed `are_beams_coplanar` function to `are_beams_aligned_with_cross_vector`.
+* Refactored `_create_negative_volumes()` in `LapJoint` so that it generates box-like volumes. 
+* Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `_create_negative_volumes()` method to get the negative volumes and use the alt constructor `Lap.from_volume_and_beam()`.
+* Fixed an error occuring in `BTLxPart.shape_strings` by ensuring the polyline is always closed.
+* Implemented `Inclination` in the `FreeContour` BTLx Processing.
+* Changed `Plate` element to be defined by top and bottom contours instead of one contour and thickness. 
 
 ### Removed
 
+* Removed `check_elements_compatibility` method from the parent `LapJoint` since non co-planar lap joints can be achieved.
+* Removed the `is_pocket` argument in `Lap.from_plane_and_beam()` since this class method will now only serve for pockets in Butt joints.
+* Removed `opposing_side_index` and `OPPOSING_SIDE_MAP` from `Beam` class since they have now been replaced by `front_side`, `back_side`, `opp_side` methods.
+* Removed the deprecated `main_beam_opposing_side_index` property from `LButtJoint` and `TButtJoint` as it is no longer in use.
 
 ## [0.15.2] 2025-03-05
 

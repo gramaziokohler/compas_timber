@@ -101,3 +101,17 @@ def test_french_ridge_lap_params_obj():
     assert params["RefPosition"] == "refedge"
     assert params["Drillhole"] == "yes"
     assert params["DrillholeDiam"] == "11.000"
+
+
+def test_french_ridge_scaled():
+    instance = FrenchRidgeLap(OrientationType.START, 14.23, 31.24, EdgePositionType.REFEDGE, True, 11.0, ref_side_index=3)
+
+    scaled_instance = instance.scaled(2.0)
+
+    assert scaled_instance.orientation == instance.orientation
+    assert scaled_instance.start_x == instance.start_x * 2.0
+    assert scaled_instance.angle == instance.angle
+    assert scaled_instance.ref_position == instance.ref_position
+    assert scaled_instance.drillhole == instance.drillhole
+    assert scaled_instance.drillhole_diam == instance.drillhole_diam * 2.0
+    assert scaled_instance.ref_side_index == instance.ref_side_index

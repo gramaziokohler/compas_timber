@@ -9,4 +9,7 @@ twine
 build
 wheel
 pytest-mock
--e .
+build
+pythonnet
+tomlkit
+pytest-cov

@@ -1,0 +1,20 @@
+{
+    "name": "T Topological Joint Rules",
+    "nickname": "T_Topo_Joint",
+    "category": "COMPAS Timber",
+    "subcategory": "Joint Rules",
+    "description": "makes rule to apply joint type to T topology. Defualts to TButtJoint",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+        ],
+        "outputParameters": [
+            {
+                "name": "Rule",
+                "description": "List of JointDefinitions."
+            }
+        ]
+    }
+}
