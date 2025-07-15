@@ -112,7 +112,7 @@ Key Considerations
 .. note::
     The BTLx specification uses 1-based indexing for reference sides (RS1-RS6), but ``compas_timber`` uses 0-based indexing internally (0-5). The ``BTLxWriter`` automatically converts from 0-based to 1-based indexing when serializing to BTLx XML format.
 
-**Local Coordinate System**: All BTLx parameters must be defined in the local coordinate system of the element being processed. When implementing alternative constructors, ensure geometric calculations are converted to the element's local space.
+**Local Coordinate System**: All BTLx parameters must be defined in the local coordinate system of the element's `ReferenceSide`. When implementing alternative constructors, ensure geometric calculations are converted to the element's local space.
 
 **Bidirectional Geometry-Parameter Conversion**: Implement both directions of conversion:
 
