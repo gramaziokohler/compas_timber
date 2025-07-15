@@ -151,9 +151,9 @@ def test_direct_rule_get_joint(beams):
     assert rule.get_joint() is not None
     rule = DirectRule(LMiterJoint, [beams[2], beams[3]])
     assert rule.get_joint() is not None
-    rule = DirectRule(LMiterJoint, [beams[1], beams[2]])
+    rule = DirectRule(TButtJoint, [beams[2], beams[1]])
     assert rule.get_joint() is not None
-    rule = DirectRule(LMiterJoint, [beams[3], beams[0]])
+    rule = DirectRule(XLapJoint, [beams[3], beams[0]])
     assert rule.get_joint() is not None
 
 

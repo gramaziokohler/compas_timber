@@ -49,7 +49,7 @@ class PlateToPlateInterface(object):
 
     """
 
-    def __init__(self, polyline, frame, edge_index, topology, interface_role=None):
+    def __init__(self, polyline, frame, topology, edge_index = None, interface_role=None):
         self.polyline = polyline
         self.frame = frame
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
@@ -91,8 +91,7 @@ class PlateJoint(Joint):
         The topology in which the plates are connected.
     a_segment_index : int
         The index of the segment in plate_a's outline where the plates are connected.
-    b_segment_index : int
-        The index of the segment in plate_b's outline where the plates are connected.
+
     **kwargs : dict, optional
         Additional keyword arguments to pass to the parent class.
 
@@ -121,6 +120,7 @@ class PlateJoint(Joint):
         self.plate_a = plate_a
         self.plate_b = plate_b
         self.a_segment_index = a_segment_index
+        self.b_segment_index = None
 
         self.a_outlines = None
         self.b_outlines = None
@@ -167,8 +167,8 @@ class PlateJoint(Joint):
         return PlateToPlateInterface(
             a_interface_polyline,
             frame,
-            self.a_segment_index,
             self.topology,
+            self.a_segment_index,
         )
 
     @property
@@ -188,8 +188,8 @@ class PlateJoint(Joint):
         return PlateToPlateInterface(
             b_interface_polyline,
             frame,
-            self.b_segment_index,
             self.topology,
+            self.b_segment_index,
         )
 
     def add_features(self):

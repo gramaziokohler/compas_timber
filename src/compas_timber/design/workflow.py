@@ -209,11 +209,18 @@ class DirectRule(JointRule):
                     solver = ConnectionSolver()
                     found_topology, beam_a, _ = solver.find_topology(*self.elements, max_distance=max_distance)
                     supported_topo = self.joint_type.SUPPORTED_TOPOLOGY if isinstance(self.joint_type.SUPPORTED_TOPOLOGY, list) else [self.joint_type.SUPPORTED_TOPOLOGY]
-                    if found_topology not in supported_topo or self.elements[0] != beam_a:
+                    if found_topology not in supported_topo:
                         raise BeamJoiningError(
                             self.elements,
                             self.joint_type,
                             "Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(found_topology)),
+                            [e.shape for e in self.elements],
+                        )
+                    if self.elements[0] != beam_a:
+                        raise BeamJoiningError(
+                            self.elements,
+                            self.joint_type,
+                            "Beam roles must be reversed for topology of {}".format(self.joint_type.__name__),
                             [e.shape for e in self.elements],
                         )
                 else:

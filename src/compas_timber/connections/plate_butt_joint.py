@@ -10,7 +10,7 @@ class PlateButtJoint(PlateJoint):
 
     @property
     def __data__(self):
-        data = super(PlateJoint, self).__data__
+        data = super(PlateButtJoint, self).__data__
         dict = {}
         dict["main_plate_guid"] = data["plate_a_guid"]
         dict["cross_plate_guid"] = data["plate_b_guid"]
@@ -154,7 +154,7 @@ class PlateTButtJoint(PlateButtJoint):
 
     def __repr__(self):
         return "PlateTButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
-
+    
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""
 

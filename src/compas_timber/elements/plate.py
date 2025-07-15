@@ -31,8 +31,6 @@ class Plate(TimberElement):
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
-    blank_extension : float, optional
-        The extension of the blank geometry around the edges of the plate geometry. Default is 0.
 
 
     Attributes
@@ -69,7 +67,6 @@ class Plate(TimberElement):
         data = super(Plate, self).__data__
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
-        data["blank_extension"] = self.blank_extension
         data["openings"] = self.openings
         return data
 
@@ -274,8 +271,6 @@ class Plate(TimberElement):
             The thickness of the plate.
         vector : :class:`~compas.geometry.Vector`, optional
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        blank_extension : float, optional
-            The extension of the blank geometry around the edges of the plate geometry. Default is 0.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 

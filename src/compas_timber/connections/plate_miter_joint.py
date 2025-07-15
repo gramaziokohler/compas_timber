@@ -14,7 +14,7 @@ class PlateMiterJoint(PlateJoint):
         data["b_segment_index"] = self.b_segment_index
         return data
     
-    def __init__(self, plate_a, plate_b, topology, a_segment_index, b_segment_index, **kwargs):
+    def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(PlateMiterJoint, self).__init__(plate_a, plate_b, topology, a_segment_index, **kwargs)
         self.b_segment_index = b_segment_index
 
