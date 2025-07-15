@@ -66,7 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
 * Fixed a bug in `BeamsFromMesh` GH Component.
 * Fixed attribute error when creating a `TButtJoint`.
-* Fixed a bug in `BeamsFromMesh` GH Component.
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.joints_from_rules_and_elements` which now returns Joint instances instead of `JointDefinition`s.
 * Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
