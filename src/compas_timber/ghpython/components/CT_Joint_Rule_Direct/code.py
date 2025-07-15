@@ -64,7 +64,7 @@ class DirectJointRule(component):
                         Warning,
                         "Beams meet with topology: {} which does not agree with joint of type: {}".format(JointTopology.get_name(topology), self.joint_type.__name__),
                     )
-                Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
+                Rules.append(DirectRule(self.joint_type, [main, secondary], **kwargs))
             return Rules
 
     def arg_names(self):

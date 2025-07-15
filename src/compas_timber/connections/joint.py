@@ -185,6 +185,32 @@ class Joint(Interaction):
 
         """
 
-        joint = cls(*elements, **kwargs)
+        joint = cls.from_element_list(elements, **kwargs)
         model.add_joint(joint)
         return joint
+
+
+    @classmethod
+    def from_element_list(cls, elements, **kwargs):
+        """Creates an instance of this joint from a list of elements. This should be overridden when a joint type takes a list of elements.
+
+        This code does not verify that the given elements are adjacent and/or lie in a topology which allows connecting
+        them. This is the responsibility of the calling code.
+
+        Parameters
+        ----------
+        *elements : :class:`~compas_model.elements.Element`
+            The elements to be connected by this joint. The number of elements must comply with the `Joint` class's
+            `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` attributes.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+
+        return cls(*elements, **kwargs)
+        

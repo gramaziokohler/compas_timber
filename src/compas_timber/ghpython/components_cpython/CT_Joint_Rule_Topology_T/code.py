@@ -23,15 +23,10 @@ class T_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 supported_topo = [supported_topo]
             if JointTopology.TOPO_T in supported_topo:
                 self.classes[cls.__name__] = cls
-        if ghenv.Component.Params.Output[0].NickName == "Rule":
-            self.joint_type = TButtJoint
-            self.clicked = False
-        else:
-            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
-            self.clicked = True
+        self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
     def RunScript(self, *args):
-        if not self.clicked:
+        if not self.joint_type:
             ghenv.Component.Message = "Default: TButtJoint"
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "TButtJoint is default, change in context menu (right click)")
             return TopologyRule(JointTopology.TOPO_T, TButtJoint)
@@ -41,11 +36,6 @@ class T_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             for i, val in enumerate(args):
                 if val is not None:
                     kwargs[self.arg_names()[i]] = val
-            supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-            if not isinstance(supported_topo, list):
-                supported_topo = [supported_topo]
-            if JointTopology.TOPO_T not in supported_topo:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Joint type does not match topology. Joint may not be generated.")
             return TopologyRule(JointTopology.TOPO_T, self.joint_type, **kwargs)
 
     def arg_names(self):
@@ -59,7 +49,6 @@ class T_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 item.Checked = True
 
     def on_item_click(self, sender, event_info):
-        self.clicked = True
         self.joint_type = self.classes[str(sender)]
         rename_cpython_gh_output(self.joint_type.__name__, 0, ghenv)
         manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=0)

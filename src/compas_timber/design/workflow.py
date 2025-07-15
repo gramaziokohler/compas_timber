@@ -2,11 +2,18 @@ from itertools import combinations
 
 from compas.tolerance import TOL
 
-from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import ConnectionSolver, solver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
+from compas_timber.connections import PlateConnectionSolver
+from compas_timber.connections import PlateJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
+from compas_timber.connections.plate_butt_joint import PlateTButtJoint
+from compas_timber.connections.plate_miter_joint import PlateMiterJoint
+from compas_timber.elements.beam import Beam
+from compas_timber.elements.plate import Plate
+from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import intersection_line_line_param
 
@@ -36,20 +43,6 @@ class ContainerDefinition(object):
 
 
 class JointRule(object):
-    def comply(self, elements):
-        """Returns True if the provided elements comply with the rule defined by this instance. False otherwise.
-
-        Parameters
-        ----------
-        elements : list(:class:`~compas_timber.elements.TimberElement`)
-
-        Returns
-        -------
-        bool
-
-        """
-        raise NotImplementedError
-
     @staticmethod
     def get_direct_rules(rules):
         return [rule for rule in rules if rule.__class__.__name__ == "DirectRule"]
@@ -66,6 +59,8 @@ class JointRule(object):
                 JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
                 JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
                 JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XLapJoint),
+                JointTopology.TOPO_EDGE_EDGE: TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
+                JointTopology.TOPO_EDGE_FACE: TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
             }
         for rule in rules:  # separate category and topo and direct joint rules
             if rule.__class__.__name__ == "TopologyRule":
@@ -73,31 +68,33 @@ class JointRule(object):
         return [rule for rule in topo_rules.values() if rule is not None]
 
     @staticmethod
-    def joints_from_beams_and_rules(elements, rules, max_distance=TOL.absolute, handled_pairs=None):
-        """processes joint rules into joint definitions.
+    def joints_from_rules_and_elements(rules, elements, max_distance=TOL.absolute, handled_pairs=None):
+        """Returns a list of joints based on the given rules and elements.
 
         Parameters
         ----------
+        rules : list(:class:`~compas_timber.connections.JointRule`)
+            A list of joint rules to consider.
         elements : list(:class:`~compas_timber.elements.TimberElement`)
-            A list of elements to be joined.
-        rules : list(:class:`~compas_timber.design.JointRule`)
-            A list of joint rules to be applied.
-        max_distance : float, optional
-            The maximum distance to consider two elements as intersecting.
+            A list of elements to join.
+        max_distance : float
+            The maximum distance to consider for joining elements.
+        handled_pairs : list(set(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)), optional
+            A list of already handled element pairs.
 
         Returns
         -------
-        list(:class:`~compas_timber.design.JointDefinition`)
-            A list of joint definitions that can be applied to the given elements.
+        tuple(list(:class:`~compas_timber.connections.Joint`), list(:class:`~compas_timber.connections.BeamJoiningError`))
+            A tuple containing a list of joints and a list of joining errors.
 
         """
+
         handled_pairs = handled_pairs or []
         elements = elements if isinstance(elements, list) else list(elements)
         direct_rules = JointRule.get_direct_rules(rules)
         solver = ConnectionSolver()
 
-        max_distances = [rule.max_distance for rule in rules if rule.max_distance]
-        max_rule_distance = max(max_distances) if max_distances else max_distance
+        max_rule_distance = max([rule.max_distance for rule in rules if rule.max_distance] + [max_distance])
 
         element_pairs = solver.find_intersecting_pairs(elements, rtree=True, max_distance=max_rule_distance)
 
@@ -108,40 +105,41 @@ class JointRule(object):
             if pair in element_pairs:
                 element_pairs.remove(pair)
 
-        joint_defs = []
-        unmatched_pairs = []
-        compliant_direct_rules = []
-
+        direct_joints = []
+        joints = []
+        joining_errors = []
         for rule in direct_rules:
-            if rule.comply(rule.elements, model_max_distance=max_distance):  # see if pair complies with max distance
-                joint_defs.append(JointDefinition(rule.joint_type, rule.elements, **rule.kwargs))
-                compliant_direct_rules.append(rule)
+            try:
+                joint = rule.get_joint(model_max_distance=max_distance)  # try to get the joint from the rule
+                direct_joints.append(joint)
+            except BeamJoiningError as e:
+                joining_errors.append(e)
 
         while element_pairs:
             pair = element_pairs.pop()
-            match_found = False
-
-            for rule in compliant_direct_rules:
-                if rule.contains(pair):  # see if pair is used in a direct rule
-                    match_found = True
+            joint_found = False
+            # ignore pairs that are joined by direct rules
+            for joint in direct_joints:
+                if set(pair).issubset(set(joint.elements)):
+                    joint_found = True
+                    break
+            if joint_found:
+                continue
+            for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
+                joint = rule.try_get_joint(pair, model_max_distance=max_distance)
+                if joint:
+                    joint_found = True
+                    joints.append(joint)
+                    break
+            if joint_found:
+                continue
+            for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
+                joint = rule.try_get_joint(pair, model_max_distance=max_distance)
+                if joint:
+                    joints.append(joint)
                     break
 
-            if not match_found:
-                for rule in JointRule.get_category_rules(rules):  # see if pair is used in a category rule
-                    if rule.comply(pair, model_max_distance=max_distance):
-                        match_found = True
-                        joint_defs.append(JointDefinition(rule.joint_type, rule.reorder(pair), **rule.kwargs))
-                        break
-            if not match_found:
-                for rule in JointRule.get_topology_rules(rules):  # see if pair is used in a topology rule
-                    comply, ordered_pair = rule.comply(pair, model_max_distance=max_distance)
-                    if comply:
-                        match_found = True
-                        joint_defs.append(JointDefinition(rule.joint_type, ordered_pair, **rule.kwargs))
-                        break
-            if not match_found:
-                unmatched_pairs.append(pair)
-        return joint_defs, unmatched_pairs
+        return direct_joints + joints, joining_errors
 
 
 class DirectRule(JointRule):
@@ -179,34 +177,82 @@ class DirectRule(JointRule):
         except TypeError:
             raise UserWarning("unable to comply direct joint element sets")
 
-    def comply(self, elements, model_max_distance=TOL.absolute):
-        """Returns True if the given elements comply with this DirectRule.
+    def get_joint(self, model_max_distance=TOL.absolute):
+        """Returns a Joint if the given elements comply with this DirectRule.
         Checks if the distance between the centerlines of the elements is less than the max_distance.
         Does not check for JointTopology compliance.
+        TODO: Consider how to do Topology check when there are more than 2 elements.
 
         Parameters
         ----------
-        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
-            A tuple containing two elements to check.
         model_max_distance : float, optional
             The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
             This is only used if the rule does not already have a max_distance set.
 
         Returns
         -------
-        bool
-            True if the elements comply with the rule, False otherwise.
+        :class:`~compas_timber.connections.Joint`
+            The joint created from the elements and the joint type.
+
+        Raises
+        ------
+        BeamJoiningError
+            If the distance between the elements is greater than the max_distance.
 
         """
-        if self.max_distance is not None:
-            max_distance = self.max_distance
-        else:
-            max_distance = model_max_distance
-        try:
-            for pair in combinations(list(elements), 2):
-                return distance_segment_segment(pair[0].centerline, pair[1].centerline) <= max_distance
-        except TypeError:
-            raise UserWarning("unable to comply direct joint element sets")
+
+        max_distance = self.max_distance or model_max_distance
+
+        if all([isinstance(e, Beam) for e in self.elements]) and not issubclass(self.joint_type, PlateJoint):
+            try:
+                if len(self.elements) == 2:
+                    solver = ConnectionSolver()
+                    found_topology, beam_a, _ = solver.find_topology(*self.elements, max_distance=max_distance)
+                    supported_topo = self.joint_type.SUPPORTED_TOPOLOGY if isinstance(self.joint_type.SUPPORTED_TOPOLOGY, list) else [self.joint_type.SUPPORTED_TOPOLOGY]
+                    if found_topology not in supported_topo:
+                        raise BeamJoiningError(
+                            self.elements,
+                            self.joint_type,
+                            "Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(found_topology)),
+                            [e.shape for e in self.elements],
+                        )
+                    if self.elements[0] != beam_a:
+                        raise BeamJoiningError(
+                            self.elements,
+                            self.joint_type,
+                            "Beam roles must be reversed for topology of {}".format(self.joint_type.__name__),
+                            [e.shape for e in self.elements],
+                        )
+                else:
+                    for pair in combinations(list(self.elements), 2):
+                        if distance_segment_segment(pair[0].centerline, pair[1].centerline) > max_distance: #TODO: can we do topo checks for 3+ elements?
+                            raise BeamJoiningError(
+                                pair,
+                                self.joint_type,
+                                "Joint type {} does not support elements with distance greater than {}".format(self.joint_type.__name__, max_distance),
+                            [e.shape for e in pair],
+                        )
+                return self.joint_type.from_element_list(self.elements, **self.kwargs)
+            except TypeError:
+                raise UserWarning("unable to comply direct joint element sets")
+        elif all([isinstance(e, Plate) for e in self.elements]) and issubclass(self.joint_type, PlateJoint):
+            if len(self.elements) != 2:
+                raise BeamJoiningError(self.elements, self.joint_type, "DirectRule for Plates requires exactly two elements.", [e.shape for e in self.elements])
+
+            topo, plate_a, plate_b = PlateConnectionSolver().find_topology(self.elements[0], self.elements[1], max_distance=max_distance)
+            if topo is not None:
+                if topo != self.joint_type.SUPPORTED_TOPOLOGY:
+                    raise BeamJoiningError(
+                        self.elements,
+                        self.joint_type,
+                        "Joint type {} does not support topology {}".format(self.joint_type.__name__, JointTopology.get_name(topo)),
+                        [e.shape for e in self.elements],
+                    )
+                    # TODO: implement error handling a la FeatureApplicationError.
+                if topo == JointTopology.TOPO_EDGE_EDGE:
+                    return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], plate_b[1], **self.kwargs)
+                else:
+                    return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], **self.kwargs)
 
 
 class CategoryRule(JointRule):
@@ -243,13 +289,13 @@ class CategoryRule(JointRule):
     def __repr__(self):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
-    def comply(self, elements, model_max_distance=TOL.absolute):
-        """Checks if the given elements comply with this CategoryRule.
+    def try_get_joint(self, elements, model_max_distance=TOL.absolute):
+        """Returns a Joint if the given elements comply with this CategoryRule.
         It checks:
-        that the elements have the expected category attribute,
-        that the max_distance is not exceeded,
-        that the joint supports the topology of the elements.
-
+        -that the elements have the expected category attribute,
+        -that the max_distance is not exceeded,
+        -that the joint supports the topology of the elements.
+        -that the element order is not reversed to meet the topology requirements.
 
         Parameters
         ----------
@@ -261,29 +307,34 @@ class CategoryRule(JointRule):
 
         Returns
         -------
-        bool
-            True if the elements comply with the rule, False otherwise.
+        :class:`~compas_timber.connections.Joint` or None
+            The joint created from the elements.
 
         """
-        if self.max_distance is not None:
-            max_distance = self.max_distance
-        else:
-            max_distance = model_max_distance
-        try:
-            element_cats = set([e.attributes["category"] for e in elements])
-            comply = False
-            elements = list(elements)
-            if element_cats == set([self.category_a, self.category_b]):
-                solver = ConnectionSolver()
-                found_topology = solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
-                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-                if not isinstance(supported_topo, list):
-                    supported_topo = [supported_topo]
-                if found_topology in supported_topo:
-                    comply = True
-            return comply
-        except KeyError:
-            return False
+        if not set([e.attributes["category"] for e in elements]) == set([self.category_a, self.category_b]):
+            return None
+
+        elements = list(self.reorder(elements))  # reorder the elements to match the expected order of the joint type
+        max_distance = self.max_distance or model_max_distance
+
+        if all([isinstance(e, Beam) for e in elements]) and not issubclass(self.joint_type, PlateJoint):
+            solver = ConnectionSolver()
+            if (self.joint_type.SUPPORTED_TOPOLOGY, elements[0], elements[1]) != solver.find_topology(elements[0], elements[1], max_distance=max_distance):
+                return None
+            return self.joint_type.from_element_list(elements, **self.kwargs)
+        elif all([isinstance(e, Plate) for e in elements]) and issubclass(self.joint_type, PlateJoint):
+            solver = PlateConnectionSolver()
+            topo, plate_a, plate_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
+            if topo is not None:
+                if topo != self.joint_type.SUPPORTED_TOPOLOGY:
+                    return None
+                if plate_a[0] != elements[0]:  # check that the plate roles are correct
+                    return None
+                if topo == JointTopology.TOPO_EDGE_EDGE:
+                    return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], plate_b[1], **self.kwargs)
+                else:
+                    return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], **self.kwargs)
+        return None
 
     def reorder(self, elements):
         """Returns the given elements in a sorted order.
@@ -342,10 +393,11 @@ class TopologyRule(JointRule):
             self.joint_type,
         )
 
-    def comply(self, elements, model_max_distance=TOL.absolute):
-        """Checks if the given elements comply with this TopologyRule.
-        It checks that the max_distance is not exceeded and that the topology of the elements matches the rule.
-        If the elements are not in the correct order, they are reversed.
+    def try_get_joint(self, elements, model_max_distance=TOL.absolute):
+        """Returns a Joint if the given elements comply with this TopologyRule.
+        It checks:
+        that the max_distance is not exceeded,
+        that the joint supports the topology of the elements.
 
         Parameters
         ----------
@@ -357,85 +409,29 @@ class TopologyRule(JointRule):
 
         Returns
         -------
-        bool
-            True if the elements comply with the rule, False otherwise.
-        list(:class:`~compas_timber.elements.TimberElement`)
-            The elements in the correct order.
+        :class:`~compas_timber.connections.Joint` or None
+            The joint created from the elements if the elements comply with the rule,
 
         """
-        if self.max_distance is not None:
-            max_distance = self.max_distance
-        else:
-            max_distance = model_max_distance
-        try:
-            elements = list(elements)
+
+        max_distance = self.max_distance or model_max_distance
+        elements = list(elements)
+        if all([isinstance(e, Beam) for e in elements]) and not issubclass(self.joint_type, PlateJoint):
             solver = ConnectionSolver()
-            topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
-            return (
-                self.topology_type == topo_results[0],
-                [topo_results[1], topo_results[2]],
-            )  # comply, if topologies match, reverse if the element order should be switched
-        except KeyError:
-            return False
-
-
-class JointDefinition(object):
-    """Container for a joint type and the elements that shall be joined.
-
-    This allows delaying the actual joining of the elements to a downstream component.
-
-    """
-
-    def __init__(self, joint_type, elements, **kwargs):
-        # if not issubclass(joint_type, Joint):
-        #     raise UserWarning("{} is not a valid Joint type!".format(joint_type.__name__))
-
-        if len(elements) < 2:
-            raise UserWarning("Joint requires at least two Elements, got {}.".format(len(elements)))
-
-        self.joint_type = joint_type
-        self.elements = elements
-        self.kwargs = kwargs
-
-    def __repr__(self):
-        return "{}({}, {}, {})".format(JointDefinition.__name__, self.joint_type.__name__, self.elements, self.kwargs)
-
-    def ToString(self):
-        return repr(self)
-
-    def __hash__(self):
-        return hash((self.joint_type, self.elements))
-
-    def is_identical(self, other):
-        return isinstance(other, JointDefinition) and self.joint_type == other.joint_type and set([e.key for e in self.elements]) == set([e.key for e in other.elements])
-
-    def match(self, elements):
-        """Returns True if elements are defined within this JointDefinition."""
-        set_a = set([id(e) for e in elements])
-        set_b = set([id(e) for e in self.elements])
-        return set_a == set_b
-
-
-class FeatureDefinition(object):
-    """Container linking a feature to the elements on which it should be applied.
-
-    This allows delaying the actual applying of features to a downstream component.
-
-    TODO: this needs to be adapted to in order to create processings.
-    TODO: There needs to be a way for this to call a named alternative constructor with the required arguments.
-    TODO: There needs to be a possibility to transform the elements before converting this to a processing.
-
-    """
-
-    def __init__(self, feature, elements=None):
-        self.feature = feature
-        self.elements = elements
-
-    def __repr__(self):
-        return "{}({}, {})".format(FeatureDefinition.__name__, repr(self.feature), self.elements)
-
-    def ToString(self):
-        return repr(self)
+            found_topology, beam_a, beam_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
+            if found_topology == self.joint_type.SUPPORTED_TOPOLOGY:
+                return self.joint_type.from_element_list([beam_a, beam_b], **self.kwargs)
+        elif all([isinstance(e, Plate) for e in elements]) and issubclass(self.joint_type, PlateJoint):
+            solver = PlateConnectionSolver()
+            topo, plate_a, plate_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
+            if topo is not None:
+                if topo != self.joint_type.SUPPORTED_TOPOLOGY:
+                    return None
+                if topo == JointTopology.TOPO_EDGE_EDGE:
+                    return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], plate_b[1], **self.kwargs)
+                else:
+                    return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], **self.kwargs)
+        return None
 
 
 class Attribute:
