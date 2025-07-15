@@ -107,7 +107,7 @@ class Label(object):
 
 
 class DeferredLabel(Data):
-    """A deferred label for a timber assembly, allowing attribues generated via joinery and other processings to be included in label data.
+    """A deferred label for timber elements, allowing attribues generated via joinery and other processings to be included in label data.
 
     parameters
     ----------
