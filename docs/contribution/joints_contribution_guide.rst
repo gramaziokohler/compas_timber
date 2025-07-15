@@ -28,7 +28,7 @@ Creating a New Joint
    - **T-joints**: One element's end intersecting another element along its length
    - **I-joints**: Elements joined end-to-end in a straight line
 
-   **Define Element Roles**: Assign specific roles to each participating element:
+   **Define Element Roles**: Assign specific roles to each participating element, if relevant:
 
    - **Cross beam**: The primary or continuous element in the joint
    - **Main beam**: The secondary element that connects to the cross beam
