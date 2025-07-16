@@ -43,7 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateMiterJoint`.
 * Added `PlateConnectionSolver`.
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
-* Added generic alternate constructor `Joint.from_element_list` to allow joints to override construction without reference to model. 
 
 ### Changed
 
@@ -62,8 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed attribute error when creating a `TButtJoint`.
 * Fixed a bug in `BeamsFromMesh` GH Component.
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
-* Fixed geometry creation for `BallNodeJoint`.
-* `BallNodeJoint` overrides instantiation with `BallNodeJoint.from_element_list` instead of create.
+* Fixed `elements` and geometry creation for `BallNodeJoint`.
 
 ### Removed
 
