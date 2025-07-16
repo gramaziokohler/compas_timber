@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
 * Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
 * Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
+* Removed `angle_vectors_projected` from `compas_timber.utils` since this has been upstreamed to core.
 
 
 ## [0.16.2] 2025-05-07
@@ -105,6 +106,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed `AttributeError` when deserializing a model with Lap joints.
+* Fixed a bug in `compas_timber.fabrication.Lap` where `ref_side_index` failed for `0` by checking for `None` instead.
+* Fixed a bug in `compas_timber.fabrication.Lap` to handle the case when the vectors used to calculate the `inclination` angle are perpendicular.
+
 ### Removed
 
 
