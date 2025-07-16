@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed attribute error when creating a `TButtJoint`.
 * Fixed a bug in `BeamsFromMesh` GH Component.
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
+* Minor fixes to GH Components.
 
 ### Removed
 
