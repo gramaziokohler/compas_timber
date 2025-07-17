@@ -1,3 +1,4 @@
+from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -26,8 +27,8 @@ class TimberElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, features=None, **kwargs):
-        super(TimberElement, self).__init__(**kwargs)
+    def __init__(self, features=None, frame=None, **kwargs):
+        super(TimberElement, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self._features = features or []
         self.debug_info = []
 
@@ -54,11 +55,19 @@ class TimberElement(Element):
     @property
     def features(self):
         # type: () -> list[Feature]
+        """A list of features applied to the element."""
         return self._features
 
     @features.setter
+    @reset_computed
     def features(self, features):
         self._features = features
+
+    @property
+    def geometry(self):
+        if self._geometry is None:
+            self._geometry = self.compute_elementgeometry()
+        return self._geometry
 
     def remove_blank_extension(self):
         pass
@@ -83,6 +92,7 @@ class TimberElement(Element):
         if not isinstance(features, list):
             features = [features]
         self._features.extend(features)  # type: ignore
+        self._geometry = None  # reset geometry cache TODO: should we do that?
 
     @reset_computed
     def remove_features(self, features=None):
@@ -101,3 +111,4 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
+        self._geometry = None  # reset geometry cache TODO: should we do that?

@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
 * Added new `compas_timber.connections.XNotchJoint`.
 * Added a proxy class for `Pocket` BTLx processing for performance optimization. 
+* Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
+* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `interactions()` method to `TimberModel` for iterating over edge-level joints and contacts in the model graph.
 * Added `topology` to class `Joint`.
 * Added `location` to class `Joint`.
 * Added `NBeamKDTreeAnalyzer` to `compas_timber.connections`.
@@ -55,6 +60,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
 * Renamed `NullJoint` to `GenericJoint`.
 * Fixed bug in show_ref_faces GH component.
+* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Beam` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Fastener` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Plate` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Slab` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.PlateFastener` following the renaming in `compas_model`.
+* Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.BallNodeFastener` following the renaming in `compas_model`.
+* Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
+* Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
+* Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
+* Updated default edge attributes in the model graph to include `joints` and `contacts`.
+* Updated `compas_model` version pinning from `0.4.4` to `0.8.0` to align with the latest development.
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
 * Fixed several GH Components for Rhino8 compatibility.
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
@@ -66,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 * Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
+* Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 * Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
 * Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
 * Removed `angle_vectors_projected` from `compas_timber.utils` since this has been upstreamed to core.
