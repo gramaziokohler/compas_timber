@@ -5,7 +5,7 @@ BTLx Contribution Guide
 BTLx processings are machining operations that can be applied to timber elements. This guide provides step-by-step instructions for creating new BTLx processings and integrating them with the COMPAS Timber framework.
 
 .. note::
-    For implementing new joint types from already existing BTLx Processings, see the :doc:`Joint Contribution Guide`.
+    For implementing new joint types from already existing BTLx Processings, see the :doc:`Joint Contribution Guide <joints_contribution_guide>`.
 
 Adding a new BTLx Processing
 ============================
@@ -37,8 +37,8 @@ It is important to implement the following methods and attributes:
 
     See also:
 
-    - :meth:`compas_timber.fabrication.JackRafterCut`
-    - :meth:`compas_timber.fabrication.Lap`
+    - :meth:`JackRafterCut <compas_timber.fabrication.JackRafterCut>`
+    - :meth:`Lap <compas_timber.fabrication.Lap>`
 
 
 3. Add Alternative Constructors in Processing Class
@@ -60,8 +60,8 @@ This is the **geometry → parameters** conversion used in joint implementations
 
     See also:
 
-    - :meth:`compas_timber.fabrication.JackRafterCut.from_plane_and_beam`
-    - :meth:`compas_timber.fabrication.Lap.from_volume_and_beam`
+    - :meth:`JackRafterCut.from_plane_and_beam <compas_timber.fabrication.JackRafterCut.from_plane_and_beam>`
+    - :meth:`Lap.from_volume_and_beam <compas_timber.fabrication.Lap.from_volume_and_beam>`
 
 4. Add Geometry Generation Method in Processing Class
 -----------------------------------------------------
@@ -82,8 +82,8 @@ This is the **parameters → geometry** conversion used in the ``apply()`` metho
 
     See also:
 
-    - :meth:`compas_timber.fabrication.JackRafterCut.plane_from_params_and_beam`
-    - :meth:`compas_timber.fabrication.Lap.volume_from_params_and_beam`
+    - :meth:`JackRafterCut.plane_from_params_and_beam <compas_timber.fabrication.JackRafterCut.plane_from_params_and_beam>`
+    - :meth:`Lap.volume_from_params_and_beam <compas_timber.fabrication.Lap.volume_from_params_and_beam>`
 
 5. Create the Parameters Class
 ------------------------------
@@ -122,7 +122,7 @@ Key Considerations
 These methods are inverse operations and should be consistent with each other.
 
 
-Example: Looking at Existing Processings
+Example: Looking at existing Processings
 ========================================
 
-Study existing processings like ``JackRafterCut``, ``Lap``, ``StepJoint``, ``Tenon`` in the fabrication module to understand the patterns and best practices used in the codebase.
+Study existing processings like :class:`JackRafterCut <compas_timber.fabrication.JackRafterCut>`, :class:`Lap <compas_timber.fabrication.Lap>`, :class:`StepJoint <compas_timber.fabrication.StepJoint>`, :class:`Tenon <compas_timber.fabrication.Tenon>` in the fabrication module to understand the patterns and best practices used in the codebase.
