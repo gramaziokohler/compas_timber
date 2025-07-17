@@ -1,4 +1,3 @@
-from re import T
 import pytest
 from compas.geometry import Frame
 from compas.tolerance import Tolerance
