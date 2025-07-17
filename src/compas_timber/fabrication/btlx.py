@@ -116,7 +116,7 @@ class BTLxWriter(object):
         """
         self._errors = []
         self._tolerance = model.tolerance
-        if self._tolerance.unit != "M":
+        if self._tolerance.unit == "M":
             warn("Model units are set to {} and will auto-scale to mm for BTLx. Please design in mm if you intend to use BTLx.".format(self._tolerance.unit))
 
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
