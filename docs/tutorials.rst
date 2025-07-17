@@ -39,4 +39,3 @@ Then, the following sections explain in detail the concepts and tools:
     tutorials/grasshopper/show
     tutorials/grasshopper/utils
     tutorials/grasshopper/examples
-    tutorials/BTLx_contribution_guide
