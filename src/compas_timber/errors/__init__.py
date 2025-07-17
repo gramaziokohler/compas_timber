@@ -20,6 +20,10 @@ class FeatureApplicationError(Exception):
         self.element_geometry = element_geometry
         self.message = message
 
+    def __reduce__(self):
+        # without this the error cannot be deepcopied
+        return (FeatureApplicationError, (self.feature_geometry, self.element_geometry, self.message))
+
 
 class BeamJoiningError(Exception):
     """Indicates that an error has occurred while trying to join two or more beams.
@@ -41,11 +45,15 @@ class BeamJoiningError(Exception):
     """
 
     def __init__(self, beams, joint, debug_info=None, debug_geometries=None):
-        super(BeamJoiningError, self).__init__()
+        super(BeamJoiningError, self).__init__(debug_info)
         self.beams = beams
         self.joint = joint
         self.debug_info = debug_info
         self.debug_geometries = debug_geometries or []
+
+    def __reduce__(self):
+        # without this the error cannot be deepcopied
+        return (BeamJoiningError, (self.beams, self.joint, self.debug_info, self.debug_geometries))
 
 
 class FastenerApplicationError(Exception):
@@ -67,6 +75,10 @@ class FastenerApplicationError(Exception):
         self.elements = elements
         self.fastener = fastener
         self.message = message
+
+    def __reduce__(self):
+        # without this the error cannot be deepcopied
+        return (FastenerApplicationError, (self.elements, self.fastener, self.message))
 
 
 class BTLxProcessingError(Exception):

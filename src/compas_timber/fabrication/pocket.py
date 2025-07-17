@@ -10,6 +10,7 @@ from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_projected
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
@@ -19,7 +20,6 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import angle_vectors_projected
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -329,7 +329,7 @@ class Pocket(BTLxProcessing):
             raise ValueError("Volume must have 6 faces.")
 
         # get ref_side of the element
-        if not ref_side_index:
+        if ref_side_index is None:
             ref_side_index = cls._get_optimal_ref_side_index(element, volume)
         ref_side = element.ref_sides[ref_side_index]
 
@@ -354,17 +354,17 @@ class Pocket(BTLxProcessing):
         yyaxis = Vector.from_start_end(start_point, back_point)
 
         # calculate the angle of the pocket
-        angle = angle_vectors_projected(ref_side.xaxis, xxaxis, ref_side.normal)
+        angle = angle_vectors_projected(ref_side.xaxis, xxaxis, ref_side.normal, deg=True)
 
         # x'-axis and y'-axis (see BTLx Documentation p.46)
         xaxis = ref_side.xaxis.rotated(math.radians(angle), ref_side.normal)
         yaxis = ref_side.yaxis.rotated(math.radians(angle), ref_side.normal)
 
         # calculate the inclination of the pocket
-        inclination = angle_vectors_projected(xaxis, xxaxis, yaxis)
+        inclination = angle_vectors_projected(xaxis, xxaxis, yaxis, deg=True)
 
         # calculate the slope of the pocket
-        slope = angle_vectors_projected(yaxis, yyaxis, xxaxis)
+        slope = angle_vectors_projected(yaxis, yyaxis, xxaxis, deg=True)
 
         # calculate internal_angle
         internal_angle = angle_vectors_signed(xxaxis, yyaxis, ref_side.normal, deg=True)
@@ -380,10 +380,7 @@ class Pocket(BTLxProcessing):
         tilt_start_side = cls._calculate_tilt_angle(bottom_plane, start_plane)
 
         # define machining limits
-        if machining_limits:
-            if not isinstance(machining_limits, dict):
-                raise ValueError("machining_limits must be a dictionary.")
-        else:
+        if not machining_limits:
             machining_limits = cls._define_machining_limits(planes, element, ref_side_index)
 
         return cls(
@@ -643,7 +640,7 @@ class Pocket(BTLxProcessing):
         if self.machining_limits["FaceLimitedFront"]:
             front_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.yaxis, point=bottom_frame.point)
         else:
-            front_frame = element.ref_sides[(self.ref_side_index+1)%4]
+            front_frame = element.front_side(self.ref_side_index)
             front_frame.translate(front_frame.normal * tol.absolute)
 
         # tilt back frame
@@ -651,7 +648,7 @@ class Pocket(BTLxProcessing):
             back_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.yaxis, point=bottom_frame.point)
             back_frame.translate(back_frame.normal * self.width)
         else:
-            back_frame = element.ref_sides[(self.ref_side_index-1)%4]
+            back_frame = element.back_side(self.ref_side_index)
             back_frame.translate(back_frame.normal * tol.absolute)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
@@ -700,6 +697,25 @@ class Pocket(BTLxProcessing):
 
         return Polyhedron(vertices, faces)
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.start_depth *= factor
+        self.length *= factor
+        self.width *= factor
+
 
 class PocketParams(BTLxProcessingParams):
     """A class to store the parameters of a Pocket feature.
@@ -739,3 +755,116 @@ class PocketParams(BTLxProcessingParams):
         result["TiltStartSide"] = "{:.{prec}f}".format(float(self._instance.tilt_start_side), prec=TOL.precision)
         result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
         return result
+
+
+class PocketProxy(object):
+    """This object behaves like a Pocket except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the pocket. Must have 6 faces.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The Pocket feature.
+
+    """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxy as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
+
+    def __init__(self, volume, element, machining_limits=None, ref_side_index=None):
+        self.volume = volume
+        self.element = element
+        self.machining_limits = machining_limits
+        self.ref_side_index = ref_side_index
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+
+        """
+        if not self._processing:
+            self._processing = Pocket.from_volume_and_element(self.volume, self.element, self.machining_limits, self.ref_side_index)
+        return self._processing
+
+    @classmethod
+    def from_volume_and_element(cls, volume, element, machining_limits=None, ref_side_index=None):
+        """Construct a Pocket feature from a volume and a TimberElement.
+
+        Parameters
+        ----------
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+            The volume of the pocket. Must have 6 faces.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
+        machining_limits : dict, optional
+            The machining limits for the cut. Default is None.
+        ref_side_index : int, optional
+            The index of the reference side of the element. Default is 0.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The Pocket feature.
+
+        """
+        if isinstance(volume, Polyhedron):
+            volume = Brep.from_mesh(volume.to_mesh())
+        if TOL.is_negative(volume.volume):
+            volume.flip()
+        return cls(volume, element, machining_limits, ref_side_index)
+
+    def apply(self, geometry, _):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to apply the pocket to.
+        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+            The element that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the pocket volume does not intersect with element geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Element) -> Brep
+        try:
+            return geometry - self.volume
+        except IndexError:
+            raise FeatureApplicationError(
+                self.volume,
+                geometry,
+                "The volume to subtract does not intersect with element geometry.",
+            )
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)

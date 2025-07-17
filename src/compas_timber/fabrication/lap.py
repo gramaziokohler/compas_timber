@@ -9,6 +9,7 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import Vector
+from compas.geometry import angle_vectors_projected
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.geometry import distance_point_point
@@ -21,7 +22,6 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import angle_vectors_projected
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -372,7 +372,7 @@ class Lap(BTLxProcessing):
                    ref_side_index=ref_side_index)
 
     @classmethod
-    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None):
+    def from_volume_and_beam(cls, volume, beam, machining_limits=None, ref_side_index=None, **kwargs):
         """Construct a Lap feature from a volume and a Beam.
 
         Parameters
@@ -409,7 +409,7 @@ class Lap(BTLxProcessing):
             raise ValueError("Volume must have 6 faces.")
 
         # get ref_side of the
-        if not ref_side_index:
+        if ref_side_index is None:
             ref_side_index = cls._get_optimal_ref_side_index(beam, volume)
         ref_side = beam.ref_sides[ref_side_index]
 
@@ -441,11 +441,14 @@ class Lap(BTLxProcessing):
         angle = angle_vectors_signed(-yyaxis, ref_side.xaxis, ref_side.normal, deg=True)
 
         # calculate the inclination of the lap
-        inclination = angle_vectors_projected(zzaxis, front_plane.normal, yyaxis)
+        if TOL.is_zero(yyaxis.dot(zzaxis)) or TOL.is_zero(yyaxis.dot(front_plane.normal)):  # TODO: follow changes in compas.geometry and update this accordingly
+            inclination = angle_vectors_signed(zzaxis, ref_side.xaxis, ref_side.normal, deg=True)
+        else:
+            inclination = angle_vectors_projected(zzaxis, front_plane.normal, yyaxis, deg=True)
         inclination = 180 + inclination if inclination < 0 else inclination
 
         # calculate the slope of the lap
-        slope = angle_vectors_projected(-ref_side.normal, bottom_plane.normal, start_plane.normal)
+        slope = angle_vectors_projected(-ref_side.normal, bottom_plane.normal, start_plane.normal, deg=True)
 
         # calculate length, width and depth
         length = distance_point_plane(start_plane.point, end_plane)
@@ -473,21 +476,24 @@ class Lap(BTLxProcessing):
         else:
             machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
 
-        return cls(orientation,
-                   start_x,
-                   start_y,
-                   angle,
-                   inclination,
-                   slope,
-                   length,
-                   width,
-                   depth,
-                   lead_angle_parallel,
-                   lead_angle,
-                   lead_inclination_parallel,
-                   lead_inclination,
-                   machining_limits=machining_limits,
-                   ref_side_index=ref_side_index)
+        return cls(
+            orientation,
+            start_x,
+            start_y,
+            angle,
+            inclination,
+            slope,
+            length,
+            width,
+            depth,
+            lead_angle_parallel,
+            lead_angle,
+            lead_inclination_parallel,
+            lead_inclination,
+            machining_limits=machining_limits,
+            ref_side_index=ref_side_index,
+            **kwargs
+        )
 
     @classmethod
     def from_shapes_and_element(cls, volume, element, **kwargs):
@@ -736,10 +742,10 @@ class Lap(BTLxProcessing):
         tol = Tolerance()
         tol.absolute=1e-3
 
-        if self.machining_limits["FaceLimitedStart"]:
-            start_frame = self._start_frame_from_params_and_beam(beam)
-        else:
-            start_frame = beam.ref_sides[4]
+        start_frame = self._start_frame_from_params_and_beam(beam)
+
+        top_frame = beam.ref_sides[self.ref_side_index] # top should always be unlimited
+        top_frame.translate(top_frame.normal * TOL.absolute)
 
         if self.machining_limits["FaceLimitedEnd"]:
             end_frame = start_frame.translated(-start_frame.normal * self.length)
@@ -747,14 +753,12 @@ class Lap(BTLxProcessing):
         else:
             end_frame = beam.ref_sides[5]
 
-        top_frame = beam.ref_sides[self.ref_side_index] # top should always be unlimited
-
         if self.machining_limits["FaceLimitedBottom"]:
             bottom_frame = Frame(start_frame.point, start_frame.zaxis, start_frame.yaxis)
             angle = angle_vectors_signed(top_frame.xaxis, -start_frame.xaxis, top_frame.yaxis)
             bottom_frame = bottom_frame.translated(bottom_frame.zaxis * (self.depth/math.sin(angle)))
         else:
-            bottom_frame = beam.ref_sides[4]
+            bottom_frame = beam.opp_side(self.ref_side_index)
 
         if self.machining_limits["FaceLimitedFront"]:
             front_frame = bottom_frame.rotated(math.radians(self.lead_angle), bottom_frame.xaxis, point=bottom_frame.point)
@@ -818,6 +822,25 @@ class Lap(BTLxProcessing):
             faces = [face[::-1] for face in faces]
         return Polyhedron(vertices, faces)
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.length *= factor
+        self.width *= factor
+        self.depth *= factor
+
 
 class LapParams(BTLxProcessingParams):
     """A class to store the parameters of a Lap feature.
@@ -878,6 +901,12 @@ class LapProxy(object):
         The reference side index for the Lap.
 
     """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
 
     def __init__(self, volume, beam, machining_limits=None, ref_side_index=None):
         self.volume = volume

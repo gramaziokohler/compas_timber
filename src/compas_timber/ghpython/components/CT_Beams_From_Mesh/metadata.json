@@ -30,7 +30,7 @@
             {
                 "name": "Category",
                 "description": "Category assigned to beams that can be used to define joint rules.",
-                "typeHintID": "float",
+                "typeHintID": "str",
                 "scriptParamAccess": 0
             }
         ],

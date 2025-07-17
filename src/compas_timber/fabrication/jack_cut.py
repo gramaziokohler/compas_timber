@@ -142,7 +142,7 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=0, **kwargs):
         """Create a JackRafterCut instance from a cutting plane and the beam it should cut.
 
         Parameters
@@ -174,7 +174,7 @@ class JackRafterCut(BTLxProcessing):
         start_x = distance_point_point(ref_edge.point, point_start_x)
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
-        return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
+        return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index, **kwargs)
 
     @classmethod
     def from_shapes_and_element(cls, plane, element, **kwargs):
@@ -299,6 +299,23 @@ class JackRafterCut(BTLxProcessing):
             plane_normal = -cutting_plane.xaxis
         return Plane(cutting_plane.point, plane_normal)
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self._start_x *= factor
+        self._start_y *= factor
+        self._start_depth *= factor
+
 
 class JackRafterCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Jack Rafter Cut feature.
@@ -349,6 +366,12 @@ class JackRafterCutProxy(object):
         The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
 
     """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
 
     def __init__(self, plane, beam, ref_side_index=0):
         self.plane = plane
