@@ -16,13 +16,7 @@ from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class Plate(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self,
-            outline,
-            thickness: float,
-            vector: Rhino.Geometry.Vector3d,
-            openings: System.Collections.Generic.List[object],
-            category: str,
-            updateRefObj: bool):
+    def RunScript(self, outline, thickness: float, vector: Rhino.Geometry.Vector3d, openings: System.Collections.Generic.List[object], category: str, updateRefObj: bool):
         # minimum inputs required
 
         if not item_input_valid_cpython(ghenv, outline, "Outline") or not item_input_valid_cpython(ghenv, thickness, "Thickness"):

@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateMiterJoint`.
 * Added `PlateConnectionSolver`.
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
+* Added new `BTLxProcessingError` to `compas_timber.errors`.
+* Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 
 ### Changed
 
