@@ -64,8 +64,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a bug in `BeamsFromMesh` GH Component.
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Minor fixes to GH Components.
-* Fixed a bug in `compas_timber.fabrication.Lap` where `ref_side_index` failed for `0` by checking for `None` instead.
-* Fixed a bug in `compas_timber.fabrication.Lap` to handle the case when the vectors used to calculate the `inclination` angle are perpendicular.
 
 ### Removed
 
@@ -110,6 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed `AttributeError` when deserializing a model with Lap joints.
+* Fixed a bug in `compas_timber.fabrication.Lap` where `ref_side_index` failed for `0` by checking for `None` instead.
+* Fixed a bug in `compas_timber.fabrication.Lap` to handle the case when the vectors used to calculate the `inclination` angle are perpendicular.
 
 ### Removed
 
