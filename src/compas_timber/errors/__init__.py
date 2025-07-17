@@ -116,8 +116,8 @@ class BTLxProcessingError(Exception):
 
 
 __all__ = [
-    "FeatureApplicationError",
     "BeamJoiningError",
-    "FeatureApplicationError",
     "BTLxProcessingError",
+    "FastenerApplicationError",
+    "FeatureApplicationError",
 ]
