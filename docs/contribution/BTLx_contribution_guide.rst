@@ -53,6 +53,7 @@ This is the **geometry → parameters** conversion used in joint implementations
 - At least one alternative constructor that takes geometric objects and the target element
 - Extract BTLx parameters from the geometry-element relationship
 - Return a new processing instance with calculated parameters
+- A generic ``from_shapes_and_element()`` method that calls your specific alternative constructor
 
 **Naming convention:** Use descriptive method names that specify the geometric input and target element.
 
