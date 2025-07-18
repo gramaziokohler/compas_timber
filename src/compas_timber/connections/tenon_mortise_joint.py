@@ -6,6 +6,8 @@ from compas_timber.fabrication import TenonShapeType
 from .joint import Joint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
+from .utilities import beam_ref_side_incidence_with_vector
+from .utilities import point_centerline_towards_joint
 
 
 class TenonMortiseJoint(Joint):
@@ -20,24 +22,24 @@ class TenonMortiseJoint(Joint):
     Parameters
     ----------
     main_beam : :class:`~compas_timber.parts.Beam`
-        First beam to be joined.
+        First beam to be joined. This is the beam that will receive the tenon.
     cross_beam : :class:`~compas_timber.parts.Beam`
-        Second beam to be joined.
-    start_y : float
+        Second beam to be joined. This is the beam that will receive the mortise.
+    start_y : float, optional
         Start position of the tenon along the y-axis of the main beam.
-    start_depth : float
+    start_depth : float, optional
         Depth of the tenon from the surface of the main beam.
-    rotation : float
+    rotation : float, optional
         Rotation of the tenon around the main beam's axis.
-    length : float
-        Length of the tenon along the main beam.
-    width : float
+    length : float, optional
+        Length of the tenon.
+    width : float, optional
         Width of the tenon.
-    height : float
+    height : float, optional
         Height of the tenon.
-    shape : int
+    shape : int, optional
         The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
-    shape_radius : float
+    shape_radius : float, optional
         The radius used to define the shape of the tenon, if applicable.
 
 
@@ -135,7 +137,13 @@ class TenonMortiseJoint(Joint):
 
     @property
     def main_beam_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
+        # get the vector towards the joint
+        centerline_vect = point_centerline_towards_joint(self.main_beam, self.cross_beam)
+        # flip the vector if the dot product with the y-axis of the reference side is negative
+        vector = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].yaxis
+        if centerline_vect.dot(vector) < 0:
+            vector = -vector
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.main_beam, vector, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
