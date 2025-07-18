@@ -135,18 +135,6 @@ class Joint(Interaction):
         """
         pass
 
-    def check_elements_compatibility(self):
-        """Checks if the beams are compatible for the creation of the joint.
-        This is optional and should only be implemented by joints that require it.
-
-        Raises
-        ------
-        :class:`~compas_timber.connections.BeamJoiningError`
-            Should be raised whenever the elements did not comply with the requirements of the joint.
-
-        """
-        pass
-
     def restore_beams_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.
 
@@ -196,7 +184,7 @@ class Joint(Interaction):
         return joint
 
     @classmethod
-    def comply_elements(cls, elements, cluster, raise_error=False):
+    def comply_elements(cls, elements, raise_error=False):
         """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
 
         Parameters
@@ -215,38 +203,4 @@ class Joint(Interaction):
             True if the cluster complies with the requirements, False otherwise.
 
         """
-        pass
-
-    # @classmethod
-    # def comply_cluster_topology(cls, cluster, raise_error=False):
-    #     """Checks if the cluster of beams complies with the requirements for the joint's topology.
-
-    #     Parameters
-    #     ----------
-    #     cluster : :class:`~compas_timber.model.TimberCluster`
-    #         The cluster of beams to be checked.
-
-    #     Returns
-    #     -------
-    #     bool
-    #         True if the cluster complies with the requirements, False otherwise.
-
-    #     """
-    #     if cls.SUPPORTED_TOPOLOGY == JointTopology.TOPO_Y:
-    #         if not all([j.topology == JointTopology.TOPO_L or j.topology == JointTopology.TOPO_I for j in cluster.joints]):
-    #             if raise_error:
-    #                 raise BeamJoiningError(
-    #                     beams=cluster.elements,
-    #                     joint=cls,
-    #                     debug_info="All beams must meet at their ends for a Y-Butt joint.",
-    #                     debug_geometries=[e.geometry for e in cluster.elements],
-    #                 )
-    #             return False
-    #         return True
-
-    #     supported_topologies = cls.SUPPORTED_TOPOLOGY if isinstance(cls.SUPPORTED_TOPOLOGY, list) else [cls.SUPPORTED_TOPOLOGY]
-    #     if cluster.topology not in supported_topologies:
-    #         if raise_error:
-    #             raise BeamJoiningError(beams=cluster.elements, joint=cls, debug_info="The cluster topology {} is not supported for {}.".format(cluster.topology, cls.__name__))
-    #         return False
-    #     return True
+        return True

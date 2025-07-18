@@ -5,6 +5,7 @@ from compas_timber.elements import Plate
 
 from .joint import Joint
 from .plate_joint import PlateJoint
+from .joint import JointTopology
 
 
 class GenericJoint(Joint):
@@ -73,6 +74,7 @@ class GenericJoint(Joint):
         """This joint does not add any features."""
         pass
 
+
 class GenericPlateJoint(PlateJoint, GenericJoint):
     """A GenericPlateJoint is an information-only joint for plate connections.
 
@@ -98,8 +100,8 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
     def __data__(self):
         data = super(GenericPlateJoint, self).__data__
         data_dict = {
-            "plate_a_guid": data["element_a_guid"],
-            "plate_b_guid": data["element_b_guid"],
+            "plate_a_guid": self.plate_a_guid,
+            "plate_b_guid": self.plate_b_guid,
             "topology": self.topology,
             "a_segment_index": self.a_segment_index,
         }
@@ -109,32 +111,15 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
 
     def __init__(self, plate_a=None, plate_b=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, a_segment_index=a_segment_index, **kwargs)
-        self.plate_a_guid = str(plate_a.guid) if plate_a else None
-        self.plate_b_guid = str(plate_b.guid) if plate_b else None
+        self.plate_a_guid = str(plate_a.guid)
+        self.plate_b_guid = str(plate_b.guid)
         self.b_segment_index = b_segment_index
-
-    @property
-    def plate_a(self):
-        """Return the first plate."""
-        return self.element_a
-
-    @plate_a.setter
-    def plate_a(self, value):
-        """Set the first plate."""
-        self.element_a = value
-
-    @property
-    def plate_b(self):
-        """Return the second plate."""
-        return self.element_b
-
-    @plate_b.setter
-    def plate_b(self, value):
-        """Set the second plate."""
-        self.element_b = value
 
     def promote(self, model, joint_type, **kwargs):
         """Promote this joint to a specific joint type."""
         model.remove_joint(self)
-        joint = joint_type.create(model, self.element_a, self.element_b, self.topology, self.a_segment_index, **kwargs)
+        if self.topology == JointTopology.TOPO_EDGE_FACE:
+            joint = joint_type.create(model, self.plate_a, self.plate_b, self.topology, self.a_segment_index, **kwargs)
+        else:
+            joint = joint_type.create(model, self.plate_a, self.plate_b, self.topology, self.a_segment_index, self.b_segment_index, **kwargs)
         return joint

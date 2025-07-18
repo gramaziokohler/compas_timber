@@ -83,7 +83,6 @@ class Cluster(object):
         :class:`~compas_timber.connections.Joint`
             The created joint instance.
         """
-        print("Promoting cluster.", self.joints[0].topology)  # noqa: T201
         if len(self.joints) == 1:
             joint = self.joints[0].promote(model, joint_type, **kwargs)
         else:

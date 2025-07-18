@@ -1,4 +1,3 @@
-from typing import Generic
 import compas
 
 from compas_timber.connections.plate_joint import PlateJoint
@@ -363,7 +362,6 @@ class TimberModel(Model):
             if isinstance(joint, GenericJoint):
                 continue
             try:
-                joint.check_elements_compatibility()
                 joint.add_extensions()
             except BeamJoiningError as bje:
                 errors.append(bje)
@@ -432,6 +430,7 @@ class TimberModel(Model):
 
             if topology == JointTopology.TOPO_EDGE_EDGE:
                 kwargs["b_segment_index"] = p_b[1]
+
             GenericPlateJoint.create(self, plate_a, plate_b, **kwargs)
 
     def connect_adjacent_walls(self, max_distance=None):

@@ -220,25 +220,6 @@ class TStepJoint(Joint):
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
-
-        Raises
-        ------
-        BeamJoiningError
-            If the elements are not compatible for the creation of the joint.
-
-        """
-        # check if the beams are aligned
-        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
-        for beam in self.elements:
-            beam_normal = beam.frame.normal.unitized()
-            dot = abs(beam_normal.dot(cross_vect.unitized()))
-            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoiningError(
-                    self.main_beam,
-                    self.cross_beam,
-                    debug_info="The the two beams are not aligned to create a Step joint.")
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
@@ -246,7 +227,7 @@ class TStepJoint(Joint):
         self.cross_beam = model.element_by_guid(self.cross_beam_guid)
 
     @classmethod
-    def comply_elements_cluster(cls, elements, cluster, raise_error=False):
+    def comply_elements(cls, elements, raise_error=False):
         """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
 
         Parameters
@@ -262,7 +243,7 @@ class TStepJoint(Joint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
-        if not super(TStepJoint, cls).comply_elements_cluster(elements, cluster, raise_error=raise_error):
+        if not super(TStepJoint, cls).comply_elements(elements, raise_error=raise_error):
             return False
         cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
         for beam in elements:
@@ -271,6 +252,6 @@ class TStepJoint(Joint):
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
                 if not raise_error:
                     return False
-                raise BeamJoiningError(cluster.elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
+                raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
 
         return True

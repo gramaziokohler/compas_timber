@@ -72,33 +72,6 @@ class YButtJoint(Joint):
     def elements(self):
         return self.beams
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
-
-        For the Y-Butt joint, this method checks if the two cross beams are coplanar and have the same dimensions.
-
-        Raises
-        ------
-        BeamJoiningError
-            If the elements are not compatible for the creation of the joint.
-        """
-
-        if not are_beams_aligned_with_cross_vector(*self.cross_beams):
-            raise BeamJoiningError(
-                beams=self.cross_beams,
-                joint=self,
-                debug_info="The two cross beams are not coplanar to create a Y-Butt joint.",
-            )
-        # calculate widths and heights of the cross beams
-        else:
-            dimensions = []
-            for beam in self.cross_beams:
-                ref_side_index = self.cross_beam_ref_side_index(beam)
-                dimensions.append(beam.get_dimensions_relative_to_side(ref_side_index)[0])  # beams only need a miter that meets in the corner. width can be different
-            # check if the dimensions of both cross beams match
-            if dimensions[0] != dimensions[1]:
-                raise BeamJoiningError(self.cross_beams, self, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
-
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
@@ -271,11 +244,10 @@ class YButtJoint(Joint):
         if not super(YButtJoint, cls).comply_elements(elements, raise_error=raise_error):
             return False
 
-
         if not are_beams_aligned_with_cross_vector(*elements[1:3]):
             raise BeamJoiningError(
                 beams=elements[1:3],
-                joint=cluster,
+                joint=cls,
                 debug_info="The two cross beams are not coplanar to create a Y-Butt joint.",
             )
         # calculate widths and heights of the cross beams
@@ -289,29 +261,3 @@ class YButtJoint(Joint):
             if dimensions[0] != dimensions[1]:
                 raise BeamJoiningError(elements, cls, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
         return True
-
-    # @classmethod
-    # def comply_cluster_topology(cls, cluster, raise_error=False):
-    #     """Checks if the cluster of beams complies with the requirements for the joint's topology.
-
-    #     Parameters
-    #     ----------
-    #     cluster : :class:`~compas_timber.model.TimberCluster`
-    #         The cluster of beams to be checked.
-
-    #     Returns
-    #     -------
-    #     bool
-    #         True if the cluster complies with the requirements, False otherwise.
-
-    #     """
-    #     if not all([j.topology == JointTopology.TOPO_L or j.topology == JointTopology.TOPO_I for j in cluster.joints]):
-    #         if raise_error:
-    #             raise BeamJoiningError(
-    #                 beams=cluster.elements,
-    #                 joint=cls,
-    #                 debug_info="All beams must meet at their ends for a Y-Butt joint.",
-    #                 debug_geometries=[e.geometry for e in cluster.elements],
-    #             )
-    #         return False
-    #     return True

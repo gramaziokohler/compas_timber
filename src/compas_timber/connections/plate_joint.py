@@ -127,8 +127,8 @@ class PlateJoint(Joint):
         self.a_planes = None
         self.b_planes = None
 
-        self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
-        self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
+        self.plate_a_guid = str(self.plate_a.guid) if self.plate_a else None  # type: ignore
+        self.plate_b_guid = str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))

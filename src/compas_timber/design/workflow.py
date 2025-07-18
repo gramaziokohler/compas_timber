@@ -84,8 +84,8 @@ class JointRule(object):
 
         Returns
         -------
-        tuple(list(:class:`~compas_timber.connections.Joint`), list(:class:`~compas_timber.connections.BeamJoiningError`))
-            A tuple containing a list of joints and a list of joining errors.
+        tuple(list(:class:`~compas_timber.connections.BeamJoiningError`), list(:class:`~compas_timber.connections.Cluster`), )
+            A tuple containing a list of joining errors and a list of unjoined Clusters.
 
         """
 
@@ -94,6 +94,7 @@ class JointRule(object):
 
         model.connect_adjacent_beams(max_distance=max_rule_distance)  # ensure that the model is connected before analyzing
         model.connect_adjacent_plates(max_distance=max_rule_distance)  # ensure that the model is connected before analyzing
+    
         analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
         clusters = analyzer.find()
         # these pairs were already handled by some external logic and shouldn't be processed again
@@ -173,14 +174,9 @@ class JointRule(object):
         joining_errors = []
         for rule in rules:
             for cluster in [c for c in clusters]:
-                try:
-                    joint = rule.try_create_joint(model, cluster)
-                    print("instantiated a joint of type: {}. it was added to the model is {}".format(joint.__class__.__name__, joint in list(model.joints)))  # noqa: T201
-                    if joint:
-                        clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
-                        break
-                except BeamJoiningError as ex:
-                    joining_errors.append(ex)
+                joint = rule.try_create_joint(model, cluster)
+                if joint:
+                    clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
         return joining_errors
 
 
@@ -226,7 +222,23 @@ class DirectRule(JointRule):
                     debug_geometries=[e.shape for e in self.elements],
                 )
         return True
-
+    
+    @classmethod
+    def process_rules(cls, rules, model, clusters):
+        """Processes the DirectRules and creates joints based on the clusters."""
+        joining_errors = []
+        for rule in rules:
+            for cluster in [c for c in clusters]:
+                try:
+                    joint = rule.try_create_joint(model, cluster)
+                    print("instantiated a joint of type: {}. it was added to the model is {}".format(joint.__class__.__name__, joint in list(model.joints)))  # noqa: T201
+                    if joint:
+                        clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
+                        break
+                except BeamJoiningError as ex:
+                    joining_errors.append(ex)
+        return joining_errors
+    
     def try_create_joint(self, model, cluster):
         """Creates a joint from the elements defined in this DirectRule.
 
@@ -250,7 +262,6 @@ class DirectRule(JointRule):
 
         """
         if not self._matches_cluster(cluster):
-            print("Rule does not match cluster")
             return
         if not self._comply_element_count(cluster, raise_error=True):
             print("Rule does not comply with element count")
@@ -264,7 +275,9 @@ class DirectRule(JointRule):
         if not self._comply_distance(cluster, raise_error=True):
             print("Rule does not comply with distance")
             return
-
+        if not self.joint_type.comply_elements(self.elements):
+            print("Rule does not comply with element compatibility")
+            return
         return cluster.promote_to_joint(model, self.joint_type, **self.kwargs)
 
 
@@ -301,7 +314,7 @@ class CategoryRule(JointRule):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
     def _comply_category_order(self, cluster, raise_error=False):
-        if cluster.topology == JointTopology.TOPO_T:
+        if cluster.topology == JointTopology.TOPO_T or cluster.topology == JointTopology.TOPO_EDGE_FACE:
             if cluster.joints[0].elements[0].attributes.get("category", None) != self.category_a:
                 if not raise_error:
                     return False
@@ -311,6 +324,7 @@ class CategoryRule(JointRule):
                     debug_info="Category roles must be reversed for topology of {}, try swapping categories in joint".format(self.joint_type.__name__),
                     debug_geometries=[e.shape for e in self.elements],
                 )
+        return True
 
     def _comply_categories(self, cluster):
         """Checks if the categories of the elements in the cluster comply with the rule's categories."""
@@ -340,15 +354,23 @@ class CategoryRule(JointRule):
         """
         if not self._comply_categories(cluster):
             return
+        print("Categories comply") 
         if not self._comply_element_count(cluster):
             return
+        print("element count complies")
         if not self._comply_topology(cluster):
             return
-        if not self._comply_element_order(cluster):
+        print("topology complies")
+        if not self._comply_category_order(cluster):
             return
+        print("category order complies")
         if not self._comply_distance(cluster):
             return
-        self.joint_type.create(model, *list(cluster.elements), **self.kwargs)
+        print("distance complies")
+        if not self.joint_type.comply_elements(list(cluster.elements)):
+            return
+        print("element compliance check passed")
+        cluster.promote_to_joint(model, self.joint_type, **self.kwargs)
 
 
 class TopologyRule(JointRule):
@@ -409,19 +431,9 @@ class TopologyRule(JointRule):
             return
         if not self._comply_distance(cluster):
             return
-        self.joint_type.create(model, *list(cluster.elements), **self.kwargs)
-
-        # elif all([isinstance(e, Plate) for e in elements]) and issubclass(self.joint_type, PlateJoint):
-        #     solver = PlateConnectionSolver()
-        #     topo, plate_a, plate_b = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
-        #     if topo is not None:
-        #         if topo != self.joint_type.SUPPORTED_TOPOLOGY:
-        #             return None
-        #         if topo == JointTopology.TOPO_EDGE_EDGE:
-        #             return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], plate_b[1], **self.kwargs)
-        #         else:
-        #             return self.joint_type(plate_a[0], plate_b[0], topo, plate_a[1], **self.kwargs)
-        # return None
+        if not self.joint_type.comply_elements(self.elements):
+            return
+        cluster.promote_to_joint(model, self.joint_type, **self.kwargs)
 
 
 class Attribute:

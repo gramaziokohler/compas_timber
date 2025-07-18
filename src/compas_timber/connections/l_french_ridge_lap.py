@@ -93,32 +93,6 @@ class LFrenchRidgeLapJoint(LapJoint):
         # register the features in the joint
         self.features = [main_frl_feature, cross_frl_feature]
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
-
-        Compared to the LapJoint's `check_elements_compatibility` method, this one additionally checks if dimensions of the beams match.
-
-        Raises
-        ------
-        BeamJoiningError
-            If the elements are not compatible for the creation of the joint.
-        """
-        if not are_beams_aligned_with_cross_vector(*self.elements):
-            raise BeamJoiningError(
-                beams=self.elements,
-                joint=self,
-                debug_info="The two beams are not coplanar to create a Lap joint.",
-            )
-        # calculate widths and heights of the beams
-        dimensions = []
-        ref_side_indices = [self.main_ref_side_index, self.cross_ref_side_index]
-        for i, beam in enumerate(self.elements):
-            width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
-            dimensions.append((width, height))
-        # check if the dimensions of both beams match
-        if dimensions[0] != dimensions[1]:
-            raise BeamJoiningError(self.elements, self, debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.")
-
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.beam_a = model.element_by_guid(self.beam_a_guid)
@@ -141,9 +115,10 @@ class LFrenchRidgeLapJoint(LapJoint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
+        print("Here")
         if not super(LFrenchRidgeLapJoint, cls).comply_elements(elements, raise_error=raise_error):
             return False
-
+        print("Elements comply with the requirements for super/Joint.")
         if not are_beams_aligned_with_cross_vector(*elements):
             if not raise_error:
                 return False
