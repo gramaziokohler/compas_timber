@@ -95,7 +95,7 @@ class Label(object):
             if x_positions[i + 1] - x_positions[i] > biggest_gap[1] - biggest_gap[0]:
                 biggest_gap = (x_positions[i], x_positions[i + 1])
         x_pos = (biggest_gap[0] + biggest_gap[1]) / 2
-        return Text(
+        processing =  Text(
             ref_side_index=ref_side_index,
             start_x=x_pos,
             start_y=self.element.side_as_surface(ref_side_index).ysize / 2.0,
@@ -104,7 +104,8 @@ class Label(object):
             text_height=text_height,
             text=self.text,
         )
-
+        beam.add_feature(processing)
+        return processing
 
 class DeferredLabel(Data):
     """A deferred label for timber elements, allowing attribues generated via joinery and other processings to be included in label data.
