@@ -3,6 +3,7 @@ from itertools import combinations
 from compas.geometry import Point
 from compas.geometry import distance_point_line
 from compas_model.interactions import Interaction
+from compas_timber.errors import BeamJoiningError
 
 from .solver import JointTopology
 
@@ -52,6 +53,11 @@ class Joint(Interaction):
     @property
     def topology(self):
         return self._topology
+
+    @topology.setter
+    def topology(self, value):
+        """Set the topology of the joint."""
+        self._topology = value
 
     @property
     def location(self):
@@ -185,32 +191,62 @@ class Joint(Interaction):
 
         """
 
-        joint = cls.from_element_list(elements, **kwargs)
+        joint = cls(*elements, **kwargs)
         model.add_joint(joint)
         return joint
 
-
     @classmethod
-    def from_element_list(cls, elements, **kwargs):
-        """Creates an instance of this joint from a list of elements. This should be overridden when a joint type takes a list of elements.
-
-        This code does not verify that the given elements are adjacent and/or lie in a topology which allows connecting
-        them. This is the responsibility of the calling code.
+    def comply_elements(cls, elements, cluster, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
 
         Parameters
         ----------
-        *elements : :class:`~compas_model.elements.Element`
-            The elements to be connected by this joint. The number of elements must comply with the `Joint` class's
-            `MIN_ELEMENT_COUNT` and `MAX_ELEMENT_COUNT` attributes.
-        **kwargs : dict
-            Additional keyword arguments that are passed to the joint's constructor.
+        elements : list(:class:`~compas_model.elements.Element`)
+            The elements to be checked.
+        cluster : :class:`~compas_timber.model.TimberCluster`
+            The cluster of beams to be checked.
+        raise_error : bool, optional
+            If True, raises a :class:`~compas_timber.errors.BeamJoiningError` if the cluster does not comply with the requirements.
+            If False, returns False instead.
 
         Returns
         -------
-        :class:`compas_timber.connections.Joint`
-            The instance of the created joint.
+        bool
+            True if the cluster complies with the requirements, False otherwise.
 
         """
+        pass
 
-        return cls(*elements, **kwargs)
-        
+    # @classmethod
+    # def comply_cluster_topology(cls, cluster, raise_error=False):
+    #     """Checks if the cluster of beams complies with the requirements for the joint's topology.
+
+    #     Parameters
+    #     ----------
+    #     cluster : :class:`~compas_timber.model.TimberCluster`
+    #         The cluster of beams to be checked.
+
+    #     Returns
+    #     -------
+    #     bool
+    #         True if the cluster complies with the requirements, False otherwise.
+
+    #     """
+    #     if cls.SUPPORTED_TOPOLOGY == JointTopology.TOPO_Y:
+    #         if not all([j.topology == JointTopology.TOPO_L or j.topology == JointTopology.TOPO_I for j in cluster.joints]):
+    #             if raise_error:
+    #                 raise BeamJoiningError(
+    #                     beams=cluster.elements,
+    #                     joint=cls,
+    #                     debug_info="All beams must meet at their ends for a Y-Butt joint.",
+    #                     debug_geometries=[e.geometry for e in cluster.elements],
+    #                 )
+    #             return False
+    #         return True
+
+    #     supported_topologies = cls.SUPPORTED_TOPOLOGY if isinstance(cls.SUPPORTED_TOPOLOGY, list) else [cls.SUPPORTED_TOPOLOGY]
+    #     if cluster.topology not in supported_topologies:
+    #         if raise_error:
+    #             raise BeamJoiningError(beams=cluster.elements, joint=cls, debug_info="The cluster topology {} is not supported for {}.".format(cluster.topology, cls.__name__))
+    #         return False
+    #     return True

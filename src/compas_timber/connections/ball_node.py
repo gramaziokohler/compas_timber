@@ -33,7 +33,7 @@ class BallNodeJoint(Joint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_Y
     MAX_ELEMENT_COUNT = None
 
     @property
@@ -101,7 +101,6 @@ class BallNodeJoint(Joint):
 
         """
         return cls(elements, **kwargs)
-         
 
     @property
     def node_point(self):

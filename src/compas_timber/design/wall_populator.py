@@ -21,7 +21,6 @@ from compas_timber.connections import InterfaceLocation
 from compas_timber.connections import InterfaceRole
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
-
 from compas_timber.design import CategoryRule
 from compas_timber.design import JointRule
 from compas_timber.elements import Beam

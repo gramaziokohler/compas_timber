@@ -123,3 +123,51 @@ class LFrenchRidgeLapJoint(LapJoint):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.beam_a = model.element_by_guid(self.beam_a_guid)
         self.beam_b = model.element_by_guid(self.beam_b_guid)
+
+    @classmethod
+    def comply_elements(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.model.TimberCluster`
+            The cluster of beams to be checked.
+        model_max_distance : float, optional
+            The maximum distance between the centerlines of the beams in the cluster.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
+
+        """
+        if not super(LFrenchRidgeLapJoint, cls).comply_elements(elements, raise_error=raise_error):
+            return False
+
+        if not are_beams_aligned_with_cross_vector(*elements):
+            if not raise_error:
+                return False
+            raise BeamJoiningError(
+                beams=elements,
+                joint=cls,
+                debug_info="The two beams are not coplanar to create a French Ridge Lap joint.",
+                debug_geometries=[e.shape for e in elements],
+            )
+        # calculate widths and heights of the beams
+        dimensions = []
+        ref_side_indices = [cls._get_beam_ref_side_index(*elements, False), cls._get_beam_ref_side_index(*elements[::-1], False)]
+        for i, beam in enumerate(elements):
+            width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
+            dimensions.append((width, height))
+        # check if the dimensions of both beams match
+        if dimensions[0] != dimensions[1]:
+            if not raise_error:
+                return False
+            raise BeamJoiningError(
+                elements,
+                cls,
+                debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.",
+                debug_geometries=[e.shape for e in elements],
+            )
+
+        return True

@@ -1,4 +1,7 @@
+from typing import Generic
 import compas
+
+from compas_timber.connections.plate_joint import PlateJoint
 
 if not compas.IPY:
     from typing import Generator  # noqa: F401
@@ -13,8 +16,10 @@ from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import GenericJoint
+from compas_timber.connections import GenericPlateJoint
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
+from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import WallJoint
 from compas_timber.errors import BeamJoiningError
 
@@ -355,6 +360,8 @@ class TimberModel(Model):
         joints = self.joints
 
         for joint in joints:
+            if isinstance(joint, GenericJoint):
+                continue
             try:
                 joint.check_elements_compatibility()
                 joint.add_extensions()
@@ -364,6 +371,8 @@ class TimberModel(Model):
                     raise bje
 
         for joint in joints:
+            if isinstance(joint, GenericJoint):
+                continue
             try:
                 joint.add_features()
             except BeamJoiningError as bje:
@@ -382,7 +391,7 @@ class TimberModel(Model):
 
     def connect_adjacent_beams(self, max_distance=None):
         for joint in self.joints:
-            if not isinstance(joint, WallJoint):
+            if not isinstance(joint, WallJoint) or isinstance(joint, PlateJoint):
                 self.remove_joint(joint)
 
         max_distance = max_distance or TOL.relative
@@ -393,7 +402,7 @@ class TimberModel(Model):
             beam_a, beam_b = pair
             result = solver.find_topology(beam_a, beam_b, tol=TOL.relative, max_distance=max_distance)
 
-            topology, beam_a, beam_b = result
+            topology, beam_a, beam_b, distance = result
             if topology == JointTopology.TOPO_UNKNOWN:
                 continue
 
@@ -401,7 +410,29 @@ class TimberModel(Model):
             p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             p1 = Point(*p1) if p1 else None
 
-            GenericJoint.create(self, beam_a, beam_b, topology=topology, location=p1)
+            GenericJoint.create(self, beam_a, beam_b, topology=topology, distance=distance, location=p1)
+
+    def connect_adjacent_plates(self, max_distance=None):
+        for joint in self.joints:
+            if isinstance(joint, PlateJoint):
+                self.remove_joint(joint)
+
+        max_distance = max_distance or TOL.relative
+        plates = list(self.plates)
+        solver = PlateConnectionSolver()
+        pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)
+        for pair in pairs:
+            plate_a, plate_b = pair
+            topology, p_a, p_b, distance, pt = solver.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance)
+
+            if topology is None:
+                continue
+
+            kwargs = {"topology": topology, "a_segment_index": p_a[1], "distance": distance, "location": pt}
+
+            if topology == JointTopology.TOPO_EDGE_EDGE:
+                kwargs["b_segment_index"] = p_b[1]
+            GenericPlateJoint.create(self, plate_a, plate_b, **kwargs)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.

@@ -49,7 +49,7 @@ class PlateToPlateInterface(object):
 
     """
 
-    def __init__(self, polyline, frame, topology, edge_index = None, interface_role=None):
+    def __init__(self, polyline, frame, topology, edge_index=None, interface_role=None):
         self.polyline = polyline
         self.frame = frame
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
@@ -109,8 +109,8 @@ class PlateJoint(Joint):
     @property
     def __data__(self):
         data = super(PlateJoint, self).__data__
-        data["plate_a_guid"] = self._plate_a_guid
-        data["plate_b_guid"] = self._plate_b_guid
+        data["plate_a_guid"] = self.plate_a_guid
+        data["plate_b_guid"] = self.plate_b_guid
         data["topology"] = self.topology
         data["a_segment_index"] = self.a_segment_index
         return data
@@ -127,8 +127,8 @@ class PlateJoint(Joint):
         self.a_planes = None
         self.b_planes = None
 
-        self._plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid)  # type: ignore
-        self._plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid)  # type: ignore
+        self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
+        self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -196,7 +196,7 @@ class PlateJoint(Joint):
         """Add features to the plates based on the joint."""
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
+                topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
                 if not topo_results:
                     raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
                 self.topology = topo_results[0]
@@ -235,12 +235,12 @@ class PlateJoint(Joint):
         self.restore_plates_from_keys(*args, **kwargs)
 
     def restore_plates_from_keys(self, model):
-        self.plate_a = model.element_by_guid(self._plate_a_guid)
-        self.plate_b = model.element_by_guid(self._plate_b_guid)
+        self.plate_a = model.element_by_guid(self.plate_a_guid)
+        self.plate_b = model.element_by_guid(self.plate_b_guid)
 
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
-        self._plate_a_guid, self._plate_b_guid = self._plate_b_guid, self._plate_a_guid
+        self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid
 
 
 def move_polyline_segment_to_plane(polyline, segment_index, plane):

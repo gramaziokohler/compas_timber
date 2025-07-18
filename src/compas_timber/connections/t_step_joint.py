@@ -244,3 +244,33 @@ class TStepJoint(Joint):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
         self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+
+    @classmethod
+    def comply_elements_cluster(cls, elements, cluster, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.model.TimberCluster`
+            The cluster of beams to be checked.
+        model_max_distance : float, optional
+            The maximum distance between the centerlines of the beams in the cluster.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
+
+        """
+        if not super(TStepJoint, cls).comply_elements_cluster(elements, cluster, raise_error=raise_error):
+            return False
+        cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
+        for beam in elements:
+            beam_normal = beam.frame.normal.unitized()
+            dot = abs(beam_normal.dot(cross_vect.unitized()))
+            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
+                if not raise_error:
+                    return False
+                raise BeamJoiningError(cluster.elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
+
+        return True

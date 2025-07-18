@@ -10,6 +10,7 @@ from compas.tolerance import TOL
 import compas_timber.connections  # noqa: F401
 import compas_timber.elements  # noqa: F401
 from compas_timber.connections import GenericJoint
+from compas_timber.connections import JointTopology
 
 
 class Cluster(object):
@@ -53,6 +54,43 @@ class Cluster(object):
     def location(self):
         # type: () -> compas.geometry.Point
         return self.joints[0].location
+
+    @property
+    def topology(self):
+        """Returns the topology of the joint if there is only one joint, otherwise TOPO_UNKNOWN."""
+        if len(self.joints) == 1:
+            return self.joints[0].topology
+        if any([j.topology not in [JointTopology.TOPO_L, JointTopology.TOPO_I, JointTopology.TOPO_T] for j in self.joints]):
+            return JointTopology.TOPO_UNKNOWN
+        if any([j.topology == JointTopology.TOPO_T for j in self.joints]):
+            return JointTopology.TOPO_K
+        return JointTopology.TOPO_Y
+
+    def promote_to_joint(self, model, joint_type, **kwargs):
+        """Promotes the cluster to a joint of the specified type.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The TimberModel to which the joint will be added.
+        joint_type : type[:class:`~compas_timber.connections.Joint`]
+            The type of joint to create. If None, defaults to GenericJoint.
+        kwargs : dict
+            Additional keyword arguments to pass to the joint constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.Joint`
+            The created joint instance.
+        """
+        print("Promoting cluster.", self.joints[0].topology)  # noqa: T201
+        if len(self.joints) == 1:
+            joint = self.joints[0].promote(model, joint_type, **kwargs)
+        else:
+            joint = joint_type.create(model, *self.elements, **kwargs)
+            for joint in self.joints:
+                model.remove_joint(joint)
+        return joint
 
 
 class BeamGroupAnalyzer(object):

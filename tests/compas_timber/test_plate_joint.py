@@ -176,6 +176,7 @@ def test_simple_l_butt_joint_reset_copy():
     assert joint_copy.plate_b.outline_a == plate_b.outline_a, "Expected joint copy to reference the original plate_b"
     assert joint_copy.topology == JointTopology.TOPO_EDGE_EDGE, "Expected joint copy to have the same topology"
 
+
 def test_simple_t_butt_joint_reset_copy():
     polyline_main = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
     plate_main = Plate.from_outline_thickness(polyline_main, 1)
@@ -202,6 +203,7 @@ def test_simple_t_butt_joint_reset_copy():
     assert joint_copy.main_plate.outline_a == plate_main.outline_a, "Expected joint copy to reference the original plate_main"
     assert joint_copy.cross_plate.outline_a == plate_cross.outline_a, "Expected joint copy to reference the original plate_cross"
     assert joint_copy.topology == JointTopology.TOPO_EDGE_FACE, "Expected joint copy to have the same topology"
+
 
 def test_three_plate_joints():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])

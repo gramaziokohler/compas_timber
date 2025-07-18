@@ -18,8 +18,9 @@ class PlateButtJoint(PlateJoint):
         dict["main_segment_index"] = data["a_segment_index"]
         return dict
 
-    def __init__(self, main_plate, cross_plate, topology, main_segment_index, **kwargs):
+    def __init__(self, main_plate=None, cross_plate=None, topology=None, main_segment_index=None, **kwargs):
         super(PlateButtJoint, self).__init__(main_plate, cross_plate, topology, main_segment_index, **kwargs)
+        self.a_segment_index = main_segment_index or self.a_segment_index
 
     @property
     def main_plate(self):
@@ -35,6 +36,11 @@ class PlateButtJoint(PlateJoint):
     def main_segment_index(self):
         """Return the index of the segment in the main plate outline."""
         return self.a_segment_index
+
+    @main_segment_index.setter
+    def main_segment_index(self, value):
+        """Set the index of the segment in the main plate outline."""
+        self.a_segment_index = value
 
     @property
     def _main_plate_guid(self):
@@ -114,9 +120,9 @@ class PlateLButtJoint(PlateButtJoint):
         data["cross_segment_index"] = self.cross_segment_index
         return data
 
-    def __init__(self, main_plate, cross_plate, topology, main_segment_index, cross_segment_index, **kwargs):
+    def __init__(self, main_plate=None, cross_plate=None, topology=None, main_segment_index=None, cross_segment_index=None, **kwargs):
         super(PlateLButtJoint, self).__init__(main_plate, cross_plate, topology, main_segment_index, **kwargs)
-        self.cross_segment_index = cross_segment_index
+        self.cross_segment_index = cross_segment_index or self.b_segment_index
 
     def __repr__(self):
         return "PlateLButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
@@ -125,6 +131,11 @@ class PlateLButtJoint(PlateButtJoint):
     def cross_segment_index(self):
         """Return the index of the segment in the main plate outline."""
         return self.b_segment_index
+
+    @cross_segment_index.setter
+    def cross_segment_index(self, value):
+        """Set the index of the segment in the main plate outline."""
+        self.b_segment_index = value
 
     @cross_segment_index.setter
     def cross_segment_index(self, value):
@@ -149,12 +160,13 @@ class PlateTButtJoint(PlateButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_FACE
 
-    def __init__(self, main_plate, cross_plate, topology, main_segment_index, **kwargs):
+    def __init__(self, main_plate=None, cross_plate=None, topology=None, main_segment_index=None, **kwargs):
         super(PlateTButtJoint, self).__init__(main_plate, cross_plate, topology, main_segment_index, **kwargs)
+        self.main_segment_index = main_segment_index or self.a_segment_index
 
     def __repr__(self):
         return "PlateTButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
-    
+
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""
 
