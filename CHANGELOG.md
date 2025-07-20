@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a bug in `BeamsFromMesh` GH Component.
 * Fixed attribute error when creating a `TButtJoint`.
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
-* Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.joints_from_rules_and_model` which now adds `Joint`s to the
+* Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.apply_joint_rules_to_model` which now adds `Joint`s to the
   `TimberModel` directly.
 * Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
 * Fixed element order in `DirectJointRule` GH component.
