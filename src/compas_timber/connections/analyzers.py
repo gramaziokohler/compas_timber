@@ -66,7 +66,7 @@ class Cluster(object):
             return JointTopology.TOPO_K
         return JointTopology.TOPO_Y
 
-    def promote_to_joint(self, model, joint_type, **kwargs):
+    def promote_to_joint(self, model, joint_type, elements=None, **kwargs):
         """Promotes the cluster to a joint of the specified type.
 
         Parameters
@@ -75,6 +75,8 @@ class Cluster(object):
             The TimberModel to which the joint will be added.
         joint_type : type[:class:`~compas_timber.connections.Joint`]
             The type of joint to create. If None, defaults to GenericJoint.
+        elements : list[:class:`~compas_timber.elements.Element`] | None
+            The elements to include in the joint in case the order is defined by a JointRule. If None, defaults to the elements in the cluster.
         kwargs : dict
             Additional keyword arguments to pass to the joint constructor.
 
@@ -83,10 +85,11 @@ class Cluster(object):
         :class:`~compas_timber.connections.Joint`
             The created joint instance.
         """
+        elements = elements or self.elements
         if len(self.joints) == 1:
             joint = self.joints[0].promote(model, joint_type, **kwargs)
         else:
-            joint = joint_type.create(model, *self.elements, **kwargs)
+            joint = joint_type.create(model, *elements, **kwargs)
             for joint in self.joints:
                 model.remove_joint(joint)
         return joint

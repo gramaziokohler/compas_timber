@@ -241,9 +241,6 @@ class YButtJoint(Joint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
-        if not super(YButtJoint, cls).comply_elements(elements, raise_error=raise_error):
-            return False
-
         if not are_beams_aligned_with_cross_vector(*elements[1:3]):
             raise BeamJoiningError(
                 beams=elements[1:3],

@@ -115,10 +115,6 @@ class LFrenchRidgeLapJoint(LapJoint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
-        print("Here")
-        if not super(LFrenchRidgeLapJoint, cls).comply_elements(elements, raise_error=raise_error):
-            return False
-        print("Elements comply with the requirements for super/Joint.")
         if not are_beams_aligned_with_cross_vector(*elements):
             if not raise_error:
                 return False

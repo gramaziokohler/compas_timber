@@ -78,7 +78,7 @@ class BallNodeJoint(Joint):
             yield (beam, self.fastener)
 
     @classmethod
-    def from_element_list(cls, elements, **kwargs):
+    def create(cls, model, *elements, **kwargs):
         """Creates an instance of the BallNodeJoint.
 
         This differs fom the generic `Joint.create()` method in that it passes the `beams` to
@@ -100,7 +100,9 @@ class BallNodeJoint(Joint):
             The instance of the created joint.
 
         """
-        return cls(elements, **kwargs)
+        joint = cls(elements, **kwargs)
+        model.add_joint(joint)
+        return joint
 
     @property
     def node_point(self):
