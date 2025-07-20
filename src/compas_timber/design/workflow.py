@@ -46,26 +46,26 @@ class JointRuleSolver(object):
         A list of rules to apply to the model.
     """
 
-    def __init__(self, rules, use_defaults=False):
-        self.rules = rules
-        self.use_defaults = use_defaults
+    def __init__(self,rules=None,use_default_topo=False, max_distance=TOL.absolute):
+        self.rules = rules if isinstance(rules, list) else [rules] if rules else []
+        self.use_default_topo = use_default_topo
+        self.max_distance = max_distance
+        self.clusters = []
+        self.joining_errors = []
 
 
-    def apply(self, model, max_distance=TOL.absolute, handled_pairs=None):
-        return JointRule.apply_joint_rules_to_model(self.rules, model, max_distance, handled_pairs)
-    
-    @staticmethod
+    @property
     def direct_rules(rules):
         return [rule for rule in rules if rule.__class__.__name__ == "DirectRule"]
 
-    @staticmethod
-    def category_rules(rules):
-        return [rule for rule in rules if rule.__class__.__name__ == "CategoryRule"]
+    @property
+    def category_rules(self):
+        return [rule for rule in self.rules if rule.__class__.__name__ == "CategoryRule"]
 
-    @staticmethod
-    def topology_rules(rules, use_defaults=False):
+    @property
+    def topology_rules(self):
         topo_rules = {}
-        if use_defaults:
+        if self.use_default_topo:
             topo_rules = {
                 JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
                 JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
@@ -73,44 +73,14 @@ class JointRuleSolver(object):
                 JointTopology.TOPO_EDGE_EDGE: TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
                 JointTopology.TOPO_EDGE_FACE: TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
             }
-        for rule in rules:  # separate category and topo and direct joint rules
+        for rule in self.rules:  # separate category and topo and direct joint rules
             if rule.__class__.__name__ == "TopologyRule":
                 topo_rules[rule.topology_type] = TopologyRule(rule.topology_type, rule.joint_type, rule.max_distance, **rule.kwargs)  # overwrites, meaning last rule wins
         return [rule for rule in topo_rules.values() if rule is not None]
 
-class JointRule(object):
-    def __init__(self, joint_type, max_distance=None, **kwargs):
-        """Initializes a JointRule with the given joint type and optional max distance."""
-        self.joint_type = joint_type
-        self.max_distance = max_distance
-        self.kwargs = kwargs
 
-    @staticmethod
-    def get_direct_rules(rules):
-        return [rule for rule in rules if rule.__class__.__name__ == "DirectRule"]
-
-    @staticmethod
-    def get_category_rules(rules):
-        return [rule for rule in rules if rule.__class__.__name__ == "CategoryRule"]
-
-    @staticmethod
-    def get_topology_rules(rules, use_defaults=False):
-        topo_rules = {}
-        if use_defaults:
-            topo_rules = {
-                JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
-                JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
-                JointTopology.TOPO_X: TopologyRule(JointTopology.TOPO_X, XLapJoint),
-                JointTopology.TOPO_EDGE_EDGE: TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
-                JointTopology.TOPO_EDGE_FACE: TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
-            }
-        for rule in rules:  # separate category and topo and direct joint rules
-            if rule.__class__.__name__ == "TopologyRule":
-                topo_rules[rule.topology_type] = TopologyRule(rule.topology_type, rule.joint_type, rule.max_distance, **rule.kwargs)  # overwrites, meaning last rule wins
-        return [rule for rule in topo_rules.values() if rule is not None]
-
-    @staticmethod
-    def apply_joint_rules_to_model(rules, model, max_distance=TOL.absolute, handled_pairs=None):
+    
+    def apply_rules_to_model(self, model, handled_pairs=None):
         """Returns a list of joints based on the given rules and elements.
 
         Parameters
@@ -132,26 +102,59 @@ class JointRule(object):
         """
 
         handled_pairs = handled_pairs or []
+        max_rule_distance = max([rule.max_distance for rule in self.rules if rule.max_distance] + [self.max_distance])
+        unjoined_clusters = self.get_clusters_from_model(model, max_distance=max_rule_distance)
+        unjoined_clusters = self.remove_handled_pairs(unjoined_clusters, handled_pairs)
 
-        max_rule_distance = max([rule.max_distance for rule in rules if rule.max_distance] + [max_distance])
-        print("max_rule_distance, ",max_rule_distance)
-        
-        model.connect_adjacent_beams(max_distance=max_rule_distance)  # ensure that the model is connected before analyzing
-        model.connect_adjacent_plates(max_distance=max_rule_distance)  # ensure that the model is connected before analyzing
+        self.process_clusters(model, max_distance=max_rule_distance)
+        return self.joining_errors, unjoined_clusters
+    
+
+    def get_clusters_from_model(self, model, max_distance=None):
+        model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
+        model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
         analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
-        clusters = analyzer.find()
-        # these pairs were already handled by some external logic and shouldn't be processed again
-        # e.g. the beams within a wall are joined by wall specific logic
-        # however, other beams in the model should be allowed to be joined with them, thus they cannot be altogether excluded
+        return analyzer.find()
+    
+    def remove_handled_pairs(self, clusters, handled_pairs):
+        """Removes clusters from the list that have been handled."""
         clusters_temp = [c for c in clusters]
         for cluster in clusters_temp:
             if set(cluster.elements) in handled_pairs:
                 clusters.remove(cluster)
-        joining_errors = []
-        joining_errors.extend(JointRule.process_rules(JointRule.get_direct_rules(rules), model, clusters, max_distance=max_distance))
-        joining_errors.extend(JointRule.process_rules(JointRule.get_category_rules(rules), model, clusters, max_distance=max_distance))
-        joining_errors.extend(JointRule.process_rules(JointRule.get_topology_rules(rules, use_defaults=False), model, clusters, max_distance=max_distance))
-        return joining_errors, clusters
+
+
+    def joints_from_clusters(self, model, clusters, max_distance=None):
+        """Processes the DirectRules and creates joints based on the clusters."""
+        for rule in self.rules:
+            for cluster in [c for c in clusters]:
+                joint, error = rule.try_create_joint(model, cluster, max_distance=max_distance)
+                if joint:
+                    clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
+                if error:
+                    self.joining_errors.append(error)
+
+    def process_clusters(self, unhandled_clusters, model, max_distance=None):
+        """Processes the clusters and creates joints based on the rules."""
+        unhandled_clusters = [c for c in self.clusters]
+        for cluster in unhandled_clusters:
+            if set(cluster.elements) in unhandled_clusters:
+                unhandled_clusters.remove(cluster)
+
+        self.joints_from_clusters(self.direct_rules, model, unhandled_clusters, max_distance=max_distance)
+        self.joints_from_clusters(self.category_rules, model, unhandled_clusters, max_distance=max_distance)
+        self.joints_from_clusters(self.topology_rules, model, unhandled_clusters, max_distance=max_distance)
+        
+        return self.joining_errors, unhandled_clusters
+
+class JointRule(object):
+    def __init__(self, joint_type, max_distance=None, **kwargs):
+        """Initializes a JointRule with the given joint type and optional max distance."""
+        self.joint_type = joint_type
+        self.max_distance = max_distance
+        self.kwargs = kwargs
+
+
 
     def _comply_topology(self, cluster, raise_error=False):
         """Checks if the given elements comply with the given topology.
@@ -211,18 +214,7 @@ class JointRule(object):
             return False
         return True
 
-    @classmethod
-    def process_rules(cls, rules, model, clusters, max_distance=None):
-        """Processes the DirectRules and creates joints based on the clusters."""
-        joining_errors = []
-        for rule in rules:
-            for cluster in [c for c in clusters]:
-                joint, error = rule.try_create_joint(model, cluster, max_distance=max_distance)
-                if joint:
-                    clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
-                if error:
-                    joining_errors.append(error)
-        return joining_errors
+
 
 
 class DirectRule(JointRule):
@@ -461,10 +453,8 @@ class TopologyRule(JointRule):
             return None, None
         if not self._comply_topology(cluster):
             return None, None
-        print("complied topology: ", self.topology_type)
         if not self._comply_distance(cluster, max_distance=max_distance):
             return None, None
-        print("complied distance")
         if not self.joint_type.comply_elements(cluster.elements):
             return None, None
         try:
