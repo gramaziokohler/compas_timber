@@ -12,6 +12,8 @@ from compas_timber.connections import LMiterJoint
 from compas_timber.connections import PlateTButtJoint
 from compas_timber.connections import PlateLButtJoint
 from compas_timber.connections import PlateMiterJoint
+from compas_timber.connections import GenericJoint
+from compas_timber.connections import Cluster
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.design import JointRule
@@ -19,6 +21,7 @@ from compas_timber.design import DirectRule
 from compas_timber.design import CategoryRule
 from compas_timber.design import TopologyRule
 from compas_timber.errors import BeamJoiningError
+from compas_timber.model import TimberModel
 
 
 @pytest.fixture
@@ -102,48 +105,58 @@ def L_beams_separated():
 
 
 def test_joints_from_beams_and_topo_rules(beams):
+    model = TimberModel()
+    model.add_elements(beams)
     rules = [
         TopologyRule(JointTopology.TOPO_L, LMiterJoint),
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, beams)
-    assert len(joints) == 4
-    assert set([joint.__class__.__name__ for joint in joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
+    errors, unjoined_clusters = JointRule.joints_from_rules_and_model(rules, model)
+    assert len(model.joints) == 4
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
 
 
 def test_joints_from_beams_and_rules_with_max_distance(separated_beams):
+    model = TimberModel()
+    model.add_elements(separated_beams)
     rules = [
         TopologyRule(JointTopology.TOPO_L, LMiterJoint),
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, separated_beams)
-    assert len(joints) == 0
+    with pytest.raises(ValueError):
+        errors, unjoined_clusters = JointRule.joints_from_rules_and_model(rules, model)
+    assert len(model.joints) == 0
 
+    model = TimberModel()
+    model.add_elements(separated_beams)
     rules = [
         TopologyRule(JointTopology.TOPO_L, LMiterJoint),
         TopologyRule(JointTopology.TOPO_T, TButtJoint, max_distance=0.15),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, separated_beams)
-    assert len(joints) == 1
+    errors, unjoined_clusters = JointRule.joints_from_rules_and_model(rules, model)
+    assert len(model.joints) == 4
+    assert len(unjoined_clusters) == 3
 
+    model = TimberModel()
+    model.add_elements(separated_beams)
     rules = [
         TopologyRule(JointTopology.TOPO_L, LMiterJoint),
         TopologyRule(JointTopology.TOPO_T, TButtJoint, max_distance=0.05),
         TopologyRule(JointTopology.TOPO_X, XLapJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, separated_beams, max_distance=0.15)
-    assert len(joints) == 3
+    errors, unjoined_clusters = JointRule.joints_from_rules_and_model(rules, model, max_distance=0.15)
+    assert len(model.joints) == 4
+    assert len(unjoined_clusters) == 1
 
-
-def test_direct_rule_contains(beams):
+def test_direct_rule_matches_cluster(beams):
     rule = DirectRule(LMiterJoint, beams[:2])
-    assert rule.contains(beams[:2]) is True
-    assert rule.contains(beams[1:3]) is False
-    assert rule.contains(beams[2:]) is False
-    assert rule.contains([beams[0], beams[3]]) is False
+    cluster_a = Cluster([GenericJoint(*beams[:2])])
+    cluster_b = Cluster([GenericJoint(*beams[1:3])])
+    assert rule._matches_cluster(cluster_a) is True
+    assert rule._matches_cluster(cluster_b) is False
 
 
 def test_direct_rule_get_joint(beams):
@@ -187,7 +200,7 @@ def test_different_rules(L_beams):
         beam.attributes["category"] = "A"
     L_beams[1].attributes["category"] = "B"
     rules = [DirectRule(LLapJoint, L_beams[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, L_beams)
+    joints, errors = JointRule.joints_from_rules_and_model(rules, L_beams)
     assert len(joints) == 3
     assert set([joint.__class__.__name__ for joint in joints]) == set(["LLapJoint", "LButtJoint", "LMiterJoint"])
 
@@ -197,12 +210,12 @@ def test_different_rules_max_distance(L_beams_separated):
         beam.attributes["category"] = "A"
     L_beams_separated[1].attributes["category"] = "B"
     rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, L_beams_separated)
+    joints, errors = JointRule.joints_from_rules_and_model(rules, L_beams_separated)
     assert len(joints) == 0
 
     rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint, max_distance=0.15)]
 
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, L_beams_separated)
+    joints, errors = JointRule.joints_from_rules_and_model(rules, L_beams_separated)
     assert len(joints) == 3
     assert set([joint.__class__.__name__ for joint in joints]) == set(["LMiterJoint"])
 
@@ -224,7 +237,7 @@ def test_plate_topo_rules():
         TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
         TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
+    joints, errors = JointRule.joints_from_rules_and_model(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 3, "Expected three joints"
 
 
@@ -246,7 +259,7 @@ def test_plate_category_rules():
         CategoryRule(PlateMiterJoint, "A", "C"),
         CategoryRule(PlateLButtJoint, "B", "C"),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
+    joints, errors = JointRule.joints_from_rules_and_model(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 2, "Expected two joints"
 
     plate_a.reset()
@@ -258,7 +271,7 @@ def test_plate_category_rules():
         CategoryRule(PlateMiterJoint, "A", "C"),
         CategoryRule(PlateLButtJoint, "B", "C"),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
+    joints, errors = JointRule.joints_from_rules_and_model(rules, [plate_a, plate_b, plate_c])
 
 
 def test_plate_rules_priority():
@@ -282,7 +295,7 @@ def test_plate_rules_priority():
         TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
         TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
+    joints, errors = JointRule.joints_from_rules_and_model(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 3, "Expected three joints"
     assert set([j.__class__.__name__ for j in joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), (
         "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
@@ -295,7 +308,7 @@ def test_plate_rules_priority():
         TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
         TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
+    joints, errors = JointRule.joints_from_rules_and_model(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 3, "Expected three joints"
     assert set([j.__class__.__name__ for j in joints]) == set(["PlateLButtJoint", "PlateTButtJoint"]), "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
 
@@ -305,7 +318,7 @@ def test_plate_rules_priority():
         TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
         TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
     ]
-    joints, errors = JointRule.joints_from_rules_and_elements(rules, [plate_a, plate_b, plate_c])
+    joints, errors = JointRule.joints_from_rules_and_model(rules, [plate_a, plate_b, plate_c])
     assert len(joints) == 3, "Expected three joints"
     assert set([j.__class__.__name__ for j in joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), (
         "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"

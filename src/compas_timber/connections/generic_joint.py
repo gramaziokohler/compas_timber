@@ -1,11 +1,8 @@
 from compas.tolerance import TOL
 
-from compas_timber.elements import Beam
-from compas_timber.elements import Plate
-
 from .joint import Joint
-from .plate_joint import PlateJoint
 from .joint import JointTopology
+from .plate_joint import PlateJoint
 
 
 class GenericJoint(Joint):
@@ -98,7 +95,6 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
 
     @property
     def __data__(self):
-        data = super(GenericPlateJoint, self).__data__
         data_dict = {
             "plate_a_guid": self.plate_a_guid,
             "plate_b_guid": self.plate_b_guid,

@@ -1,4 +1,3 @@
-
 from compas.tolerance import TOL
 
 from compas_timber.connections import JointTopology
@@ -95,7 +94,6 @@ class JointRule(object):
 
         model.connect_adjacent_beams(max_distance=max_rule_distance)  # ensure that the model is connected before analyzing
         model.connect_adjacent_plates(max_distance=max_rule_distance)  # ensure that the model is connected before analyzing
-    
         analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
         clusters = analyzer.find()
         # these pairs were already handled by some external logic and shouldn't be processed again
@@ -103,14 +101,17 @@ class JointRule(object):
         # however, other beams in the model should be allowed to be joined with them, thus they cannot be altogether excluded
         clusters_temp = [c for c in clusters]
         for cluster in clusters_temp:
+            print([j.distance for j in cluster.joints])
             if set(cluster.elements) in handled_pairs:
                 clusters.remove(cluster)
-
+        print("len(clusters)", len(clusters))
         joining_errors = []
-        joining_errors.extend(JointRule.process_rules(JointRule.get_direct_rules(rules), model, clusters))
-        joining_errors.extend(JointRule.process_rules(JointRule.get_category_rules(rules), model, clusters))
-        joining_errors.extend(JointRule.process_rules(JointRule.get_topology_rules(rules, use_defaults=False), model, clusters))
-
+        joining_errors.extend(JointRule.process_rules(JointRule.get_direct_rules(rules), model, clusters, max_distance=max_distance))
+        joining_errors.extend(JointRule.process_rules(JointRule.get_category_rules(rules), model, clusters, max_distance=max_distance))
+        print("len(clusters)", len(clusters))
+        joining_errors.extend(JointRule.process_rules(JointRule.get_topology_rules(rules, use_defaults=False), model, clusters, max_distance=max_distance))
+        print("len(clusters)", len(clusters))
+        print([j.__class__.__name__ for j in model.joints])
         return joining_errors, clusters
 
     def _comply_topology(self, cluster, raise_error=False):
@@ -141,16 +142,17 @@ class JointRule(object):
             return False
         return True
 
-    def _comply_distance(self, cluster, raise_error=False):
-        if not self.max_distance:
+    def _comply_distance(self, cluster, max_distance=None, raise_error=False):
+        max_distance = self.max_distance or max_distance
+        if not max_distance:
             return True
         distance = max([j.distance for j in cluster.joints])
-        if distance > self.max_distance:
+        if distance > max_distance:
             if raise_error:
                 raise BeamJoiningError(
                     beams=cluster.elements,
                     joint=self.joint_type,
-                    debug_info="The distance between the elements is greater than the maximum allowed distance of {}.".format(self.max_distance),
+                    debug_info="The distance between the elements is greater than the maximum allowed distance of {}.".format(max_distance),
                     debug_geometries=[e.shape for e in cluster.elements],
                 )
             return False
@@ -170,12 +172,13 @@ class JointRule(object):
         return True
 
     @classmethod
-    def process_rules(cls, rules, model, clusters):
+    def process_rules(cls, rules, model, clusters, max_distance=None):
         """Processes the DirectRules and creates joints based on the clusters."""
         joining_errors = []
         for rule in rules:
             for cluster in [c for c in clusters]:
-                joint, error = rule.try_create_joint(model, cluster)
+                print([j.distance for j in cluster.joints])
+                joint, error = rule.try_create_joint(model, cluster, max_distance=max_distance)
                 if joint:
                     clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
                 if error:
@@ -225,8 +228,8 @@ class DirectRule(JointRule):
                     debug_geometries=[e.shape for e in self.elements],
                 )
         return True
-    
-    def try_create_joint(self, model, cluster):
+
+    def try_create_joint(self, model, cluster, max_distance=None):
         """Creates a joint from the elements defined in this DirectRule.
 
         Parameters
@@ -248,9 +251,10 @@ class DirectRule(JointRule):
             If the distance between the elements is greater than the max_distance.
 
         """
+
         joint = None
         error = None
-        if self._matches_cluster(cluster):        
+        if self._matches_cluster(cluster):
             try:
                 if not self._comply_element_count(cluster, raise_error=True):
                     return None, None
@@ -258,7 +262,7 @@ class DirectRule(JointRule):
                     return None, None
                 if not self._comply_element_order(cluster, raise_error=True):
                     return None, None
-                if not self._comply_distance(cluster, raise_error=True):
+                if not self._comply_distance(cluster, raise_error=True, max_distance=max_distance):
                     return None, None
                 if not self.joint_type.comply_elements(self.elements, raise_error=True):
                     return None, None
@@ -317,7 +321,7 @@ class CategoryRule(JointRule):
         """Checks if the categories of the elements in the cluster comply with the rule's categories."""
         return set([e.attributes.get("category", None) for e in cluster.elements]) == {self.category_a, self.category_b}
 
-    def try_create_joint(self, model, cluster):
+    def try_create_joint(self, model, cluster, max_distance=None):
         """Creates a joint from the elements defined in this DirectRule.
 
         Parameters
@@ -339,6 +343,7 @@ class CategoryRule(JointRule):
             If the distance between the elements is greater than the max_distance.
 
         """
+
         joint = None
         error = None
         if not self._comply_categories(cluster):
@@ -349,7 +354,7 @@ class CategoryRule(JointRule):
             return None, None
         if not self._comply_category_order(cluster):
             return None, None
-        if not self._comply_distance(cluster):
+        if not self._comply_distance(cluster, max_distance=max_distance):
             return None, None
         if not self.joint_type.comply_elements(list(cluster.elements)):
             return None, None
@@ -358,6 +363,7 @@ class CategoryRule(JointRule):
         except BeamJoiningError as bje:
             error = bje
         return joint, error
+
 
 class TopologyRule(JointRule):
     """for a given connection topology type (L,T,X,I,K...), this rule assigns a joint type.
@@ -390,7 +396,7 @@ class TopologyRule(JointRule):
             self.joint_type,
         )
 
-    def try_create_joint(self, model, cluster):
+    def try_create_joint(self, model, cluster, max_distance=None):
         """Returns a Joint if the given elements comply with this TopologyRule.
         It checks:
         that the max_distance is not exceeded,
@@ -416,9 +422,11 @@ class TopologyRule(JointRule):
             return None, None
         if not self._comply_topology(cluster):
             return None, None
-        if not self._comply_distance(cluster):
+        print("complied topology: ", self.topology_type)
+        if not self._comply_distance(cluster, max_distance=max_distance):
             return None, None
-        if not self.joint_type.comply_elements(self.elements):
+        print("complied distance")
+        if not self.joint_type.comply_elements(cluster.elements):
             return None, None
         try:
             joint = cluster.promote_to_joint(model, self.joint_type, **self.kwargs)

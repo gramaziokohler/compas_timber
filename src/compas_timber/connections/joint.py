@@ -3,7 +3,6 @@ from itertools import combinations
 from compas.geometry import Point
 from compas.geometry import distance_point_line
 from compas_model.interactions import Interaction
-from compas_timber.errors import BeamJoiningError
 
 from .solver import JointTopology
 
