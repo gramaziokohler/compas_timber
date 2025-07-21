@@ -6,6 +6,7 @@ from .workflow import DebugInfomation
 from .workflow import ContainerDefinition
 from .workflow import guess_joint_topology_2beams
 from .workflow import set_default_joints
+from .workflow import JointRuleSolver
 
 from .wall_from_surface import SurfaceModel
 from .wall_populator import WallPopulator
@@ -17,6 +18,7 @@ from .wall_details import LConnectionDetailB
 from .wall_details import TConnectionDetailA
 
 __all__ = [
+    "JointRuleSolver",
     "CategoryRule",
     "DirectRule",
     "JointRule",

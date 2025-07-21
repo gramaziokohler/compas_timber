@@ -201,9 +201,6 @@ class PlateJoint(Joint):
                     raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
                 self.topology = topo_results[0]
                 self.a_segment_index = topo_results[1][1]
-                self.b_segment_index = topo_results[2][1]
-            print("plate_a outline:", self.plate_a.outline_a)
-            print("plate_b outline:", self.plate_b.outline_a)
             self.reorder_planes_and_outlines()
             self._adjust_plate_outlines()
             self.plate_a.add_interface(self.interface_a)

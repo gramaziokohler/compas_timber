@@ -309,6 +309,7 @@ class CategoryRule(JointRule):
         The category of the second element.
     topos : list(:class:`~compas_timber.connections.JointTopology`), optional
         The topologies that are supported by this rule.
+        TODO: reconsider how to implement this. was meant to filter/override joint application based on topology.
     max_distance : float, optional
         The maximum distance to consider two elements as intersecting.
     kwargs : dict

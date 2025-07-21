@@ -230,10 +230,10 @@ class YButtJoint(Joint):
 
         Parameters
         ----------
-        cluster : :class:`~compas_timber.model.TimberCluster`
-            The cluster of beams to be checked.
-        model_max_distance : float, optional
-            The maximum distance between the centerlines of the beams in the cluster.
+        elements : list of :class:`~compas_timber.parts.Beam`
+            The beams to check.
+        raise_error : bool, optional
+            If True, raises a `BeamJoiningError` if the requirements are not met.
 
         Returns
         -------

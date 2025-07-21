@@ -23,10 +23,12 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.design import JointRule
+from compas_timber.design.workflow import JointRuleSolver
 from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
+from compas_timber.model import TimberModel
 
 
 class WallSelector(object):
@@ -611,7 +613,11 @@ class WallPopulator(object):
 
     def create_joints(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
-        return JointRule.joints_from_rules_and_elements(self.rules, beams, max_distance=max_distance)
+        model = TimberModel()
+        model.add_elements(beams)
+        solver = JointRuleSolver(self.rules, model)
+        errors, unjoined_clusters = solver.apply_rules_to_model()
+        return model.joints
 
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)

@@ -45,13 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
-* Added `DirectRule.get_joint()`.
-* Added `TopologyRule.try_get_joint`.
-* Added `CategoryRule.try_get_rule`.
+* Added `JointRuleSolver` class.
+* Added `JointTopology.TOPO_Y` for Beam Connections.
+* Added `JointTopology.TOPO_K` for Beam Connections.
 * Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
 * Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
-* Added `CategoryPlateJointRule`, `DirectPlateJointRule`, `EdgeEdgeTopologyPlateJointRule`, and `EdgeFaceTopologyPlateJointRule` Plate joint rule GH components.
-
+* Added `Cluster.topology`.
 ### Changed
 
 * BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.

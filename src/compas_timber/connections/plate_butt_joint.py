@@ -137,11 +137,6 @@ class PlateLButtJoint(PlateButtJoint):
         """Set the index of the segment in the main plate outline."""
         self.b_segment_index = value
 
-    @cross_segment_index.setter
-    def cross_segment_index(self, value):
-        """Set the index of the segment in the main plate outline."""
-        self.b_segment_index = value
-
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""
 

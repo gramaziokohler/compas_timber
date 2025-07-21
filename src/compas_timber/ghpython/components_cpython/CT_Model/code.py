@@ -9,7 +9,7 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.design import DebugInfomation
-from compas_timber.design import JointRule
+from compas_timber.design import JointRuleSolver
 from compas_timber.design import WallPopulator
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
@@ -65,9 +65,8 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         # checks elements compatibility and generates Joints
         JointRules = [j for j in JointRules if j is not None]
 
-        joints, joint_errors = JointRule.apply_rules_to_model(JointRules, Model, MaxDistance, handled_pairs)
-        for joint in joints + wall_joints:
-            Model.add_joint(joint)
+        solver = JointRuleSolver(JointRules, Model, max_distance=MaxDistance)
+        joint_errors, unjoined_clusters = solver.apply_rules_to_model()
 
         for je in joint_errors:
             debug_info.add_joint_error(je)

@@ -106,14 +106,6 @@ def L_beams_separated():
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
 
-
-@pytest.fixture
-def model(beams):
-    model = TimberModel()
-    model.add_elements(beams)
-    return model
-
-
 def test_joints_from_beams_and_topo_rules(beams):
     rules = [
         TopologyRule(JointTopology.TOPO_L, LMiterJoint),

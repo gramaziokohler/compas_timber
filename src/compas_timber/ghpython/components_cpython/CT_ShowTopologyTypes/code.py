@@ -22,7 +22,7 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
         if not item_input_valid_cpython(ghenv, model, "model"):
             return
 
-        analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.beams)))
+        analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
         clusters = analyzer.find()
 
         for cluster in clusters:

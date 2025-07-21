@@ -149,7 +149,7 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`, float)
 
         """
         tol = self.TOLERANCE  # TODO: change to a unit-sensitive value
@@ -169,7 +169,7 @@ class ConnectionSolver(object):
         if parallel:
             pa = a1
             pb = closest_point_on_line(a1, [b1, b2])
-            exceed, distance = self._exceed_max_distance(pa, pb, max_distance, tol)
+            exceed, _ = self._exceed_max_distance(pa, pb, max_distance, tol)
             if exceed:
                 return JointTopology.TOPO_UNKNOWN, None, None, None
 
@@ -299,7 +299,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
-        When T-Topology is found, the plates will be returned in a consistent order, with the main plate first and the cross plate second.
+        When TOPOLOGY_EDGE_FACE is found, the plates may be returned in reverse order, with the main plate first and the cross plate second.
 
         parameters
         ----------
