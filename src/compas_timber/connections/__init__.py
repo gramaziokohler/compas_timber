@@ -4,6 +4,8 @@ from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
+from .l_tenon_mortise_joint import LTenonMortiseJoint
+from .l_dovetail import LDovetailJoint
 from .lap_joint import LapJoint
 from .generic_joint import GenericJoint
 from .solver import ConnectionSolver
@@ -17,7 +19,8 @@ from .t_lap import TLapJoint
 from .x_lap import XLapJoint
 from .x_notch import XNotchJoint
 from .t_dovetail import TDovetailJoint
-from .t_tenon_mortise import TenonMortiseJoint
+from .tenon_mortise_joint import TenonMortiseJoint
+from .t_tenon_mortise_joint import TTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import TOliGinaJoint
@@ -64,6 +67,9 @@ __all__ = [
     "TDovetailJoint",
     "BallNodeJoint",
     "TenonMortiseJoint",
+    "TTenonMortiseJoint",
+    "LTenonMortiseJoint",
+    "LDovetailJoint",
     "YButtJoint",
     "TOliGinaJoint",
     "beam_ref_side_incidence",
