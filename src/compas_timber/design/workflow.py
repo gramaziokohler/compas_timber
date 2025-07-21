@@ -103,9 +103,7 @@ class JointRuleSolver(object):
         max_rule_distance = max([rule.max_distance for rule in self.rules if rule.max_distance] + [self.max_distance])
         clusters = self.get_clusters_from_model(max_distance=max_rule_distance)
         clusters = self.remove_handled_pairs(clusters, handled_pairs)
-        print("self.max_distance", self.max_distance)
         self.joining_errors, unjoined_clusters = self.process_clusters(clusters, max_distance=max_rule_distance)
-        print(self.model.joints)
         return self.joining_errors, unjoined_clusters
 
     def get_clusters_from_model(self, max_distance=None):
@@ -182,9 +180,7 @@ class JointRule(object):
         max_distance = self.max_distance or max_distance or None
         if not max_distance:
             return True
-        print("_comply_distance.max_distance", max_distance)
         distance = max([j.distance for j in cluster.joints])
-        print("j.dist", [j.distance for j in cluster.joints])
         if distance > max_distance:
             if raise_error:
                 raise BeamJoiningError(
@@ -331,8 +327,6 @@ class CategoryRule(JointRule):
 
     def _comply_category_order(self, cluster, raise_error=False):
         if cluster.topology == JointTopology.TOPO_T or cluster.topology == JointTopology.TOPO_EDGE_FACE:
-            print("category_a", self.category_a)
-            print("element[0] category", cluster.joints[0].elements[0].attributes.get("category", None))
             if cluster.joints[0].elements[0].attributes.get("category", None) != self.category_a:
                 if not raise_error:
                     return False

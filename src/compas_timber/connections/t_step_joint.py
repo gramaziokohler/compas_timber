@@ -243,6 +243,7 @@ class TStepJoint(Joint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
+        elements = list(elements)
         cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
         for beam in elements:
             beam_normal = beam.frame.normal.unitized()

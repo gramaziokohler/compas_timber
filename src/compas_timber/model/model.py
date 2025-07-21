@@ -407,7 +407,6 @@ class TimberModel(Model):
             assert beam_a and beam_b
             p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             p1 = Point(*p1) if p1 else None
-            print("GJ dist = ", distance)
             GenericJoint.create(self, beam_a, beam_b, topology=topology, distance=distance, location=p1)
 
     def connect_adjacent_plates(self, max_distance=None):
