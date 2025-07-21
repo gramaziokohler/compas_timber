@@ -399,11 +399,12 @@ class DovetailTenon(BTLxProcessing):
             tool_angle = cls._DOVETAIL_TOOL_PARAMS["tool_angle"]
             tool_diameter = cls._DOVETAIL_TOOL_PARAMS["tool_diameter"]
             tool_height = cls._DOVETAIL_TOOL_PARAMS["tool_height"]
+            # calculate the max shape_radius based on the tool parameters
             tool_top_radius = tool_diameter / 2 - tool_height * (math.tan(math.radians(tool_angle)))
             # update parameters related to the tool if a tool is defined
-            height = min(height, tool_height)
             flank_angle = tool_angle
-            shape_radius = tool_top_radius
+            shape_radius = min(shape_radius, tool_top_radius)
+            height = min(height, tool_height)
 
         # find the difference of the bottom and top radius of the frustum cone
         frustum_difference = height * math.tan(math.radians(flank_angle))
