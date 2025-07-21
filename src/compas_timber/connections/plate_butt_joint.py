@@ -122,7 +122,7 @@ class PlateLButtJoint(PlateButtJoint):
 
     def __init__(self, main_plate=None, cross_plate=None, topology=None, main_segment_index=None, cross_segment_index=None, **kwargs):
         super(PlateLButtJoint, self).__init__(main_plate, cross_plate, topology, main_segment_index, **kwargs)
-        self.cross_segment_index = cross_segment_index or self.b_segment_index
+        self.cross_segment_index = cross_segment_index if cross_segment_index is not None else self.b_segment_index
 
     def __repr__(self):
         return "PlateLButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))

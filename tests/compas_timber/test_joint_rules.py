@@ -139,9 +139,8 @@ def test_joints_from_beams_and_rules_with_no_max_distance(separated_beams):
     model = TimberModel()
     model.add_elements(separated_beams)
     solver=JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
     with pytest.raises(ValueError):
-        errors, unjoined_clusters = solver.apply_rules_to_model(rules, model)
+        errors, unjoined_clusters = solver.apply_rules_to_model()
     assert len(model.joints) == 0
 
 def test_joints_from_beams_and_rules_with_max_distance_rule(separated_beams):
