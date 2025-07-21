@@ -1,3 +1,5 @@
+from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
 
@@ -5,7 +7,7 @@ from .solver import JointTopology
 from .tenon_mortise_joint import TenonMortiseJoint
 
 
-class TDovetailJoint(TenonMortiseJoint):
+class LDovetailJoint(TenonMortiseJoint):
     """
     Represents a T-Dovetail type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross).
     A dovetail tenon is added on the main beam, and a corresponding dovetail mortse is made on the cross beam to fit the main beam's tenon.
@@ -78,7 +80,7 @@ class TDovetailJoint(TenonMortiseJoint):
         List of features added to the main and cross beams for the dovetail joint.
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
     _DEFAULT_DOVETAIL_TOOL = {
         "angle": 15.0,
@@ -88,7 +90,7 @@ class TDovetailJoint(TenonMortiseJoint):
 
     @property
     def __data__(self):
-        data = super(TDovetailJoint, self).__data__
+        data = super(LDovetailJoint, self).__data__
         data["dovetail_tool"] = self.dovetail_tool
         return data
 
@@ -108,7 +110,7 @@ class TDovetailJoint(TenonMortiseJoint):
         dovetail_tool=None,
         **kwargs
     ):
-        super(TDovetailJoint, self).__init__(
+        super(LDovetailJoint, self).__init__(
             main_beam=main_beam,
             cross_beam=cross_beam,
             start_y=start_y,
@@ -127,6 +129,39 @@ class TDovetailJoint(TenonMortiseJoint):
         self.dovetail_tool = dovetail_tool or self._DEFAULT_DOVETAIL_TOOL
         if not isinstance(self.dovetail_tool, dict) or set(self.dovetail_tool.keys()) != {"angle", "diameter", "height"}:
             raise ValueError("dovetail_tool must be a dict with keys 'angle', 'diameter', 'height'.")
+
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoiningError
+            If the extension could not be calculated.
+
+        """
+        assert self.main_beam and self.cross_beam
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+
+        # cross_beam
+        try:
+            cutting_plane = self.main_beam.front_side(self.main_beam_ref_side_index)
+            start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        self.cross_beam.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid)
+        # main_beam
+        try:
+            cutting_plane = self.cross_beam.opp_side(self.cross_beam_ref_side_index)
+            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        self.main_beam.add_blank_extension(
+            start_main + extension_tolerance,
+            end_main + extension_tolerance,
+            self.guid,
+        )
 
     def add_features(self):
         """Adds the required trimming features to both beams.
