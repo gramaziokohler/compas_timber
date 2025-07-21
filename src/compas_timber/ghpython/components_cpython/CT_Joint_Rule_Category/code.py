@@ -96,5 +96,5 @@ class CategoryJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]
         rename_cpython_gh_output(self.output_name(), 0, ghenv)
-        manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=2)
+        manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=2, permanent_param_count=0)
         ghenv.Component.ExpireSolution(True)

@@ -1,3 +1,5 @@
+from compas.tolerance import TOL
+
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
@@ -64,8 +66,9 @@ class LLapJoint(LapJoint):
             raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
-        self.main_beam.add_blank_extension(start_main, end_main, self.main_beam_guid)
-        self.cross_beam.add_blank_extension(start_cross, end_cross, self.cross_beam_guid)
+        tol = TOL.absolute
+        self.main_beam.add_blank_extension(start_main + tol, end_main + tol, self.main_beam_guid)
+        self.cross_beam.add_blank_extension(start_cross + tol, end_cross + tol, self.cross_beam_guid)
 
     def add_features(self):
         """Adds the required joint features to both beams.

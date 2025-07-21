@@ -1,5 +1,5 @@
 # r: compas_timber>=0.15.3
-"""Creates a Beam from a LineCurve."""
+"""Creates a data-tree structure of Beams from edges of a Mesh."""
 
 # flake8: noqa
 import Grasshopper
