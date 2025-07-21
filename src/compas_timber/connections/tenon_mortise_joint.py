@@ -4,7 +4,6 @@ from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import TenonShapeType
 
 from .joint import Joint
-from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
@@ -72,8 +71,6 @@ class TenonMortiseJoint(Joint):
     features : list
         List of features or machining processings applied to the elements.
     """
-
-    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_T, JointTopology.TOPO_L]
 
     @property
     def __data__(self):
@@ -165,16 +162,17 @@ class TenonMortiseJoint(Joint):
 
     def set_default_values(self):
         """Sets default values for attributes if they are not provided."""
-        width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
+        main_width, main_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
+        cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
         # assign default values
         self.start_y = self.start_y or 0.0
         self.start_depth = self.start_depth or 0.0
         self.rotation = self.rotation or 0.0
-        self.length = self.length or height
-        self.width = self.width or width / 2
-        self.height = self.height or width / 2
+        self.length = self.length or main_height / 2
+        self.width = self.width or main_width / 2
+        self.height = self.height or cross_width / 2
         self.shape = self.shape or 2  # Default shape: ROUND
-        self.shape_radius = self.shape_radius or width / 4
+        self.shape_radius = self.shape_radius or main_width / 4
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -189,22 +187,9 @@ class TenonMortiseJoint(Joint):
         """
         assert self.main_beam and self.cross_beam
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-
-        #cross_beam
-        try:
-            cutting_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
-            start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane)
-        except AttributeError as ae:
-            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
-        self.cross_beam.add_blank_extension(
-            start_cross + extension_tolerance,
-            end_cross + extension_tolerance,
-            self.guid
-            )
         #main_beam
         try:
-            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.translate(-cutting_plane.normal * self.height)
+            cutting_plane = self.cross_beam.opp_side(self.cross_beam_ref_side_index)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
