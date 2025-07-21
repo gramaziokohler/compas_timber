@@ -78,7 +78,7 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
     def __init__(self, model, n=2, tolerance=None):
         super(NBeamKDTreeAnalyzer, self).__init__()
-        # ignore any joints that are not GenericJoint as we cannot guarantee they old the appropriate information
+        # ignore any joints that are not `JointCandidate` as we cannot guarantee they old the appropriate information
         self._joints = list(filter(lambda joint: isinstance(joint, JointCandidate), model.joints))
         if not self._joints:
             raise ValueError("The model has no joints to analyze. Forgot to call `model.connect_adjacent_beams()`?")

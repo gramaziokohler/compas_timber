@@ -2,11 +2,11 @@ from .joint import Joint
 
 
 class JointCandidate(Joint):
-    """A GenericJoint is an information-only joint, which does not add any features to the elements it connects.
+    """A JointCandidate is an information-only joint, which does not add any features to the elements it connects.
 
     It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
 
-    Please use `GenericJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `JointCandidate.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
