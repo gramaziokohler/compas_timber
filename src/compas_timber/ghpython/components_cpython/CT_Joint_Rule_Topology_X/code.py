@@ -5,6 +5,7 @@ import inspect
 import Grasshopper
 
 from compas_timber.connections import Joint
+from compas_timber.connections import PlateJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import XLapJoint
 from compas_timber.design import TopologyRule
@@ -18,17 +19,10 @@ class X_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         super(X_TopologyJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            supported_topo = cls.SUPPORTED_TOPOLOGY
-            if not isinstance(supported_topo, list):
-                supported_topo = [supported_topo]
-            if JointTopology.TOPO_X in supported_topo:
+            supported_topo = cls.SUPPORTED_TOPOLOGY if isinstance(cls.SUPPORTED_TOPOLOGY, list) else [cls.SUPPORTED_TOPOLOGY]
+            if JointTopology.TOPO_X in supported_topo and not issubclass(cls, PlateJoint):
                 self.classes[cls.__name__] = cls
-        if ghenv.Component.Params.Output[0].NickName == "Rule":
-            self.joint_type = XLapJoint
-            self.clicked = False
-        else:
-            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
-            self.clicked = True
+        self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
     def RunScript(self, *args):
         if not self.joint_type:

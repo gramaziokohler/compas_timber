@@ -5,6 +5,7 @@ import inspect
 import Grasshopper
 
 from compas_timber.connections import Joint
+from compas_timber.connections import PlateJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import TButtJoint
 from compas_timber.design import TopologyRule
@@ -18,10 +19,8 @@ class T_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         super(T_TopologyJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            supported_topo = cls.SUPPORTED_TOPOLOGY
-            if not isinstance(supported_topo, list):
-                supported_topo = [supported_topo]
-            if JointTopology.TOPO_T in supported_topo:
+            supported_topo = cls.SUPPORTED_TOPOLOGY if isinstance(cls.SUPPORTED_TOPOLOGY, list) else [cls.SUPPORTED_TOPOLOGY]
+            if JointTopology.TOPO_T in supported_topo and not issubclass(cls, PlateJoint):
                 self.classes[cls.__name__] = cls
         self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 

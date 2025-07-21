@@ -76,7 +76,6 @@ class Plate(TimberElement):
         self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
         self.outline_a = Polyline(outline_a.points)
         self.outline_b = Polyline(outline_b.points)
-        self.openings = openings or []
         self._outline_feature = None
         self._opening_features = None
         self._frame = None
@@ -88,6 +87,10 @@ class Plate(TimberElement):
         self._planes = None
         self._thickness = None
         self.interfaces = []
+        self.openings = []
+        if openings:
+            for opening in openings:
+                self.openings.append(Polyline([closest_point_on_plane(pt, self.planes[0]) for pt in opening]))
 
     def __repr__(self):
         # type: () -> str
