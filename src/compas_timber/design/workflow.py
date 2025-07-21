@@ -46,14 +46,13 @@ class JointRuleSolver(object):
         A list of rules to apply to the model.
     """
 
-    def __init__(self,rules,model,use_default_topo=False, max_distance=TOL.absolute):
+    def __init__(self, rules, model, use_default_topo=False, max_distance=TOL.absolute):
         self.rules = rules if isinstance(rules, list) else [rules] if rules else []
         self.use_default_topo = use_default_topo
         self.max_distance = max_distance
         self.clusters = []
         self.joining_errors = []
         self.model = model
-
 
     @property
     def direct_rules(self):
@@ -78,8 +77,6 @@ class JointRuleSolver(object):
             if rule.__class__.__name__ == "TopologyRule":
                 topo_rules[rule.topology_type] = TopologyRule(rule.topology_type, rule.joint_type, rule.max_distance, **rule.kwargs)  # overwrites, meaning last rule wins
         return [rule for rule in topo_rules.values() if rule is not None]
-
-
 
     def apply_rules_to_model(self, handled_pairs=None):
         """Adds joints to model based on the given rules and elements.
@@ -107,10 +104,9 @@ class JointRuleSolver(object):
         clusters = self.get_clusters_from_model(max_distance=max_rule_distance)
         clusters = self.remove_handled_pairs(clusters, handled_pairs)
         print("self.max_distance", self.max_distance)
-        self.joining_errors, unjoined_clusters =self.process_clusters(clusters, max_distance=max_rule_distance)
+        self.joining_errors, unjoined_clusters = self.process_clusters(clusters, max_distance=max_rule_distance)
         print(self.model.joints)
         return self.joining_errors, unjoined_clusters
-
 
     def get_clusters_from_model(self, max_distance=None):
         self.model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
@@ -146,14 +142,13 @@ class JointRuleSolver(object):
 
         return self.joining_errors, unhandled_clusters
 
+
 class JointRule(object):
     def __init__(self, joint_type, max_distance=None, **kwargs):
         """Initializes a JointRule with the given joint type and optional max distance."""
         self.joint_type = joint_type
         self.max_distance = max_distance
         self.kwargs = kwargs
-
-
 
     def _comply_topology(self, cluster, raise_error=False):
         """Checks if the given elements comply with the given topology.
@@ -189,7 +184,7 @@ class JointRule(object):
             return True
         print("_comply_distance.max_distance", max_distance)
         distance = max([j.distance for j in cluster.joints])
-        print("j.dist",[j.distance for j in cluster.joints])
+        print("j.dist", [j.distance for j in cluster.joints])
         if distance > max_distance:
             if raise_error:
                 raise BeamJoiningError(
@@ -213,8 +208,6 @@ class JointRule(object):
                 )
             return False
         return True
-
-
 
 
 class DirectRule(JointRule):

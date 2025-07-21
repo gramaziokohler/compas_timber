@@ -1,4 +1,3 @@
-from compas.tolerance import TOL
 
 from .joint import Joint
 from .joint import JointTopology

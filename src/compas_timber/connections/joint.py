@@ -184,14 +184,12 @@ class Joint(Interaction):
 
     @classmethod
     def comply_elements(cls, elements, raise_error=False):
-        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+        """Checks if the cluster of elements complies with the requirements for the Joint.
 
         Parameters
         ----------
         elements : list(:class:`~compas_model.elements.Element`)
             The elements to be checked.
-        cluster : :class:`~compas_timber.model.TimberCluster`
-            The cluster of beams to be checked.
         raise_error : bool, optional
             If True, raises a :class:`~compas_timber.errors.BeamJoiningError` if the cluster does not comply with the requirements.
             If False, returns False instead.

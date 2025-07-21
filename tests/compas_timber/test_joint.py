@@ -19,7 +19,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import TLapJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.connections import find_neighboring_elements
-from compas_timber.elements import Beam, plate
+from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -283,4 +283,3 @@ def test_generic_plate_joint():
     assert isinstance(edge_face_joints[0], GenericPlateJoint)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
     assert list(model.joints)[0].elements[0] == plate_b
-

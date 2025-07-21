@@ -64,7 +64,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         ##### Handle joinery #####
         # checks elements compatibility and generates Joints
         JointRules = [j for j in JointRules if j is not None]
-        
+
         joints, joint_errors = JointRule.apply_rules_to_model(JointRules, Model, MaxDistance, handled_pairs)
         for joint in joints + wall_joints:
             Model.add_joint(joint)

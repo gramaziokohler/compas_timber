@@ -104,10 +104,11 @@ class LFrenchRidgeLapJoint(LapJoint):
 
         Parameters
         ----------
-        cluster : :class:`~compas_timber.model.TimberCluster`
-            The cluster of beams to be checked.
-        model_max_distance : float, optional
-            The maximum distance between the centerlines of the beams in the cluster.
+        elements : list(:class:`~compas_model.elements.Beam`)
+            The elements to be checked.
+        raise_error : bool, optional
+            If True, raises a :class:`~compas_timber.errors.BeamJoiningError` if the cluster does not comply with the requirements.
+            If False, returns False instead.
 
         Returns
         -------
