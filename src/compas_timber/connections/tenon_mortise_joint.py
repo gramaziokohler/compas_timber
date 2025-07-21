@@ -168,7 +168,7 @@ class TenonMortiseJoint(Joint):
         self.start_y = self.start_y or 0.0
         self.start_depth = self.start_depth or 0.0
         self.rotation = self.rotation or 0.0
-        self.length = self.length or main_height / 2
+        self.length = self.length or main_height * 0.75
         self.width = self.width or main_width / 2
         self.height = self.height or cross_width / 2
         self.shape = self.shape or 2  # Default shape: ROUND
