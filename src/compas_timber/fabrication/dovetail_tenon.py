@@ -1,12 +1,13 @@
 import math
 from collections import OrderedDict
 
-from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Plane
+from compas.geometry import Polyhedron
+from compas.geometry import Polyline
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
@@ -400,7 +401,7 @@ class DovetailTenon(BTLxProcessing):
             tool_diameter = cls._DOVETAIL_TOOL_PARAMS["tool_diameter"]
             tool_height = cls._DOVETAIL_TOOL_PARAMS["tool_height"]
             # calculate the max shape_radius based on the tool parameters
-            tool_top_radius = tool_diameter / 2 - tool_height * (math.tan(math.radians(tool_angle)))
+            tool_top_radius = tool_diameter/2 - tool_height * (math.tan(math.radians(tool_angle)))
             # update parameters related to the tool if a tool is defined
             flank_angle = tool_angle
             shape_radius = min(shape_radius, tool_top_radius)
@@ -436,7 +437,7 @@ class DovetailTenon(BTLxProcessing):
         length = cls._bound_length(
             ref_side, plane, beam.height, start_depth, inclination, length, height, frustum_difference
         )
-        width = cls._bound_width(beam.width, angle, length, width, cone_angle, shape_radius, frustum_difference)
+        width = max(width, 2.1 * shape_radius)  # ensure width is at least twice the shape radius + added tolerance
 
         # calculate start_x
         start_x = cls._calculate_start_x(
@@ -549,19 +550,6 @@ class DovetailTenon(BTLxProcessing):
         return min(max_length, length)
 
     @staticmethod
-    def _bound_width(beam_width, angle, length, width, cone_angle, shape_radius, frustum_difference):
-        # bound the inserted width value to the minumum(based on the dovetail tool radius) and maximum(so that the tenon does not go out of the blank) possible width for the beam
-        max_width = beam_width / math.sin(math.radians(angle)) - 2 * (
-            frustum_difference + length * math.tan(math.radians(cone_angle))
-        )
-        min_width = 2 * shape_radius
-        if width < min_width:
-            width = min_width
-        elif width > max_width:
-            width = max_width
-        return width
-
-    @staticmethod
     def _bound_start_depth(start_depth, inclination, height):
         # bound the start_depth value to the minimum possible start_depth if the incliantion is larger than 90 so that the tenon does not go out of the blank
         min_start_depth = height / (math.tan(math.radians(180 - inclination)))
@@ -628,30 +616,6 @@ class DovetailTenon(BTLxProcessing):
                 None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
 
-        # get dovetail volume from params and beam
-        try:
-            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
-        except ValueError as e:
-            raise FeatureApplicationError(
-                None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
-            )
-
-        # fillet the edges of the dovetail volume based on the shape
-        if (
-            self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
-        ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_indices = [4, 7] if self.length_limited_top else [5, 8]
-            try:
-                dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
-                )  # TODO: NotImplementedError
-            except Exception as e:
-                raise FeatureApplicationError(
-                    dovetail_volume,
-                    geometry,
-                    "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
-                )
-
         # trim geometry with cutting planes
         try:
             geometry.trim(cutting_plane)
@@ -660,6 +624,34 @@ class DovetailTenon(BTLxProcessing):
                 cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
             )
 
+        # get dovetail volume from params and beam
+        try:
+            dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
+            dovetail_volume = Brep.from_mesh(dovetail_volume)
+        except Exception as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
+            )
+
+        # fillet the edges of the volume based on the shape
+        if self.shape is not TenonShapeType.SQUARE:
+            try:
+                # collet the edges that need to be excluded from the fillet operation
+                edges = [dovetail_volume.edges[i] for i in range(len(dovetail_volume.edges)) if i not in [2,4]]
+                dovetail_volume.fillet(self.shape_radius, edges)
+            except Exception as e:
+                raise FeatureApplicationError(
+                    dovetail_volume,
+                    geometry,
+                    "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
+                )
+        # remove any parts of the volume that exceed the beam geometry. Fails silently.
+        for frame in beam.ref_sides[:4]:
+            try:
+                dovetail_volume = dovetail_volume.trimmed(frame)
+            except Exception:
+                pass # Fail silently since it won't be possible to trim the tenon if it doesn't exceed the beam geometry.
+
         # add tenon volume to geometry
         try:
             geometry += dovetail_volume
@@ -667,7 +659,6 @@ class DovetailTenon(BTLxProcessing):
             raise FeatureApplicationError(
                 dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
             )
-
         return geometry
 
     def frame_from_params_and_beam(self, beam):
@@ -726,61 +717,8 @@ class DovetailTenon(BTLxProcessing):
 
         return cutting_frame
 
-    def dovetail_cutting_frames_from_params_and_beam(self, beam):
-        """Calculates the cutting frames for the dovetail tenon from the machining parameters in this instance and the given beam."""
-
-        # get the cutting frame
-        cutting_frame = self.frame_from_params_and_beam(beam)
-
-        # offset the cutting frame to create the cutting surface based on the height of the tenon. It needs to face in the opposite direction.
-        offseted_cutting_frame = Frame(cutting_frame.point, cutting_frame.xaxis, cutting_frame.yaxis)
-        offseted_cutting_frame.point += cutting_frame.normal * self.height
-
-        cutting_surface = PlanarSurface(
-            xsize=beam.height / math.sin(math.radians(self.inclination)),
-            ysize=beam.width / math.sin(math.radians(self.angle)),
-            frame=cutting_frame,
-        )
-        # move the cutting surface to the center
-        cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
-
-        dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
-        dx_bottom = self.width / 2
-        dy = -self.length
-
-        bottom_dovetail_points = [
-            cutting_surface.point_at(self.start_y - dx_top, 0),
-            cutting_surface.point_at(self.start_y + dx_top, 0),
-            cutting_surface.point_at(self.start_y + dx_bottom, dy),
-            cutting_surface.point_at(self.start_y - dx_bottom, dy),
-        ]
-
-        dovetail_edges = [
-            Line(bottom_dovetail_points[0], bottom_dovetail_points[1]),  # Top line
-            Line(bottom_dovetail_points[1], bottom_dovetail_points[2]),  # Right line
-            Line(bottom_dovetail_points[2], bottom_dovetail_points[3]),  # Bottom line
-            Line(bottom_dovetail_points[3], bottom_dovetail_points[0]),  # Left line
-        ]
-
-        trimming_frames = []
-        for i, edge in enumerate(dovetail_edges):
-            # create the initial frame using the line's direction and the cutting frame's normal
-            frame = Frame(edge.midpoint, -edge.direction, cutting_frame.normal)
-
-            if i != 0:
-                # determine the rotation direction: right and bottom are positive, top and left are negative
-                # apply the rotation based on the flank angle
-                rotation = Rotation.from_axis_and_angle(-edge.direction, math.radians(self.flank_angle), frame.point)
-                frame.transform(rotation)
-
-            trimming_frames.append(frame)
-
-        cutting_frame.xaxis = -cutting_frame.xaxis
-        trimming_frames.extend([cutting_frame, offseted_cutting_frame])
-        return trimming_frames
-
-    def dovetail_volume_from_params_and_beam(self, beam):
-        """Calculates the dovetail tenon volume from the machining parameters in this instance and the given beam.
+    def _dovetail_polylines_from_params_and_beam(self, beam):
+        """Creates the bottom and top polylines for the dovetail tenon from the machining parameters and beam.
 
         Parameters
         ----------
@@ -789,47 +727,104 @@ class DovetailTenon(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
-            The tenon volume.
-
+        tuple[:class:`compas.geometry.Polyline`, :class:`compas.geometry.Polyline`]
+            The bottom and top polylines of the dovetail tenon.
         """
-        # type: (Beam) -> Brep
+        # type: (Beam) -> tuple[Polyline, Polyline]
 
         assert self.inclination is not None
         assert self.rotation is not None
         assert self.height is not None
         assert self.flank_angle is not None
-        assert self.shape is not None
-        assert self.shape_radius is not None
-        assert self.length_limited_top is not None
-        assert self.length_limited_bottom is not None
+        assert self.cone_angle is not None
+        assert self.length is not None
+        assert self.width is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
 
-        # create the dovetail volume by trimming a box  # TODO: PluginNotInstalledError for Brep.from_loft
-        # get the box as a brep
-        dovetail_volume = Brep.from_box(
-            Box(
-                (beam.width + (beam.width * math.sin(math.radians(self.rotation)))) * 2,
-                (beam.height / math.sin(math.radians(self.inclination))) * 2,
-                self.height * 2,
-                cutting_frame,
-            )
+        # create cutting surface for point calculations
+        cutting_surface = PlanarSurface(
+            xsize=beam.height / math.sin(math.radians(self.inclination)),
+            ysize=beam.width / math.sin(math.radians(self.angle)),
+            frame=cutting_frame,
         )
+        # move the cutting surface to the center
+        cutting_surface.translate(-cutting_frame.xaxis * self.start_y)
 
-        # get the cutting frames for the dovetail tenon
-        trimming_frames = self.dovetail_cutting_frames_from_params_and_beam(beam)
+        # calculate dovetail profile dimensions
+        dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
+        dx_bottom = self.width / 2
+        dy = -self.length
 
-        # trim the box to create the dovetail volume
-        for frame in trimming_frames:
-            try:
-                dovetail_volume.trim(frame)
-            except Exception as e:
-                raise FeatureApplicationError(
-                    frame, dovetail_volume, "Failed to trim tenon volume with cutting frame: {}".format(str(e))
-                )
+        # create bottom profile points
+        bottom_points = [
+            cutting_surface.point_at(self.start_y - dx_top, 0),
+            cutting_surface.point_at(self.start_y + dx_top, 0),
+            cutting_surface.point_at(self.start_y + dx_bottom, dy),
+            cutting_surface.point_at(self.start_y - dx_bottom, dy),
+        ]
 
-        return dovetail_volume
+        # calculate offset
+        height_offset = cutting_frame.normal * self.height
+        flank_offset = self.height * math.tan(math.radians(180-self.flank_angle))
+
+        # create top profile point
+        top_points = []
+        for i in range(len(bottom_points)):
+            if i == 0:  # Top-left point
+                top_point = cutting_surface.point_at(self.start_y - dx_top + flank_offset, 0) + height_offset
+            elif i == 1:  # Top-right point
+                top_point = cutting_surface.point_at(self.start_y + dx_top - flank_offset, 0) + height_offset
+            elif i == 2:  # Bottom-right point
+                top_point = cutting_surface.point_at(self.start_y + dx_bottom - flank_offset, dy + flank_offset) + height_offset
+            elif i == 3:  # Bottom-left point
+                top_point = cutting_surface.point_at(self.start_y - dx_bottom + flank_offset, dy + flank_offset) + height_offset
+            top_points.append(top_point)
+
+        # close polylines
+        bottom_polyline = Polyline(bottom_points + [bottom_points[0]])
+        top_polyline = Polyline(top_points + [top_points[0]])
+
+        return bottom_polyline, top_polyline
+
+    def dovetail_volume_from_params_and_beam(self, beam):
+        """Creates the dovetail tenon volume from the machining parameters in this instance and the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`compas.geometry.Polyhedron`
+            The dovetail tenon as a polyhedron.
+
+        """
+        # type: (Beam) -> Polyhedron
+
+        # get bottom and top polylines
+        bottom_polyline, top_polyline = self._dovetail_polylines_from_params_and_beam(beam)
+
+        # remove the closing point from polylines
+        bottom_points = bottom_polyline.points[:-1]
+        top_points = top_polyline.points[:-1]
+
+        vertices = bottom_points + top_points
+        n = len(bottom_points)  # should always be 4 for dovetail shape
+
+        faces = []
+        # top and bottom faces
+        faces.append(list(range(n))[::-1]) # Bottom face (indices 3, 2, 1, 0 in clockwise order when viewed from below)
+        faces.append(list(range(n, 2*n))) # Top face (indices 4, 5, 6, 7 in counter-clockwise order when viewed from above)
+
+        # side faces
+        for i in range(n):
+            next_i = (i + 1) % n
+            face = [i, n + i, n + next_i, next_i] # Each side face connects: bottom[i] -> top[i] -> top[i+1] -> bottom[i+1]
+            faces.append(face)
+
+        return Polyhedron(vertices, faces)
 
     def scale(self, factor):
         """Scale the parameters of the processing by the given factor.
