@@ -1,7 +1,7 @@
-from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
+from compas_timber.fabrication.jack_cut import JackRafterCut
 
 from .solver import JointTopology
 from .tenon_mortise_joint import TenonMortiseJoint
@@ -209,8 +209,12 @@ class LDovetailJoint(TenonMortiseJoint):
             ref_side_index=self.cross_beam_ref_side_index,
         )
 
+        # generate refinement features
+        modification_plane = self.main_beam.front_side(self.main_beam_ref_side_index)
+        cross_refinement_feature = JackRafterCut.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
+
         # add features to beams
         self.main_beam.add_features(main_feature)
-        self.cross_beam.add_features(cross_feature)
+        self.cross_beam.add_features([cross_feature, cross_refinement_feature])
         # add features to joint
-        self.features = [cross_feature, main_feature]
+        self.features = [cross_feature, main_feature, cross_refinement_feature]
