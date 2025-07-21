@@ -78,7 +78,6 @@ class Plate(TimberElement):
         self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
         self.outline_a = Polyline(outline_a.points)
         self.outline_b = Polyline(outline_b.points)
-        self.openings = openings or []
         self._outline_feature = None
         self._opening_features = None
         self._frame = None
@@ -90,6 +89,10 @@ class Plate(TimberElement):
         self._planes = None
         self._thickness = None
         self.interfaces = []
+        self.openings = []
+        if openings:
+            for opening in openings:
+                self.openings.append(Polyline([closest_point_on_plane(pt, self.planes[0]) for pt in opening]))
 
     def __repr__(self):
         # type: () -> str
@@ -304,6 +307,7 @@ class Plate(TimberElement):
     @classmethod
     def from_brep(cls, brep, thickness, vector=None, **kwargs):
         """Creates a plate from a brep.
+
         Parameters
         ----------
         brep : :class:`compas.geometry.Brep`
@@ -386,7 +390,7 @@ class Plate(TimberElement):
         """
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = self.shape()
+        plate_geo = self.shape
         if include_features:
             for feature in self._features:
                 try:
@@ -449,3 +453,20 @@ class Plate(TimberElement):
 
         """
         return self.obb.to_mesh()
+
+    def opp_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the opposite side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the opposite side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 2) % 4]

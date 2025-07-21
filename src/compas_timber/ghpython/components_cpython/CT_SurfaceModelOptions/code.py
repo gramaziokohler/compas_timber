@@ -36,4 +36,4 @@ class SurfaceModelOptions(Grasshopper.Kernel.GH_ScriptInstance):
             "joint_overrides": joint_overrides,
         }
 
-        return (dict,)
+        return Grasshopper.Kernel.Types.GH_ObjectWrapper(dict)

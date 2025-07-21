@@ -5,6 +5,7 @@ import inspect
 import Grasshopper
 
 from compas_timber.connections import Joint
+from compas_timber.connections import PlateJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import TButtJoint
 from compas_timber.design import TopologyRule
@@ -18,20 +19,13 @@ class T_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         super(T_TopologyJointRule, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            supported_topo = cls.SUPPORTED_TOPOLOGY
-            if not isinstance(supported_topo, list):
-                supported_topo = [supported_topo]
-            if JointTopology.TOPO_T in supported_topo:
+            supported_topo = cls.SUPPORTED_TOPOLOGY if isinstance(cls.SUPPORTED_TOPOLOGY, list) else [cls.SUPPORTED_TOPOLOGY]
+            if JointTopology.TOPO_T in supported_topo and not issubclass(cls, PlateJoint):
                 self.classes[cls.__name__] = cls
-        if ghenv.Component.Params.Output[0].NickName == "Rule":
-            self.joint_type = TButtJoint
-            self.clicked = False
-        else:
-            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
-            self.clicked = True
+        self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
     def RunScript(self, *args):
-        if not self.clicked:
+        if not self.joint_type:
             ghenv.Component.Message = "Default: TButtJoint"
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "TButtJoint is default, change in context menu (right click)")
             return TopologyRule(JointTopology.TOPO_T, TButtJoint)
@@ -59,7 +53,6 @@ class T_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
                 item.Checked = True
 
     def on_item_click(self, sender, event_info):
-        self.clicked = True
         self.joint_type = self.classes[str(sender)]
         rename_cpython_gh_output(self.joint_type.__name__, 0, ghenv)
         manage_cpython_dynamic_params(self.arg_names(), ghenv, rename_count=0, permanent_param_count=0)
