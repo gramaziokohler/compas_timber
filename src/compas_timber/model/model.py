@@ -431,7 +431,7 @@ class TimberModel(Model):
             if topology == JointTopology.TOPO_EDGE_EDGE:
                 kwargs["b_segment_index"] = p_b[1]
 
-            GenericPlateJoint.create(self, plate_a, plate_b, **kwargs)
+            GenericPlateJoint.create(self, p_a[0], p_b[0], **kwargs)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.

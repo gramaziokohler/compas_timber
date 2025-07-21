@@ -102,3 +102,4 @@ def test_composite_analyzer(one_triplet_two_quads_beams):
     quads = [cluster for cluster in clusters if len(cluster) == 4]
     assert len(triplets) == 1
     assert len(quads) == 2
+

@@ -46,17 +46,18 @@ class JointRuleSolver(object):
         A list of rules to apply to the model.
     """
 
-    def __init__(self,rules=None,use_default_topo=False, max_distance=TOL.absolute):
+    def __init__(self,rules,model,use_default_topo=False, max_distance=TOL.absolute):
         self.rules = rules if isinstance(rules, list) else [rules] if rules else []
         self.use_default_topo = use_default_topo
         self.max_distance = max_distance
         self.clusters = []
         self.joining_errors = []
+        self.model = model
 
 
     @property
-    def direct_rules(rules):
-        return [rule for rule in rules if rule.__class__.__name__ == "DirectRule"]
+    def direct_rules(self):
+        return [rule for rule in self.rules if rule.__class__.__name__ == "DirectRule"]
 
     @property
     def category_rules(self):
@@ -79,9 +80,9 @@ class JointRuleSolver(object):
         return [rule for rule in topo_rules.values() if rule is not None]
 
 
-    
-    def apply_rules_to_model(self, model, handled_pairs=None):
-        """Returns a list of joints based on the given rules and elements.
+
+    def apply_rules_to_model(self, handled_pairs=None):
+        """Adds joints to model based on the given rules and elements.
 
         Parameters
         ----------
@@ -103,48 +104,46 @@ class JointRuleSolver(object):
 
         handled_pairs = handled_pairs or []
         max_rule_distance = max([rule.max_distance for rule in self.rules if rule.max_distance] + [self.max_distance])
-        unjoined_clusters = self.get_clusters_from_model(model, max_distance=max_rule_distance)
-        unjoined_clusters = self.remove_handled_pairs(unjoined_clusters, handled_pairs)
-
-        self.process_clusters(model, max_distance=max_rule_distance)
+        clusters = self.get_clusters_from_model(max_distance=max_rule_distance)
+        clusters = self.remove_handled_pairs(clusters, handled_pairs)
+        print("self.max_distance", self.max_distance)
+        self.joining_errors, unjoined_clusters =self.process_clusters(clusters, max_distance=max_rule_distance)
+        print(self.model.joints)
         return self.joining_errors, unjoined_clusters
-    
 
-    def get_clusters_from_model(self, model, max_distance=None):
-        model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
-        model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
-        analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
+
+    def get_clusters_from_model(self, max_distance=None):
+        self.model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
+        self.model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
+        analyzer = MaxNCompositeAnalyzer(self.model, n=len(list(self.model.elements())))
         return analyzer.find()
-    
+
     def remove_handled_pairs(self, clusters, handled_pairs):
         """Removes clusters from the list that have been handled."""
         clusters_temp = [c for c in clusters]
         for cluster in clusters_temp:
             if set(cluster.elements) in handled_pairs:
                 clusters.remove(cluster)
+        return clusters
 
-
-    def joints_from_clusters(self, model, clusters, max_distance=None):
+    def joints_from_rules_and_clusters(self, rules, clusters, max_distance=None):
         """Processes the DirectRules and creates joints based on the clusters."""
-        for rule in self.rules:
+        for rule in rules:
             for cluster in [c for c in clusters]:
-                joint, error = rule.try_create_joint(model, cluster, max_distance=max_distance)
+                joint, error = rule.try_create_joint(self.model, cluster, max_distance=self.max_distance)
                 if joint:
                     clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
                 if error:
                     self.joining_errors.append(error)
 
-    def process_clusters(self, unhandled_clusters, model, max_distance=None):
+    def process_clusters(self, clusters, max_distance=None):
         """Processes the clusters and creates joints based on the rules."""
-        unhandled_clusters = [c for c in self.clusters]
-        for cluster in unhandled_clusters:
-            if set(cluster.elements) in unhandled_clusters:
-                unhandled_clusters.remove(cluster)
+        unhandled_clusters = [c for c in clusters]
 
-        self.joints_from_clusters(self.direct_rules, model, unhandled_clusters, max_distance=max_distance)
-        self.joints_from_clusters(self.category_rules, model, unhandled_clusters, max_distance=max_distance)
-        self.joints_from_clusters(self.topology_rules, model, unhandled_clusters, max_distance=max_distance)
-        
+        self.joints_from_rules_and_clusters(self.direct_rules, unhandled_clusters, max_distance=max_distance)
+        self.joints_from_rules_and_clusters(self.category_rules, unhandled_clusters, max_distance=max_distance)
+        self.joints_from_rules_and_clusters(self.topology_rules, unhandled_clusters, max_distance=max_distance)
+
         return self.joining_errors, unhandled_clusters
 
 class JointRule(object):
@@ -188,6 +187,7 @@ class JointRule(object):
         max_distance = self.max_distance or max_distance or None
         if not max_distance:
             return True
+        print("_comply_distance.max_distance", max_distance)
         distance = max([j.distance for j in cluster.joints])
         print("j.dist",[j.distance for j in cluster.joints])
         if distance > max_distance:
@@ -337,6 +337,8 @@ class CategoryRule(JointRule):
 
     def _comply_category_order(self, cluster, raise_error=False):
         if cluster.topology == JointTopology.TOPO_T or cluster.topology == JointTopology.TOPO_EDGE_FACE:
+            print("category_a", self.category_a)
+            print("element[0] category", cluster.joints[0].elements[0].attributes.get("category", None))
             if cluster.joints[0].elements[0].attributes.get("category", None) != self.category_a:
                 if not raise_error:
                     return False

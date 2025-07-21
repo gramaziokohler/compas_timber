@@ -7,9 +7,11 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Polyline
 from compas.tolerance import TOL
 
 from compas_timber.connections import GenericJoint
+from compas_timber.connections import GenericPlateJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
@@ -17,7 +19,8 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import TLapJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.connections import find_neighboring_elements
-from compas_timber.elements import Beam
+from compas_timber.elements import Beam, plate
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 
@@ -258,3 +261,26 @@ def test_generic_joint():
         assert TOL.is_allclose(j.location, Point(x=-10.0, y=-10.0, z=0.0))
     for j in x_joints:
         assert TOL.is_allclose(j.location, Point(x=107.24142664116566, y=69.42161159562835, z=0.0))
+
+
+def test_generic_plate_joint():
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    model = TimberModel()
+    model.add_elements([plate_a, plate_b])
+
+    model.connect_adjacent_plates()
+
+    assert all((isinstance(j, GenericPlateJoint) for j in model.joints))
+
+    assert len(model.joints) == 1
+    edge_face_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_EDGE_FACE]
+    assert len(edge_face_joints) == 1
+    assert isinstance(edge_face_joints[0], GenericPlateJoint)
+    assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
+    assert list(model.joints)[0].elements[0] == plate_b
+
