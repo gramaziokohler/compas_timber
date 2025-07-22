@@ -344,8 +344,7 @@ class TimberModel(Model):
             edge = (element_a.graph_node, element_b.graph_node)
             if edge not in self._graph.edges():
                 self._graph.add_edge(*edge)
-                # Initialize interactions attribute to empty list
-                self._graph.edge_attribute(edge, "interactions", [])
+                self._graph.edge_attribute(edge, "interactions", [])  # initialize new edge, otherwise calls to model.joints breaks
 
             # Store the candidate (replaces any existing candidate)
             self._graph.edge_attribute(edge, "candidate", candidate)
@@ -365,8 +364,7 @@ class TimberModel(Model):
             if edge in self._graph.edges():
                 stored_candidate = self._graph.edge_attribute(edge, "candidate")
                 if stored_candidate is candidate:
-                    # Remove the entire edge since we only store one candidate per edge
-                    self._graph.delete_edge(edge)
+                    self._graph.unset_edge_attribute(edge, "candidate")
 
     def remove_joint(self, joint):
         # type: (Joint) -> None

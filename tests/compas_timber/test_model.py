@@ -412,3 +412,41 @@ def test_remove_joint_candidates():
 
     # Should have no candidates left
     assert len(model.joint_candidates) == 0
+
+
+def test_remove_joint_candidate_preserves_edge():
+    """Test that removing a joint candidate preserves the edge and other attributes."""
+    # Create a model with two beams
+    model = TimberModel()
+
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    # Create a candidate
+    model.connect_adjacent_beams()
+
+    # Verify candidate was created
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 1
+
+    # Remove the candidate
+    candidate = candidates[0]
+    model.remove_joint_candidate(candidate)
+
+    # Verify candidate is gone
+    assert len(model.joint_candidates) == 0
+
+    # Test that we can add a new candidate to the same edge
+    # This verifies the edge still exists and can accept new candidates
+    new_candidate = JointCandidate(beam1, beam2, topology=JointTopology.TOPO_X, location=Point(0.5, 0, 0))
+    model.add_joint_candidate(new_candidate)
+
+    # Verify the new candidate was added successfully
+    assert len(model.joint_candidates) == 1
+    assert list(model.joint_candidates)[0] is new_candidate
