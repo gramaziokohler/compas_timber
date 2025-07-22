@@ -93,7 +93,7 @@ class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
         self.details = details
 
     def __repr__(self):
-        return "SlabLButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab)
+        return "SlabLButtJoint({0}, {1})".format(self.main_slab, self.cross_slab)
 
 
 class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
@@ -137,4 +137,4 @@ class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
         super(SlabTButtJoint, self).__init__(main_slab, cross_slab, JointTopology.TOPO_T, main_segment_index, **kwargs)
 
     def __repr__(self):
-        return "SlabTButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab)
+        return "SlabTButtJoint({0}, {1})".format(self.main_slab, self.cross_slab)
