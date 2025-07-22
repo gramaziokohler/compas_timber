@@ -14,6 +14,8 @@ from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
+from compas_timber.utils import do_segments_overlap
+from compas_timber.utils import distance_segment_segment
 
 
 def test_intersection_line_line_param():
@@ -154,3 +156,41 @@ def test_get_polyline_segment_perpendicular_vector_concave_reversed(polyline_wit
     concave_polyline_perp_vectors = concave_polyline_perp_vectors[::-1]
     for i, expected_vector in enumerate(concave_polyline_perp_vectors):
         assert TOL.is_angle_zero(angle_vectors(get_polyline_segment_perpendicular_vector(polyline_with_concave, i), expected_vector))
+
+
+def test_do_segments_overlap():
+    segment_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    overlapping = [Line(Point(5, 0, 0), Point(15, 0, 0)),
+        Line(Point(9, 1, 0), Point(10, 10, 0)),
+        Line(Point(2, 0, 0), Point(8, 0, 0)),
+        Line(Point(-2, 0, 0), Point(12, 0, 0)),
+        Line(Point(0, 0, 0), Point(10, 0, 0)),
+    ]
+    non_overlapping = [Line(Point(11, 0, 0), Point(20, 0, 0)),
+        Line(Point(10, 1, 0), Point(20, 10, 0)),
+        Line(Point(-10, 0, 0), Point(0, 0, 0)),
+        Line(Point(10, 0, 0), Point(15, 0, 0)),
+        Line(Point(11, 0, 0), Point(21, 0, 0)),
+    ]
+
+    for segment_b in overlapping:
+        assert do_segments_overlap(segment_a, segment_b)
+    for segment_b in non_overlapping:
+        assert not do_segments_overlap(segment_a, segment_b)
+
+
+def test_distance_segment_segment():
+    segment_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    segments = [
+        Line(Point(5, 0, 0), Point(15, 0, 0)),  # Overlapping parallel segment
+        Line(Point(9, 1, 0), Point(10, 10,0)),  # Overlapping non-parallel segment
+        Line(Point(2, 1, 0), Point(8, 1, 0)),   # Overlapping parallel segment internal to segment_a
+        Line(Point(13, 4, 0), Point(15, 6, 0)), # Non-overlapping segment
+        Line(Point(15, -5, 0), Point(15, 5, 0)), # crossing perpendicular segment
+        Line(Point(5, -5, 0), Point(5, 5, 0)), #crossing perpendicular segment
+        Line(Point(5, -5, 1), Point(5, 5, 1)), # crossing non-intersectingperpendicular segment
+    ]
+    results = [0.0, 1.0, 1.0, 5.0, 5.0, 0.0, 1.0]
+    # Distance between non-overlapping segments
+    for seg, result in zip(segments, results):
+        assert TOL.is_close(distance_segment_segment(segment_a, seg), result)

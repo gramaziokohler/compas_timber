@@ -20,7 +20,8 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
-from compas.geometry import intersection_line_line
+from compas.geometry import intersection_segment_segment
+from compas.geometry import distance_point_line
 from compas.tolerance import TOL
 
 
@@ -281,17 +282,16 @@ def distance_segment_segment(segment_a, segment_b):
         The distance between the two segments.
 
     """
-    pta, ptb = intersection_line_line(segment_a, segment_b)
-    if not pta:  # segments are parallel
-        dists = []
-        for pair in product(segment_a, segment_b):
-            # gets shortest distance between all 4 possible pairs of endpoints. only for L/I_Topo.
-            # T_Topology cannot have paralell segments
-            dists.append(distance_point_point(*pair))
-        return min(dists)
-    pt_seg_a = closest_point_on_segment(pta, segment_a)
-    pt_seg_b = closest_point_on_segment(ptb, segment_b)
-    return distance_point_point(pt_seg_a, pt_seg_b)
+    pta, ptb = intersection_segment_segment(segment_a, segment_b)
+    if pta and ptb:
+        return distance_point_point(pta, ptb)
+
+    dists = []
+    for pt in [segment_a.start, segment_a.end]:
+        dists.append(distance_point_point(pt, closest_point_on_segment(pt, segment_b)))
+    for pt in [segment_b.start, segment_b.end]:
+        dists.append(distance_point_point(pt, closest_point_on_segment(pt, segment_a)))
+    return min(dists)
 
 
 def is_polyline_clockwise(polyline, normal_vector):
@@ -395,6 +395,34 @@ def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
         return False
     return is_point_in_polygon_xy(pt, pgon)
 
+def do_segments_overlap(segment_a, segment_b):
+    """Checks if two segments overlap.
+
+    Parameters
+    ----------
+    seg_a : :class:`~compas.geometry.Segment`
+        The first segment.
+    seg_b : :class:`~compas.geometry.Segment`
+        The second segment.
+
+    Returns
+    -------
+    bool
+        True if the segments overlap, False otherwise.
+    """
+    a_end_dot = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, segment_a.end))
+    for pt in [segment_b.start, segment_b.end, segment_b.point_at(0.5)]:
+        b_dot = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt))
+        if b_dot > 0 and b_dot < a_end_dot:
+            return True
+
+    b_end_dot = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, segment_b.end))
+    for pt in [segment_a.start, segment_a.end, segment_a.point_at(0.5)]:
+        a_dot = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, pt))
+        if a_dot > 0 and a_dot < b_end_dot:
+            return True
+
+    return False
 
 __all__ = [
     "intersection_line_line_param",
@@ -406,4 +434,5 @@ __all__ = [
     "correct_polyline_direction",
     "get_polyline_segment_perpendicular_vector",
     "is_point_in_polyline",
+    "do_segments_overlap",
 ]

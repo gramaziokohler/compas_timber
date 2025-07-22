@@ -1,4 +1,6 @@
+from hmac import new
 import math
+import itertools
 
 from compas.geometry import Box
 from compas.geometry import Frame
@@ -36,6 +38,8 @@ from compas_timber.fabrication.longitudinal_cut import LongitudinalCutProxy
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import distance_segment_segment
+from compas_timber.utils import do_segments_overlap
 
 
 class SlabSelector(object):
@@ -205,62 +209,44 @@ class Window(object):
 class Door(Window):
     """TODO: revise when we know where this is going, maybe no need for classes here beyond Opening"""
 
-    def __init__(self, outline, slab_populator, lintel_posts=None):
+
+    def __init__(self, outline, slab_populator, split_bottom_plate=True,lintel_posts=None):
         super(Door, self).__init__(outline, slab_populator, lintel_posts)
+        self.split_bottom_plate = split_bottom_plate
+        self.bottom_plate_beams = []
+        self.jamb_studs = []
 
     def create_elements(self):
-        # segments = self.frame_polyline.lines[0:3]
-        # for door_frame_seg, slab_outline in itertools.product(segments, [self.slab_populator.outline_a, self.slab_populator.outline_b]):
-        #     if not is_point_in_polyline(door_frame_seg.point_at(0.5), slab_outline):
-        #         raise ValueError("door cannot be placed outside slab outline")
+        segments = self.frame_polyline.lines[0:3]
+        for door_frame_seg, edge_stud in itertools.product(segments, self.slab_populator.edge_studs):
+            if distance_segment_segment(door_frame_seg, edge_stud.centerline) < edge_stud.width * 0.5 + self.beam_dimensions["king_stud"][0]:
+                raise ValueError("door is too close to the slab edge {}".format(edge_stud.attributes["edge_index"]))
 
-        # stud_segs = [segments[0], segments[2]]
-        # for i, beam in enumerate(self.slab_populator.edge_beams):
-        #     ints = []
-        #     for seg in segments:
-        #         ints.append(intersection_segment_segment(seg, beam.centerline))
-        #         if not is_point_in_polyline(seg.point_at(0.5), self.slab_populator.outline_a):
-        #             continue
-        #     if len(ints) == 0:
-        #         continue
-        #     if self.slab_populator.edge_interfaces.get(i, None):
-        #         raise ValueError("door cannot intersect with a slab edge {} because that edge has a connection interface ".format(i))
-        #     if distance_point_line(seg.point_at(0.5), beam.centerline) < beam.width * 0.5 + self.beam_dimensions["jack_stud"][0]:
-        #         raise ValueError("door is too close to slab edge {}".format(i))
 
-        # self.header = beam_from_category(self, segments[1], "header", edge_index=1)
-        # left_king = beam_from_category(self, segments[2], "king_stud", edge_index=2)
-        # right_king = beam_from_category(self, segments[0], "king_stud", edge_index=0)
 
-        # ints.extend([beam.centerline.start, beam.centerline.end])
-        # ints.sort(key = lambda x: dot_vectors(beam.centerline.direction, x))
-        # for pair in pairwise(ints):
-        #     if is_point_in_polyline((pair[0]+pair[1])*0.5,  self.frame_polyline):
-        #         continue
+        beams = super(Door, self).create_elements()
+        for beam in beams:
+            if beam.attributes["category"] == "king_stud":
+                self.jamb_studs.append(beam)
+            if beam.attributes["category"] == "sill":
+                continue
+            self._beams.append(beam)
 
-        # for pair in itertools.product(segments, self.slab_populator.outline_a.lines):
-        #     intersection = intersection_segment_segment(pair[0], pair[1])
+        for beam in self.slab_populator.plate_beams:
+            ints = []
+            for seg in self.jamb_studs:
+                ints.append(intersection_segment_segment(seg, beam.centerline, tolerance=self.slab_populator.tolerance.relative))
+            if len(ints) != 2:
+                continue
+            dots = [dot_vectors(beam.centerline.direction, x) for x in ints]
+            self.jamb_studs = sorted(self.jamb_studs, key=lambda x: dot_vectors(beam.centerline.direction, x))
+            ints.sort(key=lambda x: dot_vectors(beam.centerline.direction, x))
 
-        # if TOL.is_zero(distance_point_line(pair[0].point_at(0.5), pair[1])):
-        #     if is_parallel_line_line(pair[0], pair[1], tol=tol):
-        #         if PlateConnectionSolver.do_segments_overlap(pair[0], pair[1]):
-
-        # self.header = beam_from_category(self, segments[1], "header", edge_index=1)
-        # left_king = beam_from_category(self, segments[2], "king_stud", edge_index=2)
-        # right_king = beam_from_category(self, segments[0], "king_stud", edge_index=0)
-        # self.sill = beam_from_category(self, segments[3], "sill", edge_index=3)
-        # self._beams = [self.header, self.sill, left_king, right_king]
-
-        # if self._lintel_posts:
-        #     left_jack = beam_from_category(self, left_king.centerline, "jack_stud", edge_index=2, normal_offset=False)
-        #     right_jack = beam_from_category(self, right_king.centerline, "jack_stud", edge_index=0, normal_offset=False)
-        #     self._beams.extend([left_jack, right_jack])
-        #     left_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 2) * self.beam_dimensions["jack_stud"][0])
-        #     right_king.frame.translate(get_polyline_segment_perpendicular_vector(self.frame_polyline, 0) * self.beam_dimensions["jack_stud"][0])
-
-        # for beam in self._beams:
-        #     vector = get_polyline_segment_perpendicular_vector(self.frame_polyline, beam.attributes["edge_index"])
-        #     beam.frame.translate(vector * beam.width * 0.5)
+            new_beam = beam.copy()
+            beam.length = distance_point_point(beam.start, ints[0])
+            new_beam.length = distance_point_point(ints[1], new_beam.end)
+            new_beam.frame.point = ints[1]
+            self.slab_populator._beams.append(new_beam)
         return self._beams
 
 
