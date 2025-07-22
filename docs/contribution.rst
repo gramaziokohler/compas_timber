@@ -1,8 +1,8 @@
 **********************************************
-Contribution Guide
+Developer Guide
 **********************************************
 
-Welcome to the COMPAS Timber contribution guide. This section provides comprehensive guidance for contributing to the COMPAS Timber framework.
+Welcome to the COMPAS Timber developer guide. This section provides comprehensive guidance for contributing to the COMPAS Timber framework.
 
 .. toctree::
     :maxdepth: 1
