@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Minor fixes to GH Components.
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
-* Analyzers now operate on `model.joint_candidates`.
+* `NBeamKDTreeAnalyzer` now uses `model.joint_candidates` instead of filtering `model.joints`.
 
 ### Removed
 
