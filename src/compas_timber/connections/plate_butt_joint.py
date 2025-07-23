@@ -3,14 +3,12 @@ from compas_timber.connections import InterfaceRole
 from .joint import JointTopology
 from .plate_joint import PlateJoint
 from .plate_joint import move_polyline_segment_to_plane
-from .solver import PlateConnectionSolver
-from compas_timber.errors import BeamJoiningError
 
 
 class PlateButtJoint(PlateJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
-    def __init__(self, main_plate=None, cross_plate=None,**kwargs):
+    def __init__(self, main_plate=None, cross_plate=None, **kwargs):
         super(PlateButtJoint, self).__init__(**kwargs)
         self.main_plate = main_plate
         self.cross_plate = cross_plate
@@ -120,7 +118,6 @@ class PlateButtJoint(PlateJoint):
         self._plate_b_interface = super(PlateButtJoint, self).interface_b
         self._plate_b_interface.interface_role = InterfaceRole.CROSS
         return self._plate_b_interface
-
 
 
 class PlateLButtJoint(PlateButtJoint):

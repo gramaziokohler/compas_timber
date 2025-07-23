@@ -6,8 +6,8 @@ from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 
-from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.errors import BeamJoiningError
+from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 from .joint import Joint
 from .joint import JointTopology
@@ -242,7 +242,7 @@ class PlateJoint(Joint):
 
     def add_features(self):
         """Add features to the plates based on the joint."""
-        assert self.plate_a and self.plate_b, ("Both plates must be defined before adding features to the joint.")
+        assert self.plate_a and self.plate_b, "Both plates must be defined before adding features to the joint."
         self.reorder_planes_and_outlines()
         self._adjust_plate_outlines()
         self.plate_a.add_interface(self.interface_a)

@@ -1,5 +1,4 @@
 from itertools import combinations
-from math import e
 
 from compas.geometry import Point
 from compas.geometry import distance_point_line

@@ -341,9 +341,8 @@ class TestJointFromMethodsEdgeCases:
         cluster = Cluster([])
 
         # Should handle empty cluster gracefully
-        with pytest.raises(AttributeError): # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
-            joint = TButtJoint.from_cluster(model, cluster)
-
+        with pytest.raises(AttributeError):  # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
+            TButtJoint.from_cluster(model, cluster)
 
     def test_from_generic_joint_non_generic_plate_joint(self, generic_joint_with_beams):
         """Test from_generic_joint with non-GenericPlateJoint."""
