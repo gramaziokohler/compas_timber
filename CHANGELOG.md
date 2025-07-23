@@ -45,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
+* Added `JointTopology.TOPO_Y` for Beam Connections.
+* Added `JointTopology.TOPO_K` for Beam Connections.
+* Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
+* Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
+* Added `Cluster.topology`.
 
 ### Changed
 
@@ -65,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Minor fixes to GH Components.
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
+* Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
 
 ### Removed
 

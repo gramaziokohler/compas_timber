@@ -315,11 +315,11 @@ class PlateConnectionSolver(ConnectionSolver):
         if plate_a_segment_index is None and plate_b_segment_index is None:
             return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
         if plate_a_segment_index is not None and plate_b_segment_index is None:
-            return JointTopology.TOPO_T, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+            return JointTopology.TOPO_EDGE_FACE, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
         if plate_a_segment_index is None and plate_b_segment_index is not None:
-            return JointTopology.TOPO_T, (plate_b, plate_b_segment_index), (plate_a, plate_a_segment_index)
+            return JointTopology.TOPO_EDGE_FACE, (plate_b, plate_b_segment_index), (plate_a, plate_a_segment_index)
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
-            return JointTopology.TOPO_L, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+            return JointTopology.TOPO_EDGE_EDGE, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
 
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
