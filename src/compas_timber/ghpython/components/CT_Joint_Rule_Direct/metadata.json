@@ -13,13 +13,13 @@
                 "name": "Beam A",
                 "description": "Beam A.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "Beam B",
                 "description": "Beam B.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [
