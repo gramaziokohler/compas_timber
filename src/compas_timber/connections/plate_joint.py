@@ -128,7 +128,7 @@ class PlateJoint(Joint):
             solver = PlateConnectionSolver()
             results = solver.find_topology(plate_a, plate_b)
             if results[0] is JointTopology.TOPO_UNKNOWN:
-                raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(self.plate_a, self.plate_b))
+                raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(plate_a, plate_b))
             if results[1][0] != plate_a:
                 raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
             self.topology, (self.plate_a, self.a_segment_index), (self.plate_b, self.b_segment_index) = results
