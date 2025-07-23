@@ -58,41 +58,22 @@ class Cluster(object):
     @property
     def topology(self):
         """Returns the topology of the joint if there is only one joint, otherwise TOPO_UNKNOWN."""
+        # TODO: will we ever have clusters from non-GenericJoints? if so then we coult have a joint in a cluster with TOPO_Y or TOPO_K
+        # TOPO_Y + TOPO_I = TOPO_Y
+        # TOPO_Y + TOPO_L = TOPO_Y
+        # TOPO_Y + TOPO_T = TOPO_K
+        # TOPO_K + TOPO_I = TOPO_K
+        # TOPO_K + TOPO_L = TOPO_K ...
+        if len(self.joints) == 0:
+            return JointTopology.TOPO_UNKNOWN
         if len(self.joints) == 1:
             return self.joints[0].topology
-        if any([j.topology not in [JointTopology.TOPO_L, JointTopology.TOPO_I, JointTopology.TOPO_T] for j in self.joints]):
+        if any([j.topology not in [JointTopology.TOPO_L, JointTopology.TOPO_I, JointTopology.TOPO_T, JointTopology.TOPO_X] for j in self.joints]):
             return JointTopology.TOPO_UNKNOWN
-        if any([j.topology == JointTopology.TOPO_T for j in self.joints]):
+        if any([j.topology == JointTopology.TOPO_T or j.topology == JointTopology.TOPO_X for j in self.joints]):
             return JointTopology.TOPO_K
         return JointTopology.TOPO_Y
 
-    def promote_to_joint(self, model, joint_type, elements=None, **kwargs):
-        """Promotes the cluster to a joint of the specified type.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The TimberModel to which the joint will be added.
-        joint_type : type[:class:`~compas_timber.connections.Joint`]
-            The type of joint to create. If None, defaults to GenericJoint.
-        elements : list[:class:`~compas_timber.elements.Element`] | None
-            The elements to include in the joint in case the order is defined by a JointRule. If None, defaults to the elements in the cluster.
-        kwargs : dict
-            Additional keyword arguments to pass to the joint constructor.
-
-        Returns
-        -------
-        :class:`~compas_timber.connections.Joint`
-            The created joint instance.
-        """
-        elements = elements or self.elements
-        if len(self.joints) == 1:
-            joint = self.joints[0].promote(model, joint_type, **kwargs)
-        else:
-            joint = joint_type.create(model, *elements, **kwargs)
-            for joint in self.joints:
-                model.remove_joint(joint)
-        return joint
 
 
 class BeamGroupAnalyzer(object):
