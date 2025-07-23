@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from compas.geometry import Frame
 from compas.geometry import Point
 
+from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import GenericJoint
@@ -383,7 +384,6 @@ class TestJointFromMethodsEdgeCases:
 
     def test_plate_joint_from_generic_joint_topology_solver_not_called_when_attributes_set(self, plate_model, mocker):
         """Test that PlateConnectionSolver.find_topology is NOT called when GenericPlateJoint already has topology and segment indices set."""
-        from compas_timber.connections.solver import PlateConnectionSolver
 
         model, plate1, plate2 = plate_model
 
@@ -408,5 +408,3 @@ class TestJointFromMethodsEdgeCases:
 
         # Verify the original generic joint was removed
         assert generic_plate_joint not in model.joints
-
-

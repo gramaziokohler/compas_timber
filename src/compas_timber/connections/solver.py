@@ -320,7 +320,7 @@ class PlateConnectionSolver(ConnectionSolver):
         """
         print("find_topology")
         plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        print("_find_plate_segment_indices =",plate_a_segment_index, plate_b_segment_index, dist, pt)
+        print("_find_plate_segment_indices =", plate_a_segment_index, plate_b_segment_index, dist, pt)
         if plate_a_segment_index is None and plate_b_segment_index is None:
             return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index), dist, pt
         if plate_a_segment_index is not None and plate_b_segment_index is None:

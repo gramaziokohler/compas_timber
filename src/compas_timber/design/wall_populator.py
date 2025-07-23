@@ -617,7 +617,7 @@ class WallPopulator(object):
         solver = JointRuleSolver(self.rules, model)
         _, _ = solver.apply_rules_to_model()
         return model.joints
-        #TODO: figure out how to create joints. pass just the joints like this? "sub-model"? can we add 2 models together?
+        # TODO: figure out how to create joints. pass just the joints like this? "sub-model"? can we add 2 models together?
 
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)

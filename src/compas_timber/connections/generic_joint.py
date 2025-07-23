@@ -1,4 +1,3 @@
-
 from .joint import Joint
 from .plate_joint import PlateJoint
 
@@ -84,6 +83,7 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
         Second plate to be joined.
 
     """
+
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
         super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
         # TODO: should we make topology and segment_index required to ensure that this is called as result of PlateConnectionSolver.find_topology?

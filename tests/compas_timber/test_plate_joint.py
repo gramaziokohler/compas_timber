@@ -8,6 +8,7 @@ from compas_timber.connections import PlateTButtJoint
 from compas_timber.connections import PlateLButtJoint
 from compas.geometry import Polyline, Point
 
+
 def test_plate_L_topos():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
@@ -122,7 +123,6 @@ def test_simple_joint_and_reset():
     assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to reset outline_a"
 
 
-
 def test_simple_joint_and_reset_no_kwargs():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(Polyline([pt for pt in polyline_a.points]), 1)
@@ -226,6 +226,7 @@ def test_simple_t_butt_joint_reset_copy():
     assert joint_copy.cross_plate.outline_a == plate_cross.outline_a, "Expected joint copy to reference the original plate_cross"
     assert joint_copy.topology == JointTopology.TOPO_EDGE_FACE, "Expected joint copy to have the same topology"
 
+
 def test_three_plate_joints():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
@@ -308,7 +309,6 @@ def plate_model():
     return model, plate1, plate2
 
 
-
 def test_plate_joint_create_joint_topology_solver_called_when_attributes_missing(plate_model, mocker):
     """Test that PlateConnectionSolver.find_topology IS called when GenericPlateJoint has missing segment indices."""
 
@@ -320,6 +320,8 @@ def test_plate_joint_create_joint_topology_solver_called_when_attributes_missing
         JointTopology.TOPO_EDGE_EDGE,
         (plate1, 1),  # (plate, segment_index)
         (plate2, 0),  # (plate, segment_index)
+        0.0,  # distance
+        Point(x=5.0, y=10.0, z=0.0),
     ]
 
     # Convert generic plate joint to specific plate joint
@@ -352,4 +354,3 @@ def test_plate_joint_create_joint_topology_solver_not_called_when_attributes_set
 
     # Verify that find_topology was NOT called since all attributes were already set
     mock_find_topology.assert_not_called()
-
