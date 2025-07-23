@@ -286,7 +286,7 @@ class DirectRule(JointRule):
                     return None, None
                 if not self.joint_type.comply_elements(self.elements, raise_error=True):
                     return None, None
-                joint = cluster.promote_to_joint(model, self.joint_type, elements=self.elements, **self.kwargs)
+                joint = self.joint_type.from_cluster(model, cluster, elements=self.elements, **self.kwargs)
             except BeamJoiningError as bje:
                 error = bje
         return joint, error
@@ -380,7 +380,7 @@ class CategoryRule(JointRule):
         if not self.joint_type.comply_elements(list(cluster.elements)):
             return None, None
         try:
-            joint = cluster.promote_to_joint(model, self.joint_type, **self.kwargs)
+            joint = self.joint_type.from_cluster(model, cluster, **self.kwargs)
         except BeamJoiningError as bje:
             error = bje
         return joint, error
@@ -448,7 +448,7 @@ class TopologyRule(JointRule):
         if not self.joint_type.comply_elements(cluster.elements):
             return None, None
         try:
-            joint = cluster.promote_to_joint(model, self.joint_type, **self.kwargs)
+            joint = self.joint_type.from_cluster(model, cluster, **self.kwargs)
         except BeamJoiningError as bje:
             error = bje
         return joint, error
