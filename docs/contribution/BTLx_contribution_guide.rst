@@ -103,16 +103,16 @@ Example:
 
     class NewProcessing(BTLxProcessing):
         @classmethod
-        def from_shape_and_element(cls, shape, element, additional_arg_a="Default Value A", additional_arg_b="Default Value B"):
-            # Extract parameters from the shape and element
-            arg_a = calculate_arg_a(shape, element)
-            arg_b = calculate_arg_b(shape, element)
-            return cls(arg_a=arg_a, arg_b=arg_b, arg_c=additional_arg_a, arg_d=additional_arg_b)
+        def from_anygeometry_and_element(cls, geometry, element, additional_arg_1=None, additional_arg_2=None):
+            # Extract parameters from the geometry and element
+            arg_a = calculate_arg_a(geometry, element)
+            arg_b = calculate_arg_b(geometry, element)
+            return cls(arg_a=arg_a, arg_b=arg_b, arg_c=additional_arg_1, arg_d=additional_arg_2)
 
         @classmethod
-        def from_shapes_and_element(cls, shapes, element, **kwargs):
-            # Call the specific constructor for each shape
-            return cls.from_shape_and_element(shape, element, **kwargs)
+        def from_shapes_and_element(cls, geometry, element, **kwargs):
+            # Call the specific constructor implemented above
+            return cls.from_anygeometry_and_element(geometry, element, **kwargs)
 
 
 **Naming convention:** Use descriptive method names that specify the geometric input and target element.
@@ -145,19 +145,19 @@ Example:
         def geometry_from_params_and_element(self, element):
             # Convert parameters to geometry
             # ... implementation of the parameter-to-geometry conversion ...
-            return geometry_generated_from_params
+            return feature_geometry_generated_from_params
 
         def apply(self, element_geometry, element):
             # Modify the element's geometry using the generated shape
             try:
-                shape = self.geometry_from_params_and_element(element)
+                feature_geometry = self.geometry_from_params_and_element(element)
             except Exception as e:
-                raise FeatureApplicationError(feature_geometry=shape, message=f"Failed to generate geometry from parameters: {e}")
+                raise FeatureApplicationError(feature_geometry=feature_geometry, message=f"Failed to generate geometry from parameters: {e}")
 
             try:
                 # ... apply the shape to the element geometry
             except Exception as e:
-                raise FeatureApplicationError(feature_geometry=shape, element_geometry=element_geometry, message=f"Failed to apply geometry to element: {e}")
+                raise FeatureApplicationError(feature_geometry=feature_geometry, element_geometry=element_geometry, message=f"Failed to apply geometry to element: {e}")
             return modified_element_geometry
 
 .. Note::
