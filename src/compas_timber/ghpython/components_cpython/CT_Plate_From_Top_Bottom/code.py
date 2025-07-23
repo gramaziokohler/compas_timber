@@ -25,13 +25,11 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
 
         if not item_input_valid_cpython(ghenv, top, "top") or not item_input_valid_cpython(ghenv, bottom, "bottom"):
             return
-        else:
-            if not category:
-                category = None
-            plates = []
-            scene = Scene()
-            # check list lengths for consistency
 
+        if not category:
+            category = None
+        plates = []
+        scene = Scene()
         t_guid, t_geometry = self._get_guid_and_geometry(top)
         b_guid, b_geometry = self._get_guid_and_geometry(bottom)
         t_rhino_polyline = rs.coercecurve(t_geometry)

@@ -19,19 +19,25 @@
                 "name": "thickness",
                 "description": "Thickness of the plate material.",
                 "typeHintID": "float",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "vector",
                 "description": "Determines direction of the plate extrusion",
                 "typeHintID": "vector",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "openings",
+                "description": "List of openings in the plate.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 0
             },
             {
                 "name": "category",
                 "description": "Category of a beam.",
                 "typeHintID": "str",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "updateRefObj",

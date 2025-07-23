@@ -29,7 +29,7 @@ class Plate(Grasshopper.Kernel.GH_ScriptInstance):
         o = []
         if openings:
             for o_outline in openings:
-                o_guid, o_geometry = self._get_guid_and_geometry(o_outline)
+                _, o_geometry = self._get_guid_and_geometry(o_outline)
                 o_rhino_polyline = rs.coercecurve(o_geometry)
                 o.append(polyline_to_compas(o_rhino_polyline.ToPolyline()))
         v = vector_to_compas(vector)

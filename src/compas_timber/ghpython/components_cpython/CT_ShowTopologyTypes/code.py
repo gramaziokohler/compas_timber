@@ -22,6 +22,7 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
         if not item_input_valid_cpython(ghenv, model, "model"):
             return
 
+        # TODO: can we cash the clusters in the model?
         analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
         clusters = analyzer.find()
 

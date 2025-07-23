@@ -13,19 +13,25 @@
                 "name": "top",
                 "description": "Top outline of plate. Referenced polyline, Guid of polyline in the active Rhino document.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "bottom",
                 "description": "Bottom outline of plate. Referenced polyline, Guid of polyline in the active Rhino document.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "openings",
+                "description": "List of openings in the plate.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 0
             },
             {
                 "name": "category",
                 "description": "Category of a beam.",
                 "typeHintID": "str",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "updateRefObj",
