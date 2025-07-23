@@ -55,10 +55,14 @@ class JointTopology(object):
     Attributes
     ----------
     TOPO_UNKNOWN
-    TOPO_I
-    TOPO_L
-    TOPO_T
-    TOPO_X
+    TOPO_I - end-to-end joint between two parallel beams
+    TOPO_L - end-to-end joint between two non-parallel beams
+    TOPO_T - end-to-middle joint between two beams
+    TOPO_X - middle-to-middle joint between two beams
+    TOPO_Y - joint between three or more beams where all beams meet at their ends
+    TOPO_K - joint between three or more beams where at least one beam meet in the middle
+    TOPO_EDGE_EDGE  - joint between two plates where the edges of both plates are aligned
+    TOPO_EDGE_FACE  - joint between two plates where one plate is aligned with the face of the other
 
     """
 
@@ -67,6 +71,10 @@ class JointTopology(object):
     TOPO_L = 2
     TOPO_T = 3
     TOPO_X = 4
+    TOPO_Y = 5
+    TOPO_K = 6
+    TOPO_EDGE_EDGE = 7
+    TOPO_EDGE_FACE = 8
 
     @classmethod
     def get_name(cls, value):
@@ -77,12 +85,13 @@ class JointTopology(object):
         Parameters
         ----------
         value : int
-            One of [JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_UNKNOWN]
+            One of [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_Y,
+            JointTopology.TOPO_K, JointTopology.TOPO_EDGE_EDGE, JointTopology.TOPO_EDGE_FACE, JointTopology.TOPO_UNKNOWN]
 
         Returns
         -------
         str
-            One of ["TOPO_L", "TOPO_T", "TOPO_X", "TOPO_UNKNOWN"]
+            One of ["TOPO_I", "TOPO_L", "TOPO_T", "TOPO_X", "TOPO_Y", "TOPO_K", "TOPO_EDGE_EDGE", "TOPO_EDGE_FACE", "TOPO_UNKNOWN"]
 
         """
         try:
