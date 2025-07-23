@@ -183,3 +183,29 @@ def test_float_formatting_of_param_dicts():
     assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
     assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
     assert test_processing.params.header_attributes["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
+
+
+def test_processing_scaled_called_for_meter_units(mocker):
+    writer = BTLxWriter()
+    model = TimberModel(Tolerance(unit="M", absolute=1e-3, relative=1e-3))
+    beam = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    processing = JackRafterCut(OrientationType.END, 0.01, 0.02, 0.005, 45.0, 90.0, ref_side_index=0)
+    beam.add_features(processing)
+    model.add_element(beam)
+
+    spy = mocker.spy(processing, "scaled")
+    writer.model_to_xml(model)
+    spy.assert_called_once_with(1000.0)
+
+
+def test_processing_scaled_not_called_for_millimeter_units(mocker):
+    writer = BTLxWriter()
+    model = TimberModel(Tolerance(unit="MM", absolute=1e-3, relative=1e-3))
+    beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=100.0)
+    processing = JackRafterCut(OrientationType.END, 10.0, 20.0, 5.0, 45.0, 90.0, ref_side_index=0)
+    beam.add_features(processing)
+    model.add_element(beam)
+
+    spy = mocker.spy(processing, "scaled")
+    writer.model_to_xml(model)
+    spy.assert_not_called()

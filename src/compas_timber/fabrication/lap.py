@@ -9,6 +9,7 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import Vector
+from compas.geometry import angle_vectors_projected
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.geometry import distance_point_point
@@ -21,7 +22,6 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import angle_vectors_projected
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -410,7 +410,7 @@ class Lap(BTLxProcessing):
             raise ValueError("Volume must have 6 faces.")
 
         # get ref_side of the
-        if not ref_side_index:
+        if ref_side_index is None:
             ref_side_index = cls._get_optimal_ref_side_index(beam, volume)
         ref_side = beam.ref_sides[ref_side_index]
 
@@ -442,11 +442,14 @@ class Lap(BTLxProcessing):
         angle = angle_vectors_signed(-yyaxis, ref_side.xaxis, ref_side.normal, deg=True)
 
         # calculate the inclination of the lap
-        inclination = angle_vectors_projected(zzaxis, front_plane.normal, yyaxis)
+        if TOL.is_zero(yyaxis.dot(zzaxis)) or TOL.is_zero(yyaxis.dot(front_plane.normal)):  # TODO: follow changes in compas.geometry and update this accordingly
+            inclination = angle_vectors_signed(zzaxis, ref_side.xaxis, ref_side.normal, deg=True)
+        else:
+            inclination = angle_vectors_projected(zzaxis, front_plane.normal, yyaxis, deg=True)
         inclination = 180 + inclination if inclination < 0 else inclination
 
         # calculate the slope of the lap
-        slope = angle_vectors_projected(-ref_side.normal, bottom_plane.normal, start_plane.normal)
+        slope = angle_vectors_projected(-ref_side.normal, bottom_plane.normal, start_plane.normal, deg=True)
 
         # calculate length, width and depth
         length = distance_point_plane(start_plane.point, end_plane)
@@ -740,10 +743,10 @@ class Lap(BTLxProcessing):
         tol = Tolerance()
         tol.absolute=1e-3
 
-        if self.machining_limits["FaceLimitedStart"]:
-            start_frame = self._start_frame_from_params_and_beam(beam)
-        else:
-            start_frame = beam.ref_sides[4]
+        start_frame = self._start_frame_from_params_and_beam(beam)
+
+        top_frame = beam.ref_sides[self.ref_side_index] # top should always be unlimited
+        top_frame.translate(top_frame.normal * TOL.absolute)
 
         if self.machining_limits["FaceLimitedEnd"]:
             end_frame = start_frame.translated(-start_frame.normal * self.length)
@@ -751,14 +754,12 @@ class Lap(BTLxProcessing):
         else:
             end_frame = beam.ref_sides[5]
 
-        top_frame = beam.ref_sides[self.ref_side_index] # top should always be unlimited
-
         if self.machining_limits["FaceLimitedBottom"]:
             bottom_frame = Frame(start_frame.point, start_frame.zaxis, start_frame.yaxis)
             angle = angle_vectors_signed(top_frame.xaxis, -start_frame.xaxis, top_frame.yaxis)
             bottom_frame = bottom_frame.translated(bottom_frame.zaxis * (self.depth/math.sin(angle)))
         else:
-            bottom_frame = beam.ref_sides[4]
+            bottom_frame = beam.opp_side(self.ref_side_index)
 
         if self.machining_limits["FaceLimitedFront"]:
             front_frame = bottom_frame.rotated(math.radians(self.lead_angle), bottom_frame.xaxis, point=bottom_frame.point)
