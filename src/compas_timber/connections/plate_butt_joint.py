@@ -83,7 +83,7 @@ class PlateButtJoint(PlateJoint):
         for polyline in self.main_outlines:
             move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
 
-        if self.topology == JointTopology.TOPO_L:
+        if self.topology == JointTopology.TOPO_EDGE_EDGE:
             for polyline in self.cross_outlines:
                 move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
 
@@ -111,7 +111,7 @@ class PlateButtJoint(PlateJoint):
 class PlateLButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_EDGE
 
     @property
     def __data__(self):
@@ -145,7 +145,7 @@ class PlateLButtJoint(PlateButtJoint):
 class PlateTButtJoint(PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_FACE
 
     @property
     def __data__(self):
