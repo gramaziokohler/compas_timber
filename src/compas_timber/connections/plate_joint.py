@@ -99,6 +99,10 @@ class PlateJoint(Joint):
 
     Attributes
     ----------
+    plate_a : :class:`compas_timber.elements.Plate`
+        The first plate.
+    plate_b : :class:`compas_timber.elements.Plate`
+        The second plate.
     plates : tuple of :class:`compas_timber.elements.Plate`
         The plates that are connected.
     interface_a : :class:`compas.geometry.PlanarSurface`
