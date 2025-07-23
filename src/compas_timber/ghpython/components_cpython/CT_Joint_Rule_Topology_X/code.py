@@ -25,7 +25,7 @@ class X_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
     def RunScript(self, *args):
-        if not self.clicked:
+        if not self.joint_type:
             ghenv.Component.Message = "Default: XLapJoint"
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "XLapJoint is default, change in context menu (right click)")
             return TopologyRule(JointTopology.TOPO_X, XLapJoint)

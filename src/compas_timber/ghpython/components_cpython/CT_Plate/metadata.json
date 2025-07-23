@@ -1,9 +1,9 @@
 {
-    "name": "Plate",
-    "nickname": "Plate",
+    "name": "Plate From Outline and Thickness",
+    "nickname": "PlateFromThickness",
     "category": "COMPAS Timber",
     "subcategory": "Elements",
-    "description": "Creates a Plate from a Polyline.",
+    "description": "Creates a Plate from a Polyline and Thickness.",
     "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,

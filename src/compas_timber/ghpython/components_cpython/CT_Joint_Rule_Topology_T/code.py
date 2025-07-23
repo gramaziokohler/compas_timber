@@ -35,11 +35,6 @@ class T_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             for i, val in enumerate(args):
                 if val is not None:
                     kwargs[self.arg_names()[i]] = val
-            supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-            if not isinstance(supported_topo, list):
-                supported_topo = [supported_topo]
-            if JointTopology.TOPO_T not in supported_topo:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Joint type does not match topology. Joint may not be generated.")
             return TopologyRule(JointTopology.TOPO_T, self.joint_type, **kwargs)
 
     def arg_names(self):
