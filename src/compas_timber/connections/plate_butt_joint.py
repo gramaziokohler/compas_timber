@@ -11,7 +11,6 @@ class PlateButtJoint(PlateJoint):
     def __init__(self, main_plate=None, cross_plate=None, **kwargs):
         super(PlateButtJoint, self).__init__(main_plate, cross_plate, **kwargs)
 
-
     @property
     def main_plate(self):
         """Return the main plate."""

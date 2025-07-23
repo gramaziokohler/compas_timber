@@ -6,7 +6,6 @@ from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 
-from compas_timber.elements import plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
@@ -128,7 +127,7 @@ class PlateJoint(Joint):
                 raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(self.plate_a, self.plate_b))
             if results[1][0] != plate_a:
                 raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
-            self.topology, (self.plate_a , self.a_segment_index), (self.plate_b, self.b_segment_index) = results
+            self.topology, (self.plate_a, self.a_segment_index), (self.plate_b, self.b_segment_index) = results
         else:
             self.plate_a = plate_a
             self.plate_b = plate_b
@@ -226,7 +225,7 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        kwargs.update(generic_joint.__data__) #pass topology and segment indices from generic joint
+        kwargs.update(generic_joint.__data__)  # pass topology and segment indices from generic joint
         return super(PlateJoint, cls).from_generic_joint(model, generic_joint, elements=elements, **kwargs)
 
     def add_features(self):

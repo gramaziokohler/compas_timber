@@ -389,17 +389,11 @@ class TestJointFromMethodsEdgeCases:
         model, plate1, plate2 = plate_model
 
         # Create generic plate joint with all required attributes already set
-        generic_plate_joint = GenericPlateJoint(
-            plate_a=plate1,
-            plate_b=plate2,
-            topology=JointTopology.TOPO_L,
-            a_segment_index=1,
-            b_segment_index=0
-        )
+        generic_plate_joint = GenericPlateJoint(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_L, a_segment_index=1, b_segment_index=0)
         model.add_joint(generic_plate_joint)
 
         # Mock the PlateConnectionSolver.find_topology method
-        mock_find_topology = mocker.patch.object(PlateConnectionSolver, 'find_topology')
+        mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
 
         # Convert generic plate joint to specific plate joint
         joint = PlateLButtJoint.from_generic_joint(model, generic_plate_joint)
@@ -423,11 +417,11 @@ class TestJointFromMethodsEdgeCases:
         model, plate1, plate2 = plate_model
 
         # Mock the PlateConnectionSolver.find_topology method to return expected results
-        mock_find_topology = mocker.patch.object(PlateConnectionSolver, 'find_topology')
+        mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
         mock_find_topology.return_value = [
             JointTopology.TOPO_L,
             (plate1, 1),  # (plate, segment_index)
-            (plate2, 0)   # (plate, segment_index)
+            (plate2, 0),  # (plate, segment_index)
         ]
 
         # Convert generic plate joint to specific plate joint
@@ -439,4 +433,3 @@ class TestJointFromMethodsEdgeCases:
 
         # Verify that find_topology WAS called since a_segment_index was None
         mock_find_topology.assert_called_once_with(plate1, plate2)
-

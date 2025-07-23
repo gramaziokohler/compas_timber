@@ -85,4 +85,3 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
 
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
         super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
-
