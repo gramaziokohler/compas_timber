@@ -1,4 +1,5 @@
 from .joint import Joint
+from .plate_joint import PlateJoint
 
 
 class GenericJoint(Joint):
@@ -40,12 +41,13 @@ class GenericJoint(Joint):
         instance.element_b_guid = value["cross_beam_key"]
         return instance
 
-    def __init__(self, element_a=None, element_b=None, **kwargs):
+    def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
         super(GenericJoint, self).__init__(**kwargs)
         self.element_a = element_a
         self.element_b = element_b
         self.element_a_guid = str(element_a.guid) if element_a else None
         self.element_b_guid = str(element_b.guid) if element_b else None
+        self.distance = distance if distance is not None else None
 
     @property
     def elements(self):
@@ -59,3 +61,47 @@ class GenericJoint(Joint):
     def add_features(self):
         """This joint does not add any features."""
         pass
+
+
+class GenericPlateJoint(PlateJoint, GenericJoint):
+    """A GenericPlateJoint is an information-only joint for plate connections.
+
+    It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
+
+    Parameters
+    ----------
+    plate_a : :class:`~compas_timber.parts.Plate`
+        First plate to be joined.
+    plate_b : :class:`~compas_timber.parts.Plate`
+        Second plate to be joined.
+    a_segment_index : int
+        Index of the segment in the first plate to be joined.
+    b_segment_index : int, optional
+        Index of the segment in the second plate to be joined. Will not exist if the joint uses `JointTopology.TOPO_EDGE_FACE`.
+
+    Attributes
+    ----------
+    plate_a : :class:`~compas_timber.parts.Plate`
+        First plate to be joined.
+    plate_b : :class:`~compas_timber.parts.Plate`
+        Second plate to be joined.
+
+    """
+
+    @property
+    def __data__(self):
+        data_dict = {
+            "plate_a_guid": self.plate_a_guid,
+            "plate_b_guid": self.plate_b_guid,
+            "topology": self.topology,
+            "a_segment_index": self.a_segment_index,
+        }
+        if self.b_segment_index is not None:
+            data_dict["b_segment_index"] = self.b_segment_index
+        return data_dict
+
+    def __init__(self, plate_a=None, plate_b=None, a_segment_index=None, b_segment_index=None, **kwargs):
+        super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, a_segment_index=a_segment_index, **kwargs)
+        self.plate_a_guid = str(plate_a.guid)
+        self.plate_b_guid = str(plate_b.guid)
+        self.b_segment_index = b_segment_index
