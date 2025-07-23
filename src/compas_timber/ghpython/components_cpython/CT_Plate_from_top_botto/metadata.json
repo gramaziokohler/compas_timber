@@ -10,21 +10,15 @@
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "outline",
-                "description": "Referenced polyline, Guid of polyline in the active Rhino document.",
+                "name": "Top",
+                "description": "Top outline of plate. Referenced polyline, Guid of polyline in the active Rhino document.",
                 "typeHintID": "ghdoc",
                 "scriptParamAccess": 1
             },
             {
-                "name": "thickness",
-                "description": "Thickness of the plate material.",
-                "typeHintID": "float",
-                "scriptParamAccess": 1
-            },
-            {
-                "name": "vector",
-                "description": "Determines direction of the plate extrusion",
-                "typeHintID": "vector",
+                "name": "Bottom",
+                "description": "Bottom outline of plate. Referenced polyline, Guid of polyline in the active Rhino document.",
+                "typeHintID": "ghdoc",
                 "scriptParamAccess": 1
             },
             {

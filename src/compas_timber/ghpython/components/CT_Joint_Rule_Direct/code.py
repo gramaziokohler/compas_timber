@@ -1,9 +1,12 @@
 import inspect
 
 from ghpythonlib.componentbase import executingcomponent as component
+from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
+from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
+from compas_timber.connections import JointTopology
 from compas_timber.design import DirectRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
@@ -32,6 +35,10 @@ class DirectJointRule(component):
             ghenv.Component.Message = self.joint_type.__name__
             beam_a = args[0]
             beam_b = args[1]
+            kwargs = {}
+            for i, val in enumerate(args[2:]):
+                if val is not None:
+                    kwargs[self.arg_names()[i + 2]] = val
 
             if not beam_a:
                 self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[0]))
@@ -39,13 +46,25 @@ class DirectJointRule(component):
                 self.AddRuntimeMessage(Warning, "Input parameter {} failed to collect data.".format(self.arg_names()[1]))
             if not (args[0] and args[1]):
                 return
-
-            kwargs = {}
-            for i, val in enumerate(args[2:]):
-                if val is not None:
-                    kwargs[self.arg_names()[i + 2]] = val
-
-            Rules = DirectRule(self.joint_type, [beam_a, beam_b], **kwargs)
+            if not isinstance(beam_a, list):
+                beam_a = [beam_a]
+            if not isinstance(beam_b, list):
+                beam_b = [beam_b]
+            if len(beam_a) != len(beam_b):
+                self.AddRuntimeMessage(Error, "Number of items in {} and {} must match!".format(self.arg_names()[0], self.arg_names()[1]))
+                return
+            Rules = []
+            for main, secondary in zip(beam_a, beam_b):
+                topology, _, _ = ConnectionSolver().find_topology(main, secondary)
+                supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
+                if not isinstance(supported_topo, list):
+                    supported_topo = [supported_topo]
+                if topology not in supported_topo:
+                    self.AddRuntimeMessage(
+                        Warning,
+                        "Beams meet with topology: {} which does not agree with joint of type: {}".format(JointTopology.get_name(topology), self.joint_type.__name__),
+                    )
+                Rules.append(DirectRule(self.joint_type, [secondary, main], **kwargs))
             return Rules
 
     def arg_names(self):

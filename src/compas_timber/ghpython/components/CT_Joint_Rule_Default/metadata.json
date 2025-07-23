@@ -13,7 +13,7 @@
         "outputParameters": [
             {
                 "name": "Rules",
-                "description": "List of TopologyRules."
+                "description": "List of JointDefinitions."
             }
         ]
     }
