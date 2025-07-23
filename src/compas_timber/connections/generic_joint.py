@@ -1,6 +1,5 @@
 
 from .joint import Joint
-from .joint import JointTopology
 from .plate_joint import PlateJoint
 
 
