@@ -6,6 +6,7 @@ from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 
+from compas_timber.elements import plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
@@ -119,21 +120,20 @@ class PlateJoint(Joint):
         return data
 
     def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
-        print("PlateJoint kwargs:", kwargs)
         super(PlateJoint, self).__init__(topology=topology, **kwargs)
-        self.plate_a = plate_a
-        self.plate_b = plate_b
-        self.a_segment_index = a_segment_index
-        self.b_segment_index = b_segment_index
-        if self.a_segment_index is None:
+        if a_segment_index is None and plate_a and plate_b:
             solver = PlateConnectionSolver()
-            results = solver.find_topology(self.plate_a, self.plate_b)
+            results = solver.find_topology(plate_a, plate_b)
             if results[0] is JointTopology.TOPO_UNKNOWN:
                 raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(self.plate_a, self.plate_b))
-            if results[1][0] != self.plate_a:
+            if results[1][0] != plate_a:
                 raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
-            self.topology, (_, self.a_segment_index), (_, self.b_segment_index) = results
-
+            self.topology, (self.plate_a , self.a_segment_index), (self.plate_b, self.b_segment_index) = results
+        else:
+            self.plate_a = plate_a
+            self.plate_b = plate_b
+            self.a_segment_index = a_segment_index
+            self.b_segment_index = b_segment_index
         self.a_outlines = None
         self.b_outlines = None
         self.a_planes = None
@@ -226,19 +226,8 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        kwargs["topology"] = generic_joint.topology
-        kwargs["a_segment_index"] = generic_joint.a_segment_index
-        if generic_joint.b_segment_index is not None:
-            kwargs["b_segment_index"] = generic_joint.b_segment_index
-
-        if elements:
-            assert set(elements) == set(generic_joint.elements), "Elements of the generic joint must match the provided elements."
-        elements = elements or generic_joint.elements
-        model.remove_joint(generic_joint)
-
-        joint = cls.create(model, *elements, **kwargs)
-        # @chenkasirer is there a way to pass all the attributes of the generic joint to the new joint? Do we have to do that explicitly?
-        return joint
+        kwargs.update(generic_joint.__data__) #pass topology and segment indices from generic joint
+        return super(PlateJoint, cls).from_generic_joint(model, generic_joint, elements=elements, **kwargs)
 
     def add_features(self):
         """Add features to the plates based on the joint."""

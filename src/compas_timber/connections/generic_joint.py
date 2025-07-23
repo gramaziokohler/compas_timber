@@ -74,10 +74,6 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
         First plate to be joined.
     plate_b : :class:`~compas_timber.parts.Plate`
         Second plate to be joined.
-    a_segment_index : int
-        Index of the segment in the first plate to be joined.
-    b_segment_index : int, optional
-        Index of the segment in the second plate to be joined. Will not exist if the joint uses `JointTopology.TOPO_EDGE_FACE`.
 
     Attributes
     ----------
@@ -88,20 +84,6 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
 
     """
 
-    @property
-    def __data__(self):
-        data_dict = {
-            "plate_a_guid": self.plate_a_guid,
-            "plate_b_guid": self.plate_b_guid,
-            "topology": self.topology,
-            "a_segment_index": self.a_segment_index,
-        }
-        if self.b_segment_index is not None:
-            data_dict["b_segment_index"] = self.b_segment_index
-        return data_dict
+    def __init__(self, plate_a=None, plate_b=None, **kwargs):
+        super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
 
-    def __init__(self, plate_a=None, plate_b=None, a_segment_index=None, b_segment_index=None, **kwargs):
-        super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, a_segment_index=a_segment_index, **kwargs)
-        self.plate_a_guid = str(plate_a.guid)
-        self.plate_b_guid = str(plate_b.guid)
-        self.b_segment_index = b_segment_index

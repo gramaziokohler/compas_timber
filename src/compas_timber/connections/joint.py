@@ -250,7 +250,6 @@ class Joint(Interaction):
         if elements:
             assert set(elements) == set(generic_joint.elements), "Elements of the generic joint must match the provided elements."
         else:
-            print([e for e in generic_joint.elements])
             elements = generic_joint.elements
         model.remove_joint(generic_joint)
         joint = cls.create(model, *elements, **kwargs)
