@@ -117,6 +117,21 @@ def test_three_plate_mix_topos():
     assert topo_results[2][0] == JointTopology.TOPO_EDGE_EDGE, "Expected third topology result to be L-joint"
 
 
+def test_simple_joint_and_reset_no_kwargs():
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(Polyline([pt for pt in polyline_a.points]), 1)
+
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    plate_b = Plate.from_outline_thickness(Polyline(polyline_b.points), 1)
+
+    joint = PlateMiterJoint(plate_a, plate_b)
+    joint.add_features()
+    assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
+    assert any([plate_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to change outline_a"
+    plate_a.reset()
+    assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to reset outline_a"
+
+
 def test_simple_miter_joint_reset_copy():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
 
@@ -126,7 +141,8 @@ def test_simple_miter_joint_reset_copy():
 
     plate_b = Plate.from_outline_thickness(Polyline(polyline_b.points), 1)
 
-    joint = PlateMiterJoint(plate_a, plate_b, JointTopology.TOPO_EDGE_EDGE, 1, 0)
+    kwargs = {"topology": JointTopology.TOPO_L, "a_segment_index": 1, "b_segment_index": 0}
+    joint = PlateMiterJoint(plate_a, plate_b, **kwargs)
     model = TimberModel()
     model.add_element(plate_a)
     model.add_element(plate_b)
