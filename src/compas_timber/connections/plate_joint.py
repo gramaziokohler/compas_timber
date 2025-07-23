@@ -231,7 +231,7 @@ class PlateJoint(Joint):
 
     def add_features(self):
         """Add features to the plates based on the joint."""
-        assert self.plate_a and self.plate_b, "Both plates must be defined before adding features to the joint."
+        assert self.plate_a and self.plate_b and self.a_segment_index is not None, "Both plates and at least a_segment_index must be defined before adding features to the joint."
         self.reorder_planes_and_outlines()
         self._adjust_plate_outlines()
         self.plate_a.add_interface(self.interface_a)
