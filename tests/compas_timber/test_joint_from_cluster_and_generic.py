@@ -388,7 +388,7 @@ class TestJointFromMethodsEdgeCases:
         model, plate1, plate2 = plate_model
 
         # Create generic plate joint with all required attributes already set
-        generic_plate_joint = GenericPlateJoint(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_L, a_segment_index=1, b_segment_index=0)
+        generic_plate_joint = GenericPlateJoint(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
         model.add_joint(generic_plate_joint)
 
         # Mock the PlateConnectionSolver.find_topology method
@@ -399,7 +399,7 @@ class TestJointFromMethodsEdgeCases:
 
         # Verify the joint was created correctly
         assert isinstance(joint, PlateLButtJoint)
-        assert joint.topology == JointTopology.TOPO_L
+        assert joint.topology == JointTopology.TOPO_EDGE_EDGE
         assert joint.a_segment_index == 1
         assert joint.b_segment_index == 0
 
