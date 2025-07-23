@@ -85,13 +85,13 @@ class JointTopology(object):
         Parameters
         ----------
         value : int
-            One of [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X,
-            JointTopology.TOPO_EDGE_EDGE, JointTopology.TOPO_EDGE_FACE, JointTopology.TOPO_UNKNOWN]
+            One of [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_Y,
+            JointTopology.TOPO_K, JointTopology.TOPO_EDGE_EDGE, JointTopology.TOPO_EDGE_FACE, JointTopology.TOPO_UNKNOWN]
 
         Returns
         -------
         str
-            One of ["TOPO_I", "TOPO_L", "TOPO_T", "TOPO_X", "TOPO_EDGE_EDGE", "TOPO_EDGE_FACE", "TOPO_UNKNOWN"]
+            One of ["TOPO_I", "TOPO_L", "TOPO_T", "TOPO_X", "TOPO_Y", "TOPO_K", "TOPO_EDGE_EDGE", "TOPO_EDGE_FACE", "TOPO_UNKNOWN"]
 
         """
         try:
@@ -266,7 +266,7 @@ class ConnectionSolver(object):
 
         """
         # TODO: make find topology more generic. break down to find_line_line_topo etc.
-        return self.find_topology(wall_a, wall_b, tol, max_distance)[0:3]
+        return self.find_topology(wall_a, wall_b, tol, max_distance)
 
     @staticmethod
     def _calc_t(line, plane):
@@ -355,11 +355,12 @@ class PlateConnectionSolver(ConnectionSolver):
         for pair in itertools.product(plate_a.outlines, plate_b.outlines):
             for i, seg_a in enumerate(pair[0].lines):
                 for j, seg_b in enumerate(pair[1].lines):  # TODO: use rtree?
-                    dist = distance_point_line(seg_a.point_at(0.5), seg_b)
+                    seg_a_midpt = seg_a.point_at(0.5)
+                    dist = distance_point_line(seg_a_midpt, seg_b)
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
-                                return i, j, dist, seg_a.point_at(0.5)
+                                return i, j, dist, seg_a_midpt
         return None, None, None, None
 
     @staticmethod
@@ -373,11 +374,12 @@ class PlateConnectionSolver(ConnectionSolver):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
                 line = Line(*intersection_plane_plane(plane_a, plane_b))
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
-                    dist = distance_point_line(seg_a.point_at(0.5), line)
+                    seg_a_midpt = seg_a.point_at(0.5)
+                    dist = distance_point_line(seg_a_midpt, line)
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                return i, dist, seg_a.point_at(0.5)
+                                return i, dist, seg_a_midpt
         return None, None, None
 
     @staticmethod
