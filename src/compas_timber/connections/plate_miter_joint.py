@@ -6,7 +6,7 @@ from .plate_joint import move_polyline_segment_to_plane
 class PlateMiterJoint(PlateJoint):
     """Creates a mitered edge plate-to-plate connection."""
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_EDGE
 
     def __repr__(self):
         return "PlateMiterJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
