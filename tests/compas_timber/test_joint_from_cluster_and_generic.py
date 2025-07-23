@@ -340,7 +340,6 @@ class TestJointFromMethodsEdgeCases:
         # Create empty cluster
         cluster = Cluster([])
 
-        # Should handle empty cluster gracefully
         with pytest.raises(AttributeError):  # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
             TButtJoint.from_cluster(model, cluster)
 
