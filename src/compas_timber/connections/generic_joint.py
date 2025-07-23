@@ -41,7 +41,7 @@ class GenericJoint(Joint):
         instance.element_b_guid = value["cross_beam_key"]
         return instance
 
-    def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
+    def __init__(self, element_a=None, element_b=None, **kwargs):
         super(GenericJoint, self).__init__(**kwargs)
         self.element_a = element_a
         self.element_b = element_b
