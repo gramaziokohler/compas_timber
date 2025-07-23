@@ -6,6 +6,7 @@ import Grasshopper
 import System
 
 from compas_timber.connections import Joint
+from compas_timber.connections import PlateJoint
 from compas_timber.design import DirectRule
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
@@ -18,12 +19,10 @@ class JointRuleFromList(Grasshopper.Kernel.GH_ScriptInstance):
         super(JointRuleFromList, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(Joint):
-            self.classes[cls.__name__] = cls
+            if not issubclass(cls, PlateJoint):
+                self.classes[cls.__name__] = cls
 
-        if ghenv.Component.Params.Output[0].NickName == "Rule":
-            self.joint_type = None
-        else:
-            self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
+        self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
     def RunScript(self, elements: System.Collections.Generic.List[object], *args):
         if not self.joint_type:

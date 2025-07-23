@@ -70,7 +70,7 @@ class BallNodeJoint(Joint):
 
     @property
     def elements(self):
-        return self.beams + [self.generated_elements]
+        return list(self.beams) + self.generated_elements
 
     @property
     def interactions(self):
