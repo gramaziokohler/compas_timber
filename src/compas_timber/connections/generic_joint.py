@@ -55,12 +55,6 @@ class GenericJoint(Joint):
     def elements(self):
         return [self.element_a, self.element_b]
 
-    def promote(self, model, joint_type, **kwargs):
-        """Promote this joint to a specific joint type."""
-        model.remove_joint(self)
-        joint = joint_type.create(model, self.element_a, self.element_b, **kwargs)
-        return joint
-
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to elements saved in the model."""
         self.element_a = model.element_by_guid(self.element_a_guid)
@@ -91,30 +85,6 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
         Second plate to be joined.
 
     """
-
-    @property
-    def __data__(self):
-        data_dict = {
-            "plate_a_guid": self.plate_a_guid,
-            "plate_b_guid": self.plate_b_guid,
-            "topology": self.topology,
-            "a_segment_index": self.a_segment_index,
-        }
-        if self.b_segment_index is not None:
-            data_dict["b_segment_index"] = self.b_segment_index
-        return data_dict
-
-    def __init__(self, plate_a=None, plate_b=None, a_segment_index=None, b_segment_index=None, **kwargs):
-        super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, a_segment_index=a_segment_index, **kwargs)
-        self.plate_a_guid = str(plate_a.guid)
-        self.plate_b_guid = str(plate_b.guid)
-        self.b_segment_index = b_segment_index
-
-    def promote(self, model, joint_type, **kwargs):
-        """Promote this joint to a specific joint type."""
-        model.remove_joint(self)
-        if self.topology == JointTopology.TOPO_EDGE_FACE:
-            joint = joint_type.create(model, self.plate_a, self.plate_b, self.topology, self.a_segment_index, **kwargs)
-        else:
-            joint = joint_type.create(model, self.plate_a, self.plate_b, self.topology, self.a_segment_index, self.b_segment_index, **kwargs)
-        return joint
+    def __init__(self, plate_a=None, plate_b=None, **kwargs):
+        super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
+        # TODO: should we make topology and segment_index required to ensure that this is called as result of PlateConnectionSolver.find_topology?
