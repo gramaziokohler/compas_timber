@@ -396,18 +396,21 @@ class TimberModel(Model):
         beams = list(self.beams)
         solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+        print("{} pairs found".format(len(pairs)))
         for pair in pairs:
             beam_a, beam_b = pair
             result = solver.find_topology(beam_a, beam_b, tol=TOL.relative, max_distance=max_distance)
-
-            topology, beam_a, beam_b, distance = result
+            print("pair is being tested")
+            topology, beam_a, beam_b, distance, pt = result
             if topology == JointTopology.TOPO_UNKNOWN:
+                print("topo unknown")
                 continue
 
             assert beam_a and beam_b
-            p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
-            p1 = Point(*p1) if p1 else None
-            GenericJoint.create(self, beam_a, beam_b, topology=topology, distance=distance, location=p1)
+            # p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
+            # p1 = Point(*p1) if p1 else None
+            joint = GenericJoint.create(self, beam_a, beam_b, topology=topology, distance=distance, location=pt)
+            print("joint_created at: ", joint.location)
 
     def connect_adjacent_plates(self, max_distance=None):
         for joint in self.joints:

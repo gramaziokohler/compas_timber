@@ -20,6 +20,8 @@ from compas.plugins import pluggable
 from compas.tolerance import TOL
 
 from compas_timber.utils import is_point_in_polyline
+from compas_timber.utils import do_segments_overlap
+from compas_timber.utils import distance_segment_segment
 
 
 @pluggable(category="solvers")
@@ -171,19 +173,20 @@ class ConnectionSolver(object):
             pb = closest_point_on_line(a1, [b1, b2])
             exceed, _ = self._exceed_max_distance(pa, pb, max_distance, tol)
             if exceed:
-                return JointTopology.TOPO_UNKNOWN, None, None, None
+                return JointTopology.TOPO_UNKNOWN, None, None, None, None
 
             # check if any ends meet
             comb = [[0, 0], [0, 1], [1, 0], [1, 1]]
             meet = []
             distance = 0.0
+            
             for ia, ib in comb:
-                exceed, d = self._exceed_max_distance(pa, pb, max_distance, tol)
+                exceed, d = self._exceed_max_distance([a1, a2][ia], [b1, b2][ib], max_distance=max_distance, tol=tol)
                 meet.append(not exceed)
                 if not exceed:
                     distance = max(distance, d)
             if sum(meet) != 1:
-                return JointTopology.TOPO_UNKNOWN, None, None, None
+                return JointTopology.TOPO_UNKNOWN, None, None, None, None
 
             # check if overlap: find meeting ends -> compare vectors outgoing from these points
             meeting_ends_idx = [c for c, m in zip(comb, meet) if m is True][0]
@@ -195,11 +198,12 @@ class ConnectionSolver(object):
             vA = subtract_vectors(pa2, pa1)
             vB = subtract_vectors(pb2, pb1)
             ang = angle_vectors(vA, vB)
-            if ang < tol:
+
+            if ang < tol and do_segments_overlap(Line(pa1, pa2), Line(pb1, pb2)):
                 # vectors pointing in the same direction -> beams are overlapping
-                return JointTopology.TOPO_UNKNOWN, None, None, None
+                return JointTopology.TOPO_UNKNOWN, None, None, None, None
             else:
-                return JointTopology.TOPO_I, beam_a, beam_b, distance
+                return JointTopology.TOPO_I, beam_a, beam_b, distance, (pa1+pb1)/2
 
         # if not parallel:
         vn = cross_vectors(va, vb)
@@ -223,26 +227,28 @@ class ConnectionSolver(object):
 
         exceed, distance = self._exceed_max_distance(pa, pb, max_distance, tol)
         if exceed:
-            return JointTopology.TOPO_UNKNOWN, None, None, None
+            print("distance exceeded somehow")
+            return JointTopology.TOPO_UNKNOWN, None, None, None, None
 
         # topologies:
         xa = self._is_near_end(ta, beam_a.centerline.length, max_distance or 0, tol)
         xb = self._is_near_end(tb, beam_b.centerline.length, max_distance or 0, tol)
 
+        pt = (pa+pb)/2.0
         # L-joint (both meeting at ends)
         if xa and xb:
-            return JointTopology.TOPO_L, beam_a, beam_b, distance
+            return JointTopology.TOPO_L, beam_a, beam_b, distance, pt
 
         # T-joint (one meeting with the end along the other)
         if xa:
             # A:main, B:cross
-            return JointTopology.TOPO_T, beam_a, beam_b, distance
+            return JointTopology.TOPO_T, beam_a, beam_b, distance, pt
         if xb:
             # B:main, A:cross
-            return JointTopology.TOPO_T, beam_b, beam_a, distance
+            return JointTopology.TOPO_T, beam_b, beam_a, distance, pt
 
         # X-joint (both meeting somewhere along the line)
-        return JointTopology.TOPO_X, beam_a, beam_b, distance
+        return JointTopology.TOPO_X, beam_a, beam_b, distance, pt
 
     def find_wall_wall_topology(self, wall_a, wall_b, tol=TOLERANCE, max_distance=None):
         """Calculates the topology of the intersection between two walls.

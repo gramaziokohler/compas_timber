@@ -11,6 +11,7 @@ from compas_timber.connections import TripletAnalyzer
 from compas_timber.connections import GenericJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.analyzers import Cluster
+from compas_timber.connections.analyzers import get_clusters_from_model
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -107,6 +108,100 @@ def test_composite_analyzer(one_triplet_two_quads_beams):
     assert len(triplets) == 1
     assert len(quads) == 2
 
+
+@pytest.fixture
+def beams():
+
+    w = 0.2
+    h = 0.2
+    lines = [
+        Line(Point(1, 0, 0), Point(-1, 0, 0)),
+        Line(Point(1, 0, 0), Point(1, 2, 0)),
+        Line(Point(1, 0, 0), Point(1, -1, 0)),
+    ]
+    return [Beam.from_centerline(line, w, h) for line in lines]
+
+
+@pytest.fixture
+def beams_one_separated():
+    """
+    0 <=> 1:L
+    1 <=> 2:T
+    2 <=> 3:L
+    3 <=> 0:X
+
+    """
+    w = 0.2
+    h = 0.2
+    lines = [
+        Line(Point(1, 0, 0), Point(-1, 0, 0)),
+        Line(Point(1, 0, 0), Point(1, 2, 0)),
+        Line(Point(1, 0, 0), Point(1, -1, 0.05)),
+    ]
+    return [Beam.from_centerline(line, w, h) for line in lines]
+
+
+
+@pytest.fixture
+def beams_all_separated():
+    """
+    0 <=> 1:L
+    1 <=> 2:T
+    2 <=> 3:L
+    3 <=> 0:X
+
+    """
+    w = 0.2
+    h = 0.2
+    lines = [
+        Line(Point(1, 0, 0), Point(-1, 0, -0.05)),
+        Line(Point(1, 0, 0), Point(1, 2, 0)),
+        Line(Point(1, 0, 0), Point(1, -1, 0.05)),
+    ]
+    return [Beam.from_centerline(line, w, h) for line in lines]
+
+def test_get_clusters_from_model_connected(beams):
+    model = TimberModel()
+    model.add_elements(beams)
+    clusters = get_clusters_from_model(model)
+
+    assert len(clusters) ==1
+    assert isinstance(clusters[0], Cluster)
+    assert len(list(clusters[0].elements)) == 3
+
+def test_get_clusters_from_model_one_separate(beams_one_separated):
+    model = TimberModel()
+    model.add_elements(beams_one_separated)
+    clusters = get_clusters_from_model(model)
+
+    assert len(clusters) == 1
+    assert isinstance(clusters[0], Cluster)
+    assert len(list(clusters[0].elements)) == 2
+
+def test_get_clusters_from_model_all_separate(beams_all_separated):
+    model = TimberModel()
+    model.add_elements(beams_all_separated)
+    clusters = get_clusters_from_model(model)
+
+    assert len(clusters) == 0
+
+def test_get_clusters_from_model_one_separate_with_distance(beams_one_separated):
+    model = TimberModel()
+    model.add_elements(beams_one_separated)
+    clusters = get_clusters_from_model(model, max_distance=0.1)
+
+    assert len(clusters) ==1
+    assert isinstance(clusters[0], Cluster)
+    assert len(list(clusters[0].elements)) == 3
+
+def test_get_clusters_from_model_all_separate_with_distance(beams_all_separated):
+    model = TimberModel()
+    model.add_elements(beams_all_separated)
+    clusters = get_clusters_from_model(model)
+
+    assert len(clusters) == 0
+    assert isinstance(clusters[0], Cluster)
+    assert len(list(clusters[0].elements)) == 3
 
 class TestClusterTopology:
     """Test cases for the topology property of the Cluster class."""
@@ -269,3 +364,4 @@ class TestClusterTopology:
         """Test topology behavior with empty cluster."""
         cluster = Cluster([])
         assert cluster.topology == JointTopology.TOPO_UNKNOWN
+

@@ -9,6 +9,7 @@ from compas_timber.connections.plate_butt_joint import PlateTButtJoint
 from compas_timber.connections.plate_miter_joint import PlateMiterJoint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import intersection_line_line_param
+from compas_timber.connections.analyzers import get_clusters_from_model
 
 
 class CollectionDef(object):
@@ -101,16 +102,16 @@ class JointRuleSolver(object):
 
         handled_pairs = handled_pairs or []
         max_rule_distance = max([rule.max_distance for rule in self.rules if rule.max_distance] + [self.max_distance])
-        clusters = self.get_clusters_from_model(max_distance=max_rule_distance)
+        clusters = get_clusters_from_model(self.model, max_distance=max_rule_distance)
         clusters = self.remove_handled_pairs(clusters, handled_pairs)
         self.joining_errors, unjoined_clusters = self.process_clusters(clusters, max_distance=max_rule_distance)
         return self.joining_errors, unjoined_clusters
 
-    def get_clusters_from_model(self, max_distance=None):
-        self.model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
-        self.model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
-        analyzer = MaxNCompositeAnalyzer(self.model, n=len(list(self.model.elements())))
-        return analyzer.find()
+    # def get_clusters_from_model(self, max_distance=None):
+    #     self.model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
+    #     self.model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
+    #     analyzer = MaxNCompositeAnalyzer(self.model, n=len(list(self.model.elements())), max_distance=max_distance)
+    #     return analyzer.find()
 
     def remove_handled_pairs(self, clusters, handled_pairs):
         """Removes clusters from the list that have been handled."""
@@ -124,7 +125,7 @@ class JointRuleSolver(object):
         """Processes the DirectRules and creates joints based on the clusters."""
         for rule in rules:
             for cluster in [c for c in clusters]:
-                joint, error = rule.try_create_joint(self.model, cluster, max_distance=self.max_distance)
+                joint, error = rule.try_create_joint(self.model, cluster, max_distance=max_distance)
                 if joint:
                     clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
                 if error:
