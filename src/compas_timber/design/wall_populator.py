@@ -622,7 +622,7 @@ class WallPopulator(object):
         max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
         for pair in found_pairs:
             beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
+            detected_topo, beam_a, beam_b,_,_ = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
             if detected_topo == JointTopology.TOPO_UNKNOWN:
                 continue
 
