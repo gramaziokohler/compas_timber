@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Installation Guide" href="tutorials/grasshopper/installation.html" />
-    <link rel="prev" title="Create Joint" href="examples/create_joint.html" />
+    <link rel="prev" title="find_neighboring_elements" href="api/generated/compas_timber.rhino.find_neighboring_elements.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -171,16 +171,16 @@
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="examples.html">
-                        Examples
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Grasshopper plugin
                       </a>
                     </li>
                 
 
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
-                        Grasshopper plugin
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="contribution.html">
+                        Developer Guide
                       </a>
                     </li>
                 
@@ -362,16 +362,16 @@ document.write(`
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="examples.html">
-                        Examples
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Grasshopper plugin
                       </a>
                     </li>
                 
 
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
-                        Grasshopper plugin
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="contribution.html">
+                        Developer Guide
                       </a>
                     </li>
                 
@@ -501,11 +501,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.rhino.html">compas_timber.rhino</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/create_joint.html">Create Joint</a></li>
-</ul>
-</li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/installation.html">Installation Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/workflow.html">Workflow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/attributes.html">Attributes</a></li>
@@ -518,7 +514,11 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/show.html">Show</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/grasshopper/examples.html">Examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="contribution.html">Developer Guide</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="contribution/BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribution/joints_contribution_guide.html">Joints Contribution Guide</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
@@ -595,7 +595,7 @@ and some more.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>You can also use the COMPAS Timber python library in Grasshopper using the ghPython componenent.
-See COMPAS Timber <a class="reference internal" href="api.html"><span class="doc">API Reference</span></a> and <a class="reference internal" href="examples.html"><span class="doc">Examples</span></a> for more details.</p>
+See COMPAS Timber <a class="reference internal" href="api.html"><span class="doc">API Reference</span></a> and <span class="xref std std-doc">examples</span> for more details.</p>
 </div>
 <p>To get an overall idea how to use it, start with <a class="reference internal" href="tutorials/grasshopper/workflow.html"><span class="doc">Workflow</span></a>.
 Then, the following sections explain in detail the concepts and tools:</p>
@@ -613,7 +613,6 @@ Then, the following sections explain in detail the concepts and tools:</p>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/grasshopper/show.html">Show</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/grasshopper/utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/grasshopper/examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
 </ul>
 </div>
 </section>
