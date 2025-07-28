@@ -58,7 +58,7 @@ class Cluster(object):
     @property
     def topology(self):
         """Returns the topology of the joint if there is only one joint, otherwise TOPO_UNKNOWN."""
-        # TODO: will we ever have clusters from non-GenericJoints? if so then we coult have a joint in a cluster with TOPO_Y or TOPO_K
+        # TODO: will we ever have clusters from non-GenericJoints? if so then we could have a joint in a cluster with TOPO_Y or TOPO_K
         # TOPO_Y + TOPO_I = TOPO_Y
         # TOPO_Y + TOPO_L = TOPO_Y
         # TOPO_Y + TOPO_T = TOPO_K
