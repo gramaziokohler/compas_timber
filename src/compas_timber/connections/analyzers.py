@@ -252,6 +252,5 @@ def MaxNCompositeAnalyzer(model, n, tolerance=None):
 def get_clusters_from_model(model, max_distance=None):
     model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
     model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
-    print("model has {} joints".format(len(list(model.joints))))
     analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
     return analyzer.find()

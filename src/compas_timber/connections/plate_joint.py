@@ -253,6 +253,8 @@ class PlateJoint(Joint):
             raise ValueError("Plate not part of this joint.")
 
     def reorder_planes_and_outlines(self):
+        """reorders `self.a_planes`, `self.b_planes`, `self.a_outlines`, `self.b_outlines` based on proximity to other plate.
+        closer/inside planes and outlines first."""
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
             self.b_planes = self.b_planes[::-1]
             self.b_outlines = self.b_outlines[::-1]
