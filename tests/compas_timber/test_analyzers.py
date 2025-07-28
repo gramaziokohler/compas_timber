@@ -124,13 +124,7 @@ class TestClusterTopology:
 
     def test_single_joint_cluster_different_topologies(self):
         """Test single joint clusters with different topology types."""
-        test_cases = [
-            JointTopology.TOPO_I,
-            JointTopology.TOPO_L,
-            JointTopology.TOPO_T,
-            JointTopology.TOPO_X,
-            JointTopology.TOPO_UNKNOWN
-        ]
+        test_cases = [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_UNKNOWN]
 
         for topology in test_cases:
             mock_joint = Mock(spec=GenericJoint)
@@ -256,12 +250,7 @@ class TestClusterTopology:
 
     def test_edge_cases_with_other_topology_values(self):
         """Test cluster topology with edge case topology values."""
-        edge_case_topologies = [
-            JointTopology.TOPO_Y,
-            JointTopology.TOPO_K,
-            JointTopology.TOPO_EDGE_EDGE,
-            JointTopology.TOPO_EDGE_FACE
-        ]
+        edge_case_topologies = [JointTopology.TOPO_Y, JointTopology.TOPO_K, JointTopology.TOPO_EDGE_EDGE, JointTopology.TOPO_EDGE_FACE]
 
         for topology in edge_case_topologies:
             joint1 = Mock(spec=GenericJoint)

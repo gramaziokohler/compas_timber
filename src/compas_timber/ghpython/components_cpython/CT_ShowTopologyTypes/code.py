@@ -25,7 +25,7 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
         found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
         for pair in found_pairs:
             detected_topo, _, _, _, pt = solver.find_topology(*pair)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:  
+            if not detected_topo == JointTopology.TOPO_UNKNOWN:
                 self.pt.append(point_to_rhino(pt))
                 self.txt.append(JointTopology.get_name(detected_topo))
 

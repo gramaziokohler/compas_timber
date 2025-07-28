@@ -1,4 +1,3 @@
-from itertools import product
 from math import fabs
 
 from compas.geometry import Plane
@@ -292,6 +291,7 @@ def distance_segment_segment(segment_a, segment_b):
         dists.append(distance_point_point(pt, closest_point_on_segment(pt, segment_a)))
     return min(dists)
 
+
 def distance_segment_segment_points(segment_a, segment_b):
     """Computes the distance between two segments.
 
@@ -325,6 +325,7 @@ def distance_segment_segment_points(segment_a, segment_b):
         closest_pts.append((cp, pt))
     min_index = dists.index(min(dists))
     return dists[min_index], closest_pts[min_index][0], closest_pts[min_index][1]
+
 
 def is_polyline_clockwise(polyline, normal_vector):
     """Check if a polyline is clockwise. If the polyline is open, it is closed before the check.
@@ -459,6 +460,7 @@ def do_segments_overlap(segment_a, segment_b):
 
     return False
 
+
 def get_segment_overlap(segment_a, segment_b, unitize=False):
     """Checks if two segments overlap.
 
@@ -485,16 +487,15 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
     if dots[0] >= length or dots[1] <= 0.0:
         return None
 
-    if dots[0]<0.0:
+    if dots[0] < 0.0:
         dots[0] = 0.0
-    if dots[1]>length:
-        dots[1]=length
+    if dots[1] > length:
+        dots[1] = length
     if unitize:
         dots[0] /= length
         dots[1] /= length
 
-    return (dots[0],dots[1])
-
+    return (dots[0], dots[1])
 
 
 __all__ = [
@@ -508,5 +509,5 @@ __all__ = [
     "get_polyline_segment_perpendicular_vector",
     "is_point_in_polyline",
     "do_segments_overlap",
-    "get_segment_overlap"
+    "get_segment_overlap",
 ]

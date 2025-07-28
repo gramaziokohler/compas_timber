@@ -4,26 +4,20 @@ import math
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
-from compas.geometry import closest_point_on_line
-from compas.geometry import cross_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_line_line
-from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
 from compas.tolerance import TOL
 
-from compas_timber.utils import is_point_in_polyline
-from compas_timber.utils import do_segments_overlap
 from compas_timber.utils import distance_segment_segment_points
 from compas_timber.utils import get_segment_overlap
-
+from compas_timber.utils import is_point_in_polyline
 
 
 @pluggable(category="solvers")
@@ -157,45 +151,44 @@ class ConnectionSolver(object):
 
         """
         # first check if the beams are close enough to be considered intersecting and get the closest points on the segments
-        max_distance = max_distance or TOL.absolute # TODO: change to a unit-sensitive value
+        max_distance = max_distance or TOL.absolute  # TODO: change to a unit-sensitive value
         dist, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
         if dist > max_distance:
             return JointTopology.TOPO_UNKNOWN, None, None, None, None
         point_a = Point(*point_a)
         point_b = Point(*point_b)
 
-        #see if beams are parallel
+        # see if beams are parallel
         if TOL.is_zero(angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction) % math.pi):
-            #beams are parallel
+            # beams are parallel
             # if parallel overlap on beam_a means that beam_b is overlapped by beam_a. Only need to perform the check on beam_a
             overlap_on_a = get_segment_overlap(beam_a.centerline, beam_b.centerline)
             if overlap_on_a is None:
-                return JointTopology.TOPO_I, beam_a, beam_b, dist, (point_a + point_b)/2.0
-            if overlap_on_a[1] < max_distance: #overlaps on beam_a start 
+                return JointTopology.TOPO_I, beam_a, beam_b, dist, (point_a + point_b) / 2.0
+            if overlap_on_a[1] < max_distance:  # overlaps on beam_a start
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.start)[1]
                 dist = distance_point_point(pt, beam_a.centerline.start)
-                return JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.start+pt)/2.0
-            if abs(overlap_on_a[0]-beam_a.length) < max_distance: #overlaps on beam_a end
+                return JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.start + pt) / 2.0
+            if abs(overlap_on_a[0] - beam_a.length) < max_distance:  # overlaps on beam_a end
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.end)[1]
-                dist=distance_point_point(pt, beam_a.centerline.end)
-                return JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.start+pt)/2.0
+                dist = distance_point_point(pt, beam_a.centerline.end)
+                return JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.start + pt) / 2.0
             else:
-                return JointTopology.TOPO_UNKNOWN, None,None,None,None
-            
+                return JointTopology.TOPO_UNKNOWN, None, None, None, None
+
         _, a_end_pt = beam_a.endpoint_closest_to_point(point_b)
         _, b_end_pt = beam_b.endpoint_closest_to_point(point_a)
 
         a_end = distance_point_point(a_end_pt, point_a) < max_distance
         b_end = distance_point_point(b_end_pt, point_b) < max_distance
-        location = (point_a + point_b)/2.0
+        location = (point_a + point_b) / 2.0
         if a_end and b_end:
-            return JointTopology.TOPO_L, beam_a, beam_b, dist, location            
+            return JointTopology.TOPO_L, beam_a, beam_b, dist, location
         if a_end:
             return JointTopology.TOPO_T, beam_a, beam_b, dist, location
         if b_end:
             return JointTopology.TOPO_T, beam_b, beam_a, dist, location
         return JointTopology.TOPO_X, beam_a, beam_b, dist, location
-       
 
     def find_wall_wall_topology(self, wall_a, wall_b, tol=TOLERANCE, max_distance=None):
         """Calculates the topology of the intersection between two walls.

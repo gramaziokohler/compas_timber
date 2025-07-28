@@ -161,13 +161,15 @@ def test_get_polyline_segment_perpendicular_vector_concave_reversed(polyline_wit
 
 def test_do_segments_overlap():
     segment_a = Line(Point(0, 0, 0), Point(10, 0, 0))
-    overlapping = [Line(Point(5, 0, 0), Point(15, 0, 0)),
+    overlapping = [
+        Line(Point(5, 0, 0), Point(15, 0, 0)),
         Line(Point(9, 1, 0), Point(10, 10, 0)),
         Line(Point(2, 0, 0), Point(8, 0, 0)),
         Line(Point(-2, 0, 0), Point(12, 0, 0)),
         Line(Point(0, 0, 0), Point(10, 0, 0)),
     ]
-    non_overlapping = [Line(Point(11, 0, 0), Point(20, 0, 0)),
+    non_overlapping = [
+        Line(Point(11, 0, 0), Point(20, 0, 0)),
         Line(Point(10, 1, 0), Point(20, 10, 0)),
         Line(Point(-10, 0, 0), Point(0, 0, 0)),
         Line(Point(10, 0, 0), Point(15, 0, 0)),
@@ -184,12 +186,12 @@ def test_distance_segment_segment():
     segment_a = Line(Point(0, 0, 0), Point(10, 0, 0))
     segments = [
         Line(Point(5, 0, 0), Point(15, 0, 0)),  # Overlapping parallel segment
-        Line(Point(9, 1, 0), Point(10, 10,0)),  # Overlapping non-parallel segment
-        Line(Point(2, 1, 0), Point(8, 1, 0)),   # Overlapping parallel segment internal to segment_a
-        Line(Point(13, 4, 0), Point(15, 6, 0)), # Non-overlapping segment
-        Line(Point(15, -5, 0), Point(15, 5, 0)), # crossing perpendicular segment
-        Line(Point(5, -5, 0), Point(5, 5, 0)), #crossing perpendicular segment
-        Line(Point(5, -5, 1), Point(5, 5, 1)), # crossing non-intersectingperpendicular segment
+        Line(Point(9, 1, 0), Point(10, 10, 0)),  # Overlapping non-parallel segment
+        Line(Point(2, 1, 0), Point(8, 1, 0)),  # Overlapping parallel segment internal to segment_a
+        Line(Point(13, 4, 0), Point(15, 6, 0)),  # Non-overlapping segment
+        Line(Point(15, -5, 0), Point(15, 5, 0)),  # crossing perpendicular segment
+        Line(Point(5, -5, 0), Point(5, 5, 0)),  # crossing perpendicular segment
+        Line(Point(5, -5, 1), Point(5, 5, 1)),  # crossing non-intersectingperpendicular segment
     ]
     results = [0.0, 1.0, 1.0, 5.0, 5.0, 0.0, 1.0]
     # Distance between non-overlapping segments
@@ -198,29 +200,29 @@ def test_distance_segment_segment():
 
 
 def test_get_segment_overlap():
-    seg_a = Line(Point(0,0,0), Point(10,0,0))
+    seg_a = Line(Point(0, 0, 0), Point(10, 0, 0))
     segs = [
-        Line(Point(0,0,0), Point(10,0,0)),
-        Line(Point(-1,0,0), Point(9,0,0)),
-        Line(Point(1,0,0), Point(11,0,0)),
-        Line(Point(1,0,0), Point(9,0,0)),
-        Line(Point(-1,0,0), Point(11,0,0)),
-        Line(Point(-11,0,0), Point(-1,0,0)),
-        Line(Point(11,0,0), Point(21,0,0)),
-        Line(Point(10,0,0), Point(20,0,0)),
-        Line(Point(-10,0,0), Point(0,0,0)),
+        Line(Point(0, 0, 0), Point(10, 0, 0)),
+        Line(Point(-1, 0, 0), Point(9, 0, 0)),
+        Line(Point(1, 0, 0), Point(11, 0, 0)),
+        Line(Point(1, 0, 0), Point(9, 0, 0)),
+        Line(Point(-1, 0, 0), Point(11, 0, 0)),
+        Line(Point(-11, 0, 0), Point(-1, 0, 0)),
+        Line(Point(11, 0, 0), Point(21, 0, 0)),
+        Line(Point(10, 0, 0), Point(20, 0, 0)),
+        Line(Point(-10, 0, 0), Point(0, 0, 0)),
     ]
     expected_overlaps = [
-        (0,10),
-        (0,9),
-        (1,10),
-        (1,9),
-        (0,10),
+        (0, 10),
+        (0, 9),
+        (1, 10),
+        (1, 9),
+        (0, 10),
         None,
         None,
         None,
         None,
-        ]
+    ]
 
     for seg_b, o in zip(segs, expected_overlaps):
-        assert get_segment_overlap(seg_a, seg_b) == o 
+        assert get_segment_overlap(seg_a, seg_b) == o
