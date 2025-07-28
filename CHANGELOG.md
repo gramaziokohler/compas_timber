@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
+* Added `joints_contribution_guide` in docs.
 * Added `JointTopology.TOPO_Y` for Beam Connections.
 * Added `JointTopology.TOPO_K` for Beam Connections.
 * Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
@@ -63,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `NullJoint` to `GenericJoint`.
 * Fixed bug in show_ref_faces GH component.
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Updated `BTLx_contribution_guide` in docs.
 * Fixed several GH Components for Rhino8 compatibility.
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
 * Fixed attribute error when creating a `TButtJoint`.
