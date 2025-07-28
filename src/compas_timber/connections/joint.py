@@ -183,26 +183,6 @@ class Joint(Interaction):
         return joint
 
     @classmethod
-    def comply_elements(cls, elements, raise_error=False):
-        """Checks if the cluster of elements complies with the requirements for the Joint.
-
-        Parameters
-        ----------
-        elements : list(:class:`~compas_model.elements.Element`)
-            The elements to be checked.
-        raise_error : bool, optional
-            If True, raises a :class:`~compas_timber.errors.BeamJoiningError` if the cluster does not comply with the requirements.
-            If False, returns False instead.
-
-        Returns
-        -------
-        bool
-            True if the cluster complies with the requirements, False otherwise.
-
-        """
-        return True
-
-    @classmethod
     def from_cluster(cls, model, cluster, elements=None, **kwargs):
         """Creates an instance of this joint from a cluster of elements.
 
