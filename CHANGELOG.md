@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Minor fixes to GH Components.
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
 * Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
+* Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
 
 ### Removed
 

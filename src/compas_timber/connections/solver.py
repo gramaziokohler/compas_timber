@@ -132,8 +132,6 @@ class ConnectionSolver(object):
         (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
         order as they were inputted.
 
-        # TODO: this needs to be reworked ASAP
-
         Parameters
         ----------
         beam_a : :class:`~compas_timber.parts.Beam`
