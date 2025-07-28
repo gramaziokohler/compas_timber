@@ -41,7 +41,7 @@ class YButtJoint(Joint):
     """
 
     # TODO: implement Y and K topologies
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_Y
     MIN_ELEMENT_COUNT = 3
     MAX_ELEMENT_COUNT = 3
 

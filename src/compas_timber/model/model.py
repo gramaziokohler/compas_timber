@@ -391,9 +391,9 @@ class TimberModel(Model):
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         for pair in pairs:
             beam_a, beam_b = pair
-            result = solver.find_topology(beam_a, beam_b, tol=TOL.relative, max_distance=max_distance)
+            result = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
 
-            topology, beam_a, beam_b = result
+            topology, beam_a, beam_b, _, _ = result
             if topology == JointTopology.TOPO_UNKNOWN:
                 continue
 
