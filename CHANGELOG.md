@@ -49,11 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `GenericPlateJoint` to `generic_joint.py`.
 * Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
 * Added `PlateJoint.from_generic_joint` as override.
-* Added `JointTopology.TOPO_Y` for Beam Connections.
-* Added `JointTopology.TOPO_K` for Beam Connections.
-* Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
-* Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
-* Added `Cluster.topology`.
+=========
+* Added `joints_contribution_guide` in docs.
+>>>>>>>>> Temporary merge branch 2
 
 ### Changed
 
