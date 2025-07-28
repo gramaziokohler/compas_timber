@@ -4,12 +4,11 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections.analyzers import MaxNCompositeAnalyzer
+from compas_timber.connections.analyzers import get_clusters_from_model
 from compas_timber.connections.plate_butt_joint import PlateTButtJoint
 from compas_timber.connections.plate_miter_joint import PlateMiterJoint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import intersection_line_line_param
-from compas_timber.connections.analyzers import get_clusters_from_model
 
 
 class CollectionDef(object):

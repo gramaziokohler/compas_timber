@@ -18,8 +18,6 @@ from compas.tolerance import TOL
 from compas_timber.utils import distance_segment_segment_points
 from compas_timber.utils import get_segment_overlap
 from compas_timber.utils import is_point_in_polyline
-from compas_timber.utils import do_segments_overlap
-from compas_timber.utils import distance_segment_segment
 
 
 @pluggable(category="solvers")

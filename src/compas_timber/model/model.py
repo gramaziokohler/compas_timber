@@ -9,7 +9,6 @@ if not compas.IPY:
     from compas.tolerance import Tolerance  # noqa: F401
 
 from compas.geometry import Point
-from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 from compas_model.models import Model
 
