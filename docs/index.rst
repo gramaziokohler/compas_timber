@@ -45,8 +45,8 @@ Table of Contents
    Introduction <self>
    installation
    api
-   examples
    tutorials
+   contribution
    license
    citing
 
