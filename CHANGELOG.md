@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
+* Added `GenericPlateJoint` to `generic_joint.py`.
+* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
+* Added `PlateJoint.from_generic_joint` as override.
 
 ### Changed
 
@@ -67,6 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Minor fixes to GH Components.
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
+* Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
+* `Platejoint`s can now be isntantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
 
 ### Removed
 
