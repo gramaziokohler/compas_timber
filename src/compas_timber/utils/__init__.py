@@ -79,7 +79,6 @@ def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segme
 
     # double-check for parallels, should not happen:
     if t1 is None or t2 is None:
-        print("intersection_line_plane detected parallel lines")
         return [None, None], [None, None]
 
     # is intersection exact / within some max_distance?
@@ -305,8 +304,9 @@ def distance_segment_segment_points(segment_a, segment_b):
 
     Returns
     -------
-    float
-        The distance between the two segments.
+
+    tuple(float, :class:`~compas.geometry.Point`, :class:`~compas.geometry.Point`)
+        The distance between the two segments, and the closest points on each segment.
 
     """
     pta, ptb = intersection_segment_segment(segment_a, segment_b)
@@ -467,26 +467,31 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
     segment_a : :class:`~compas.geometry.Segment`
         The segment upon which the overlap is tested.
     segment_b : :class:`~compas.geometry.Segment`
-        The segment that is overlaidon segment_a.
+        The segment that is overlapped on segment_a.
+    unitize : bool, optional
+        If True, the returned parameters are normalized to the length of segment_a. Default is False
 
     Returns
     -------
-    bool
-        True if the segments overlap, False otherwise.
+    tuple(float, float) or None
+        A tuple containing the start and end parameters of the overlap on segment_a.
+        If there is no overlap, None is returned.
     """
     dots = []
     for pt in segment_b:
         dots.append(dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt)))
-
+    length = segment_a.length
     dots.sort()
-    if dots[0] >= segment_a.length or dots[1] <= 0.0:
+    if dots[0] >= length or dots[1] <= 0.0:
         return None
 
     if dots[0]<0.0:
         dots[0] = 0.0
-    if dots[1]>segment_a.length:
-        dots[1]=segment_a.length
-
+    if dots[1]>length:
+        dots[1]=length
+    if unitize:
+        dots[0] /= length
+        dots[1] /= length
 
     return (dots[0],dots[1])
 

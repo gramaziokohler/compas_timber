@@ -156,16 +156,18 @@ class ConnectionSolver(object):
         tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
 
         """
-        max_distance = max_distance or TOL.absolute
-        print("MD",max_distance)
+        # first check if the beams are close enough to be considered intersecting and get the closest points on the segments
+        max_distance = max_distance or TOL.absolute # TODO: change to a unit-sensitive value
         dist, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
         if dist > max_distance:
             return JointTopology.TOPO_UNKNOWN, None, None, None, None
         point_a = Point(*point_a)
         point_b = Point(*point_b)
 
+        #see if beams are parallel
         if TOL.is_zero(angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction) % math.pi):
             #beams are parallel
+            # if parallel overlap on beam_a means that beam_b is overlapped by beam_a. Only need to perform the check on beam_a
             overlap_on_a = get_segment_overlap(beam_a.centerline, beam_b.centerline)
             if overlap_on_a is None:
                 return JointTopology.TOPO_I, beam_a, beam_b, dist, (point_a + point_b)/2.0
