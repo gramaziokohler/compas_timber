@@ -243,3 +243,22 @@ class Joint(Interaction):
         joint = cls.create(model, *elements, **kwargs)
         # @chenkasirer is there a way to pass all the attributes of the generic joint to the new joint? Do we have to do that explicitly?
         return joint
+
+    @classmethod
+    def comply_elements(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+
+        Parameters
+        ----------
+        elements : list of :class:`~compas_timber.parts.Beam`
+            The beams to check.
+        raise_error : bool, optional
+            If True, raises a `BeamJoiningError` if the requirements are not met.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
+
+        """
+        return True
