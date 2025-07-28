@@ -168,7 +168,7 @@ class TestClusterTopology:
 
         assert cluster.topology == JointTopology.TOPO_K
 
-    def test_multiple_joints_with_invalid_topology_returns_topo_unknown(self):
+    def test_multiple_joints_with_x_topology_returns_topo_k(self):
         """Test that cluster with any invalid topology returns TOPO_UNKNOWN."""
         # Create joints with one invalid topology
         joint1 = Mock(spec=GenericJoint)
