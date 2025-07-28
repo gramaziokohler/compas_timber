@@ -123,7 +123,6 @@ def test_simple_joint_and_reset():
     assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to reset outline_a"
 
 
-
 def test_simple_joint_and_reset_no_kwargs():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(Polyline([pt for pt in polyline_a.points]), 1)

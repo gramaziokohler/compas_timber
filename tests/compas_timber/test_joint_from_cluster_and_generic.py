@@ -408,3 +408,27 @@ class TestJointFromMethodsEdgeCases:
 
         # Verify the original generic joint was removed
         assert generic_plate_joint not in model.joints
+
+    def test_plate_joint_from_generic_joint_topology_solver_called_when_attributes_missing(self, plate_model, mocker):
+        """Test that PlateConnectionSolver.find_topology IS called when GenericPlateJoint has missing segment indices."""
+        from compas_timber.connections.solver import PlateConnectionSolver
+
+        model, plate1, plate2 = plate_model
+
+        # Mock the PlateConnectionSolver.find_topology method to return expected results
+        mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
+        mock_find_topology.return_value = [
+            JointTopology.TOPO_L,
+            (plate1, 1),  # (plate, segment_index)
+            (plate2, 0),  # (plate, segment_index)
+        ]
+
+        # Convert generic plate joint to specific plate joint
+        joint = PlateLButtJoint.create(model, plate1, plate2)
+
+        # Verify the joint was created correctly
+        assert isinstance(joint, PlateLButtJoint)
+        assert joint.topology == JointTopology.TOPO_L
+
+        # Verify that find_topology WAS called since a_segment_index was None
+        mock_find_topology.assert_called_once_with(plate1, plate2)

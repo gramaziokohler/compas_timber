@@ -274,7 +274,6 @@ class TestClusterTopology:
 
 @pytest.fixture
 def beams():
-
     w = 0.2
     h = 0.2
     lines = [
@@ -304,7 +303,6 @@ def beams_one_separated():
     return [Beam.from_centerline(line, w, h) for line in lines]
 
 
-
 @pytest.fixture
 def beams_all_separated():
     """
@@ -323,14 +321,16 @@ def beams_all_separated():
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
 
+
 def test_get_clusters_from_model_connected(beams):
     model = TimberModel()
     model.add_elements(beams)
     clusters = get_clusters_from_model(model)
 
-    assert len(clusters) ==1
+    assert len(clusters) == 1
     assert isinstance(clusters[0], Cluster)
     assert len(list(clusters[0].elements)) == 3
+
 
 def test_get_clusters_from_model_one_separate(beams_one_separated):
     model = TimberModel()
@@ -341,6 +341,7 @@ def test_get_clusters_from_model_one_separate(beams_one_separated):
     assert isinstance(clusters[0], Cluster)
     assert len(list(clusters[0].elements)) == 2
 
+
 def test_get_clusters_from_model_all_separate(beams_all_separated):
     model = TimberModel()
     model.add_elements(beams_all_separated)
@@ -348,14 +349,16 @@ def test_get_clusters_from_model_all_separate(beams_all_separated):
 
     assert len(clusters) == 0
 
+
 def test_get_clusters_from_model_one_separate_with_distance(beams_one_separated):
     model = TimberModel()
     model.add_elements(beams_one_separated)
     clusters = get_clusters_from_model(model, max_distance=0.1)
 
-    assert len(clusters) ==1
+    assert len(clusters) == 1
     assert isinstance(clusters[0], Cluster)
     assert len(list(clusters[0].elements)) == 3
+
 
 def test_get_clusters_from_model_all_separate_with_distance(beams_all_separated):
     model = TimberModel()

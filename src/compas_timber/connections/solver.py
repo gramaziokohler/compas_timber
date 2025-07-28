@@ -11,7 +11,6 @@ from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_line_line
-from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
 from compas.tolerance import TOL
 
@@ -145,7 +144,10 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`, float)
+        tuple(:class:`~compas_timber.connections.JointTopology`, tuple(:class:`~compas_timber.parts.Beam`, int),
+            tuple(:class:`~compas_timber.parts.Beam`, int), float, :class:`~compas_timber.geometry.Point`)
+            The topology of the intersection between the two beams, tuple containing plate and index of connecting edge, the
+            distance between the plates, and the point of intersection.
 
         """
         # first check if the beams are close enough to be considered intersecting and get the closest points on the segments
@@ -212,28 +214,6 @@ class ConnectionSolver(object):
         # TODO: make find topology more generic. break down to find_line_line_topo etc.
         return self.find_topology(wall_a, wall_b, tol, max_distance)
 
-    @staticmethod
-    def _calc_t(line, plane):
-        a, b = line
-        o, n = plane
-        ab = subtract_vectors(b, a)
-        dotv = dot_vectors(n, ab)  # lines parallel to plane (dotv=0) filtered out already
-        oa = subtract_vectors(a, o)
-        t = -dot_vectors(n, oa) / dotv
-        return t
-
-    @staticmethod
-    def _exceed_max_distance(pa, pb, max_distance, tol):
-        d = distance_point_point(pa, pb)
-        if max_distance is not None and d > max_distance:
-            return True, d
-        if max_distance is None and d > tol:
-            return True, d
-        return False, d
-
-    @staticmethod
-    def _is_near_end(t, length, max_distance, tol):
-        return abs(t) * length < max_distance + tol or abs(1.0 - t) * length < max_distance + tol
 
 
 class PlateConnectionSolver(ConnectionSolver):

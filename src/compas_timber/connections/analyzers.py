@@ -75,7 +75,6 @@ class Cluster(object):
         return JointTopology.TOPO_Y
 
 
-
 class BeamGroupAnalyzer(object):
     """Interface for a beam group analyzer."""
 
