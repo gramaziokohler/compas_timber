@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
+* Added `joint_candidates` property to `TimberModel`.
+* Added `add_joint_candidate` method to `TimberModel`.
+* Added `remove_joint_candidate` method to `TimberModel`.
 
 ### Changed
 
@@ -67,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Minor fixes to GH Components.
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
+* `NBeamKDTreeAnalyzer` now uses `model.joint_candidates` instead of filtering `model.joints`.
 
 ### Removed
 
