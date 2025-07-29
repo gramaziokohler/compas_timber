@@ -298,7 +298,7 @@ def beams_one_separated():
     lines = [
         Line(Point(1, 0, 0), Point(-1, 0, 0)),
         Line(Point(1, 0, 0), Point(1, 2, 0)),
-        Line(Point(1, 0, 0), Point(1, -1, 0.05)),
+        Line(Point(1, 0, 0.05), Point(1, -1, 0.05)),
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
 
@@ -315,9 +315,9 @@ def beams_all_separated():
     w = 0.2
     h = 0.2
     lines = [
-        Line(Point(1, 0, 0), Point(-1, 0, -0.05)),
+        Line(Point(1, 0, -0.05), Point(-1, 0, -0.05)),
         Line(Point(1, 0, 0), Point(1, 2, 0)),
-        Line(Point(1, 0, 0), Point(1, -1, 0.05)),
+        Line(Point(1, 0, 0.05), Point(1, -1, 0.05)),
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
 
@@ -345,26 +345,32 @@ def test_get_clusters_from_model_one_separate(beams_one_separated):
 def test_get_clusters_from_model_all_separate(beams_all_separated):
     model = TimberModel()
     model.add_elements(beams_all_separated)
-    clusters = get_clusters_from_model(model)
-
-    assert len(clusters) == 0
+    with pytest.raises(ValueError):
+        _ = get_clusters_from_model(model)
 
 
 def test_get_clusters_from_model_one_separate_with_distance(beams_one_separated):
     model = TimberModel()
     model.add_elements(beams_one_separated)
-    clusters = get_clusters_from_model(model, max_distance=0.1)
+    clusters = get_clusters_from_model(model, max_distance=0.11)
 
     assert len(clusters) == 1
     assert isinstance(clusters[0], Cluster)
     assert len(list(clusters[0].elements)) == 3
 
 
+def test_get_clusters_from_model_all_separate_without_distance(beams_all_separated):
+    model = TimberModel()
+    model.add_elements(beams_all_separated)
+    with pytest.raises(ValueError):
+        _ = get_clusters_from_model(model)
+
+
 def test_get_clusters_from_model_all_separate_with_distance(beams_all_separated):
     model = TimberModel()
     model.add_elements(beams_all_separated)
-    clusters = get_clusters_from_model(model)
+    clusters = get_clusters_from_model(model, max_distance=0.1)
 
-    assert len(clusters) == 0
+    assert len(clusters) == 1
     assert isinstance(clusters[0], Cluster)
     assert len(list(clusters[0].elements)) == 3

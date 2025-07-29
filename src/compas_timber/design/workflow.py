@@ -103,7 +103,7 @@ class JointRuleSolver(object):
         max_rule_distance = max([rule.max_distance for rule in self.rules if rule.max_distance] + [self.max_distance])
         clusters = get_clusters_from_model(self.model, max_distance=max_rule_distance)
         clusters = self.remove_handled_pairs(clusters, handled_pairs)
-        self.joining_errors, unjoined_clusters = self.process_clusters(clusters, max_distance=max_rule_distance)
+        self.joining_errors, unjoined_clusters = self.process_clusters(clusters, max_distance=self.max_distance)
         return self.joining_errors, unjoined_clusters
 
     # def get_clusters_from_model(self, max_distance=None):
@@ -133,7 +133,6 @@ class JointRuleSolver(object):
     def process_clusters(self, clusters, max_distance=None):
         """Processes the clusters and creates joints based on the rules."""
         unhandled_clusters = [c for c in clusters]
-
         self.joints_from_rules_and_clusters(self.direct_rules, unhandled_clusters, max_distance=max_distance)
         self.joints_from_rules_and_clusters(self.category_rules, unhandled_clusters, max_distance=max_distance)
         self.joints_from_rules_and_clusters(self.topology_rules, unhandled_clusters, max_distance=max_distance)
@@ -177,9 +176,9 @@ class JointRule(object):
         return True
 
     def _comply_distance(self, cluster, max_distance=None, raise_error=False):
-        max_distance = self.max_distance or max_distance or None
         if not max_distance:
             return True
+
         distance = max([j.distance for j in cluster.joints])
         if distance > max_distance:
             if raise_error:
@@ -271,6 +270,7 @@ class DirectRule(JointRule):
             If the distance between the elements is greater than the max_distance.
 
         """
+        max_distance = self.max_distance or max_distance or TOL.absolute
 
         joint = None
         error = None
@@ -364,6 +364,7 @@ class CategoryRule(JointRule):
             If the distance between the elements is greater than the max_distance.
 
         """
+        max_distance = self.max_distance or max_distance or TOL.absolute
 
         joint = None
         error = None
@@ -437,6 +438,8 @@ class TopologyRule(JointRule):
             The joint created from the elements if the elements comply with the rule,
 
         """
+        max_distance = self.max_distance or max_distance or TOL.absolute
+
         joint = None
         error = None
         if not self._comply_element_count(cluster):

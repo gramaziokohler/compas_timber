@@ -61,6 +61,13 @@ class Joint(Interaction):
     @property
     def location(self):
         return self._location
+    
+    @location.setter
+    def location(self, value):
+        """Set the location of the joint."""
+        if not isinstance(value, Point):
+            raise TypeError("Location must be a Point.")
+        self._location = value
 
     @property
     def elements(self):

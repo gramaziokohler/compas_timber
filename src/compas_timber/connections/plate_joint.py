@@ -127,25 +127,23 @@ class PlateJoint(Joint):
         if a_segment_index is None and plate_a and plate_b:
             solver = PlateConnectionSolver()
             results = solver.find_topology(plate_a, plate_b)
-
             if results[0] is JointTopology.TOPO_UNKNOWN:
                 raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(plate_a, plate_b))
             if results[1][0] != plate_a:
                 raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
-
-            self.topology, (self.plate_a, self.a_segment_index), (self.plate_b, self.b_segment_index), self.distance, self.point = results
+            self.topology, (self.plate_a, self.a_segment_index), (self.plate_b, self.b_segment_index), self.distance, self.location = results
         else:
             self.plate_a = plate_a
             self.plate_b = plate_b
             self.a_segment_index = a_segment_index
             self.b_segment_index = b_segment_index
 
-        self.a_planes = self.plate_a.planes
-        self.a_outlines = self.plate_a.outlines
+        self.a_planes = [p for p in self.plate_a.planes]
+        self.a_outlines = [o for o in self.plate_a.outlines]
 
-        self.b_planes = self.plate_b.planes
-        self.b_outlines = self.plate_b.outlines
-
+        self.b_planes = [p for p in self.plate_b.planes]
+        self.b_outlines = [o for o in self.plate_b.outlines]
+        
         self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
         self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 

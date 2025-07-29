@@ -391,7 +391,7 @@ class TimberModel(Model):
             if not isinstance(joint, WallJoint) or isinstance(joint, PlateJoint):
                 self.remove_joint(joint)
 
-        max_distance = max_distance or TOL.relative
+        max_distance = max_distance or TOL.absolute
         beams = list(self.beams)
         solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
@@ -401,7 +401,7 @@ class TimberModel(Model):
             topology, beam_a, beam_b, distance, pt = result
             if topology == JointTopology.TOPO_UNKNOWN:
                 continue
-
+            
             assert beam_a and beam_b
             # p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             # p1 = Point(*p1) if p1 else None
@@ -412,7 +412,7 @@ class TimberModel(Model):
             if isinstance(joint, PlateJoint):
                 self.remove_joint(joint)
 
-        max_distance = max_distance or TOL.relative
+        max_distance = max_distance or TOL.absolute
         plates = list(self.plates)
         solver = PlateConnectionSolver()
         pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)

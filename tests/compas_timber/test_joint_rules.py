@@ -144,7 +144,7 @@ def test_joints_from_beams_and_rules_with_max_distance_rule(separated_beams):
     model = TimberModel()
     model.add_elements(separated_beams)
     solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    _, unjoined_clusters = solver.apply_rules_to_model()
     assert len([j for j in model.joints if not isinstance(j, GenericJoint)]) == 1
     assert len(unjoined_clusters) == 3
 
