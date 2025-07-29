@@ -340,13 +340,16 @@ class TimberModel(Model):
         """
         for interaction in candidate.interactions:
             element_a, element_b = interaction
-            # Store candidate on the edge under "candidate" attribute
             edge = (element_a.graph_node, element_b.graph_node)
             if edge not in self._graph.edges():
                 self._graph.add_edge(*edge)
-                self._graph.edge_attribute(edge, "interactions", [])  # initialize new edge, otherwise calls to model.joints breaks
 
-            # Store the candidate (replaces any existing candidate)
+                # HACK: calls to `model.joints` expect there to be a "interactions" on any edges
+                self._graph.edge_attribute(edge, "interactions", [])
+
+            # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
+            # (``interactions`` vs. ``candidate``)
+            # TODO: ``interactions`` is a list, should ``candidate`` be a list as well? don't see a reason rn.
             self._graph.edge_attribute(edge, "candidate", candidate)
 
     def remove_joint_candidate(self, candidate):
