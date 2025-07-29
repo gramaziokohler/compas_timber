@@ -143,7 +143,7 @@ class PlateJoint(Joint):
 
         self.b_planes = [p for p in self.plate_b.planes]
         self.b_outlines = [o for o in self.plate_b.outlines]
-        
+
         self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
         self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 

@@ -401,7 +401,7 @@ class TimberModel(Model):
             topology, beam_a, beam_b, distance, pt = result
             if topology == JointTopology.TOPO_UNKNOWN:
                 continue
-            
+
             assert beam_a and beam_b
             # p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             # p1 = Point(*p1) if p1 else None

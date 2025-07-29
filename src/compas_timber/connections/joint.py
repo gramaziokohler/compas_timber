@@ -61,7 +61,7 @@ class Joint(Interaction):
     @property
     def location(self):
         return self._location
-    
+
     @location.setter
     def location(self, value):
         """Set the location of the joint."""

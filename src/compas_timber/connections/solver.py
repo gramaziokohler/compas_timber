@@ -215,7 +215,6 @@ class ConnectionSolver(object):
         return self.find_topology(wall_a, wall_b, tol, max_distance)
 
 
-
 class PlateConnectionSolver(ConnectionSolver):
     """Provides tools for detecting plate intersections and joint topologies."""
 

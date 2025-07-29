@@ -422,7 +422,7 @@ class TestJointFromMethodsEdgeCases:
             (plate1, 1),  # (plate, segment_index)
             (plate2, 0),  # (plate, segment_index)
             0.0,  # Example distance
-            Point(5,10,0)
+            Point(5, 10, 0),
         ]
 
         # Convert generic plate joint to specific plate joint

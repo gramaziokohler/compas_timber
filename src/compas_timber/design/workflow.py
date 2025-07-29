@@ -106,12 +106,6 @@ class JointRuleSolver(object):
         self.joining_errors, unjoined_clusters = self.process_clusters(clusters, max_distance=self.max_distance)
         return self.joining_errors, unjoined_clusters
 
-    # def get_clusters_from_model(self, max_distance=None):
-    #     self.model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
-    #     self.model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
-    #     analyzer = MaxNCompositeAnalyzer(self.model, n=len(list(self.model.elements())), max_distance=max_distance)
-    #     return analyzer.find()
-
     def remove_handled_pairs(self, clusters, handled_pairs):
         """Removes clusters from the list that have been handled."""
         clusters_temp = [c for c in clusters]

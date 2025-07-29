@@ -105,7 +105,7 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
         self._kdtree = KDTree([joint.location for joint in self._joints])
         self._n = n
-        self.max_distance = max_distance or TOL.absolute 
+        self.max_distance = max_distance or TOL.absolute
 
         # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
 
@@ -245,6 +245,7 @@ def MaxNCompositeAnalyzer(model, n, max_distance=None):
     analyzers_cls = [lambda m, t, k=k: NBeamKDTreeAnalyzer(m, n=k, max_distance=t) for k in range(n, 1, -1)]
     # Use lambdas to capture k at each step
     return CompositeAnalyzer([cls(model, max_distance) for cls in analyzers_cls])
+
 
 def get_clusters_from_model(model, max_distance=None):
     model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
