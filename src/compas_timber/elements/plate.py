@@ -11,6 +11,7 @@ from compas.geometry import closest_point_on_plane
 from compas.geometry import distance_point_plane
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
+from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
@@ -32,8 +33,6 @@ class Plate(TimberElement):
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
-    blank_extension : float, optional
-        The extension of the blank geometry around the edges of the plate geometry. Default is 0.
 
 
     Attributes
@@ -70,7 +69,6 @@ class Plate(TimberElement):
         data = super(Plate, self).__data__
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
-        data["blank_extension"] = self.blank_extension
         data["openings"] = self.openings
         return data
 
@@ -210,6 +208,7 @@ class Plate(TimberElement):
                 self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
         return self._frame
 
+    @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self._features = []
@@ -288,8 +287,6 @@ class Plate(TimberElement):
             The thickness of the plate.
         vector : :class:`~compas.geometry.Vector`, optional
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        blank_extension : float, optional
-            The extension of the blank geometry around the edges of the plate geometry. Default is 0.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 

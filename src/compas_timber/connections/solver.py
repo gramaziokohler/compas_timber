@@ -4,21 +4,18 @@ import math
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
-from compas.geometry import closest_point_on_line
-from compas.geometry import cross_vectors
 from compas.geometry import distance_point_line
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_line_line
-from compas.geometry import scale_vector
-from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
 from compas.tolerance import TOL
 
+from compas_timber.utils import distance_segment_segment_points
+from compas_timber.utils import get_segment_overlap
 from compas_timber.utils import is_point_in_polyline
 
 
@@ -55,10 +52,14 @@ class JointTopology(object):
     Attributes
     ----------
     TOPO_UNKNOWN
-    TOPO_I
-    TOPO_L
-    TOPO_T
-    TOPO_X
+    TOPO_I - end-to-end joint between two parallel beams
+    TOPO_L - end-to-end joint between two non-parallel beams
+    TOPO_T - end-to-middle joint between two beams
+    TOPO_X - middle-to-middle joint between two beams
+    TOPO_Y - joint between three or more beams where all beams meet at their ends
+    TOPO_K - joint between three or more beams where at least one beam meet in the middle
+    TOPO_EDGE_EDGE  - joint between two plates where the edges of both plates are aligned
+    TOPO_EDGE_FACE  - joint between two plates where one plate is aligned with the face of the other
 
     """
 
@@ -67,6 +68,10 @@ class JointTopology(object):
     TOPO_L = 2
     TOPO_T = 3
     TOPO_X = 4
+    TOPO_Y = 5
+    TOPO_K = 6
+    TOPO_EDGE_EDGE = 7
+    TOPO_EDGE_FACE = 8
 
     @classmethod
     def get_name(cls, value):
@@ -77,12 +82,13 @@ class JointTopology(object):
         Parameters
         ----------
         value : int
-            One of [JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_UNKNOWN]
+            One of [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_Y,
+            JointTopology.TOPO_K, JointTopology.TOPO_EDGE_EDGE, JointTopology.TOPO_EDGE_FACE, JointTopology.TOPO_UNKNOWN]
 
         Returns
         -------
         str
-            One of ["TOPO_L", "TOPO_T", "TOPO_X", "TOPO_UNKNOWN"]
+            One of ["TOPO_I", "TOPO_L", "TOPO_T", "TOPO_X", "TOPO_Y", "TOPO_K", "TOPO_EDGE_EDGE", "TOPO_EDGE_FACE", "TOPO_UNKNOWN"]
 
         """
         try:
@@ -118,14 +124,12 @@ class ConnectionSolver(object):
         """
         return find_neighboring_elements(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
 
-    def find_topology(self, beam_a, beam_b, tol=TOLERANCE, max_distance=None):
+    def find_topology(self, beam_a, beam_b, max_distance=None):
         """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
 
         If the topology is role-sensitive, the method outputs the beams in a consistent specific order
         (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
         order as they were inputted.
-
-        # TODO: this needs to be reworked ASAP
 
         Parameters
         ----------
@@ -140,115 +144,75 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`)
+        tuple(:class:`~compas_timber.connections.JointTopology`, tuple(:class:`~compas_timber.parts.Beam`, int),
+            tuple(:class:`~compas_timber.parts.Beam`, int), float, :class:`~compas_timber.geometry.Point`)
+            The topology of the intersection between the two beams, tuple containing plate and index of connecting edge, the
+            distance between the plates, and the point of intersection.
 
         """
-        tol = self.TOLERANCE  # TODO: change to a unit-sensitive value
-        angtol = 1e-3
-        a1, a2 = beam_a.centerline
-        b1, b2 = beam_b.centerline
-        va = subtract_vectors(a2, a1)
-        vb = subtract_vectors(b2, b1)
+        # first check if the beams are close enough to be considered intersecting and get the closest points on the segments
+        max_distance = max_distance or TOL.absolute  # TODO: change to a unit-sensitive value
+        dist, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+        if dist > max_distance:
+            return JointTopology.TOPO_UNKNOWN, None, None, None, None
+        point_a = Point(*point_a)
+        point_b = Point(*point_b)
 
-        # check if centerlines parallel
-        ang = angle_vectors(va, vb)
-        if ang < angtol or ang > math.pi - angtol:
-            parallel = True
-        else:
-            parallel = False
-
-        if parallel:
-            pa = a1
-            pb = closest_point_on_line(a1, [b1, b2])
-            if self._exceed_max_distance(pa, pb, max_distance, tol):
-                return JointTopology.TOPO_UNKNOWN, None, None
-
-            # check if any ends meet
-            comb = [[0, 0], [0, 1], [1, 0], [1, 1]]
-            meet = [not self._exceed_max_distance([a1, a2][ia], [b1, b2][ib], max_distance, tol) for ia, ib in comb]
-            if sum(meet) != 1:
-                return JointTopology.TOPO_UNKNOWN, None, None
-
-            # check if overlap: find meeting ends -> compare vectors outgoing from these points
-            meeting_ends_idx = [c for c, m in zip(comb, meet) if m is True][0]
-            ia, ib = meeting_ends_idx
-            pa1 = [a1, a2][ia]
-            pa2 = [a1, a2][not ia]
-            pb1 = [b1, b2][ib]
-            pb2 = [b1, b2][not ib]
-            vA = subtract_vectors(pa2, pa1)
-            vB = subtract_vectors(pb2, pb1)
-            ang = angle_vectors(vA, vB)
-            if ang < tol:
-                # vectors pointing in the same direction -> beams are overlapping
-                return JointTopology.TOPO_UNKNOWN, None, None
+        # see if beams are parallel
+        if TOL.is_zero(angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction) % math.pi):
+            # beams are parallel
+            # if parallel overlap on beam_a means that beam_b is overlapped by beam_a. Only need to perform the check on beam_a
+            overlap_on_a = get_segment_overlap(beam_a.centerline, beam_b.centerline)
+            if overlap_on_a is None:
+                return JointTopology.TOPO_I, beam_a, beam_b, dist, (point_a + point_b) / 2.0
+            if overlap_on_a[1] < max_distance:  # overlaps on beam_a start
+                pt = beam_b.endpoint_closest_to_point(beam_a.centerline.start)[1]
+                dist = distance_point_point(pt, beam_a.centerline.start)
+                return JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.start + pt) / 2.0
+            if abs(overlap_on_a[0] - beam_a.length) < max_distance:  # overlaps on beam_a end
+                pt = beam_b.endpoint_closest_to_point(beam_a.centerline.end)[1]
+                dist = distance_point_point(pt, beam_a.centerline.end)
+                return JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.start + pt) / 2.0
             else:
-                return JointTopology.TOPO_I, beam_a, beam_b
+                return JointTopology.TOPO_UNKNOWN, None, None, None, None
 
-        # if not parallel:
-        vn = cross_vectors(va, vb)
-        vna = cross_vectors(va, vn)
-        vnb = cross_vectors(vb, vn)
+        _, a_end_pt = beam_a.endpoint_closest_to_point(point_b)
+        _, b_end_pt = beam_b.endpoint_closest_to_point(point_a)
 
-        ta = self._calc_t([a1, a2], [b1, vnb])
-        pa = Point(*add_vectors(a1, scale_vector(va, ta)))
-        tb = self._calc_t([b1, b2], [a1, vna])
-        pb = Point(*add_vectors(b1, scale_vector(vb, tb)))
+        a_end = distance_point_point(a_end_pt, point_a) < max_distance
+        b_end = distance_point_point(b_end_pt, point_b) < max_distance
+        location = (point_a + point_b) / 2.0
+        if a_end and b_end:
+            return JointTopology.TOPO_L, beam_a, beam_b, dist, location
+        if a_end:
+            return JointTopology.TOPO_T, beam_a, beam_b, dist, location
+        if b_end:
+            return JointTopology.TOPO_T, beam_b, beam_a, dist, location
+        return JointTopology.TOPO_X, beam_a, beam_b, dist, location
 
-        # for max_distance calculations, limit intersection point to line segment
-        if ta < 0:
-            pa = a1
-        if ta > 1:
-            pa = a2
-        if tb < 0:
-            pb = b1
-        if tb > 1:
-            pb = b2
+    def find_wall_wall_topology(self, wall_a, wall_b, tol=TOLERANCE, max_distance=None):
+        """Calculates the topology of the intersection between two walls.
 
-        if self._exceed_max_distance(pa, pb, max_distance, tol):
-            return JointTopology.TOPO_UNKNOWN, None, None
+        TODO: Passes-through to the beam topology calculation. This should be reworked.
 
-        # topologies:
-        xa = self._is_near_end(ta, beam_a.centerline.length, max_distance or 0, tol)
-        xb = self._is_near_end(tb, beam_b.centerline.length, max_distance or 0, tol)
+        Parameters
+        ----------
+        wall_a : :class:`~compas_timber.elements.Wall`
+            First potential intersecting wall.
+        wall_b : :class:`~compas_timber.elements.Wall`
+            Second potential intersecting wall.
+        tol : float
+            General tolerance to use for mathematical computations.
+        max_distance : float, optional
+            Maximum distance, in desigen units, at which two fs are considered intersecting.
 
-        # L-joint (both meeting at ends)
-        if xa and xb:
-            return JointTopology.TOPO_L, beam_a, beam_b
+        Returns
+        -------
+        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.element.Wall`, :class:`~compas_timber.element.Wall`)
 
-        # T-joint (one meeting with the end along the other)
-        if xa:
-            # A:main, B:cross
-            return JointTopology.TOPO_T, beam_a, beam_b
-        if xb:
-            # B:main, A:cross
-            return JointTopology.TOPO_T, beam_b, beam_a
-
-        # X-joint (both meeting somewhere along the line)
-        return JointTopology.TOPO_X, beam_a, beam_b
-
-    @staticmethod
-    def _calc_t(line, plane):
-        a, b = line
-        o, n = plane
-        ab = subtract_vectors(b, a)
-        dotv = dot_vectors(n, ab)  # lines parallel to plane (dotv=0) filtered out already
-        oa = subtract_vectors(a, o)
-        t = -dot_vectors(n, oa) / dotv
-        return t
-
-    @staticmethod
-    def _exceed_max_distance(pa, pb, max_distance, tol):
-        d = distance_point_point(pa, pb)
-        if max_distance is not None and d > max_distance:
-            return True
-        if max_distance is None and d > tol:
-            return True
-        return False
-
-    @staticmethod
-    def _is_near_end(t, length, max_distance, tol):
-        return abs(t) * length < max_distance + tol or abs(1.0 - t) * length < max_distance + tol
+        """
+        # TODO: make find topology more generic. break down to find_line_line_topo etc.
+        return self.find_topology(wall_a, wall_b, tol, max_distance)
 
 
 class PlateConnectionSolver(ConnectionSolver):
@@ -258,6 +222,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
+        When TOPOLOGY_EDGE_FACE is found, the plates may be returned in reverse order, with the main plate first and the cross plate second.
 
         parameters
         ----------
@@ -276,32 +241,30 @@ class PlateConnectionSolver(ConnectionSolver):
             The topology of the intersection between the two plates and the two plates themselves, and the indices of the outline segments where the intersection occurs.
             Format: JointTopology, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
         """
-
-        plate_a_segment_index, plate_b_segment_index = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
-
+        plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if plate_a_segment_index is None and plate_b_segment_index is None:
-            return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+            return JointTopology.TOPO_UNKNOWN, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index), dist, pt
         if plate_a_segment_index is not None and plate_b_segment_index is None:
-            return JointTopology.TOPO_T, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+            return JointTopology.TOPO_EDGE_FACE, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index), dist, pt
         if plate_a_segment_index is None and plate_b_segment_index is not None:
-            return JointTopology.TOPO_T, (plate_b, plate_b_segment_index), (plate_a, plate_a_segment_index)
+            return JointTopology.TOPO_EDGE_FACE, (plate_b, plate_b_segment_index), (plate_a, plate_a_segment_index), dist, pt
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
-            return JointTopology.TOPO_L, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+            return JointTopology.TOPO_EDGE_EDGE, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index), dist, pt
 
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b`. used to determine connection Topology"""
 
-        indices = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        if indices[0] is not None:
-            return indices
-        index = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        if index is not None:
-            return index, None
-        index = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
-        if index is not None:
-            return None, index
-        return None, None
+        i_a, i_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if i_a is not None:
+            return i_a, i_b, dist, pt
+        i_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if i_a is not None:
+            return i_a, None, dist, pt
+        i_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+        if i_b is not None:
+            return None, i_b, dist, pt
+        return None, None, None, None
 
     @staticmethod
     def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
@@ -313,11 +276,13 @@ class PlateConnectionSolver(ConnectionSolver):
         for pair in itertools.product(plate_a.outlines, plate_b.outlines):
             for i, seg_a in enumerate(pair[0].lines):
                 for j, seg_b in enumerate(pair[1].lines):  # TODO: use rtree?
-                    if distance_point_line(seg_a.point_at(0.5), seg_b) <= max_distance:
+                    seg_a_midpt = seg_a.point_at(0.5)
+                    dist = distance_point_line(seg_a_midpt, seg_b)
+                    if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
-                                return i, j
-        return None, None
+                                return i, j, dist, seg_a_midpt
+        return None, None, None, None
 
     @staticmethod
     def _get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, tol=TOL):
@@ -330,14 +295,43 @@ class PlateConnectionSolver(ConnectionSolver):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
                 line = Line(*intersection_plane_plane(plane_a, plane_b))
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
-                    if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
+                    seg_a_midpt = seg_a.point_at(0.5)
+                    dist = distance_point_line(seg_a_midpt, line)
+                    if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                return i
-        return None
+                                return i, dist, seg_a_midpt
+        return None, None, None
 
+    @staticmethod
+    def do_segments_overlap(segment_a, segment_b):
+        """Checks if two segments overlap.
 
+        Parameters
+        ----------
+        seg_a : :class:`~compas.geometry.Segment`
+            The first segment.
+        seg_b : :class:`~compas.geometry.Segment`
+            The second segment.
+        tol : float, optional
+            Tolerance for overlap check.
 
+        Returns
+        -------
+        bool
+            True if the segments overlap, False otherwise.
+        """
+        for pt_a in [segment_a.start, segment_a.end, segment_a.point_at(0.5)]:
+            dot_start = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, pt_a))
+            dot_end = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.end, pt_a))
+            if dot_start > 0 and dot_end < 0:
+                return True
+        for pt_b in [segment_b.start, segment_b.end, segment_b.point_at(0.5)]:
+            dot_start = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt_b))
+            dot_end = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.end, pt_b))
+            if dot_start > 0 and dot_end < 0:
+                return True
+        return False
 
     @staticmethod
     def does_segment_intersect_outline(segment, polyline, tol=TOL):
