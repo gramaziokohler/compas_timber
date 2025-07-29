@@ -11,7 +11,7 @@ from compas.geometry import Polyline
 from compas.tolerance import TOL
 
 from compas_timber.connections import JointCandidate
-from compas_timber.connections import GenericPlateJoint
+from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
@@ -275,11 +275,11 @@ def test_generic_plate_joint():
 
     model.connect_adjacent_plates()
 
-    assert all((isinstance(j, GenericPlateJoint) for j in model.joints))
+    assert all((isinstance(j, PlateJointCandidate) for j in model.joints))
 
     assert len(model.joints) == 1
     edge_face_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_EDGE_FACE]
     assert len(edge_face_joints) == 1
-    assert isinstance(edge_face_joints[0], GenericPlateJoint)
+    assert isinstance(edge_face_joints[0], PlateJointCandidate)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
     assert list(model.joints)[0].elements[0] == plate_b

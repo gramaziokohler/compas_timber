@@ -8,7 +8,7 @@ from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import GenericJoint
-from compas_timber.connections import GenericPlateJoint
+from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateLButtJoint
 from compas_timber.connections.analyzers import Cluster
@@ -89,7 +89,7 @@ def plate_model():
 def generic_plate_joint_with_plates(plate_model):
     """Create a generic plate joint connecting two plates."""
     model, plate1, plate2 = plate_model
-    generic_plate_joint = GenericPlateJoint(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_L, a_segment_index=1, b_segment_index=0)
+    generic_plate_joint = PlateJointCandidate(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_L, a_segment_index=1, b_segment_index=0)
     model.add_joint(generic_plate_joint)
     return model, generic_plate_joint, plate1, plate2
 
@@ -246,7 +246,7 @@ class TestJointFromGenericJoint:
         # The kwargs should be passed to the joint constructor
 
     def test_from_generic_plate_joint_with_attributes(self, generic_plate_joint_with_plates):
-        """Test conversion from GenericPlateJoint preserves attributes."""
+        """Test conversion from PlateJointCandidate preserves attributes."""
         model, generic_plate_joint, plate1, plate2 = generic_plate_joint_with_plates
 
         # Convert generic plate joint to specific plate joint
@@ -266,11 +266,11 @@ class TestJointFromGenericJoint:
         assert generic_plate_joint not in model.joints
 
     def test_from_generic_plate_joint_without_b_segment_index(self, plate_model):
-        """Test conversion from GenericPlateJoint without b_segment_index."""
+        """Test conversion from PlateJointCandidate without b_segment_index."""
         model, plate1, plate2 = plate_model
 
         # Create generic plate joint without b_segment_index
-        generic_plate_joint = GenericPlateJoint(
+        generic_plate_joint = PlateJointCandidate(
             plate_a=plate1,
             plate_b=plate2,
             topology=JointTopology.TOPO_T,
@@ -345,7 +345,7 @@ class TestJointFromMethodsEdgeCases:
             TButtJoint.from_cluster(model, cluster)
 
     def test_from_generic_joint_non_generic_plate_joint(self, generic_joint_with_beams):
-        """Test from_generic_joint with non-GenericPlateJoint."""
+        """Test from_generic_joint with non-PlateJointCandidate."""
         model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
         # Should not try to extract plate-specific attributes
@@ -383,12 +383,12 @@ class TestJointFromMethodsEdgeCases:
         # The exact behavior depends on TButtJoint implementation
 
     def test_plate_joint_from_generic_joint_topology_solver_not_called_when_attributes_set(self, plate_model, mocker):
-        """Test that PlateConnectionSolver.find_topology is NOT called when GenericPlateJoint already has topology and segment indices set."""
+        """Test that PlateConnectionSolver.find_topology is NOT called when PlateJointCandidate already has topology and segment indices set."""
 
         model, plate1, plate2 = plate_model
 
         # Create generic plate joint with all required attributes already set
-        generic_plate_joint = GenericPlateJoint(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
+        generic_plate_joint = PlateJointCandidate(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
         model.add_joint(generic_plate_joint)
 
         # Mock the PlateConnectionSolver.find_topology method
@@ -410,7 +410,7 @@ class TestJointFromMethodsEdgeCases:
         assert generic_plate_joint not in model.joints
 
     def test_plate_joint_from_generic_joint_topology_solver_called_when_attributes_missing(self, plate_model, mocker):
-        """Test that PlateConnectionSolver.find_topology IS called when GenericPlateJoint has missing segment indices."""
+        """Test that PlateConnectionSolver.find_topology IS called when PlateJointCandidate has missing segment indices."""
         from compas_timber.connections.solver import PlateConnectionSolver
 
         model, plate1, plate2 = plate_model

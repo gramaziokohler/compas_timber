@@ -311,7 +311,7 @@ def plate_model():
 
 
 def test_plate_joint_create_joint_topology_solver_called_when_attributes_missing(plate_model, mocker):
-    """Test that PlateConnectionSolver.find_topology IS called when GenericPlateJoint has missing segment indices."""
+    """Test that PlateConnectionSolver.find_topology IS called when PlateJointCandidate has missing segment indices."""
 
     model, plate1, plate2 = plate_model
 
@@ -337,7 +337,7 @@ def test_plate_joint_create_joint_topology_solver_called_when_attributes_missing
 
 
 def test_plate_joint_create_joint_topology_solver_not_called_when_attributes_set(plate_model, mocker):
-    """Test that PlateConnectionSolver.find_topology IS called when GenericPlateJoint has missing segment indices."""
+    """Test that PlateConnectionSolver.find_topology IS called when PlateJointCandidate has missing segment indices."""
 
     model, plate1, plate2 = plate_model
 

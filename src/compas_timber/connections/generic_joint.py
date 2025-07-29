@@ -63,8 +63,8 @@ class JointCandidate(Joint):
         pass
 
 
-class GenericPlateJoint(PlateJoint, GenericJoint):
-    """A GenericPlateJoint is an information-only joint for plate connections.
+class PlateJointCandidate(PlateJoint, JointCandidate):
+    """A PlateJointCandidate is an information-only joint for plate connections.
 
     It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
 
@@ -85,4 +85,4 @@ class GenericPlateJoint(PlateJoint, GenericJoint):
     """
 
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
-        super(GenericPlateJoint, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
+        super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)

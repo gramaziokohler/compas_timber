@@ -17,7 +17,7 @@ from compas_timber.connections import PlateTButtJoint
 from compas_timber.connections import PlateLButtJoint
 from compas_timber.connections import PlateMiterJoint
 from compas_timber.connections import GenericJoint
-from compas_timber.connections import GenericPlateJoint
+from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import Cluster
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
@@ -311,7 +311,7 @@ def test_plate_topo_rules():
     model.add_elements([plate_a, plate_b, plate_c])
     solver = JointRuleSolver(rules, model)
     errors, unjoined_clusters = solver.apply_rules_to_model()
-    assert len([j for j in model.joints if not isinstance(j, GenericPlateJoint)]) == 3, "Expected three joints"
+    assert len([j for j in model.joints if not isinstance(j, PlateJointCandidate)]) == 3, "Expected three joints"
 
 
 def test_plate_category_rules_reverse_topo():
@@ -337,7 +337,7 @@ def test_plate_category_rules_reverse_topo():
     solver = JointRuleSolver(rules, model)
     errors, unjoined_clusters = solver.apply_rules_to_model()
 
-    assert len([j for j in model.joints if not isinstance(j, GenericPlateJoint)]) == 2, "Expected two joints"
+    assert len([j for j in model.joints if not isinstance(j, PlateJointCandidate)]) == 2, "Expected two joints"
 
 
 def test_plate_category_rules_correct_topo():
@@ -362,7 +362,7 @@ def test_plate_category_rules_correct_topo():
     model.add_elements([plate_a, plate_b, plate_c])
     solver = JointRuleSolver(rules, model)
     errors, unjoined_clusters = solver.apply_rules_to_model()
-    assert len([j for j in model.joints if not isinstance(j, GenericPlateJoint)]) == 3, "Expected three joints"
+    assert len([j for j in model.joints if not isinstance(j, PlateJointCandidate)]) == 3, "Expected three joints"
 
 
 def test_plate_rules_priority():
