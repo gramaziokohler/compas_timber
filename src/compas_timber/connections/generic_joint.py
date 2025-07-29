@@ -2,12 +2,12 @@ from .joint import Joint
 from .plate_joint import PlateJoint
 
 
-class GenericJoint(Joint):
-    """A GenericJoint is an information-only joint, which does not add any features to the elements it connects.
+class JointCandidate(Joint):
+    """A JointCandidate is an information-only joint, which does not add any features to the elements it connects.
 
     It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
 
-    Please use `GenericJoint.create()` to properly create an instance of this class and associate it with an model.
+    Please use `JointCandidate.create()` to properly create an instance of this class and associate it with an model.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ class GenericJoint(Joint):
             "element_a_guid": self.element_a_guid,
             "element_b_guid": self.element_b_guid,
         }
-        data_dict.update(super(GenericJoint, self).__data__)
+        data_dict.update(super(JointCandidate, self).__data__)
         return data_dict
 
     @classmethod
@@ -42,7 +42,7 @@ class GenericJoint(Joint):
         return instance
 
     def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
-        super(GenericJoint, self).__init__(**kwargs)
+        super(JointCandidate, self).__init__(**kwargs)
         self.element_a = element_a
         self.element_b = element_b
         self.element_a_guid = str(element_a.guid) if element_a else None

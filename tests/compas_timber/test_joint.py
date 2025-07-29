@@ -10,7 +10,7 @@ from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.tolerance import TOL
 
-from compas_timber.connections import GenericJoint
+from compas_timber.connections import JointCandidate
 from compas_timber.connections import GenericPlateJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
@@ -249,7 +249,7 @@ def test_generic_joint():
 
     model.connect_adjacent_beams()
 
-    assert all((isinstance(j, GenericJoint) for j in model.joints))
+    assert all((isinstance(j, JointCandidate) for j in model.joints))
 
     assert len(model.joints) == 4
     l_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_L]

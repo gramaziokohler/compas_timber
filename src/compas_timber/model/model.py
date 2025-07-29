@@ -13,7 +13,7 @@ from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import GenericJoint
+from compas_timber.connections import JointCandidate
 from compas_timber.connections import GenericPlateJoint
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
@@ -405,7 +405,7 @@ class TimberModel(Model):
             assert beam_a and beam_b
             # p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             # p1 = Point(*p1) if p1 else None
-            joint = GenericJoint.create(self, beam_a, beam_b, topology=topology, distance=distance, location=pt)
+            joint = JointCandidate.create(self, beam_a, beam_b, topology=topology, distance=distance, location=pt)
 
     def connect_adjacent_plates(self, max_distance=None):
         for joint in self.joints:
