@@ -34,12 +34,12 @@ class SlabButtJoint(SlabJoint, PlateButtJoint):
     @property
     def _main_slab_guid(self):
         """Return the GUID of the main slab."""
-        return self.plate_a.guid if self.plate_a else None
+        return self._plate_a_guid or self.plate_a.guid if self.plate_a else None
 
     @property
     def _cross_slab_guid(self):
         """Return the GUID of the cross slab."""
-        return self.plate_b.guid if self.plate_b else None
+        return self._plate_b_guid or self.plate_b.guid if self.plate_b else None
 
     def __repr__(self):
         return "SlabButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))

@@ -16,6 +16,8 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import get_polyline_segment_perpendicular_vector
+
 
 from .timber import TimberElement
 
@@ -170,7 +172,17 @@ class Plate(TimberElement):
             Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
             Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
         )
-
+    
+    @property
+    def edge_planes(self):
+        _edge_planes = []
+        for i in range(len(self.outline_a) - 1):
+            plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
+            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a, i)) < 0:
+                plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
+            _edge_planes.append(plane)
+        return _edge_planes
+    
     @property
     def features(self):
         if not self._outline_feature:
