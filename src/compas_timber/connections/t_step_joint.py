@@ -220,27 +220,37 @@ class TStepJoint(Joint):
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
-
-        Raises
-        ------
-        BeamJoiningError
-            If the elements are not compatible for the creation of the joint.
-
-        """
-        # check if the beams are aligned
-        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
-        for beam in self.elements:
-            beam_normal = beam.frame.normal.unitized()
-            dot = abs(beam_normal.dot(cross_vect.unitized()))
-            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoiningError(
-                    self.main_beam,
-                    self.cross_beam,
-                    debug_info="The the two beams are not aligned to create a Step joint.")
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
         self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+
+    @classmethod
+    def comply_elements(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.model.TimberCluster`
+            The cluster of beams to be checked.
+        model_max_distance : float, optional
+            The maximum distance between the centerlines of the beams in the cluster.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
+
+        """
+        elements = list(elements)
+        cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
+        for beam in elements:
+            beam_normal = beam.frame.normal.unitized()
+            dot = abs(beam_normal.dot(cross_vect.unitized()))
+            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
+                if not raise_error:
+                    return False
+                raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
+
+        return True

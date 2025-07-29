@@ -46,6 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
+* Added `PlateJointCandidate` to `generic_joint.py`.
+* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
+* Added `PlateJoint.from_generic_joint` as override.
+* Added `joints_contribution_guide` in docs.
+* Added `JointRuleSolver` class.
+* Added `JointTopology.TOPO_Y` for Beam Connections.
+* Added `JointTopology.TOPO_K` for Beam Connections.
+* Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
+* Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
+* Added `Cluster.topology`.
 
 ### Changed
 
@@ -62,11 +72,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Updated `BTLx_contribution_guide` in docs.
 * Fixed several GH Components for Rhino8 compatibility.
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
-* Fixed attribute error when creating a `TButtJoint`.
 * Fixed a bug in `BeamsFromMesh` GH Component.
+* Fixed attribute error when creating a `TButtJoint`.
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Minor fixes to GH Components.
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
+* Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
+* `Platejoint`s can now be isntantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
+* Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
+* Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
+* Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.apply_rules_to_model` which now adds `Joint`s to the
+  `TimberModel` directly.
+* Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
+* Fixed element order in `DirectJointRule` GH component.
+* Reworked `Model` GH component.
+* Changed `WallPopulator.create_joint_definitions()` to `WallPopulator.create_joints()`, which now returns Joint instances.
 
 ### Removed
 
@@ -74,7 +94,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
 * Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
 * Removed `angle_vectors_projected` from `compas_timber.utils` since this has been upstreamed to core.
-
+* Removed `comply()` from JointRule and its child classes.
+* Removed `JointDefinition`. 
+* Removed `FeatureDefinition`. 
+* Removed redundant checks in `TopologyRule` GH components.
 
 ## [0.16.2] 2025-05-07
 
@@ -351,6 +374,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
 
+ 
+
 ### Changed
 
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
@@ -389,8 +414,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed module `compas_timber.connections.french_ridge_lap`.
 * Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
 * Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
-
-
 
 ## [0.11.0] 2024-09-17
 
