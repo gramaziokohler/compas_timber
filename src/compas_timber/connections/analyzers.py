@@ -10,6 +10,7 @@ from compas.tolerance import TOL
 import compas_timber.connections  # noqa: F401
 import compas_timber.elements  # noqa: F401
 from compas_timber.connections import JointCandidate
+from compas_timber.connections import JointTopology
 
 
 class Cluster(object):

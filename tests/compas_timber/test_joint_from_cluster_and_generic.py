@@ -7,7 +7,7 @@ from compas.geometry import Point
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import BallNodeJoint
-from compas_timber.connections import GenericJoint
+from compas_timber.connections import JointCandidate
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateLButtJoint
@@ -36,7 +36,7 @@ def timber_model():
 def generic_joint_with_beams(timber_model):
     """Create a generic joint connecting two beams."""
     model, beam1, beam2 = timber_model
-    generic_joint = GenericJoint.create(model, beam1, beam2)
+    generic_joint = JointCandidate.create(model, beam1, beam2)
     return model, generic_joint, beam1, beam2
 
 
@@ -58,8 +58,8 @@ def cluster_with_multiple_joints(timber_model):
     model.add_element(beam3)
 
     # Create multiple joints
-    joint1 = GenericJoint.create(model, beam1, beam2)
-    joint2 = GenericJoint.create(model, beam2, beam3)
+    joint1 = JointCandidate.create(model, beam1, beam2)
+    joint2 = JointCandidate.create(model, beam2, beam3)
 
     cluster = Cluster([joint1, joint2])
     return model, cluster, beam1, beam2, beam3
@@ -114,7 +114,7 @@ class TestJointFromCluster:
         assert joint in model.joints
 
         # Verify the original generic joint was removed
-        assert len([j for j in model.joints if isinstance(j, GenericJoint)]) == 0
+        assert len([j for j in model.joints if isinstance(j, JointCandidate)]) == 0
 
     def test_from_cluster_with_multiple_joints(self, cluster_with_multiple_joints):
         """Test creating a joint from a cluster with multiple joints."""

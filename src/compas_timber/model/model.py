@@ -358,7 +358,7 @@ class TimberModel(Model):
         joints = self.joints
 
         for joint in joints:
-            if isinstance(joint, GenericJoint):
+            if isinstance(joint, JointCandidate):
                 continue
             try:
                 joint.add_extensions()
@@ -368,7 +368,7 @@ class TimberModel(Model):
                     raise bje
 
         for joint in joints:
-            if isinstance(joint, GenericJoint):
+            if isinstance(joint, JointCandidate):
                 continue
             try:
                 joint.add_features()
