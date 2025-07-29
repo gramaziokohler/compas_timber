@@ -18,8 +18,8 @@ class SlabButtJoint(SlabJoint, PlateButtJoint):
         data["cross_segment_index"] = self.cross_segment_index
         return data
 
-    def __init__(self, main_slab, cross_slab, topology, main_segment_index, cross_segment_index=None, **kwargs):
-        super(SlabButtJoint, self).__init__(main_slab, cross_slab, topology, main_segment_index, cross_segment_index, **kwargs)
+    def __init__(self, main_slab, cross_slab, **kwargs):
+        super(SlabButtJoint, self).__init__(main_slab, cross_slab, **kwargs)
 
     @property
     def main_slab(self):
@@ -79,17 +79,8 @@ class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    @property
-    def __data__(self):
-        data = super(SlabLButtJoint, self).__data__
-        data["main_slab_guid"] = self._main_slab_guid
-        data["cross_slab_guid"] = self._cross_slab_guid
-        data["main_segment_index"] = self.main_segment_index
-        data["cross_segment_index"] = self.cross_segment_index
-        return data
-
-    def __init__(self, main_slab, cross_slab, main_segment_index, cross_segment_index, details=None, **kwargs):
-        super(SlabLButtJoint, self).__init__(main_slab, cross_slab, JointTopology.TOPO_L, main_segment_index, cross_segment_index, **kwargs)
+    def __init__(self, main_slab, cross_slab, details=None, **kwargs):
+        super(SlabLButtJoint, self).__init__(main_slab, cross_slab, **kwargs)
         self.details = details
 
     def __repr__(self):
@@ -133,8 +124,9 @@ class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
         data["main_segment_index"] = self.main_segment_index
         return data
 
-    def __init__(self, main_slab, cross_slab, main_segment_index, **kwargs):
-        super(SlabTButtJoint, self).__init__(main_slab, cross_slab, JointTopology.TOPO_T, main_segment_index, **kwargs)
-
+    def __init__(self, main_slab, cross_slab, details=None, **kwargs):
+        super(SlabTButtJoint, self).__init__(main_slab, cross_slab, **kwargs)
+        self.details = details
+        
     def __repr__(self):
         return "SlabTButtJoint({0}, {1})".format(self.main_slab, self.cross_slab)

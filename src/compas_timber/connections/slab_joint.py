@@ -95,8 +95,8 @@ class SlabJoint(PlateJoint):
         data["b_segment_index"] = self.b_segment_index
         return data
 
-    def __init__(self, slab_a=None, slab_b=None, topology=None, a_segment_index=None, b_segment_index=None, detail_sets=None, **kwargs):
-        super(SlabJoint, self).__init__(slab_a, slab_b, topology, a_segment_index, b_segment_index, **kwargs)
+    def __init__(self, slab_a=None, slab_b=None, detail_sets=None, **kwargs):
+        super(SlabJoint, self).__init__(slab_a, slab_b, **kwargs)
 
         self._slab_a_guid = kwargs.get("slab_a_guid", None) or str(self.slab_a.guid)  # type: ignore
         self._slab_b_guid = kwargs.get("slab_b_guid", None) or str(self.slab_b.guid)  # type: ignore
