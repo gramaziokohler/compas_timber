@@ -77,7 +77,7 @@ class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_EDGE
 
     def __init__(self, main_slab, cross_slab, details=None, **kwargs):
         super(SlabLButtJoint, self).__init__(main_slab, cross_slab, **kwargs)
@@ -114,7 +114,7 @@ class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_FACE
 
     @property
     def __data__(self):
@@ -127,6 +127,6 @@ class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
     def __init__(self, main_slab, cross_slab, details=None, **kwargs):
         super(SlabTButtJoint, self).__init__(main_slab, cross_slab, **kwargs)
         self.details = details
-        
+
     def __repr__(self):
         return "SlabTButtJoint({0}, {1})".format(self.main_slab, self.cross_slab)

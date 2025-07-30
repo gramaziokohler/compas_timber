@@ -22,6 +22,7 @@ from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
 
 from compas.tolerance import TOL
+from numpy import cross
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
@@ -394,13 +395,11 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
         The vector perpendicular to the segment, pointing outside of the polyline.
 
     """
-    plane = Plane.from_points(polyline.points)
-    pt = polyline.lines[segment_index].point_at(0.5)
-    perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
-    point = pt + (perp_vector * 0.1)
-    if is_point_in_polyline(point, polyline):
-        return Vector.from_start_end(point, pt)
-    return Vector.from_start_end(pt, point)
+    normal = Plane.from_points(polyline.points[:3]).normal
+    if is_polyline_clockwise(polyline, normal):
+        return Vector(*cross_vectors(normal, polyline.lines[segment_index].direction))
+    else:
+        return Vector(*cross_vectors(polyline.lines[segment_index].direction, normal))
 
 
 def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):

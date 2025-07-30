@@ -348,7 +348,6 @@ class Plate(TimberElement):
                 outer_polyline = Polyline(polyline_points)
             else:
                 inner_polylines.append(Polyline(polyline_points))
-        print("outer_polyline", outer_polyline)
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
     # ==========================================================================
@@ -371,7 +370,6 @@ class Plate(TimberElement):
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for pline in self.openings:
-            print("opening_polyline", len(pline))
             if not TOL.is_allclose(pline[0], pline[-1]):
                 raise ValueError("Opening polyline is not closed.", pline[0], pline[-1])
             polyline = correct_polyline_direction(pline, self.frame.normal, clockwise=True)

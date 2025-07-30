@@ -100,7 +100,7 @@ class SlabJoint(PlateJoint):
 
         self._slab_a_guid = kwargs.get("slab_a_guid", None) or str(self.slab_a.guid)  # type: ignore
         self._slab_b_guid = kwargs.get("slab_b_guid", None) or str(self.slab_b.guid)  # type: ignore
-        self.detail_sets = detail_sets if detail_sets else {JointTopology.TOPO_L: LButtDetailB, JointTopology.TOPO_T: TButtDetailB}
+        self.detail_sets = detail_sets if detail_sets else {JointTopology.TOPO_EDGE_EDGE: LButtDetailB, JointTopology.TOPO_EDGE_FACE: TButtDetailB}
 
     def __repr__(self):
         return "SlabJoint({0}, {1}, {2})".format(self.slab_a, self.slab_b, JointTopology.get_name(self.topology))
