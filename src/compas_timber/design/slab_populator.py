@@ -1,4 +1,3 @@
-from hmac import new
 import math
 import itertools
 
@@ -660,7 +659,7 @@ class SlabPopulator(object):
     def _generate_interface_beams(self):
         """Generate the beams for the interface."""
         for interface in self._slab.interfaces:
-            if interface.topology == JointTopology.TOPO_T or interface.topology == JointTopology.TOPO_L:
+            if interface.topology == JointTopology.TOPO_EDGE_FACE or interface.topology == JointTopology.TOPO_EDGE_EDGE:
                 if interface.interface_role == "CROSS":
                     self._beams.extend(interface.detail_set.create_elements_cross(interface, self))
                 elif interface.interface_role == "MAIN":

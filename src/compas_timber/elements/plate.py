@@ -170,7 +170,7 @@ class Plate(TimberElement):
             Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
             Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
         )
-    
+
     @property
     def edge_planes(self):
         _edge_planes = []
@@ -180,7 +180,7 @@ class Plate(TimberElement):
                 plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
             _edge_planes.append(plane)
         return _edge_planes
-    
+
     @property
     def features(self):
         if not self._outline_feature:
@@ -219,7 +219,6 @@ class Plate(TimberElement):
         self.debug_info = []
 
     def add_interface(self, interface):
-        print("Adding interface", interface)
         self.interfaces.append(interface)
 
     def check_outlines(outline_a, outline_b):
