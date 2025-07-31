@@ -26,7 +26,6 @@ from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_vector_vector
 from compas.itertools import pairwise
 from compas.tolerance import TOL
-from numpy import dot
 
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
@@ -484,10 +483,27 @@ class SlabPopulator(object):
         self.sheeting_inside = configuration_set.sheeting_inside or 0
         self.sheeting_outside = configuration_set.sheeting_outside or 0
         self.lintel_posts = configuration_set.lintel_posts
+
+
         if configuration_set.sheeting_inside:
+            offset_inside = configuration_set.sheeting_inside/slab.thickness
+            pts_inside = []
+            for pt_a, pt_b in zip(self.outline_a.points, self.outline_b.points):
+                pt = pt_a * (1 - offset_inside) + pt_b * offset_inside
+                pts_inside.append(pt)
             self.frame_thickness -= configuration_set.sheeting_inside
+            self.frame_outline_a = Polyline(pts_inside)
+        else:
+            self.frame_outline_a = self.outline_a
         if configuration_set.sheeting_outside:
+            offset_outside = configuration_set.sheeting_outside/slab.thickness
+            pts_outside = []
+            for pt_a, pt_b in zip(self.outline_a.points, self.outline_b.points):
+                pts_outside.append(pt_a * offset_outside + pt_b * (1-offset_outside))
             self.frame_thickness -= configuration_set.sheeting_outside
+            self.frame_outline_b = Polyline(pts_outside)
+        else:
+            self.frame_outline_b = self.outline_b
 
         for key in self.BEAM_CATEGORY_NAMES:
             self.beam_dimensions[key] = (configuration_set.beam_width, self.frame_thickness)
@@ -495,7 +511,7 @@ class SlabPopulator(object):
             dimensions = self._config_set.custom_dimensions
             for key, value in dimensions.items():
                 if value:
-                    self.beam_dimensions[key] = value
+                    self.beam_dimensions[key] = (value[0], self.frame_thickness)
         self.test_out = []  # DEBUG used for debugging, to see if the slab is correctly populated
 
     def __repr__(self):
@@ -523,10 +539,6 @@ class SlabPopulator(object):
         if not self._edge_perpendicular_vectors:
             self._edge_perpendicular_vectors = [get_polyline_segment_perpendicular_vector(self.outline_a, i) for i in range(len(self.outline_a.lines))]
         return self._edge_perpendicular_vectors
-
-    @property
-    def points(self):
-        return self.outer_polyline.points
 
     @property
     def jack_studs(self):
@@ -717,13 +729,13 @@ class SlabPopulator(object):
 
     def _get_outer_segment_and_offset(self, segment_index):
         vector = self.edge_perpendicular_vectors[segment_index]
-        seg_a = self.outline_a.lines[segment_index]
-        seg_b = self.outline_b.lines[segment_index]
+        seg_a = self.frame_outline_a.lines[segment_index]
+        seg_b = self.frame_outline_b.lines[segment_index]
         dot = dot_vectors(vector, Vector.from_start_end(seg_a.start, seg_b.start))
         if dot <= 0:  # seg_b is closer to the middle
             return seg_a, -dot
         else:  # seg_a is closer to the middle
-            return seg_b.translated(-self.normal * self._slab.thickness), dot
+            return seg_b.translated(-self.normal * self.frame_thickness), dot
 
     def _set_edge_beams_category(self, beam):
         beam_angle = angle_vectors(beam.centerline.direction, self.stud_direction, deg=True)
@@ -792,7 +804,7 @@ class SlabPopulator(object):
     # ==========================================================================
 
     def _generate_edge_joints(self):
-        for i in range(len(self._edge_beams)):
+        for i in range(len(self.outline_a)-1):
             edge_interface_a = self.edge_interfaces.get((i - 1) %(len(self.outline_a)-1), None)
             edge_interface_b = self.edge_interfaces.get(i, None)
             interior_corner = i in self.interior_corner_indices
@@ -862,7 +874,7 @@ class SlabPopulator(object):
 
 
         for opening in self.inner_polylines:
-            if does_opening_intersect_polyline(opening, self.outline_a) or does_opening_intersect_polyline(opening, self.outline_b):
+            if does_opening_intersect_polyline(opening, self.frame_outline_a) or does_opening_intersect_polyline(opening, self.frame_outline_b):
                 op = Door(opening, self)
             else:
                 op = Window(opening, self)
@@ -879,7 +891,7 @@ class SlabPopulator(object):
         x_position = self._config_set.stud_spacing
         frame = Frame(self._slab.frame.point, cross_vectors(self.stud_direction, self.normal), self.stud_direction)
         to_world = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-        pts = [pt.transformed(to_world) for pt in self.outline_a.points + self.outline_b.points]
+        pts = [pt.transformed(to_world) for pt in self.frame_outline_a.points + self.frame_outline_b.points]
         box = Box.from_points(pts)
         x_position = box.xmin + self._config_set.stud_spacing
         to_local = Transformation.from_frame_to_frame(Frame.worldXY(), frame)
@@ -938,7 +950,7 @@ class SlabPopulator(object):
 
             if seg.length < min_length:
                 continue
-            if not is_point_in_polyline(seg.point_at(0.5), self.outline_a):
+            if not is_point_in_polyline(seg.point_at(0.5), self.frame_outline_a):
                 continue
             # create the beam element and add joints
             studs.append(beam_from_category(self, seg, "stud"))
@@ -983,19 +995,10 @@ class SlabPopulator(object):
         return pt.distance_to_point(cp)
 
     def _generate_plates(self):
-        plates = []
         if self._config_set.sheeting_inside:
-            plate = Plate.from_outline_thickness(self.outer_polyline, self._config_set.sheeting_inside, self.normal)
-            plates.append(plate)
+            self.plates.append(Plate(self.outline_a, self.frame_outline_a, openings=self.inner_polylines))
         if self._config_set.sheeting_outside:
-            pline = self.outer_polyline.translated(self.frame.zaxis * (self._wall.thickness - self._config_set.sheeting_outside))
-            plate = Plate.from_outline_thickness(pline, self._config_set.sheeting_outside, self.normal)
-            plates.append(plate)
-        for plate in plates:
-            for opening in self._openings:
-                projected_outline = Polyline([closest_point_on_plane(pt, Plane.from_frame(plate.frame)) for pt in opening.outline])
-                plate.add_feature(FreeContour.from_polyline_and_element(projected_outline, plate, interior=True))
-        self.plates.extend(plates)
+            self.plates.append(Plate(self.outline_b, self.frame_outline_b, openings=self.inner_polylines))
 
 
 def intersection_line_beams(line, beams, max_distance=0.0):
@@ -1046,23 +1049,6 @@ def beam_from_category(parent, segment, category, normal_offset=True, **kwargs):
         beam.attributes[key] = value
     return beam
 
-
-def _closest_points_line_segment_projected(line, segment, normal, max_distance=None):
-    x_line, x_seg = intersection_line_line(line, segment)
-    if x_line is None:
-        return None, None
-    dot = dot_vectors((segment.end - segment.start), (Point(*x_seg) - segment.start)) / distance_point_point_sqrd(segment.end, segment.start)
-    if dot > 1:
-        pt_seg = segment.end
-    elif dot < 0:
-        pt_seg = segment.start
-    else:
-        pt_seg = Point(*x_seg)
-    pt_line = Point(*closest_point_on_line(pt_seg, line))
-    proj = Projection.from_plane(Plane(pt_seg, normal))
-    if max_distance is not None and distance_point_point(Point(*pt_line).transformed(proj), pt_seg) > max_distance:
-        return None, None
-    return pt_line, pt_seg
 
 
 def does_line_intersect_polyline(line, polyline):

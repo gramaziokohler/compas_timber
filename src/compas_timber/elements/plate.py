@@ -297,10 +297,6 @@ class Plate(TimberElement):
         # this ensure the plate's geometry can always be computed
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-        # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
-        # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
-        if TOL.is_zero(thickness):
-            thickness = TOL.absolute
         offset_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal  # gets frame perpendicular to outline
         if vector:
             if vector.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction

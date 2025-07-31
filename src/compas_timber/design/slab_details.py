@@ -197,7 +197,7 @@ class TButtDetailB(TDetailBase):
         joints = []
         for beam in interface.beams:
             pts = {}
-            for i, seg in enumerate(slab_populator.outline_a.lines):
+            for i, seg in enumerate(slab_populator.frame_outline_a.lines):
                 pt = intersection_line_segment(beam.centerline, seg)[0]
                 if pt:
                     pts[i] = pt
