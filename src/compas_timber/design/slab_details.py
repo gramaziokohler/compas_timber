@@ -1,6 +1,8 @@
 import math
 
 from compas.geometry import Plane
+from compas.geometry import Vector
+from compas.geometry import dot_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
@@ -8,6 +10,7 @@ from compas.geometry import intersection_line_segment
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
+from compas_timber.utils import distance_segment_segment
 
 from .slab_populator import beam_from_category
 
@@ -24,19 +27,19 @@ class LDetailBase(object):
     @staticmethod
     def create_elements_main(interface, slab_populator):
         """Generate the beams for a main interface."""
-        interface.beams.append(slab_populator._edge_beams[interface.edge_index])
+        interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
 
     @staticmethod
     def create_elements_cross(interface, slab_populator):
         """Generate the beams for a cross interface."""
-        interface.beams.append(slab_populator._edge_beams[interface.edge_index])
+        interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
 
     @staticmethod
     def create_elements_none(interface, slab_populator):
         """Generate the beams for a none interface."""
-        interface.beams.append(slab_populator._edge_beams[interface.edge_index])
+        interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
 
 
@@ -52,7 +55,7 @@ class TDetailBase(object):
     @staticmethod
     def create_elements_main(interface, slab_populator):
         """Generate the beams for a main interface."""
-        interface.beams.append(slab_populator._edge_beams[interface.edge_index])
+        interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
 
     @staticmethod
@@ -76,7 +79,7 @@ class LButtDetailB(LDetailBase):
     @staticmethod
     def create_elements_cross(interface, slab_populator):
         """Generate the beams for a T-cross interface."""
-        edge_beam = slab_populator._edge_beams[interface.edge_index]
+        edge_beam = slab_populator._edge_beams[interface.edge_index][0]
         edge = edge_beam.centerline
         stud_width = slab_populator.beam_dimensions["stud"][0]
         stud_height = slab_populator.beam_dimensions["stud"][1]
@@ -117,7 +120,7 @@ class LButtDetailB(LDetailBase):
                 joints.append(TButtJoint(interface_a.beams[0], interface_b.beams[2]))
                 joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[2]))
                 joints.append(LButtJoint(interface_a.beams[2], interface_b.beams[2]))
-            LButtDetailB._extend_interface_beams(interface_a, interface_b)
+            # LButtDetailB._extend_interface_beams(interface_a, interface_b)
         else:
             if interface_a_angle < interface_b_angle:
                 joints.append(LButtJoint(interface_b.beams[0], interface_a.beams[0], back_plane=slab_populator._slab.edge_planes[edge_index]))
@@ -182,8 +185,8 @@ class TButtDetailB(TDetailBase):
         stud_edge_b = edge.translated(-interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         beam_a = beam_from_category(slab_populator, stud_edge_a, "stud")
         beam_b = beam_from_category(slab_populator, stud_edge_b, "stud")
-
         interface.beams = [beam_a, flat_beam, beam_b]
+
         for beam in interface.beams:
             beam.attributes["category"] = "detail"
         return interface.beams
@@ -207,7 +210,10 @@ class TButtDetailB(TDetailBase):
                         joints.append(TButtJoint(beam, slab_populator.edge_interfaces[i].beams[-1]))
                     else:
                         # if there is no interface, we create a joint definition between the edge beam and the beam
-                        joints.append(TButtJoint(beam, slab_populator._edge_beams[i]))
+                        for edge_beam in slab_populator._edge_beams[i]:
+                            if intersection_line_segment(beam.centerline, edge_beam.centerline)[0]:
+                                joints.append(TButtJoint(beam, edge_beam))
+
         return joints
 
     @staticmethod
@@ -221,3 +227,5 @@ class TButtDetailB(TDetailBase):
         for beam in interface_main.beams:
             joints.append(TButtJoint(beam, cross_beam))
         return joints
+
+

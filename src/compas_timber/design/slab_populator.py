@@ -26,6 +26,7 @@ from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_vector_vector
 from compas.itertools import pairwise
 from compas.tolerance import TOL
+from numpy import dot
 
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
@@ -118,6 +119,11 @@ class Window(object):
             CategoryRule(TButtJoint, "sill", "king_stud"),
             CategoryRule(TButtJoint, "sill", "jack_stud"),
             CategoryRule(LButtJoint, "jack_stud", "header"),
+            CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
+            CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
+            CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
+            CategoryRule(TButtJoint, "king_stud", "header"),
+            CategoryRule(TButtJoint, "king_stud", "sill"),
         ]
 
     @property
@@ -178,7 +184,10 @@ class Window(object):
         return [beam for beam in self.beams if beam.attributes["category"] == "king_stud"]
 
     def create_elements(self):
-        segments = self.frame_polyline.lines
+        segments = [l for l in self.frame_polyline.lines]
+        for i in range(4):
+            if dot_vectors(segments[i].direction, self.slab_populator.stud_direction) < 0:
+                segments[i] = Line(segments[i].end, segments[i].start)  # reverse the segment to match the stud direction
         self.header = beam_from_category(self, segments[1], "header", edge_index=1)
         left_king = beam_from_category(self, segments[2], "king_stud", edge_index=2)
         right_king = beam_from_category(self, segments[0], "king_stud", edge_index=0)
@@ -211,18 +220,20 @@ class Window(object):
         return self.joints
 
     def _join_jack_studs(self):
-        for king_stud in self.king_studs:
+        for jack_stud in self.jack_studs:
             intersections = []
             # get beams to intersect with
-            int_beams = sum(self._edge_beams.values())
-            for opening in self._openings:
+            beams = []
+            for val in self.slab_populator._edge_beams.values():
+                beams.extend(val)
+            for opening in self.slab_populator._openings:
                 if opening != self:
-                    int_beams.extend([opening.header])
+                    beams.extend([opening.header])
             # get intersections
-            intersections = get_beam_intersections(king_stud, int_beams, max_distance=self.beam_dimensions["king_stud"][0])
+            intersections = intersection_line_beams(jack_stud.centerline, beams, max_distance=self.beam_dimensions["jack_stud"][0])
             if not intersections:
                 continue
-            #get closest intersection to the bottom of the king stud
+            #get closest intersection to the bottom of the jack stud
             intersections.sort(key=lambda x: x["dot"])
             bottom_int = None
             for intersection in intersections:
@@ -231,19 +242,21 @@ class Window(object):
                 else:
                     break
             #create joint
-            self.joints.append(self.get_joint_from_elements(king_stud, bottom_int["beam"]))
+            self.joints.append(self.slab_populator.get_joint_from_elements(jack_stud, bottom_int["beam"], rules=self.default_rules))
 
     def _join_king_studs(self):
         for king_stud in self.king_studs:
             intersections = []
             # get beams to intersect with
-            int_beams = sum(self._edge_beams.values())
-            for opening in self._openings:
+            beams = []
+            for val in self.slab_populator._edge_beams.values():
+                beams.extend(val)
+            for opening in self.slab_populator._openings:
                 if opening != self:
-                    int_beams.extend([opening.sill, opening.header])
+                    beams.extend([opening.sill, opening.header])
 
             # get intersections
-            intersections = get_beam_intersections(king_stud, int_beams, max_distance=self.beam_dimensions["king_stud"][0])
+            intersections = intersection_line_beams(king_stud.centerline, beams, max_distance=self.beam_dimensions["king_stud"][0])
             if not intersections:
                 continue
 
@@ -258,8 +271,8 @@ class Window(object):
                     top_int = intersection
                     break
             #create joints
-            self.joints.append(self.get_joint_from_elements(king_stud, bottom_int["beam"]))
-            self.joints.append(self.get_joint_from_elements(king_stud, top_int["beam"]))
+            self.joints.append(self.slab_populator.get_joint_from_elements(king_stud, bottom_int["beam"], rules=self.default_rules))
+            self.joints.append(self.slab_populator.get_joint_from_elements(king_stud, top_int["beam"], rules=self.default_rules))
 
 
 
@@ -274,17 +287,17 @@ class Door(Window):
 
     @property
     def default_rules(self):
-        rules = [
-            CategoryRule(TButtJoint, "header", "king_stud"),
-            CategoryRule(TButtJoint, "sill", "king_stud"),
-            CategoryRule(TButtJoint, "sill", "jack_stud"),
-            CategoryRule(LButtJoint, "jack_stud", "header"),
-        ]
+        rules = super(Door, self).default_rules
         if self.split_bottom_plate:
             if self._lintel_posts:
+                for rule in rules:
+                    if rule.category_a == "jack_stud" and rule.category_b == "bottom_plate_beam":
+                        rules.remove(rule)
                 rules.append(CategoryRule(LButtJoint, "jack_stud", "bottom_plate_beam"))
-                rules.append(CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"))
             else:
+                for rule in rules:
+                    if rule.category_a == "king_stud" and rule.category_b == "bottom_plate_beam":
+                        rules.remove(rule)
                 rules.append(CategoryRule(LButtJoint, "king_stud", "bottom_plate_beam"))
         return rules
 
@@ -321,7 +334,7 @@ class Door(Window):
                 new_beam.frame.translate(beam.frame.xaxis * overlap[1])
 
                 self.bottom_plate_beams = [beam, new_beam]
-                self.slab_populator.edge_beams[beam.attributes["edge_index"]].append(new_beam)
+                self.slab_populator._edge_beams[beam.attributes["edge_index"]].append(new_beam)
                 break
 
         return self.beams
@@ -451,12 +464,10 @@ class SlabPopulator(object):
         self.outline_b = slab.outline_b
         self.inner_polylines = slab.openings
         self.edges = []
-        self._elements = []
-        self._beams = []
         self._edge_beams = {}
-        self._plates = []
+        self.plates = []
+        self.studs = []
         self._rules = []
-        self._features = []
         self.beam_dimensions = {}
         self.dist_tolerance = configuration_set.tolerance.relative
         self._edge_perpendicular_vectors = []
@@ -492,17 +503,19 @@ class SlabPopulator(object):
 
     @property
     def elements(self):
-        return self._beams + self._plates
+        return self.beams + self.plates
 
     @property
-    def features(self):
-        return self._features
-
-    @property
-    def plate_elements(self):
-        for plate in self._elements:
-            if isinstance(plate, Plate):
-                yield plate
+    def beams(self):
+        beams = []
+        for val in self._edge_beams.values():
+            beams.extend(val)
+        for interface in self._interfaces:
+            beams.extend(interface.beams)
+        for opening in self._openings:
+            beams.extend(opening.beams)
+        beams.extend(self.studs)
+        return list(set(beams))
 
     @property
     def edge_perpendicular_vectors(self):
@@ -517,35 +530,32 @@ class SlabPopulator(object):
 
     @property
     def jack_studs(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "jack_stud"]
+        return [beam for beam in self.beams if beam.attributes.get("category", None) == "jack_stud"]
 
     @property
     def king_studs(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "king_stud"]
+        return [beam for beam in self.beams if beam.attributes.get("category", None) == "king_stud"]
 
     @property
     def edge_studs(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "edge_stud"]
+        return [beam for beam in self.beams if beam.attributes.get("category", None) == "edge_stud"]
 
-    @property
-    def studs(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "stud"]
 
     @property
     def sills(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "sill"]
+        return [beam for beam in self.beams if beam.attributes.get("category", None) == "sill"]
 
     @property
     def headers(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "header"]
+        return [beam for beam in self.beams if beam.attributes.get("category", None) == "header"]
 
     @property
     def top_plate_beams(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "top_plate_beam"]
+        return [beam for beam in self.beams if beam.attributes.get("category", None) == "top_plate_beam"]
 
     @property
     def bottom_plate_beams(self):
-        return [beam for beam in self._beams if beam.attributes.get("category", None) == "bottom_plate_beam"]
+        return [beam for beam in self.beams if beam.attributes.get("category", None) == "bottom_plate_beam"]
 
     @property
     def plate_beams(self):
@@ -651,12 +661,23 @@ class SlabPopulator(object):
         """
         self._generate_edge_beams()
         self._generate_interface_beams()
-        self._generate_edge_joints()
-        self._generate_face_joints()
+        self._extend_interface_beams()
         self._generate_openings()
         self._generate_stud_beams()
         self._generate_plates()
+        self._generate_edge_joints()
+        self._generate_face_joints()
+        self._generate_opening_joints()
+        self._cull_overlaps()
         return self.elements
+
+
+    def generate_joints(self):
+        self._generate_edge_joints()
+        self._generate_face_joints()
+        self._generate_opening_joints()
+        self._cull_overlaps()
+
 
     def get_joint_from_elements(self, element_a, element_b, rules=None, **kwargs):
         """Get the joint type for the given elements."""
@@ -676,63 +697,50 @@ class SlabPopulator(object):
         """Get the edge beam definitions for the outer polyline of the slab."""
         if min_width is None:
             min_width = self._config_set.beam_width
-        bounding_pline, edge_beam_widths = self._get_bounding_polyline_and_widths()
-        for i, (seg, width) in enumerate(zip(bounding_pline.lines, edge_beam_widths)):
+        edge_segs, edge_beam_widths = self._get_edge_segments_and_widths()
+        for i, (seg, width) in enumerate(zip(edge_segs, edge_beam_widths)):
             beam = Beam.from_centerline(seg, width=width + min_width, height=self.frame_thickness, z_vector=self.normal)
             beam.attributes["edge_index"] = i
             self._set_edge_beams_category(beam)
             self._offset_edge_beam(beam)
-            self._trim_edge_beam(beam)
+            self._apply_linear_cut_to_edge_beam(beam)
             self._edge_beams[i] = [beam]
-            self._beams.append(beam)
 
-    def _get_bounding_polyline_and_widths(self):
+    def _get_edge_segments_and_widths(self):
         edge_segs = []
         edge_beam_widths = []
         for i in range(len(self.outline_a.lines)):
             seg, width = self._get_outer_segment_and_offset(i)
             edge_segs.append(seg)
             edge_beam_widths.append(width)
-        pts = []
-        for i in range(len(edge_segs)):
-            pts.append(intersection_line_line(edge_segs[i - 1], edge_segs[i])[0])
-        pts.append(pts[0])  # close the loop
-        return Polyline(pts), edge_beam_widths
+        return edge_segs, edge_beam_widths
 
     def _get_outer_segment_and_offset(self, segment_index):
         vector = self.edge_perpendicular_vectors[segment_index]
-        vector.unitize()
         seg_a = self.outline_a.lines[segment_index]
         seg_b = self.outline_b.lines[segment_index]
-        pt = closest_point_on_segment(seg_a.point_at(0.5), seg_b)
-        dot = dot_vectors(vector, Vector.from_start_end(seg_a.point_at(0.5), pt))
+        dot = dot_vectors(vector, Vector.from_start_end(seg_a.start, seg_b.start))
         if dot <= 0:  # seg_b is closer to the middle
             return seg_a, -dot
         else:  # seg_a is closer to the middle
             return seg_b.translated(-self.normal * self._slab.thickness), dot
 
     def _set_edge_beams_category(self, beam):
+        beam_angle = angle_vectors(beam.centerline.direction, self.stud_direction, deg=True)
         if beam.attributes["edge_index"] in self.interior_segment_indices:
-            if angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) > 135:
-                beam.attributes["category"] = "king_stud"
-            else:
-                beam.attributes["category"] = "header"
-        else:
-            if angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) < 45 or angle_vectors(beam.centerline.direction, self.stud_direction, deg=True) > 135:
+            if beam_angle < 45 or beam_angle > 135:
                 beam.attributes["category"] = "edge_stud"
             else:
-                edge_vector = get_polyline_segment_perpendicular_vector(self.outline_a, beam.attributes["edge_index"])
-                if dot_vectors(edge_vector, self.stud_direction) < 0:
+                beam.attributes["category"] = "header"  #TODO: maybe make this related to interfaces eg. it is header if there is no interface, otherwise plate.
+        else:
+            if beam_angle < 45 or beam_angle > 135:
+                beam.attributes["category"] = "edge_stud"
+            else:
+                if dot_vectors(self.edge_perpendicular_vectors[beam.attributes["edge_index"]], self.stud_direction) < 0:
                     beam.attributes["category"] = "bottom_plate_beam"
                 else:
                     beam.attributes["category"] = "top_plate_beam"
 
-    def _trim_edge_beam(self, beam):
-        """Trim the edge beams to fit between the plate beams."""
-        plane = self._slab.edge_planes[beam.attributes["edge_index"]]
-        if not TOL.is_zero(dot_vectors(self.normal, plane.normal)):
-            long_cut = LongitudinalCutProxy.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
-            beam.add_features(long_cut)
 
     def _offset_edge_beam(self, beam):
         """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
@@ -747,29 +755,45 @@ class SlabPopulator(object):
         beam.frame.translate(vector * beam.width * 0.5)
         beam.frame.translate(self.normal * beam.height * 0.5)
 
+
+    def _apply_linear_cut_to_edge_beam(self, beam):
+        """Trim the edge beams to fit between the plate beams."""
+        plane = self._slab.edge_planes[beam.attributes["edge_index"]]
+        if not TOL.is_zero(dot_vectors(self.normal, plane.normal)):
+            long_cut = LongitudinalCutProxy.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
+            beam.add_features(long_cut)
+
+
     def _generate_interface_beams(self):
         """Generate the beams for the interface."""
         for interface in self._slab.interfaces:
-            if interface.topology == JointTopology.TOPO_EDGE_FACE or interface.topology == JointTopology.TOPO_EDGE_EDGE:
-                if interface.interface_role == "CROSS":
-                    self._beams.extend(interface.detail_set.create_elements_cross(interface, self))
-                elif interface.interface_role == "MAIN":
-                    self._beams.extend(interface.detail_set.create_elements_main(interface, self))
-                elif interface.interface_role == "NONE":
-                    self._beams.extend(interface.detail_set.create_elements_none(interface, self))
-            else:
-                raise ValueError("either topology: {} or interface role: {} is invalid".format(interface.topology, interface.interface_role))
+            if interface.interface_role == "CROSS":
+                interface.detail_set.create_elements_cross(interface, self)
+            elif interface.interface_role == "MAIN":
+                interface.detail_set.create_elements_main(interface, self)
+            elif interface.interface_role == "NONE":
+                interface.detail_set.create_elements_none(interface, self)
 
+    def _extend_interface_beams(self):
+        """extends beams to the interface polyline."""
+        for i in range(len(self.outline_a.lines)):
+            interface = self.edge_interfaces.get(i, None)
+            next_interface = self.edge_interfaces.get((i + 1)%(len(self.outline_a)-1), None)
+            if any(interface is None for interface in [interface, next_interface]):
+                continue
+            ip, ic = intersection_line_line(interface.beams[-1].centerline, next_interface.beams[-1].centerline)
+            if ip and ic:
+                # if the previous and current edge beams intersect, we extend the previous beam to the intersection point
+                interface.beams[-1].length = interface.beams[-1].frame.point.distance_to_point(ip)
+                next_interface.beams[-1].length = next_interface.beams[-1].centerline.end.distance_to_point(ic)
+                next_interface.beams[-1].frame.point = ic
     # ==========================================================================
     # methods for beam joints
     # ==========================================================================
 
     def _generate_edge_joints(self):
         for i in range(len(self._edge_beams)):
-            # if i == 0:
-            #     edge_interface_a = self.edge_interfaces.get(len(self._edge_beams) - 1, None)
-            # else:
-            edge_interface_a = self.edge_interfaces.get((i - 1) % len(self._edge_beams), None)
+            edge_interface_a = self.edge_interfaces.get((i - 1) %(len(self.outline_a)-1), None)
             edge_interface_b = self.edge_interfaces.get(i, None)
             interior_corner = i in self.interior_corner_indices
             if edge_interface_a and len(edge_interface_a.beams) > 1 and edge_interface_b and len(edge_interface_b.beams) > 1:
@@ -777,16 +801,16 @@ class SlabPopulator(object):
                 self._joints.extend(edge_interface_a.detail_set.create_interface_interface_joints(edge_interface_a, edge_interface_b, self, interior_corner))
             elif edge_interface_a and len(edge_interface_a.beams) > 1:
                 # if there is only an interface on the previous edge, we use that to create the joint definition
-                self._joints.extend(edge_interface_a.detail_set.create_interface_beam_joint(edge_interface_a, self._edge_beams[i], self, interior_corner))
+                self._joints.extend(edge_interface_a.detail_set.create_interface_beam_joint(edge_interface_a, self._edge_beams[i][0], self, interior_corner))
             elif edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is only an interface on the next edge, we use that to create the joint definition
-                self._joints.extend(edge_interface_b.detail_set.create_interface_beam_joint(edge_interface_b, self._edge_beams[i - 1], self, interior_corner))
+                self._joints.extend(edge_interface_b.detail_set.create_interface_beam_joint(edge_interface_b, self._edge_beams[(i - 1)%(len(self.outline_a)-1)][-1], self, interior_corner))
             else:  # if there is no interface, we create a joint definition between the two edge beams
                 self._get_edge_beam_joint(i, interior_corner)
 
     def _get_edge_beam_joint(self, edge_index, interior_corner):
-        beam_a = self._edge_beams[edge_index - 1]
-        beam_b = self._edge_beams[edge_index]
+        beam_a = self._edge_beams[(edge_index - 1)%(len(self.outline_a)-1)][-1]
+        beam_b = self._edge_beams[edge_index][0]
         beam_a_angle = angle_vectors(beam_a.centerline.direction, self.stud_direction)
         beam_a_angle = min(beam_a_angle, math.pi - beam_a_angle)  # get the smallest angle to the stud direction
         beam_b_angle = angle_vectors(beam_b.centerline.direction, self.stud_direction)
@@ -813,37 +837,42 @@ class SlabPopulator(object):
             detail_set = interface.detail_set
             self._joints.extend(detail_set.create_joints_cross(interface, self))
 
+    def _generate_opening_joints(self):
+        """Generate the joint definitions for the openings."""
+        for opening in self._openings:
+            opening.create_joints()
+            self._joints.extend(opening.joints)
+
+
     # ==========================================================================
     # methods for stud beams
     # ==========================================================================
 
     def _generate_openings(self):
-        for opening in self.inner_polylines:
-            ints =[]
+        def does_opening_intersect_polyline(opening, polyline):
+            """Check if the opening intersects with the polyline."""
+            inds = []
             for plate_beam in self.bottom_plate_beams:
+                inds.append(plate_beam.attributes["edge_index"])
+            for i in list(set(inds)):
                 for segment in opening.lines:
-                    int=intersection_segment_segment(plate_beam.centerline, segment)[0]
-                    print(int)
-                    if int:
-                        ints.append(int)
-                        break
-                if ints:
-                        break
-            if ints:
-                print("instantiate Door")
+                    if intersection_segment_segment(polyline.lines[i], segment, tol=TOL.relative)[0]:
+                        return True
+            return False
+
+
+        for opening in self.inner_polylines:
+            if does_opening_intersect_polyline(opening, self.outline_a) or does_opening_intersect_polyline(opening, self.outline_b):
                 op = Door(opening, self)
             else:
-                print("instantiate Window")
                 op = Window(opening, self)
             self._openings.append(op)
-            self._beams.extend(op.create_elements())
-            # self._joints.extend(op.create_joints())
+            op.create_elements()
+
 
     def _generate_stud_beams(self):
         self._generate_studs(min_length=self.beam_dimensions["stud"][0])
-        self._join_jack_studs()
-        self._join_king_studs()
-        self._cull_overlaps()
+
 
     def _get_stud_lines(self):
         stud_lines = []
@@ -873,16 +902,19 @@ class SlabPopulator(object):
 
     def _get_stud_intersections(self, line):
         intersections = []
-        ints = get_beam_intersections(line, self._edge_beams, max_distance=self.beam_dimensions["stud"][0])
+        beams_to_intersect = []
+        for val in self._edge_beams.values():
+            beams_to_intersect.extend(val)
+        ints = intersection_line_beams(line, beams_to_intersect, max_distance=self.beam_dimensions["stud"][0])
         if ints:
             intersections.extend(ints)
         for opening in self._openings:
-            ints = get_beam_intersections(line, [opening.sill, opening.header], max_distance=self.beam_dimensions["stud"][0])
+            ints = intersection_line_beams(line, [opening.sill, opening.header], max_distance=self.beam_dimensions["stud"][0])
             if ints:
                 intersections.extend(ints)
         for interface in self._slab.interfaces:
             if interface.interface_role == "CROSS" and does_line_intersect_polyline(line, interface.beam_polyline):
-                ints = get_beam_intersections(line, [interface.beams[0], interface.beams[-1]], max_distance=self.beam_dimensions["stud"][0])
+                ints = intersection_line_beams(line, [interface.beams[0], interface.beams[-1]], max_distance=self.beam_dimensions["stud"][0])
                 if ints:
                     intersections.extend(ints)
         return intersections
@@ -918,7 +950,7 @@ class SlabPopulator(object):
             while len(intersecting_beams) > 0:
                 beam = intersecting_beams.pop()
                 self._joints.append(self.get_joint_from_elements(studs[-1], beam))
-            self._beams.extend(studs)
+            self.studs.extend(studs)
 
     def _is_line_in_interface(self, line):
         for i in self._slab.interfaces:
@@ -935,14 +967,14 @@ class SlabPopulator(object):
 
 
     def _cull_overlaps(self):
-        not_studs = [beam for beam in self._beams if beam.attributes.get("category", None) != "stud"]
+        not_studs = [beam for beam in self.beams if beam.attributes.get("category", None) != "stud"]
         for stud in self.studs:
             for other_element in not_studs:
                 if (
                     self._distance_between_elements(stud, other_element)
                     < (self.beam_dimensions[stud.attributes["category"]][0] + self.beam_dimensions[other_element.attributes["category"]][0]) / 2
                 ):
-                    self._beams.remove(stud)
+                    self.studs.remove(stud)
                     break
 
     def _distance_between_elements(self, element_one, element_two):
@@ -963,18 +995,19 @@ class SlabPopulator(object):
             for opening in self._openings:
                 projected_outline = Polyline([closest_point_on_plane(pt, Plane.from_frame(plate.frame)) for pt in opening.outline])
                 plate.add_feature(FreeContour.from_polyline_and_element(projected_outline, plate, interior=True))
-        self._elements.extend(plates)
+        self.plates.extend(plates)
 
 
-def get_beam_intersections(self, beam, beams_to_intersect, max_distance=0.0):
+def intersection_line_beams(line, beams, max_distance=0.0):
     intersections = []
-    line = beam.centerline
-    for beam in beams_to_intersect:
-        point, _ = _closest_points_line_segment_projected(line, beam.centerline, self.normal, max_distance=max_distance)
-        if point:
+    for beam in beams:
+        line_pt, beam_pt = intersection_line_line(line, beam.centerline)
+        if line_pt:
+            if distance_point_point(beam_pt, closest_point_on_segment(beam_pt, beam.centerline)) > max_distance:
+               continue
             intersection = {}
-            intersection["point"] = point
-            intersection["dot"] = dot_vectors(Vector.from_start_end(line.point_at(0.5), Point(*point)), line.direction)
+            intersection["point"] = Point(*line_pt)
+            intersection["dot"] = dot_vectors(Vector.from_start_end(line.point_at(0.5), Point(*line_pt)), line.direction)
             intersection["beam"] = beam
             intersections.append(intersection)
     return intersections
@@ -1103,6 +1136,3 @@ def split_beam(beam, interval, joints):
             new_joint = joint.copy()
             new_joint.elements = [new_beam]
             joints.append(new_joint)
-
-
-    print(joint, joint.elements)
