@@ -2,9 +2,9 @@ import math
 
 from compas.geometry import Plane
 from compas.geometry import angle_vectors
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
-from compas.geometry import dot_vectors
 
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
@@ -177,14 +177,15 @@ class TButtDetailB(TDetailBase):
         edge.translate(interface.frame.yaxis * interface.width * 0.5)
         stud_width = slab_populator.beam_dimensions["stud"][0]
         stud_height = slab_populator.beam_dimensions["stud"][1]
-        flat_beam = Beam.from_centerline(edge, width=stud_height, height=stud_width, z_vector=slab_populator.normal)
-        flat_beam.frame.translate(interface.frame.zaxis * flat_beam.height * 0.5)
-        stud_edge_a = edge.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
-        stud_edge_b = edge.translated(-interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         if dot_vectors(interface.frame.normal, slab_populator.normal) < 0:
             offset = slab_populator.sheeting_outside
         else:
             offset = slab_populator.sheeting_inside
+        flat_beam = Beam.from_centerline(edge, width=stud_height, height=stud_width, z_vector=slab_populator.normal)
+        flat_beam.frame.translate(interface.frame.zaxis * (flat_beam.height * 0.5+offset))
+        stud_edge_a = edge.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
+        stud_edge_b = edge.translated(-interface.frame.yaxis * (stud_width + stud_height) * 0.5)
+
         beam_a = beam_from_category(slab_populator, stud_edge_a, "stud", normal_offset=False)
         beam_a.frame.translate(interface.frame.normal * (beam_a.height * 0.5 + offset))
         beam_b = beam_from_category(slab_populator, stud_edge_b, "stud", normal_offset=False)
