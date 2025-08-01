@@ -485,6 +485,9 @@ class SlabPopulator(object):
                 pts_inside.append(pt)
             self.frame_thickness -= configuration_set.sheeting_inside
             self.frame_outline_a = Polyline(pts_inside)
+            for polyline in self.inner_polylines:
+                for pt in polyline.points:
+                    pt.translate(self.normal * configuration_set.sheeting_inside)
         else:
             self.frame_outline_a = self.outline_a
         if configuration_set.sheeting_outside:
@@ -874,7 +877,7 @@ class SlabPopulator(object):
     def _get_stud_lines(self):
         stud_lines = []
         x_position = self._config_set.stud_spacing
-        frame = Frame(self._slab.frame.point, cross_vectors(self.stud_direction, self.normal), self.stud_direction)
+        frame = Frame(self._slab.frame.point+self.normal*self.sheeting_inside, cross_vectors(self.stud_direction, self.normal), self.stud_direction)
         to_world = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         pts = [pt.transformed(to_world) for pt in self.frame_outline_a.points + self.frame_outline_b.points]
         box = Box.from_points(pts)
@@ -902,19 +905,13 @@ class SlabPopulator(object):
         beams_to_intersect = []
         for val in self._edge_beams.values():
             beams_to_intersect.extend(val)
-        ints = intersection_line_beams(line, beams_to_intersect, max_distance=self.beam_dimensions["stud"][0])
-        if ints:
-            intersections.extend(ints)
         for opening in self._openings:
-            ints = intersection_line_beams(line, [opening.sill, opening.header], max_distance=self.beam_dimensions["stud"][0])
-            if ints:
-                intersections.extend(ints)
+            beams_to_intersect.extend([opening.sill, opening.header])
         for interface in self._slab.interfaces:
-            if interface.interface_role == "CROSS" and does_line_intersect_polyline(line, interface.beam_polyline):
-                ints = intersection_line_beams(line, [interface.beams[0], interface.beams[-1]], max_distance=self.beam_dimensions["stud"][0])
-                if ints:
-                    intersections.extend(ints)
-        return intersections
+            beams_to_intersect.extend(interface.beams)
+        beams_to_intersect = list(set(beams_to_intersect))  # remove duplicates
+        return intersection_line_beams(line, beams_to_intersect, max_distance=self.beam_dimensions["stud"][0])
+      
 
     def _generate_and_join_studs_from_intersections(self, intersections, min_length=TOL.absolute):
         intersections = sorted(intersections, key=lambda x: x.get("dot"))
@@ -923,7 +920,6 @@ class SlabPopulator(object):
         for pair in pairwise(intersections):
             # cull the invalid segments but keep the intersectig beams
             seg = Line(pair[0]["point"], pair[1]["point"])
-
             if self._is_line_in_interface(seg):
                 continue
             if self._is_line_in_opening(seg):
@@ -935,7 +931,7 @@ class SlabPopulator(object):
 
             if seg.length < min_length:
                 continue
-            if not is_point_in_polyline(seg.point_at(0.5), self.frame_outline_a):
+            if not is_point_in_polyline(seg.point_at(0.5), self.frame_outline_a, in_plane=False):
                 continue
             # create the beam element and add joints
             studs.append(beam_from_category(self, seg, "stud"))

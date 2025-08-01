@@ -4,6 +4,7 @@ from compas.geometry import Plane
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
+from compas.geometry import dot_vectors
 
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
@@ -180,8 +181,14 @@ class TButtDetailB(TDetailBase):
         flat_beam.frame.translate(interface.frame.zaxis * flat_beam.height * 0.5)
         stud_edge_a = edge.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         stud_edge_b = edge.translated(-interface.frame.yaxis * (stud_width + stud_height) * 0.5)
-        beam_a = beam_from_category(slab_populator, stud_edge_a, "stud")
-        beam_b = beam_from_category(slab_populator, stud_edge_b, "stud")
+        if dot_vectors(interface.frame.normal, slab_populator.normal) < 0:
+            offset = slab_populator.sheeting_outside
+        else:
+            offset = slab_populator.sheeting_inside
+        beam_a = beam_from_category(slab_populator, stud_edge_a, "stud", normal_offset=False)
+        beam_a.frame.translate(interface.frame.normal * (beam_a.height * 0.5 + offset))
+        beam_b = beam_from_category(slab_populator, stud_edge_b, "stud", normal_offset=False)
+        beam_b.frame.translate(interface.frame.normal * (beam_b.height * 0.5 + offset))
         interface.beams = [beam_a, flat_beam, beam_b]
 
         for beam in interface.beams:
