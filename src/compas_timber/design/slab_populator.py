@@ -106,7 +106,7 @@ class Window(object):
         self._frame = None
 
     @property
-    def default_rules(self):
+    def _default_rules(self):
         return [
             CategoryRule(TButtJoint, "header", "king_stud"),
             CategoryRule(TButtJoint, "sill", "king_stud"),
@@ -205,12 +205,12 @@ class Window(object):
         return self.beams
 
     def create_joints(self):
-        self.joints.extend([self.slab_populator.get_joint_from_elements(self.header, king, self.default_rules) for king in self.king_studs])
+        self.joints.extend([self.slab_populator.get_joint_from_elements(self.header, king, self._default_rules) for king in self.king_studs])
         if self._lintel_posts:
-            self.joints.extend([self.slab_populator.get_joint_from_elements(self.sill, jack, self.default_rules) for jack in self.jack_studs])
-            self.joints.extend([self.slab_populator.get_joint_from_elements(jack, self.header, self.default_rules) for jack in self.jack_studs])
+            self.joints.extend([self.slab_populator.get_joint_from_elements(self.sill, jack, self._default_rules) for jack in self.jack_studs])
+            self.joints.extend([self.slab_populator.get_joint_from_elements(jack, self.header, self._default_rules) for jack in self.jack_studs])
         else:
-            self.joints.extend([self.slab_populator.get_joint_from_elements(self.sill, king, self.default_rules) for king in self.king_studs])
+            self.joints.extend([self.slab_populator.get_joint_from_elements(self.sill, king, self._default_rules) for king in self.king_studs])
         self._join_jack_studs()
         self._join_king_studs()
         return self.joints
@@ -238,7 +238,7 @@ class Window(object):
                 else:
                     break
             # create joint
-            self.joints.append(self.slab_populator.get_joint_from_elements(jack_stud, bottom_int["beam"], rules=self.default_rules))
+            self.joints.append(self.slab_populator.get_joint_from_elements(jack_stud, bottom_int["beam"], rules=self._default_rules))
 
     def _join_king_studs(self):
         for king_stud in self.king_studs:
@@ -267,8 +267,8 @@ class Window(object):
                     top_int = intersection
                     break
             # create joints
-            self.joints.append(self.slab_populator.get_joint_from_elements(king_stud, bottom_int["beam"], rules=self.default_rules))
-            self.joints.append(self.slab_populator.get_joint_from_elements(king_stud, top_int["beam"], rules=self.default_rules))
+            self.joints.append(self.slab_populator.get_joint_from_elements(king_stud, bottom_int["beam"], rules=self._default_rules))
+            self.joints.append(self.slab_populator.get_joint_from_elements(king_stud, top_int["beam"], rules=self._default_rules))
 
 
 class Door(Window):
@@ -280,8 +280,8 @@ class Door(Window):
         self.bottom_plate_beams = []
 
     @property
-    def default_rules(self):
-        rules = super(Door, self).default_rules
+    def _default_rules(self):
+        rules = super(Door, self)._default_rules
         if self.split_bottom_plate:
             if self._lintel_posts:
                 for rule in rules:
@@ -443,74 +443,149 @@ class SlabPopulator(object):
     def __init__(self, configuration_set, slab):
         self._slab = slab
         self._config_set = configuration_set
-        if configuration_set.stud_direction:
-            if is_parallel_vector_vector(slab.frame.normal, configuration_set.stud_direction):
-                self.stud_direction = slab.frame.yaxis
-            else:
-                proj = Projection.from_plane(Plane.from_frame(slab.frame))
-                self.stud_direction = configuration_set.stud_direction.transformed(proj)
-        else:
-            self.stud_direction = slab.frame.yaxis
-        self.normal = slab.frame.zaxis  # out
-        self.outline_a = slab.outline_a
-        self.outline_b = slab.outline_b
-        self.inner_polylines = slab.openings
-        self.edges = []
-        self._edge_beams = {}
-        self.plates = []
-        self.studs = []
-        self._rules = []
-        self.beam_dimensions = {}
-        self.dist_tolerance = configuration_set.tolerance.relative
-        self._edge_perpendicular_vectors = []
 
-        self.frame = slab.frame
-        self._interfaces = slab.interfaces or []
-        self._adjusted_segments = {}
-        self._plate_segments = {}
-        self._detail_obbs = []
+        self._stud_direction = None
+        self._beam_dimensions = None
+        self._frame_outline_a = None
+        self._frame_outline_b = None
+        self._frame_thickness = None
+
+        self.plates = []
+        self._studs = []
+        self._interior_corner_indices = []
+        self._edge_perpendicular_vectors = []
+        self._edge_beams = {}
         self._openings = []
         self._joints = []
-        self._interior_corner_indices = []
-        self.frame_thickness = slab.thickness
-        self.sheeting_inside = configuration_set.sheeting_inside or 0
-        self.sheeting_outside = configuration_set.sheeting_outside or 0
-        self.lintel_posts = configuration_set.lintel_posts
+        self._joint_tuples = []
+        self._rules = []
 
-        if configuration_set.sheeting_inside:
-            offset_inside = configuration_set.sheeting_inside / slab.thickness
-            pts_inside = []
-            for pt_a, pt_b in zip(self.outline_a.points, self.outline_b.points):
-                pt = pt_a * (1 - offset_inside) + pt_b * offset_inside
-                pts_inside.append(pt)
-            self.frame_thickness -= configuration_set.sheeting_inside
-            self.frame_outline_a = Polyline(pts_inside)
-            for polyline in self.inner_polylines:
-                for pt in polyline.points:
-                    pt.translate(self.normal * configuration_set.sheeting_inside)
-        else:
-            self.frame_outline_a = self.outline_a
-        if configuration_set.sheeting_outside:
-            offset_outside = configuration_set.sheeting_outside / slab.thickness
-            pts_outside = []
-            for pt_a, pt_b in zip(self.outline_a.points, self.outline_b.points):
-                pts_outside.append(pt_a * offset_outside + pt_b * (1 - offset_outside))
-            self.frame_thickness -= configuration_set.sheeting_outside
-            self.frame_outline_b = Polyline(pts_outside)
-        else:
-            self.frame_outline_b = self.outline_b
 
-        for key in self.BEAM_CATEGORY_NAMES:
-            self.beam_dimensions[key] = (configuration_set.beam_width, self.frame_thickness)
-        if self._config_set.custom_dimensions:
-            dimensions = self._config_set.custom_dimensions
-            for key, value in dimensions.items():
-                if value:
-                    self.beam_dimensions[key] = (value[0], self.frame_thickness)
-        self.test_out = []  # DEBUG used for debugging, to see if the slab is correctly populated
+    @property
+    def outline_a(self):
+        """Returns the outline A of the slab."""
+        return self._slab.outline_a
+
+    @property
+    def outline_b(self):
+        """Returns the outline B of the slab."""
+        return self._slab.outline_b
+    
+    @property
+    def opening_polylines(self):
+        """Returns the opening polylines of the slab."""
+        return self._slab.openings
+
+    @property
+    def frame(self):
+        """Returns the frame of the slab."""
+        return self._slab.frame
+    
+    @property
+    def interfaces(self):
+        """Returns the interfaces of the slab."""
+        return self._slab.interfaces
+
+    @property
+    def stud_spacing(self):
+        """Returns the stud spacing from the configuration set."""
+        return self._config_set.stud_spacing
+    
+    @property
+    def beam_width(self):
+        """Returns the beam width from the configuration set."""
+        return self._config_set.beam_width
+    
+    @property
+    def stud_direction(self):
+        """Returns the stud direction from the configuration set."""
+        if self._stud_direction is None:  
+            if self._config_set.stud_direction:
+                if is_parallel_vector_vector(self.frame.normal, self._config_set.stud_direction.stud_direction):
+                    self.stud_direction = self.frame.yaxis
+                else:
+                    proj = Projection.from_plane(Plane.from_frame(self.frame))
+                    self._stud_direction = self._config_set.stud_direction.transformed(proj)
+        return self._stud_direction 
+    
+    @property
+    def tolerance(self):
+        """Returns the tolerance from the configuration set."""
+        return self._config_set.tolerance
+    
+    @property
+    def sheeting_outside(self):
+        """Returns the outside sheeting thickness from the configuration set."""
+        return self._config_set.sheeting_outside
+    
+    @property
+    def sheeting_inside(self):
+        """Returns the inside sheeting thickness from the configuration set."""
+        return self._config_set.sheeting_inside
+    
+    @property
+    def frame_outline_a(self):
+        """Returns the frame outline A, adjusted for sheeting."""
+        if self._frame_outline_a is None:
+            self._handle_sheeting_offsets()
+        return self._frame_outline_a
+
+    @property
+    def frame_outline_b(self):
+        """Returns the frame outline B, adjusted for sheeting."""
+        if self._frame_outline_b is None:
+            self._handle_sheeting_offsets()
+        return self._frame_outline_b
+    
+    @property
+    def thickness(self):
+        """Returns the thickness of the slab."""
+        return self._slab.thickness
+
+    @property
+    def frame_thickness(self):
+        """Returns the frame thickness, adjusted for sheeting."""
+        if self._frame_thickness is None:
+            self._handle_sheeting_offsets()
+        return self._frame_thickness
+
+    @property
+    def lintel_posts(self):
+        """Returns the lintel posts flag from the configuration set."""
+        return self._config_set.lintel_posts
+    
+    @property
+    def edge_stud_offset(self):
+        """Returns the edge stud offset from the configuration set."""
+        return self._config_set.edge_stud_offset
+    
+    @property
+    def beam_dimensions(self):
+        """Returns the custom dimensions from the configuration set."""
+        if self._beam_dimensions is None:
+            self._beam_dimensions = {}
+            for key in self.BEAM_CATEGORY_NAMES:
+                self._beam_dimensions[key] = (self._config_set.beam_width, self.frame_thickness)
+            if self._config_set.custom_dimensions:
+                dimensions = self._config_set.custom_dimensions
+                for key, value in dimensions.items():
+                    if value:
+                        self._beam_dimensions[key] = (value[0], self.frame_thickness)
+        return self._beam_dimensions
+    
+    @property
+    def joint_overrides(self):
+        """Returns the joint overrides from the configuration set."""
+        return self._config_set.joint_overrides
+    
+    @property
+    def wall_selector(self):
+        """Returns the wall selector from the configuration set."""
+        return self._config_set.wall_selector
+
 
     def __repr__(self):
-        return "SlabPopulator({}, {})".format(self._config_set, self._wall)
+        return "SlabPopulator({}, {})".format(self._config_set, self._slab)
 
     @property
     def elements(self):
@@ -521,7 +596,7 @@ class SlabPopulator(object):
         beams = []
         for val in self._edge_beams.values():
             beams.extend(val)
-        for interface in self._interfaces:
+        for interface in self.interfaces:
             beams.extend(interface.beams)
         for opening in self._openings:
             beams.extend(opening.beams)
@@ -534,6 +609,10 @@ class SlabPopulator(object):
         if not self._edge_perpendicular_vectors:
             self._edge_perpendicular_vectors = [get_polyline_segment_perpendicular_vector(self.outline_a, i) for i in range(len(self.outline_a.lines))]
         return self._edge_perpendicular_vectors
+
+    @property
+    def normal(self):
+        return self.frame.normal
 
     @property
     def jack_studs(self):
@@ -591,13 +670,18 @@ class SlabPopulator(object):
     def edge_interfaces(self):
         """Get the edge interfaces of the slab."""
         interfaces = {}
-        for interface in self._interfaces:
+        for interface in self.interfaces:
             if interface.edge_index is not None:
                 interfaces[interface.edge_index] = interface
         return interfaces
+    
+    @property
+    def face_interfaces(self):
+        """Get the face interfaces of the slab."""
+        return [i for i in self.interfaces if i.edge_index is None]
 
     @property
-    def default_rules(self):
+    def _default_rules(self):
         return [
             CategoryRule(TButtJoint, "stud", "top_plate_beam"),
             CategoryRule(TButtJoint, "jack_stud", "top_plate_beam"),
@@ -623,7 +707,7 @@ class SlabPopulator(object):
     @property
     def rules(self):
         if not self._rules:
-            self._rules = self.default_rules
+            self._rules = self._default_rules
             if self._config_set.joint_overrides:
                 for rule in self._config_set.joint_overrides:
                     rule_set = set([rule.category_a, rule.category_b])
@@ -633,11 +717,6 @@ class SlabPopulator(object):
                             self._rules[i] = rule
                             break
         return self._rules
-
-    @property
-    def face_interfaces(self):
-        """Get the face interfaces of the slab."""
-        return [i for i in self._interfaces if i.edge_index is None]
 
     @classmethod
     def beam_category_names(cls):
@@ -660,6 +739,33 @@ class SlabPopulator(object):
                     slab_populators.append(cls(config_set, slab, interfaces))
                     break
         return slab_populators
+    
+    def _handle_sheeting_offsets(self):
+        """Handles the sheeting offsets for the slab outlines."""
+        """This method creates new outlines for the beam frame based on the sheeting thicknesses."""
+        if self.sheeting_inside:
+            offset_inside = self.sheeting_inside / self.thickness
+            pts_inside = []
+            for pt_a, pt_b in zip(self.outline_a.points, self.outline_b.points):
+                pt = pt_a * (1 - offset_inside) + pt_b * offset_inside
+                pts_inside.append(pt)
+            self.frame_thickness -= self.sheeting_inside
+            self.frame_outline_a = Polyline(pts_inside)
+            for polyline in self.opening_polylines:
+                for pt in polyline.points:
+                    pt.translate(self.normal * self.sheeting_inside)
+        else:
+            self.frame_outline_a = self.outline_a
+        if self.sheeting_outside:
+            offset_outside = self.sheeting_outside / self.thickness
+            pts_outside = []
+            for pt_a, pt_b in zip(self.outline_a.points, self.outline_b.points):
+                pts_outside.append(pt_a * offset_outside + pt_b * (1 - offset_outside))
+            self.frame_thickness -= self.sheeting_outside
+            self.frame_outline_b = Polyline(pts_outside)
+        else:
+            self.frame_outline_b = self.outline_b
+
 
     def create_elements(self):
         """Does the actual populating of the wall
@@ -767,7 +873,7 @@ class SlabPopulator(object):
 
     def _generate_interface_beams(self):
         """Generate the beams for the interface."""
-        for interface in self._slab.interfaces:
+        for interface in self.interfaces:
             if interface.interface_role == "CROSS":
                 interface.detail_set.create_elements_cross(interface, self)
             elif interface.interface_role == "MAIN":
@@ -863,7 +969,7 @@ class SlabPopulator(object):
                         return True
             return False
 
-        for opening in self.inner_polylines:
+        for opening in self.opening_polylines:
             if does_opening_intersect_polyline(opening, self.frame_outline_a) or does_opening_intersect_polyline(opening, self.frame_outline_b):
                 op = Door(opening, self)
             else:
@@ -877,7 +983,7 @@ class SlabPopulator(object):
     def _get_stud_lines(self):
         stud_lines = []
         x_position = self._config_set.stud_spacing
-        frame = Frame(self._slab.frame.point+self.normal*self.sheeting_inside, cross_vectors(self.stud_direction, self.normal), self.stud_direction)
+        frame = Frame(self.frame.point+self.normal*self.sheeting_inside, cross_vectors(self.stud_direction, self.normal), self.stud_direction)
         to_world = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         pts = [pt.transformed(to_world) for pt in self.frame_outline_a.points + self.frame_outline_b.points]
         box = Box.from_points(pts)
@@ -907,7 +1013,7 @@ class SlabPopulator(object):
             beams_to_intersect.extend(val)
         for opening in self._openings:
             beams_to_intersect.extend([opening.sill, opening.header])
-        for interface in self._slab.interfaces:
+        for interface in self.interfaces:
             beams_to_intersect.extend(interface.beams)
         beams_to_intersect = list(set(beams_to_intersect))  # remove duplicates
         return intersection_line_beams(line, beams_to_intersect, max_distance=self.beam_dimensions["stud"][0])
@@ -946,7 +1052,7 @@ class SlabPopulator(object):
             self.studs.extend(studs)
 
     def _is_line_in_interface(self, line):
-        for i in self._slab.interfaces:
+        for i in self.interfaces:
             if i.interface_role == "CROSS" and is_point_in_polyline(line.point_at(0.5), i.beam_polyline, in_plane=False):
                 return True
         return False
@@ -975,9 +1081,9 @@ class SlabPopulator(object):
 
     def _generate_plates(self):
         if self._config_set.sheeting_inside:
-            self.plates.append(Plate(self.outline_a, self.frame_outline_a, openings=self.inner_polylines))
+            self.plates.append(Plate(self.outline_a, self.frame_outline_a, openings=self.opening_polylines))
         if self._config_set.sheeting_outside:
-            self.plates.append(Plate(self.outline_b, self.frame_outline_b, openings=self.inner_polylines))
+            self.plates.append(Plate(self.outline_b, self.frame_outline_b, openings=self.opening_polylines))
 
 
 def intersection_line_beams(line, beams, max_distance=0.0):
