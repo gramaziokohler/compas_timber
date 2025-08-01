@@ -1,8 +1,6 @@
 import math
 
 from compas.geometry import Plane
-from compas.geometry import Vector
-from compas.geometry import dot_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
@@ -10,7 +8,6 @@ from compas.geometry import intersection_line_segment
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.utils import distance_segment_segment
 
 from .slab_populator import beam_from_category
 
@@ -227,5 +224,3 @@ class TButtDetailB(TDetailBase):
         for beam in interface_main.beams:
             joints.append(TButtJoint(beam, cross_beam))
         return joints
-
-

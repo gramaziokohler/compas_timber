@@ -1,6 +1,4 @@
 from compas.data import Data
-from compas.geometry import Frame
-from compas.geometry import dot_vectors
 
 from .plate import Plate
 

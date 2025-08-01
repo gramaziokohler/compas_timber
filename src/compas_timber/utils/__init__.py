@@ -22,7 +22,6 @@ from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
 
 from compas.tolerance import TOL
-from numpy import cross
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):

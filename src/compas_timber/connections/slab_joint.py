@@ -1,7 +1,5 @@
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Frame
-from compas.geometry import Transformation
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 
@@ -56,7 +54,6 @@ class SlabToSlabInterface(PlateToPlateInterface):
             return Polyline([points[0], points[1], points[2], points[3], points[0]])
         else:
             return self.polyline
-
 
 
 class SlabJoint(PlateJoint):
@@ -124,7 +121,7 @@ class SlabJoint(PlateJoint):
 
     @property
     def elements(self):
-        return self.slab_a, self.slab_b #TODO: consider including connection detail elements
+        return self.slab_a, self.slab_b  # TODO: consider including connection detail elements
 
     @property
     def interfaces(self):

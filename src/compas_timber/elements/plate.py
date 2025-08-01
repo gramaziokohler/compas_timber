@@ -16,9 +16,8 @@ from compas_model.elements import reset_computed
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
 from compas_timber.utils import correct_polyline_direction
-from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
-
+from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
 
