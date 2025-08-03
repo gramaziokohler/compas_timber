@@ -77,8 +77,6 @@ class Wall(TimberElement):
     def is_wall(self):
         return True
 
-
-
     @property
     def is_group_element(self):
         return True

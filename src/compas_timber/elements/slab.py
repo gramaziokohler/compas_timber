@@ -1,29 +1,11 @@
 from compas.data import Data
+from compas.geometry import Polyline
+from compas.geometry import Frame
+from compas.tolerance import TOL
+
+from compas_timber.utils import is_polyline_clockwise
 
 from .plate import Plate
-
-
-class OpeningType(object):
-    DOOR = "door"
-    WINDOW = "window"
-    GENERIC = "generic"
-
-
-class Opening(Data):
-    @property
-    def __data__(self):
-        return {
-            "polyline": self.polyline,
-            "opening_type": self.opening_type,
-        }
-
-    def __init__(self, polyline, opening_type, **kwargs):
-        super(Opening, self).__init__(**kwargs)
-        self.polyline = polyline
-        self.opening_type = opening_type
-
-    def __repr__(self):
-        return "Opening(type={})".format(self.opening_type)
 
 
 class Slab(Plate):
@@ -48,10 +30,13 @@ class Slab(Plate):
 
     def __init__(self, outline_a, outline_b, openings=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(outline_a, outline_b, openings=openings, name=name, **kwargs)
+        super(Slab, self).__init__(outline_a, outline_b, name=name, **kwargs)
+        self.openings = openings
+        self.opening_outlines = [opening.outline for opening in self.openings] if openings else []
         self.attributes = {}
         self.attributes.update(kwargs)
         self._edge_planes = []
+        self.openings = openings if openings is not None else []
         self.interfaces = []  # type: list[SlabToSlabInterface]
 
     def __repr__(self):
@@ -68,21 +53,8 @@ class Slab(Plate):
     def is_group_element(self):
         return True
 
-    def compute_geometry(self, include_features=True):
-        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
-        """Compute the geometry of the element.
+    def add_opening(self, opening):
+        """Add an opening to the slab."""
+        self.openings.append(opening)
+        self.opening_outlines.append(opening.outline)
 
-        Parameters
-        ----------
-        include_features : bool, optional
-            If ``True``, include the features in the computed geometry.
-            If ``False``, return only the plate shape.
-
-        Returns
-        -------
-        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
-
-        """
-
-        # TODO: consider if Brep.from_curves(curves) is faster/better
-        return self.shape

@@ -68,10 +68,10 @@ class Plate(TimberElement):
         data = super(Plate, self).__data__
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
-        data["openings"] = self.openings
+        data["opening_outlines"] = self.opening_outlines
         return data
 
-    def __init__(self, outline_a=None, outline_b=None, openings=None, **kwargs):
+    def __init__(self, outline_a=None, outline_b=None, opening_outlines=None, **kwargs):
         super(Plate, self).__init__(**kwargs)
         Plate.check_outlines(outline_a, outline_b)
         self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
@@ -88,10 +88,10 @@ class Plate(TimberElement):
         self._planes = None
         self._thickness = None
         self.interfaces = []
-        self.openings = []
-        if openings:
-            for opening in openings:
-                self.openings.append(Polyline([closest_point_on_plane(pt, self.planes[0]) for pt in opening]))
+        self.opening_outlines = []
+        if opening_outlines:
+            for opening in opening_outlines:
+                self.opening_outlines.append(Polyline([closest_point_on_plane(pt, self.planes[0]) for pt in opening]))
 
     def __repr__(self):
         # type: () -> str
@@ -185,7 +185,7 @@ class Plate(TimberElement):
         if not self._outline_feature:
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:
-            self._opening_features = [FreeContour.from_polyline_and_element(o, self, interior=True) for o in self.openings]
+            self._opening_features = [FreeContour.from_polyline_and_element(o, self, interior=True) for o in self.opening_outlines]
         return [self._outline_feature] + self._opening_features + self._features
 
     @features.setter
@@ -272,7 +272,7 @@ class Plate(TimberElement):
     # ==========================================================================
 
     @classmethod
-    def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
+    def from_outline_thickness(cls, outline, thickness, vector=None, opening_outlines=None, **kwargs):
         """
         Constructs a plate from a polyline outline and a thickness.
         The outline is the top face of the plate, and the thickness is the distance to the bottom face.
@@ -305,7 +305,7 @@ class Plate(TimberElement):
         offset_vector.unitize()
         offset_vector *= thickness
         outline_b = Polyline(outline).translated(offset_vector)
-        return cls(outline, outline_b, openings=openings, **kwargs)
+        return cls(outline, outline_b, opening_outlines=opening_outlines, **kwargs)
 
     @classmethod
     def from_brep(cls, brep, thickness, vector=None, **kwargs):
@@ -343,7 +343,7 @@ class Plate(TimberElement):
                 outer_polyline = Polyline(polyline_points)
             else:
                 inner_polylines.append(Polyline(polyline_points))
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, opening_outlines=inner_polylines, **kwargs)
 
     # ==========================================================================
     #  methods
@@ -364,9 +364,10 @@ class Plate(TimberElement):
         outline_b = correct_polyline_direction(self.outline_b, self.frame.normal, clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
-        for pline in self.openings:
+        for pline in self.opening_outlines:
             if not TOL.is_allclose(pline[0], pline[-1]):
                 raise ValueError("Opening polyline is not closed.", pline[0], pline[-1])
+            print("Opening polyline:", pline)
             polyline = correct_polyline_direction(pline, self.frame.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline, polyline_b)])

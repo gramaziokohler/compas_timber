@@ -182,7 +182,7 @@ class TButtDetailB(TDetailBase):
         else:
             offset = slab_populator.sheeting_inside
         flat_beam = Beam.from_centerline(edge, width=stud_height, height=stud_width, z_vector=slab_populator.normal)
-        flat_beam.frame.translate(interface.frame.zaxis * (flat_beam.height * 0.5+offset))
+        flat_beam.frame.translate(interface.frame.zaxis * (flat_beam.height * 0.5 + offset))
         stud_edge_a = edge.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         stud_edge_b = edge.translated(-interface.frame.yaxis * (stud_width + stud_height) * 0.5)
 

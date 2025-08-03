@@ -24,7 +24,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.design.workflow import JointRuleSolver
 from compas_timber.elements import Beam
-from compas_timber.elements import OpeningType
+from compas_timber.elements.wall import WallOpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
 from compas_timber.model import TimberModel
@@ -703,7 +703,7 @@ class WallPopulator(object):
 
     def generate_openings(self):
         for opening in self.inner_polylines:
-            if opening.opening_type == OpeningType.DOOR:
+            if opening.opening_type == WallOpeningType.DOOR:
                 element = Door(
                     opening.polyline,
                     self.beam_dimensions,
