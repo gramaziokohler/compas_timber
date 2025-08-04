@@ -367,7 +367,6 @@ class Plate(TimberElement):
         for pline in self.opening_outlines:
             if not TOL.is_allclose(pline[0], pline[-1]):
                 raise ValueError("Opening polyline is not closed.", pline[0], pline[-1])
-            print("Opening polyline:", pline)
             polyline = correct_polyline_direction(pline, self.frame.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline, polyline_b)])

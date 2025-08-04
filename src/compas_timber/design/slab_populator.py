@@ -55,8 +55,6 @@ class AnySlabSelector(object):
 class SlabPopulatorConfigurationSet(object):
     """Contains one or more configuration set for the WallPopulator.
 
-    wall_selector can be used to apply different configurations to different walls based on e.g. their name.
-
     Parameters
     ----------
     stud_spacing : float
@@ -69,8 +67,6 @@ class SlabPopulatorConfigurationSet(object):
         The thickness of the sheeting outside.
     sheeting_inside : float, optional
         The thickness of the sheeting inside.
-    lintel_posts : bool, optional
-        Whether to use lintel posts.
     edge_stud_offset : float, optional
         Additional offset for the edge studs.
     custom_dimensions : dict, optional
@@ -94,7 +90,6 @@ class SlabPopulatorConfigurationSet(object):
         edge_stud_offset=0.0,
         custom_dimensions=None,
         joint_overrides=None,
-        wall_selector=None,
     ):
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
@@ -106,7 +101,6 @@ class SlabPopulatorConfigurationSet(object):
         self.edge_stud_offset = edge_stud_offset or 0.0
         self.custom_dimensions = custom_dimensions
         self.joint_overrides = joint_overrides
-        self.wall_selector = wall_selector
 
     def __str__(self):
         return "SlabPopulatorConfigurationSet({}, {}, {})".format(self.stud_spacing, self.beam_width, self.stud_direction)
@@ -115,6 +109,17 @@ class SlabPopulatorConfigurationSet(object):
     def default(cls, stud_spacing, beam_width):
         return cls(stud_spacing, beam_width)
 
+    @property
+    def beam_widths(self):
+        """Returns the custom dimensions from the configuration set."""
+        for key in self.BEAM_CATEGORY_NAMES:
+            self._beam_widths[key] = self._config_set.beam_width
+        if self._config_set.custom_dimensions:
+            dimensions = self._config_set.custom_dimensions
+            for key, value in dimensions.items():
+                if value:
+                    self._beam_widths[key] = value
+        return self._beam_widths
 
 class SlabPopulator(object):
     """Create a timber assembly from a surface.
@@ -123,42 +128,46 @@ class SlabPopulator(object):
     ----------
     configuration_set : :class:`WallPopulatorConfigurationSet`
         The configuration for this wall populator.
-    wall : :class:`compas_timber.elements.Wall`
-        The wall for this populater to fill with beams.
+    slab : :class:`compas_timber.elements.Slab`
+        The slab for this populater to fill with beams.
 
     Attributes
     ----------
-    beams : list of :class:`compas_timber.elements.Beam`
-        The beams of the assembly.
-    rules : list of :class:`compas_timber.design.CategoryRule`
-        The rules for the assembly.
-    centerlines : list of :class:`compas.geometry.Line`
-        The centerlines of the beams.
-    normal : :class:`compas.geometry.Vector`
-        The normal of the surface.
-    panel_length : float
-        The length of the panel perpendicular to the z-axis.
-    panel_height : float
-        The height of the panel.
-    frame : :class:`compas.geometry.Frame`
-        The frame of the assembly.
-    jack_studs : list of :class:`compas_timber.elements.Beam`
-        The jack studs of the assembly.
-    king_studs : list of :class:`compas_timber.elements.Beam`
-        The king studs of the assembly.
-    edge_studs : list of :class:`compas_timber.elements.Beam`
-        The edge studs of the assembly.
-    studs : list of :class:`compas_timber.elements.Beam`
-        The studs of the assembly.
-    sills : list of :class:`compas_timber.elements.Beam`
-        The sills of the assembly.
-    headers : list of :class:`compas_timber.elements.Beam`
-        The headers of the assembly.
-    plate_beams : list of :class:`compas_timber.elements.Beam`
+    outline_a : :class:`compas.geometry.Polyline`
+        The outline A of the slab.
+    outline_b : :class:`compas.geometry.Polyline`
+        The outline B of the slab.
+    openings : list of :class:`compas.geometry.Polyline`
+        The openings in the slab.
+    opening_polylines : list of :class:`compas.geometry.Polyline`
+        The opening polylines of the slab.
+    frame : :class:`compas.geometry.Polyline`
+        The frame of the slab.
+    interfaces : list of :class:`compas_timber.connections.SlabToSlabInterface`
+        The interfaces of the slab. These are the connections to other slabs.
+    edge_count : int
+        The number of edges in the slab outline.
+    stud_spacing : float
+        The spacing between studs in the slab.
+    stud_direction : :class:`compas.geometry.Vector`
+        The direction of the studs in the slab.
+    tolerance : :class:`compas_tolerance.Tolerance`
+        The tolerance for the slab populator.
+    sheeting_outside : float
+        The outside sheeting thickness from the configuration set.
+    sheeting_inside : float
+        The inside sheeting thickness from the configuration set.
+    frame_outline_a : :class:`compas.geometry.Polyline`
+        The outline A of the frame.
+    frame_outline_b : :class:`compas.geometry.Polyline`
+        The outline B of the frame.
+    frame_thickness : float
+        The thickness of the frame. This is the thickness of the slab minus the sheeting thicknesses.
+
 
     """
 
-    BEAM_CATEGORY_NAMES = ["stud", "king_stud", "jack_stud", "edge_stud", "top_plate_beam", "bottom_plate_beam", "header", "sill", "detail"]
+    BEAM_CATEGORY_NAMES = ["stud", "edge_stud", "top_plate_beam", "bottom_plate_beam",]
 
     def __init__(self, configuration_set, slab):
         self._slab = slab
@@ -204,6 +213,10 @@ class SlabPopulator(object):
         return self._slab.frame
 
     @property
+    def normal(self):
+        return self.frame.normal
+    
+    @property
     def interfaces(self):
         """Returns the interfaces of the slab."""
         return self._slab.interfaces
@@ -217,11 +230,6 @@ class SlabPopulator(object):
     def stud_spacing(self):
         """Returns the stud spacing from the configuration set."""
         return self._config_set.stud_spacing
-
-    @property
-    def beam_width(self):
-        """Returns the beam width from the configuration set."""
-        return self._config_set.beam_width
 
     @property
     def stud_direction(self):
@@ -277,16 +285,6 @@ class SlabPopulator(object):
         return self._frame_thickness
 
     @property
-    def lintel_posts(self):
-        """Returns the lintel posts flag from the configuration set."""
-        return self._config_set.lintel_posts
-
-    @property
-    def edge_stud_offset(self):
-        """Returns the edge stud offset from the configuration set."""
-        return self._config_set.edge_stud_offset
-
-    @property
     def beam_dimensions(self):
         """Returns the custom dimensions from the configuration set."""
         if self._beam_dimensions is None:
@@ -300,16 +298,6 @@ class SlabPopulator(object):
                         self._beam_dimensions[key] = (value[0], self.frame_thickness)
         return self._beam_dimensions
 
-    @property
-    def joint_overrides(self):
-        """Returns the joint overrides from the configuration set."""
-        return self._config_set.joint_overrides
-
-    @property
-    def wall_selector(self):
-        """Returns the wall selector from the configuration set."""
-        return self._config_set.wall_selector
-
     def __repr__(self):
         return "SlabPopulator({}, {})".format(self._config_set, self._slab)
 
@@ -319,9 +307,7 @@ class SlabPopulator(object):
 
     @property
     def beams(self):
-        beams = []
-        for val in self._edge_beams.values():
-            beams.extend(val)
+        beams = self.edge_beams
         for interface in self.interfaces:
             beams.extend(interface.beams)
         for opening in self.openings:
@@ -336,41 +322,27 @@ class SlabPopulator(object):
             self._edge_perpendicular_vectors = [get_polyline_segment_perpendicular_vector(self.outline_a, i) for i in range(self.edge_count)]
         return self._edge_perpendicular_vectors
 
-    @property
-    def normal(self):
-        return self.frame.normal
 
+    
     @property
-    def jack_studs(self):
-        return [beam for beam in self.beams if beam.attributes.get("category", None) == "jack_stud"]
-
-    @property
-    def king_studs(self):
-        return [beam for beam in self.beams if beam.attributes.get("category", None) == "king_stud"]
+    def edge_beams(self):
+        """Returns the edge beams of the slab."""
+        beams = []
+        for val in self._edge_beams.values():
+            beams.extend(val)
+        return beams
 
     @property
     def edge_studs(self):
-        return [beam for beam in self.beams if beam.attributes.get("category", None) == "edge_stud"]
-
-    @property
-    def sills(self):
-        return [beam for beam in self.beams if beam.attributes.get("category", None) == "sill"]
-
-    @property
-    def headers(self):
-        return [beam for beam in self.beams if beam.attributes.get("category", None) == "header"]
+        return [beam for beam in self.edge_beams if beam.attributes.get("category", None) == "edge_stud"]
 
     @property
     def top_plate_beams(self):
-        return [beam for beam in self.beams if beam.attributes.get("category", None) == "top_plate_beam"]
+        return [beam for beam in self.edge_beams if beam.attributes.get("category", None) == "top_plate_beam"]
 
     @property
     def bottom_plate_beams(self):
-        return [beam for beam in self.beams if beam.attributes.get("category", None) == "bottom_plate_beam"]
-
-    @property
-    def plate_beams(self):
-        return self.top_plate_beams + self.bottom_plate_beams
+        return [beam for beam in self.edge_beams if beam.attributes.get("category", None) == "bottom_plate_beam"]
 
     @property
     def interior_corner_indices(self):
@@ -410,21 +382,11 @@ class SlabPopulator(object):
     def _default_rules(self):
         return [
             CategoryRule(TButtJoint, "stud", "top_plate_beam"),
-            CategoryRule(TButtJoint, "jack_stud", "top_plate_beam"),
-            CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
             CategoryRule(LButtJoint, "edge_stud", "top_plate_beam"),
             CategoryRule(TButtJoint, "stud", "bottom_plate_beam"),
-            CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
-            CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
             CategoryRule(LButtJoint, "edge_stud", "bottom_plate_beam"),
-            CategoryRule(TButtJoint, "stud", "header"),
-            CategoryRule(TButtJoint, "king_stud", "header"),
-            CategoryRule(TButtJoint, "jack_stud", "header"),
-            CategoryRule(TButtJoint, "king_stud", "sill"),
-            CategoryRule(TButtJoint, "stud", "sill"),
             CategoryRule(TButtJoint, "stud", "edge_stud"),
-            CategoryRule(LButtJoint, "king_stud", "edge_stud"),
-            CategoryRule(LButtJoint, "jack_stud", "edge_stud"),
+
             CategoryRule(TButtJoint, "stud", "detail"),
             CategoryRule(TButtJoint, "jack_stud", "detail"),
             CategoryRule(TButtJoint, "king_stud", "detail"),
@@ -826,7 +788,7 @@ def intersection_line_beams(line, beams, max_distance=0.0):
     return intersections
 
 
-def beam_from_category(parent, segment, category, normal_offset=True, **kwargs):
+def beam_from_category(slab_populator, segment, category, normal_offset=True, **kwargs):
     """Creates a beam from a segment and a category, using the dimensions from the configuration set.
     Parameters
     ----------
@@ -846,13 +808,13 @@ def beam_from_category(parent, segment, category, normal_offset=True, **kwargs):
     :class:`compas_timber.elements.Beam`
         The created beam with the specified category and attributes.
     """
-    if category not in parent.beam_dimensions:
+    if category not in slab_populator.beam_dimensions:
         raise ValueError(f"Unknown beam category: {category}")
-    width = parent.beam_dimensions[category][0]
-    height = parent.beam_dimensions[category][1]
-    beam = Beam.from_centerline(segment, width=width, height=height, z_vector=parent.normal)
+    width = slab_populator.beam_dimensions[category][0]
+    height = slab_populator.frame_thickness
+    beam = Beam.from_centerline(segment, width=width, height=height, z_vector=slab_populator.normal)
     if normal_offset:
-        beam.frame.translate(parent.normal * height * 0.5)  # align the beam to the slab frame
+        beam.frame.translate(slab_populator.normal * height * 0.5)  # align the beam to the slab frame
     beam.attributes["category"] = category
     for key, value in kwargs.items():
         beam.attributes[key] = value

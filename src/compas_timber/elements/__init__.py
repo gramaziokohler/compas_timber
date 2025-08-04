@@ -12,8 +12,6 @@ from .fasteners.ball_node_fastener import BallNodeFastener
 from .fasteners.plate_fastener import PlateFastener
 from .timber import TimberElement
 from .opening import Opening
-from .opening import Window
-from .opening import Door
 
 __all__ = [
     "Beam",
@@ -30,6 +28,4 @@ __all__ = [
     "Opening",
     "Slab",
     "Wall",
-    "Window",
-    "Door",
 ]

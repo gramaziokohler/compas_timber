@@ -11,24 +11,52 @@ class Opening(TimberElement):
 
     Parameters
     ----------
-    polyline : :class:`compas.geometry.Polyline`
+    outline : :class:`compas.geometry.Polyline`
         The outline of the opening.
-    opening_type : str
-        The type of the opening (e.g., "window", "door").
+    detail_set : :class:`compas_timber.design.OpeningDetailBase`
+        The detail set associated with the opening.
 
     Attributes
     ----------
-    polyline : :class:`compas.geometry.Polyline`
+    outline : :class:`compas.geometry.Polyline`
         The outline of the opening.
-    opening_type : str
-        The type of the opening.
+    detail_set : :class:`compas_timber.design.OpeningDetailBase`
+        The detail set associated with the opening.
+    frame : :class:`compas.geometry.Frame`
+        The frame of the opening, used for positioning and orientation.
+    beams : list[:class:`compas_timber.elements.Beam`]
+        The beams associated with the opening.
+    joints : list[:class:`compas_timber.elements.Joint`]
+        The joints associated with the opening.
+    frame_polyline : :class:`compas.geometry.Polyline`
+        The polyline representation of the opening's frame, used for beam generation.
+    obb : :class:`compas.geometry.Box`
+        The oriented bounding box of the opening, used for framing elements around non-standard shapes.
+    jack_studs : list[:class:`compas_timber.elements.Beam`]
+        The jack studs associated with the opening.
+    king_studs : list[:class:`compas_timber.elements.Beam`]
+        The king studs associated with the opening.
+    sill : :class:`compas_timber.elements.Beam`
+        The sill beam associated with the opening.
+    header : :class:`compas_timber.elements.Beam`
+        The header beam associated with the opening.
     """
 
     @property
     def __data__(self):
         return {
             "outline": self.outline,
+            "detail_set": self.detail_set,
         }
+
+
+    def __init__(self, outline, detail_set=None, frame=None):
+        self.outline = outline
+        self.beams = []
+        self.joints = []
+        self.detail_set = detail_set
+        self.frame = frame
+        self.frame_polyline = None
 
     def __repr__(self):
         return "Opening(type={})".format(self.__class__.__name__, self.outline)
@@ -51,51 +79,6 @@ class Opening(TimberElement):
         return op
 
 
-class Window(object):
-    """
-
-    # TODO: is this an Element maybe?
-
-    A window object for the SurfaceAssembly.
-
-    Parameters
-    ----------
-    outline : :class:`compas.geometry.Polyline` TODO: define with 2 polylines(inside and outside)
-        The outline of the window.
-    parent : :class:`compas_timber.model.SurfaceAssembly`
-        The parent of the window.
-
-    Attributes
-    ----------
-    outline : :class:`compas.geometry.Polyline`
-        The outline of the window.
-    parent : :class:`compas_timber.model.SurfaceAssembly`
-        The parent of the window.
-    stud_direction : :class:`compas.geometry.Vector`
-        The z axis of the parent.
-    normal : :class:`compas.geometry.Vector`
-        The normal of the parent.
-    beam_dimensions : dict
-        The beam dimensions of the parent.
-    beam_definions : list of :class:`compas_timber.model.SurfaceAssembly.BeamDefinition`
-        The beam_definions of the window.
-    length : float
-        The length of the window.
-    height : float
-        The height of the window.
-    frame : :class:`compas.geometry.Frame`
-        The frame of the window.
-    """
-
-    # TODO: consider make opening generate an interface. it shares a lot of characteristics, e.g. it adds beams, joints, etc.
-
-    def __init__(self, outline, detail_set=None, frame=None):
-        self.outline = outline
-        self.beams = []
-        self.joints = []
-        self.detail_set = detail_set
-        self.frame = frame
-        self.frame_polyline = None
 
     @property
     def obb(self):
@@ -137,8 +120,3 @@ class Window(object):
         return self.detail_set.generate_joints(self, slab_populator)
 
 
-class Door(Window):
-    """TODO: revise when we know where this is going, maybe no need for classes here beyond Opening"""
-
-    def __init__(self, outline, detail_set=None):
-        super(Door, self).__init__(outline, detail_set=detail_set)

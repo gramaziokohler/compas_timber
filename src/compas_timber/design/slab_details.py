@@ -14,13 +14,7 @@ from .slab_populator import beam_from_category
 
 
 class LDetailBase(object):
-    """Base class for L-butt detail sets.
-
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-        The interface for which the detail set is created.
-    """
+    """Base class for L-butt detail sets."""
 
     @staticmethod
     def create_elements_main(interface, slab_populator):
@@ -42,13 +36,7 @@ class LDetailBase(object):
 
 
 class TDetailBase(object):
-    """Base class for L-butt detail sets.
-
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-        The interface for which the detail set is created.
-    """
+    """Base class for T-butt detail sets."""
 
     @staticmethod
     def create_elements_main(interface, slab_populator):
@@ -68,15 +56,11 @@ class TDetailBase(object):
 
 
 class LButtDetailB(LDetailBase):
-    """
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-    """
+    """Detail Set that generates the beams for a L-butt a 3-beam box in the Cross Slab."""
 
     @staticmethod
     def create_elements_cross(interface, slab_populator):
-        """Generate the beams for a T-cross interface."""
+        """Generate the beams for a L-cross interface."""
         edge_beam = slab_populator._edge_beams[interface.edge_index][0]
         edge = edge_beam.centerline
         stud_width = slab_populator.beam_dimensions["stud"][0]
@@ -94,7 +78,7 @@ class LButtDetailB(LDetailBase):
 
     @staticmethod
     def create_interface_interface_joints(interface_a, interface_b, slab_populator, interior_corner):
-        """Generate the joints between individual beams of adjacent SlabLButtJoints."""
+        """Generate the joints between beams of adjacent SlabLButtJoint interfaces."""
         if interface_a.detail_set is not interface_b.detail_set:
             raise ValueError("Cannot create joints between interfaces with different detail sets: {} and {}".format(interface_a.detail_set, interface_b.detail_set))
         edge_index = interface_b.edge_index
@@ -164,11 +148,7 @@ class LButtDetailB(LDetailBase):
 
 
 class TButtDetailB(TDetailBase):
-    """
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-    """
+    """Detail Set that generates the beams for a T-butt a 3-beam box in the Cross Slab."""
 
     @staticmethod
     def create_elements_cross(interface, slab_populator):
@@ -198,7 +178,7 @@ class TButtDetailB(TDetailBase):
 
     @staticmethod
     def create_joints_cross(interface, slab_populator):
-        """Generate the joints between T_TOPO interfaces and slab edge beams."""
+        """Generate the joints between T-BUTT interfaces and slab edge beams."""
         joints = []
         for beam in interface.beams:
             pts = {}

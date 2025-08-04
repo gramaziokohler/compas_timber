@@ -1,4 +1,5 @@
 from compas.geometry import Box
+from compas.geometry import Vector
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polyline
@@ -24,9 +25,41 @@ class OpeningDetailBase(object):
     interface : :class:`compas_timber.connections.SlabToSlabInterface`
         The interface for which the detail set is created.
     """
+    BEAM_CATEGORY_NAMES = ["header","sill","king_stud","jack_stud",]
 
-    RULES = []
+    RULES = [
+        CategoryRule(TButtJoint, "header", "king_stud"),
+        CategoryRule(TButtJoint, "sill", "king_stud"),
+        CategoryRule(TButtJoint, "sill", "jack_stud"),
+        CategoryRule(LButtJoint, "jack_stud", "header"),
+        CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "header"),
+        CategoryRule(TButtJoint, "king_stud", "sill"),
+        CategoryRule(TButtJoint, "king_stud", "edge_stud"),
+        CategoryRule(TButtJoint, "jack_stud", "edge_stud"),
+    ]
 
+    def __init__(self, beam_width_overrides=None, joint_rule_overrides=None):
+        self.beam_width_overrides = beam_width_overrides
+        self.joint_rule_overrides = joint_rule_overrides or []
+        self._rules = []
+        
+    @property
+    def rules(self):
+        if not self._rules:
+            self._rules = self.RULES
+            for override in self.joint_rule_overrides:
+                for rule in self.RULES:
+                    if override.category_a == rule.category_a and override.category_b == rule.category_b:
+                        rule = override
+                        break
+                else:
+                    self._rules.append(override)
+        return self._rules
+
+        
     def _get_frame_polyline(opening, slab_populator):
         """Bounding rectangle aligned orthogonal to the slab.stud_direction."""
 
@@ -39,6 +72,7 @@ class OpeningDetailBase(object):
         #opening.obb = box
         opening.frame_polyline = Polyline([box.corner(0), box.corner(1), box.corner(2), box.corner(3), box.corner(0)])
         return opening.frame_polyline
+
 
     @staticmethod
     def generate_elements(opening, slab_populator):
@@ -130,6 +164,52 @@ class OpeningDetailBase(object):
             break
 
 
+    @staticmethod
+    def cull_and_split_studs(opening, slab_populator):
+        """Split the bottom plate beam for door openings."""
+        cull_outer_edge = [dot_vectors(slab_populator.frame.xaxis, Vector.from_start_end(slab_populator.frame.point, king))for king in opening.king_studs]
+        cull_outer_edge.sort()
+        if opening.jack_beams:
+            cull_inner_edge = [dot_vectors(slab_populator.frame.xaxis, Vector.from_start_end(slab_populator.frame.point, jack))for jack in opening.jack_beams]
+            cull_inner_edge.sort()
+            cull_inner_edge[0]+=opening.jack_studs[0].width
+            cull_inner_edge[1]-=opening.jack_studs[0].width
+        else:
+            cull_inner_edge = cull_outer_edge
+            cull_inner_edge[0]+=opening.king_studs[0].width
+            cull_inner_edge[1]-=opening.king_studs[0].width
+        cull_outer_edge[0]-=opening.king_studs[0].width
+        cull_outer_edge[1]+=opening.king_studs[0].width
+
+
+
+        to_cull = []
+        for beam in slab_populator.studs:
+            beam_dot = dot_vectors(slab_populator.frame.xaxis, Vector.from_start_end(slab_populator.frame.point, beam.centerline.start))
+            if beam_dot < cull_outer_edge[0]-beam.width or beam_dot > cull_outer_edge[1]+beam.width: #within opening domain
+                continue
+            if beam_dot < cull_inner_edge[0]+beam.width or beam_dot > cull_inner_edge[1]-beam.width:
+                to_cull.append(beam)
+                continue            
+            #now split remaining beams
+            overlap = (
+                dot_vectors(slab_populator.stud_direction, Vector.from_start_end(beam.centerline.start, opening.sill.centerline.start)), 
+                dot_vectors(slab_populator.stud_direction, Vector.from_start_end(beam.centerline.start, opening.header.centerline.start)), 
+                )
+            if overlap[1]<0 or overlap[0] > beam.length:    #if sill is above top of stud or header is below bottom of stud
+                continue            
+
+            new_beam = beam.copy()
+            new_beam.attributes.update(beam.attributes)
+            new_beam.length = beam.length - overlap[1]
+            beam.length = overlap[0]
+            new_beam.frame.translate(beam.frame.xaxis * overlap[1])
+
+            slab_populator._edge_beams[beam.attributes["edge_index"]].append(new_beam)
+        for beam in to_cull:
+            opening.studs.remove(beam)
+
+
 class WindowDetailA(OpeningDetailBase):
     """Detail set for window openings without lintel posts.
 
@@ -138,14 +218,6 @@ class WindowDetailA(OpeningDetailBase):
     interface : :class:`compas_timber.connections.SlabToSlabInterface`
         The interface for which the detail set is created.
     """
-    RULES = [
-        CategoryRule(TButtJoint, "header", "king_stud"),
-        CategoryRule(TButtJoint, "sill", "king_stud"),
-        CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "header"),
-        CategoryRule(TButtJoint, "king_stud", "sill"),
-    ]
 
     @staticmethod
     def generate_elements(opening, slab_populator):
@@ -173,71 +245,9 @@ class WindowDetailA(OpeningDetailBase):
         joints.append(cls._join_king_studs(opening, slab_populator))
         return joints
 
-
-class DoorDetailAA(WindowDetailA):
-    """Detail set for door openings without lintel posts and without splitting the bottom plate.
-
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-        The interface for which the detail set is created.
-    """
-
-    @staticmethod
-    def generate_elements(opening, slab_populator):
-        """Generate the beams for a main interface."""
-        WindowDetailA.generate_elements(opening, slab_populator)
-        opening.beams.remove(opening.sill)
-        return opening.beams
-
-
-class DoorDetailAB(WindowDetailA):
-    """Detail set for door openings without lintel posts and with splitting the bottom plate.
-
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-        The interface for which the detail set is created.
-    """
-
-    RULES = [
-        CategoryRule(TButtJoint, "header", "king_stud"),
-        CategoryRule(TButtJoint, "sill", "king_stud"),
-        CategoryRule(LButtJoint, "king_stud", "bottom_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "header"),
-        CategoryRule(TButtJoint, "king_stud", "sill"),
-    ]
-
-    @staticmethod
-    def generate_elements(opening, slab_populator):
-        """Generate the beams for a main interface."""
-        WindowDetailA.generate_elements(opening, slab_populator)
-        sill = opening.beams.pop(opening.sill)
-        OpeningDetailBase.split_bottom_plate(slab_populator, sill)
-        return opening.beams
-
-
 class WindowDetailB(WindowDetailA):
-    """Detail set for window openings with lintel posts.
+    """Detail set for window openings with lintel posts."""
 
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-        The interface for which the detail set is created.
-    """
-    RULES = [
-        CategoryRule(TButtJoint, "header", "king_stud"),
-        CategoryRule(TButtJoint, "sill", "king_stud"),
-        CategoryRule(TButtJoint, "sill", "jack_stud"),
-        CategoryRule(LButtJoint, "jack_stud", "header"),
-        CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "header"),
-        CategoryRule(TButtJoint, "king_stud", "sill"),
-    ]
-    
     @staticmethod
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
@@ -266,31 +276,53 @@ class WindowDetailB(WindowDetailA):
         return joints
 
 
-class DoorDetailBA(WindowDetailB):
-    """Detail set for door openings with lintel posts and without splitting the bottom plate.
+class DoorDetailAA(WindowDetailA):
+    """Detail set for door openings without lintel posts and without splitting the bottom plate."""
 
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-        The interface for which the detail set is created.
-    """
+    @staticmethod
+    def generate_elements(opening, slab_populator):
+        """Generate the beams for a main interface."""
+        WindowDetailA.generate_elements(opening, slab_populator)
+        opening.beams.remove(opening.sill)
+        return opening.beams
+
+
+class DoorDetailAB(WindowDetailA):
+    """Detail set for door openings without lintel posts and with splitting the bottom plate."""
+
+    RULES = [
+        CategoryRule(TButtJoint, "header", "king_stud"),
+        CategoryRule(TButtJoint, "sill", "king_stud"),
+        CategoryRule(LButtJoint, "king_stud", "bottom_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "header"),
+        CategoryRule(TButtJoint, "king_stud", "sill"),
+    ]
+
+    @staticmethod
+    def generate_elements(opening, slab_populator):
+        """Generate the beams for a main interface."""
+        WindowDetailA.generate_elements(opening, slab_populator)
+        sill = opening.sill
+        opening.beams.remove(sill)
+        OpeningDetailBase.split_bottom_plate(slab_populator, sill)
+        return opening.beams
+
+
+class DoorDetailBA(WindowDetailB):
+    """Detail set for door openings with lintel posts and without splitting the bottom plate."""
 
     @staticmethod
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
         WindowDetailB.generate_elements(opening, slab_populator)
-        opening.beams.pop(opening.sill)
+        sill = opening.sill
+        opening.beams.remove(sill)
         return opening.beams
 
 
 class DoorDetailBB(WindowDetailB):
-    """Detail set for door openings with lintel posts and with splitting the bottom plate.
-
-    Parameters
-    ----------
-    interface : :class:`compas_timber.connections.SlabToSlabInterface`
-        The interface for which the detail set is created.
-    """
+    """Detail set for door openings with lintel posts and with splitting the bottom plate."""
 
     RULES = [
         CategoryRule(TButtJoint, "header", "king_stud"),
@@ -308,6 +340,7 @@ class DoorDetailBB(WindowDetailB):
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
         WindowDetailB.generate_elements(opening, slab_populator)
-        sill = opening.beams.pop(opening.sill)
+        sill = opening.sill
+        opening.beams.remove(sill)
         OpeningDetailBase.split_bottom_plate(slab_populator, sill)
         return opening.beams
