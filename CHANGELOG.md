@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
+* Added `joints_contribution_guide` in docs.
 
 ### Changed
 
@@ -60,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
-* Renamed `NullJoint` to `GenericJoint`.
+* Renamed `NullJoint` to `JointCandidate`.
 * Fixed bug in show_ref_faces GH component.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
 * Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Beam` following the renaming in `compas_model`.
@@ -75,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Updated default edge attributes in the model graph to include `joints` and `contacts`.
 * Updated `compas_model` version pinning from `0.4.4` to `0.8.0` to align with the latest development.
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Updated `BTLx_contribution_guide` in docs.
 * Fixed several GH Components for Rhino8 compatibility.
 * Fixed `graph_node` is `None` after deserializing a `TimberModel`.
 * Fixed attribute error when creating a `TButtJoint`.
