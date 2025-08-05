@@ -398,6 +398,7 @@ class BeamConnectionTopologyResults(Data):
         self.beam_b = beam_b
         self.distance = distance
         self.location = location
+        print(f"Topology: {JointTopology.get_name(topology)}")
 
 
 class PlateConnectionTopologyResults(Data):
