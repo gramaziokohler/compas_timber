@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
-* Added `GenericPlateJoint` to `generic_joint.py`.
+* Added `PlateJointCandidate` to `generic_joint.py`.
 * Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
 * Added `PlateJoint.from_generic_joint` as override.
 =========
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Processings which are not the result of joinery are now serialized with `TimberElement`.
 * Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
-* Renamed `NullJoint` to `GenericJoint`.
+* Renamed `NullJoint` to `JointCandidate`.
 * Fixed bug in show_ref_faces GH component.
 * `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
 * Updated `BTLx_contribution_guide` in docs.

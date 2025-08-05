@@ -5,8 +5,8 @@ from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
-from .generic_joint import GenericJoint
-from .generic_joint import GenericPlateJoint
+from .generic_joint import JointCandidate
+from .generic_joint import PlateJointCandidate
 from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
@@ -56,8 +56,8 @@ __all__ = [
     "XNotchJoint",
     "TLapJoint",
     "LLapJoint",
-    "GenericJoint",
-    "GenericPlateJoint",
+    "JointCandidate",
+    "PlateJointCandidate",
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",

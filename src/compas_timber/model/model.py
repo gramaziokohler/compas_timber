@@ -12,7 +12,7 @@ from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import GenericJoint
+from compas_timber.connections import JointCandidate
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import WallJoint
@@ -401,7 +401,7 @@ class TimberModel(Model):
             p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             p1 = Point(*p1) if p1 else None
 
-            GenericJoint.create(self, beam_a, beam_b, topology=topology, location=p1)
+            JointCandidate.create(self, beam_a, beam_b, topology=topology, location=p1)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.
