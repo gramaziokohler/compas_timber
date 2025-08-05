@@ -462,7 +462,7 @@ def do_segments_overlap(segment_a, segment_b):
 
 
 def get_segment_overlap(segment_a, segment_b, unitize=False):
-    """Checks if two segments overlap.
+    """gets the length parameters of the overlap between two segments.
 
     Parameters
     ----------

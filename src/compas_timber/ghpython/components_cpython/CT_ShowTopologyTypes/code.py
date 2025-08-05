@@ -2,6 +2,7 @@
 """Shows the names of the connection topology types."""
 
 # flake8: noqa
+import re
 import Grasshopper
 import System
 from compas_rhino.conversions import point_to_rhino
@@ -24,10 +25,10 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
         for pair in found_pairs:
-            detected_topo, _, _, _, pt = solver.find_topology(*pair)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                self.pt.append(point_to_rhino(pt))
-                self.txt.append(JointTopology.get_name(detected_topo))
+            result = solver.find_topology(*pair)
+            if not result.topology == JointTopology.TOPO_UNKNOWN:
+                self.pt.append(point_to_rhino(result.point))
+                self.txt.append(JointTopology.get_name(result.topology))
 
     def DrawViewportWires(self, arg):
         if ghenv.Component.Locked:

@@ -46,12 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
+* Added `JointTopology.TOPO_Y` for Beam Connections.
+* Added `JointTopology.TOPO_K` for Beam Connections.
+* Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
+* Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
+* Added `Cluster.topology`.
 * Added `PlateJointCandidate` to `generic_joint.py`.
 * Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
 * Added `PlateJoint.from_generic_joint` as override.
-=========
 * Added `joints_contribution_guide` in docs.
->>>>>>>>> Temporary merge branch 2
+* Added `PlateConnectionTopologyResults` and `BeamConnectionTopologyResults` to package results from `PlateConnectionSolver.find_topology()` and `ConnectionSolver.find_topology()`.
 
 ### Changed
 
@@ -75,8 +79,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
 * Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
 * `Platejoint`s can now be isntantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
-* Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
+* Changed `PlateConnectionSolver.find_topology()` to solve for `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
+* Changed `PlateConnectionSolver.find_topology()` to return a `PlateConnectionTopologyResults` instance.
 * Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
+* Changed `ConnectionSolver.find_topology()` to return a `BeamConnectionTopologyResults` instance.
 
 ### Removed
 

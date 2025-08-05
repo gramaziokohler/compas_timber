@@ -272,9 +272,14 @@ class SurfaceModel(object):
         found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True, max_distance=self.dist_tolerance)
         for pair in found_pairs:
             beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b, _, _ = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            results = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            detected_topo = results.topology
+            beam_a = results.beam_a
+            beam_b = results.beam_b
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
+                topologies.append(
+                    {"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b}
+                )  # TODO: get rid of this dict, should be covered by JointCandidates/clusters
                 for rule in self.rules:
                     if not rule.comply(pair):
                         continue
