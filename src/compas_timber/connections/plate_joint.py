@@ -127,11 +127,13 @@ class PlateJoint(Joint):
         if a_segment_index is None and plate_a and plate_b:
             solver = PlateConnectionSolver()
             results = solver.find_topology(plate_a, plate_b)
-            if results[0] is JointTopology.TOPO_UNKNOWN:
+            if results.topology is JointTopology.TOPO_UNKNOWN:
                 raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(plate_a, plate_b))
-            if results[1][0] != plate_a:
+            if results.plate_a != plate_a:
                 raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
-            self.topology, (self.plate_a, self.a_segment_index), (self.plate_b, self.b_segment_index) = results
+            self.topology = results.topology
+            self.plate_a, self.a_segment_index = results.plate_a, results.a_segment_index
+            self.plate_b, self.b_segment_index = results.plate_b, results.b_segment_index
         else:
             self.plate_a = plate_a
             self.plate_b = plate_b
@@ -267,8 +269,8 @@ class PlateJoint(Joint):
         self.a_outlines = self.plate_a.outlines
         if self.topology == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
-                self.a_planes = self.plate_a.planes[::-1]
-                self.a_outlines = self.plate_a.outlines[::-1]
+                self.a_planes = self.a_planes[::-1]
+                self.a_outlines = self.a_outlines[::-1]
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.

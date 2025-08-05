@@ -92,9 +92,9 @@ def test_three_plate_joints_mix_topo():
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, tr.topology, tr.segment_a_index, tr.segment_b_index))
+            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, segment_a_index=tr.segment_a_index, segment_b_index=tr.segment_b_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, tr.topology, tr.segment_a_index, tr.segment_b_index))
+            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, segment_a_index=tr.segment_a_index, segment_b_index=tr.segment_b_index))
 
     assert len(joints) == 3, "Expected three joints"
     assert isinstance(joints[0], PlateButtJoint), "Expected L-joints to be PlateButtJoint"
