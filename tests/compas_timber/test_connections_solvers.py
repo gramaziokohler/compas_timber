@@ -101,7 +101,7 @@ def test_find_topology_i_beams_overlap_max_dist(overlap_i_beams):
                 cs = ConnectionSolver()
                 topo_results = cs.find_topology(beam_a, beam_b, max_distance=0.02)
                 assert topo_results.topology == JointTopology.TOPO_UNKNOWN, "Expected unknown joint topology"
-                assert all([v is None for v in [ topo_results.distance, topo_results.location]]), "Expected no valid topology results for I_Topo beams with tolerance"
+                assert all([v is None for v in [topo_results.distance, topo_results.location]]), "Expected no valid topology results for I_Topo beams with tolerance"
 
 
 @pytest.fixture

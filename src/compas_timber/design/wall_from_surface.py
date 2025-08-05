@@ -277,7 +277,9 @@ class SurfaceModel(object):
             beam_a = results.beam_a
             beam_b = results.beam_b
             if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b}) #TODO: get rid of this dict, should be covered by JointCandidates/clusters
+                topologies.append(
+                    {"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b}
+                )  # TODO: get rid of this dict, should be covered by JointCandidates/clusters
                 for rule in self.rules:
                     if not rule.comply(pair):
                         continue

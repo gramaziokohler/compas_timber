@@ -372,6 +372,7 @@ class PlateConnectionSolver(ConnectionSolver):
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
 
+
 class BeamConnectionTopologyResults(Data):
     """Data structure to hold the results of beam connection topology analysis."""
 
@@ -397,6 +398,7 @@ class BeamConnectionTopologyResults(Data):
         self.beam_b = beam_b
         self.distance = distance
         self.location = location
+
 
 class PlateConnectionTopologyResults(Data):
     """Data structure to hold the results of plate connection topology analysis."""

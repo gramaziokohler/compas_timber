@@ -119,6 +119,7 @@ def test_single_joint_cluster_topology():
 
     assert cluster.topology == JointTopology.TOPO_L
 
+
 def test_single_joint_cluster_different_topologies():
     """Test single joint clusters with different topology types."""
     test_cases = [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_UNKNOWN]
@@ -130,6 +131,7 @@ def test_single_joint_cluster_different_topologies():
 
         cluster = Cluster([mock_joint])
         assert cluster.topology == topology
+
 
 def test_multiple_joints_with_valid_topologies_returns_valid_topo():
     """Test that cluster with multiple joints of valid topologies (L, I, T) returns TOPO_K."""
@@ -150,6 +152,7 @@ def test_multiple_joints_with_valid_topologies_returns_valid_topo():
 
     assert cluster.topology == JointTopology.TOPO_K
 
+
 def test_multiple_joints_with_t_topology_returns_topo_k():
     """Test that cluster with at least one T joint returns TOPO_K."""
     # Create joints where at least one is T topology
@@ -164,6 +167,7 @@ def test_multiple_joints_with_t_topology_returns_topo_k():
     cluster = Cluster([joint1, joint2])
 
     assert cluster.topology == JointTopology.TOPO_K
+
 
 def test_multiple_joints_with_x_topology_returns_topo_k():
     """Test that cluster with any invalid topology returns TOPO_UNKNOWN."""
@@ -180,6 +184,7 @@ def test_multiple_joints_with_x_topology_returns_topo_k():
 
     assert cluster.topology == JointTopology.TOPO_K
 
+
 def test_multiple_joints_with_unknown_topology_returns_topo_unknown():
     """Test that cluster with TOPO_UNKNOWN joints returns TOPO_UNKNOWN."""
     joint1 = Mock(spec=GenericJoint)
@@ -193,6 +198,7 @@ def test_multiple_joints_with_unknown_topology_returns_topo_unknown():
     cluster = Cluster([joint1, joint2])
 
     assert cluster.topology == JointTopology.TOPO_UNKNOWN
+
 
 def test_multiple_joints_all_l_i_topologies_returns_topo_y():
     """Test that cluster with only L and I topologies returns TOPO_Y."""
@@ -211,6 +217,7 @@ def test_multiple_joints_all_l_i_topologies_returns_topo_y():
     cluster = Cluster([joint1, joint2, joint3])
 
     assert cluster.topology == JointTopology.TOPO_Y
+
 
 def test_t_topology_precedence_over_other_valid_topologies():
     """Test that T topology takes precedence and returns TOPO_K even with other valid topologies."""
@@ -231,6 +238,7 @@ def test_t_topology_precedence_over_other_valid_topologies():
 
     assert cluster.topology == JointTopology.TOPO_K
 
+
 def test_multiple_t_joints_returns_topo_k():
     """Test that cluster with multiple T joints returns TOPO_K."""
     joint1 = Mock(spec=GenericJoint)
@@ -244,6 +252,7 @@ def test_multiple_t_joints_returns_topo_k():
     cluster = Cluster([joint1, joint2])
 
     assert cluster.topology == JointTopology.TOPO_K
+
 
 def test_edge_cases_with_other_topology_values():
     """Test cluster topology with edge case topology values."""
@@ -261,6 +270,7 @@ def test_edge_cases_with_other_topology_values():
         cluster = Cluster([joint1, joint2])
 
         assert cluster.topology == JointTopology.TOPO_UNKNOWN
+
 
 def test_empty_cluster_topology():
     """Test topology behavior with empty cluster."""
