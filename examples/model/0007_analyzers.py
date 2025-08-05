@@ -55,7 +55,7 @@ def main():
         beam = Beam.from_centerline(centerline=line, height=height, width=width)
         model.add_element(beam)
 
-    # pairs of adjacent beams are connected by GenericJoint instances
+    # pairs of adjacent beams are connected by JointCandidate instances
     model.connect_adjacent_beams()
 
     # setup the viewer

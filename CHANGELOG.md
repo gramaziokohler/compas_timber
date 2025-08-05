@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
-* Added `GenericPlateJoint` to `generic_joint.py`.
+* Added `PlateJointCandidate` to `generic_joint.py`.
 * Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
 * Added `PlateJoint.from_generic_joint` as override.
 
