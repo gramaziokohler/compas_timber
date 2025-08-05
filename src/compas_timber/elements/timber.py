@@ -29,8 +29,8 @@ class TimberElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, features=None, frame=None, **kwargs):
-        super(TimberElement, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
+    def __init__(self, features=None, **kwargs):
+        super(TimberElement, self).__init__(**kwargs)
         self._features = features or []
         self.debug_info = []
 
@@ -55,6 +55,19 @@ class TimberElement(Element):
         return False
 
     @property
+    def frame(self):
+        # type: () -> Frame | None
+        """The local coordinate system of the element."""
+        return self._frame
+
+    @frame.setter
+    def frame(self, frame):
+        # type: (Frame) -> None
+        self._frame = frame
+        if frame is not None:
+            self.transformation = Transformation.from_frame(frame)
+
+    @property
     def features(self):
         # type: () -> list[Feature]
         """A list of features applied to the element."""
@@ -68,7 +81,7 @@ class TimberElement(Element):
     @property
     def geometry(self):
         if self._geometry is None:
-            self._geometry = self.compute_elementgeometry()
+            self._geometry = self.compute_elementgeometry()  # TODO: should this be in local or global coordinates?
         return self._geometry
 
     def remove_blank_extension(self):
@@ -122,15 +135,9 @@ class TimberElement(Element):
     @property
     def ref_frame(self):
         # type: () -> Frame
-        """Reference frame for machining processings according to BTLx standard. The origin is at the center of the beam."""
-        assert self.frame
-        start, _ = self._resolve_blank_extensions()
-        ref_point = self.frame.point.copy()
-        ref_point += -self.frame.xaxis * start  # "extension" to the start edge
-
-        ref_point += self.frame.yaxis * self.width * 0.5
-        ref_point -= self.frame.zaxis * self.height * 0.5
-        return Frame(ref_point, self.frame.xaxis, self.frame.zaxis)
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
+        return NotImplementedError("This method should be implemented in subclasses.")
 
     @property
     def ref_sides(self):
