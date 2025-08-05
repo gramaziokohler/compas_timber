@@ -199,11 +199,11 @@ class PlateJoint(Joint):
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
-                if not topo_results:
+                if topo_results.topology == JointTopology.TOPO_UNKNOWN:
                     raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
-                self.topology = topo_results[0]
-                self.a_segment_index = topo_results[1][1]
-                self.b_segment_index = topo_results[2][1]
+                self.topology = topo_results.topology
+                self.a_segment_index = topo_results.segment_a_index
+                self.b_segment_index = topo_results.segment_b_index
             self.reorder_planes_and_outlines()
             self._adjust_plate_outlines()
             self.plate_a.add_interface(self.interface_a)

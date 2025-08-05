@@ -392,8 +392,9 @@ class TimberModel(Model):
         for pair in pairs:
             beam_a, beam_b = pair
             result = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
-
-            topology, beam_a, beam_b, _, _ = result
+            topology = result.topology
+            beam_a = result.beam_a
+            beam_b = result.beam_b
             if topology == JointTopology.TOPO_UNKNOWN:
                 continue
 
