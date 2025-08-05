@@ -1,6 +1,6 @@
 from .joint import JointTopology
 from .plate_joint import PlateJoint
-from .plate_joint import move_polyline_segment_to_plane
+from compas_timber.utils import move_polyline_segment_to_plane
 
 
 class PlateMiterJoint(PlateJoint):

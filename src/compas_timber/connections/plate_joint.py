@@ -275,15 +275,4 @@ class PlateJoint(Joint):
         self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid
 
 
-def move_polyline_segment_to_plane(polyline, segment_index, plane):
-    """Move a segment of a polyline to the intersection with a plane."""
-    start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
-    if start_pt:
-        polyline[segment_index] = start_pt
-        if segment_index == 0:
-            polyline[-1] = start_pt
-    end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
-    if end_pt:
-        polyline[segment_index + 1] = end_pt
-        if segment_index + 1 == len(polyline.lines):
-            polyline[0] = end_pt
+

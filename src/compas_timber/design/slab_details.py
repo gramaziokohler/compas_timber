@@ -1,19 +1,101 @@
+from hmac import new
 import math
+from tracemalloc import start
 
 from compas.geometry import Plane
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_segment
+from compas.geometry import Vector
+from compas.geometry import intersection_segment_segment
 
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.design import CategoryRule
 from compas_timber.elements import Beam
+from compas_timber.utils import intersection_line_beams, is_point_in_polyline
+from compas_timber.utils import split_beam_at_lengths
 
 from .slab_populator import beam_from_category
 
+class InterfaceDetailBase(object):
+    """Base class for interface detail sets."""
 
-class LDetailBase(object):
+    BEAM_CATEGORY_NAMES = ["header","sill","king_stud","jack_stud",]
+
+    RULES = [
+        CategoryRule(TButtJoint, "header", "king_stud"),
+        CategoryRule(TButtJoint, "sill", "king_stud"),
+        CategoryRule(TButtJoint, "sill", "jack_stud"),
+        CategoryRule(LButtJoint, "jack_stud", "header"),
+        CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
+        CategoryRule(TButtJoint, "king_stud", "header"),
+        CategoryRule(TButtJoint, "king_stud", "sill"),
+        CategoryRule(TButtJoint, "king_stud", "edge_stud"),
+        CategoryRule(TButtJoint, "jack_stud", "edge_stud"),
+    ]
+
+    def __init__(self, beam_width_overrides=None, joint_rule_overrides=None):
+        self.beam_width_overrides = beam_width_overrides
+        self.joint_rule_overrides = joint_rule_overrides or []
+        self._rules = []
+
+    @property
+    def rules(self):
+        if not self._rules:
+            self._rules = self.RULES
+            for override in self.joint_rule_overrides:
+                for rule in self.RULES:
+                    if override.category_a == rule.category_a and override.category_b == rule.category_b:
+                        rule = override
+                        break
+                else:
+                    self._rules.append(override)
+        return self._rules
+
+    @staticmethod
+    def cull_and_split_studs(interface, slab_populator, min_length=None):
+        """Split studs with an interface."""
+        new_studs = []
+        min_length = min_length or slab_populator.beam_dimensions["stud"][0]
+        int_beams = interface.beams
+        while slab_populator.studs:
+            stud = slab_populator.studs.pop(0)
+            dots = []
+            for int_beam in int_beams:
+                intersection = intersection_segment_segment(stud.centerline, int_beam.centerline)[0]
+                if not intersection:
+                    continue
+                dots.append(dot_vectors(stud.centerline.direction, Vector.from_start_end(stud.centerline.start, intersection)))
+            stud_segs = split_beam_at_lengths(stud, dots)
+            for seg in stud_segs:
+                if not is_point_in_polyline(seg.midpoint, interface.beam_polyline, in_plane=False) and seg.length >= min_length:
+                    new_studs.append(seg)
+        slab_populator.studs = new_studs
+
+
+
+    @staticmethod
+    def create_elements_main(interface, slab_populator):
+        """Generate the beams for a main interface."""
+        raise NotImplementedError("create_elements_main must be implemented in subclasses.")
+
+    @staticmethod
+    def create_elements_cross(interface, slab_populator):
+        """Generate the beams for a cross interface."""
+        raise NotImplementedError("create_elements_cross must be implemented in subclasses.")
+
+    @staticmethod
+    def create_elements_none(interface, slab_populator):
+        """Generate the beams for a none interface."""
+        raise NotImplementedError("create_elements_none must be implemented in subclasses.")
+
+
+
+class LDetailBase(InterfaceDetailBase):
     """Base class for L-butt detail sets."""
 
     @staticmethod
@@ -35,7 +117,8 @@ class LDetailBase(object):
         return []
 
 
-class TDetailBase(object):
+
+class TDetailBase(InterfaceDetailBase):
     """Base class for T-butt detail sets."""
 
     @staticmethod
@@ -69,7 +152,7 @@ class LButtDetailB(LDetailBase):
         inner_line = flat_line.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         flat_line.translate(interface.frame.zaxis * (stud_width - edge_beam.height) * 0.5)
         edge.translate(interface.frame.yaxis * stud_height * 0.5)
-        flat_beam = Beam.from_centerline(flat_line, width=stud_height, height=stud_width, z_vector=slab_populator.normal)
+        flat_beam = Beam.from_centerline(flat_line, width=stud_height, height=stud_width, z_vector=slab_populator._slab.frame.normal)
         inner_beam = beam_from_category(slab_populator, inner_line, "stud", normal_offset=False)
         interface.beams = [edge_beam, flat_beam, inner_beam]
         for beam in interface.beams:
@@ -157,11 +240,11 @@ class TButtDetailB(TDetailBase):
         edge.translate(interface.frame.yaxis * interface.width * 0.5)
         stud_width = slab_populator.beam_dimensions["stud"][0]
         stud_height = slab_populator.beam_dimensions["stud"][1]
-        if dot_vectors(interface.frame.normal, slab_populator.normal) < 0:
-            offset = slab_populator.sheeting_outside
+        if dot_vectors(interface.frame.normal, slab_populator._slab.frame.normal) < 0:
+            offset = slab_populator._config_set.sheeting_outside
         else:
-            offset = slab_populator.sheeting_inside
-        flat_beam = Beam.from_centerline(edge, width=stud_height, height=stud_width, z_vector=slab_populator.normal)
+            offset = slab_populator._config_set.sheeting_inside
+        flat_beam = Beam.from_centerline(edge, width=stud_height, height=stud_width, z_vector=slab_populator._slab.frame.normal)
         flat_beam.frame.translate(interface.frame.zaxis * (flat_beam.height * 0.5 + offset))
         stud_edge_a = edge.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         stud_edge_b = edge.translated(-interface.frame.yaxis * (stud_width + stud_height) * 0.5)

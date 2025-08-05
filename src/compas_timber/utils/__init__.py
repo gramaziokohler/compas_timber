@@ -18,10 +18,12 @@ from compas.geometry import subtract_vectors
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_line_segment
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
 
 from compas.tolerance import TOL
+from shapely import reverse
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
@@ -496,6 +498,114 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
     return (dots[0], dots[1])
 
 
+def intersection_line_beams(line, beams, max_distance=None):
+    """Find intersections between a line and a list of beams.
+    Parameters
+    ----------
+    line : :class:`compas.geometry.Line`
+        The line to check for intersections.
+    beams : list of :class:`compas_timber.elements.Beam`
+        The beams to check for intersections.
+    max_distance : float, optional
+        The maximum distance from the line to consider an intersection valid.
+        Defaults to 0.0, meaning no distance check.
+    Returns
+    -------
+    list of dict
+        A list of dictionaries containing the intersection points, dot products, and the corresponding beams.
+    Each dictionary has the keys "point", "dot", and "beam".
+    """
+    intersections = []
+    max_distance = max_distance or TOL.relative
+    for beam in beams:
+        line_pt, beam_pt = intersection_line_segment(line, beam.centerline)
+        if line_pt:
+            if distance_point_point(beam_pt, closest_point_on_segment(beam_pt, beam.centerline)) > max_distance:
+                continue
+            intersection = {}
+            intersection["point"] = Point(*line_pt)
+            intersection["dot"] = dot_vectors(Vector.from_start_end(line.start, Point(*line_pt)), line.direction)
+            intersection["beam"] = beam
+            intersections.append(intersection)
+    return intersections
+
+
+def split_beam_at_lengths(beam, lengths):
+    """Splits a beam at given lengths.
+
+    Parameters
+    ----------
+    beam : :class:`compas_timber.elements.Beam`
+        The beam to split.
+    length : float
+        The length at which to split the beam.
+
+    Returns
+    -------
+    :class:`compas_timber.elements.Beam` or None
+        The new beam that is created by the split, or None if the length is outside the beam's length.
+
+    """
+    lengths.sort(reverse=True)
+    for length in lengths:
+        if length <= 0.0 or length >= beam.length:
+            lengths.remove(length)  # remove lengths that are outside the beam's length
+    beams = [beam]
+    for length in lengths:
+        new_beam = beam.copy()
+        new_beam.attributes.update(beam.attributes)
+        new_beam.length = beam.length - length
+        beam.length = length
+        new_beam.frame.translate(beam.frame.xaxis * length)
+        beams.insert(1, new_beam)
+    return beams
+
+def split_beam_by_domain(beam, domain):
+        """Removes the part of the beam that is inside the domain.
+        If the domain is partially outside the beam, the original beam will be modified but no new beam will be created.
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam to split.
+        domain : tuple of float
+            The domain to split the beam by.
+        Returns
+        -------
+        :class:`compas_timber.elements.Beam` or None
+            The new beam that is created by the split, or None if the domain is partially outside the beam.
+
+        """
+        if domain[1]<0 or domain[0] > beam.length:    #if sill is above top of stud or header is below bottom of stud
+            return
+        if domain[0] <= 0.0:
+            beam.length - domain[1]
+            beam.frame.translate(beam.frame.xaxis * domain[1])
+            return None  # no new beam created, original beam is modified
+        if domain[1] >= beam.length:
+            beam.length = domain[0]
+            return None
+        new_beam = beam.copy()
+        new_beam.attributes.update(beam.attributes)
+        new_beam.length = beam.length - domain[1]
+        beam.length = domain[0]
+        new_beam.frame.translate(beam.frame.xaxis * domain[1])
+        return new_beam
+
+
+def move_polyline_segment_to_plane(polyline, segment_index, plane):
+    """Move a segment of a polyline to the intersection with a plane."""
+    start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
+    if start_pt:
+        polyline[segment_index] = start_pt
+        if segment_index == 0:
+            polyline[-1] = start_pt
+    end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
+    if end_pt:
+        polyline[segment_index + 1] = end_pt
+        if segment_index + 1 == len(polyline.lines):
+            polyline[0] = end_pt
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -508,4 +618,10 @@ __all__ = [
     "is_point_in_polyline",
     "do_segments_overlap",
     "get_segment_overlap",
+    "split_beam_by_domain",
+    "split_beam_at_lengths",
+    "intersection_line_beams",
+    "move_polyline_segment_to_plane",
+    "distance_segment_segment_points",
+
 ]

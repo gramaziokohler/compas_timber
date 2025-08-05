@@ -57,27 +57,10 @@ class Opening(TimberElement):
         self.detail_set = detail_set
         self.frame = frame
         self.frame_polyline = None
+        self.joint_tuples = []
 
     def __repr__(self):
         return "Opening(type={})".format(self.__class__.__name__, self.outline)
-
-    @classmethod
-    def from_outline_and_slab(cls, outline, slab, detail_set=None):
-        """Create an Opening from an outline and a slab."""
-
-        def does_opening_intersect_polyline(opening_polyline, polyline):
-            for segment_a in opening_polyline.lines:
-                for segment_b in polyline.lines:
-                    if intersection_segment_segment(segment_a, segment_b)[0]:
-                        return True
-            return False
-
-        if does_opening_intersect_polyline(outline, slab.outline_a) or does_opening_intersect_polyline(outline, slab.outline_b):
-            op = Door(outline, detail_set=detail_set)
-        else:
-            op = Window(outline, detail_set=detail_set)
-        return op
-
 
 
     @property
