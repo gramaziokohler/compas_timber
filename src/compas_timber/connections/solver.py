@@ -405,7 +405,7 @@ class BeamSolverResult(Data):
     """
 
     def __init__(self, topology, beam_a, beam_b, distance=None, location=None):
-        super(BeamSolverResult,self).__init__()
+        super(BeamSolverResult, self).__init__()
         self.topology = topology
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -424,6 +424,7 @@ class BeamSolverResult(Data):
 
     def __repr__(self):
         return f"BeamSolverResult(topology={self.topology}, beam_a={self.beam_a.name}, beam_b={self.beam_b.name}, distance={self.distance}, location={self.location})"
+
 
 class PlateSolverResult(Data):
     """Data structure to hold the results of plate connection topology analysis.
@@ -465,7 +466,7 @@ class PlateSolverResult(Data):
     def __init__(self, topology, plate_a, plate_b, a_segment_index=None, b_segment_index=None, distance=None, location=None):
         """Initializes the PlateSolverResult with the given parameters."""
 
-        super(PlateSolverResult,self).__init__()
+        super(PlateSolverResult, self).__init__()
         self.topology = topology
         self.plate_a = plate_a
         self.plate_b = plate_b
@@ -489,4 +490,12 @@ class PlateSolverResult(Data):
 
     def __repr__(self):
         """Returns a string representation of the PlateSolverResult."""
-        return f"PlateSolverResult(topology={self.topology}, plate_a={self.plate_a.name}, plate_b={self.plate_b.name}, a_segment_index={self.a_segment_index}, b_segment_index={self.b_segment_index}, distance={self.distance}, location={self.location})"
+        return "PlateSolverResult(topology={}, plate_a={}, plate_b={}, a_segment_index={}, b_segment_index={}, distance={}, location={})".format(
+            self.topology,
+            self.plate_a.name,
+            self.plate_b.name,
+            self.a_segment_index,
+            self.b_segment_index,
+            self.distance,
+            self.location,
+        )
