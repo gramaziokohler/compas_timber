@@ -113,15 +113,12 @@ class Beam(TimberElement):
     def shape(self):
         # type: () -> Box
         assert self.frame
-        return self._create_shape(self.frame, self.length, self.width, self.height)  # Doesn't get affected by blank extensions
+        return self._create_shape()
 
     @property
     def blank(self):
         # type: () -> Box
-        shape = self._create_shape(self.ref_frame, self.blank_length, self.width, self.height)  # Gets affected by blank extensions
-        shape.translate(-self.frame.yaxis * self.width * 0.5)
-        shape.translate(self.frame.zaxis * self.height * 0.5)
-        return shape
+        return self._create_blank()
 
     @property
     def blank_length(self):
@@ -195,15 +192,14 @@ class Beam(TimberElement):
 
         """
         blank_geo = Brep.from_box(self.blank)  # blank is in global coordinates
-        blank_geo.transform(self.transformation.inverse())  # transform back to local coordinates
-
         if include_features:
             for feature in self.features:
                 try:
                     blank_geo = feature.apply(blank_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return blank_geo  # type: ignore
+        blank_geo.transform(self.transformation.inverse())  # transform back to local coordinates
+        return blank_geo
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
@@ -325,13 +321,19 @@ class Beam(TimberElement):
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector)
 
-    @staticmethod
-    def _create_shape(frame, xsize, ysize, zsize):
-        # type: (Frame, float, float, float) -> Box
-        boxframe = frame
-        depth_offset = boxframe.xaxis * xsize * 0.5
+    def _create_shape(self):
+        # type: () -> Box
+        boxframe = self.frame
+        depth_offset = boxframe.xaxis * self.length * 0.5
         boxframe.point += depth_offset
-        return Box(xsize, ysize, zsize, frame=boxframe)
+        return Box(self.length, self.width, self.height, frame=boxframe)
+
+    def _create_blank(self):
+        # type: () -> Box
+        origin = self.ref_frame.point.copy()
+        origin += (self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width) / 2  # center the origin
+        frame = Frame(origin, self.ref_frame.xaxis, self.ref_frame.zaxis)
+        return Box(self.blank_length, self.width, self.height, frame=frame)
 
     # ==========================================================================
     # Featrues

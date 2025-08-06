@@ -80,8 +80,11 @@ class TimberElement(Element):
 
     @property
     def geometry(self):
+        # this property return the geometry of the element in it's own global coordinates.
+        # since the element doesn't know anything about the tree, those coordinates might differ from the model's coordinate system.
         if self._geometry is None:
-            self._geometry = self.compute_modelgeometry()  # TODO: should this be in local or global coordinates?
+            element_geometry = self.compute_elementgeometry()
+            self._geometry = element_geometry.transformed(self.transformation)
         return self._geometry
 
     def remove_blank_extension(self):
