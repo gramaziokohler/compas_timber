@@ -170,7 +170,7 @@ def test_multiple_joints_with_t_topology_returns_topo_k():
 
 
 def test_multiple_joints_with_x_topology_returns_topo_k():
-    """Test that cluster with any invalid topology returns TOPO_UNKNOWN."""
+    """Test that cluster including TOPO_X returns TOPO_K."""
     # Create joints with one invalid topology
     joint1 = Mock(spec=JointCandidate)
     joint1.topology = JointTopology.TOPO_L
