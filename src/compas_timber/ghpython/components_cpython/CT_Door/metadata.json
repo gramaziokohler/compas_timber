@@ -1,0 +1,50 @@
+{
+    "name": "Door",
+    "nickname": "Door",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Generates and defines options for Door.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "outline",
+                "description": "Outline of the door opening.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "lintel_posts",
+                "description": "(optional) If False, jack studs will not be generated and headers will butt directly onto king studs.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "split_bottom_plate",
+                "description": "(optional) If True, the bottom plate beam will be split into two beams.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "custom_dimensions",
+                "description": "(optional) From beam dimension component. These dimensions will override the default beam dimensions from Slab Configuration Set.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "joint_overrides",
+                "description": "(optional) From joint overrides component. Allows user to specify joints between specific beam types in a door frame.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Door",
+                "description": "the Door element."
+            }
+        ]
+    }
+}

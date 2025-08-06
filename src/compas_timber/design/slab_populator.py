@@ -737,7 +737,7 @@ class SlabPopulator(object):
 
 
 
-def beam_from_category(slab_populator, segment, category, normal_offset=True, **kwargs):
+def beam_from_category(beam_dimensions, segment, category, normal, normal_offset=True, **kwargs):
     """Creates a beam from a segment and a category, using the dimensions from the configuration set.
     Parameters
     ----------
@@ -759,8 +759,8 @@ def beam_from_category(slab_populator, segment, category, normal_offset=True, **
     """
     if category not in slab_populator.beam_dimensions:
         raise ValueError(f"Unknown beam category: {category}")
-    width = slab_populator.beam_dimensions[category][0]
-    height = slab_populator.frame_thickness
+    width = beam_dimensions[category][0]
+    height = frame_thickness
     beam = Beam.from_centerline(segment, width=width, height=height, z_vector=slab_populator._slab.frame.normal)
     if normal_offset:
         beam.frame.translate(slab_populator._slab.frame.normal * height * 0.5)  # align the beam to the slab frame

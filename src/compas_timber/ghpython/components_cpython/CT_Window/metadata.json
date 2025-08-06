@@ -1,0 +1,44 @@
+{
+    "name": "Window",
+    "nickname": "Window",
+    "category": "COMPAS Timber",
+    "subcategory": "Design",
+    "description": "Generates and defines options for Window.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "outline",
+                "description": "Outline of the Window opening.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "lintel_posts",
+                "description": "(optional) If False, jack studs will not be generated and headers will butt directly onto king studs.",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "custom_dimensions",
+                "description": "(optional) From beam dimension component. These dimensions will override the default beam dimensions from Slab Configuration Set.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "joint_overrides",
+                "description": "(optional) From joint overrides component. Allows user to specify joints between specific beam types in a Window frame.",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Window",
+                "description": "the Window element."
+            }
+        ]
+    }
+}

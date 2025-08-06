@@ -560,38 +560,6 @@ def split_beam_at_lengths(beam, lengths):
         beams.insert(1, new_beam)
     return beams
 
-def split_beam_by_domain(beam, domain):
-        """Removes the part of the beam that is inside the domain.
-        If the domain is partially outside the beam, the original beam will be modified but no new beam will be created.
-
-        Parameters
-        ----------
-        beam : :class:`compas_timber.elements.Beam`
-            The beam to split.
-        domain : tuple of float
-            The domain to split the beam by.
-        Returns
-        -------
-        :class:`compas_timber.elements.Beam` or None
-            The new beam that is created by the split, or None if the domain is partially outside the beam.
-
-        """
-        if domain[1]<0 or domain[0] > beam.length:    #if sill is above top of stud or header is below bottom of stud
-            return
-        if domain[0] <= 0.0:
-            beam.length - domain[1]
-            beam.frame.translate(beam.frame.xaxis * domain[1])
-            return None  # no new beam created, original beam is modified
-        if domain[1] >= beam.length:
-            beam.length = domain[0]
-            return None
-        new_beam = beam.copy()
-        new_beam.attributes.update(beam.attributes)
-        new_beam.length = beam.length - domain[1]
-        beam.length = domain[0]
-        new_beam.frame.translate(beam.frame.xaxis * domain[1])
-        return new_beam
-
 
 def move_polyline_segment_to_plane(polyline, segment_index, plane):
     """Move a segment of a polyline to the intersection with a plane."""
@@ -618,7 +586,6 @@ __all__ = [
     "is_point_in_polyline",
     "do_segments_overlap",
     "get_segment_overlap",
-    "split_beam_by_domain",
     "split_beam_at_lengths",
     "intersection_line_beams",
     "move_polyline_segment_to_plane",

@@ -16,7 +16,6 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.utils import do_segments_overlap, get_polyline_segment_perpendicular_vector, split_beam_at_lengths
 from compas_timber.utils import get_segment_overlap
-from compas_timber.utils import split_beam_by_domain
 from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import move_polyline_segment_to_plane
 
@@ -33,6 +32,12 @@ class OpeningDetailBase(object):
         The interface for which the detail set is created.
     """
 
+    def __init__(self, dimension_overrides=None, joint_overrides=None):
+        self.dimension_overrides = dimension_overrides or {}
+        self.joint_overrides = joint_overrides or {}
+
+
+
     @staticmethod
     def _generate_frame_polyline(opening, slab_populator):
         """Bounding rectangle aligned orthogonal to the slab.stud_direction."""
@@ -45,12 +50,12 @@ class OpeningDetailBase(object):
         return opening.frame_polyline
 
 
-    @staticmethod
+
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
         return []
 
-    @staticmethod
+
     def generate_joints(opening, slab_populator):
         """Generate the beams for a cross interface."""
         return []
@@ -174,24 +179,25 @@ class WindowDetailBase(OpeningDetailBase):
     interface : :class:`compas_timber.connections.SlabToSlabInterface`
         The interface for which the detail set is created.
     """
-    @staticmethod
-    def generate_elements(opening, slab_populator):
+
+    def generate_elements(self, opening, slab_populator):
         """Generate the beams for a main interface."""
+        self.beam_dimensions.update(slab_populator.beam_dimensions)
         frame_polyline = OpeningDetailBase._generate_frame_polyline(opening, slab_populator)
         segments = [line for line in frame_polyline.lines]
         for i in range(4):
             if dot_vectors(segments[i].direction, slab_populator.stud_direction) < 0:
                 segments[i] = Line(segments[i].end, segments[i].start)  # reverse the segment to match the stud direction
-        opening.beams.append(beam_from_category(slab_populator, segments[1], "header", edge_index=1))
-        opening.beams.append(beam_from_category(slab_populator, segments[2], "king_stud", edge_index=2))
-        opening.beams.append(beam_from_category(slab_populator, segments[0], "king_stud", edge_index=0))
-        opening.beams.append(beam_from_category(slab_populator, segments[3], "sill", edge_index=3))
+        opening.beams.append(beam_from_category(self, segments[1], "header", normal=slab_populator._slab.frame.normal, edge_index=1))
+        opening.beams.append(beam_from_category(self, segments[2], "king_stud", edge_index=2))
+        opening.beams.append(beam_from_category(self, segments[0], "king_stud", edge_index=0))
+        opening.beams.append(beam_from_category(self, segments[3], "sill", edge_index=3))
         for beam in opening.beams:
             vector = get_polyline_segment_perpendicular_vector(frame_polyline, beam.attributes["edge_index"])
             beam.frame.translate(vector * beam.width * 0.5)
         return opening.beams
 
-    @classmethod
+
     def generate_joints(cls, opening, slab_populator):
         """Generate the joints for WindowDetailB."""
         joints = []
@@ -208,7 +214,7 @@ class WindowDetailA(WindowDetailBase):
         The interface for which the detail set is created.
     """
 
-    @classmethod
+
     def generate_joints(cls, opening, slab_populator):
         """Generate the beams for a cross interface."""
         joints = WindowDetailBase.generate_joints(opening, slab_populator)
@@ -220,7 +226,7 @@ class WindowDetailA(WindowDetailBase):
 class WindowDetailB(WindowDetailBase):
     """Detail set for window openings with lintel posts."""
 
-    @staticmethod
+
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
         WindowDetailBase.generate_elements(opening, slab_populator)
@@ -235,7 +241,7 @@ class WindowDetailB(WindowDetailBase):
 
         return opening.beams
 
-    @classmethod
+
     def generate_joints(cls, opening, slab_populator):
         """Generate the joints for WindowDetailB."""
         joints = WindowDetailBase.generate_joints(opening, slab_populator)
@@ -258,8 +264,8 @@ class DoorDetailBase(OpeningDetailBase):
     BEAM_CATEGORY_NAMES = ["header", "sill", "king_stud", "jack_stud", "edge_stud"]
 
 
-    @staticmethod
-    def generate_elements(opening, slab_populator):
+
+    def generate_elements(self, opening, slab_populator):
         """Generate the beams for a main interface."""
         DoorDetailBase._adjust_door_outline(opening, slab_populator)
         frame_polyline = OpeningDetailBase._generate_frame_polyline(opening, slab_populator)
@@ -327,7 +333,7 @@ class DoorDetailBase(OpeningDetailBase):
 
         beams = split_beam_at_lengths(edge_beam, [overlap[0], overlap[1]])
 
-        slab_populator._edge_beams[slab_index].append(beams[0])
+        slab_populator._edge_beams[slab_index].append(beams[2])
 class DoorDetailAA(DoorDetailBase):
     """Detail set for door openings without lintel posts and without splitting the bottom plate."""
 
@@ -336,14 +342,13 @@ class DoorDetailAB(DoorDetailBase):
 
     RULES = [
         CategoryRule(TButtJoint, "header", "king_stud"),
-        CategoryRule(TButtJoint, "sill", "king_stud"),
         CategoryRule(LButtJoint, "king_stud", "bottom_plate_beam"),
         CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
         CategoryRule(TButtJoint, "king_stud", "header"),
         CategoryRule(TButtJoint, "king_stud", "sill"),
     ]
 
-    @staticmethod
+
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
         DoorDetailBase.generate_elements(opening, slab_populator)
@@ -355,7 +360,7 @@ class DoorDetailAB(DoorDetailBase):
 class DoorDetailBA(DoorDetailBase):
     """Detail set for door openings with lintel posts and without splitting the bottom plate."""
 
-    @staticmethod
+
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
         beams = DoorDetailBase.generate_elements(opening, slab_populator)
@@ -386,7 +391,7 @@ class DoorDetailBB(WindowDetailB):
         CategoryRule(TButtJoint, "king_stud", "sill"),
     ]
 
-    @staticmethod
+
     def generate_elements(opening, slab_populator):
         """Generate the beams for a main interface."""
         DoorDetailBase.generate_elements(opening, slab_populator)
