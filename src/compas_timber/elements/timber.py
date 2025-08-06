@@ -81,7 +81,7 @@ class TimberElement(Element):
     @property
     def geometry(self):
         if self._geometry is None:
-            self._geometry = self.compute_elementgeometry()  # TODO: should this be in local or global coordinates?
+            self._geometry = self.compute_modelgeometry()  # TODO: should this be in local or global coordinates?
         return self._geometry
 
     def remove_blank_extension(self):

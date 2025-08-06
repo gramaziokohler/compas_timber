@@ -7,6 +7,7 @@ from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
@@ -112,12 +113,15 @@ class Beam(TimberElement):
     def shape(self):
         # type: () -> Box
         assert self.frame
-        return self._create_shape(self.frame, self.length, self.width, self.height)
+        return self._create_shape(self.frame, self.length, self.width, self.height)  # Doesn't get affected by blank extensions
 
     @property
     def blank(self):
         # type: () -> Box
-        return self._create_shape(self.ref_frame, self.blank_length, self.width, self.height)
+        shape = self._create_shape(self.ref_frame, self.blank_length, self.width, self.height)  # Gets affected by blank extensions
+        shape.translate(-self.frame.yaxis * self.width * 0.5)
+        shape.translate(self.frame.zaxis * self.height * 0.5)
+        return shape
 
     @property
     def blank_length(self):
@@ -346,11 +350,25 @@ class Beam(TimberElement):
             this extension will be removed as well.
 
         """
+        # Get the current start extension before modification
+        old_start, _ = self._resolve_blank_extensions()
+
         if joint_key is not None and joint_key in self._blank_extensions:
             s, e = self._blank_extensions[joint_key]
             start += s
             end += e
+
+        # Add/update the extension
         self._blank_extensions[joint_key] = (start, end)
+
+        # Get the new start extension after modification
+        new_start, _ = self._resolve_blank_extensions()
+
+        # Apply transformation for the difference in start extension
+        start_diff = new_start - old_start
+        if start_diff != 0.0:
+            translation = Translation.from_vector(-self.frame.xaxis * start_diff)
+            self.transformation = translation * self.transformation
 
     def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
@@ -362,6 +380,7 @@ class Beam(TimberElement):
             The key of the joint which required this extension.
 
         """
+        # TODO: transformation in the opposite direction of the extension?
         if joint_key is None:
             self._blank_extensions = {}
         else:
