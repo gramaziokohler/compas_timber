@@ -79,13 +79,15 @@ class Beam(TimberElement):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
+        data["frame"] = self.frame
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(frame=frame, **kwargs)
+        super(Beam, self).__init__(**kwargs)
+        self.frame = frame
         self.width = width
         self.height = height
         self.length = length
@@ -142,6 +144,7 @@ class Beam(TimberElement):
 
     @property
     def long_edges(self):
+        # TODO: can we replace this with `ref_edges`? No because ref_edges get affected by blank extensions
         # type: () -> list[Line]
         assert self.frame
         y = self.frame.yaxis
@@ -187,7 +190,9 @@ class Beam(TimberElement):
         :class:`compas.geometry.Brep`
 
         """
-        blank_geo = Brep.from_box(self.blank)
+        blank_geo = Brep.from_box(self.blank)  # blank is in global coordinates
+        blank_geo.transform(self.transformation.inverse())  # transform back to local coordinates
+
         if include_features:
             for feature in self.features:
                 try:
@@ -317,10 +322,9 @@ class Beam(TimberElement):
         return cls.from_centerline(line, width, height, z_vector)
 
     @staticmethod
-    def _create_shape(xsize, ysize, zsize):
-        # type: (float, float, float) -> Box
-        """Creates a box representing the shape of the beam in local coordinates."""
-        boxframe = Frame.worldXY()
+    def _create_shape(frame, xsize, ysize, zsize):
+        # type: (Frame, float, float, float) -> Box
+        boxframe = frame
         depth_offset = boxframe.xaxis * xsize * 0.5
         boxframe.point += depth_offset
         return Box(xsize, ysize, zsize, frame=boxframe)
