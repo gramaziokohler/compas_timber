@@ -137,7 +137,15 @@ class TimberElement(Element):
         # type: () -> Frame
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
         """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
-        return NotImplementedError("This method should be implemented in subclasses.")
+        # TODO: check if this applies for other elements than beams -> plate
+        assert self.frame
+        start, _ = self._resolve_blank_extensions()
+        ref_point = self.frame.point.copy()
+        ref_point += -self.frame.xaxis * start  # "extension" to the start edge
+
+        ref_point += self.frame.yaxis * self.width * 0.5
+        ref_point -= self.frame.zaxis * self.height * 0.5
+        return Frame(ref_point, self.frame.xaxis, self.frame.zaxis)
 
     @property
     def ref_sides(self):
