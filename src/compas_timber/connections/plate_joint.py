@@ -6,6 +6,7 @@ from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 
+from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 from .joint import Joint
@@ -123,7 +124,9 @@ class PlateJoint(Joint):
         self.plate_b = plate_b
         self.a_segment_index = a_segment_index
         self.b_segment_index = b_segment_index
-
+        if self.plate_a and self.plate_b:
+            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
+                self.calculate_topology(self.plate_a, self.plate_b)
         self.a_outlines = None
         self.b_outlines = None
         self.a_planes = None
@@ -194,16 +197,26 @@ class PlateJoint(Joint):
             self.topology,
         )
 
+    def calculate_topology(self, allow_reordering=False):
+        """Calculate the topology of the joint based on the plates."""
+        topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
+        if topo_results.topology == JointTopology.TOPO_UNKNOWN:
+            raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
+        if self.plate_a != topo_results.plate_a:
+            if allow_reordering:
+                self.plate_a, self.plate_b = topo_results.plate_a, topo_results.plate_b
+            else:
+                raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
+        self.topology = topo_results.topology
+        self.a_segment_index = topo_results.a_segment_index
+        self.b_segment_index = topo_results.b_segment_index
+        return topo_results
+
     def add_features(self):
         """Add features to the plates based on the joint."""
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
-                if topo_results.topology == JointTopology.TOPO_UNKNOWN:
-                    raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
-                self.topology = topo_results.topology
-                self.a_segment_index = topo_results.segment_a_index
-                self.b_segment_index = topo_results.segment_b_index
+                self.calculate_topology()
             self.reorder_planes_and_outlines()
             self._adjust_plate_outlines()
             self.plate_a.add_interface(self.interface_a)

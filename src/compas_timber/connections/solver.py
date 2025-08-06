@@ -404,7 +404,7 @@ class BeamConnectionTopologyResults(Data):
 class PlateConnectionTopologyResults(Data):
     """Data structure to hold the results of plate connection topology analysis."""
 
-    def __init__(self, topology, plate_a, plate_b, segment_a_index=None, segment_b_index=None, distance=None, location=None):
+    def __init__(self, topology, plate_a, plate_b, a_segment_index=None, b_segment_index=None, distance=None, location=None):
         """Initializes the PlateConnectionTopologyResults with the given parameters.
 
         Parameters
@@ -415,14 +415,16 @@ class PlateConnectionTopologyResults(Data):
             The first plate involved in the intersection.
         plate_b : :class:`~compas_timber.elements.Plate`
             The second plate involved in the intersection.
-        segment_a_index : int, optional
+        a_segment_index : int, optional
             The index of the segment in `plate_a` where the intersection occurs.
-        segment_b_index : int, optional
+        b_segment_index : int, optional
             The index of the segment in `plate_b` where the intersection occurs.
         """
         super().__init__()
         self.topology = topology
         self.plate_a = plate_a
         self.plate_b = plate_b
-        self.segment_a_index = segment_a_index
-        self.segment_b_index = segment_b_index
+        self.a_segment_index = a_segment_index
+        self.b_segment_index = b_segment_index
+        self.distance = distance
+        self.location = location

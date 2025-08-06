@@ -247,12 +247,12 @@ def test_plate_topology(plate_config, expected_topology, expected_segments, requ
     if expected_topology == JointTopology.TOPO_EDGE_EDGE:
         assert topo_results.plate_a == plate_a, "Expected plate_a as first plate"
         assert topo_results.plate_b == plate_b, "Expected plate_b as second plate"
-        assert topo_results.segment_a_index == expected_segments[0], f"Expected segment_a_index = {expected_segments[0]}"
-        assert topo_results.segment_b_index == expected_segments[1], f"Expected segment_b_index = {expected_segments[1]}"
+        assert topo_results.a_segment_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
+        assert topo_results.b_segment_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
     elif expected_topology == JointTopology.TOPO_EDGE_FACE:
         # For T-joints, the roles may be swapped
-        assert topo_results.segment_a_index == expected_segments[0], f"Expected segment_a_index = {expected_segments[0]}"
-        assert topo_results.segment_b_index == expected_segments[1], f"Expected segment_b_index = {expected_segments[1]}"
+        assert topo_results.a_segment_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
+        assert topo_results.b_segment_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
 
 
 @pytest.fixture

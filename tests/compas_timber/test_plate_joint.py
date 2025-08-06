@@ -47,9 +47,9 @@ def test_three_plate_joints():
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, tr.topology, tr.segment_a_index, tr.segment_b_index))
+            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, tr.topology, tr.segment_a_index, tr.segment_b_index))
+            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
 
     assert len(joints) == 3, "Expected three joints"
     assert all(isinstance(j, PlateMiterJoint) for j in joints), "Expected L-joints to be PlateMiterJoint"
@@ -79,9 +79,9 @@ def test_three_plate_joints_mix_topo():
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, tr.topology, tr.segment_a_index, tr.segment_b_index))
+            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, tr.topology, tr.segment_a_index, tr.segment_b_index))
+            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
 
     assert len(joints) == 3, "Expected three joints"
     assert isinstance(joints[0], PlateButtJoint), "Expected L-joints to be PlateButtJoint"
