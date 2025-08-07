@@ -53,7 +53,7 @@ class AnySlabSelector(object):
         return True
 
 
-class SlabPopulatorConfigurationSet(object):
+class SlabDetailBase(DetailBase):
     """Contains one or more configuration set for the WallPopulator.
 
     Parameters
@@ -89,6 +89,7 @@ class SlabPopulatorConfigurationSet(object):
         beam_width_overrides=None,
         joint_overrides=None,
     ):
+        super(SlabDetailBase, self).__init__(beam_width_overrides, joint_overrides)
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
         self.stud_direction = stud_direction
@@ -104,19 +105,76 @@ class SlabPopulatorConfigurationSet(object):
     def default(cls, stud_spacing, beam_width):
         return cls(stud_spacing, beam_width)
 
-    @property
-    def beam_widths(self):
-        """Returns the custom dimensions from the configuration set."""
-        for key in self.BEAM_CATEGORY_NAMES:
-            self._beam_widths[key] = self._config_set.beam_width
-        if self._config_set.custom_dimensions:
-            dimensions = self._config_set.custom_dimensions
-            for key, value in dimensions.items():
-                if value:
-                    self._beam_widths[key] = value
-        return self._beam_widths
+    def generate_elements(self, slab):
+        """Generates the elements for the slab."""
+        raise NotImplementedError("This method should be implemented in a subclass.")
 
-class SlabPopulator(DetailBase):
+    def generate_joints(self, slab):
+        """Generates the joints for the slab."""
+        raise NotImplementedError("This method should be implemented in a subclass."
+                                  )
+
+class SlabDetailA(SlabDetailBase):
+    """A slab detail set that uses the default beam width and stud spacing."""
+
+
+    BEAM_CATEGORY_NAMES = ["stud", "edge_stud", "top_plate_beam", "bottom_plate_beam"]
+    RULES = [
+            CategoryRule(TButtJoint, "stud", "top_plate_beam"),
+            CategoryRule(LButtJoint, "edge_stud", "top_plate_beam"),
+            CategoryRule(TButtJoint, "stud", "bottom_plate_beam"),
+            CategoryRule(LButtJoint, "edge_stud", "bottom_plate_beam"),
+            CategoryRule(TButtJoint, "stud", "edge_stud"),
+            CategoryRule(TButtJoint, "stud", "detail"),
+        ]
+
+    def generate_elements(self, slab):
+        """Generates the elements for the slab."""
+        slab_populator = SlabPopulator(self, slab)
+        slab_populator._generate_edge_beams()
+        slab_populator._generate_studs()
+        slab_populator._generate_interface_beams()
+        slab_populator._extend_interior_corner_beams()
+        slab_populator._generate_opening_beams()
+        slab_populator._cull_and_split_studs()
+        slab_populator._generate_plates()
+        slab.populator = slab_populator
+        return slab_populator.elements
+
+    def generate_joints(self, slab):
+        """Generates the joints for the slab."""
+        slab_populator = SlabPopulator(self, slab)
+        slab_populator._generate_edge_joints()
+        slab_populator._generate_face_interface_joints()
+        slab_populator._generate_opening_joints()
+        return slab_populator.joints
+
+class SlabDetailB(SlabDetailBase):
+    """A slab detail set that uses the default beam width and stud spacing."""
+
+
+    BEAM_CATEGORY_NAMES = ["stud", "edge_stud", "top_plate_beam", "bottom_plate_beam"]
+    RULES = [
+            CategoryRule(LButtJoint, "edge_stud", "top_plate_beam"),
+            CategoryRule(LButtJoint, "edge_stud", "bottom_plate_beam"),
+
+        ]
+
+    def generate_elements(self, slab):
+        """Generates the elements for the slab."""
+        slab_populator = SlabPopulator(self, slab)
+        slab_populator._generate_edge_beams()
+        slab_populator._generate_plates()
+        return slab_populator.elements
+
+    def generate_joints(self, slab):
+        """Generates the joints for the slab."""
+        slab_populator = SlabPopulator(self, slab)
+        slab_populator._generate_edge_joints()
+        return slab_populator.joints
+
+
+class SlabPopulator(object):
     """Create a timber assembly from a surface.
 
     Parameters
@@ -134,8 +192,6 @@ class SlabPopulator(DetailBase):
         The outline B of the slab.
     openings : list of :class:`compas.geometry.Polyline`
         The openings in the slab.
-    opening_polylines : list of :class:`compas.geometry.Polyline`
-        The opening polylines of the slab.
     frame : :class:`compas.geometry.Polyline`
         The frame of the slab.
     interfaces : list of :class:`compas_timber.connections.SlabToSlabInterface`
@@ -191,12 +247,6 @@ class SlabPopulator(DetailBase):
         self.joints = []
         self.beam_dimensions = self.get_beam_dimensions(self)
 
-
-    @property
-    def opening_polylines(self):
-        """Returns the opening polylines of the slab."""
-        return [op.outline for op in self._slab.openings]
-
     @property
     def edge_count(self):
         """Returns the number of edges in the slab outline."""
@@ -237,26 +287,22 @@ class SlabPopulator(DetailBase):
     @property
     def frame_thickness(self):
         """Returns the frame thickness, adjusted for sheeting."""
-        if self._frame_thickness is None:
-            self._handle_sheeting_offsets()
-        return self._frame_thickness
+        return self._slab.thickness - self._config_set.sheeting_inside - self._config_set.sheeting_outside
 
     def __repr__(self):
         return "SlabPopulator({}, {})".format(self._config_set, self._slab)
 
     @property
     def elements(self):
-        return self.beams + self.plates
+        return self._slab.elements
 
     @property
     def beams(self):
-        beams = self.edge_beams
-        for interface in self._slab.interfaces:
-            beams.extend(interface.beams)
-        for opening in self._slab.openings:
-            beams.extend(opening.beams)
-        beams.extend(self.studs)
-        return list(set(beams))
+        return filter(lambda x: x.is_beam, self._slab.elements)
+
+    @property
+    def plates(self):
+        return filter(lambda x: x.is_plate, self._slab.elements)
 
     @property
     def edge_perpendicular_vectors(self):
@@ -265,27 +311,28 @@ class SlabPopulator(DetailBase):
             self._edge_perpendicular_vectors = [get_polyline_segment_perpendicular_vector(self._slab.outline_a, i) for i in range(self.edge_count)]
         return self._edge_perpendicular_vectors
 
-
-
     @property
     def edge_beams(self):
         """Returns the edge beams of the slab."""
-        beams = []
-        for val in self._edge_beams.values():
-            beams.extend(val)
+        beams = {}
+        for beam in self.beams:
+            if beam.attributes.get("edge_index", None) is not None:
+                if beam.attributes["edge_index"] not in beams:
+                    beams[beam.attributes["edge_index"]] = []
+                beams[beam.attributes["edge_index"]].append(beam)
         return beams
 
     @property
     def edge_studs(self):
-        return [beam for beam in self.edge_beams if beam.attributes.get("category", None) == "edge_stud"]
+        return filter(lambda x: x.attributes.get("category", None) == "edge_stud", self.elements)
 
     @property
     def top_plate_beams(self):
-        return [beam for beam in self.edge_beams if beam.attributes.get("category", None) == "top_plate_beam"]
+        return filter(lambda x: x.attributes.get("category", None) == "top_plate_beam", self.elements)
 
     @property
     def bottom_plate_beams(self):
-        return [beam for beam in self.edge_beams if beam.attributes.get("category", None) == "bottom_plate_beam"]
+        return filter(lambda x: x.attributes.get("category", None) == "bottom_plate_beam", self.elements)
 
     @property
     def interior_corner_indices(self):
@@ -303,9 +350,10 @@ class SlabPopulator(DetailBase):
     @property
     def interior_segment_indices(self):
         """Get the indices of the interior segments of the slab outline."""
-        for i in range(self.edge_count):
-            if i in self.interior_corner_indices and (i + 1) % self.edge_count in self.interior_corner_indices:
-                yield i
+        if not self._interior_corner_indices:
+            for i in range(self.edge_count):
+                if i in self.interior_corner_indices and (i + 1) % self.edge_count in self.interior_corner_indices:
+                    yield i
 
     @property
     def edge_interfaces(self):
@@ -320,12 +368,6 @@ class SlabPopulator(DetailBase):
     def face_interfaces(self):
         """Get the face interfaces of the slab."""
         return [i for i in self._slab.interfaces if i.edge_index is None]
-
-
-
-    @classmethod
-    def beam_category_names(cls):
-        return SlabPopulator.BEAM_CATEGORY_NAMES
 
     @classmethod
     def from_model(cls, model, configuration_sets):
@@ -372,25 +414,6 @@ class SlabPopulator(DetailBase):
         else:
             self._frame_outline_b = self._slab.outline_b
 
-    def create_elements(self):
-        """Does the actual populating of the wall
-        creates and returns all the elements in the wall, returns also the joint definitions
-        """
-        self._generate_edge_beams()
-        self._generate_studs()
-        self._generate_interface_beams()
-        self._extend_interior_corner_beams()
-        self._generate_opening_beams()
-        self._cull_and_split_studs()
-        self._generate_plates()
-        return self.elements
-
-    def generate_joints(self):
-        self._generate_edge_joints()
-        self._generate_face_interface_joints()
-        self._generate_opening_joints()
-        return self.joints
-
 
     # ==========================================================================
     # methods for edge beams
@@ -430,19 +453,13 @@ class SlabPopulator(DetailBase):
 
     def _set_edge_beams_category(self, beam):
         beam_angle = angle_vectors(beam.centerline.direction, self.stud_direction, deg=True)
-        if beam.attributes["edge_index"] in self.interior_segment_indices:
-            if beam_angle < 45 or beam_angle > 135:
-                beam.attributes["category"] = "edge_stud"
-            else:
-                beam.attributes["category"] = "header"  # TODO: maybe make this related to interfaces eg. it is header if there is no interface, otherwise plate.
+        if beam_angle < 45 or beam_angle > 135:
+            beam.attributes["category"] = "edge_stud"
         else:
-            if beam_angle < 45 or beam_angle > 135:
-                beam.attributes["category"] = "edge_stud"
+            if dot_vectors(self.edge_perpendicular_vectors[beam.attributes["edge_index"]], self.stud_direction) < 0:
+                beam.attributes["category"] = "bottom_plate_beam"
             else:
-                if dot_vectors(self.edge_perpendicular_vectors[beam.attributes["edge_index"]], self.stud_direction) < 0:
-                    beam.attributes["category"] = "bottom_plate_beam"
-                else:
-                    beam.attributes["category"] = "top_plate_beam"
+                beam.attributes["category"] = "top_plate_beam"
 
     def _offset_edge_beam(self, beam):
         """Offset elements towards the inside of the wall. The given beam definitions are modified in-place.
@@ -464,9 +481,9 @@ class SlabPopulator(DetailBase):
             long_cut = LongitudinalCutProxy.from_plane_and_beam(self._slab.edge_planes[beam.attributes["edge_index"]], beam)
             beam.add_features(long_cut)
 
-    def _generate_interface_beams(self):
+    def _generate_interface_beams(self, slab):
         """Generate the beams for the interface."""
-        for interface in self._slab.interfaces:
+        for interface in slab.interfaces:
             if interface.interface_role == "CROSS":
                 interface.detail_set.create_elements_cross(interface, self)
             elif interface.interface_role == "MAIN":
@@ -601,11 +618,6 @@ class SlabPopulator(DetailBase):
         beams_to_intersect = []
         for val in self._edge_beams.values():
             beams_to_intersect.extend(val)
-        # for opening in self._slab.openings:
-        #     beams_to_intersect.extend([opening.sill, opening.header])
-        # for interface in self._slab.interfaces:
-        #     beams_to_intersect.extend(interface.beams)
-        # beams_to_intersect = list(set(beams_to_intersect))  # remove duplicates
         return intersection_line_beams(line, beams_to_intersect, max_distance=self.beam_dimensions["stud"][0])
 
     def _generate_studs_from_intersections(self, intersections, min_length=TOL.absolute):
@@ -616,10 +628,7 @@ class SlabPopulator(DetailBase):
         for pair in pairwise(intersections):
             # cull the invalid segments but keep the intersectig beams
             seg = Line(pair[0]["point"], pair[1]["point"])
-            # if self._is_line_in_interface(seg):
-            #     continue
-            # if self._is_line_in_opening(seg):
-            #     continue
+
 
             for intersection in pair:
                 if intersection["beam"] not in intersecting_beams:
@@ -635,46 +644,12 @@ class SlabPopulator(DetailBase):
                 self.studs.append(stud)
 
 
-    def _is_line_in_interface(self, line):
-        for i in self._slab.interfaces:
-            if i.interface_role == "CROSS" and is_point_in_polyline(line.point_at(0.5), i.beam_polyline, in_plane=False):
-                return True
-        return False
-
-    # def _is_line_in_opening(self, line):
-    #     for opening in self._slab.openings:
-    #         if is_point_in_polyline(line.point_at(0.5), opening.frame_polyline, in_plane=False):
-    #             return True
-    #     return False
-
-    def _cull_overlaps(self):  # TODO: use RTree or similar to speed this up
-        not_studs = [beam for beam in self.beams if beam.attributes.get("category", None) != "stud"]
-        for stud in self.studs:
-            for other_element in not_studs:
-                if (
-                    self._distance_between_elements(stud, other_element)
-                    < (self.beam_dimensions[stud.attributes["category"]][0] + self.beam_dimensions[other_element.attributes["category"]][0]) / 2
-                ):
-                    self.studs.remove(stud)
-                    break
-
-    def _distance_between_elements(self, element_one, element_two):
-        pt = element_one.centerline.point_at(0.5)
-        cp = closest_point_on_segment(pt, element_two.centerline)
-        return pt.distance_to_point(cp)
-
     def _generate_plates(self):
         if self._config_set.sheeting_inside:
-            self.plates.append(Plate(self._slab.outline_a, self.frame_outline_a, opening_outlines=self.opening_polylines))
+            self.plates.append(Plate(self._slab.outline_a, self.frame_outline_a, opening_outlines=[o.outline for o in self.openings]))
         if self._config_set.sheeting_outside:
-            self.plates.append(Plate(self._slab.outline_b, self.frame_outline_b, opening_outlines=self.opening_polylines))
+            self.plates.append(Plate(self._slab.outline_b, self.frame_outline_b, opening_outlines=[o.outline for o in self.openings]))
 
 
-def get_joint_from_elements(element_a, element_b, rules, **kwargs):
-    """Get the joint type for the given elements."""
-    for rule in rules:
-        if rule.category_a == element_a.attributes["category"] and rule.category_b == element_b.attributes["category"]:
-            rule.kwargs.update(kwargs)
-            return rule.joint_type(element_a, element_b, **rule.kwargs)
-    raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
+
 

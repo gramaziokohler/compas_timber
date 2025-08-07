@@ -87,6 +87,7 @@ class Plate(TimberElement):
         self._blank = None
         self._planes = None
         self._thickness = None
+        self._edge_planes = []
         self.interfaces = []
         self.opening_outlines = []
         if opening_outlines:
@@ -172,13 +173,13 @@ class Plate(TimberElement):
 
     @property
     def edge_planes(self):
-        _edge_planes = []
-        for i in range(len(self.outline_a) - 1):
-            plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
-            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a, i)) < 0:
-                plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
-            _edge_planes.append(plane)
-        return _edge_planes
+        if not self._edge_planes:
+            for i in range(len(self.outline_a) - 1):
+                plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
+                if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a, i)) < 0:
+                    plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
+                self._edge_planes.append(plane)
+        return self._edge_planes
 
     @property
     def features(self):

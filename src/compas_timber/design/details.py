@@ -92,12 +92,12 @@ class DetailBase(object):
             raise ValueError("Failed to create beam from segment: {}".format(segment))
         return beam
 
+    def get_joint_from_elements(self, element_a, element_b, **kwargs):
+        """Get the joint type for the given elements."""
+        for rule in self.rules:
+            if rule.category_a == element_a.attributes["category"] and rule.category_b == element_b.attributes["category"]:
+                rule.kwargs.update(kwargs)
+                return rule.joint_type(element_a, element_b, **rule.kwargs)
+        raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
 
-    def generate_elements(opening, slab_populator):
-        """Generate the beams for a main interface."""
-        return []
 
-
-    def generate_joints(opening, slab_populator):
-        """Generate the beams for a cross interface."""
-        return []

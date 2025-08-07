@@ -12,7 +12,9 @@ from .wall_from_surface import SurfaceModel
 from .wall_populator import WallPopulator
 from .wall_populator import WallPopulatorConfigurationSet
 from .slab_populator import SlabPopulator
-from .slab_populator import SlabPopulatorConfigurationSet
+from .slab_populator import SlabDetailBase
+from .slab_populator import SlabDetailA
+from .slab_populator import SlabDetailB
 from .wall_populator import WallSelector
 from .wall_populator import AnyWallSelector
 from .wall_details import LConnectionDetailA
@@ -30,7 +32,9 @@ __all__ = [
     "WallPopulator",
     "WallPopulatorConfigurationSet",
     "SlabPopulator",
-    "SlabPopulatorConfigurationSet",
+    "SlabDetailBase",
+    "SlabDetailA",
+    "SlabDetailB",
     "WallSelector",
     "AnyWallSelector",
     "LConnectionDetailA",
