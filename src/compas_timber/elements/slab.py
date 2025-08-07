@@ -148,7 +148,7 @@ class Slab(TimberElement):
     def envelope_faces(self):
         return self.faces[:4]
 
-    def compute_geometry(self, _=False):
+    def compute_elementgeometry(self, _=False):
         assert self.frame
 
         extrusion_vector = self.frame.zaxis * self.thickness

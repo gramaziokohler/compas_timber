@@ -78,6 +78,7 @@ for beam in model.beams:
 
 # draw geometry (with features)
 for beam in model.beams:
-    viewer.scene.add(beam.geometry)
+    beam: Beam
+    viewer.scene.add(beam.modelgeometry)
 
 viewer.show()
