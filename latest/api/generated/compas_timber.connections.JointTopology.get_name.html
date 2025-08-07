@@ -602,19 +602,20 @@ document.write(`
 <h1>JointTopology.get_name</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.JointTopology.get_name">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">JointTopology.</span></span><span class="sig-name descname"><span class="pre">get_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/158cd45/src/compas_timber/connections/solver.py#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">JointTopology.</span></span><span class="sig-name descname"><span class="pre">get_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/5434c7d/src/compas_timber/connections/solver.py#L78"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Returns the string representation of given topology value.</p>
 <p>For use in logging.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>value</strong><span class="classifier">int</span></dt><dd><p>One of [JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_UNKNOWN]</p>
+<dt><strong>value</strong><span class="classifier">int</span></dt><dd><p>One of [JointTopology.TOPO_I, JointTopology.TOPO_L, JointTopology.TOPO_T, JointTopology.TOPO_X, JointTopology.TOPO_Y,
+JointTopology.TOPO_K, JointTopology.TOPO_EDGE_EDGE, JointTopology.TOPO_EDGE_FACE, JointTopology.TOPO_UNKNOWN]</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>str</dt><dd><p>One of [“TOPO_L”, “TOPO_T”, “TOPO_X”, “TOPO_UNKNOWN”]</p>
+<dt>str</dt><dd><p>One of [“TOPO_I”, “TOPO_L”, “TOPO_T”, “TOPO_X”, “TOPO_Y”, “TOPO_K”, “TOPO_EDGE_EDGE”, “TOPO_EDGE_FACE”, “TOPO_UNKNOWN”]</p>
 </dd>
 </dl>
 </dd>

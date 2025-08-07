@@ -602,12 +602,11 @@ document.write(`
 <h1>ConnectionSolver.find_topology</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.ConnectionSolver.find_topology">
-<span class="sig-prename descclassname"><span class="pre">ConnectionSolver.</span></span><span class="sig-name descname"><span class="pre">find_topology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/158cd45/src/compas_timber/connections/solver.py#L121"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">ConnectionSolver.</span></span><span class="sig-name descname"><span class="pre">find_topology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/5434c7d/src/compas_timber/connections/solver.py#L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>If <cite>beam_a</cite> and <cite>beam_b</cite> intersect within the given <cite>max_distance</cite>, return the topology type of the intersection.</p>
 <p>If the topology is role-sensitive, the method outputs the beams in a consistent specific order
 (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
 order as they were inputted.</p>
-<p># TODO: this needs to be reworked ASAP</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -615,15 +614,14 @@ order as they were inputted.</p>
 </dd>
 <dt><strong>beam_b</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>Second beam from intersecting pair.</p>
 </dd>
-<dt><strong>tol</strong><span class="classifier">float</span></dt><dd><p>General tolerance to use for mathematical computations.</p>
-</dd>
-<dt><strong>max_distance</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum distance, in desigen units, at which two beams are considered intersecting.</p>
+<dt><strong>max_distance</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum distance, in design units, at which two beams are considered intersecting.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>tuple(<a class="reference internal" href="compas_timber.connections.JointTopology.html#compas_timber.connections.JointTopology" title="compas_timber.connections.JointTopology"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointTopology</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>)</dt><dd></dd>
+<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamSolverResult</span></code></dt><dd><p>The topology results of the intersection between the two beams.</p>
+</dd>
 </dl>
 </dd>
 </dl>

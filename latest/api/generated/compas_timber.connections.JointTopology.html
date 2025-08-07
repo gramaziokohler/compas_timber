@@ -597,17 +597,21 @@ document.write(`
 <h1>JointTopology</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.JointTopology">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">JointTopology</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/158cd45/src/compas_timber/connections/solver.py#L52"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">JointTopology</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/5434c7d/src/compas_timber/connections/solver.py#L51"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Enumeration of the possible joint topologies.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Attributes<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>TOPO_UNKNOWN</strong></dt><dd></dd>
-<dt><strong>TOPO_I</strong></dt><dd></dd>
-<dt><strong>TOPO_L</strong></dt><dd></dd>
-<dt><strong>TOPO_T</strong></dt><dd></dd>
-<dt><strong>TOPO_X</strong></dt><dd></dd>
+<dt><strong>TOPO_I - end-to-end joint between two parallel beams</strong></dt><dd></dd>
+<dt><strong>TOPO_L - end-to-end joint between two non-parallel beams</strong></dt><dd></dd>
+<dt><strong>TOPO_T - end-to-middle joint between two beams</strong></dt><dd></dd>
+<dt><strong>TOPO_X - middle-to-middle joint between two beams</strong></dt><dd></dd>
+<dt><strong>TOPO_Y - joint between three or more beams where all beams meet at their ends</strong></dt><dd></dd>
+<dt><strong>TOPO_K - joint between three or more beams where at least one beam meet in the middle</strong></dt><dd></dd>
+<dt><strong>TOPO_EDGE_EDGE  - joint between two plates where the edges of both plates are aligned</strong></dt><dd></dd>
+<dt><strong>TOPO_EDGE_FACE  - joint between two plates where one plate is aligned with the face of the other</strong></dt><dd></dd>
 </dl>
 </dd>
 </dl>
