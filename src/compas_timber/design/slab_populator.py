@@ -23,6 +23,7 @@ from compas.tolerance import TOL
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
+from compas_timber.design.details import DetailBase
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.fabrication.longitudinal_cut import LongitudinalCutProxy
@@ -70,7 +71,7 @@ class SlabPopulatorConfigurationSet(object):
     edge_stud_offset : float, optional
         Additional offset for the edge studs.
     custom_dimensions : dict, optional
-        Custom cross section for the beams, by category. (e.g. {"king_stud": (120, 60)})
+        Custom cross section for the beams, by category. (e.g. {"bottom_plate_beam": (120, 60)})
     joint_overrides : list(`compas_timber.workflow.CategoryRule), optional
         List of joint rules to override the default ones.
     connection_details : dict, optional
@@ -88,7 +89,7 @@ class SlabPopulatorConfigurationSet(object):
         sheeting_inside=0,
         lintel_posts=True,
         edge_stud_offset=0.0,
-        custom_dimensions=None,
+        beam_width_overrides=None,
         joint_overrides=None,
     ):
         self.stud_spacing = stud_spacing
@@ -99,7 +100,7 @@ class SlabPopulatorConfigurationSet(object):
         self.sheeting_inside = sheeting_inside
         self.lintel_posts = lintel_posts
         self.edge_stud_offset = edge_stud_offset or 0.0
-        self.custom_dimensions = custom_dimensions
+        self.beam_width_overrides = beam_width_overrides
         self.joint_overrides = joint_overrides
 
     def __str__(self):
@@ -121,7 +122,7 @@ class SlabPopulatorConfigurationSet(object):
                     self._beam_widths[key] = value
         return self._beam_widths
 
-class SlabPopulator(object):
+class SlabPopulator(DetailBase):
     """Create a timber assembly from a surface.
 
     Parameters
@@ -167,14 +168,36 @@ class SlabPopulator(object):
 
     """
 
-    BEAM_CATEGORY_NAMES = ["stud", "edge_stud", "top_plate_beam", "bottom_plate_beam","header","sill","king_stud","jack_stud", "detail"]
+    BEAM_CATEGORY_NAMES = ["stud", "edge_stud", "top_plate_beam", "bottom_plate_beam"]
+    RULES = [
+            CategoryRule(TButtJoint, "stud", "top_plate_beam"),
+            CategoryRule(LButtJoint, "edge_stud", "top_plate_beam"),
+            CategoryRule(TButtJoint, "stud", "bottom_plate_beam"),
+            CategoryRule(LButtJoint, "edge_stud", "bottom_plate_beam"),
+            CategoryRule(TButtJoint, "stud", "edge_stud"),
+            CategoryRule(TButtJoint, "stud", "detail"),
+            # CategoryRule(TButtJoint, "jack_stud", "detail"),
+            # CategoryRule(TButtJoint, "king_stud", "detail"),
+            # CategoryRule(TButtJoint, "header", "king_stud"),
+            # CategoryRule(TButtJoint, "sill", "king_stud"),
+            # CategoryRule(TButtJoint, "sill", "jack_stud"),
+            # CategoryRule(LButtJoint, "jack_stud", "header"),
+            # CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
+            # CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
+            # CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
+            # CategoryRule(TButtJoint, "king_stud", "header"),
+            # CategoryRule(TButtJoint, "king_stud", "sill"),
+            # CategoryRule(TButtJoint, "king_stud", "edge_stud"),
+            # CategoryRule(TButtJoint, "jack_stud", "edge_stud"),
+        ]
+
 
     def __init__(self, configuration_set, slab):
+        super(SlabPopulator, self).__init__(configuration_set.beam_width_overrides, configuration_set.joint_overrides)
         self._slab = slab
         self._config_set = configuration_set
 
         self._stud_direction = None
-        self._beam_dimensions = None
         self._frame_outline_a = None
         self._frame_outline_b = None
         self._frame_thickness = None
@@ -185,7 +208,8 @@ class SlabPopulator(object):
         self._edge_perpendicular_vectors = []
         self._edge_beams = {}
         self.joints = []
-        self._rules = []
+        self.beam_dimensions = self.get_beam_dimensions(self)
+
 
     @property
     def opening_polylines(self):
@@ -235,20 +259,6 @@ class SlabPopulator(object):
         if self._frame_thickness is None:
             self._handle_sheeting_offsets()
         return self._frame_thickness
-
-    @property
-    def beam_dimensions(self):
-        """Returns the custom dimensions from the configuration set."""
-        if self._beam_dimensions is None:
-            self._beam_dimensions = {}
-            for key in self.BEAM_CATEGORY_NAMES:
-                self._beam_dimensions[key] = (self._config_set.beam_width, self.frame_thickness)
-            if self._config_set.custom_dimensions:
-                dimensions = self._config_set.custom_dimensions
-                for key, value in dimensions.items():
-                    if value:
-                        self._beam_dimensions[key] = (value[0], self.frame_thickness)
-        return self._beam_dimensions
 
     def __repr__(self):
         return "SlabPopulator({}, {})".format(self._config_set, self._slab)
@@ -330,45 +340,7 @@ class SlabPopulator(object):
         """Get the face interfaces of the slab."""
         return [i for i in self._slab.interfaces if i.edge_index is None]
 
-    @property
-    def _default_rules(self):
-        return [
-            CategoryRule(TButtJoint, "stud", "top_plate_beam"),
-            CategoryRule(LButtJoint, "edge_stud", "top_plate_beam"),
-            CategoryRule(TButtJoint, "stud", "bottom_plate_beam"),
-            CategoryRule(LButtJoint, "edge_stud", "bottom_plate_beam"),
-            CategoryRule(TButtJoint, "stud", "edge_stud"),
-            CategoryRule(TButtJoint, "stud", "detail"),
-            CategoryRule(TButtJoint, "jack_stud", "detail"),
-            CategoryRule(TButtJoint, "king_stud", "detail"),
-            CategoryRule(TButtJoint, "header", "king_stud"),
-            CategoryRule(TButtJoint, "sill", "king_stud"),
-            CategoryRule(TButtJoint, "sill", "jack_stud"),
-            CategoryRule(LButtJoint, "jack_stud", "header"),
-            CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
-            CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
-            CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
-            CategoryRule(TButtJoint, "king_stud", "header"),
-            CategoryRule(TButtJoint, "king_stud", "sill"),
-            CategoryRule(TButtJoint, "king_stud", "edge_stud"),
-            CategoryRule(TButtJoint, "jack_stud", "edge_stud"),
 
-
-        ]
-
-    @property
-    def rules(self):
-        if not self._rules:
-            self._rules = self._default_rules
-            if self._config_set.joint_overrides:
-                for rule in self._config_set.joint_overrides:
-                    rule_set = set([rule.category_a, rule.category_b])
-                    for i, _rule in enumerate(self._rules):
-                        _set = set([_rule.category_a, _rule.category_b])
-                        if rule_set == _set:
-                            self._rules[i] = rule
-                            break
-        return self._rules
 
     @classmethod
     def beam_category_names(cls):
@@ -404,8 +376,8 @@ class SlabPopulator(object):
                 pts_inside.append(pt)
             self._frame_thickness -= self._config_set.sheeting_inside
             self._frame_outline_a = Polyline(pts_inside)
-            for polyline in self.opening_polylines:
-                for pt in polyline.points:
+            for opening in self._slab.openings:
+                for pt in opening.outline.points:
                     pt.translate(self._slab.frame.normal * self._config_set.sheeting_inside)
         else:
             self._frame_outline_a = self._slab.outline_a
@@ -438,15 +410,6 @@ class SlabPopulator(object):
         self._generate_opening_joints()
         return self.joints
 
-    def get_joint_from_elements(self, element_a, element_b, rules=None, **kwargs):
-        """Get the joint type for the given elements."""
-        if rules is None:
-            rules = self.rules
-        for rule in rules:
-            if rule.category_a == element_a.attributes["category"] and rule.category_b == element_b.attributes["category"]:
-                rule.kwargs.update(kwargs)
-                return rule.joint_type(element_a, element_b, **rule.kwargs)
-        raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
 
     # ==========================================================================
     # methods for edge beams
@@ -580,15 +543,15 @@ class SlabPopulator(object):
         if interior_corner:
             if beam_a_angle < beam_b_angle:
                 plane = Plane(self._slab.edge_planes[edge_index].point, -self._slab.edge_planes[edge_index].normal)
-                joint_def = self.get_joint_from_elements(beam_a, beam_b, butt_plane=plane)
+                joint_def = get_joint_from_elements(beam_a, beam_b, self.rules, butt_plane=plane)
             else:
                 plane = Plane(self._slab.edge_planes[edge_index - 1].point, -self._slab.edge_planes[edge_index - 1].normal)
-                joint_def = self.get_joint_from_elements(beam_b, beam_a, butt_plane=plane)
+                joint_def = get_joint_from_elements(beam_b, beam_a, self.rules, butt_plane=plane)
         else:
             if beam_a_angle < beam_b_angle:
-                joint_def = self.get_joint_from_elements(beam_a, beam_b, back_plane=self._slab.edge_planes[edge_index - 1])
+                joint_def = get_joint_from_elements(beam_a, beam_b, self.rules, back_plane=self._slab.edge_planes[edge_index - 1])
             else:
-                joint_def = self.get_joint_from_elements(beam_b, beam_a, back_plane=self._slab.edge_planes[edge_index])
+                joint_def = get_joint_from_elements(beam_b, beam_a, self.rules, back_plane=self._slab.edge_planes[edge_index])
 
         self.joints.append(joint_def)
 
@@ -609,10 +572,7 @@ class SlabPopulator(object):
 
     def _generate_opening_beams(self):
         """Generates the elements for the openings."""
-        print("there are {} openings in the slab".format(len(self._slab.openings)))
-
         for opening in self._slab.openings:
-            print("GENERATING OPENING BEAMS")
             opening.generate_elements(self)
             # opening.detail_set.cull_and_split_studs(opening, self)
 
@@ -689,16 +649,9 @@ class SlabPopulator(object):
             if not is_point_in_polyline(seg.point_at(0.5), self.frame_outline_a, in_plane=False):
                 continue
             # create the beam element and add joints
-            stud = beam_from_category(self, seg, "stud")
+            stud = beam_from_category(seg, "stud", self._slab.frame.normal, self.beam_dimensions)
             if stud is not None:
                 self.studs.append(stud)
-        #     while len(intersecting_beams) > 0:
-        #         beam = intersecting_beams.pop()
-        #         self.joints.append(self.get_joint_from_elements(studs[-1], beam))
-        # if len(studs) > 0:  # add joints with any leftover beams
-        #     while len(intersecting_beams) > 0:
-        #         beam = intersecting_beams.pop()
-        #         self.joints.append(self.get_joint_from_elements(studs[-1], beam))
 
 
     def _is_line_in_interface(self, line):
@@ -736,17 +689,29 @@ class SlabPopulator(object):
             self.plates.append(Plate(self._slab.outline_b, self.frame_outline_b, opening_outlines=self.opening_polylines))
 
 
+def get_joint_from_elements(element_a, element_b, rules, **kwargs):
+    """Get the joint type for the given elements."""
+    for rule in rules:
+        if rule.category_a == element_a.attributes["category"] and rule.category_b == element_b.attributes["category"]:
+            rule.kwargs.update(kwargs)
+            return rule.joint_type(element_a, element_b, **rule.kwargs)
+    raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
 
-def beam_from_category(beam_dimensions, segment, category, normal, normal_offset=True, **kwargs):
+
+def beam_from_category(segment, category, normal, beam_dimensions, normal_offset=True, **kwargs):
     """Creates a beam from a segment and a category, using the dimensions from the configuration set.
     Parameters
     ----------
-    parent : :class:`SlabPopulator` or class:`Window`
-        The parent object containing the configuration set and slab.
     segment : :class:`compas.geometry.Line`
         The segment to create the beam from.
     category : str
         The category of the beam, which determines its dimensions.
+    normal : :class:`compas.geometry.Vector`
+        The normal vector to align the beam with the slab frame.
+    beam_dimensions : dict
+        A dictionary containing the beam dimensions for each category.
+        key = beam category name
+        value = tuple of (width, height)
     normal_offset : bool, optional
         Whether to offset the beam by 1/2 of the beam height in the parent.normal direction. Defaults to True.
     kwargs : dict, optional
@@ -757,16 +722,22 @@ def beam_from_category(beam_dimensions, segment, category, normal, normal_offset
     :class:`compas_timber.elements.Beam`
         The created beam with the specified category and attributes.
     """
-    if category not in slab_populator.beam_dimensions:
+    if category not in beam_dimensions:
         raise ValueError(f"Unknown beam category: {category}")
     width = beam_dimensions[category][0]
-    height = frame_thickness
-    beam = Beam.from_centerline(segment, width=width, height=height, z_vector=slab_populator._slab.frame.normal)
-    if normal_offset:
-        beam.frame.translate(slab_populator._slab.frame.normal * height * 0.5)  # align the beam to the slab frame
-    beam.attributes["category"] = category
+    height = beam_dimensions[category][1]
+    beam = Beam.from_centerline(segment, width=width, height=height, z_vector=normal)
     for key, value in kwargs.items():
         beam.attributes[key] = value
+    beam.attributes["category"] = category
+
+    if normal_offset:
+        normal = normal.unitized()
+        print(beam.attributes.get("category", None))
+        if beam.attributes.get("category", None) == "jack_stud":
+            # edge studs are aligned to the slab frame, so we offset them by half the height
+            print("Offsetting jack stud by {} in normal direction".format(normal * height * 0.5))
+        beam.frame.translate(normal * height * 0.5)  # align the beam to the slab frame
     if beam is None:
         raise ValueError("Failed to create beam from segment: {}".format(segment))
     return beam

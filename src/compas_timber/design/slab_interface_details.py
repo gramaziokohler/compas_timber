@@ -1,6 +1,4 @@
-from hmac import new
 import math
-from tracemalloc import start
 
 from compas.geometry import Plane
 from compas.geometry import angle_vectors
@@ -13,48 +11,43 @@ from compas.geometry import intersection_segment_segment
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
+from compas_timber.design.details import DetailBase
 from compas_timber.elements import Beam
-from compas_timber.utils import intersection_line_beams, is_point_in_polyline
+from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import split_beam_at_lengths
 
 from .slab_populator import beam_from_category
 
-class InterfaceDetailBase(object):
+class InterfaceDetailBase(DetailBase):
     """Base class for interface detail sets."""
 
-    BEAM_CATEGORY_NAMES = ["header","sill","king_stud","jack_stud",]
+    BEAM_CATEGORY_NAMES = ["detail"]
 
     RULES = [
-        CategoryRule(TButtJoint, "header", "king_stud"),
-        CategoryRule(TButtJoint, "sill", "king_stud"),
-        CategoryRule(TButtJoint, "sill", "jack_stud"),
-        CategoryRule(LButtJoint, "jack_stud", "header"),
-        CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
-        CategoryRule(TButtJoint, "king_stud", "header"),
-        CategoryRule(TButtJoint, "king_stud", "sill"),
-        CategoryRule(TButtJoint, "king_stud", "edge_stud"),
-        CategoryRule(TButtJoint, "jack_stud", "edge_stud"),
+        CategoryRule(TButtJoint, "detail", "edge_stud"),
+        CategoryRule(TButtJoint, "detail", "bottom_plate_beam"),
+        CategoryRule(TButtJoint, "detail", "top_plate_beam"),
+        CategoryRule(TButtJoint, "detail", "edge_stud"),
+        CategoryRule(TButtJoint, "king_stud", "detail"),
+        CategoryRule(TButtJoint, "jack_stud", "detail"),
+        CategoryRule(TButtJoint, "stud", "detail"),
     ]
 
     def __init__(self, beam_width_overrides=None, joint_rule_overrides=None):
-        self.beam_width_overrides = beam_width_overrides
-        self.joint_rule_overrides = joint_rule_overrides or []
-        self._rules = []
+        super(InterfaceDetailBase, self).__init__(beam_width_overrides, joint_rule_overrides)
 
-    @property
-    def rules(self):
-        if not self._rules:
-            self._rules = self.RULES
-            for override in self.joint_rule_overrides:
-                for rule in self.RULES:
-                    if override.category_a == rule.category_a and override.category_b == rule.category_b:
-                        rule = override
-                        break
-                else:
-                    self._rules.append(override)
-        return self._rules
+
+    def update_rules(self, joint_rule_overrides):
+        """Update the rules with any overrides provided."""
+        rules = [r for r in self.RULES]
+        for override in joint_rule_overrides:
+            for rule in rules:
+                if override.category_a == rule.category_a and override.category_b == rule.category_b:
+                    rule = override
+                    break
+            else:
+                rules.append(override)
+        return rules
 
     @staticmethod
     def cull_and_split_studs(interface, slab_populator, min_length=None):
@@ -78,18 +71,17 @@ class InterfaceDetailBase(object):
 
 
 
-    @staticmethod
-    def create_elements_main(interface, slab_populator):
+
+    def create_elements_main(self,interface, slab_populator):
         """Generate the beams for a main interface."""
         raise NotImplementedError("create_elements_main must be implemented in subclasses.")
 
-    @staticmethod
-    def create_elements_cross(interface, slab_populator):
+
+    def create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a cross interface."""
         raise NotImplementedError("create_elements_cross must be implemented in subclasses.")
 
-    @staticmethod
-    def create_elements_none(interface, slab_populator):
+    def create_elements_none(self, interface, slab_populator):
         """Generate the beams for a none interface."""
         raise NotImplementedError("create_elements_none must be implemented in subclasses.")
 
@@ -98,20 +90,20 @@ class InterfaceDetailBase(object):
 class LDetailBase(InterfaceDetailBase):
     """Base class for L-butt detail sets."""
 
-    @staticmethod
-    def create_elements_main(interface, slab_populator):
+
+    def create_elements_main(self,interface, slab_populator):
         """Generate the beams for a main interface."""
         interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
 
-    @staticmethod
-    def create_elements_cross(interface, slab_populator):
+
+    def create_elements_cross(self,interface, slab_populator):
         """Generate the beams for a cross interface."""
         interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
 
-    @staticmethod
-    def create_elements_none(interface, slab_populator):
+
+    def create_elements_none(self,interface, slab_populator):
         """Generate the beams for a none interface."""
         interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
@@ -121,19 +113,16 @@ class LDetailBase(InterfaceDetailBase):
 class TDetailBase(InterfaceDetailBase):
     """Base class for T-butt detail sets."""
 
-    @staticmethod
-    def create_elements_main(interface, slab_populator):
+    def create_elements_main(self, interface, slab_populator):
         """Generate the beams for a main interface."""
         interface.beams.append(slab_populator._edge_beams[interface.edge_index][0])
         return []
 
-    @staticmethod
-    def create_elements_cross(interface, slab_populator):
+    def create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a cross interface."""
         return []
 
-    @staticmethod
-    def create_elements_none(interface, slab_populator):
+    def create_elements_none(self, interface, slab_populator):
         """Generate the beams for a none interface."""
         raise ValueError("TDetailBase does not support NONE interfaces. Must be MAIN or CROSS interface role.")
 
@@ -141,22 +130,21 @@ class TDetailBase(InterfaceDetailBase):
 class LButtDetailB(LDetailBase):
     """Detail Set that generates the beams for a L-butt a 3-beam box in the Cross Slab."""
 
-    @staticmethod
-    def create_elements_cross(interface, slab_populator):
+    def create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a L-cross interface."""
+        beam_dimensions = DetailBase.get_beam_dimensions(self, slab_populator)
         edge_beam = slab_populator._edge_beams[interface.edge_index][0]
         edge = edge_beam.centerline
-        stud_width = slab_populator.beam_dimensions["stud"][0]
-        stud_height = slab_populator.beam_dimensions["stud"][1]
+        stud_width = beam_dimensions["detail"][0]
+        stud_height = beam_dimensions["detail"][1]
         flat_line = edge.translated(interface.frame.yaxis * (edge_beam.width + stud_height) * 0.5)
         inner_line = flat_line.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         flat_line.translate(interface.frame.zaxis * (stud_width - edge_beam.height) * 0.5)
         edge.translate(interface.frame.yaxis * stud_height * 0.5)
-        flat_beam = Beam.from_centerline(flat_line, width=stud_height, height=stud_width, z_vector=slab_populator._slab.frame.normal)
-        inner_beam = beam_from_category(slab_populator, inner_line, "stud", normal_offset=False)
+        normal = slab_populator._slab.frame.normal
+        flat_beam = Beam.from_centerline(flat_line, width=stud_height, height=stud_width, z_vector=normal)
+        inner_beam = beam_from_category(inner_line, "detail", normal, beam_dimensions, normal_offset=False)
         interface.beams = [edge_beam, flat_beam, inner_beam]
-        for beam in interface.beams:
-            beam.attributes["category"] = "detail"
         return [flat_beam, inner_beam]
 
     @staticmethod
@@ -233,25 +221,27 @@ class LButtDetailB(LDetailBase):
 class TButtDetailB(TDetailBase):
     """Detail Set that generates the beams for a T-butt a 3-beam box in the Cross Slab."""
 
-    @staticmethod
-    def create_elements_cross(interface, slab_populator):
+    def create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a T-cross interface."""
+        beam_dimensions = self.get_beam_dimensions(slab_populator)
         edge = interface.polyline.lines[0]
         edge.translate(interface.frame.yaxis * interface.width * 0.5)
-        stud_width = slab_populator.beam_dimensions["stud"][0]
-        stud_height = slab_populator.beam_dimensions["stud"][1]
+        width = beam_dimensions["detail"][0]
+        height = beam_dimensions["detail"][1]
         if dot_vectors(interface.frame.normal, slab_populator._slab.frame.normal) < 0:
             offset = slab_populator._config_set.sheeting_outside
         else:
             offset = slab_populator._config_set.sheeting_inside
-        flat_beam = Beam.from_centerline(edge, width=stud_height, height=stud_width, z_vector=slab_populator._slab.frame.normal)
-        flat_beam.frame.translate(interface.frame.zaxis * (flat_beam.height * 0.5 + offset))
-        stud_edge_a = edge.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
-        stud_edge_b = edge.translated(-interface.frame.yaxis * (stud_width + stud_height) * 0.5)
 
-        beam_a = beam_from_category(slab_populator, stud_edge_a, "stud", normal_offset=False)
+        flat_beam = Beam.from_centerline(edge, width=height, height=width, z_vector=slab_populator._slab.frame.normal)
+        flat_beam.frame.translate(interface.frame.zaxis * (flat_beam.height * 0.5 + offset))
+        stud_edge_a = edge.translated(interface.frame.yaxis * (width + height) * 0.5)
+        stud_edge_b = edge.translated(-interface.frame.yaxis * (width + height) * 0.5)
+
+        normal= slab_populator._slab.frame.normal
+        beam_a = beam_from_category(stud_edge_a, "detail", normal, beam_dimensions, normal_offset=False)
         beam_a.frame.translate(interface.frame.normal * (beam_a.height * 0.5 + offset))
-        beam_b = beam_from_category(slab_populator, stud_edge_b, "stud", normal_offset=False)
+        beam_b = beam_from_category(stud_edge_b, "detail", normal, beam_dimensions, normal_offset=False)
         beam_b.frame.translate(interface.frame.normal * (beam_b.height * 0.5 + offset))
         interface.beams = [beam_a, flat_beam, beam_b]
 
@@ -259,8 +249,7 @@ class TButtDetailB(TDetailBase):
             beam.attributes["category"] = "detail"
         return interface.beams
 
-    @staticmethod
-    def create_joints_cross(interface, slab_populator):
+    def create_joints_cross(self, interface, slab_populator):
         """Generate the joints between T-BUTT interfaces and slab edge beams."""
         joints = []
         for beam in interface.beams:
@@ -280,12 +269,12 @@ class TButtDetailB(TDetailBase):
                         # if there is no interface, we create a joint definition between the edge beam and the beam
                         for edge_beam in slab_populator._edge_beams[i]:
                             if intersection_line_segment(beam.centerline, edge_beam.centerline)[0]:
-                                joints.append(TButtJoint(beam, edge_beam))
+                                joints.append(get_joint_from_elements(beam, edge_beam))
 
         return joints
 
     @staticmethod
-    def create_interface_interface_joints(interface_main, interface_cross, slab_populator):
+    def create_interface_interface_joints(interface_main, interface_cross):
         """Generate the joints between T_TOPO interfaces."""
         # NOTE: untested
         joints = []
