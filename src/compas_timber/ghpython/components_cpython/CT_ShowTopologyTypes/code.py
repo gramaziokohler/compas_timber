@@ -2,6 +2,7 @@
 """Shows the names of the connection topology types."""
 
 # flake8: noqa
+import re
 import Grasshopper
 import System
 from compas_rhino.conversions import point_to_rhino
@@ -24,21 +25,10 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
         for pair in found_pairs:
-            beam_a, beam_b = pair
-            detected_topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b)
-            if not detected_topo == JointTopology.TOPO_UNKNOWN:
-                topologies.append({"detected_topo": detected_topo, "beam_a": beam_a, "beam_b": beam_b})
-
-        for topo in topologies:
-            beam_a = topo["beam_a"]
-            beam_b = topo["beam_b"]
-            topology = topo.get("detected_topo")
-
-            [p1, _], [p2, _] = intersection_line_line_param(beam_a.centerline, beam_b.centerline, float("inf"), False, 1e-3)
-            p1 = point_to_rhino(p1)
-            p2 = point_to_rhino(p2)
-            self.pt.append((p2 + p1) / 2)
-            self.txt.append(JointTopology.get_name(topology))
+            result = solver.find_topology(*pair)
+            if not result.topology == JointTopology.TOPO_UNKNOWN:
+                self.pt.append(point_to_rhino(result.point))
+                self.txt.append(JointTopology.get_name(result.topology))
 
     def DrawViewportWires(self, arg):
         if ghenv.Component.Locked:
