@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `Text` `BTLxProcessing` class, module and a corresponding `Label_Beams` GH Component.
+* Added `Label` and `DeferredLabel` classes
 
 * Added attribute `tolerance` to `TimberModel`.
 * Added `scaled` method to `compas_timber.fabrication.BTLxProcessing` to scale the BTLx parameters.
