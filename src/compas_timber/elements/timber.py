@@ -1,6 +1,7 @@
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Transformation
+from compas.geometry import Translation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -64,8 +65,19 @@ class TimberElement(Element):
     def frame(self, frame):
         # type: (Frame) -> None
         self._frame = frame
-        if frame is not None:
-            self.transformation = Transformation.from_frame(frame)
+
+    @property
+    def transformation(self):
+        # type: () -> Transformation
+        """The transformation that transforms the element's geometry to the model's coordinate system."""
+        transformation = Transformation.from_frame(self.frame) if self.frame else Transformation()
+        if self.is_beam:
+            # For beams, we need to apply the blank extension to the transformation
+            # This is needed to align the beam's geometry with the model's coordinate system
+            # The blank extension is applied to the start of the beam
+            start, _ = self._resolve_blank_extensions()
+            transformation *= Translation.from_vector(-self.frame.xaxis * start)
+        return transformation
 
     @property
     def features(self):
