@@ -12,8 +12,8 @@ from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import JointCandidate
 from compas_timber.connections import Joint
+from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import WallJoint
 from compas_timber.errors import BeamJoiningError
@@ -391,9 +391,10 @@ class TimberModel(Model):
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         for pair in pairs:
             beam_a, beam_b = pair
-            result = solver.find_topology(beam_a, beam_b, tol=TOL.relative, max_distance=max_distance)
-
-            topology, beam_a, beam_b = result
+            result = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
+            topology = result.topology
+            beam_a = result.beam_a
+            beam_b = result.beam_b
             if topology == JointTopology.TOPO_UNKNOWN:
                 continue
 

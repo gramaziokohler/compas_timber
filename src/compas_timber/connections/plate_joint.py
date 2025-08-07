@@ -124,19 +124,13 @@ class PlateJoint(Joint):
 
     def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(PlateJoint, self).__init__(topology=topology, **kwargs)
-        if a_segment_index is None and plate_a and plate_b:
-            solver = PlateConnectionSolver()
-            results = solver.find_topology(plate_a, plate_b)
-            if results[0] is JointTopology.TOPO_UNKNOWN:
-                raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(plate_a, plate_b))
-            if results[1][0] != plate_a:
-                raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
-            self.topology, (self.plate_a, self.a_segment_index), (self.plate_b, self.b_segment_index) = results
-        else:
-            self.plate_a = plate_a
-            self.plate_b = plate_b
-            self.a_segment_index = a_segment_index
-            self.b_segment_index = b_segment_index
+        self.plate_a = plate_a
+        self.plate_b = plate_b
+        self.a_segment_index = a_segment_index
+        self.b_segment_index = b_segment_index
+        if self.plate_a and self.plate_b:
+            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
+                self.calculate_topology(self.plate_a, self.plate_b)
         self.a_outlines = None
         self.b_outlines = None
         self.a_planes = None
@@ -207,6 +201,21 @@ class PlateJoint(Joint):
             self.topology,
         )
 
+    def calculate_topology(self, allow_reordering=False):
+        """Calculate the topology of the joint based on the plates."""
+        topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
+        if topo_results.topology == JointTopology.TOPO_UNKNOWN:
+            raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
+        if self.plate_a != topo_results.plate_a:
+            if allow_reordering:
+                self.plate_a, self.plate_b = topo_results.plate_a, topo_results.plate_b
+            else:
+                raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
+        self.topology = topo_results.topology
+        self.a_segment_index = topo_results.a_segment_index
+        self.b_segment_index = topo_results.b_segment_index
+        return topo_results
+
     @classmethod
     def from_generic_joint(cls, model, generic_joint, elements=None, **kwargs):
         """Creates an instance of this joint from a generic joint.
@@ -234,11 +243,13 @@ class PlateJoint(Joint):
 
     def add_features(self):
         """Add features to the plates based on the joint."""
-        assert self.plate_a and self.plate_b and self.a_segment_index is not None, "Both plates and at least a_segment_index must be defined before adding features to the joint."
-        self.reorder_planes_and_outlines()
-        self._adjust_plate_outlines()
-        self.plate_a.add_interface(self.interface_a)
-        self.plate_b.add_interface(self.interface_b)
+        if self.plate_a and self.plate_b:
+            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
+                self.calculate_topology()
+            self.reorder_planes_and_outlines()
+            self._adjust_plate_outlines()
+            self.plate_a.add_interface(self.interface_a)
+            self.plate_b.add_interface(self.interface_b)
 
     def get_interface_for_plate(self, plate):
         if plate is self.plate_a:
@@ -258,7 +269,7 @@ class PlateJoint(Joint):
 
         self.a_planes = self.plate_a.planes
         self.a_outlines = self.plate_a.outlines
-        if self.topology == JointTopology.TOPO_L:
+        if self.topology == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
                 self.a_planes = self.plate_a.planes[::-1]
                 self.a_outlines = self.plate_a.outlines[::-1]

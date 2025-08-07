@@ -1,4 +1,3 @@
-from itertools import product
 from math import fabs
 
 from compas.geometry import Plane
@@ -20,7 +19,7 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
-from compas.geometry import intersection_line_line
+from compas.geometry import intersection_segment_segment
 
 from compas.tolerance import TOL
 
@@ -79,7 +78,6 @@ def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segme
 
     # double-check for parallels, should not happen:
     if t1 is None or t2 is None:
-        print("intersection_line_plane detected parallel lines")
         return [None, None], [None, None]
 
     # is intersection exact / within some max_distance?
@@ -282,17 +280,51 @@ def distance_segment_segment(segment_a, segment_b):
         The distance between the two segments.
 
     """
-    pta, ptb = intersection_line_line(segment_a, segment_b)
-    if not pta:  # segments are parallel
-        dists = []
-        for pair in product(segment_a, segment_b):
-            # gets shortest distance between all 4 possible pairs of endpoints. only for L/I_Topo.
-            # T_Topology cannot have paralell segments
-            dists.append(distance_point_point(*pair))
-        return min(dists)
-    pt_seg_a = closest_point_on_segment(pta, segment_a)
-    pt_seg_b = closest_point_on_segment(ptb, segment_b)
-    return distance_point_point(pt_seg_a, pt_seg_b)
+    pta, ptb = intersection_segment_segment(segment_a, segment_b)
+    if pta and ptb:
+        return distance_point_point(pta, ptb)
+
+    dists = []
+    for pt in [segment_a.start, segment_a.end]:
+        dists.append(distance_point_point(pt, closest_point_on_segment(pt, segment_b)))
+    for pt in [segment_b.start, segment_b.end]:
+        dists.append(distance_point_point(pt, closest_point_on_segment(pt, segment_a)))
+    return min(dists)
+
+
+def distance_segment_segment_points(segment_a, segment_b):
+    """Computes the distance between two segments.
+
+    Parameters
+    ----------
+    segment_a : tuple(tuple(float, float, float), tuple(float, float, float))
+        The first segment, defined by two points.
+    segment_b : tuple(tuple(float, float, float), tuple(float, float, float))
+        The second segment, defined by two points.
+
+    Returns
+    -------
+
+    tuple(float, :class:`~compas.geometry.Point`, :class:`~compas.geometry.Point`)
+        The distance between the two segments, and the closest points on each segment.
+
+    """
+    pta, ptb = intersection_segment_segment(segment_a, segment_b)
+    if pta and ptb:
+        return distance_point_point(pta, ptb), pta, ptb
+
+    dists = []
+    closest_pts = []
+    for pt in [segment_a.start, segment_a.end]:
+        cp = closest_point_on_segment(pt, segment_b)
+        dists.append(distance_point_point(pt, cp))
+        closest_pts.append((pt, cp))
+    for pt in [segment_b.start, segment_b.end]:
+        cp = closest_point_on_segment(pt, segment_a)
+        dists.append(distance_point_point(pt, cp))
+        closest_pts.append((cp, pt))
+    min_index = dists.index(min(dists))
+    return dists[min_index], closest_pts[min_index][0], closest_pts[min_index][1]
 
 
 def is_polyline_clockwise(polyline, normal_vector):
@@ -399,6 +431,73 @@ def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     return is_point_in_polygon_xy(pt, pgon)
 
 
+def do_segments_overlap(segment_a, segment_b):
+    """Checks if two segments overlap.
+
+    Parameters
+    ----------
+    seg_a : :class:`~compas.geometry.Segment`
+        The first segment.
+    seg_b : :class:`~compas.geometry.Segment`
+        The second segment.
+
+    Returns
+    -------
+    bool
+        True if the segments overlap, False otherwise.
+    """
+    a_end_dot = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, segment_a.end))
+    for pt in [segment_b.start, segment_b.end, segment_b.point_at(0.5)]:
+        b_dot = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt))
+        if b_dot > 0 and b_dot < a_end_dot:
+            return True
+
+    b_end_dot = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, segment_b.end))
+    for pt in [segment_a.start, segment_a.end, segment_a.point_at(0.5)]:
+        a_dot = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, pt))
+        if a_dot > 0 and a_dot < b_end_dot:
+            return True
+
+    return False
+
+
+def get_segment_overlap(segment_a, segment_b, unitize=False):
+    """gets the length parameters of the overlap between two segments.
+
+    Parameters
+    ----------
+    segment_a : :class:`~compas.geometry.Segment`
+        The segment upon which the overlap is tested.
+    segment_b : :class:`~compas.geometry.Segment`
+        The segment that is overlapped on segment_a.
+    unitize : bool, optional
+        If True, the returned parameters are normalized to the length of segment_a. Default is False
+
+    Returns
+    -------
+    tuple(float, float) or None
+        A tuple containing the start and end parameters of the overlap on segment_a.
+        If there is no overlap, None is returned.
+    """
+    dots = []
+    for pt in segment_b:
+        dots.append(dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt)))
+    length = segment_a.length
+    dots.sort()
+    if dots[0] >= length or dots[1] <= 0.0:
+        return None
+
+    if dots[0] < 0.0:
+        dots[0] = 0.0
+    if dots[1] > length:
+        dots[1] = length
+    if unitize:
+        dots[0] /= length
+        dots[1] /= length
+
+    return (dots[0], dots[1])
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -409,4 +508,6 @@ __all__ = [
     "correct_polyline_direction",
     "get_polyline_segment_perpendicular_vector",
     "is_point_in_polyline",
+    "do_segments_overlap",
+    "get_segment_overlap",
 ]
