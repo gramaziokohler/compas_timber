@@ -31,11 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added tasks `update-gh-header` to update the version in the header of the GH components.
 * Added new `compas_timber.connections.XNotchJoint`.
 * Added a proxy class for `Pocket` BTLx processing for performance optimization. 
-* Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
-* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added `interactions()` method to `TimberModel` for iterating over edge-level joints and contacts in the model graph.
 * Added `topology` to class `Joint`.
 * Added `location` to class `Joint`.
 * Added `NBeamKDTreeAnalyzer` to `compas_timber.connections`.
@@ -51,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
+* Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
+* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `interactions()` method to `TimberModel` for iterating over edge-level joints and contacts in the model graph.
+* Added explicit `frame` property setter to `TimberElement` that automatically updates the `transformation` when frame is set.
+** Added `transformation` property to `TimberElement` that automatically includes blank extension transformations for beam elements.
 
 ### Changed
 
@@ -63,6 +65,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
 * Renamed `NullJoint` to `JointCandidate`.
 * Fixed bug in show_ref_faces GH component.
+* `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Updated `BTLx_contribution_guide` in docs.
+* Fixed several GH Components for Rhino8 compatibility.
+* Fixed `graph_node` is `None` after deserializing a `TimberModel`.
+* Fixed attribute error when creating a `TButtJoint`.
+* Fixed a bug in `BeamsFromMesh` GH Component.
+* Changed default value for `modify_cross` to `True` for `LButtJoint`.
+* Minor fixes to GH Components.
+* Fixed `elements` and geometry creation for `BallNodeJoint`.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
 * Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Beam` following the renaming in `compas_model`.
 * Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Fastener` following the renaming in `compas_model`.
@@ -75,23 +86,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
 * Updated default edge attributes in the model graph to include `joints` and `contacts`.
 * Updated `compas_model` version pinning from `0.4.4` to `0.8.0` to align with the latest development.
-* `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
-* Updated `BTLx_contribution_guide` in docs.
-* Fixed several GH Components for Rhino8 compatibility.
-* Fixed `graph_node` is `None` after deserializing a `TimberModel`.
-* Fixed attribute error when creating a `TButtJoint`.
-* Fixed a bug in `BeamsFromMesh` GH Component.
-* Changed default value for `modify_cross` to `True` for `LButtJoint`.
-* Minor fixes to GH Components.
-* Fixed `elements` and geometry creation for `BallNodeJoint`.
+* Updated `graph_node` property to `graphnode` following the changes in the parent `compas_model.elements.Element` class.
+* Upstreamed `ref_frame` property from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `ref_sides` property from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `ref_edges` property from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `front_side`, `back_side`, `opp_side` methods from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Modified `TimberElement.__init__()` to remove automatic frame and transformation initialization from constructor.
+* Modified `compute_elementgeometry` in `TimberElement` to apply transformation and return geometry in local coordinate space instead of global.
+* Modified `geometry` property in `TimberElement` to return the `elementgeometry` transformed to global coordinates of the element.
 
 ### Removed
 
 * Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
-* Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 * Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
 * Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
 * Removed `angle_vectors_projected` from `compas_timber.utils` since this has been upstreamed to core.
+* Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
+* Removed `blank_frame` property from `compas_timber.elements.Beam` since the ref_frame could serve it's purpose.
+* Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
+* Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
+* Removed `key` property from `compas_timber.elements.Beam` since it is not needed anymore.
 
 
 ## [0.16.2] 2025-05-07
