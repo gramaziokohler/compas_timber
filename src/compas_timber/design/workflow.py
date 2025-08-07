@@ -275,11 +275,11 @@ class CategoryRule(JointRule):
             elements = list(elements)
             if element_cats == set([self.category_a, self.category_b]):
                 solver = ConnectionSolver()
-                found_topology = solver.find_topology(elements[0], elements[1], max_distance=max_distance)[0]
+                result = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
                 supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
                 if not isinstance(supported_topo, list):
                     supported_topo = [supported_topo]
-                if found_topology in supported_topo:
+                if result.topology in supported_topo:
                     comply = True
             return comply
         except KeyError:
@@ -372,8 +372,8 @@ class TopologyRule(JointRule):
             solver = ConnectionSolver()
             topo_results = solver.find_topology(elements[0], elements[1], max_distance=max_distance)
             return (
-                self.topology_type == topo_results[0],
-                [topo_results[1], topo_results[2]],
+                self.topology_type == topo_results.topology,
+                [topo_results.beam_a, topo_results.beam_b],
             )  # comply, if topologies match, reverse if the element order should be switched
         except KeyError:
             return False

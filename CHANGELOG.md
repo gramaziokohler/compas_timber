@@ -46,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
+* Added `JointTopology.TOPO_Y` for Beam Connections.
+* Added `JointTopology.TOPO_K` for Beam Connections.
+* Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
+* Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
+* Added `Cluster.topology`.
+* Added `PlateSolverResult` and `BeamSolverResult` to package results from `PlateConnectionSolver.find_topology()` and `ConnectionSolver.find_topology()`.
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
 * Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
@@ -74,6 +80,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed default value for `modify_cross` to `True` for `LButtJoint`.
 * Minor fixes to GH Components.
 * Fixed `elements` and geometry creation for `BallNodeJoint`.
+* Changed `PlateConnectionSolver.find_topology()` to solve for `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
+* Changed `PlateConnectionSolver.find_topology()` to return a `PlateSolverResult` instance.
+* Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
+* Changed `ConnectionSolver.find_topology()` to return a `BeamSolverResult` instance.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
 * Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Beam` following the renaming in `compas_model`.
 * Renamed `compute_geometry` to `compute_elementgeometry` in `compas_timber.elements.Fastener` following the renaming in `compas_model`.
