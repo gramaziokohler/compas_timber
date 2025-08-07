@@ -52,6 +52,10 @@ class TimberElement(Element):
         return False
 
     @property
+    def is_opening(self):
+        return False
+
+    @property
     def features(self):
         # type: () -> list[Feature]
         return self._features

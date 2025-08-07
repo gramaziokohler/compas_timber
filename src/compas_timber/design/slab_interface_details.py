@@ -16,7 +16,6 @@ from compas_timber.elements import Beam
 from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import split_beam_at_lengths
 
-from .slab_populator import beam_from_category
 
 class InterfaceDetailBase(DetailBase):
     """Base class for interface detail sets."""
@@ -141,9 +140,8 @@ class LButtDetailB(LDetailBase):
         inner_line = flat_line.translated(interface.frame.yaxis * (stud_width + stud_height) * 0.5)
         flat_line.translate(interface.frame.zaxis * (stud_width - edge_beam.height) * 0.5)
         edge.translate(interface.frame.yaxis * stud_height * 0.5)
-        normal = slab_populator._slab.frame.normal
-        flat_beam = Beam.from_centerline(flat_line, width=stud_height, height=stud_width, z_vector=normal)
-        inner_beam = beam_from_category(inner_line, "detail", normal, beam_dimensions, normal_offset=False)
+        flat_beam = Beam.from_centerline(flat_line, width=stud_height, height=stud_width, z_vector=slab_populator._slab.frame.normal)
+        inner_beam = self.beam_from_category(inner_line, "detail", slab_populator, normal_offset=False)
         interface.beams = [edge_beam, flat_beam, inner_beam]
         return [flat_beam, inner_beam]
 
@@ -238,10 +236,9 @@ class TButtDetailB(TDetailBase):
         stud_edge_a = edge.translated(interface.frame.yaxis * (width + height) * 0.5)
         stud_edge_b = edge.translated(-interface.frame.yaxis * (width + height) * 0.5)
 
-        normal= slab_populator._slab.frame.normal
-        beam_a = beam_from_category(stud_edge_a, "detail", normal, beam_dimensions, normal_offset=False)
+        beam_a = self.beam_from_category(stud_edge_a, "detail", slab_populator, normal_offset=False)
         beam_a.frame.translate(interface.frame.normal * (beam_a.height * 0.5 + offset))
-        beam_b = beam_from_category(stud_edge_b, "detail", normal, beam_dimensions, normal_offset=False)
+        beam_b = self.beam_from_category(stud_edge_b, "detail", slab_populator, normal_offset=False)
         beam_b.frame.translate(interface.frame.normal * (beam_b.height * 0.5 + offset))
         interface.beams = [beam_a, flat_beam, beam_b]
 

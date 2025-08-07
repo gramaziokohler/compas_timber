@@ -21,7 +21,6 @@ from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import move_polyline_segment_to_plane
 
 
-from .slab_populator import beam_from_category
 from .slab_populator import intersection_line_beams
 from .slab_populator import get_joint_from_elements
 
@@ -50,10 +49,9 @@ class OpeningDetailBase(DetailBase):
         return opening.frame_polyline
 
     def _add_jack_studs(self, opening, slab_populator):
-        normal = slab_populator._slab.frame.normal
         beam_dimensions = self.get_beam_dimensions(slab_populator)
-        opening.beams.append(beam_from_category(opening.king_studs[0].centerline, "jack_stud", normal, beam_dimensions, normal_offset=False, edge_index=2))
-        opening.beams.append(beam_from_category(opening.king_studs[1].centerline, "jack_stud", normal, beam_dimensions, normal_offset=False, edge_index=0))
+        opening.beams.append(self.beam_from_category(opening.king_studs[0].centerline, "jack_stud", slab_populator, normal_offset=False, edge_index=2))
+        opening.beams.append(self.beam_from_category(opening.king_studs[1].centerline, "jack_stud", slab_populator, normal_offset=False, edge_index=0))
         opening.king_studs[0].frame.translate(
             get_polyline_segment_perpendicular_vector(opening.frame_polyline, 2) * (beam_dimensions["jack_stud"][0] + beam_dimensions["king_stud"][0]) * 0.5
         )
@@ -194,10 +192,10 @@ class WindowDetailBase(OpeningDetailBase):
             if dot_vectors(segments[i].direction, slab_populator.stud_direction) < 0:
                 segments[i] = Line(segments[i].end, segments[i].start)  # reverse the segment to match the stud direction
         normal = slab_populator._slab.frame.normal
-        opening.beams.append(beam_from_category(segments[1], "header", normal, beam_dimensions,  edge_index=1))
-        opening.beams.append(beam_from_category(segments[2], "king_stud", normal, beam_dimensions, edge_index=2))
-        opening.beams.append(beam_from_category(segments[0], "king_stud", normal, beam_dimensions, edge_index=0))
-        opening.beams.append(beam_from_category(segments[3], "sill", normal, beam_dimensions, edge_index=3))
+        opening.beams.append(self.beam_from_category(segments[1], "header", slab_populator, edge_index=1))
+        opening.beams.append(self.beam_from_category(segments[2], "king_stud", slab_populator, edge_index=2))
+        opening.beams.append(self.beam_from_category(segments[0], "king_stud", slab_populator, edge_index=0))
+        opening.beams.append(self.beam_from_category(segments[3], "sill", slab_populator, edge_index=3))
         for beam in opening.beams:
             vector = get_polyline_segment_perpendicular_vector(frame_polyline, beam.attributes["edge_index"])
             beam.frame.translate(vector * beam.width * 0.5)
@@ -287,9 +285,9 @@ class DoorDetailBase(OpeningDetailBase):
             if dot_vectors(segments[i].direction, slab_populator.stud_direction) < 0:
                 segments[i] = Line(segments[i].end, segments[i].start)  # reverse the segment to match the stud direction
         normal = slab_populator._slab.frame.normal
-        opening.beams.append(beam_from_category(segments[1], "header", normal, beam_dimensions,  edge_index=1))
-        opening.beams.append(beam_from_category(segments[2], "king_stud", normal, beam_dimensions, edge_index=2))
-        opening.beams.append(beam_from_category(segments[0], "king_stud", normal, beam_dimensions, edge_index=0))
+        opening.beams.append(self.beam_from_category(segments[1], "header", slab_populator, edge_index=1))
+        opening.beams.append(self.beam_from_category(segments[2], "king_stud", slab_populator, edge_index=2))
+        opening.beams.append(self.beam_from_category(segments[0], "king_stud", slab_populator, edge_index=0))
         for beam in opening.beams:
             vector = get_polyline_segment_perpendicular_vector(frame_polyline, beam.attributes["edge_index"])
             beam.frame.translate(vector * beam.width * 0.5)

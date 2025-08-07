@@ -1,4 +1,5 @@
 from compas_timber.connections import JointTopology
+from compas_timber.elements import Beam
 
 class DetailBase(object):
     """Base class for opening detail sets.
@@ -51,6 +52,45 @@ class DetailBase(object):
             else:
                 beam_dims[category] = (slab_populator._config_set.beam_width, slab_populator.frame_thickness)
         return beam_dims
+
+
+    def beam_from_category(self, segment, category, slab_populator, normal_offset=True, **kwargs):
+        """Creates a beam from a segment and a category, using the dimensions from the configuration set.
+        Parameters
+        ----------
+        segment : :class:`compas.geometry.Line`
+            The segment to create the beam from.
+        category : str
+            The category of the beam, which determines its dimensions.
+        slab_populator : :class:`compas_timber.populators.SlabPopulator`
+            The populator instance that provides the beam dimensions.
+        normal_offset : bool, optional
+            Whether to offset the beam by 1/2 of the beam height in the parent.normal direction. Defaults to True.
+        kwargs : dict, optional
+            Additional attributes to set on the beam.
+
+        Returns
+        -------
+        :class:`compas_timber.elements.Beam`
+            The created beam with the specified category and attributes.
+        """
+        beam_dimensions = self.get_beam_dimensions(slab_populator)
+        if category not in beam_dimensions:
+            raise ValueError("Unknown beam category: {}".format(category))
+        width = beam_dimensions[category][0]
+        height = beam_dimensions[category][1]
+        normal = slab_populator._slab.frame.normal
+        beam = Beam.from_centerline(segment, width=width, height=height, z_vector=normal)
+        for key, value in kwargs.items():
+            beam.attributes[key] = value
+        beam.attributes["category"] = category
+
+        if normal_offset:
+            # beam centerlines are aligned to the slab frame, so we offset them by half the height
+            beam.frame.translate(normal * height * 0.5)  # align the beam to the slab frame
+        if beam is None:
+            raise ValueError("Failed to create beam from segment: {}".format(segment))
+        return beam
 
 
     def generate_elements(opening, slab_populator):

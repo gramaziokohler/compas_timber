@@ -62,6 +62,13 @@ class Opening(TimberElement):
     def __repr__(self):
         return "Opening(type={})".format(self.__class__.__name__, self.outline)
 
+    @property
+    def is_opening(self):
+        return True
+
+    @property
+    def is_group_element(self):
+        return True
 
     @property
     def obb(self):

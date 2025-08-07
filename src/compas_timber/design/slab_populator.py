@@ -84,22 +84,16 @@ class SlabPopulatorConfigurationSet(object):
         stud_spacing,
         beam_width,
         stud_direction=None,
-        tolerance=None,
         sheeting_outside=0,
         sheeting_inside=0,
-        lintel_posts=True,
-        edge_stud_offset=0.0,
         beam_width_overrides=None,
         joint_overrides=None,
     ):
         self.stud_spacing = stud_spacing
         self.beam_width = beam_width
         self.stud_direction = stud_direction
-        self.tolerance = tolerance or TOL
         self.sheeting_outside = sheeting_outside
         self.sheeting_inside = sheeting_inside
-        self.lintel_posts = lintel_posts
-        self.edge_stud_offset = edge_stud_offset or 0.0
         self.beam_width_overrides = beam_width_overrides
         self.joint_overrides = joint_overrides
 
@@ -176,19 +170,6 @@ class SlabPopulator(DetailBase):
             CategoryRule(LButtJoint, "edge_stud", "bottom_plate_beam"),
             CategoryRule(TButtJoint, "stud", "edge_stud"),
             CategoryRule(TButtJoint, "stud", "detail"),
-            # CategoryRule(TButtJoint, "jack_stud", "detail"),
-            # CategoryRule(TButtJoint, "king_stud", "detail"),
-            # CategoryRule(TButtJoint, "header", "king_stud"),
-            # CategoryRule(TButtJoint, "sill", "king_stud"),
-            # CategoryRule(TButtJoint, "sill", "jack_stud"),
-            # CategoryRule(LButtJoint, "jack_stud", "header"),
-            # CategoryRule(TButtJoint, "jack_stud", "bottom_plate_beam"),
-            # CategoryRule(TButtJoint, "king_stud", "bottom_plate_beam"),
-            # CategoryRule(TButtJoint, "king_stud", "top_plate_beam"),
-            # CategoryRule(TButtJoint, "king_stud", "header"),
-            # CategoryRule(TButtJoint, "king_stud", "sill"),
-            # CategoryRule(TButtJoint, "king_stud", "edge_stud"),
-            # CategoryRule(TButtJoint, "jack_stud", "edge_stud"),
         ]
 
 
@@ -649,7 +630,7 @@ class SlabPopulator(DetailBase):
             if not is_point_in_polyline(seg.point_at(0.5), self.frame_outline_a, in_plane=False):
                 continue
             # create the beam element and add joints
-            stud = beam_from_category(seg, "stud", self._slab.frame.normal, self.beam_dimensions)
+            stud = self.beam_from_category(seg, "stud", self)
             if stud is not None:
                 self.studs.append(stud)
 
@@ -697,47 +678,3 @@ def get_joint_from_elements(element_a, element_b, rules, **kwargs):
             return rule.joint_type(element_a, element_b, **rule.kwargs)
     raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
 
-
-def beam_from_category(segment, category, normal, beam_dimensions, normal_offset=True, **kwargs):
-    """Creates a beam from a segment and a category, using the dimensions from the configuration set.
-    Parameters
-    ----------
-    segment : :class:`compas.geometry.Line`
-        The segment to create the beam from.
-    category : str
-        The category of the beam, which determines its dimensions.
-    normal : :class:`compas.geometry.Vector`
-        The normal vector to align the beam with the slab frame.
-    beam_dimensions : dict
-        A dictionary containing the beam dimensions for each category.
-        key = beam category name
-        value = tuple of (width, height)
-    normal_offset : bool, optional
-        Whether to offset the beam by 1/2 of the beam height in the parent.normal direction. Defaults to True.
-    kwargs : dict, optional
-        Additional attributes to set on the beam.
-
-    Returns
-    -------
-    :class:`compas_timber.elements.Beam`
-        The created beam with the specified category and attributes.
-    """
-    if category not in beam_dimensions:
-        raise ValueError(f"Unknown beam category: {category}")
-    width = beam_dimensions[category][0]
-    height = beam_dimensions[category][1]
-    beam = Beam.from_centerline(segment, width=width, height=height, z_vector=normal)
-    for key, value in kwargs.items():
-        beam.attributes[key] = value
-    beam.attributes["category"] = category
-
-    if normal_offset:
-        normal = normal.unitized()
-        print(beam.attributes.get("category", None))
-        if beam.attributes.get("category", None) == "jack_stud":
-            # edge studs are aligned to the slab frame, so we offset them by half the height
-            print("Offsetting jack stud by {} in normal direction".format(normal * height * 0.5))
-        beam.frame.translate(normal * height * 0.5)  # align the beam to the slab frame
-    if beam is None:
-        raise ValueError("Failed to create beam from segment: {}".format(segment))
-    return beam
