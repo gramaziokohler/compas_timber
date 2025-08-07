@@ -130,7 +130,7 @@ class PlateJoint(Joint):
         self.b_segment_index = b_segment_index
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                self.calculate_topology(self.plate_a, self.plate_b)
+                self.calculate_topology()
         self.a_outlines = None
         self.b_outlines = None
         self.a_planes = None
@@ -203,7 +203,7 @@ class PlateJoint(Joint):
 
     def calculate_topology(self, allow_reordering=False):
         """Calculate the topology of the joint based on the plates."""
-        topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
+        topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
         if topo_results.topology == JointTopology.TOPO_UNKNOWN:
             raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
         if self.plate_a != topo_results.plate_a:

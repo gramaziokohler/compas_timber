@@ -11,7 +11,7 @@ from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateLButtJoint
 from compas_timber.connections.analyzers import Cluster
-from compas_timber.connections.solver import PlateConnectionTopologyResults
+from compas_timber.connections.solver import PlateSolverResult
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
@@ -418,7 +418,7 @@ class TestJointFromMethodsEdgeCases:
 
         # Mock the PlateConnectionSolver.find_topology method to return expected results
         mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
-        mock_find_topology.return_value = PlateConnectionTopologyResults(
+        mock_find_topology.return_value = PlateSolverResult(
             topology=JointTopology.TOPO_EDGE_EDGE,
             plate_a=plate1,
             plate_b=plate2,

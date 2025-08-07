@@ -75,7 +75,7 @@ __all__ = [
     "InterfaceLocation",
     "InterfaceRole",
     "PlateJoint",
-    "PlateButtJoint",
+    "PlateLButtJoint",
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
