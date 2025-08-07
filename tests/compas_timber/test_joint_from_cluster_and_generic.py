@@ -418,13 +418,7 @@ class TestJointFromMethodsEdgeCases:
 
         # Mock the PlateConnectionSolver.find_topology method to return expected results
         mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
-        mock_find_topology.return_value = PlateSolverResult(
-            topology=JointTopology.TOPO_EDGE_EDGE,
-            plate_a=plate1,
-            plate_b=plate2,
-            a_segment_index=1,
-            b_segment_index=0
-        )
+        mock_find_topology.return_value = PlateSolverResult(topology=JointTopology.TOPO_EDGE_EDGE, plate_a=plate1, plate_b=plate2, a_segment_index=1, b_segment_index=0)
 
         # Convert generic plate joint to specific plate joint
         joint = PlateLButtJoint.create(model, plate1, plate2)
