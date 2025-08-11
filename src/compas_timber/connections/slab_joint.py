@@ -3,8 +3,8 @@ from compas.geometry import Polyline
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 
-from compas_timber.design.slab_interface_details import LButtDetailB
-from compas_timber.design.slab_interface_details import TButtDetailB
+from compas_timber.design.interface_details import LButtDetailB
+from compas_timber.design.interface_details import TButtDetailB
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
@@ -54,6 +54,16 @@ class SlabToSlabInterface(PlateToPlateInterface):
             return Polyline([points[0], points[1], points[2], points[3], points[0]])
         else:
             return self.polyline
+
+
+    def create_elements(self, slab_populator):
+        """Generate the beams for the slab interfaces."""
+        if self.interface_role == "CROSS":
+            self.detail_set.create_elements_cross(self, slab_populator)
+        elif self.interface_role == "MAIN":
+            self.detail_set.create_elements_main(self, slab_populator)
+        elif self.interface_role == "NONE":
+            self.detail_set.create_elements_none(self, slab_populator)
 
 
 class SlabJoint(PlateJoint):

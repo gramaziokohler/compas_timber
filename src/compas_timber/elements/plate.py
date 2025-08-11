@@ -130,7 +130,7 @@ class Plate(TimberElement):
     @property
     def planes(self):
         if not self._planes:
-            self._planes = (Plane.from_frame(self.frame), Plane.from_frame(self.frame.translated(self.thickness * self.frame.normal)))
+            self._planes = (Plane.from_frame(self.frame), Plane.from_frame(self.frame.translated(self.thickness * self.normal)))
         return self._planes
 
     @property
@@ -207,6 +207,12 @@ class Plate(TimberElement):
             if dot_vectors(Vector.from_start_end(self.outline_a[0], self.outline_b[0]), self._frame.normal) < 0:
                 self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
         return self._frame
+
+    @property
+    def normal(self):
+        """Normal vector of the plate."""
+        return self.frame.normal
+
 
     @reset_computed
     def reset(self):
@@ -361,14 +367,14 @@ class Plate(TimberElement):
             The shape of the element.
 
         """
-        outline_a = correct_polyline_direction(self.outline_a, self.frame.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self.outline_b, self.frame.normal, clockwise=True)
+        outline_a = correct_polyline_direction(self.outline_a, self.normal, clockwise=True)
+        outline_b = correct_polyline_direction(self.outline_b, self.normal, clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for pline in self.opening_outlines:
             if not TOL.is_allclose(pline[0], pline[-1]):
                 raise ValueError("Opening polyline is not closed.", pline[0], pline[-1])
-            polyline = correct_polyline_direction(pline, self.frame.normal, clockwise=True)
+            polyline = correct_polyline_direction(pline, self.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline, polyline_b)])
             brep.cap_planar_holes()

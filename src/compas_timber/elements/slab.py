@@ -28,7 +28,7 @@ class Slab(Plate):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, outline_a, outline_b, openings=None, detail_set=None, name=None, **kwargs):
+    def __init__(self, outline_a, outline_b, openings=None, interfaces=None, detail_set=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
         super(Slab, self).__init__(outline_a, outline_b, name=name, **kwargs)
         self.openings = openings
@@ -37,7 +37,7 @@ class Slab(Plate):
         self.attributes.update(kwargs)
         self._edge_planes = []
         self.openings = openings if openings is not None else []
-        self.interfaces = []  # type: list[SlabToSlabInterface]
+        self.interfaces = interfaces if interfaces is not None else [] # type: list[SlabToSlabInterface]
         self.elements = []
         self.joints = []
         self.populator = None
@@ -62,12 +62,3 @@ class Slab(Plate):
         self.openings.append(opening)
         self.opening_outlines.append(opening.outline)
 
-    def generate_elements(self):
-        """Generates the elements for the slab."""
-        self.elements.append(self.detail_set.generate_elements(self))
-        return self.elements
-
-    def generate_joints(self):
-        """Generates the joints for the slab."""
-        self.joints.append(self.detail_set.generate_joints(self))
-        return self.joints

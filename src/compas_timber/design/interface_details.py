@@ -69,9 +69,7 @@ class InterfaceDetailBase(DetailBase):
         slab_populator.studs = new_studs
 
 
-
-
-    def create_elements_main(self,interface, slab_populator):
+    def create_elements_main(self, interface, slab_populator):
         """Generate the beams for a main interface."""
         raise NotImplementedError("create_elements_main must be implemented in subclasses.")
 
@@ -127,7 +125,7 @@ class TDetailBase(InterfaceDetailBase):
 
 
 class LButtDetailB(LDetailBase):
-    """Detail Set that generates the beams for a L-butt a 3-beam box in the Cross Slab."""
+    """Detail Set that creates the beams for a L-butt a 3-beam box in the Cross Slab."""
 
     def create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a L-cross interface."""
@@ -217,7 +215,7 @@ class LButtDetailB(LDetailBase):
 
 
 class TButtDetailB(TDetailBase):
-    """Detail Set that generates the beams for a T-butt a 3-beam box in the Cross Slab."""
+    """Detail Set that creates the beams for a T-butt a 3-beam box in the Cross Slab."""
 
     def create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a T-cross interface."""

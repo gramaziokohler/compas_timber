@@ -101,12 +101,12 @@ class Opening(TimberElement):
                 return beam
         return None
 
-    def generate_elements(self, slab_populator):
+    def create_elements(self, slab_populator):
         """Create the elements for the window."""
-        return self.detail_set.generate_elements(self, slab_populator)
+        return self.detail_set.create_elements(self, slab_populator)
 
-    def generate_joints(self, slab_populator):
+    def create_joints(self, slab_populator):
         """Generate the joints for the window."""
-        return self.detail_set.generate_joints(self, slab_populator)
+        return self.detail_set.create_joints(self, slab_populator)
 
 
