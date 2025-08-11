@@ -95,14 +95,14 @@ def generic_plate_joint_with_plates(plate_model):
 
 
 class TestJointFromCluster:
-    """Test cases for Joint.from_cluster method."""
+    """Test cases for Joint.promote_cluster method."""
 
     def test_from_cluster_with_single_joint(self, cluster_with_single_joint):
         """Test creating a joint from a cluster with a single joint."""
         model, cluster, beam1, beam2 = cluster_with_single_joint
 
         # Create a TButtJoint from the cluster
-        joint = TButtJoint.from_cluster(model, cluster)
+        joint = TButtJoint.promote_cluster(model, cluster)
 
         # Verify the joint was created correctly
         assert isinstance(joint, TButtJoint)
@@ -124,7 +124,7 @@ class TestJointFromCluster:
         initial_joint_count = len(list(model.joints))
 
         # Create a TButtJoint from the cluster (should connect all elements)
-        joint = BallNodeJoint.from_cluster(model, cluster)
+        joint = BallNodeJoint.promote_cluster(model, cluster)
 
         # Verify the joint was created
         assert isinstance(joint, BallNodeJoint)
@@ -143,7 +143,7 @@ class TestJointFromCluster:
 
         # Specify elements in a specific order
         elements = [beam2, beam1]  # Reverse order
-        joint = TButtJoint.from_cluster(model, cluster, elements=elements)
+        joint = TButtJoint.promote_cluster(model, cluster, reordered_elements=elements)
 
         # Verify the joint respects the element order
         assert isinstance(joint, TButtJoint)
@@ -155,7 +155,7 @@ class TestJointFromCluster:
         model, cluster, beam1, beam2 = cluster_with_single_joint
 
         # Create joint with additional parameters
-        joint = TButtJoint.from_cluster(model, cluster, mill_depth=0.05)
+        joint = TButtJoint.promote_cluster(model, cluster, mill_depth=0.05)
 
         assert isinstance(joint, TButtJoint)
         assert joint.mill_depth == 0.05  # Verify the mill depth was set correctly
@@ -163,47 +163,47 @@ class TestJointFromCluster:
         # (exact verification depends on TButtJoint implementation)
 
     def test_from_cluster_calls_from_generic_joint_for_single_joint(self, cluster_with_single_joint, mocker):
-        """Test that from_cluster calls from_generic_joint when cluster has one joint."""
+        """Test that promote_cluster calls promote_joint_candidate when cluster has one joint."""
         model, cluster, beam1, beam2 = cluster_with_single_joint
 
-        # Mock the from_generic_joint method
-        mock_from_generic = mocker.patch.object(TButtJoint, "from_generic_joint")
+        # Mock the promote_joint_candidate method
+        mock_from_generic = mocker.patch.object(TButtJoint, "promote_joint_candidate")
         mock_from_generic.return_value = Mock(spec=TButtJoint)
 
-        # Call from_cluster
-        TButtJoint.from_cluster(model, cluster)
+        # Call promote_cluster
+        TButtJoint.promote_cluster(model, cluster)
 
-        # Verify from_generic_joint was called
+        # Verify promote_joint_candidate was called
         mock_from_generic.assert_called_once_with(
             model,
             cluster.joints[0],
-            elements=cluster.joints[0].elements,
+            reordered_elements=cluster.joints[0].elements,
         )
 
     def test_from_cluster_calls_create_for_multiple_joints(self, cluster_with_multiple_joints, mocker):
-        """Test that from_cluster calls create when cluster has multiple joints."""
+        """Test that promote_cluster calls create when cluster has multiple joints."""
         model, cluster, beam1, beam2, beam3 = cluster_with_multiple_joints
 
         # Mock the create method
         mock_create = mocker.patch.object(BallNodeJoint, "create")
         mock_create.return_value = Mock(spec=BallNodeJoint)
 
-        # Call from_cluster
-        BallNodeJoint.from_cluster(model, cluster)
+        # Call promote_cluster
+        BallNodeJoint.promote_cluster(model, cluster)
 
         # Verify create was called with cluster elements
         mock_create.assert_called_once_with(model, *list(cluster.elements))
 
 
 class TestJointFromGenericJoint:
-    """Test cases for Joint.from_generic_joint method."""
+    """Test cases for Joint.promote_joint_candidate method."""
 
     def test_from_generic_joint_basic(self, generic_joint_with_beams):
         """Test basic conversion from generic joint to specific joint."""
         model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
         # Convert generic joint to TButtJoint
-        joint = TButtJoint.from_generic_joint(model, generic_joint)
+        joint = TButtJoint.promote_joint_candidate(model, generic_joint)
 
         # Verify the joint was created correctly
         assert isinstance(joint, TButtJoint)
@@ -223,7 +223,7 @@ class TestJointFromGenericJoint:
 
         # Specify elements in specific order
         elements = [beam2, beam1]
-        joint = TButtJoint.from_generic_joint(model, generic_joint, elements=elements)
+        joint = TButtJoint.promote_joint_candidate(model, generic_joint, reordered_elements=elements)
 
         # Verify the joint respects the element order
         assert isinstance(joint, TButtJoint)
@@ -235,7 +235,7 @@ class TestJointFromGenericJoint:
         model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
         # Convert with additional parameters
-        joint = TButtJoint.from_generic_joint(
+        joint = TButtJoint.promote_joint_candidate(
             model,
             generic_joint,
             mill_depth=0.05,
@@ -250,7 +250,7 @@ class TestJointFromGenericJoint:
         model, generic_plate_joint, plate1, plate2 = generic_plate_joint_with_plates
 
         # Convert generic plate joint to specific plate joint
-        joint = PlateLButtJoint.from_generic_joint(model, generic_plate_joint)
+        joint = PlateLButtJoint.promote_joint_candidate(model, generic_plate_joint)
 
         # Verify the joint was created correctly
         assert isinstance(joint, PlateLButtJoint)
@@ -280,7 +280,7 @@ class TestJointFromGenericJoint:
         model.add_joint(generic_plate_joint)
 
         # Convert to specific joint
-        joint = PlateLButtJoint.from_generic_joint(model, generic_plate_joint)
+        joint = PlateLButtJoint.promote_joint_candidate(model, generic_plate_joint)
 
         # Verify the joint was created
         assert isinstance(joint, PlateLButtJoint)
@@ -289,15 +289,15 @@ class TestJointFromGenericJoint:
         # b_segment_index should not be in kwargs when None
 
     def test_from_generic_joint_calls_create(self, generic_joint_with_beams, mocker):
-        """Test that from_generic_joint calls create method."""
+        """Test that promote_joint_candidate calls create method."""
         model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
         # Mock the create method
         mock_create = mocker.patch.object(TButtJoint, "create")
         mock_create.return_value = Mock(spec=TButtJoint)
 
-        # Call from_generic_joint
-        TButtJoint.from_generic_joint(model, generic_joint)
+        # Call promote_joint_candidate
+        TButtJoint.promote_joint_candidate(model, generic_joint)
 
         # Verify create was called with the generic joint's elements
         mock_create.assert_called_once_with(model, *generic_joint.elements)
@@ -311,7 +311,7 @@ class TestJointFromGenericJoint:
         assert generic_joint in initial_joints
 
         # Convert to specific joint
-        new_joint = TButtJoint.from_generic_joint(model, generic_joint)
+        new_joint = TButtJoint.promote_joint_candidate(model, generic_joint)
 
         # Verify original joint was removed
         assert generic_joint not in model.joints
@@ -324,7 +324,7 @@ class TestJointFromGenericJoint:
         model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
         # Convert without specifying elements
-        joint = TButtJoint.from_generic_joint(model, generic_joint)
+        joint = TButtJoint.promote_joint_candidate(model, generic_joint)
 
         # Should use the generic joint's elements
         assert isinstance(joint, TButtJoint)
@@ -342,14 +342,14 @@ class TestJointFromMethodsEdgeCases:
         cluster = Cluster([])
 
         with pytest.raises(AttributeError):  # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
-            TButtJoint.from_cluster(model, cluster)
+            TButtJoint.promote_cluster(model, cluster)
 
     def test_from_generic_joint_non_generic_plate_joint(self, generic_joint_with_beams):
-        """Test from_generic_joint with non-PlateJointCandidate."""
+        """Test promote_joint_candidate with non-PlateJointCandidate."""
         model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
         # Should not try to extract plate-specific attributes
-        joint = TButtJoint.from_generic_joint(model, generic_joint)
+        joint = TButtJoint.promote_joint_candidate(model, generic_joint)
 
         assert isinstance(joint, TButtJoint)
         # No topology/segment attributes should be extracted
@@ -362,10 +362,10 @@ class TestJointFromMethodsEdgeCases:
         elements_order1 = [beam1, beam2]
         elements_order2 = [beam2, beam1]
 
-        joint1 = TButtJoint.from_cluster(model, cluster, elements=elements_order1)
+        joint1 = TButtJoint.promote_cluster(model, cluster, reordered_elements=elements_order1)
         model.remove_joint(joint1)  # Clean up for second test
 
-        joint2 = TButtJoint.from_cluster(model, cluster, elements=elements_order2)
+        joint2 = TButtJoint.promote_cluster(model, cluster, reordered_elements=elements_order2)
 
         # Both should succeed but potentially with different internal ordering
         assert isinstance(joint1, TButtJoint)
@@ -377,7 +377,7 @@ class TestJointFromMethodsEdgeCases:
 
         # Test with specific element order
         elements = [beam2, beam1]  # Reversed order
-        joint = TButtJoint.from_generic_joint(model, generic_joint, elements=elements)
+        joint = TButtJoint.promote_joint_candidate(model, generic_joint, reordered_elements=elements)
 
         assert isinstance(joint, TButtJoint)
         # The exact behavior depends on TButtJoint implementation
@@ -396,7 +396,7 @@ class TestJointFromMethodsEdgeCases:
         mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
 
         # Convert generic plate joint to specific plate joint
-        joint = PlateLButtJoint.from_generic_joint(model, generic_plate_joint)
+        joint = PlateLButtJoint.promote_joint_candidate(model, generic_plate_joint)
 
         # Verify the joint was created correctly
         assert isinstance(joint, PlateLButtJoint)
