@@ -1,6 +1,7 @@
 from compas_timber.connections import JointTopology
 from compas_timber.elements import Beam
 
+
 class DetailBase(object):
     """Base class for opening detail sets.
 
@@ -15,14 +16,13 @@ class DetailBase(object):
 
     BEAM_CATEGORY_NAMES = []
 
-
     def __init__(self, beam_width_overrides=None, joint_rule_overrides=None):
-        self.beam_width_overrides = beam_width_overrides or []  #actual dimensions need a SlabPopulator instance
+        self.beam_width_overrides = beam_width_overrides or {}  # actual dimensions need a SlabPopulator instance
+        print("Beam width overrides:", self.beam_width_overrides)
         if not joint_rule_overrides:
             self.rules = self.RULES
         else:
             self.rules = self.update_rules(joint_rule_overrides)
-
 
     def update_rules(self, joint_rule_overrides):
         """Update the rules with any overrides provided."""
@@ -31,11 +31,11 @@ class DetailBase(object):
         for override in joint_rule_overrides:
             for rule in rules:
                 # element order is important TODO: use rule.comply_topology when merged. TOPO_EDGE_EDGE should not occur, but adding for future-proofing.
-                if  rule.joint_type.supported_topology == JointTopology.TOPO_T or rule.joint_type.supported_topology == JointTopology.TOPO_EDGE_FACE:
+                if rule.joint_type.supported_topology == JointTopology.TOPO_T or rule.joint_type.supported_topology == JointTopology.TOPO_EDGE_FACE:
                     if override.category_a == rule.category_a and override.category_b == rule.category_b:
                         rule = override
                         break
-                else:   # order does not matter
+                else:  # order does not matter
                     if set([override.category_a, override.category_b]) == set([rule.category_a, rule.category_b]):
                         rule = override
                         break
@@ -50,9 +50,8 @@ class DetailBase(object):
             if category in self.beam_width_overrides:
                 beam_dims[category] = (self.beam_width_overrides[category], slab_populator.frame_thickness)
             else:
-                beam_dims[category] = (slab_populator._config_set.beam_width, slab_populator.frame_thickness)
+                beam_dims[category] = (slab_populator.detail_set.beam_width, slab_populator.frame_thickness)
         return beam_dims
-
 
     def beam_from_category(self, segment, category, slab_populator, normal_offset=True, **kwargs):
         """Creates a beam from a segment and a category, using the dimensions from the configuration set.
@@ -79,15 +78,14 @@ class DetailBase(object):
             raise ValueError("Unknown beam category: {}".format(category))
         width = beam_dimensions[category][0]
         height = beam_dimensions[category][1]
-        normal = slab_populator._slab.frame.normal
-        beam = Beam.from_centerline(segment, width=width, height=height, z_vector=normal)
+        beam = Beam.from_centerline(segment, width=width, height=height, z_vector=slab_populator.normal)
         for key, value in kwargs.items():
             beam.attributes[key] = value
         beam.attributes["category"] = category
 
         if normal_offset:
             # beam centerlines are aligned to the slab frame, so we offset them by half the height
-            beam.frame.translate(normal * height * 0.5)  # align the beam to the slab frame
+            beam.frame.translate(slab_populator.normal * height * 0.5)  # align the beam to the slab frame
         if beam is None:
             raise ValueError("Failed to create beam from segment: {}".format(segment))
         return beam
@@ -99,5 +97,3 @@ class DetailBase(object):
                 rule.kwargs.update(kwargs)
                 return rule.joint_type(element_a, element_b, **rule.kwargs)
         raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
-
-

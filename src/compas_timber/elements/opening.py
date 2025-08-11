@@ -3,7 +3,6 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 
 from compas_timber.elements import TimberElement
-from compas_timber.utils import intersection_segment_segment
 
 
 class Opening(TimberElement):
@@ -49,7 +48,6 @@ class Opening(TimberElement):
             "detail_set": self.detail_set,
         }
 
-
     def __init__(self, outline, detail_set=None, frame=None):
         self.outline = outline
         self.beams = []
@@ -60,7 +58,9 @@ class Opening(TimberElement):
         self.joint_tuples = []
 
     def __repr__(self):
-        return "Opening(type={})".format(self.__class__.__name__, self.outline)
+        return "Opening(type={})".format(
+            self.__class__.__name__,
+        )
 
     @property
     def is_opening(self):
@@ -108,5 +108,3 @@ class Opening(TimberElement):
     def create_joints(self, slab_populator):
         """Generate the joints for the window."""
         return self.detail_set.create_joints(self, slab_populator)
-
-

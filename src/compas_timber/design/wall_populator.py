@@ -24,9 +24,9 @@ from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.design.workflow import JointRuleSolver
 from compas_timber.elements import Beam
-from compas_timber.elements.wall import WallOpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
+from compas_timber.elements.wall import WallOpeningType
 from compas_timber.model import TimberModel
 
 

@@ -26,7 +26,6 @@ class DoorComponent(Grasshopper.Kernel.GH_ScriptInstance):
         custom_dimensions: System.Collections.Generic.List[object],
         joint_overrides: System.Collections.Generic.List[object],
     ):
-
         """default values for stud spacing and beam width"""
         if not item_input_valid_cpython(ghenv, outline, "Outline"):
             return
@@ -52,4 +51,3 @@ class DoorComponent(Grasshopper.Kernel.GH_ScriptInstance):
             detail_set = DoorDetailBB(dimension_overrides=dims, joint_overrides=joint_overrides)
 
         return Opening(outline=compas_outline, detail_set=detail_set)
-

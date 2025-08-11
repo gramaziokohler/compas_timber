@@ -1,10 +1,3 @@
-from compas.data import Data
-from compas.geometry import Polyline
-from compas.geometry import Frame
-from compas.tolerance import TOL
-
-from compas_timber.utils import is_polyline_clockwise
-
 from .plate import Plate
 
 
@@ -37,7 +30,7 @@ class Slab(Plate):
         self.attributes.update(kwargs)
         self._edge_planes = []
         self.openings = openings if openings is not None else []
-        self.interfaces = interfaces if interfaces is not None else [] # type: list[SlabToSlabInterface]
+        self.interfaces = interfaces if interfaces is not None else []  # type: list[SlabToSlabInterface]
         self.elements = []
         self.joints = []
         self.populator = None
@@ -61,4 +54,3 @@ class Slab(Plate):
         """Add an opening to the slab."""
         self.openings.append(opening)
         self.opening_outlines.append(opening.outline)
-

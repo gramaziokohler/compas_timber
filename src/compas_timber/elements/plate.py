@@ -213,7 +213,6 @@ class Plate(TimberElement):
         """Normal vector of the plate."""
         return self.frame.normal
 
-
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
