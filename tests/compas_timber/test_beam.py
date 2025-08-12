@@ -303,6 +303,9 @@ def test_reset_computed_when_adding_features(mocker):
 
 def test_compute_geometry_without_features(beam, mocker):
     """Test geometry hasn't applied features."""
+    # Mock the geometry creation but not the feature application
+    mocker.patch("compas_timber.elements.beam.Brep.from_box", return_value=mocker.Mock(spec=Brep))
+
     mock_feature = JackRafterCut(is_joinery=False)
     mock_feature.apply = mocker.Mock(wraps=mock_feature.apply)
 
@@ -316,6 +319,9 @@ def test_compute_geometry_without_features(beam, mocker):
 
 def test_geometry_with_features(beam, mocker):
     """Test geometry applies features when requested."""
+    # Mock the geometry creation but not the feature application
+    mocker.patch("compas_timber.elements.beam.Brep.from_box", return_value=mocker.Mock(spec=Brep))
+
     mock_feature = JackRafterCut(is_joinery=False)
     mock_feature.apply = mocker.Mock(wraps=mock_feature.apply)
 
