@@ -3,8 +3,8 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Polyline
-from compas.geometry import Vector
 from compas.geometry import bounding_box
 
 from compas_timber.utils import classify_polyline_segments
@@ -87,8 +87,14 @@ class Slab(TimberElement):
     def frame(self):
         """The frame of the slab."""
         if self._frame is None:
-            self._frame = Slab._frame_from_polyline(self.outline, Vector(0, 0, 1))
+            self._frame = Slab._frame_from_polyline(self.outline, self.normal)
         return self._frame
+
+    @property
+    def normal(self):
+        """Return the normal vector of the slab, calculated from the outline's best-fit plane."""
+        plane = Plane.from_points(self.outline.points)
+        return plane.normal
 
     @property
     def origin(self):
