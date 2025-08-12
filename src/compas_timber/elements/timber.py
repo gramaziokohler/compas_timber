@@ -1,7 +1,7 @@
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
-from compas.geometry import Translation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -33,6 +33,7 @@ class TimberElement(Element):
     def __init__(self, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
         self._features = features or []
+        self._geometry = None
         self.debug_info = []
 
     @property
@@ -70,14 +71,7 @@ class TimberElement(Element):
     def transformation(self):
         # type: () -> Transformation
         """The transformation that transforms the element's geometry to the model's coordinate system."""
-        transformation = Transformation.from_frame(self.frame) if self.frame else Transformation()
-        if self.is_beam:
-            # For beams, we need to apply the blank extension to the transformation
-            # This is needed to align the beam's geometry with the model's coordinate system
-            # The blank extension is applied to the start of the beam
-            start, _ = self._resolve_blank_extensions()
-            transformation *= Translation.from_vector(-self.frame.xaxis * start)
-        return transformation
+        return Transformation.from_frame(self.frame) if self.frame else Transformation()
 
     @property
     def features(self):
@@ -92,12 +86,64 @@ class TimberElement(Element):
 
     @property
     def geometry(self):
-        # this property return the geometry of the element in it's own global coordinates.
-        # since the element doesn't know anything about the tree, those coordinates might differ from the model's coordinate system.
+        """The geometry of the element in its own global coordinates."""
         if self._geometry is None:
-            element_geometry = self.compute_elementgeometry()
-            self._geometry = element_geometry.transformed(self.transformation)
+            self._geometry = self.compute_geometry(include_features=True)
         return self._geometry
+
+    # ========================================================================
+    # Geometry computation methods
+    # ========================================================================
+
+    def compute_geometry(self, include_features=False):
+        # type: (bool) -> compas.geometry.Brep
+        """Compute the geometry of the element in global coordinates.
+
+        This is the parametric representation of the element,
+        considering its location in the model.
+
+        Parameters
+        ----------
+        include_features : bool, optional
+            If True, the features should be included in the element geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The geometry of the element in global coordinates.
+
+        Raises
+        ------
+        FeatureApplicationError
+            If there is an error applying features to the element.
+
+        """
+        raise NotImplementedError("This method should be implemented by subclasses.")
+
+    def compute_elementgeometry(self, include_features=False):
+        # type: (bool) -> compas.geometry.Brep
+        """Compute the geometry of the element in local coordinates.
+
+        This is the parametric representation of the element,
+        without considering its location in the model.
+
+        Parameters
+        ----------
+        include_features : bool, optional
+            If True, the features should be included in the element geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+
+        """
+        global_geo = self.compute_geometry(include_features=include_features)
+        if global_geo:
+            return global_geo.transformed(self.transformation.inverse())
+
+    # ========================================================================
+    # Feature management & Modification methods
+    # ========================================================================
 
     def remove_blank_extension(self):
         pass
@@ -122,7 +168,7 @@ class TimberElement(Element):
         if not isinstance(features, list):
             features = [features]
         self._features.extend(features)  # type: ignore
-        self._geometry = None  # reset geometry cache TODO: should we do that?
+        self._geometry = None  # reset geometry cache
 
     @reset_computed
     def remove_features(self, features=None):
@@ -141,7 +187,7 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
-        self._geometry = None  # reset geometry cache TODO: should we do that?
+        self._geometry = None  # reset geometry cache
 
     ########################################################################
     # BTLx properties
@@ -152,15 +198,8 @@ class TimberElement(Element):
         # type: () -> Frame
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
         """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
-        # TODO: check if this applies for other elements than beams -> plate
-        assert self.frame
-        start, _ = self._resolve_blank_extensions()
-        ref_point = self.frame.point.copy()
-        ref_point += -self.frame.xaxis * start  # "extension" to the start edge
 
-        ref_point += self.frame.yaxis * self.width * 0.5
-        ref_point -= self.frame.zaxis * self.height * 0.5
-        return Frame(ref_point, self.frame.xaxis, self.frame.zaxis)
+        raise NotImplementedError("This method should be implemented by subclasses.")
 
     @property
     def ref_sides(self):
@@ -193,6 +232,29 @@ class TimberElement(Element):
             Line(ref_sides[2].point, ref_sides[2].point + ref_sides[2].xaxis * self.blank_length, name="RE_3"),
             Line(ref_sides[3].point, ref_sides[3].point + ref_sides[3].xaxis * self.blank_length, name="RE_4"),
         )
+
+    def side_as_surface(self, side_index):
+        # type: (int) -> compas.geometry.PlanarSurface
+        """Returns the requested side of the beam as a parametric planar surface.
+
+        Parameters
+        ----------
+        side_index : int
+            The index of the reference side to be returned. 0 to 5.
+
+        """
+        # TODO: maybe this should be the default representation of the ref sides?
+        ref_side = self.ref_sides[side_index]
+        if side_index in (0, 2):  # top + bottom
+            xsize = self.blank_length
+            ysize = self.width
+        elif side_index in (1, 3):  # sides
+            xsize = self.blank_length
+            ysize = self.height
+        elif side_index in (4, 5):  # ends
+            xsize = self.width
+            ysize = self.height
+        return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
 
     def front_side(self, ref_side_index):
         # type: (int) -> Frame

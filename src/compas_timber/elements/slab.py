@@ -4,6 +4,7 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polyline
+from compas.geometry import Vector
 from compas.geometry import bounding_box
 
 from compas_timber.utils import classify_polyline_segments
@@ -58,13 +59,14 @@ class Slab(TimberElement):
 
     def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(frame=frame or Frame.worldXY(), name=name)
+        super(Slab, self).__init__(name=name)
         self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
         self.attributes = {}
         self.attributes.update(kwargs)
 
+        self._frame = frame
         self._faces = None
         self._corners = None
 
@@ -80,6 +82,13 @@ class Slab(TimberElement):
     @property
     def is_group_element(self):
         return True
+
+    @property
+    def frame(self):
+        """The frame of the slab."""
+        if self._frame is None:
+            self._frame = Slab._frame_from_polyline(self.outline, Vector(0, 0, 1))
+        return self._frame
 
     @property
     def origin(self):
@@ -148,9 +157,20 @@ class Slab(TimberElement):
     def envelope_faces(self):
         return self.faces[:4]
 
-    def compute_elementgeometry(self, _=False):
-        assert self.frame
+    def compute_geometry(self, _=False):
+        """Compute the geometry of the element in global coordinates.
 
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+
+        Raises
+        ------
+        :class:`compas_timber.errors.FeatureApplicationError`
+            If there is an error applying features to the element.
+
+        """
+        assert self.frame
         extrusion_vector = self.frame.zaxis * self.thickness
         return Brep.from_extrusion(self.outline, extrusion_vector)
 

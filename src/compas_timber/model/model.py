@@ -195,6 +195,7 @@ class TimberModel(Model):
         The container element is added to the group as well.
 
         TODO: upstream this to compas_model, maybe?
+        TODO: should this allow for assigning it a parent in the future?
 
         Parameters
         ----------
@@ -239,7 +240,7 @@ class TimberModel(Model):
         if self.has_group(element):
             raise ValueError("Group {} already exists in model.".format(group_name))
 
-        group = self.add_group(group_name)  # TODO: should this allow for a parent? or should a group always be added to the root?
+        group = self.add_group(group_name)
         self.add_element(element, parent=group)
 
         element.name = group_name

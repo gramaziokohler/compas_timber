@@ -122,7 +122,7 @@ class BallNodeFastener(Fastener):
             if value:
                 setattr(self.base_interface, key, value)
 
-    def compute_elementgeometry(self):
+    def compute_geometry(self):
         # type: () -> compas.geometry.Geometry
         """Returns the geometry of the fastener including all interfaces."""
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))

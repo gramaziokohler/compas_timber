@@ -4,9 +4,9 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
@@ -109,6 +109,13 @@ class Beam(TimberElement):
         return True
 
     @property
+    def transformation(self):
+        transformation = super(Beam, self).transformation
+        start, _ = self._resolve_blank_extensions()
+        transformation *= Translation.from_vector(-self.frame.xaxis * start)  # Adjust transformation to account for blank extensions
+        return transformation
+
+    @property
     def shape(self):
         # type: () -> Box
         assert self.frame
@@ -143,8 +150,23 @@ class Beam(TimberElement):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
 
     @property
+    def ref_frame(self):
+        # type: () -> Frame
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
+        assert self.frame
+        # sort extensions at the start of the beam
+        start, _ = self._resolve_blank_extensions()
+        ref_point = self.frame.point.copy()
+        ref_point += -self.frame.xaxis * start
+
+        ref_point += self.frame.yaxis * self.width * 0.5
+        ref_point -= self.frame.zaxis * self.height * 0.5
+        return Frame(ref_point, self.frame.xaxis, self.frame.zaxis)
+
+    @property
     def long_edges(self):
-        # TODO: can we replace this with `ref_edges`? No because ref_edges get affected by blank extensions
+        # TODO: can we replace this with `ref_edges`? --> No because `ref_edges` get affected by blank extensions
         # type: () -> list[Line]
         assert self.frame
         y = self.frame.yaxis
@@ -173,12 +195,9 @@ class Beam(TimberElement):
     # Implementations of abstract methods
     # ==========================================================================
 
-    def compute_elementgeometry(self, include_features=True):
+    def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.geometry.Brep
-        """Compute the geometry of the element in local coordinates.
-
-        This is the parametric representation of the element,
-        without considering its location in the model or its interaction(s) with connected elements.
+        """Compute the geometry of the element in global coordinates.
 
         Parameters
         ----------
@@ -189,6 +208,11 @@ class Beam(TimberElement):
         -------
         :class:`compas.geometry.Brep`
 
+        Raises
+        ------
+        :class:`compas_timber.errors.FeatureApplicationError`
+            If there is an error applying features to the element.
+
         """
         blank_geo = Brep.from_box(self.blank)  # blank is in global coordinates
         if include_features:
@@ -197,7 +221,6 @@ class Beam(TimberElement):
                     blank_geo = feature.apply(blank_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        blank_geo.transform(self.transformation.inverse())  # transform back to local coordinates
         return blank_geo
 
     def compute_aabb(self, inflate=0.0):
@@ -254,6 +277,22 @@ class Beam(TimberElement):
 
         """
         return self.blank.to_mesh()
+
+    def _create_shape(self):
+        # type: () -> Box
+        boxframe = self.frame
+        depth_offset = boxframe.xaxis * self.length * 0.5
+        boxframe.point += depth_offset
+        return Box(self.length, self.width, self.height, frame=boxframe)
+
+    def _create_blank(self):
+        # type: () -> Box
+        origin = self.ref_frame.point.copy()
+        # move the origin to the center of the blank box
+        offset = self.ref_frame.xaxis * (self.blank_length / 2) + self.ref_frame.yaxis * (self.height / 2) + self.ref_frame.zaxis * (self.width / 2)
+        origin += offset
+        frame = Frame(origin, self.ref_frame.xaxis, self.ref_frame.zaxis)
+        return Box(self.blank_length, self.width, self.height, frame=frame)
 
     # ==========================================================================
     # Alternative constructors
@@ -320,22 +359,8 @@ class Beam(TimberElement):
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector)
 
-    def _create_shape(self):
-        # type: () -> Box
-        boxframe = self.frame
-        depth_offset = boxframe.xaxis * self.length * 0.5
-        boxframe.point += depth_offset
-        return Box(self.length, self.width, self.height, frame=boxframe)
-
-    def _create_blank(self):
-        # type: () -> Box
-        origin = self.ref_frame.point.copy()
-        origin += (self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width) / 2  # center the origin
-        frame = Frame(origin, self.ref_frame.xaxis, self.ref_frame.zaxis)
-        return Box(self.blank_length, self.width, self.height, frame=frame)
-
     # ==========================================================================
-    # Featrues
+    # Extensions and Modifications
     # ==========================================================================
 
     def add_blank_extension(self, start, end, joint_key=None):
@@ -371,39 +396,6 @@ class Beam(TimberElement):
             self._blank_extensions = {}
         else:
             del self._blank_extensions[joint_key]
-
-    def side_as_surface(self, side_index):
-        # type: (int) -> compas.geometry.PlanarSurface
-        """Returns the requested side of the beam as a parametric planar surface.
-
-        Parameters
-        ----------
-        side_index : int
-            The index of the reference side to be returned. 0 to 5.
-
-        """
-        # TODO: maybe this should be the default representation of the ref sides?
-        ref_side = self.ref_sides[side_index]
-        if side_index in (0, 2):  # top + bottom
-            xsize = self.blank_length
-            ysize = self.width
-        elif side_index in (1, 3):  # sides
-            xsize = self.blank_length
-            ysize = self.height
-        elif side_index in (4, 5):  # ends
-            xsize = self.width
-            ysize = self.height
-        return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
-
-    def _resolve_blank_extensions(self):
-        # type: () -> tuple[float, float]
-        """Returns the max amount by which to extend the beam at both ends."""
-        start = 0.0
-        end = 0.0
-        for s, e in self._blank_extensions.values():
-            start = max(start, s)
-            end = max(end, e)
-        return start, end
 
     def extension_to_plane(self, plane):
         # type: (Frame) -> tuple[float, float]
@@ -445,6 +437,20 @@ class Beam(TimberElement):
             tmax = max(x.keys())
             de = (tmax - 1.0) * self.length
         return -ds, de
+
+    def _resolve_blank_extensions(self):
+        # type: () -> tuple[float, float]
+        """Returns the max amount by which to extend the beam at both ends."""
+        start = 0.0
+        end = 0.0
+        for s, e in self._blank_extensions.values():
+            start = max(start, s)
+            end = max(end, e)
+        return start, end
+
+    # ==========================================================================
+    # Utility Methods
+    # ==========================================================================
 
     @staticmethod
     def _calculate_z_vector_from_centerline(centerline_vector):

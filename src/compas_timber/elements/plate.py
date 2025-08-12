@@ -2,7 +2,6 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
-from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
@@ -152,26 +151,6 @@ class Plate(TimberElement):
         return self._ref_frame
 
     @property
-    def ref_sides(self):
-        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
-        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        # TODO: cache these
-        rs1_point = self.ref_frame.point
-        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
-        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
-        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
-        rs5_point = rs1_point
-        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
-        return (
-            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
-            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
-            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
-            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
-            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
-            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
-        )
-
-    @property
     def features(self):
         if not self._outline_feature:
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
@@ -184,11 +163,6 @@ class Plate(TimberElement):
         # type: (list[FreeContour]) -> None
         """Sets the features of the plate."""
         self._features = features
-
-    @property
-    def key(self):
-        # type: () -> int | None
-        return self.graph_node
 
     @property
     def frame(self):
@@ -233,29 +207,6 @@ class Plate(TimberElement):
             raise ValueError("The outline_b is not closed.")
         if len(outline_a) != len(outline_b):
             raise ValueError("The outlines must have the same number of points.")
-
-    def side_as_surface(self, side_index):
-        # type: (int) -> compas.geometry.PlanarSurface
-        """Returns the requested side of the beam as a parametric planar surface.
-
-        Parameters
-        ----------
-        side_index : int
-            The index of the reference side to be returned. 0 to 5.
-
-        """
-        # TODO: maybe this should be the default representation of the ref sides?
-        ref_side = self.ref_sides[side_index]
-        if side_index in (0, 2):  # top + bottom
-            xsize = self.blank_length
-            ysize = self.width
-        elif side_index in (1, 3):  # sides
-            xsize = self.blank_length
-            ysize = self.height
-        elif side_index in (4, 5):  # ends
-            xsize = self.width
-            ysize = self.height
-        return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
 
     # ==========================================================================
     # Alternate constructors
@@ -342,7 +293,7 @@ class Plate(TimberElement):
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
     # ==========================================================================
-    #  methods
+    #  Implementation of abstract methods
     # ==========================================================================
 
     @property
@@ -370,19 +321,23 @@ class Plate(TimberElement):
             plate_geo -= brep
         return plate_geo
 
-    def compute_elementgeometry(self, include_features=True):
-        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
-        """Compute the geometry of the element.
+    def compute_geometry(self, include_features=True):
+        # type: (bool) -> compas.geometry.Brep
+        """Compute the geometry of the element in global coordinates.
 
         Parameters
         ----------
         include_features : bool, optional
-            If ``True``, include the features in the computed geometry.
-            If ``False``, return only the plate shape.
+            If True, the features should be included in the element geometry.
 
         Returns
         -------
-        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
+        :class:`compas.geometry.Brep`
+
+        Raises
+        ------
+        :class:`compas_timber.errors.FeatureApplicationError`
+            If there is an error applying features to the element.
 
         """
 
@@ -450,20 +405,3 @@ class Plate(TimberElement):
 
         """
         return self.obb.to_mesh()
-
-    def opp_side(self, ref_side_index):
-        # type: (int) -> Frame
-        """Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
-        This method does not consider the start and end sides of the beam (RS5 & RS6).
-
-        Parameters
-        ----------
-        ref_side_index : int
-            The index of the reference side to which the opposite side should be calculated.
-
-        Returns
-        -------
-        frame : :class:`~compas.geometry.Frame`
-            The frame of the opposite side of the beam relative to the reference side.
-        """
-        return self.ref_sides[(ref_side_index + 2) % 4]
