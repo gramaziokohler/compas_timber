@@ -112,8 +112,8 @@ class Beam(TimberElement):
     def transformation(self):
         transformation = super(Beam, self).transformation
         start, _ = self._resolve_blank_extensions()
-        transformation *= Translation.from_vector(-self.frame.xaxis * start)  # Adjust transformation to account for blank extensions
-        return transformation
+        extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
+        return extension_transformation * transformation
 
     @property
     def shape(self):
