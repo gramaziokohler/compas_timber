@@ -7,17 +7,16 @@ if not compas.IPY:
     from compas.tolerance import Tolerance  # noqa: F401
 
 from compas.geometry import Point
-from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import Joint
-from compas_timber.connections import PlateJoint
 from compas_timber.connections import JointCandidate
-from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
+from compas_timber.connections import PlateConnectionSolver
+from compas_timber.connections import PlateJoint
+from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import WallJoint
 from compas_timber.errors import BeamJoiningError
 
@@ -359,7 +358,7 @@ class TimberModel(Model):
 
         for joint in joints:
             try:
-                joint.check_elements_compatibility(joint.elements) #TODO: is this necessary here? This should be done at joint creation.
+                joint.check_elements_compatibility(joint.elements)  # TODO: is this necessary here? This should be done at joint creation.
                 joint.add_extensions()
             except BeamJoiningError as bje:
                 errors.append(bje)
@@ -399,7 +398,7 @@ class TimberModel(Model):
                 continue
             assert beam_a and beam_b
 
-            JointCandidate.create(self, result.beam_a, result.beam_b, topology=result.topology, distance = result.distance, location=result.location)
+            JointCandidate.create(self, result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location)
 
     def connect_adjacent_plates(self, max_distance=None):
         for joint in self.joints:

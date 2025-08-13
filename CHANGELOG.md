@@ -47,8 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
 * Added `joints_contribution_guide` in docs.
 * Added `PlateJointCandidate` to `generic_joint.py`.
-* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
-* Added `PlateJoint.from_generic_joint` as override.
+* Added `Joint.promote_cluster` and `Joint.promote_joint_candidate` constructors to `Joint`.
+* Added `PlateJoint.promote_joint_candidate` as override.
 * Added `joints_contribution_guide` in docs.
 * Added `JointRuleSolver` class.
 * Added `JointTopology.TOPO_Y` for Beam Connections.
@@ -57,9 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
 * Added `Cluster.topology`.
 * Added `PlateSolverResult` and `BeamSolverResult` to package results from `PlateConnectionSolver.find_topology()` and `ConnectionSolver.find_topology()`.
-* Added `PlateJointCandidate` to `generic_joint.py`.
-* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
-* Added `PlateJoint.from_generic_joint` as override.
+
 
 ### Changed
 
@@ -87,11 +85,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `ConnectionSolver.find_topology()` to return a `BeamSolverResult` instance.
 * Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
 * `Platejoint`s can now be isntantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
-* Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
 * Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
 * Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.apply_rules_to_model` which now adds `Joint`s to the
   `TimberModel` directly.
-* Changed `PlateConnectionSolver.find_topology()` to return `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
 * Fixed element order in `DirectJointRule` GH component.
 * Reworked `Model` GH component.
 * Changed `WallPopulator.create_joint_definitions()` to `WallPopulator.create_joints()`, which now returns Joint instances.
