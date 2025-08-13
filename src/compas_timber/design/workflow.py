@@ -180,6 +180,7 @@ class JointRule(object):
     **kwargs : dict, optional
         Additional keyword arguments to pass to the joint creation method.
     """
+
     def __init__(self, joint_type, max_distance=None, **kwargs):
         self.joint_type = joint_type
         self.max_distance = max_distance

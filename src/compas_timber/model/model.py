@@ -410,7 +410,7 @@ class TimberModel(Model):
         """
         for joint in self.joints:
             if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)    #TODO do we want to remove plate joints?
+                self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         plates = list(self.plates)
