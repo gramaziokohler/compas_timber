@@ -1,5 +1,4 @@
 import math
-from typing import List
 
 import compas.geometry
 import compas.tolerance  # noqa: F401
@@ -89,7 +88,7 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
         # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
 
-    def find(self, exclude=None) -> List[Cluster]:
+    def find(self, exclude=None):
         """Finds clusters of N beams connected pairwise at the same point within a given tolerance.
 
         Parameters
