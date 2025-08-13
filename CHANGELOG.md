@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `ConnectionSolver.find_topology()` to return a `BeamSolverResult` instance.
 * Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
 * `PlateJoint`s can now be instantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
+* Changed `elements` argument in `promote_joint_candidate` to `reordered_elements` for clarity.
 
 ### Removed
 

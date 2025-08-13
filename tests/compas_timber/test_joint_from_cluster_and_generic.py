@@ -300,7 +300,7 @@ class TestJointFromGenericJoint:
         TButtJoint.promote_joint_candidate(model, generic_joint)
 
         # Verify create was called with the generic joint's elements
-        mock_create.assert_called_once_with(model, *generic_joint.elements)
+        mock_create.assert_called_once_with(model, *generic_joint.elements, topology=generic_joint.topology, location=generic_joint.location)
 
     def test_from_generic_joint_removes_original(self, generic_joint_with_beams):
         """Test that the original generic joint is removed from the model."""
