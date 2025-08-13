@@ -98,7 +98,6 @@ class JointRuleSolver(object):
             A tuple containing a list of joining errors and a list of unjoined Clusters.
 
         """
-
         handled_pairs = handled_pairs or []
         max_rule_distance = max([rule.max_distance for rule in self.rules if rule.max_distance] + [self.max_distance])
         clusters = get_clusters_from_model(self.model, max_distance=max_rule_distance)
@@ -278,9 +277,9 @@ class DirectRule(JointRule):
                     return None, None
                 if not self._comply_distance(cluster, raise_error=True, max_distance=max_distance):
                     return None, None
-                if not self.joint_type.comply_elements(self.elements, raise_error=True):
+                if not self.joint_type.check_elements_compatibility(self.elements, raise_error=True):
                     return None, None
-                joint = self.joint_type.from_cluster(model, cluster, elements=self.elements, **self.kwargs)
+                joint = self.joint_type.promote_cluster(model, cluster, elements=self.elements, **self.kwargs)
             except BeamJoiningError as bje:
                 error = bje
         return joint, error
@@ -372,10 +371,10 @@ class CategoryRule(JointRule):
             return None, None
         if not self._comply_distance(cluster, max_distance=max_distance):
             return None, None
-        if not self.joint_type.comply_elements(list(cluster.elements)):
+        if not self.joint_type.check_elements_compatibility(list(cluster.elements)):
             return None, None
         try:
-            joint = self.joint_type.from_cluster(model, cluster, **self.kwargs)
+            joint = self.joint_type.promote_cluster(model, cluster, **self.kwargs)
         except BeamJoiningError as bje:
             error = bje
         return joint, error
@@ -430,7 +429,8 @@ class TopologyRule(JointRule):
         -------
         :class:`~compas_timber.connections.Joint` or None
             The joint created from the elements if the elements comply with the rule,
-
+        :class:`~compas_timber.errors.BeamJoiningError` or None
+            The error raised if the elements do not comply with the rule.
         """
         max_distance = self.max_distance or max_distance or TOL.absolute
 
@@ -442,10 +442,10 @@ class TopologyRule(JointRule):
             return None, None
         if not self._comply_distance(cluster, max_distance=max_distance):
             return None, None
-        if not self.joint_type.comply_elements(cluster.elements):
+        if not self.joint_type.check_elements_compatibility(cluster.elements):
             return None, None
         try:
-            joint = self.joint_type.from_cluster(model, cluster, **self.kwargs)
+            joint = self.joint_type.promote_cluster(model, cluster, **self.kwargs)
         except BeamJoiningError as bje:
             error = bje
         return joint, error

@@ -254,7 +254,7 @@ class Joint(Interaction):
         return joint
 
     @classmethod
-    def comply_elements(cls, elements, raise_error=False):
+    def check_elements_compatibility(cls, elements, raise_error=False):
         """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
 
         Parameters

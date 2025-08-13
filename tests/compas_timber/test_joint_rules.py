@@ -187,7 +187,7 @@ def test_direct_rule_get_joint(beams):
     assert set([j.__class__.__name__ for j in model.joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
 
 
-def test_joint_type_comply_elements(beams):
+def test_joint_type_check_elements_compatibility(beams):
     rules = [DirectRule(LMiterJoint, [beams[0], beams[1]])]
     model = TimberModel()
     model.add_elements(beams)
@@ -196,7 +196,7 @@ def test_joint_type_comply_elements(beams):
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
 
 
-def test_joint_type_comply_elements_bad_normal(beams):
+def test_joint_type_check_elements_compatibility_bad_normal(beams):
     rules = [DirectRule(LFrenchRidgeLapJoint, [beams[0], beams[1]])]
     beams[1].frame = Frame(beams[1].frame.point, beams[1].frame.xaxis, Vector(1, 1, 1))
     model = TimberModel()
@@ -207,7 +207,7 @@ def test_joint_type_comply_elements_bad_normal(beams):
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 0
 
 
-def test_joint_type_comply_elements_bad_dims(beams):
+def test_joint_type_check_elements_compatibility_bad_dims(beams):
     rules = [DirectRule(LFrenchRidgeLapJoint, [beams[0], beams[1]])]
     beams[1].width = 0.25
     model = TimberModel()
