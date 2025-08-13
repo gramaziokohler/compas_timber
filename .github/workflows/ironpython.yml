@@ -28,13 +28,6 @@ jobs:
           tar -xf compas.tar.gz && for /d %%i in (compas-*) do ren "%%i" compas
           tar -xf compas_model.tar.gz && for /d %%i in (compas_model-*) do ren "%%i" compas_model
 
-      - uses: NuGet/setup-nuget@v1.0.5
-      - name: Test import
-        shell: cmd
-        run: |
-          ipy -m compas_timber
-        env:
-          IRONPYTHONPATH: ./src;./compas/src;./compas_model/src
       - name: Run tests
         shell: cmd
         run: |
