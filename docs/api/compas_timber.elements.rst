@@ -12,8 +12,13 @@ Classes
     :nosignatures:
 
     Beam
+    Plate
     Fastener
     FastenerTimberInterface
-    Plate
+    BallNodeFastener
+    PlateFastener
     TimberElement
+    Opening
+    OpeningType
+    Slab
     Wall
