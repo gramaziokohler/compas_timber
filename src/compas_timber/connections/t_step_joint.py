@@ -220,12 +220,6 @@ class TStepJoint(Joint):
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
-
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
         """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
@@ -254,3 +248,8 @@ class TStepJoint(Joint):
                 raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
 
         return True
+
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.main_beam = model.element_by_guid(self.main_beam_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
