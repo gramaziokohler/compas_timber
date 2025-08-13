@@ -44,6 +44,14 @@ class JointRuleSolver(object):
     ----------
     rules : list(:class:`~compas_timber.connections.JointRule`)
         A list of rules to apply to the model.
+    model : :class:`~compas_timber.model.TimberModel`
+        The timber model to which the rules will be applied.
+    use_default_topo : bool, optional
+        Whether to use the default topology rules. Defaults to False.
+    max_distance : float, optional
+        The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
+        This is the general model.max_distance and will be overriden by individual rule max_distances.
+
     """
 
     def __init__(self, rules, model, use_default_topo=False, max_distance=TOL.absolute):
@@ -83,12 +91,6 @@ class JointRuleSolver(object):
 
         Parameters
         ----------
-        rules : list(:class:`~compas_timber.connections.JointRule`)
-            A list of joint rules to consider.
-        elements : list(:class:`~compas_timber.elements.TimberElement`)
-            A list of elements to join.
-        max_distance : float
-            The maximum distance to consider for joining elements.
         handled_pairs : list(set(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)), optional
             A list of already handled element pairs.
 
@@ -106,7 +108,19 @@ class JointRuleSolver(object):
         return self.joining_errors, unjoined_clusters
 
     def remove_handled_pairs(self, clusters, handled_pairs):
-        """Removes clusters from the list that have been handled."""
+        """Removes clusters from the list that have been handled.
+        Parameters
+        ----------
+        clusters : list(:class:`~compas_timber.connections.Cluster`)
+            A list of clusters to check.
+        handled_pairs : list(set(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`))
+            A list of already handled element pairs.
+
+        Returns
+        -------
+        list(:class:`~compas_timber.connections.Cluster`)
+            The filtered list of clusters.
+        """
         clusters_temp = [c for c in clusters]
         for cluster in clusters_temp:
             if set(cluster.elements) in handled_pairs:
@@ -114,7 +128,17 @@ class JointRuleSolver(object):
         return clusters
 
     def joints_from_rules_and_clusters(self, rules, clusters, max_distance=None):
-        """Processes the DirectRules and creates joints based on the clusters."""
+        """Processes the JointRules and creates joints based on the clusters.
+        Parameters
+        ----------
+        rules : list(:class:`~compas_timber.design.JointRule`)
+            The list of joint rules to apply.
+        clusters : list(:class:`~compas_timber.connections.Cluster`)
+            The list of clusters to process.
+        max_distance : float, optional
+            The maximum distance to consider when creating joints. This is a global max distance and will be overridden by individual rule max_distances.
+
+        """
         for rule in rules:
             for cluster in [c for c in clusters]:
                 joint, error = rule.try_create_joint(self.model, cluster, max_distance=max_distance)
@@ -124,7 +148,19 @@ class JointRuleSolver(object):
                     self.joining_errors.append(error)
 
     def process_clusters(self, clusters, max_distance=None):
-        """Processes the clusters and creates joints based on the rules."""
+        """Processes the clusters and creates joints based on the rules.
+        Parameters
+        ----------
+        clusters : list(:class:`~compas_timber.connections.Cluster`)
+            The list of clusters to process.
+        max_distance : float, optional
+            The maximum distance to consider when creating joints. This is a global max distance and will be overridden by individual rule max_distances.
+
+        Returns
+        -------
+        tuple(list(:class:`~compas_timber.connections.BeamJoiningError`), list(:class:`~compas_timber.connections.Cluster`), )
+            A tuple containing a list of joining errors and a list of unjoined Clusters.
+        """
         unhandled_clusters = [c for c in clusters]
         self.joints_from_rules_and_clusters(self.direct_rules, unhandled_clusters, max_distance=max_distance)
         self.joints_from_rules_and_clusters(self.category_rules, unhandled_clusters, max_distance=max_distance)
@@ -134,8 +170,17 @@ class JointRuleSolver(object):
 
 
 class JointRule(object):
+    """Represents a rule for creating joints between timber elements.
+    Parameters
+    ----------
+    joint_type : :class:`~compas_timber.joints.JointType`
+        The type of joint to create.
+    max_distance : float, optional
+        The maximum distance to consider when creating joints. This will override the global max_distance.
+    **kwargs : dict, optional
+        Additional keyword arguments to pass to the joint creation method.
+    """
     def __init__(self, joint_type, max_distance=None, **kwargs):
-        """Initializes a JointRule with the given joint type and optional max distance."""
         self.joint_type = joint_type
         self.max_distance = max_distance
         self.kwargs = kwargs
@@ -145,10 +190,10 @@ class JointRule(object):
 
         Parameters
         ----------
-        elements : list(:class:`~compas_timber.elements.TimberElement`)
-            The elements to check.
-        topology : :class:`~compas_timber.connections.JointTopology`
-            The topology to check against.
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to check.
+        raise_error : bool, optional
+            Whether to raise an error if the elements do not comply. If False, method will return False without raising an error.
 
         Returns
         -------
@@ -169,6 +214,22 @@ class JointRule(object):
         return True
 
     def _comply_distance(self, cluster, max_distance=None, raise_error=False):
+        """Checks if the distance between the elements in the cluster complies with the maximum distance.
+
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to check.
+        max_distance : float, optional
+            The maximum distance to consider two elements as intersecting. This is the model max_distance and will be overridden if the rule has a max_distance.
+        raise_error : bool, optional
+            Whether to raise an error if the elements do not comply. If False, method will return False without raising an error.
+
+        Returns
+        -------
+        bool
+            True if the distance complies, False otherwise.
+        """
         if not max_distance:
             return True
 
@@ -185,7 +246,19 @@ class JointRule(object):
         return True
 
     def _comply_element_count(self, cluster, raise_error=False):
-        """Checks if the number of elements in the cluster complies with the joint's requirements."""
+        """Checks if the number of elements in the cluster complies with the joint's requirements.
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to check.
+        raise_error : bool, optional
+            Whether to raise an error if the elements do not comply. If False, method will return False without raising an error.
+
+        Returns
+        -------
+        bool
+            True if the number of elements complies, False otherwise.
+        """
         if not self.joint_type.element_count_complies(cluster.elements):
             if raise_error:
                 raise BeamJoiningError(
@@ -199,7 +272,7 @@ class JointRule(object):
 
 
 class DirectRule(JointRule):
-    """Creates a Joint Rule that directly joins multiple elements.
+    """Creates a Joint Rule that directly joins multiple elements. This essentially replaces the JointDefinition.
 
     Parameters
     ----------
@@ -208,7 +281,7 @@ class DirectRule(JointRule):
     elements : list(:class:`~compas_timber.elements.TimberElement`)
         The elements to be joined.
     max_distance : float, optional
-        The maximum distance to consider two elements as intersecting.
+        The maximum distance to consider two elements as intersecting. This will override the global max_distance.
     kwargs : dict
         The keyword arguments to be passed to the joint.
     """
@@ -225,10 +298,34 @@ class DirectRule(JointRule):
         return "{}({}, {})".format(DirectRule, self.elements, self.joint_type)
 
     def _matches_cluster(self, cluster):
-        """Checks if the elements in this rule match the elements in the cluster."""
+        """Checks if the elements in this rule match the elements in the cluster.
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster to check against.
+
+        Returns
+        -------
+        bool
+            True if the elements match, False otherwise.
+        """
         return set(self.elements) == cluster.elements
 
     def _comply_element_order(self, cluster, raise_error=False):
+        """Checks if the element order in this rule complies with the element order in the cluster.
+        This check is only performed for JointTopology.TOPO_T or JointTopology.TOPO_EDGE_FACE, where the topology requires a specific element order.
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster to check against.
+        raise_error : bool, optional
+            Whether to raise an error if the element order does not comply. If False, method will return False without raising an error.
+
+        Returns
+        -------
+        bool
+            True if the element order complies, False otherwise.
+        """
         if cluster.topology == JointTopology.TOPO_T or cluster.topology == JointTopology.TOPO_EDGE_FACE:
             if self.elements[0] != cluster.joints[0].elements[0]:
                 if not raise_error:
@@ -242,25 +339,24 @@ class DirectRule(JointRule):
         return True
 
     def try_create_joint(self, model, cluster, max_distance=None):
-        """Creates a joint from the elements defined in this DirectRule.
+        """Returns a Joint if the given cluster's elements comply with this DirectRule.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the elements and this joint belong.
-        model_max_distance : float, optional
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements attemped to be joined.
+        max_distance : float, optional
             The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
-            This is only used if the rule does not already have a max_distance set.
+            This is the general model.max_distance and will be overriden if the rule has a max_distance.
 
         Returns
         -------
         :class:`~compas_timber.connections.Joint`
             The joint created from the elements and the joint type.
-
-        Raises
-        ------
-        BeamJoiningError
-            If the distance between the elements is greater than the max_distance.
+        :class:`~compas_timber.errors.BeamJoiningError` or None
+            Error that occurred during joint creation.
 
         """
         max_distance = self.max_distance or max_distance or TOL.absolute
@@ -319,6 +415,19 @@ class CategoryRule(JointRule):
         return "{}({}, {}, {}, {})".format(CategoryRule.__name__, self.joint_type.__name__, self.category_a, self.category_b, self.topos)
 
     def _comply_category_order(self, cluster, raise_error=False):
+        """Checks if the order of the elements in the cluster complies with the rule's categories.
+                Parameters
+        ----------
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to check.
+        raise_error : bool, optional
+            Whether to raise an error if the elements do not comply. If False, method will return False without raising an error.
+
+        Returns
+        -------
+        bool
+            True if the order complies, False otherwise.
+        """
         if cluster.topology == JointTopology.TOPO_T or cluster.topology == JointTopology.TOPO_EDGE_FACE:
             if cluster.joints[0].elements[0].attributes.get("category", None) != self.category_a:
                 if not raise_error:
@@ -332,29 +441,38 @@ class CategoryRule(JointRule):
         return True
 
     def _comply_categories(self, cluster):
-        """Checks if the categories of the elements in the cluster comply with the rule's categories."""
+        """Checks if the categories of the elements in the cluster are the same as the rule's categories.
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to check.
+
+        Returns
+        -------
+        bool
+            True if the categories comply, False otherwise.
+        """
         return set([e.attributes.get("category", None) for e in cluster.elements]) == {self.category_a, self.category_b}
 
     def try_create_joint(self, model, cluster, max_distance=None):
-        """Creates a joint from the elements defined in this DirectRule.
+        """Returns a Joint if the given cluster's elements comply with this CategoryRule.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the elements and this joint belong.
-        model_max_distance : float, optional
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to create the joint from.
+        max_distance : float, optional
             The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
-            This is only used if the rule does not already have a max_distance set.
+            This is the general model.max_distance and will be overriden if the rule has a max_distance.
 
         Returns
         -------
-        :class:`~compas_timber.connections.Joint`
-            The joint created from the elements and the joint type.
-
-        Raises
-        ------
-        BeamJoiningError
-            If the distance between the elements is greater than the max_distance.
+        :class:`~compas_timber.connections.Joint` or None
+            The joint created from the elements if the elements comply with the rule,
+        :class:`~compas_timber.errors.BeamJoiningError` or None
+            The error raised if the elements do not comply with the rule.
 
         """
         max_distance = self.max_distance or max_distance or TOL.absolute
@@ -412,18 +530,20 @@ class TopologyRule(JointRule):
         )
 
     def try_create_joint(self, model, cluster, max_distance=None):
-        """Returns a Joint if the given elements comply with this TopologyRule.
+        """Returns a Joint if the given cluster's elements comply with this TopologyRule.
         It checks:
         that the max_distance is not exceeded,
         that the joint supports the topology of the elements.
 
         Parameters
         ----------
-        elements : tuple(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)
-            A tuple containing two elements to check.
-        model_max_distance : float, optional
+        model : :class:`~compas_timber.models.TimberModel`
+            The timber model containing the elements.
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to create the joint from.
+        max_distance : float, optional
             The maximum distance to consider two elements as intersecting. Defaults to TOL.absolute.
-            This is only used if the rule does not already have a max_distance set.
+            This is the general model.max_distance and will be overriden if the rule has a max_distance.
 
         Returns
         -------
