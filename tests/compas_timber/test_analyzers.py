@@ -11,7 +11,6 @@ from compas_timber.connections import TripletAnalyzer
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections.analyzers import Cluster
-from compas_timber.connections.analyzers import get_clusters_from_model
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -145,9 +144,9 @@ def test_multiple_joints_with_valid_topologies_returns_valid_topo():
     joint2.topology = JointTopology.TOPO_I
     joint2.elements = [Mock(), Mock()]
 
-        joint3 = Mock(spec=JointCandidate)
-        joint3.topology = JointTopology.TOPO_L
-        joint3.elements = [Mock(), Mock()]
+    joint3 = Mock(spec=JointCandidate)
+    joint3.topology = JointTopology.TOPO_T
+    joint3.elements = [Mock(), Mock()]
 
     cluster = Cluster([joint1, joint2, joint3])
 

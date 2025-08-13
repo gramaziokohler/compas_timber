@@ -4,7 +4,6 @@ from unittest.mock import Mock
 from compas.geometry import Frame
 from compas.geometry import Point
 
-from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import JointCandidate

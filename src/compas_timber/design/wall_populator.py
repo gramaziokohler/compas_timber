@@ -17,17 +17,18 @@ from compas.geometry import matrix_from_frame_to_frame
 from compas.geometry import offset_line
 from compas.tolerance import TOL
 
+from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import InterfaceLocation
 from compas_timber.connections import InterfaceRole
+from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.design.workflow import JointRuleSolver
+from compas_timber.design.workflow import DirectRule
 from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
-from compas_timber.model import TimberModel
 
 
 class WallSelector(object):
@@ -631,7 +632,7 @@ class WallPopulator(object):
                 if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
                     if rule.joint_type == LButtJoint:
                         beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                    joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+                    joint_definitions.append(DirectRule(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
                     # break # ?
         return joint_definitions
 
