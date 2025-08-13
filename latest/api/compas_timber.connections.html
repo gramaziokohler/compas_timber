@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="BallNodeJoint" href="generated/compas_timber.connections.BallNodeJoint.html" />
+    <link rel="next" title="Joint" href="generated/compas_timber.connections.Joint.html" />
     <link rel="prev" title="Wall.validate_data" href="generated/compas_timber.elements.Wall.validate_data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -521,6 +521,7 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../contribution.html">Developer Guide</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contribution/class_diagrams.html">Class Diagrams</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../contribution/BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../contribution/joints_contribution_guide.html">Joints Contribution Guide</a></li>
 </ul>
@@ -596,53 +597,105 @@ document.write(`
 <h2>Joints</h2>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.BallNodeJoint.html" title="compas_timber.connections.BallNodeJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BallNodeJoint</span></code></a></p></td>
-<td><p>Represents a ball node type joint which joins the ends of multiple beams, trimming the main beam.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.Joint.html" title="compas_timber.connections.Joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Joint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.Joint.html" title="compas_timber.connections.Joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Joint</span></code></a></p></td>
 <td><p>Base class for a joint connecting two beams.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.LapJoint.html" title="compas_timber.connections.LapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LapJoint.html" title="compas_timber.connections.LapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p></td>
 <td><p>Abstract Lap type joint with functions common to L-Lap, T-Lap, and X-Lap Joints.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LButtJoint.html" title="compas_timber.connections.LButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LButtJoint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.ButtJoint.html" title="compas_timber.connections.ButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ButtJoint</span></code></a></p></td>
 <td><p>Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.LFrenchRidgeLapJoint.html" title="compas_timber.connections.LFrenchRidgeLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LFrenchRidgeLapJoint</span></code></a></p></td>
-<td><p>Represents an L-FrenchRidgeLap type joint which joins two beams at their ends, by lapping them with a ridge.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LLapJoint.html" title="compas_timber.connections.LLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LLapJoint</span></code></a></p></td>
-<td><p>Represents an L-Lap type joint which joins the ends of two beams with a lap.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.LMiterJoint.html" title="compas_timber.connections.LMiterJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LMiterJoint</span></code></a></p></td>
-<td><p>Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane at the bisector angle between the beams' centerlines.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TBirdsmouthJoint.html" title="compas_timber.connections.TBirdsmouthJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TBirdsmouthJoint</span></code></a></p></td>
-<td><p>Represents a T-Birdsmouth type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TButtJoint.html" title="compas_timber.connections.TButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TButtJoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TButtJoint.html" title="compas_timber.connections.TButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TButtJoint</span></code></a></p></td>
 <td><p>Represents a T-Butt type joint which joins the end of a beam along the length of another beam, trimming the main beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TDovetailJoint.html" title="compas_timber.connections.TDovetailJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TDovetailJoint</span></code></a></p></td>
-<td><p>Represents a T-Dovetail type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross).</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TLapJoint.html" title="compas_timber.connections.TLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TLapJoint</span></code></a></p></td>
-<td><p>Represents a T-Lap type joint which joins the end of a beam along the length of another beam with a lap.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.LButtJoint.html" title="compas_timber.connections.LButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LButtJoint</span></code></a></p></td>
+<td><p>Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TStepJoint.html" title="compas_timber.connections.TStepJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TStepJoint</span></code></a></p></td>
 <td><p>Represents an T-Step type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TenonMortiseJoint.html" title="compas_timber.connections.TenonMortiseJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TenonMortiseJoint</span></code></a></p></td>
-<td><p>Represents a TenonMortise type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross) or both of them at their ends.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TBirdsmouthJoint.html" title="compas_timber.connections.TBirdsmouthJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TBirdsmouthJoint</span></code></a></p></td>
+<td><p>Represents a T-Birdsmouth type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.XLapJoint.html" title="compas_timber.connections.XLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">XLapJoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LMiterJoint.html" title="compas_timber.connections.LMiterJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LMiterJoint</span></code></a></p></td>
+<td><p>Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane at the bisector angle between the beams' centerlines.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.XLapJoint.html" title="compas_timber.connections.XLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">XLapJoint</span></code></a></p></td>
 <td><p>Represents an X-Lap type joint which joins the two beams somewhere along their length with a lap.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.XNotchJoint.html" title="compas_timber.connections.XNotchJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">XNotchJoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.XNotchJoint.html" title="compas_timber.connections.XNotchJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">XNotchJoint</span></code></a></p></td>
 <td><p>Represents an X-Notch type joint which joins the two beams somewhere along their length with a notch applied on the main_beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.YButtJoint.html" title="compas_timber.connections.YButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">YButtJoint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TLapJoint.html" title="compas_timber.connections.TLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TLapJoint</span></code></a></p></td>
+<td><p>Represents a T-Lap type joint which joins the end of a beam along the length of another beam with a lap.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LLapJoint.html" title="compas_timber.connections.LLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LLapJoint</span></code></a></p></td>
+<td><p>Represents an L-Lap type joint which joins the ends of two beams with a lap.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.JointCandidate.html" title="compas_timber.connections.JointCandidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointCandidate</span></code></a></p></td>
+<td><p>A JointCandidate is an information-only joint, which does not add any features to the elements it connects.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LFrenchRidgeLapJoint.html" title="compas_timber.connections.LFrenchRidgeLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LFrenchRidgeLapJoint</span></code></a></p></td>
+<td><p>Represents an L-FrenchRidgeLap type joint which joins two beams at their ends, by lapping them with a ridge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.JointTopology.html" title="compas_timber.connections.JointTopology"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointTopology</span></code></a></p></td>
+<td><p>Enumeration of the possible joint topologies.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.ConnectionSolver.html" title="compas_timber.connections.ConnectionSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConnectionSolver</span></code></a></p></td>
+<td><p>Provides tools for detecting beam intersections and joint topologies.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateConnectionSolver.html" title="compas_timber.connections.PlateConnectionSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateConnectionSolver</span></code></a></p></td>
+<td><p>Provides tools for detecting plate intersections and joint topologies.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TDovetailJoint.html" title="compas_timber.connections.TDovetailJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TDovetailJoint</span></code></a></p></td>
+<td><p>Represents a T-Dovetail type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.BallNodeJoint.html" title="compas_timber.connections.BallNodeJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BallNodeJoint</span></code></a></p></td>
+<td><p>Represents a ball node type joint which joins the ends of multiple beams, trimming the main beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TenonMortiseJoint.html" title="compas_timber.connections.TenonMortiseJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TenonMortiseJoint</span></code></a></p></td>
+<td><p>Represents a TenonMortise type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross) or both of them at their ends.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.YButtJoint.html" title="compas_timber.connections.YButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">YButtJoint</span></code></a></p></td>
 <td><p>Represents a Y-Butt type joint which joins the ends of three beams, trimming the main beam with a double cut and the cross beams with a miter cut.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TOliGinaJoint.html" title="compas_timber.connections.TOliGinaJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TOliGinaJoint</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.WallJoint.html" title="compas_timber.connections.WallJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WallJoint</span></code></a></p></td>
+<td><p>Models a wall to wall interaction.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateJoint.html" title="compas_timber.connections.PlateJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateJoint</span></code></a></p></td>
+<td><p>Models a plate to plate interaction.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateButtJoint.html" title="compas_timber.connections.PlateButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateButtJoint</span></code></a></p></td>
+<td><p>Creates a plate-to-plate butt-joint connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateLButtJoint.html" title="compas_timber.connections.PlateLButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateLButtJoint</span></code></a></p></td>
+<td><p>Creates a plate-to-plate butt-joint connection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateTButtJoint.html" title="compas_timber.connections.PlateTButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateTButtJoint</span></code></a></p></td>
+<td><p>Creates a plate-to-plate butt-joint connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateMiterJoint.html" title="compas_timber.connections.PlateMiterJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateMiterJoint</span></code></a></p></td>
+<td><p>Creates a mitered edge plate-to-plate connection.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="joint-interfaces">
+<h2>Joint Interfaces</h2>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.InterfaceLocation.html" title="compas_timber.connections.InterfaceLocation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InterfaceLocation</span></code></a></p></td>
+<td><p>Enumeration of the possible interface location within the wall.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.InterfaceRole.html" title="compas_timber.connections.InterfaceRole"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InterfaceRole</span></code></a></p></td>
+<td><p>Enumeration of the possible interface roles.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateToPlateInterface.html" title="compas_timber.connections.PlateToPlateInterface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateToPlateInterface</span></code></a></p></td>
+<td><p>polyline : <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Polyline</span></code></a></p></td>
 </tr>
 </tbody>
 </table>
@@ -675,6 +728,9 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.CompositeAnalyzer.html" title="compas_timber.connections.CompositeAnalyzer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CompositeAnalyzer</span></code></a></p></td>
 <td><p>CompositeAnalyzer combines multiple analyzers to find clusters of beams.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.MaxNCompositeAnalyzer.html" title="compas_timber.connections.MaxNCompositeAnalyzer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MaxNCompositeAnalyzer</span></code></a></p></td>
+<td><p>Finds clusters of up to n beams (minimum 2), preferring larger clusters first.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -684,6 +740,15 @@ document.write(`
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.find_neighboring_elements.html" title="compas_timber.connections.find_neighboring_elements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_neighboring_elements</span></code></a></p></td>
 <td><p>Finds neighboring pairs of beams in the given list of beams, using R-tree search.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.beam_ref_side_incidence.html" title="compas_timber.connections.beam_ref_side_incidence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">beam_ref_side_incidence</span></code></a></p></td>
+<td><p>Returns a map of ref_side indices of beam_b and the angle of their normal with beam_a's centerline.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.beam_ref_side_incidence_with_vector.html" title="compas_timber.connections.beam_ref_side_incidence_with_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">beam_ref_side_incidence_with_vector</span></code></a></p></td>
+<td><p>Returns a map of ref_side indices of beam_b and the angle of their normal with a given vector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.point_centerline_towards_joint.html" title="compas_timber.connections.point_centerline_towards_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">point_centerline_towards_joint</span></code></a></p></td>
+<td><p>Returns the centerline vector of beam_a pointing towards the joint with beam_b.</p></td>
 </tr>
 </tbody>
 </table>
@@ -721,6 +786,7 @@ document.write(`
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joints">Joints</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-interfaces">Joint Interfaces</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solvers">Solvers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exceptions">Exceptions</a></li>
