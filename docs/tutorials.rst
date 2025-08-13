@@ -38,4 +38,3 @@ Then, the following sections explain in detail the concepts and tools:
     tutorials/grasshopper/model
     tutorials/grasshopper/show
     tutorials/grasshopper/utils
-    tutorials/grasshopper/examples
