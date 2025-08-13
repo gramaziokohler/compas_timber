@@ -18,7 +18,7 @@ Joints
     LFrenchRidgeLapJoint
     LLapJoint
     LMiterJoint
-    GenericJoint
+    JointCandidate
     TBirdsmouthJoint
     TButtJoint
     TDovetailJoint
