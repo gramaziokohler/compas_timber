@@ -93,11 +93,6 @@ class LFrenchRidgeLapJoint(LapJoint):
         # register the features in the joint
         self.features = [main_frl_feature, cross_frl_feature]
 
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.element_by_guid(self.beam_a_guid)
-        self.beam_b = model.element_by_guid(self.beam_b_guid)
-
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
         """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
@@ -143,3 +138,8 @@ class LFrenchRidgeLapJoint(LapJoint):
             )
 
         return True
+
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.beam_a = model.element_by_guid(self.beam_a_guid)
+        self.beam_b = model.element_by_guid(self.beam_b_guid)
