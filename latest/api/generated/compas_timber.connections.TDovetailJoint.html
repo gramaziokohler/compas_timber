@@ -597,7 +597,7 @@ document.write(`
 <h1>TDovetailJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.TDovetailJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TDovetailJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/5434c7d/src/compas_timber/connections/t_dovetail.py#L15"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TDovetailJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/47d613d/src/compas_timber/connections/t_dovetail.py#L15"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
 <p>Represents a T-Dovetail type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross).
 A dovetail cut is made on the main beam, and a corresponding notch is made on the cross beam to fit the main beam.</p>
@@ -709,6 +709,12 @@ A dovetail cut is made on the main beam, and a corresponding notch is made on th
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TDovetailJoint.from_jsonstring.html#compas_timber.connections.TDovetailJoint.from_jsonstring" title="compas_timber.connections.TDovetailJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TDovetailJoint.promote_cluster.html#compas_timber.connections.TDovetailJoint.promote_cluster" title="compas_timber.connections.TDovetailJoint.promote_cluster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_cluster</span></code></a></p></td>
+<td><p>Creates an instance of this joint from a cluster of elements.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TDovetailJoint.promote_joint_candidate.html#compas_timber.connections.TDovetailJoint.promote_joint_candidate" title="compas_timber.connections.TDovetailJoint.promote_joint_candidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_joint_candidate</span></code></a></p></td>
+<td><p>Creates an instance of this joint from a generic joint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TDovetailJoint.sha256.html#compas_timber.connections.TDovetailJoint.sha256" title="compas_timber.connections.TDovetailJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
