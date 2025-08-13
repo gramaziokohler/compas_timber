@@ -102,7 +102,7 @@ class XNotchJoint(Joint):
                 raise BeamJoiningError(
                     beams=self.elements,
                     joint=self,
-                    debug_info=f"Failed to generate the negative volume used to create the notch feature: {str(bte)}",
+                    debug_info="Failed to generate the negative volume used to create the notch feature: {}".format(str(bte)),
                 )
         return neg_vol
 
