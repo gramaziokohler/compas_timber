@@ -85,7 +85,9 @@ class SlabPopulator(Slab):
         self._interior_corner_indices = []
         self._edge_perpendicular_vectors = []
         self.elements = []
-        self.joints = []
+        self.direct_rules = []
+        self.test=[]
+        detail_set.prepare_populator(self)
 
     def __repr__(self):
         return "SlabPopulator({}, {})".format(self.detail_set, self._slab)
@@ -185,34 +187,35 @@ class SlabPopulator(Slab):
 
     def process_populator(self):
         """Processes the slab populator and creates the elements and joints."""
-        self.prepare_populator()
         self.create_elements()
+        self.cull_and_split_studs()
         self.create_joints()
 
-    def prepare_populator(self):
-        """Prepares the slab populator by adjusting outlines, openings, and interfaces."""
-        self.detail_set.prepare_populator()
-        for opening in self._slab.openings:
-            opening.detail_set.prepare_opening(opening, self)
-        for interface in self.interfaces:
-            interface.detail_set.prepare_interface(interface, self)
 
     def create_elements(self):
         """Generates the elements for the slab."""
-        self.elements.extend(self.detail_set.create_elements(self))
+        self.detail_set.create_elements(self)
         for i in self.interfaces:
-            self.elements.extend(i.create_elements(self))
+            i.detail_set.create_elements(i, self)
         for o in self.openings:
-            self.elements.extend(o.create_elements(self))
+            o.detail_set.create_elements(o, self)
+
+    def cull_and_split_studs(self):
+        """Culls the studs that are overlap with details and splits studs that intersect with openings and interfaces."""
+        self.detail_set._extend_interior_corner_beams(self)
+        for interface in self.interfaces:
+            if interface.interface_role == "CROSS":
+                interface.detail_set.cull_and_split_studs(interface, self)
+        for opening in self.openings:
+            opening.detail_set.cull_and_split_studs(opening, self)
 
     def create_joints(self):
         """Generates the joints for the slab."""
-        self.detail_set.split_and_cull_beams()
-        self.joints.extend(self.detail_set.create_joints(self))
+        self.detail_set.create_joints(self)
         for i in self.interfaces:
-            self.joints.extend(i.create_joints(i, self))
+            i.detail_set.create_joints(i, self)
         for o in self.openings:
-            self.joints.extend(o.create_joints(o, self))
+            o.detail_set.create_joints(o, self)
 
     @classmethod
     def from_model(cls, model, configuration_sets):

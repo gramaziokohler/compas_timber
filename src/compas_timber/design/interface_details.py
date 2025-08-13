@@ -1,6 +1,7 @@
 import math
 
 from compas.geometry import Plane
+from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
@@ -11,8 +12,9 @@ from compas.geometry import intersection_segment_segment
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
+from compas_timber.design import DirectRule
 from compas_timber.design.details import DetailBase
-from compas_timber.elements import Beam
+from compas_timber.elements import Beam, slab
 from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import split_beam_at_lengths
 
@@ -49,32 +51,31 @@ class InterfaceDetailBase(DetailBase):
 
     def cull_and_split_studs(self, interface, slab_populator, min_length=None):
         """Split studs with an interface."""
-        new_studs = []
-        min_length = min_length or self.get_beam_dimensions(slab_populator)["stud"][0]
-        int_beams = interface.beams
-        while slab_populator.studs:
-            stud = slab_populator.studs.pop(0)
-            dots = []
-            for int_beam in int_beams:
-                intersection = intersection_segment_segment(stud.centerline, int_beam.centerline)[0]
-                if not intersection:
-                    continue
-                dots.append(dot_vectors(stud.centerline.direction, Vector.from_start_end(stud.centerline.start, intersection)))
-            stud_segs = split_beam_at_lengths(stud, dots)
-            for seg in stud_segs:
-                if not is_point_in_polyline(seg.midpoint, interface.beam_polyline, in_plane=False) and seg.length >= min_length:
-                    new_studs.append(seg)
-        slab_populator.studs = new_studs
+        return
 
-    @staticmethod
-    def create_elements(interface, slab_populator):
+    def create_elements(self, interface, slab_populator):
         """Generate the beams for the interface."""
+        elements=[]
         if interface.interface_role == "CROSS":
-            return interface.detail_set._create_elements_cross(interface, slab_populator)
+            elements.extend(self._create_elements_cross(interface, slab_populator))
         elif interface.interface_role == "MAIN":
-            return interface.detail_set._create_elements_main(interface, slab_populator)
+            elements.extend(self._create_elements_main(interface, slab_populator))
         elif interface.interface_role == "NONE":
-            return interface.detail_set._create_elements_none(interface, slab_populator)
+            elements.extend(self._create_elements_none(interface, slab_populator))
+        slab_populator.elements.extend(elements)
+        return elements
+
+    def create_joints(self, interface, slab_populator):
+        """Generate the joints for the interface."""
+        direct_rules = []
+        if interface.interface_role == "CROSS":
+            direct_rules.extend(self._create_joints_cross(interface, slab_populator))
+        elif interface.interface_role == "MAIN":
+            direct_rules.extend(self._create_joints_main(interface, slab_populator))
+        elif interface.interface_role == "NONE":
+            direct_rules.extend(self._create_joints_none(interface, slab_populator))
+        slab_populator.direct_rules.extend(direct_rules)
+        return direct_rules
 
     def _create_elements_main(self, interface, slab_populator):
         """Generate the beams for a main interface."""
@@ -110,7 +111,6 @@ class LDetailBase(InterfaceDetailBase):
 
 class TDetailBase(InterfaceDetailBase):
     """Base class for T-butt detail sets."""
-
     def _create_elements_main(self, interface, slab_populator):
         """Generate the beams for a main interface."""
         interface.beams.extend(slab_populator.edge_beams[interface.edge_index])
@@ -124,13 +124,24 @@ class TDetailBase(InterfaceDetailBase):
         """Generate the beams for a none interface."""
         raise ValueError("TDetailBase does not support NONE interfaces. Must be MAIN or CROSS interface role.")
 
+    def _create_joints_cross(self, interface, slab_populator):
+        """Generate the joints for a cross interface."""
+        return []
+
+    def _create_joints_main(self, interface, slab_populator):
+        """Generate the joints for a main interface."""
+        return []
+
+    def _create_joints_none(self, interface, slab_populator):
+        """Generate the joints for a none interface."""
+        return []
+
 
 class LButtDetailB(LDetailBase):
     """Detail Set that creates the beams for a L-butt a 3-beam box in the Cross Slab."""
 
     def _create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a L-cross interface."""
-        print("Creating elements for L-cross interface B")
         beam_dimensions = DetailBase.get_beam_dimensions(self, slab_populator)
         edge_beam = slab_populator.edge_beams[interface.edge_index][0]
         edge = edge_beam.centerline
@@ -145,8 +156,42 @@ class LButtDetailB(LDetailBase):
         interface.beams = [edge_beam, flat_beam, inner_beam]
         return [flat_beam, inner_beam]
 
-    @staticmethod
-    def create_interface_interface_joints(interface_a, interface_b, slab_populator, interior_corner):
+    def cull_and_split_studs(self, interface, slab_populator, min_length=None):
+        """Split studs with an interface."""
+        if interface.interface_role != "CROSS":
+            return
+        new_studs = []
+        min_length = min_length or self.get_beam_dimensions(slab_populator)["detail"][0]
+        int_beams = interface.beams
+        studs=slab_populator.get_elements_by_category("stud")
+        while studs:
+            stud = studs.pop(0)
+            slab_populator.elements.remove(stud)
+            dots = []
+            for int_beam in int_beams:
+                intersection = intersection_segment_segment(stud.centerline, int_beam.centerline)[0]
+                if not intersection:
+                    continue
+                dots.append(dot_vectors(stud.centerline.direction, Vector.from_start_end(stud.centerline.start, intersection)))
+            stud_segs = split_beam_at_lengths(stud, dots)
+            for seg in stud_segs:
+                if not is_point_in_polyline(seg.midpoint, interface.beam_polyline, in_plane=False) and seg.length >= min_length:
+                    new_studs.append(seg)
+        slab_populator.elements.extend(new_studs)
+
+    def _create_joints_main(self, interface, slab_populator):
+        """Generate the joints for a main interface."""
+        return []
+
+    def _create_joints_cross(self, interface, slab_populator):
+        """Generate the joints for a cross interface."""
+        direct_rules = []
+        self._create_joints_to_adjacent_edges(interface, slab_populator)
+
+        return []
+
+
+    def create_interface_interface_joints(self, interface_a, interface_b, slab_populator, interior_corner):
         """Generate the joints between beams of adjacent SlabLButtJoint interfaces."""
         if interface_a.detail_set is not interface_b.detail_set:
             raise ValueError("Cannot create joints between interfaces with different detail sets: {} and {}".format(interface_a.detail_set, interface_b.detail_set))
@@ -155,55 +200,54 @@ class LButtDetailB(LDetailBase):
         interface_a_angle = min(interface_a_angle, math.pi - interface_a_angle)
         interface_b_angle = angle_vectors(interface_b.frame.xaxis, slab_populator.stud_direction)
         interface_b_angle = min(interface_b_angle, math.pi - interface_b_angle)
-        joints = []
+        direct_rules = []
         if interior_corner:
             if interface_a_angle < interface_b_angle:
                 plane = Plane(slab_populator._slab.edge_planes[edge_index].point, -slab_populator._slab.edge_planes[edge_index].normal)  # a: main, b: cross
-                joints.append(TButtJoint(interface_a.beams[0], interface_b.beams[0], butt_plane=plane))
-                joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[0], butt_plane=plane))
-                joints.append(TButtJoint(interface_b.beams[0], interface_a.beams[2]))
-                joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[2]))
-                joints.append(LButtJoint(interface_b.beams[2], interface_a.beams[2]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[0], interface_b.beams[0]], butt_plane=plane))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[1], interface_b.beams[0]], butt_plane=plane))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[0], interface_a.beams[2]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[1], interface_a.beams[2]]))
+                direct_rules.append(DirectRule(LButtJoint, [interface_b.beams[2], interface_a.beams[2]]))
             else:
                 plane = Plane(slab_populator._slab.edge_planes[edge_index - 1].point, -slab_populator._slab.edge_planes[edge_index - 1].normal)  # b: main, a: cross
-                joints.append(TButtJoint(interface_b.beams[0], interface_a.beams[0], butt_plane=plane))
-                joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[0], butt_plane=plane))
-                joints.append(TButtJoint(interface_a.beams[0], interface_b.beams[2]))
-                joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[2]))
-                joints.append(LButtJoint(interface_a.beams[2], interface_b.beams[2]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[0], interface_a.beams[0]], butt_plane=plane))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[1], interface_a.beams[0]], butt_plane=plane))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[0], interface_b.beams[2]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[1], interface_b.beams[2]]))
+                direct_rules.append(DirectRule(LButtJoint, [interface_a.beams[2], interface_b.beams[2]]))
         else:
             if interface_a_angle < interface_b_angle:
-                joints.append(LButtJoint(interface_b.beams[0], interface_a.beams[0], back_plane=slab_populator._slab.edge_planes[edge_index]))
-                joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[0]))
-                joints.append(TButtJoint(interface_b.beams[2], interface_a.beams[0]))
-                joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[2]))
-                joints.append(TButtJoint(interface_a.beams[2], interface_b.beams[2]))
+                direct_rules.append(DirectRule(LButtJoint, [interface_b.beams[0], interface_a.beams[0]], back_plane=slab_populator.edge_planes[edge_index]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[1], interface_a.beams[0]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[2], interface_a.beams[0]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[1], interface_b.beams[2]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[2], interface_b.beams[2]]))
 
             else:
-                joints.append(LButtJoint(interface_a.beams[0], interface_b.beams[0], back_plane=slab_populator._slab.edge_planes[edge_index - 1]))
-                joints.append(TButtJoint(interface_a.beams[1], interface_b.beams[0]))
-                joints.append(TButtJoint(interface_a.beams[2], interface_b.beams[0]))
-                joints.append(TButtJoint(interface_b.beams[1], interface_a.beams[2]))
-                joints.append(TButtJoint(interface_b.beams[2], interface_a.beams[2]))
-        return joints
+                direct_rules.append(DirectRule(LButtJoint, [interface_a.beams[0], interface_b.beams[0]], back_plane=slab_populator._slab.edge_planes[edge_index - 1]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[1], interface_b.beams[0]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_a.beams[2], interface_b.beams[0]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[1], interface_a.beams[2]]))
+                direct_rules.append(DirectRule(TButtJoint, [interface_b.beams[2], interface_a.beams[2]]))
+        return direct_rules
 
     @staticmethod
     def create_interface_beam_joint(interface, beam, slab_populator, interior_corner):
         """Generate the joints between beams of a SlabLButtJoint with an adjacent edge beam."""
         beam_index = beam.attributes["edge_index"]
         interface_index = interface.edge_index
-        joints = []
+        direct_rules = []
         if interior_corner:
-            plane = Plane(slab_populator._slab.edge_planes[beam_index].point, -slab_populator._slab.edge_planes[beam_index].normal)
-            joints.append(TButtJoint(interface.beams[0], beam, butt_plane=plane))
-            joints.append(TButtJoint(interface.beams[1], beam, butt_plane=plane))
-            joints.append(LButtJoint(interface.beams[2], beam, butt_plane=plane))
+            plane = Plane(slab_populator._slab.edge_planes[beam_index].point, -slab_populator.edge_planes[beam_index].normal)
+            direct_rules.append(DirectRule(TButtJoint, [interface.beams[0], beam], butt_plane=plane))
+            direct_rules.append(DirectRule(TButtJoint, [interface.beams[1], beam], butt_plane=plane))
+            direct_rules.append(DirectRule(LButtJoint, [interface.beams[2], beam], butt_plane=plane))
         else:
-            plane = Plane(slab_populator._slab.edge_planes[interface_index].point, -slab_populator._slab.edge_planes[interface_index].normal)
-            joints.append(LButtJoint(interface.beams[0], beam, back_plane=slab_populator._slab.edge_planes[interface_index]))
-            joints.append(TButtJoint(interface.beams[1], beam))
-            joints.append(TButtJoint(interface.beams[2], beam))
-        return joints
+            direct_rules.append(DirectRule(LButtJoint, [interface.beams[0], beam], back_plane=slab_populator.edge_planes[interface_index]))
+            direct_rules.append(DirectRule(TButtJoint, [interface.beams[1], beam]))
+            direct_rules.append(DirectRule(TButtJoint, [interface.beams[2], beam]))
+        return direct_rules
 
     def _extend_interface_beams(self, interface_a, interface_b):
         ip, ic = intersection_line_line(interface_a.beams[-1].centerline, interface_b.beams[-1].centerline)
@@ -214,12 +258,12 @@ class LButtDetailB(LDetailBase):
             interface_b.beams[-1].frame.point = ic
 
 
+
 class TButtDetailB(TDetailBase):
     """Detail Set that creates the beams for a T-butt a 3-beam box in the Cross Slab."""
 
     def _create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a T-cross interface."""
-        print("Creating elements for T-cross interface B")
         beam_dimensions = self.get_beam_dimensions(slab_populator)
         edge = interface.polyline.lines[0]
         edge.translate(interface.frame.yaxis * interface.width * 0.5)
@@ -244,6 +288,29 @@ class TButtDetailB(TDetailBase):
         for beam in interface.beams:
             beam.attributes["category"] = "detail"
         return interface.beams
+
+    def cull_and_split_studs(self, interface, slab_populator, min_length=None):
+        """Split studs with an interface."""
+        if interface.interface_role != "CROSS":
+            return
+        new_studs = []
+        min_length = min_length or self.get_beam_dimensions(slab_populator)["detail"][0]
+        int_beams = interface.beams
+        studs = slab_populator.get_elements_by_category("stud")
+        while studs:
+            stud = studs.pop(0)
+            slab_populator.elements.remove(stud)
+            dots = []
+            for int_beam in int_beams:
+                intersection = intersection_segment_segment(stud.centerline, int_beam.centerline)[0]
+                if not intersection:
+                    continue
+                dots.append(dot_vectors(stud.centerline.direction, Vector.from_start_end(stud.centerline.start, intersection)))
+            stud_segs = split_beam_at_lengths(stud, dots)
+            for seg in stud_segs:
+                if not is_point_in_polyline(seg.midpoint, interface.beam_polyline, in_plane=False) and seg.length >= min_length:
+                    new_studs.append(seg)
+        slab_populator.elements.extend(new_studs)
 
     def _create_joints_cross(self, interface, slab_populator):
         """Generate the joints between T-BUTT interfaces and slab edge beams."""
@@ -270,13 +337,22 @@ class TButtDetailB(TDetailBase):
         return joints
 
     @staticmethod
-    def create_interface_interface_joints(interface_main, interface_cross):
+    def create_interface_beam_joint(interface, beam, slab_populator, interior_corner):
+        """Generate the joints between beams of a SlabLButtJoint with an adjacent edge beam."""
+        joints = []
+        for int_beam in interface.beams:
+            joints.append(TButtJoint(int_beam, beam))
+        return joints
+
+    def create_interface_interface_joints(self, interface_main, interface_cross, slab_populator, interior_corner):
         """Generate the joints between T_TOPO interfaces."""
         # NOTE: untested
         joints = []
-        cross_beam = min(
-            sorted(interface_cross.beams, key=lambda b: b.midpoint.distance_to_point(sum(interface_main.polyline.points[:-1]) / len(interface_main.polyline.points[:-1])))
-        )[0]
+        midpoint = Point(0,0,0)
+        for pt in interface_main.polyline.points[:-1]:
+            midpoint += pt
+        midpoint= midpoint / len(interface_main.polyline.points[:-1])
+        cross_beam = min(interface_cross.beams, key=lambda b: b.midpoint.distance_to_point(midpoint))
         for beam in interface_main.beams:
             joints.append(TButtJoint(beam, cross_beam))
         return joints

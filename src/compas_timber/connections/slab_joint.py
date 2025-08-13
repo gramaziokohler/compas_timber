@@ -55,9 +55,6 @@ class SlabToSlabInterface(PlateToPlateInterface):
         else:
             return self.polyline
 
-    def create_elements(self, slab_populator):
-        """Generate the beams for the slab interfaces."""
-        return self.detail_set.create_elements(self, slab_populator)
 
 
 

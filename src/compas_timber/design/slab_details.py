@@ -16,11 +16,12 @@ from compas.geometry import intersection_line_line
 from compas.itertools import pairwise
 from compas.tolerance import TOL
 
+from compas_timber import elements
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
 from compas_timber.design.details import DetailBase
-from compas_timber.elements import Beam
+from compas_timber.elements import Beam, slab
 from compas_timber.elements import Plate
 from compas_timber.fabrication.longitudinal_cut import LongitudinalCutProxy
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
@@ -81,7 +82,7 @@ class SlabDetailBase(DetailBase):
 
     def prepare_populator(self, slab_populator):
         """Prepares the slab populator by setting up necessary attributes."""
-        raise NotImplementedError("This method should be implemented in a subclass.")
+        self._set_frame_outlines(slab_populator)
 
     def create_elements(self, slab_populator):
         """Generates the elements for the slab."""
@@ -126,7 +127,7 @@ class SlabDetailBase(DetailBase):
         if min_width is None:
             min_width = self.beam_width
         edge_segs, edge_offset = self._get_edge_segments_and_widths(slab_populator)
-        print("Edge segments:", edge_segs)
+        elements = []
         for i, (seg, width) in enumerate(zip(edge_segs, edge_offset)):
             offset = None
             if standardize_blank_dimension:
@@ -139,7 +140,7 @@ class SlabDetailBase(DetailBase):
             self._set_edge_beam_category(slab_populator, beam)
             self._offset_edge_beam(beam, slab_populator, distance=offset)
             self._apply_linear_cut_to_edge_beam(beam, slab_populator)
-            slab_populator.elements.append(beam)
+            elements.append(beam)
 
     def _get_edge_segments_and_widths(self, slab_populator):
         edge_segs = []
@@ -183,12 +184,15 @@ class SlabDetailBase(DetailBase):
         vector = slab_populator.edge_perpendicular_vectors[beam.attributes["edge_index"]]
         if distance is None:
             distance = beam.width * 0.5
-        beam.frame.translate(vector * distance)
+        beam.frame.translate(-vector * distance)
         beam.frame.translate(slab_populator.normal * beam.height * 0.5)
 
     def _apply_linear_cut_to_edge_beam(self, beam, slab_populator):
         """Trim the edge beams to fit between the plate beams."""
         plane = slab_populator.edge_planes[beam.attributes["edge_index"]]
+        slab_populator.test.append(plane)
+        slab_populator.test.append(beam.blank)
+
         if not TOL.is_zero(dot_vectors(slab_populator.normal, plane.normal)):
             long_cut = LongitudinalCutProxy.from_plane_and_beam(plane, beam)
             beam.add_features(long_cut)
@@ -198,27 +202,22 @@ class SlabDetailBase(DetailBase):
     # ==========================================================================
 
 
-    def _cull_and_split_studs(self, slab_populator):
-        """Culls the studs that are too short and trims the studs that are too long."""
-        self._extend_interior_corner_beams(slab_populator)
-        for interface in slab_populator.interfaces:
-            if interface.interface_role == "CROSS":
-                interface.detail_set.cull_and_split_studs(interface, slab_populator)
-        for opening in slab_populator.openings:
-            opening.detail_set.cull_and_split_studs(opening, slab_populator)
+
 
     def _extend_interior_corner_beams(self, slab_populator):
         """Extend the beams at the interior corners to ensure that stud generation creates valid intersections."""
-        for i in range(len(slab_populator.frame_outline_a) - 1):
+        for i in range(slab_populator.edge_count):
             edge_interface_a = slab_populator.edge_interfaces.get((i - 1) % slab_populator.edge_count, None)
-            edge_interface_b = slab_populator.edge_interfaces.get(i % slab_populator.edge_count, None)
+            edge_interface_b = slab_populator.edge_interfaces.get(i, None)
             # interface.beams: last beam is innermost. edge_beams[edge_index]: first beam is first on the edge.
-            beam_a = (
-                edge_interface_a.beams[-1]
-                if edge_interface_a
-                else slab_populator.edge_beams.get((i - 1) % slab_populator.edge_count)[-1]
-            )
-            beam_b = edge_interface_b.beams[-1] if edge_interface_b else slab_populator.edge_beams.get(i % slab_populator.edge_count)[-1]
+            if edge_interface_a:
+                beam_a = edge_interface_a[0].beams[-1]
+            else:
+                beam_a = slab_populator.edge_beams.get((i - 1) % slab_populator.edge_count)[-1]
+            if edge_interface_b:
+                beam_b = edge_interface_b[0].beams[-1]
+            else:
+                beam_b = slab_populator.edge_beams.get(i)[0]
             ip, ic = intersection_line_line(beam_a.centerline, beam_b.centerline)
             if ip and ic:
                 beam_a.length = beam_a.frame.point.distance_to_point(ip)
@@ -231,11 +230,13 @@ class SlabDetailBase(DetailBase):
 
     def _create_edge_joints(self, slab_populator):
         """Generate the joint definitions for the slab edges. When there is an interface, we use the interface.detail_set to create the joint definition."""
-        for i in range(len(slab_populator.frame_outline_a) - 1):
-            edge_interface_a = list(filter(lambda x: x.edge_index == (i - 1) % (len(slab_populator.frame_outline_a) - 1), slab_populator.interfaces))[0]
-            edge_interface_b = list(filter(lambda x: x.edge_index == i, slab_populator.interfaces))[0]
+        direct_rules = []
+        for i in range(slab_populator.edge_count):
+            edge_interface_a = slab_populator.edge_interfaces.get((i - 1) % slab_populator.edge_count, None)
+            edge_interface_a = edge_interface_a[0] if edge_interface_a else None #TODO consider whether we can have multiple interfaces on one edge.
+            edge_interface_b = slab_populator.edge_interfaces.get(i, None)
+            edge_interface_b = edge_interface_b[0] if edge_interface_b else None #TODO consider whether we can have multiple interfaces on one edge.
             interior_corner = False
-
             points = slab_populator.frame_outline_a.points[0:-1]
             cw = is_polyline_clockwise(points, slab_populator.frame.normal)
             angle = angle_vectors_signed(points[i - 1] - points[i], points[(i + 1) % len(points)] - points[i], slab_populator.frame.normal, deg=True)
@@ -243,17 +244,16 @@ class SlabDetailBase(DetailBase):
                 interior_corner = True
             if edge_interface_a and len(edge_interface_a.beams) > 1 and edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is an interface, we use the interface to create the joint definition
-                self.joints.extend(edge_interface_a.detail_set.create_interface_interface_joints(edge_interface_a, edge_interface_b, self, interior_corner))
+                direct_rules.extend(edge_interface_a.detail_set.create_interface_interface_joints(edge_interface_a, edge_interface_b, slab_populator, interior_corner))
             elif edge_interface_a and len(edge_interface_a.beams) > 1:
                 # if there is only an interface on the previous edge, we use that to create the joint definition
-                self.joints.extend(edge_interface_a.detail_set.create_interface_beam_joint(edge_interface_a, self.edge_beams[i][0], self, interior_corner))
+                direct_rules.extend(edge_interface_a.detail_set.create_interface_beam_joint(edge_interface_a, slab_populator.edge_beams[i][0], slab_populator, interior_corner))
             elif edge_interface_b and len(edge_interface_b.beams) > 1:
                 # if there is only an interface on the next edge, we use that to create the joint definition
-                self.joints.extend(
-                    edge_interface_b.detail_set.create_interface_beam_joint(edge_interface_b, self.edge_beams[(i - 1) % self.edge_count][-1], self, interior_corner)
-                )
+                direct_rules.extend(edge_interface_b.detail_set.create_interface_beam_joint(edge_interface_b, slab_populator.edge_beams[(i - 1) % slab_populator.edge_count][-1], slab_populator, interior_corner))
             else:  # if there is no interface, we create a joint definition between the two edge beams
-                self._create_edge_beam_joint(i, interior_corner)
+                direct_rules.extend(self._create_edge_beam_joint(i, interior_corner))
+        return direct_rules
 
     def _create_edge_beam_joint(self, slab_populator, corner_index, interior_corner):
         """Generate the joint definition between two edge beams. Used when there is no interface on either edge."""
@@ -267,17 +267,17 @@ class SlabDetailBase(DetailBase):
         if interior_corner:
             if beam_a_angle < beam_b_angle:
                 plane = Plane(slab_populator.edge_planes[corner_index].point, -slab_populator.edge_planes[corner_index].normal)
-                joint_def = self.get_joint_from_elements(beam_a, beam_b, butt_plane=plane)
+                direct_rule = self.get_direct_rule_from_elements(beam_a, beam_b, butt_plane=plane)
             else:
                 plane = Plane(slab_populator.edge_planes[corner_index - 1].point, -slab_populator.edge_planes[corner_index - 1].normal)
-                joint_def = self.get_joint_from_elements(beam_b, beam_a, butt_plane=plane)
+                direct_rule = self.get_direct_rule_from_elements(beam_b, beam_a, butt_plane=plane)
         else:
             if beam_a_angle < beam_b_angle:
-                joint_def = self.get_joint_from_elements(beam_a, beam_b, back_plane=slab_populator.edge_planes[corner_index - 1])
+                direct_rule = self.get_direct_rule_from_elements(beam_a, beam_b, back_plane=slab_populator.edge_planes[corner_index - 1])
             else:
-                joint_def = self.get_joint_from_elements(beam_b, beam_a, back_plane=slab_populator.edge_planes[corner_index])
+                direct_rule = self.get_direct_rule_from_elements(beam_b, beam_a, back_plane=slab_populator.edge_planes[corner_index])
 
-        self.joints.append(joint_def)
+        return direct_rule
 
     # ==========================================================================
     # methods for stud beams
@@ -287,6 +287,7 @@ class SlabDetailBase(DetailBase):
         """Generates the stud beams."""
         min_length = self.beam_width_overrides.get("stud", None) or self.beam_width
         stud_lines = self._get_stud_lines(slab_populator)
+        studs = []
         for line in stud_lines:
             # get intersections with edge beams and openings and interfaces
             intersections = self._get_stud_intersections(slab_populator, line)
@@ -294,7 +295,8 @@ class SlabDetailBase(DetailBase):
                 raise ValueError("No intersections found for stud line: {}".format(line))
             else:
                 # create studs from intersections
-                self._create_studs_from_intersections(intersections, slab_populator, min_length=min_length)
+                studs.extend(self._create_studs_from_intersections(intersections, slab_populator, min_length=min_length))
+        return studs
 
     def _get_stud_lines(self, slab_populator):
         """Generates the stud lines based on the frame outlines and stud direction."""
@@ -331,6 +333,7 @@ class SlabDetailBase(DetailBase):
         """parses the intersections and creates stud beams from them"""
         intersections = sorted(intersections, key=lambda x: x.get("dot"))
         intersecting_beams = []
+        studs = []
         for pair in pairwise(intersections):
             # cull the invalid segments but keep the intersectig beams
             seg = Line(pair[0]["point"], pair[1]["point"])
@@ -346,14 +349,17 @@ class SlabDetailBase(DetailBase):
             # create the beam element and add joints
             stud = self.beam_from_category(seg, "stud", slab_populator)
             if stud is not None:
-                slab_populator.elements.append(stud)
+                studs.append(stud)
+        return studs
 
     @staticmethod
     def _create_plates(slab_populator):
+        plates = []
         if slab_populator.detail_set.sheeting_inside:
-            slab_populator.plates.append(Plate(slab_populator._slab.outline_a, slab_populator.frame_outline_a))
+            plates.append(Plate(slab_populator._slab.outline_a, slab_populator.frame_outline_a))
         if slab_populator.detail_set.sheeting_outside:
-            slab_populator.plates.append(Plate(slab_populator._slab.outline_b, slab_populator.frame_outline_b))
+            plates.append(Plate(slab_populator._slab.outline_b, slab_populator.frame_outline_b))
+        return plates
 
 
 class SlabDetailA(SlabDetailBase):
@@ -371,16 +377,19 @@ class SlabDetailA(SlabDetailBase):
 
     def create_elements(self, slab_populator):
         """Generates the elements for the slab."""
-        self._set_frame_outlines(slab_populator)
-        self._create_edge_beams(slab_populator)
-        self._create_studs(slab_populator)
-        self._create_plates(slab_populator)
-        return slab_populator.elements
+        elements = []
+        elements.extend(self._create_edge_beams(slab_populator))
+        elements.extend(self._create_studs(slab_populator))
+        elements.extend(self._create_plates(slab_populator))
+        slab_populator.elements.extend(elements)
+        return elements
 
     def create_joints(self, slab_populator):
         """Generates the joints for the slab."""
-        self._create_edge_joints(slab_populator)
-        return slab_populator.joints
+        direct_rules = []
+        direct_rules.extend(self._create_edge_joints(slab_populator))
+        slab_populator.direct_rules.extend(direct_rules)
+        return direct_rules
 
 
 class SlabDetailB(SlabDetailBase):
@@ -394,12 +403,15 @@ class SlabDetailB(SlabDetailBase):
 
     def create_elements(self, slab_populator):
         """Generates the elements for the slab."""
-        self._set_frame_outlines(slab_populator)
-        self._create_edge_beams(slab_populator)
-        self._create_plates(slab_populator)
-        return slab_populator.elements
+        elements = []
+        elements.extend(self._create_edge_beams(slab_populator))
+        elements.extend(self._create_plates(slab_populator))
+        slab_populator.elements.extend(elements)
+        return elements
 
     def create_joints(self, slab_populator):
         """Generates the joints for the slab."""
-        self._create_edge_joints(slab_populator)
-        return slab_populator.joints
+        direct_rules=[]
+        direct_rules.extend(self._create_edge_joints(slab_populator))
+        slab_populator.direct_rules.extend(direct_rules)
+        return direct_rules

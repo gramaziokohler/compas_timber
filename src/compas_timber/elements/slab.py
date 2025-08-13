@@ -54,3 +54,7 @@ class Slab(Plate):
         """Add an opening to the slab."""
         self.openings.append(opening)
         self.opening_outlines.append(opening.outline)
+
+    def create_joint(self):
+        self.detail_set.create_joints(self)
+

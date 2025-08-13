@@ -1,4 +1,5 @@
 from compas_timber.connections import JointTopology
+from compas_timber.design import DirectRule
 from compas_timber.elements import Beam
 
 
@@ -90,10 +91,21 @@ class DetailBase(object):
             raise ValueError("Failed to create beam from segment: {}".format(segment))
         return beam
 
-    def get_joint_from_elements(self, element_a, element_b, **kwargs):
+    def get_direct_rule_from_elements(self, element_a, element_b, **kwargs):
         """Get the joint type for the given elements."""
         for rule in self.rules:
             if rule.category_a == element_a.attributes["category"] and rule.category_b == element_b.attributes["category"]:
                 rule.kwargs.update(kwargs)
-                return rule.joint_type(element_a, element_b, **rule.kwargs)
+                return DirectRule(rule.joint_type, [element_a, element_b], **rule.kwargs)
         raise ValueError("No joint definition found for {} and {}".format(element_a.attributes["category"], element_b.attributes["category"]))
+
+    def _append_and_replace_joints(self, joints, slab_populator):
+            to_remove = []
+            for joint in joints:
+                for sp_joint in slab_populator.joints:
+                    if set(joint.elements) == set(sp_joint.elements):
+                        to_remove.append(sp_joint)
+                        break
+            for joint in to_remove:
+                slab_populator.joints.remove(joint)
+            slab_populator.joints.extend(joints)
