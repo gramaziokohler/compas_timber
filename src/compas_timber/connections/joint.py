@@ -62,6 +62,13 @@ class Joint(Interaction):
     def location(self):
         return self._location
 
+    @location.setter
+    def location(self, value):
+        """Set the location of the joint."""
+        if not isinstance(value, Point):
+            raise TypeError("Location must be a Point.")
+        self._location = value
+
     @property
     def elements(self):
         raise NotImplementedError
@@ -130,18 +137,6 @@ class Joint(Interaction):
         ------
         :class:`~compas_timber.connections.BeamJoiningError`
             Should be raised whenever the joint was not able to calculate the extensions to be applied to the beams.
-
-        """
-        pass
-
-    def check_elements_compatibility(self):
-        """Checks if the beams are compatible for the creation of the joint.
-        This is optional and should only be implemented by joints that require it.
-
-        Raises
-        ------
-        :class:`~compas_timber.connections.BeamJoiningError`
-            Should be raised whenever the elements did not comply with the requirements of the joint.
 
         """
         pass
@@ -257,3 +252,22 @@ class Joint(Interaction):
         model.remove_joint(candidate)
         joint = cls.create(model, *elements, **kwargs)
         return joint
+
+    @classmethod
+    def check_elements_compatibility(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+
+        Parameters
+        ----------
+        elements : list of :class:`~compas_timber.parts.Beam`
+            The beams to check.
+        raise_error : bool, optional
+            If True, raises a `BeamJoiningError` if the requirements are not met.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
+
+        """
+        return True

@@ -41,12 +41,13 @@ class JointCandidate(Joint):
         instance.element_b_guid = value["cross_beam_key"]
         return instance
 
-    def __init__(self, element_a=None, element_b=None, **kwargs):
+    def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
         super(JointCandidate, self).__init__(**kwargs)
         self.element_a = element_a
         self.element_b = element_b
         self.element_a_guid = str(element_a.guid) if element_a else None
         self.element_b_guid = str(element_b.guid) if element_b else None
+        self.distance = distance if distance is not None else None
 
     @property
     def elements(self):

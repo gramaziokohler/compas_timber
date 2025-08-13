@@ -93,31 +93,51 @@ class LFrenchRidgeLapJoint(LapJoint):
         # register the features in the joint
         self.features = [main_frl_feature, cross_frl_feature]
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
+    @classmethod
+    def check_elements_compatibility(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
 
-        Compared to the LapJoint's `check_elements_compatibility` method, this one additionally checks if dimensions of the beams match.
+        Parameters
+        ----------
+        elements : list(:class:`~compas_model.elements.Beam`)
+            The elements to be checked.
+        raise_error : bool, optional
+            If True, raises a :class:`~compas_timber.errors.BeamJoiningError` if the cluster does not comply with the requirements.
+            If False, returns False instead.
 
-        Raises
-        ------
-        BeamJoiningError
-            If the elements are not compatible for the creation of the joint.
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
+
         """
-        if not are_beams_aligned_with_cross_vector(*self.elements):
+        if not are_beams_aligned_with_cross_vector(*elements):
+            if not raise_error:
+                return False
             raise BeamJoiningError(
-                beams=self.elements,
-                joint=self,
-                debug_info="The two beams are not coplanar to create a Lap joint.",
+                beams=elements,
+                joint=cls,
+                debug_info="The two beams are not coplanar to create a French Ridge Lap joint.",
+                debug_geometries=[e.shape for e in elements],
             )
         # calculate widths and heights of the beams
         dimensions = []
-        ref_side_indices = [self.main_ref_side_index, self.cross_ref_side_index]
-        for i, beam in enumerate(self.elements):
+        ref_side_indices = [cls._get_beam_ref_side_index(*elements, False), cls._get_beam_ref_side_index(*elements[::-1], False)]
+        for i, beam in enumerate(elements):
             width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
             dimensions.append((width, height))
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
-            raise BeamJoiningError(self.elements, self, debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.")
+            if not raise_error:
+                return False
+            raise BeamJoiningError(
+                elements,
+                cls,
+                debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.",
+                debug_geometries=[e.shape for e in elements],
+            )
+
+        return True
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
