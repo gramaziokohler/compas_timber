@@ -124,25 +124,17 @@ class PlateJoint(Joint):
 
     def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(PlateJoint, self).__init__(topology=topology, **kwargs)
-        if a_segment_index is None and plate_a and plate_b:
-            solver = PlateConnectionSolver()
-            results = solver.find_topology(plate_a, plate_b)
-            if results[0] is JointTopology.TOPO_UNKNOWN:
-                raise BeamJoiningError("Topology for plates {} and {} could not be resolved.".format(plate_a, plate_b))
-            if results[1][0] != plate_a:
-                raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
-            self.topology, (self.plate_a, self.a_segment_index), (self.plate_b, self.b_segment_index), self.distance, self.location = results
-        else:
-            self.plate_a = plate_a
-            self.plate_b = plate_b
-            self.a_segment_index = a_segment_index
-            self.b_segment_index = b_segment_index
-
-        self.a_planes = [p for p in self.plate_a.planes]
-        self.a_outlines = [o for o in self.plate_a.outlines]
-
-        self.b_planes = [p for p in self.plate_b.planes]
-        self.b_outlines = [o for o in self.plate_b.outlines]
+        self.plate_a = plate_a
+        self.plate_b = plate_b
+        self.a_segment_index = a_segment_index
+        self.b_segment_index = b_segment_index
+        if self.plate_a and self.plate_b:
+            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
+                self.calculate_topology()
+        self.a_outlines = None
+        self.b_outlines = None
+        self.a_planes = None
+        self.b_planes = None
 
         self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
         self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
@@ -209,15 +201,30 @@ class PlateJoint(Joint):
             self.topology,
         )
 
+    def calculate_topology(self, allow_reordering=False):
+        """Calculate the topology of the joint based on the plates."""
+        topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
+        if topo_results.topology == JointTopology.TOPO_UNKNOWN:
+            raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
+        if self.plate_a != topo_results.plate_a:
+            if allow_reordering:
+                self.plate_a, self.plate_b = topo_results.plate_a, topo_results.plate_b
+            else:
+                raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
+        self.topology = topo_results.topology
+        self.a_segment_index = topo_results.a_segment_index
+        self.b_segment_index = topo_results.b_segment_index
+        return topo_results
+
     @classmethod
-    def from_generic_joint(cls, model, generic_joint, elements=None, **kwargs):
+    def promote_joint_candidate(cls, model, candidate, elements=None, **kwargs):
         """Creates an instance of this joint from a generic joint.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the elements and this joint belong.
-        from_generic_joint : :class:`~compas_timber.connections.Joint`
+        candidate : :class:`~compas_timber.connections.Joint`
             The generic joint to be converted.
         elements : list(:class:`~compas_model.elements.Element`), optional
             The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
@@ -231,16 +238,18 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        kwargs.update(generic_joint.__data__)  # pass topology and segment indices from generic joint
-        return super(PlateJoint, cls).from_generic_joint(model, generic_joint, elements=elements, **kwargs)
+        kwargs.update(candidate.__data__)  # pass topology and segment indices from candidate
+        return super(PlateJoint, cls).promote_joint_candidate(model, candidate, elements=elements, **kwargs)
 
     def add_features(self):
         """Add features to the plates based on the joint."""
-        assert self.plate_a and self.plate_b and self.a_segment_index is not None, "Both plates and at least a_segment_index must be defined before adding features to the joint."
-        self.reorder_planes_and_outlines()
-        self._adjust_plate_outlines()
-        self.plate_a.add_interface(self.interface_a)
-        self.plate_b.add_interface(self.interface_b)
+        if self.plate_a and self.plate_b:
+            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
+                self.calculate_topology()
+            self.reorder_planes_and_outlines()
+            self._adjust_plate_outlines()
+            self.plate_a.add_interface(self.interface_a)
+            self.plate_b.add_interface(self.interface_b)
 
     def get_interface_for_plate(self, plate):
         if plate is self.plate_a:

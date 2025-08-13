@@ -190,7 +190,7 @@ class Joint(Interaction):
         return joint
 
     @classmethod
-    def from_cluster(cls, model, cluster, elements=None, **kwargs):
+    def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
         """Creates an instance of this joint from a cluster of elements.
 
         Parameters
@@ -199,7 +199,7 @@ class Joint(Interaction):
             The model to which the elements and this joint belong.
         cluster : :class:`~compas_model.clusters.Cluster`
             The cluster containing the elements to be connected by this joint.
-        elements : list(:class:`~compas_model.elements.Element`), optional
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
             The elements to be connected by this joint. If not provided, the elements of the cluster will be used.
             This is used to explicitly define the element order.
         **kwargs : dict
@@ -211,26 +211,28 @@ class Joint(Interaction):
             The instance of the created joint.
 
         """
+        if reordered_elements:
+            assert set(reordered_elements) == cluster.elements, "Elements of the generic joint must match the provided elements."
         if len(cluster.joints) == 1:
-            elements = elements or cluster.joints[0].elements
-            return cls.from_generic_joint(model, cluster.joints[0], elements=elements, **kwargs)
+            elements = reordered_elements or cluster.joints[0].elements
+            return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
         else:
-            elements = elements or list(cluster.elements)
+            elements = reordered_elements or list(cluster.elements)
             for joint in cluster.joints:
                 model.remove_joint(joint)
         return cls.create(model, *elements, **kwargs)
 
     @classmethod
-    def from_generic_joint(cls, model, generic_joint, elements=None, **kwargs):
+    def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
         """Creates an instance of this joint from a generic joint.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the elements and this joint belong.
-        generic_joint : :class:`~compas_timber.connections.Joint`
-            The generic joint to be converted.
-        elements : list(:class:`~compas_model.elements.Element`), optional
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            The joint candidate to be converted.
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
             The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
             This is used to explicitly define the element order.
         **kwargs : dict
@@ -242,13 +244,13 @@ class Joint(Interaction):
             The instance of the created joint.
 
         """
-        if elements:
-            assert set(elements) == set(generic_joint.elements), "Elements of the generic joint must match the provided elements."
+        if reordered_elements:
+            assert set(reordered_elements) == set(candidate.elements), "Elements of the generic joint must match the provided elements."
+            elements = reordered_elements
         else:
-            elements = generic_joint.elements
-        model.remove_joint(generic_joint)
+            elements = candidate.elements
+        model.remove_joint(candidate)
         joint = cls.create(model, *elements, **kwargs)
-        # @chenkasirer is there a way to pass all the attributes of the generic joint to the new joint? Do we have to do that explicitly?
         return joint
 
     @classmethod
