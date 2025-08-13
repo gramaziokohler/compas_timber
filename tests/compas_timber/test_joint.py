@@ -263,7 +263,7 @@ def test_generic_joint():
         assert TOL.is_allclose(j.location, Point(x=107.24142664116566, y=69.42161159562835, z=0.0))
 
 
-def test_generic_plate_joint():
+def test_plate_joint_candidate():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
 

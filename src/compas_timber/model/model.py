@@ -401,9 +401,16 @@ class TimberModel(Model):
             JointCandidate.create(self, result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location)
 
     def connect_adjacent_plates(self, max_distance=None):
+        """Connects adjacent plates in the model.
+
+        Parameters
+        ----------
+        max_distance : float, optional
+            The maximum distance between plates to consider them adjacent. Default is 0.0.
+        """
         for joint in self.joints:
             if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)
+                self.remove_joint(joint)    #TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         plates = list(self.plates)
