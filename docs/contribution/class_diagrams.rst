@@ -503,3 +503,47 @@ The fabrication subsystem handles manufacturing features and BTLx processing. Al
       %% Composition relationships
       BTLxWriter ..> BTLxPart : creates
       BTLxPart ..> BTLxProcessing : contains
+
+Errors Subsystem
+=================
+
+The errors subsystem provides specialized exception classes for different types of failures that can occur during timber modeling, joint creation, fabrication, and processing operations.
+
+.. mermaid::
+
+   classDiagram
+      class Exception {
+         <<builtin>>
+         +message : str
+      }
+
+      class FeatureApplicationError {
+         +feature_geometry : Geometry
+         +element_geometry : Geometry
+         +message : str
+      }
+
+      class BeamJoiningError {
+         +beams : list[Beam]
+         +joint : Joint
+         +debug_info : str
+         +debug_geometries : list[Geometry]
+      }
+
+      class FastenerApplicationError {
+         +elements : list[TimberElement]
+         +fastener : Fastener
+         +message : str
+      }
+
+      class BTLxProcessingError {
+         +message : str
+         +part : BTLxPart
+         +failed_processing : BTLxProcessing
+      }
+
+      %% Inheritance relationships
+      Exception <|-- FeatureApplicationError
+      Exception <|-- BeamJoiningError
+      Exception <|-- FastenerApplicationError
+      Exception <|-- BTLxProcessingError
