@@ -7,9 +7,10 @@ from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import closest_point_on_plane
+from compas.geometry import Point
 from compas.geometry import distance_point_plane
 from compas.geometry import dot_vectors
+from compas.geometry import bounding_box_xy
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
@@ -71,15 +72,16 @@ class Plate(TimberElement):
         data["opening_outlines"] = self.opening_outlines
         return data
 
-    def __init__(self, outline_a=None, outline_b=None, opening_outlines=None, **kwargs):
+    def __init__(self, outline_a=None, outline_b=None, opening_outlines=None, frame=None, **kwargs):
         super(Plate, self).__init__(**kwargs)
         Plate.check_outlines(outline_a, outline_b)
-        self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
-        self.outline_a = Polyline(outline_a.points)
-        self.outline_b = Polyline(outline_b.points)
+        self.frame = frame or self.get_frame(outline_a, outline_b) or Frame.worldXY()
+        self.local_outlines = ((outline_a.transformed(self.transformation.inverse())), (outline_b.transformed(self.transformation.inverse())))
+
+        self.outline_a = outline_a
+        self.outline_b = outline_b
         self._outline_feature = None
         self._opening_features = None
-        self._frame = None
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -92,7 +94,10 @@ class Plate(TimberElement):
         self.opening_outlines = []
         if opening_outlines:
             for opening in opening_outlines:
-                self.opening_outlines.append(Polyline([closest_point_on_plane(pt, self.planes[0]) for pt in opening]))
+                opening_local = opening.transformed(self.transformation.inverse())
+                for pt in opening_local.points:
+                    pt[2] = 0.0
+                self.opening_outlines.append(opening_local)
 
     def __repr__(self):
         # type: () -> str
@@ -114,6 +119,10 @@ class Plate(TimberElement):
         return (self.outline_a, self.outline_b)
 
     @property
+    def transformation(self):
+        return Transformation.from_frame(self.frame)
+
+    @property
     def blank(self):
         if not self._blank:
             self._blank = self.obb.copy()
@@ -123,9 +132,7 @@ class Plate(TimberElement):
 
     @property
     def thickness(self):
-        if self._thickness is None:
-            self._thickness = distance_point_plane(self.outline_b[0], Plane.from_frame(self.frame))
-        return self._thickness
+        return self.local_outlines[1][0][2]
 
     @property
     def planes(self):
@@ -174,9 +181,9 @@ class Plate(TimberElement):
     @property
     def edge_planes(self):
         if not self._edge_planes:
-            for i in range(len(self.outline_a) - 1):
-                plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
-                if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a, i)) < 0:
+            for i in range(len(self.local_outlines[0]) - 1):
+                plane = Frame.from_points(self.local_outlines[0][i], self.local_outlines[0][i + 1], self.local_outlines[1][i])
+                if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.local_outlines[0], i)) < 0:
                     plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
                 self._edge_planes.append(plane)
         return self._edge_planes
@@ -184,7 +191,7 @@ class Plate(TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
-            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.local_outlines[0], self.local_outlines[1], self, interior=False)
         if not self._opening_features:
             self._opening_features = [FreeContour.from_polyline_and_element(o, self, interior=True) for o in self.opening_outlines]
         return [self._outline_feature] + self._opening_features + self._features
@@ -201,14 +208,6 @@ class Plate(TimberElement):
         return self.graph_node
 
     @property
-    def frame(self):
-        if not self._frame:
-            self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
-            if dot_vectors(Vector.from_start_end(self.outline_a[0], self.outline_b[0]), self._frame.normal) < 0:
-                self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
-        return self._frame
-
-    @property
     def normal(self):
         """Normal vector of the plate."""
         return self.frame.normal
@@ -219,9 +218,22 @@ class Plate(TimberElement):
         self._features = []
         self._outline_feature = None
         self._opening_features = None
-        self.outline_a = Polyline(self._input_outlines[0].points)
-        self.outline_b = Polyline(self._input_outlines[1].points)
+        self.outline_a = self.local_outlines[0].transform(self.transformation)
+        self.outline_b = self.local_outlines[1].transform(self.transformation)
         self.debug_info = []
+
+
+    def get_frame(self, outline_a, outline_b):
+        """The slab_populator frame in global space."""
+        frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
+        if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
+            frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
+        transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+        rebased_pts = [pt.transformed(transform_to_world_xy) for pt in outline_a.points + outline_b.points]
+        frame_offset = bounding_box_xy(rebased_pts)[0]
+        translate_vector = frame.xaxis * frame_offset[0] + frame.yaxis * frame_offset[1]
+        frame.translate(translate_vector)
+        return frame
 
     def add_interface(self, interface):
         self.interfaces.append(interface)
@@ -315,7 +327,7 @@ class Plate(TimberElement):
 
     @classmethod
     def from_brep(cls, brep, thickness, vector=None, **kwargs):
-        """Creates a plate from a brep.
+        """Creates a plate from a single-face brep.
 
         Parameters
         ----------
@@ -356,6 +368,10 @@ class Plate(TimberElement):
     # ==========================================================================
 
     @property
+    def transformation(self):
+        return Transformation.from_frame(self.frame)
+
+    @property
     def shape(self):
         # type: () -> compas.geometry.Brep
         """The shape of the plate before other features area applied.
@@ -366,21 +382,41 @@ class Plate(TimberElement):
             The shape of the element.
 
         """
-        outline_a = correct_polyline_direction(self.outline_a, self.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self.outline_b, self.normal, clockwise=True)
+        outline_a = correct_polyline_direction(self.local_outlines[0], Vector(0,0,1), clockwise=True)
+        outline_b = correct_polyline_direction(self.local_outlines[1], Vector(0,0,1), clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for pline in self.opening_outlines:
             if not TOL.is_allclose(pline[0], pline[-1]):
                 raise ValueError("Opening polyline is not closed.", pline[0], pline[-1])
-            polyline = correct_polyline_direction(pline, self.normal, clockwise=True)
-            polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline]
+            polyline = correct_polyline_direction(pline, Vector(0,0,1), clockwise=True)
+            polyline_b = [Point(pt[0], pt[1], self.thickness) for pt in polyline]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline, polyline_b)])
             brep.cap_planar_holes()
             plate_geo -= brep
         return plate_geo
 
     def compute_geometry(self, include_features=True):
+        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
+        """Compute the geometry of the element.
+
+        Parameters
+        ----------
+        include_features : bool, optional
+            If ``True``, include the features in the computed geometry.
+            If ``False``, return only the plate shape.
+
+        Returns
+        -------
+        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
+
+        """
+
+        # TODO: consider if Brep.from_curves(curves) is faster/better
+        plate_geo = self.compute_elementgeometry(include_features=include_features)
+        return plate_geo.transformed(self.transformation)
+
+    def compute_elementgeometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
         """Compute the geometry of the element.
 
@@ -405,6 +441,7 @@ class Plate(TimberElement):
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return plate_geo
+
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
@@ -438,15 +475,12 @@ class Plate(TimberElement):
             The OBB of the element.
 
         """
-        vertices = self.outline_a.points + self.outline_b.points
-        world_vertices = []
-        for point in vertices:
-            world_vertices.append(point.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY())))
-        obb = Box.from_points(world_vertices)
+
+        obb = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
         obb.xsize += inflate
         obb.ysize += inflate
         obb.zsize += inflate
-        obb.transform(Transformation.from_frame_to_frame(Frame.worldXY(), self.frame))
+        obb.transform(self.transformation)
         return obb
 
     def compute_collision_mesh(self):

@@ -2,6 +2,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Vector
+from compas.geometry import Transformation
 from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 
@@ -50,8 +51,8 @@ class PlateToPlateInterface(object):
     """
 
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None):
-        self.polyline = polyline
         self.frame = frame
+        self.polyline = polyline.transformed(Transformation.from_frame_to_frame(frame, Frame.worldXY()))
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         self.topology = topology  # TODO: don't like this here
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE

@@ -49,14 +49,14 @@ class Opening(TimberElement):
         }
 
     def __init__(self, outline, detail_set=None, frame=None):
-        self.outline = outline
+        self.frame = frame or Frame.from_points(outline[0], outline[1], outline[-2])
+        self.local_outline = outline.transformed(Transformation.from_frame_to_frame(self.frame, Frame.worldXY()))
         self.beams = []
         self.joints = []
         self.detail_set = detail_set
-        self.frame = frame
         self.frame_polyline = None
         self.joint_tuples = []
-
+        self.name = "opening with outline {}".format(self.outline)
     def __repr__(self):
         return "Opening(type={})".format(
             self.__class__.__name__,
@@ -73,11 +73,8 @@ class Opening(TimberElement):
     @property
     def obb(self):
         """Oriented bounding box of the window. used for creating framing elements around non-standard window shapes."""
-        rebase = Transformation.from_frame_to_frame(self.frame, Frame.worldXY())
-        box = Box.from_points(self.outline.transformed(rebase))
-        rebase.invert()
-        box.transform(rebase)
-        return box
+        box = Box.from_points(self.local_outline)
+        return box.transformed(self.transformation)
 
     @property
     def jack_studs(self):
@@ -101,4 +98,10 @@ class Opening(TimberElement):
                 return beam
         return None
 
+    @property
+    def transformation(self):
+        return Transformation.from_frame(self.frame)
 
+    @property
+    def outline(self):
+        return self.local_outline.transformed(self.transformation)

@@ -1,3 +1,5 @@
+from compas.geometry import Vector
+
 from compas_timber.connections import JointTopology
 from compas_timber.design import DirectRule
 from compas_timber.elements import Beam
@@ -54,7 +56,7 @@ class DetailBase(object):
                 beam_dims[category] = (slab_populator.detail_set.beam_width, slab_populator.frame_thickness)
         return beam_dims
 
-    def beam_from_category(self, segment, category, slab_populator, normal_offset=True, **kwargs):
+    def beam_from_category(self, segment, category, slab_populator, **kwargs):
         """Creates a beam from a segment and a category, using the dimensions from the configuration set.
         Parameters
         ----------
@@ -64,8 +66,6 @@ class DetailBase(object):
             The category of the beam, which determines its dimensions.
         slab_populator : :class:`compas_timber.populators.SlabPopulator`
             The populator instance that provides the beam dimensions.
-        normal_offset : bool, optional
-            Whether to offset the beam by 1/2 of the beam height in the parent.normal direction. Defaults to True.
         kwargs : dict, optional
             Additional attributes to set on the beam.
 
@@ -79,14 +79,10 @@ class DetailBase(object):
             raise ValueError("Unknown beam category: {}".format(category))
         width = beam_dimensions[category][0]
         height = beam_dimensions[category][1]
-        beam = Beam.from_centerline(segment, width=width, height=height, z_vector=slab_populator.normal)
+        beam = Beam.from_centerline(segment, width=width, height=height, z_vector=Vector(0,0,1))
         for key, value in kwargs.items():
             beam.attributes[key] = value
         beam.attributes["category"] = category
-
-        if normal_offset:
-            # beam centerlines are aligned to the slab frame, so we offset them by half the height
-            beam.frame.translate(slab_populator.normal * height * 0.5)  # align the beam to the slab frame
         if beam is None:
             raise ValueError("Failed to create beam from segment: {}".format(segment))
         return beam

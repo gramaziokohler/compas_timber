@@ -140,6 +140,11 @@ class TDetailBase(InterfaceDetailBase):
 class LButtDetailB(LDetailBase):
     """Detail Set that creates the beams for a L-butt a 3-beam box in the Cross Slab."""
 
+    def _create_elements_main(self, interface, slab_populator):
+        """Generate the beams for a main interface."""
+        interface.beams.extend(slab_populator.edge_beams[interface.edge_index])
+        return []
+
     def _create_elements_cross(self, interface, slab_populator):
         """Generate the beams for a L-cross interface."""
         beam_dimensions = DetailBase.get_beam_dimensions(self, slab_populator)
