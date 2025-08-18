@@ -17,7 +17,7 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import is_polyline_clockwise
 
 
-class SlabSelector(object):
+class SlabSelector(object): #TODO change to detail selector or similar
     """Selects slabs based on their attributes."""
 
     def __init__(self, slab_attr, attr_value):
@@ -35,6 +35,20 @@ class SlabSelector(object):
 class AnySlabSelector(object):
     def select(self, _):
         return True
+
+
+
+class OpeningPopulator(object):
+    """Populates openings in a slab."""
+
+
+    def __init__(self, opening, detail_set, slab_populator):
+
+
+
+
+
+
 
 
 class SlabPopulator(object):
