@@ -43,11 +43,9 @@ class OpeningPopulator(object):
 
 
     def __init__(self, opening, detail_set, slab_populator):
-
-
-
-
-
+        self.opening = opening
+        self.detail_set = detail_set
+        self.slab_populator = slab_populator
 
 
 
