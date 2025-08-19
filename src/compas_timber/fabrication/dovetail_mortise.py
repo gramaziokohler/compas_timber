@@ -338,7 +338,7 @@ class DovetailMortise(BTLxProcessing):
         shape=TenonShapeType.AUTOMATIC,
         shape_radius=20.0,
         ref_side_index=0,
-        **kwargs,
+        **kwargs
     ):
         """Create a DovetailMortise instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the cross beam.
 
