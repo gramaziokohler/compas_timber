@@ -24,6 +24,27 @@ from compas_timber.utils import split_beam_at_lengths
 from compas_timber.utils import intersection_line_beams
 
 
+class OpeningPopulator(object):
+    """Class to populate openings in a slab."""
+
+    def __init__(self, opening, slab, detail_set):
+        self.opening = opening
+        self.slab = slab
+        self.detail_set = detail_set
+        self.oriented_outline = self._get_oriented_outline()
+
+    def populate_openings(self):
+        """Populate openings in the slab."""
+        for opening in self.slab.openings:
+            self._populate_opening(opening)
+
+    def _get_oriented_outline(self):
+        outline = self.opening.outline.copy()
+        outline.transform(self.slab.transformation.inverse())
+        outline.transform(self.slab_populator.transformation.inverse())
+        return outline
+
+
 class OpeningDetailBase(DetailBase):
     """Base class for opening detail sets.
 
