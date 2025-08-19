@@ -13,7 +13,7 @@ from compas_timber.model import TimberModel
 
 
 @pytest.fixture
-def timber_model():
+def model():
     """Create a basic TimberModel with two beams."""
     model = TimberModel()
 
@@ -24,15 +24,16 @@ def timber_model():
     model.add_element(beam1)
     model.add_element(beam2)
 
-    return model, beam1, beam2
+    return model
 
 
 @pytest.fixture
-def generic_joint_with_beams(timber_model):
+def generic_joint_with_beams(model):
     """Create a generic joint connecting two beams."""
-    model, beam1, beam2 = timber_model
-    generic_joint = JointCandidate.create(model, beam1, beam2)
-    return model, generic_joint, beam1, beam2
+    beam1, beam2 = model.beams
+    candidate = JointCandidate(beam1, beam2)
+    model.add_joint_candidate(candidate)
+    return model, candidate, beam1, beam2
 
 
 @pytest.fixture
@@ -44,19 +45,21 @@ def cluster_with_single_joint(generic_joint_with_beams):
 
 
 @pytest.fixture
-def cluster_with_multiple_joints(timber_model):
+def cluster_with_multiple_joints(model):
     """Create a cluster containing multiple generic joints."""
-    model, beam1, beam2 = timber_model
+    beam1, beam2 = model.beams
 
     # Add a third beam
     beam3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1)
     model.add_element(beam3)
 
     # Create multiple joints
-    joint1 = JointCandidate.create(model, beam1, beam2)
-    joint2 = JointCandidate.create(model, beam2, beam3)
+    candidate1 = JointCandidate(beam1, beam2)
+    model.add_joint_candidate(candidate1)
+    candidate2 = JointCandidate(beam2, beam3)
+    model.add_joint_candidate(candidate2)
 
-    cluster = Cluster([joint1, joint2])
+    cluster = Cluster([candidate1, candidate2])
     return model, cluster, beam1, beam2, beam3
 
 
@@ -76,8 +79,8 @@ def test_from_cluster_with_single_joint(cluster_with_single_joint):
     # Verify the joint was added to the model
     assert joint in model.joints
 
-    # Verify the original generic joint was removed
-    assert len([j for j in model.joints if isinstance(j, JointCandidate)]) == 0
+    assert len(model.joint_candidates) == 1
+    assert isinstance(list(model.joint_candidates)[0], JointCandidate)
 
 
 def test_from_cluster_with_multiple_joints(cluster_with_multiple_joints):
@@ -85,21 +88,15 @@ def test_from_cluster_with_multiple_joints(cluster_with_multiple_joints):
     model, cluster, beam1, beam2, beam3 = cluster_with_multiple_joints
 
     # Store initial joint count
-    initial_joint_count = len(list(model.joints))
+    joint_candidate_count = len(list(model.joint_candidates))
 
     # Create a TButtJoint from the cluster (should connect all elements)
     joint = BallNodeJoint.promote_cluster(model, cluster)
 
     # Verify the joint was created
     assert isinstance(joint, BallNodeJoint)
-
-    # Verify all original joints in the cluster were removed
-    final_joint_count = len(list(model.joints))
-    assert final_joint_count == initial_joint_count - len(cluster.joints) + 1
-
-    # Verify all cluster joints were removed from the model
-    for original_joint in cluster.joints:
-        assert original_joint not in model.joints
+    assert joint in model.joints
+    assert joint_candidate_count == len(list(model.joint_candidates))
 
 
 def test_from_cluster_with_custom_elements_order(cluster_with_single_joint):
@@ -175,26 +172,23 @@ def test_from_generic_joint_basic(generic_joint_with_beams):
     assert joint.main_beam == beam1 or joint.main_beam == beam2
     assert joint.cross_beam == beam1 or joint.cross_beam == beam2
     assert joint.main_beam != joint.cross_beam
-
-    # Verify the joint was added to the model
     assert joint in model.joints
-
-    # Verify the original generic joint was removed
-    assert generic_joint not in model.joints
 
 
 def test_from_generic_joint_with_custom_elements(generic_joint_with_beams):
     """Test conversion with custom element order."""
-    model, generic_joint, beam1, beam2 = generic_joint_with_beams
+    model, joint_candidate, beam1, beam2 = generic_joint_with_beams
 
     # Specify elements in specific order
     elements = [beam2, beam1]
-    joint = TButtJoint.promote_joint_candidate(model, generic_joint, reordered_elements=elements)
+    joint = TButtJoint.promote_joint_candidate(model, joint_candidate, reordered_elements=elements)
 
     # Verify the joint respects the element order
     assert isinstance(joint, TButtJoint)
     assert joint.main_beam == beam2
     assert joint.cross_beam == beam1
+    assert joint in model.joints
+    assert joint_candidate in model.joint_candidates
 
 
 def test_from_generic_joint_with_kwargs(generic_joint_with_beams):
@@ -233,14 +227,10 @@ def test_from_generic_joint_removes_original(generic_joint_with_beams):
     model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
     # Store initial state
-    initial_joints = list(model.joints)
-    assert generic_joint in initial_joints
+    assert generic_joint in model.joint_candidates
 
     # Convert to specific joint
     new_joint = TButtJoint.promote_joint_candidate(model, generic_joint)
-
-    # Verify original joint was removed
-    assert generic_joint not in model.joints
 
     # Verify new joint was added
     assert new_joint in model.joints
@@ -258,9 +248,9 @@ def test_from_generic_joint_default_elements(generic_joint_with_beams):
     assert set(joint.elements) == set(generic_joint.elements)
 
 
-def test_from_cluster_empty_cluster(timber_model):
+def test_from_cluster_empty_cluster(model):
     """Test behavior with empty cluster."""
-    model, beam1, beam2 = timber_model
+    beam1, beam2 = model.beams
 
     # Create empty cluster
     cluster = Cluster([])
@@ -289,7 +279,7 @@ def test_from_cluster_preserves_elements_order(cluster_with_single_joint):
     elements_order2 = [beam2, beam1]
 
     joint1 = TButtJoint.promote_cluster(model, cluster, reordered_elements=elements_order1)
-    model.remove_joint(joint1)  # Clean up for second test
+    # model.remove_joint(joint1)  # Clean up for second test
 
     joint2 = TButtJoint.promote_cluster(model, cluster, reordered_elements=elements_order2)
 
@@ -308,3 +298,5 @@ def test_from_generic_joint_preserves_elements_order(generic_joint_with_beams):
 
     assert isinstance(joint, TButtJoint)
     # The exact behavior depends on TButtJoint implementation
+
+
