@@ -27,16 +27,11 @@ from compas_timber.utils import intersection_line_beams
 class OpeningPopulator(object):
     """Class to populate openings in a slab."""
 
-    def __init__(self, opening, slab, detail_set):
+    def __init__(self, opening, slab_populator, detail_set):
         self.opening = opening
-        self.slab = slab
+        self.slab_populator = slab_populator
         self.detail_set = detail_set
         self.oriented_outline = self._get_oriented_outline()
-
-    def populate_openings(self):
-        """Populate openings in the slab."""
-        for opening in self.slab.openings:
-            self._populate_opening(opening)
 
     def _get_oriented_outline(self):
         outline = self.opening.outline.copy()
@@ -164,12 +159,10 @@ class OpeningDetailBase(DetailBase):
 
     def _parse_studs(self, opening, slab_populator):
         """Cull and split the studs for the opening."""
-        cull_outer_edge = [dot_vectors(slab_populator._slab.frame.xaxis, Vector.from_start_end(slab_populator._slab.frame.point, king.midpoint)) for king in opening.king_studs]
+        cull_outer_edge = [king.midpoint[0] for king in opening.king_studs]
         cull_outer_edge.sort()
         if opening.jack_studs:
-            cull_inner_edge = [
-                dot_vectors(slab_populator._slab.frame.xaxis, Vector.from_start_end(slab_populator._slab.frame.point, jack.midpoint)) for jack in opening.jack_studs
-            ]
+            cull_inner_edge = [jack.midpoint[0] for jack in opening.jack_studs]
             cull_inner_edge.sort()
             cull_inner_edge[0] += opening.jack_studs[0].width / 2
             cull_inner_edge[1] -= opening.jack_studs[0].width / 2
