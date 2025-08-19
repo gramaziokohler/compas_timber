@@ -32,6 +32,7 @@ else:
 # -- Extension configuration ------------------------------------------------
 
 extensions = sphinx_compas2_theme.default_extensions
+extensions += ["sphinxcontrib.mermaid"]
 
 # numpydoc options
 

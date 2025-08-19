@@ -33,7 +33,7 @@ class BallNodeJoint(Joint):
 
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_Y
     MAX_ELEMENT_COUNT = None
 
     @property
@@ -95,7 +95,7 @@ class BallNodeJoint(Joint):
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the beams and this joing belong.
-        beams : list(:class:`~compas_timber.parts.Beam`)
+        elements : list(:class:`~compas_timber.parts.Beam`)
             A list containing beams that whould be joined together
 
         Returns
@@ -104,7 +104,6 @@ class BallNodeJoint(Joint):
             The instance of the created joint.
 
         """
-        elements = list(elements)
         joint = cls(elements, **kwargs)
         model.add_joint(joint)
         return joint
