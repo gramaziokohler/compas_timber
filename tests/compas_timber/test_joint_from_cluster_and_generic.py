@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import Mock
 
 from compas.geometry import Frame
-from compas.geometry import Point
 
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import BallNodeJoint
@@ -298,5 +297,3 @@ def test_from_generic_joint_preserves_elements_order(generic_joint_with_beams):
 
     assert isinstance(joint, TButtJoint)
     # The exact behavior depends on TButtJoint implementation
-
-
