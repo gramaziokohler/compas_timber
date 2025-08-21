@@ -337,11 +337,11 @@ class TimberModel(Model):
             A list of interactions for the given element.
         """
 
-        negihbors = self._graph.neighbors(element.graph_node)
+        neighbors = self._graph.neighbors(element.graphnode)
         result = []
-        for nbr in negihbors:
-            result.extend(self._safely_get_interactions((element.graph_node, nbr)))
-            result.extend(self._safely_get_interactions((nbr, element.graph_node)))
+        for nbr in neighbors:
+            result.extend(self._safely_get_interactions((element.graphnode, nbr)))
+            result.extend(self._safely_get_interactions((nbr, element.graphnode)))
         return result
 
     def add_joint(self, joint):
