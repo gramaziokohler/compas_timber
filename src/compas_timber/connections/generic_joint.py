@@ -1,4 +1,5 @@
 from .joint import Joint
+from .plate_joint import PlateJoint
 
 
 class JointCandidate(Joint):
@@ -59,3 +60,28 @@ class JointCandidate(Joint):
     def add_features(self):
         """This joint does not add any features."""
         pass
+
+
+class PlateJointCandidate(PlateJoint, JointCandidate):
+    """A PlateJointCandidate is an information-only joint for plate connections.
+
+    It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
+
+    Parameters
+    ----------
+    plate_a : :class:`~compas_timber.parts.Plate`
+        First plate to be joined.
+    plate_b : :class:`~compas_timber.parts.Plate`
+        Second plate to be joined.
+
+    Attributes
+    ----------
+    plate_a : :class:`~compas_timber.parts.Plate`
+        First plate to be joined.
+    plate_b : :class:`~compas_timber.parts.Plate`
+        Second plate to be joined.
+
+    """
+
+    def __init__(self, plate_a=None, plate_b=None, **kwargs):
+        super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)

@@ -99,6 +99,10 @@ class PlateJoint(Joint):
 
     Attributes
     ----------
+    plate_a : :class:`compas_timber.elements.Plate`
+        The first plate.
+    plate_b : :class:`compas_timber.elements.Plate`
+        The second plate.
     plates : tuple of :class:`compas_timber.elements.Plate`
         The plates that are connected.
     interface_a : :class:`compas.geometry.PlanarSurface`
@@ -111,8 +115,8 @@ class PlateJoint(Joint):
     @property
     def __data__(self):
         data = super(PlateJoint, self).__data__
-        data["plate_a_guid"] = self._plate_a_guid
-        data["plate_b_guid"] = self._plate_b_guid
+        data["plate_a_guid"] = self.plate_a_guid
+        data["plate_b_guid"] = self.plate_b_guid
         data["topology"] = self.topology
         data["a_segment_index"] = self.a_segment_index
         data["b_segment_index"] = self.b_segment_index
@@ -126,14 +130,14 @@ class PlateJoint(Joint):
         self.b_segment_index = b_segment_index
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                self.calculate_topology(self.plate_a, self.plate_b)
+                self.calculate_topology()
         self.a_outlines = None
         self.b_outlines = None
         self.a_planes = None
         self.b_planes = None
 
-        self._plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid)  # type: ignore
-        self._plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid)  # type: ignore
+        self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
+        self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -199,7 +203,7 @@ class PlateJoint(Joint):
 
     def calculate_topology(self, allow_reordering=False):
         """Calculate the topology of the joint based on the plates."""
-        topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
+        topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
         if topo_results.topology == JointTopology.TOPO_UNKNOWN:
             raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
         if self.plate_a != topo_results.plate_a:
@@ -211,6 +215,31 @@ class PlateJoint(Joint):
         self.a_segment_index = topo_results.a_segment_index
         self.b_segment_index = topo_results.b_segment_index
         return topo_results
+
+    @classmethod
+    def promote_joint_candidate(cls, model, candidate, elements=None, **kwargs):
+        """Creates an instance of this joint from a generic joint.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the elements and this joint belong.
+        candidate : :class:`~compas_timber.connections.Joint`
+            The generic joint to be converted.
+        elements : list(:class:`~compas_model.elements.Element`), optional
+            The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
+            This is used to explicitly define the element order.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        kwargs.update(candidate.__data__)  # pass topology and segment indices from candidate
+        return super(PlateJoint, cls).promote_joint_candidate(model, candidate, elements=elements, **kwargs)
 
     def add_features(self):
         """Add features to the plates based on the joint."""
@@ -250,12 +279,12 @@ class PlateJoint(Joint):
         self.restore_plates_from_keys(*args, **kwargs)
 
     def restore_plates_from_keys(self, model):
-        self.plate_a = model.element_by_guid(self._plate_a_guid)
-        self.plate_b = model.element_by_guid(self._plate_b_guid)
+        self.plate_a = model.element_by_guid(self.plate_a_guid)
+        self.plate_b = model.element_by_guid(self.plate_b_guid)
 
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
-        self._plate_a_guid, self._plate_b_guid = self._plate_b_guid, self._plate_a_guid
+        self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid
 
 
 def move_polyline_segment_to_plane(polyline, segment_index, plane):

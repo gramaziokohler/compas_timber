@@ -61,6 +61,11 @@ class Joint(Data):
     def topology(self):
         return self._topology
 
+    @topology.setter
+    def topology(self, value):
+        """Set the topology of the joint."""
+        self._topology = value
+
     @property
     def location(self):
         return self._location
@@ -195,4 +200,68 @@ class Joint(Data):
 
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
+        return joint
+
+    @classmethod
+    def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
+        """Creates an instance of this joint from a cluster of elements.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the elements and this joint belong.
+        cluster : :class:`~compas_model.clusters.Cluster`
+            The cluster containing the elements to be connected by this joint.
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
+            The elements to be connected by this joint. If not provided, the elements of the cluster will be used.
+            This is used to explicitly define the element order.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        if reordered_elements:
+            assert set(reordered_elements) == cluster.elements, "Elements of the generic joint must match the provided elements."
+        if len(cluster.joints) == 1:
+            elements = reordered_elements or cluster.joints[0].elements
+            return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
+        else:
+            elements = reordered_elements or list(cluster.elements)
+            for joint in cluster.joints:
+                model.remove_joint(joint)
+        return cls.create(model, *elements, **kwargs)
+
+    @classmethod
+    def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
+        """Creates an instance of this joint from a generic joint.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the elements and this joint belong.
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            The joint candidate to be converted.
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
+            The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
+            This is used to explicitly define the element order.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        if reordered_elements:
+            assert set(reordered_elements) == set(candidate.elements), "Elements of the generic joint must match the provided elements."
+            elements = reordered_elements
+        else:
+            elements = candidate.elements
+        model.remove_joint(candidate)
+        joint = cls.create(model, *elements, **kwargs)
         return joint

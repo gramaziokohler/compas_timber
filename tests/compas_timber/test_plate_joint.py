@@ -2,7 +2,7 @@ from compas_timber.elements import Plate
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateMiterJoint
-from compas_timber.connections import PlateButtJoint
+from compas_timber.connections import PlateLButtJoint
 from compas.geometry import Polyline, Point
 
 
@@ -15,7 +15,23 @@ def test_simple_joint_and_reset():
 
     plate_b = Plate.from_outline_thickness(Polyline(polyline_b.points), 1)
 
-    joint = PlateMiterJoint(plate_a, plate_b, JointTopology.TOPO_EDGE_EDGE, 1, 0)
+    kwargs = {"topology": JointTopology.TOPO_EDGE_EDGE, "a_segment_index": 1, "b_segment_index": 0}
+    joint = PlateMiterJoint(plate_a, plate_b, **kwargs)
+    joint.add_features()
+    assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
+    assert any([plate_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to change outline_a"
+    plate_a.reset()
+    assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to reset outline_a"
+
+
+def test_simple_joint_and_reset_no_kwargs():
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(Polyline([pt for pt in polyline_a.points]), 1)
+
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    plate_b = Plate.from_outline_thickness(Polyline(polyline_b.points), 1)
+
+    joint = PlateMiterJoint(plate_a, plate_b)
     joint.add_features()
     assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
     assert any([plate_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to change outline_a"
@@ -25,15 +41,12 @@ def test_simple_joint_and_reset():
 
 def test_three_plate_joints():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
-
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
 
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
-
     plate_b = Plate.from_outline_thickness(polyline_b, 1)
 
     polyline_c = Polyline([Point(10, 0, 0), Point(20, 0, 10), Point(20, 20, 10), Point(10, 10, 0), Point(10, 0, 0)])
-
     plate_c = Plate.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
@@ -47,9 +60,9 @@ def test_three_plate_joints():
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
+            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
+            joints.append(PlateLButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
 
     assert len(joints) == 3, "Expected three joints"
     assert all(isinstance(j, PlateMiterJoint) for j in joints), "Expected L-joints to be PlateMiterJoint"
@@ -79,11 +92,11 @@ def test_three_plate_joints_mix_topo():
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
+            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PlateButtJoint(tr.plate_a, tr.plate_b, tr.topology, tr.a_segment_index, tr.b_segment_index))
+            joints.append(PlateLButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
 
     assert len(joints) == 3, "Expected three joints"
-    assert isinstance(joints[0], PlateButtJoint), "Expected L-joints to be PlateButtJoint"
+    assert isinstance(joints[0], PlateLButtJoint), "Expected L-joints to be PlateButtJoint"
     assert isinstance(joints[1], PlateMiterJoint), "Expected L-joints to be PlateMiterJoint"
     assert isinstance(joints[2], PlateMiterJoint), "Expected L-joints to be PlateMiterJoint"

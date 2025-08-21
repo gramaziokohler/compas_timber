@@ -52,6 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
 * Added `Cluster.topology`.
 * Added `PlateSolverResult` and `BeamSolverResult` to package results from `PlateConnectionSolver.find_topology()` and `ConnectionSolver.find_topology()`.
+* Added `PlateJointCandidate` to `generic_joint.py`.
+* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
+* Added `PlateJoint.from_generic_joint` as override.
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
 * Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
@@ -85,6 +88,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `PlateConnectionSolver.find_topology()` to return a `PlateSolverResult` instance.
 * Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
 * Changed `ConnectionSolver.find_topology()` to return a `BeamSolverResult` instance.
+* Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
+* `PlateJoint`s can now be instantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
+* Fixed ironpython compatibility issues.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
 * Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
