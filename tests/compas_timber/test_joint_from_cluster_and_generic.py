@@ -297,3 +297,50 @@ def test_from_generic_joint_preserves_elements_order(generic_joint_with_beams):
 
     assert isinstance(joint, TButtJoint)
     # The exact behavior depends on TButtJoint implementation
+
+
+def test_candidate_edge_stays_when_removing_joint(generic_joint_with_beams):
+    """Test basic conversion from generic joint to specific joint."""
+    # model has one JointCandidate connecting two beams
+    # a TButtJoint is added on the same edge
+    # TButt is removed, leaving the JointCandidate
+    model, generic_joint, beam1, beam2 = generic_joint_with_beams
+
+    model: TimberModel
+
+    joint = TButtJoint.promote_joint_candidate(model, generic_joint)
+    model.remove_joint(joint)
+
+    assert joint not in model.joints
+    assert generic_joint in model.joint_candidates
+
+
+def test_candidate_edge_stays_when_removing_candidate(generic_joint_with_beams):
+    """Test basic conversion from generic joint to specific joint."""
+    # model has one JointCandidate connecting two beams
+    # a TButtJoint is added on the same edge
+    # candidate is removed, leaving the TButtJoint
+    model, generic_joint, beam1, beam2 = generic_joint_with_beams
+
+    joint = TButtJoint.promote_joint_candidate(model, generic_joint)
+    model.remove_joint_candidate(generic_joint)
+
+    assert joint in model.joints
+    assert generic_joint not in model.joint_candidates
+
+
+def test_candidate_edge_removed_when_removing_candidate_and_joint(generic_joint_with_beams):
+    """Test basic conversion from generic joint to specific joint."""
+    # model has one JointCandidate connecting two beams
+    # a TButtJoint is added on the same edge
+    # TButt is removed, leaving the JointCandidate
+    model, generic_joint, beam1, beam2 = generic_joint_with_beams
+
+    model: TimberModel
+
+    joint = TButtJoint.promote_joint_candidate(model, generic_joint)
+    model.remove_joint(joint)
+    model.remove_joint_candidate(generic_joint)
+
+    assert joint not in model.joints
+    assert generic_joint not in model.joint_candidates

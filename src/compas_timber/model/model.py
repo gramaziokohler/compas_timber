@@ -48,6 +48,8 @@ class TimberModel(Model):
 
     """
 
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = ["interactions", "candidate"]
+
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
@@ -369,6 +371,10 @@ class TimberModel(Model):
                 if stored_candidate is candidate:
                     self._graph.unset_edge_attribute(edge, "candidate")
 
+            if not self._is_remaining_attrs_on_edge(edge):
+                # if there's no other timber related attributes on that edge, then remove the edge as well
+                super(TimberModel, self).remove_interaction(*interaction)
+
     def remove_joint(self, joint):
         # type: (Joint) -> None
         """Removes this joint object from the model.
@@ -384,6 +390,39 @@ class TimberModel(Model):
             self.remove_interaction(element_a, element_b)
         for element in joint.generated_elements:
             self.remove_element(element)
+
+    def remove_interaction(self, a, b, _=None):
+        """Remove the interaction between two elements.
+
+        Extends :meth:`Model.remove_interaction` to not remove the edge if there are still other timber related attribute on the same edge.
+
+        Parameters
+        ----------
+        a : :class:`TimberElement`
+        b : :class:`TimberElement`
+
+        Returns
+        -------
+        None
+
+        """
+        edge = (a.graph_node, b.graph_node)
+        if edge not in self._graph.edges():
+            return
+
+        edge_interactions = self._graph.edge_attribute(edge, "interactions")
+        edge_interactions.clear()  # type: ignore
+
+        if not self._is_remaining_attrs_on_edge(edge):
+            # if there's no other timber related attributes on that edge, then remove the edge as well
+            super(TimberModel, self).remove_interaction(*edge)
+
+    def _is_remaining_attrs_on_edge(self, edge):
+        # returns True if any TimeberModel attributes are left on edge
+        for attr in self._TIMBER_GRAPH_EDGE_ATTRIBUTES:
+            if self._graph.edge_attribute(edge, attr):
+                return True
+        return False
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
