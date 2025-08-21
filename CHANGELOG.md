@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `PlateJoint`s can now be instantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
 * Fixed ironpython compatibility issues.
 * `NBeamKDTreeAnalyzer` now uses `model.joint_candidates` instead of filtering `model.joints`.
+* Fixed element interaction gets removed even if there are still attributes on it.
 
 ### Removed
 
