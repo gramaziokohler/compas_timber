@@ -366,6 +366,7 @@ class TimberModel(Model):
         for interaction in candidate.interactions:
             element_a, element_b = interaction
             edge = (element_a.graph_node, element_b.graph_node)
+
             if edge in self._graph.edges():
                 stored_candidate = self._graph.edge_attribute(edge, "candidate")
                 if stored_candidate is candidate:
@@ -373,7 +374,7 @@ class TimberModel(Model):
 
             if not self._is_remaining_attrs_on_edge(edge):
                 # if there's no other timber related attributes on that edge, then remove the edge as well
-                super(TimberModel, self).remove_interaction(*interaction)
+                super(TimberModel, self).remove_interaction(element_a, element_b)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -415,7 +416,7 @@ class TimberModel(Model):
 
         if not self._is_remaining_attrs_on_edge(edge):
             # if there's no other timber related attributes on that edge, then remove the edge as well
-            super(TimberModel, self).remove_interaction(*edge)
+            super(TimberModel, self).remove_interaction(a, b)
 
     def _is_remaining_attrs_on_edge(self, edge):
         # returns True if any TimeberModel attributes are left on edge
