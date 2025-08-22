@@ -42,7 +42,7 @@ class LFrenchRidgeLapJoint(LapJoint):
 
     @property
     def __data__(self):
-        data = super(LFrenchRidgeLapJoint, self).__data__
+        data = super(LFrenchRidgeLapJoint, self).__data__()
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
