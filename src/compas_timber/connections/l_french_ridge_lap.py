@@ -40,9 +40,14 @@ class LFrenchRidgeLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs):
-        super(LFrenchRidgeLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, drillhole_diam, **kwargs)
+    @property
+    def __data__(self):
+        data = super(LFrenchRidgeLapJoint, self).__data__
+        data["drillhole_diam"] = self.drillhole_diam
+        return data
 
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs):
+        super(LFrenchRidgeLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
         self.drillhole_diam = drillhole_diam
 
     def add_extensions(self):
@@ -118,8 +123,3 @@ class LFrenchRidgeLapJoint(LapJoint):
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
             raise BeamJoiningError(self.elements, self, debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.")
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.element_by_guid(self.beam_a_guid)
-        self.beam_b = model.element_by_guid(self.beam_b_guid)
