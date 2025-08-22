@@ -399,7 +399,8 @@ class Lap(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            volume_frames = [face.frame_at(0,0) for face in volume.faces]
+            volume_surfaces = [face.nurbssurface for face in volume.faces]
+            volume_frames = [surface.frame_at(0, 0) for surface in volume_surfaces]
             planes = [Plane.from_frame(frame) for frame in volume_frames]
 
         else:

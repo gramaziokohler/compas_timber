@@ -612,12 +612,28 @@ class WallPopulator(object):
 
     def create_joints(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
-        model = TimberModel()
-        model.add_elements(beams)
-        solver = JointRuleSolver(self.rules, model)
-        _, _ = solver.apply_rules_to_model()
-        return model.joints
-        # TODO: figure out how to create joints. pass just the joints like this? "sub-model"? can we add 2 models together?
+        solver = ConnectionSolver()
+        found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
+
+        joint_definitions = []
+        max_distance = max_distance or 0.0
+        max_distance = max(self._config_set.beam_width, max_distance)  # oterwise L's become X's
+        for pair in found_pairs:
+            beam_a, beam_b = pair
+            results = solver.find_topology(beam_a, beam_b, max_distance=self.dist_tolerance)
+            detected_topo = results.topology
+            beam_a = results.beam_a
+            beam_b = results.beam_b
+            if detected_topo == JointTopology.TOPO_UNKNOWN:
+                continue
+
+            for rule in self.rules:
+                if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
+                    if rule.joint_type == LButtJoint:
+                        beam_a, beam_b = rule.reorder([beam_a, beam_b])
+                    joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+                    # break # ?
+        return joint_definitions
 
     def generate_perimeter_beams(self):
         # for each interface, find the appropriate connection detail (depending on the topology)

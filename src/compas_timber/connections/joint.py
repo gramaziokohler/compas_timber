@@ -1,13 +1,13 @@
 from itertools import combinations
 
+from compas.data import Data
 from compas.geometry import Point
 from compas.geometry import distance_point_line
-from compas_model.interactions import Interaction
 
 from .solver import JointTopology
 
 
-class Joint(Interaction):
+class Joint(Data):
     """Base class for a joint connecting two beams.
 
     This is a base class and should not be instantiated directly.
@@ -44,10 +44,18 @@ class Joint(Interaction):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
-    def __init__(self, topology=None, location=None, **kwargs):
-        super(Joint, self).__init__(name=self.__class__.__name__)
+    def __init__(self, topology=None, location=None, name=None, **kwargs):
+        super().__init__(name=name)
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location or Point(0, 0, 0)
+
+    @property
+    def __data__(self):
+        # type: () -> dict
+        return {"name": self.name}
+
+    def __repr__(self):
+        return '{}(name="{}")'.format(self.__class__.__name__, self.name)
 
     @property
     def topology(self):

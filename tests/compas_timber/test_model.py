@@ -34,6 +34,20 @@ def test_add_element():
     assert len(list(A.beams)) == 1
 
 
+def test_add_elements():
+    model = TimberModel()
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+
+    model.add_elements([b1, b2])
+
+    assert len(list(model.beams)) == 2
+    assert list(model.beams)[0] is b1
+    assert list(model.beams)[1] is b2
+    assert len(list(model.graph.nodes())) == 2
+    assert len(list(model.graph.edges())) == 0
+
+
 def test_add_joint():
     model = TimberModel()
     b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
@@ -274,11 +288,11 @@ def test_beam_graph_node_available_after_serialization():
     beam = Beam(frame, length=1.0, width=0.1, height=0.1)
     model.add_element(beam)
 
-    graph_node = beam.graph_node
+    graph_node = beam.graphnode
     deserialized_model = json_loads(json_dumps(model))
 
     assert graph_node is not None
-    assert list(deserialized_model.beams)[0].graph_node == graph_node
+    assert list(deserialized_model.beams)[0].graphnode == graph_node
 
 
 def test_beam_graph_node_available_after_deepcopying():
@@ -287,8 +301,8 @@ def test_beam_graph_node_available_after_deepcopying():
     beam = Beam(frame, length=1.0, width=0.1, height=0.1)
     model.add_element(beam)
 
-    grap_node = beam.graph_node
+    grap_node = beam.graphnode
     deserialized_model = deepcopy(model)
 
     assert grap_node is not None
-    assert list(deserialized_model.beams)[0].graph_node == grap_node
+    assert list(deserialized_model.beams)[0].graphnode == grap_node

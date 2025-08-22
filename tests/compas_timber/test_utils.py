@@ -191,7 +191,7 @@ def test_distance_segment_segment():
         Line(Point(13, 4, 0), Point(15, 6, 0)),  # Non-overlapping segment
         Line(Point(15, -5, 0), Point(15, 5, 0)),  # crossing perpendicular segment
         Line(Point(5, -5, 0), Point(5, 5, 0)),  # crossing perpendicular segment
-        Line(Point(5, -5, 1), Point(5, 5, 1)),  # crossing non-intersectingperpendicular segment
+        Line(Point(5, -5, 1), Point(5, 5, 1)),  # crossing non-intersecting perpendicular segment
     ]
     results = [0.0, 1.0, 1.0, 5.0, 5.0, 0.0, 1.0]
     # Distance between non-overlapping segments
