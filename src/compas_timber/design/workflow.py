@@ -4,9 +4,9 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections.analyzers import get_clusters_from_model
-from compas_timber.connections.plate_butt_joint import PlateTButtJoint
-from compas_timber.connections.plate_miter_joint import PlateMiterJoint
+from compas_timber.connections import MaxNCompositeAnalyzer
+from compas_timber.connections import PlateTButtJoint
+from compas_timber.connections import PlateMiterJoint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import intersection_line_line_param
 
@@ -54,26 +54,19 @@ class JointRuleSolver(object):
 
     """
 
-    def __init__(self, rules, model, use_default_topo=False, max_distance=TOL.absolute):
-        self.rules = rules if isinstance(rules, list) else [rules] if rules else []
+    def __init__(self, rules, use_default_topo=False, max_distance=TOL.absolute):
+        self.rules = JointRuleSolver._sort_rules(rules, use_default_topo)
         self.use_default_topo = use_default_topo
         self.max_distance = max_distance
         self.clusters = []
         self.joining_errors = []
-        self.model = model
 
-    @property
-    def direct_rules(self):
-        return [rule for rule in self.rules if rule.__class__.__name__ == "DirectRule"]
-
-    @property
-    def category_rules(self):
-        return [rule for rule in self.rules if rule.__class__.__name__ == "CategoryRule"]
-
-    @property
-    def topology_rules(self):
-        topo_rules = {}
-        if self.use_default_topo:
+    @staticmethod
+    def _sort_rules(rules, use_default_topo=False):
+        """Sorts the rules by their priority."""
+        direct_rules = []
+        category_rules = []
+        if use_default_topo:
             topo_rules = {
                 JointTopology.TOPO_L: TopologyRule(JointTopology.TOPO_L, LMiterJoint),
                 JointTopology.TOPO_T: TopologyRule(JointTopology.TOPO_T, TButtJoint),
@@ -81,16 +74,24 @@ class JointRuleSolver(object):
                 JointTopology.TOPO_EDGE_EDGE: TopologyRule(JointTopology.TOPO_EDGE_EDGE, PlateMiterJoint),
                 JointTopology.TOPO_EDGE_FACE: TopologyRule(JointTopology.TOPO_EDGE_FACE, PlateTButtJoint),
             }
-        for rule in self.rules:  # separate category and topo and direct joint rules
-            if rule.__class__.__name__ == "TopologyRule":
-                topo_rules[rule.topology_type] = TopologyRule(rule.topology_type, rule.joint_type, rule.max_distance, **rule.kwargs)  # overwrites, meaning last rule wins
-        return [rule for rule in topo_rules.values() if rule is not None]
+        else:
+            topo_rules = {}
+        for rule in rules:
+            if isinstance(rule, DirectRule):
+                direct_rules.append(rule)
+            if isinstance(rule, CategoryRule):
+                category_rules.append(rule)
+            if isinstance(rule, TopologyRule):
+                topo_rules[rule.topology_type] = TopologyRule(rule.topology_type, rule.joint_type, rule.max_distance, **rule.kwargs)
+        return direct_rules + category_rules + [rule for rule in topo_rules.values() if rule is not None]
 
-    def apply_rules_to_model(self, handled_pairs=None):
+    def apply_rules_to_model(self, model, handled_pairs=None):
         """Adds joints to model based on the given rules and elements.
 
         Parameters
         ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The timber model to which the rules will be applied.
         handled_pairs : list(set(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`)), optional
             A list of already handled element pairs.
 
@@ -102,72 +103,35 @@ class JointRuleSolver(object):
         """
         handled_pairs = handled_pairs or []
         max_rule_distance = max([rule.max_distance for rule in self.rules if rule.max_distance] + [self.max_distance])
-        clusters = get_clusters_from_model(self.model, max_distance=max_rule_distance)
-        clusters = self.remove_handled_pairs(clusters, handled_pairs)
-        self.joining_errors, unjoined_clusters = self.process_clusters(clusters, max_distance=self.max_distance)
+        clusters = get_clusters_from_model(model, max_distance=max_rule_distance)
+        clusters = self._remove_handled_pairs(clusters, handled_pairs)
+        unjoined_clusters = self._joints_from_rules_and_clusters(model, self.rules, clusters, max_distance=self.max_distance)
         return self.joining_errors, unjoined_clusters
 
-    def remove_handled_pairs(self, clusters, handled_pairs):
-        """Removes clusters from the list that have been handled.
-        Parameters
-        ----------
-        clusters : list(:class:`~compas_timber.connections.Cluster`)
-            A list of clusters to check.
-        handled_pairs : list(set(:class:`~compas_timber.elements.TimberElement`, :class:`~compas_timber.elements.TimberElement`))
-            A list of already handled element pairs.
+    def _remove_handled_pairs(self, clusters, handled_pairs):
+        """Removes clusters from the list that have been handled."""
+        remaining_clusters = []
+        for cluster in clusters:
+            if set(cluster.elements) not in handled_pairs:
+                remaining_clusters.append(cluster)
+        return remaining_clusters
 
-        Returns
-        -------
-        list(:class:`~compas_timber.connections.Cluster`)
-            The filtered list of clusters.
-        """
-        clusters_temp = [c for c in clusters]
-        for cluster in clusters_temp:
-            if set(cluster.elements) in handled_pairs:
-                clusters.remove(cluster)
-        return clusters
-
-    def joints_from_rules_and_clusters(self, rules, clusters, max_distance=None):
-        """Processes the JointRules and creates joints based on the clusters.
-        Parameters
-        ----------
-        rules : list(:class:`~compas_timber.design.JointRule`)
-            The list of joint rules to apply.
-        clusters : list(:class:`~compas_timber.connections.Cluster`)
-            The list of clusters to process.
-        max_distance : float, optional
-            The maximum distance to consider when creating joints. This is a global max distance and will be overridden by individual rule max_distances.
-
-        """
-        for rule in rules:
-            for cluster in [c for c in clusters]:
-                joint, error = rule.try_create_joint(self.model, cluster, max_distance=max_distance)
+    def _joints_from_rules_and_clusters(self, model, rules, clusters, max_distance=None):
+        """Processes the JointRules and creates joints based on the clusters."""
+        remaining_clusters = []
+        for cluster in clusters:
+            promoted = False
+            for rule in rules:
+                joint, error = rule.try_create_joint(model, cluster, max_distance=max_distance)
                 if joint:
-                    clusters.remove(cluster)  # remove the cluster from the list of clusters to avoid processing it again
+                    promoted = True
+                    break
                 if error:
-                    self.joining_errors.append(error)
-
-    def process_clusters(self, clusters, max_distance=None):
-        """Processes the clusters and creates joints based on the rules.
-        Parameters
-        ----------
-        clusters : list(:class:`~compas_timber.connections.Cluster`)
-            The list of clusters to process.
-        max_distance : float, optional
-            The maximum distance to consider when creating joints. This is a global max distance and will be overridden by individual rule max_distances.
-
-        Returns
-        -------
-        tuple(list(:class:`~compas_timber.connections.BeamJoiningError`), list(:class:`~compas_timber.connections.Cluster`), )
-            A tuple containing a list of joining errors and a list of unjoined Clusters.
-        """
-        unhandled_clusters = [c for c in clusters]
-        self.joints_from_rules_and_clusters(self.direct_rules, unhandled_clusters, max_distance=max_distance)
-        self.joints_from_rules_and_clusters(self.category_rules, unhandled_clusters, max_distance=max_distance)
-        self.joints_from_rules_and_clusters(self.topology_rules, unhandled_clusters, max_distance=max_distance)
-
-        return self.joining_errors, unhandled_clusters
-
+                    self.joining_errors.append(error) #should only happen with direct rules
+                    break
+            if not promoted:
+                remaining_clusters.append(cluster)
+        return remaining_clusters
 
 class JointRule(object):
     """Represents a rule for creating joints between timber elements.
@@ -361,7 +325,6 @@ class DirectRule(JointRule):
 
         """
         max_distance = self.max_distance or max_distance or TOL.absolute
-
         joint = None
         error = None
         if self._matches_cluster(cluster):
@@ -376,7 +339,7 @@ class DirectRule(JointRule):
                     return None, None
                 if not self.joint_type.check_elements_compatibility(self.elements, raise_error=True):
                     return None, None
-                joint = self.joint_type.promote_cluster(model, cluster, elements=self.elements, **self.kwargs)
+                joint = self.joint_type.promote_cluster(model, cluster, reordered_elements=self.elements, **self.kwargs)
             except BeamJoiningError as bje:
                 error = bje
         return joint, error
@@ -409,7 +372,6 @@ class CategoryRule(JointRule):
         self.topos = topos or []
 
     def ToString(self):
-        # GH doesn't know
         return repr(self)
 
     def __repr__(self):
@@ -563,7 +525,7 @@ class TopologyRule(JointRule):
             return None, None
         if not self._comply_distance(cluster, max_distance=max_distance):
             return None, None
-        if not self.joint_type.check_elements_compatibility(cluster.elements):
+        if not self.joint_type.check_elements_compatibility(list(cluster.elements)):
             return None, None
         try:
             joint = self.joint_type.promote_cluster(model, cluster, **self.kwargs)
@@ -639,6 +601,27 @@ def set_default_joints(model, x_default="x-lap", t_default="t-butt", l_default="
 
     for beamA, beamB in connectivity["X"]:
         pass
+
+
+def get_clusters_from_model(model, max_distance=None):
+    """Analyzes the model to find clusters of beams and plates. This will create JointCandidates and PlateJointCandidates in the model.
+    Parameters
+    ----------
+    model : :class:`~compas_timber.model.TimberModel`
+        The TimberModel to analyze.
+    max_distance : float | None
+        The maximum distance to consider for clustering. If None, a default distance is used.
+
+    Returns
+    -------
+    list[:class:`~compas_timber.connections.Cluster`]
+        A list of clusters found in the model.
+    """
+    model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
+    model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
+    analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())), max_distance=max_distance)
+    clusters = analyzer.find()
+    return clusters
 
 
 class DebugInfomation(object):

@@ -88,9 +88,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
 * Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.apply_rules_to_model` which now adds `Joint`s to the
   `TimberModel` directly.
-* Fixed element order in `DirectJointRule` GH component.
-* Reworked `Model` GH component.
-* Changed `WallPopulator.create_joint_definitions()` to `WallPopulator.create_joints()`, which now returns Joint instances.
+* Changed `WallPopulator.create_joint_definitions()` to `WallPopulator.create_joints()`, which now returns `DirectRule` instances.
+* Changed `tolerance` argument to `max_distance` in `NBeamKDTreeAnalyzer` for clarity and consisten naming. 
+* Changed `Joint.check_elements_compatibility()` to a class method to check Joint-type specific requirements before instantiation. 
 
 ### Removed
 

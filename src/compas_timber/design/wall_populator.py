@@ -24,7 +24,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
-from compas_timber.design.workflow import DirectRule
+from compas_timber.design import DirectRule
 from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate

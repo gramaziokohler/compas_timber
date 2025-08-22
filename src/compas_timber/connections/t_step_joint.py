@@ -222,14 +222,15 @@ class TStepJoint(Joint):
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
-        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+        """Checks if the cluster of beams complies with the requirements for the TStepJoint.
 
         Parameters
         ----------
-        cluster : :class:`~compas_timber.model.TimberCluster`
-            The cluster of beams to be checked.
-        model_max_distance : float, optional
-            The maximum distance between the centerlines of the beams in the cluster.
+        elements : list of :class:`~compas_timber.model.TimberElement`
+            The cluster of elements to be checked.
+        raise_error : bool, optional
+            Whether to raise an error if the elements are not compatible.
+            If False, the method will return False instead of raising an error.
 
         Returns
         -------
@@ -237,7 +238,6 @@ class TStepJoint(Joint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
-        elements = list(elements)
         cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
         for beam in elements:
             beam_normal = beam.frame.normal.unitized()

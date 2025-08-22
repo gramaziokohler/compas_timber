@@ -226,7 +226,7 @@ class YButtJoint(Joint):
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
-        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+        """Checks if the cluster of beams complies with the requirements for the YButtJoint.
 
         Parameters
         ----------
@@ -242,6 +242,8 @@ class YButtJoint(Joint):
 
         """
         if not are_beams_aligned_with_cross_vector(*elements[1:3]):
+            if not raise_error:
+                return False
             raise BeamJoiningError(
                 beams=elements[1:3],
                 joint=cls,
@@ -256,5 +258,7 @@ class YButtJoint(Joint):
                 dimensions.append(beam.get_dimensions_relative_to_side(ref_side_index)[0])  # beams only need a miter that meets in the corner. width can be different
             # check if the dimensions of both cross beams match
             if dimensions[0] != dimensions[1]:
+                if not raise_error:
+                    return False
                 raise BeamJoiningError(elements, cls, debug_info="The two cross beams must have the same dimensions to create a Y-Butt joint.")
         return True

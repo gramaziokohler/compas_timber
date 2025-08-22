@@ -13,12 +13,14 @@ Joints
 
     BallNodeJoint
     Joint
+    PlateJoint
     LapJoint
     LButtJoint
     LFrenchRidgeLapJoint
     LLapJoint
     LMiterJoint
-    GenericJoint
+    JointCandidate
+    PlateJointCandidate
     TBirdsmouthJoint
     TButtJoint
     TDovetailJoint
