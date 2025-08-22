@@ -42,7 +42,7 @@ class LLapJoint(LapJoint):
 
     @property
     def __data__(self):
-        data = super(LLapJoint, self).__data__()
+        data = super(LLapJoint, self).__data__
         data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
