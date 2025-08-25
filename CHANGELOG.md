@@ -55,6 +55,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateJointCandidate` to `generic_joint.py`.
 * Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
 * Added `PlateJoint.from_generic_joint` as override.
+* Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
+* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `interactions()` method to `TimberModel` for iterating over edge-level joints and contacts in the model graph.
+* Added explicit `frame` property setter to `TimberElement` that automatically updates the `transformation` when frame is set.
+* Added `transformation` property to `Beam` that accounts for blank extensions at the start of the beam.
+* Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
 
 ### Changed
 
@@ -83,7 +91,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
 * `PlateJoint`s can now be instantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
 * Fixed ironpython compatibility issues.
-
+* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
+* Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
+* Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
+* Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
+* Updated default edge attributes in the model graph to include `joints` and `contacts`.
+* Updated `compas_model` version pinning from `0.4.4` to `0.8.0` to align with the latest development.
+* Updated `graph_node` property to `graphnode` following the changes in the parent `compas_model.elements.Element` class.
+* Upstreamed `ref_sides` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
+* Upstreamed `ref_edges` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
+* Upstreamed `front_side`, `back_side`, `opp_side` methods from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `side_as_surface` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Modified `TimberElement.__init__()` to remove automatic frame and transformation initialization from constructor.
+* Changed the way the `blank` is computed using the `ref_frame` instead of the depricated `blank_frame` in `compas_timber.elements.Beam`.
 
 ### Removed
 
@@ -91,6 +112,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
 * Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
 * Removed `angle_vectors_projected` from `compas_timber.utils` since this has been upstreamed to core.
+* Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
+* Removed `blank_frame` property from `compas_timber.elements.Beam` since the ref_frame could serve it's purpose.
+* Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
+* Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
+* Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not needed anymore.
 
 
 ## [0.16.2] 2025-05-07

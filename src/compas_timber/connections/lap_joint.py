@@ -125,7 +125,7 @@ class LapJoint(Joint):
     @staticmethod
     def _sort_beam_planes(beam, cutplane_vector):
         # Sorts the Beam Face Planes according to the Cut Plane
-        frames = beam.faces[:4]
+        frames = beam.ref_sides[:4]
         planes = [Plane.from_frame(frame) for frame in frames]
         planes.sort(key=lambda x: angle_vectors(cutplane_vector, x.normal))
         return planes
