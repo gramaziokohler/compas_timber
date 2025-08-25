@@ -227,7 +227,7 @@ class Joint(Interaction):
 
     @classmethod
     def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
-        """Creates an instance of this joint from a generic joint.
+        """Creates an instance of this joint from a joint candidate.
 
         Parameters
         ----------
@@ -252,5 +252,6 @@ class Joint(Interaction):
             elements = reordered_elements
         else:
             elements = candidate.elements
+        kwargs.update({"topology": candidate.topology, "location": candidate.location})  # pass topology, distance and location from candidate
         joint = cls.create(model, *elements, **kwargs)
         return joint

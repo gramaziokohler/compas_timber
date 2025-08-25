@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed ironpython compatibility issues.
 * `NBeamKDTreeAnalyzer` now uses `model.joint_candidates` instead of filtering `model.joints`.
 * Fixed element interaction gets removed even if there are still attributes on it.
+* Changed `elements` argument in `promote_joint_candidate` to `reordered_elements` for clarity.
 
 ### Removed
 
