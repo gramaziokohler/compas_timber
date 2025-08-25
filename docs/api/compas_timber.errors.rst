@@ -14,3 +14,4 @@ Classes
     BeamJoiningError
     FeatureApplicationError
     FastenerApplicationError
+    BTLxProcessingError

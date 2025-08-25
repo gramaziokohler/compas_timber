@@ -223,8 +223,6 @@ class Joint(Interaction):
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
         else:
             elements = reordered_elements or list(cluster.elements)
-            for joint in cluster.joints:
-                model.remove_joint(joint)
         return cls.create(model, *elements, **kwargs)
 
     @classmethod
@@ -254,7 +252,6 @@ class Joint(Interaction):
             elements = reordered_elements
         else:
             elements = candidate.elements
-        model.remove_joint(candidate)
         kwargs.update({"topology": candidate.topology, "location": candidate.location})  # pass topology, distance and location from candidate
         joint = cls.create(model, *elements, **kwargs)
         return joint
