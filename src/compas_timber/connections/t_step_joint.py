@@ -200,7 +200,7 @@ class TStepJoint(Joint):
             heel_depth=self.heel_depth,
             strut_height=main_height,
             tapered_heel=self.tapered_heel,
-            cross_beam_ref_side_index=self.cross_beam_ref_side_index,
+            ref_side_index=self.cross_beam_ref_side_index,
         )
 
         # add tenon and mortise features
