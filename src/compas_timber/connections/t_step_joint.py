@@ -175,7 +175,7 @@ class TStepJoint(Joint):
         cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
 
         # get dimensions for main and cross beams
-        main_width, main_height = self.main_beam.get_dimensions_relative_to_side(main_beam_ref_side)
+        main_height, main_width = self.main_beam.get_dimensions_relative_to_side(main_beam_ref_side)
         cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(cross_beam_ref_side)
 
         self.set_step_depths()
