@@ -4,9 +4,8 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections import MaxNCompositeAnalyzer
-from compas_timber.connections import PlateTButtJoint
-from compas_timber.connections import PlateMiterJoint
+# from compas_timber.connections import PlateTButtJoint
+# from compas_timber.connections import PlateMiterJoint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import intersection_line_line_param
 
@@ -603,25 +602,7 @@ def set_default_joints(model, x_default="x-lap", t_default="t-butt", l_default="
         pass
 
 
-def get_clusters_from_model(model, max_distance=None):
-    """Analyzes the model to find clusters of beams and plates. This will create JointCandidates and PlateJointCandidates in the model.
-    Parameters
-    ----------
-    model : :class:`~compas_timber.model.TimberModel`
-        The TimberModel to analyze.
-    max_distance : float | None
-        The maximum distance to consider for clustering. If None, a default distance is used.
 
-    Returns
-    -------
-    list[:class:`~compas_timber.connections.Cluster`]
-        A list of clusters found in the model.
-    """
-    model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
-    model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
-    analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())), max_distance=max_distance)
-    clusters = analyzer.find()
-    return clusters
 
 
 class DebugInfomation(object):

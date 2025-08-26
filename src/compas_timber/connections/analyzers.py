@@ -248,6 +248,19 @@ def MaxNCompositeAnalyzer(model, n, max_distance=None):
 
 
 def get_clusters_from_model(model, max_distance=None):
+    """Analyzes the model to find clusters of beams and plates. This will create JointCandidates and PlateJointCandidates in the model.
+    Parameters
+    ----------
+    model : :class:`~compas_timber.model.TimberModel`
+        The TimberModel to analyze.
+    max_distance : float | None
+        The maximum distance to consider for clustering. If None, a default distance is used.
+
+    Returns
+    -------
+    list[:class:`~compas_timber.connections.Cluster`]
+        A list of clusters found in the model.
+    """
     model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
     model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
     analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())), max_distance=max_distance)

@@ -11,6 +11,8 @@ if not compas.IPY:
 from compas.geometry import Point
 from compas.tolerance import TOL
 from compas_model.models import Model
+from compas_model.models import ElementNode
+from compas_model.models import GroupNode
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
@@ -164,6 +166,59 @@ class TimberModel(Model):
         """
         return self._elements[guid]
 
+    def add_element(self, element, parent=None, material=None):
+        # type: (Element, GroupNode | None, Material | None) -> ElementNode
+        """Add an element to the model.
+
+        Parameters
+        ----------
+        element : :class:`Element`
+            The element to add.
+        parent : :class:`GroupNode`, optional
+            The parent group node of the element.
+            If ``None``, the element will be added directly under the root node.
+        material : :class:`Material`, optional
+            A material to assign to the element.
+            Note that the material should have already been added to the model before it can be assigned.
+
+        Returns
+        -------
+        :class:`Elementnode`
+            The tree node containing the element in the hierarchy.
+
+        Raises
+        ------
+        ValueError
+            If the parent node is not a GroupNode.
+        ValueError
+            If a material is provided that is not part of the model.
+
+        """
+        guid = str(element.guid)
+        if guid in self._guid_element:
+            raise Exception("Element already in the model.")
+        self._guid_element[guid] = element
+
+        element.graph_node = self.graph.add_node(element=element)
+
+        if not parent:
+            parent = self._tree.root  # type: ignore
+
+        if material and not self.has_material(material):
+            raise ValueError("The material is not part of the model: {}".format(material))
+
+
+        if not element.is_group_element:
+            tree_node = ElementNode(element=element)
+            parent.add(tree_node)
+        else:
+            tree_node = GroupNode(name=element.name)
+            for e in element.elements:
+                self.add_element(e, parent=tree_node)
+        if material:
+            self.assign_material(material=material, element=element)
+        return tree_node
+
     def add_elements(self, elements, parent=None):
         # type: (list[Element], GroupNode | None) -> list[Element]
         """Add multiple elements to the model.
@@ -193,7 +248,7 @@ class TimberModel(Model):
     # Groups
     # =============================================================================
 
-    def add_group_element(self, element, name=None):
+    def add_group_element(self, element, name=None, parent=None):
         """Add an element which shall contain other elements.
 
         The container element is added to the group as well.
@@ -245,7 +300,13 @@ class TimberModel(Model):
             raise ValueError("Group {} already exists in model.".format(group_name))
 
         group = self.add_group(group_name)
-        self.add_element(element, parent=group)
+        if parent:
+            self.add_element(element, parent=parent)
+        else:
+            self.add_element(element, parent=self.tree.root)  # add the group element to the root of the tree
+
+        for e in element.elements:
+            self.add_element(e, parent=group)
 
         element.name = group_name
         return group

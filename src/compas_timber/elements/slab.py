@@ -1,7 +1,8 @@
 from .plate import Plate
+from .timber import TimberGroupElement
 
 
-class Slab(Plate):
+class Slab(Plate, TimberGroupElement):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 
@@ -31,7 +32,7 @@ class Slab(Plate):
         self._edge_planes = []
         self.openings = openings if openings is not None else []
         self.interfaces = interfaces if interfaces is not None else []  # type: list[SlabToSlabInterface]
-        self.elements = []
+        self._elements = []
         self.joints = []
         self.populator = None
         self.detail_set = detail_set
@@ -50,10 +51,28 @@ class Slab(Plate):
     def is_group_element(self):
         return True
 
-    def add_opening(self, opening):
+    @property
+    def elements(self):
+        return self._elements + self.openings + self.interfaces
+
+    def add_interface(self, interface, frame_is_global=True):
+        """Add an interface to the slab."""
+        if frame_is_global:
+            interface.frame.transform(self.frame.inverse())
+        self.interfaces.append(interface)
+
+    def add_opening(self, opening, frame_is_global=True):
         """Add an opening to the slab."""
+        if frame_is_global:
+            opening.frame.transform(self.frame.inverse())
         self.openings.append(opening)
         self.opening_outlines.append(opening.outline)
+
+    def add_interface(self, interface, frame_is_global=True):
+        """Add an interface to the slab."""
+        if frame_is_global:
+            interface.frame.transform(self.frame.inverse())
+        self.interfaces.append(interface)
 
     def create_joint(self):
         self.detail_set.create_joints(self)

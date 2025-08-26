@@ -330,3 +330,30 @@ class TimberElement(Element):
         if ref_side_index in [1, 3]:
             return self.height, self.width
         return self.width, self.height
+
+
+
+
+class TimberGroupElement:
+    def __init__(self, features=None, elements=None, **kwargs):
+        super(TimberElement, self).__init__(features=features, **kwargs)
+        self._elements = elements or []
+
+    def add_element(self, element, transform_element=True):
+        print("group frame = ", self.frame)
+        print("adding element", element.name)
+        if transform_element:
+            print("element frame = ", element.frame)
+            element.frame.transform(self.transformation.inverse())
+            print("transformed element frame = ", element.frame)
+            self._elements.append(element)
+        else:
+            self._elements.append(element)
+        print("slab.elements contains:", [e.name for e in self.elements])
+
+    def remove_element(self, element):
+        self.elements.remove(element)
+
+    @property
+    def elements(self):
+        return self._elements

@@ -45,6 +45,7 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
+from .analyzers import get_clusters_from_model
 
 __all__ = [
     "Joint",
@@ -96,4 +97,5 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
+    "get_clusters_from_model"
 ]
