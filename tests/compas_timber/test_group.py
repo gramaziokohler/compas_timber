@@ -2,6 +2,7 @@ import pytest
 
 from compas.geometry import Polyline
 from compas.geometry import Point
+from compas.geometry import Line
 from compas.geometry import Vector
 from compas_timber.elements import Slab
 from compas_timber.elements import Beam
@@ -21,7 +22,7 @@ def slab():
 
 
 def test_add_element_to_slab(slab, beam, model):
-    centerline = beam.centerline.copy()
+    centerline = Line(Point(15,10,0), Point(15,20,0))
 
     slab.add_element(beam)
 
@@ -29,4 +30,4 @@ def test_add_element_to_slab(slab, beam, model):
     assert len(list(model.elements())) == 0
     model.add_element(slab)
     assert len(list(model.elements())) == 2
-    assert beam.centerline == centerline
+    assert beam.centerline == centerline.reverse()

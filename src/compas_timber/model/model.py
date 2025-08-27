@@ -212,7 +212,7 @@ class TimberModel(Model):
             tree_node = ElementNode(element=element)
             parent.add(tree_node)
         else:
-            tree_node = GroupNode(name=element.name)
+            tree_node = GroupNode(name=element.name, element=element)
             for e in element.elements:
                 self.add_element(e, parent=tree_node)
         if material:

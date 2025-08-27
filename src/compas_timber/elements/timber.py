@@ -345,11 +345,13 @@ class TimberGroupElement:
         if transform_element:
             print("element frame = ", element.frame)
             element.frame.transform(self.transformation.inverse())
+            print("group transoformation = ", self.transformation)
             print("transformed element frame = ", element.frame)
             self._elements.append(element)
         else:
             self._elements.append(element)
         print("slab.elements contains:", [e.name for e in self.elements])
+        print(element.transformation)
 
     def remove_element(self, element):
         self.elements.remove(element)

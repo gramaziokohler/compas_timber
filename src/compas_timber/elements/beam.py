@@ -135,7 +135,9 @@ class Beam(TimberElement):
     @property
     def centerline(self):
         # type: () -> Line
-        return Line([0, 0, 0], [self.length, 0, 0]).transformed(self.worldtransformation)
+        line = Line([0, 0, 0], [self.length, 0, 0]).transformed(self.worldtransformation)
+        print("centerline for element", self.name, "is:", line)
+        return line
 
     @property
     def centerline_start(self):
