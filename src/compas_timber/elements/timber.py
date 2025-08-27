@@ -4,6 +4,7 @@ from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
+from compas_model.elements import Group
 
 
 class TimberElement(Element):
@@ -332,29 +333,26 @@ class TimberElement(Element):
         return self.width, self.height
 
 
-
-
-class TimberGroupElement:
+class TimberGroupElement(Group):
     def __init__(self, features=None, elements=None, **kwargs):
         super(TimberElement, self).__init__(features=features, **kwargs)
         self._elements = elements or []
 
-    def add_element(self, element, transform_element=True):
-        print("group frame = ", self.frame)
-        print("adding element", element.name)
+    def add_element(self, element, transform_element=True, add_to_model=True):
         if transform_element:
-            print("element frame = ", element.frame)
             element.frame.transform(self.transformation.inverse())
-            print("group transoformation = ", self.transformation)
-            print("transformed element frame = ", element.frame)
             self._elements.append(element)
+            if add_to_model and self.model:
+                self.model.add_element(element, parent=self)
         else:
             self._elements.append(element)
-        print("slab.elements contains:", [e.name for e in self.elements])
-        print(element.transformation)
+        if add_to_model and self.model:
+            self.model.add_element(element, parent=self)
 
-    def remove_element(self, element):
-        self.elements.remove(element)
+    def remove_element(self, element, remove_from_model=False):
+        self._elements.remove(element)
+        if remove_from_model and self.model:
+            self.model.remove_element(element)
 
     @property
     def elements(self):
