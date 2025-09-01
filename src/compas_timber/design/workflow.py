@@ -127,6 +127,7 @@ class JointRuleSolver(object):
                     promoted = True
                     break
                 if error:
+                    print("Error: {}".format(error))
                     self.joining_errors.append(error)  # should only happen with direct rules
                     break
             if not promoted:

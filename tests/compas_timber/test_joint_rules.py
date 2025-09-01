@@ -254,13 +254,20 @@ def test_category_rule_same_category(beams):
         beam.attributes["category"] = "A"
     rule = CategoryRule(TButtJoint, "A", "A")
     model = TimberModel()
-    model.add_elements(beams)
+    model.add_elements([cross, main])
     solver = JointRuleSolver([rule])
     _, _ = solver.apply_rules_to_model(model)
     joint = list(model.joints)[0]
     assert joint.main_beam == main
     assert joint.cross_beam == cross
 
+    model = TimberModel()
+    model.add_elements([main, cross])
+    solver = JointRuleSolver([rule])
+    _, _ = solver.apply_rules_to_model(model)
+    joint = list(model.joints)[0]
+    assert joint.main_beam == main
+    assert joint.cross_beam == cross
 
 def test_topology_rule_try_get_joint(beams):
     rule = TopologyRule(JointTopology.TOPO_L, LMiterJoint)
