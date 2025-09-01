@@ -116,27 +116,30 @@ class LFrenchRidgeLapJoint(LapJoint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
-        if not are_beams_aligned_with_cross_vector(*elements):
+        main_beam, cross_beam = elements
+        if not are_beams_aligned_with_cross_vector(main_beam, cross_beam):
             if not raise_error:
                 return False
+
             raise BeamJoiningError(
                 beams=elements,
                 joint=cls,
                 debug_info="The two beams are not coplanar to create a French Ridge Lap joint.",
                 debug_geometries=[e.shape for e in elements],
             )
+
         # calculate widths and heights of the beams
-        dimensions = []
-        main_ref_side_index = cls._get_beam_ref_side_index(*elements, flip=False)
-        cross_ref_side_index = cls._get_beam_ref_side_index(*elements[::-1], flip=False)
-        ref_side_indices = [main_ref_side_index, cross_ref_side_index]
-        for i, beam in enumerate(elements):
-            width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
-            dimensions.append((width, height))
+        main_ref_side_index = cls._get_beam_ref_side_index(main_beam, cross_beam, flip=False)
+        cross_ref_side_index = cls._get_beam_ref_side_index(cross_beam, main_beam, flip=False)
+
+        w_main, h_main = main_beam.get_dimensions_relative_to_side(main_ref_side_index)
+        w_cross, h_cross = cross_beam.get_dimensions_relative_to_side(cross_ref_side_index)
+
         # check if the dimensions of both beams match
-        if dimensions[0] != dimensions[1]:
+        if (w_main, h_main) != (w_cross, h_cross):
             if not raise_error:
                 return False
+
             raise BeamJoiningError(
                 elements,
                 cls,
