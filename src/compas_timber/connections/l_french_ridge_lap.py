@@ -46,7 +46,7 @@ class LFrenchRidgeLapJoint(LapJoint):
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs): #TODO this joint does not have main, cross beam roles
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs):  # TODO this joint does not have main, cross beam roles
         super(LFrenchRidgeLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
         self.drillhole_diam = drillhole_diam
 
@@ -143,4 +143,3 @@ class LFrenchRidgeLapJoint(LapJoint):
             )
 
         return True
-
