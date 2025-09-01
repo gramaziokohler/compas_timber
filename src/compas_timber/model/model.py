@@ -30,8 +30,10 @@ class TimberModel(Model):
         A Generator object of all beams assigned to this model.
     plates : Generator[:class:`~compas_timber.elements.Plate`]
         A Generator object of all plates assigned to this model.
-    joints : Generator[:class:`~compas_timber.connections.Joint`]
-        A Generator object of all joints assigned to this model.
+    joints : set[:class:`~compas_timber.connections.Joint`]
+        A set of all actual joints assigned to this model.
+    joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
+        A set of all joint candidates in the model.
     walls : Generator[:class:`~compas_timber.elements.Wall`]
         A Generator object of all walls assigned to this model.
     center_of_mass : :class:`~compas.geometry.Point`
@@ -45,6 +47,8 @@ class TimberModel(Model):
         The calculated total volume of the model.
 
     """
+
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = ["interactions", "candidate"]
 
     @classmethod
     def __from_data__(cls, data):
@@ -98,6 +102,16 @@ class TimberModel(Model):
             if isinstance(interaction, Joint):
                 joints.add(interaction)
         return joints
+
+    @property
+    def joint_candidates(self):
+        # type: () -> set[JointCandidate]
+        candidates = set()
+        for edge in self._graph.edges():
+            candidate = self._graph.edge_attribute(edge, "candidate")
+            if candidate is not None:
+                candidates.add(candidate)
+        return candidates
 
     @property
     def fasteners(self):
@@ -314,6 +328,54 @@ class TimberModel(Model):
             _ = self.add_interaction(element_a, element_b, joint)
             # TODO: should we create a bidirectional interaction here?
 
+    def add_joint_candidate(self, candidate):
+        # type: (JointCandidate) -> None
+        """Add a joint candidate to the model.
+
+        Joint candidates are stored on the graph edges under the "candidate" attribute,
+        separate from actual joints which are stored under the "interaction" attribute.
+
+        Parameters
+        ----------
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            An instance of a JointCandidate class.
+        """
+        for interaction in candidate.interactions:
+            element_a, element_b = interaction
+            edge = (element_a.graph_node, element_b.graph_node)
+            if edge not in self._graph.edges():
+                self._graph.add_edge(*edge)
+
+                # HACK: calls to `model.joints` expect there to be a "interactions" on any edges
+                self._graph.edge_attribute(edge, "interactions", [])
+
+            # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
+            # (``interactions`` vs. ``candidate``)
+            # TODO: ``interactions`` is a list, should ``candidate`` be a list as well? don't see a reason rn.
+            self._graph.edge_attribute(edge, "candidate", candidate)
+
+    def remove_joint_candidate(self, candidate):
+        # type: (JointCandidate) -> None
+        """Removes this joint candidate from the model.
+
+        Parameters
+        ----------
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            The joint candidate to remove.
+        """
+        for interaction in candidate.interactions:
+            element_a, element_b = interaction
+            edge = (element_a.graph_node, element_b.graph_node)
+
+            if edge in self._graph.edges():
+                stored_candidate = self._graph.edge_attribute(edge, "candidate")
+                if stored_candidate is candidate:
+                    self._graph.unset_edge_attribute(edge, "candidate")
+
+            if not self._is_remaining_attrs_on_edge(edge):
+                # if there's no other timber related attributes on that edge, then remove the edge as well
+                super(TimberModel, self).remove_interaction(element_a, element_b)
+
     def remove_joint(self, joint):
         # type: (Joint) -> None
         """Removes this joint object from the model.
@@ -329,6 +391,39 @@ class TimberModel(Model):
             self.remove_interaction(element_a, element_b)
         for element in joint.generated_elements:
             self.remove_element(element)
+
+    def remove_interaction(self, a, b, _=None):
+        """Remove the interaction between two elements.
+
+        Extends :meth:`Model.remove_interaction` to not remove the edge if there are still other timber related attribute on the same edge.
+
+        Parameters
+        ----------
+        a : :class:`TimberElement`
+        b : :class:`TimberElement`
+
+        Returns
+        -------
+        None
+
+        """
+        edge = (a.graph_node, b.graph_node)
+        if edge not in self._graph.edges():
+            return
+
+        edge_interactions = self._graph.edge_attribute(edge, "interactions")
+        edge_interactions.clear()  # type: ignore
+
+        if not self._is_remaining_attrs_on_edge(edge):
+            # if there's no other timber related attributes on that edge, then remove the edge as well
+            super(TimberModel, self).remove_interaction(a, b)
+
+    def _is_remaining_attrs_on_edge(self, edge):
+        # returns True if any TimeberModel attributes are left on edge
+        for attr in self._TIMBER_GRAPH_EDGE_ATTRIBUTES:
+            if self._graph.edge_attribute(edge, attr):
+                return True
+        return False
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
@@ -381,7 +476,12 @@ class TimberModel(Model):
         return errors
 
     def connect_adjacent_beams(self, max_distance=None):
-        for joint in self.joints:
+        # Clear existing joint candidates
+        for candidate in list(self.joint_candidates):
+            self.remove_joint_candidate(candidate)
+
+        # Clear existing joints (except WallJoints)
+        for joint in list(self.joints):
             if not isinstance(joint, WallJoint):
                 self.remove_joint(joint)
 
@@ -402,7 +502,9 @@ class TimberModel(Model):
             p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
             p1 = Point(*p1) if p1 else None
 
-            JointCandidate.create(self, beam_a, beam_b, topology=topology, location=p1)
+            # Create candidate and add it to the model
+            candidate = JointCandidate(beam_a, beam_b, topology=topology, location=p1)
+            self.add_joint_candidate(candidate)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.
