@@ -499,7 +499,7 @@ class TimberModel(Model):
             assert beam_a and beam_b
 
             # Create candidate and add it to the model
-            candidate = JointCandidate(result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location)
+            candidate = JointCandidate(result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location) # use the beam order determined by find_topology to keep main, cross relationship
             self.add_joint_candidate(candidate)
 
     def connect_adjacent_plates(self, max_distance=None):
