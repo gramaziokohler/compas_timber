@@ -58,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Cluster.topology`.
 * Added `PlateSolverResult` and `BeamSolverResult` to package results from `PlateConnectionSolver.find_topology()` and `ConnectionSolver.find_topology()`.
 
+* Added `joint_candidates` property to `TimberModel`.
+* Added `add_joint_candidate` method to `TimberModel`.
+* Added `remove_joint_candidate` method to `TimberModel`.
 
 ### Changed
 
@@ -85,6 +88,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `ConnectionSolver.find_topology()` to return a `BeamSolverResult` instance.
 * Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
 * `Platejoint`s can now be isntantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
+* Fixed ironpython compatibility issues.
+* `NBeamKDTreeAnalyzer` now uses `model.joint_candidates` instead of filtering `model.joints`.
+* Fixed element interaction gets removed even if there are still attributes on it.
+* Changed `elements` argument in `promote_joint_candidate` to `reordered_elements` for clarity.
 * Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
 * Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.apply_rules_to_model` which now adds `Joint`s to the
   `TimberModel` directly.

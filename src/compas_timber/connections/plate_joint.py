@@ -217,7 +217,7 @@ class PlateJoint(Joint):
         return topo_results
 
     @classmethod
-    def promote_joint_candidate(cls, model, candidate, elements=None, **kwargs):
+    def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
         """Creates an instance of this joint from a generic joint.
 
         Parameters
@@ -226,7 +226,7 @@ class PlateJoint(Joint):
             The model to which the elements and this joint belong.
         candidate : :class:`~compas_timber.connections.Joint`
             The generic joint to be converted.
-        elements : list(:class:`~compas_model.elements.Element`), optional
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
             The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
             This is used to explicitly define the element order.
         **kwargs : dict
@@ -238,8 +238,8 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        kwargs.update(candidate.__data__)  # pass topology and segment indices from candidate
-        return super(PlateJoint, cls).promote_joint_candidate(model, candidate, elements=elements, **kwargs)
+        kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
+        return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
 
     def add_features(self):
         """Add features to the plates based on the joint."""

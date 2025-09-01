@@ -1,5 +1,4 @@
 import math
-from typing import List
 
 import compas.geometry
 import compas.tolerance  # noqa: F401
@@ -9,7 +8,6 @@ from compas.tolerance import TOL
 
 import compas_timber.connections  # noqa: F401
 import compas_timber.elements  # noqa: F401
-from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 
 
@@ -98,10 +96,9 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
     def __init__(self, model, n=2, max_distance=None):
         super(NBeamKDTreeAnalyzer, self).__init__()
-        # ignore any joints that are not `JointCandidate` as we cannot guarantee they hold the appropriate information
-        self._joints = list(filter(lambda joint: isinstance(joint, JointCandidate), model.joints))
+        self._joints = list(model.joint_candidates)
         if not self._joints:
-            raise ValueError("The model has no joints to analyze. Forgot to call `model.connect_adjacent_beams()`?")
+            raise ValueError("The model has no joint candidates to analyze. Forgot to call `model.connect_adjacent_beams()`?")
 
         self._kdtree = KDTree([joint.location for joint in self._joints])
         self._n = n
@@ -109,8 +106,8 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
         # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
 
-    def find(self, exclude=None) -> List[Cluster]:
-        """Finds clusters of N beams connected pairwise at the same point within a given max_distance.
+    def find(self, exclude=None):
+        """Finds clusters of N beams connected pairwise at the same point within a given tolerance.
 
         Parameters
         ----------

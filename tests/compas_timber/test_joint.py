@@ -249,11 +249,13 @@ def test_generic_joint():
 
     model.connect_adjacent_beams()
 
-    assert all((isinstance(j, JointCandidate) for j in model.joints))
+    # Joint candidates should be stored separately from actual joints
+    assert all((isinstance(j, JointCandidate) for j in model.joint_candidates))
+    assert len(model.joint_candidates) == 4
+    assert len(model.joints) == 0  # No actual joints should be created
 
-    assert len(model.joints) == 4
-    l_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_L]
-    x_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_X]
+    l_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_L]
+    x_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_X]
     assert len(l_joints) == 3
     assert len(x_joints) == 1
 
@@ -283,3 +285,25 @@ def test_plate_joint_candidate():
     assert isinstance(edge_face_joints[0], PlateJointCandidate)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
     assert list(model.joints)[0].elements[0] == plate_b
+
+
+def test_joint_candidate_create_still_works():
+    """Test that JointCandidate.create() still works for creating actual joints."""
+    w, h = 20, 20
+
+    lines = [
+        Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1.0, y=0.0, z=0.0)),
+        Line(Point(x=0.5, y=-0.5, z=0.0), Point(x=0.5, y=0.5, z=0.0)),
+    ]
+
+    model = TimberModel()
+    beams = [Beam.from_centerline(line, w, h) for line in lines]
+    model.add_elements(beams)
+
+    # JointCandidate.create() should still create actual joints
+    joint = JointCandidate.create(model, beams[0], beams[1], topology=JointTopology.TOPO_T, location=Point(0.5, 0, 0))
+
+    assert isinstance(joint, JointCandidate)
+    assert joint in model.joints  # Should be in actual joints
+    assert len(model.joints) == 1
+    assert len(model.joint_candidates) == 0  # Should not be in candidates

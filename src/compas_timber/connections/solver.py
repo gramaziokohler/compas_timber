@@ -400,7 +400,9 @@ class BeamSolverResult(Data):
         }
 
     def __repr__(self):
-        return f"BeamSolverResult(topology={self.topology}, beam_a={self.beam_a.name}, beam_b={self.beam_b.name}, distance={self.distance}, location={self.location})"
+        return "BeamSolverResult(topology={}, beam_a={}, beam_b={}, distance={}, location={})".format(
+            self.topology, self.beam_a.name, self.beam_b.name, self.distance, self.location
+        )
 
 
 class PlateSolverResult(Data):
