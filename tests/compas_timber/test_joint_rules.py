@@ -183,7 +183,7 @@ def test_direct_rule_get_joint(beams):
     model = TimberModel()
     model.add_elements(beams)
     solver = JointRuleSolver(rules)
-    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    _, _ = solver.apply_rules_to_model(model)
     assert set([j.__class__.__name__ for j in model.joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
 
 
@@ -257,7 +257,7 @@ def test_category_rule_same_category(beams):
     model.add_elements(beams)
     solver = JointRuleSolver([rule])
     _, _ = solver.apply_rules_to_model(model)
-    joint = list([j for j in model.joints if not isinstance(j, JointCandidate)])[0]
+    joint = list(model.joints)[0]
     assert joint.main_beam == main
     assert joint.cross_beam == cross
 
@@ -267,7 +267,7 @@ def test_topology_rule_try_get_joint(beams):
     model = TimberModel()
     model.add_elements(beams)
     solver = JointRuleSolver([rule])
-    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    _, _ = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 2
 
 
@@ -279,9 +279,9 @@ def test_mixed_rules(L_beams):
     model = TimberModel()
     model.add_elements(L_beams)
     solver = JointRuleSolver(rules)
-    errors, unjoined_clusters = solver.apply_rules_to_model(model)
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 3
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["JointCandidate", "LLapJoint", "LButtJoint", "LMiterJoint"])
+    _, _ = solver.apply_rules_to_model(model)
+    assert len(model.joints) == 3
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint", "LButtJoint", "LMiterJoint"])
 
 
 def test_different_rules_max_distance(L_beams_separated):
@@ -310,7 +310,7 @@ def test_different_rules_max_distance_on_topo_rule(L_beams_separated):
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 2
     assert len(unjoined_clusters) == 2
     assert len(errors) == 1  # error because DirectRule fails
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["JointCandidate", "LMiterJoint"])
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LMiterJoint"])
 
 
 def test_different_rules_max_distance_on_category_rule(L_beams_separated):
@@ -322,13 +322,13 @@ def test_different_rules_max_distance_on_category_rule(L_beams_separated):
     model.add_elements(L_beams_separated)
     solver = JointRuleSolver(rules)
     errors, unjoined_clusters = solver.apply_rules_to_model(model)
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
+    assert len(model.joints) == 1
     assert len(unjoined_clusters) == 3
     assert len(errors) == 1  # error because CategoryRule fails
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["JointCandidate", "LButtJoint"])
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LButtJoint"])
 
 
-def test_different_rules_max_distance_on_category_rule(L_beams_separated):
+def test_different_rules_max_distance_on_direct_rule(L_beams_separated):
     for beam in L_beams_separated:
         beam.attributes["category"] = "A"
     L_beams_separated[1].attributes["category"] = "B"
@@ -337,10 +337,10 @@ def test_different_rules_max_distance_on_category_rule(L_beams_separated):
     model.add_elements(L_beams_separated)
     solver = JointRuleSolver(rules)
     errors, unjoined_clusters = solver.apply_rules_to_model(model)
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
+    assert len(model.joints) == 1
     assert len(unjoined_clusters) == 3
     assert len(errors) == 0  # NO error because DirectRule succeeds
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["JointCandidate", "LLapJoint"])
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint"])
 
 
 def test_different_rules_max_distance_on_rule_solver(L_beams_separated):
@@ -352,10 +352,10 @@ def test_different_rules_max_distance_on_rule_solver(L_beams_separated):
     model.add_elements(L_beams_separated)
     solver = JointRuleSolver(rules, max_distance=0.15)
     errors, unjoined_clusters = solver.apply_rules_to_model(model)
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 3
+    assert len(model.joints) == 3
     assert len(unjoined_clusters) == 1
     assert len(errors) == 0
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["JointCandidate", "LLapJoint", "LButtJoint", "LMiterJoint"])
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint", "LButtJoint", "LMiterJoint"])
 
 
 def test_plate_topo_rules():

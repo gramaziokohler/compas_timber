@@ -279,12 +279,12 @@ def test_plate_joint_candidate():
 
     assert all((isinstance(j, PlateJointCandidate) for j in model.joints))
 
-    assert len(model.joints) == 1
-    edge_face_joints = [j for j in model.joints if j.topology == JointTopology.TOPO_EDGE_FACE]
+    assert len(model.joint_candidates) == 1
+    edge_face_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_EDGE_FACE]
     assert len(edge_face_joints) == 1
     assert isinstance(edge_face_joints[0], PlateJointCandidate)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
-    assert list(model.joints)[0].elements[0] == plate_b
+    assert list(model.joint_candidates)[0].elements[0] == plate_b
 
 
 def test_joint_candidate_create_still_works():
