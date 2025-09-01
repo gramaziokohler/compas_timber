@@ -1,4 +1,4 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.0
 """Generates a direct joint between two elements. This overrides other joint rules."""
 
 import inspect
