@@ -1,4 +1,4 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.0
 """Creates a Beam from a LineCurve."""
 
 # flake8: noqa

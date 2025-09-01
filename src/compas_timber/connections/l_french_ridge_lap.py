@@ -40,9 +40,14 @@ class LFrenchRidgeLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs):
-        super(LFrenchRidgeLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, drillhole_diam, **kwargs)
+    @property
+    def __data__(self):
+        data = super(LFrenchRidgeLapJoint, self).__data__
+        data["drillhole_diam"] = self.drillhole_diam
+        return data
 
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs):
+        super(LFrenchRidgeLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
         self.drillhole_diam = drillhole_diam
 
     def add_extensions(self):
