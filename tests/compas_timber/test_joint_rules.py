@@ -269,6 +269,7 @@ def test_category_rule_same_category(beams):
     assert joint.main_beam == main
     assert joint.cross_beam == cross
 
+
 def test_topology_rule_try_get_joint(beams):
     rule = TopologyRule(JointTopology.TOPO_L, LMiterJoint)
     model = TimberModel()
@@ -317,7 +318,7 @@ def test_different_rules_max_distance_on_topo_rule(L_beams_separated):
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 2
     assert len(unjoined_clusters) == 2
     assert len(errors) == 1  # error because DirectRule fails
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LMiterJoint"]) # TopologyRule has generated the joint
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LMiterJoint"])  # TopologyRule has generated the joint
 
 
 def test_different_rules_max_distance_on_category_rule(L_beams_separated):
@@ -332,7 +333,7 @@ def test_different_rules_max_distance_on_category_rule(L_beams_separated):
     assert len(model.joints) == 1
     assert len(unjoined_clusters) == 3
     assert len(errors) == 1  # error because CategoryRule fails
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LButtJoint"])# CategoryRule has generated the joint
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LButtJoint"])  # CategoryRule has generated the joint
 
 
 def test_different_rules_max_distance_on_direct_rule(L_beams_separated):
@@ -347,7 +348,7 @@ def test_different_rules_max_distance_on_direct_rule(L_beams_separated):
     assert len(model.joints) == 1
     assert len(unjoined_clusters) == 3
     assert len(errors) == 0  # NO error because DirectRule succeeds
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint"]) # DirectRule has generated the joint
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint"])  # DirectRule has generated the joint
 
 
 def test_different_rules_max_distance_on_rule_solver(L_beams_separated):
@@ -362,7 +363,7 @@ def test_different_rules_max_distance_on_rule_solver(L_beams_separated):
     assert len(model.joints) == 3
     assert len(unjoined_clusters) == 1
     assert len(errors) == 0
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint", "LButtJoint", "LMiterJoint"]) # All rules have generated the joints
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint", "LButtJoint", "LMiterJoint"])  # All rules have generated the joints
 
 
 def test_plate_topo_rules():
