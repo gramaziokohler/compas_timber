@@ -2,11 +2,11 @@ from compas.tolerance import TOL
 
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
+from compas_timber.connections import MaxNCompositeAnalyzer
+from compas_timber.connections import PlateMiterJoint
+from compas_timber.connections import PlateTButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections import MaxNCompositeAnalyzer
-from compas_timber.connections import PlateTButtJoint
-from compas_timber.connections import PlateMiterJoint
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import intersection_line_line_param
 
@@ -127,11 +127,12 @@ class JointRuleSolver(object):
                     promoted = True
                     break
                 if error:
-                    self.joining_errors.append(error) #should only happen with direct rules
+                    self.joining_errors.append(error)  # should only happen with direct rules
                     break
             if not promoted:
                 remaining_clusters.append(cluster)
         return remaining_clusters
+
 
 class JointRule(object):
     """Represents a rule for creating joints between timber elements.

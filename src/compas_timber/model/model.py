@@ -497,13 +497,10 @@ class TimberModel(Model):
             if result.topology == JointTopology.TOPO_UNKNOWN:
                 continue
             assert beam_a and beam_b
-            p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
-            p1 = Point(*p1) if p1 else None
 
             # Create candidate and add it to the model
-            candidate = JointCandidate(beam_a, beam_b, topology=topology, distance=result.distance, location=p1)
+            candidate = JointCandidate(beam_a, beam_b, topology=result.topology, distance=result.distance, location=result.location)
             self.add_joint_candidate(candidate)
-
 
     def connect_adjacent_plates(self, max_distance=None):
         """Connects adjacent plates in the model.

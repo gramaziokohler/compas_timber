@@ -8,7 +8,6 @@ from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections.analyzers import Cluster
 from compas_timber.elements import Beam
-from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.model import TimberModel
 
@@ -123,7 +122,6 @@ def test_from_cluster_with_custom_elements_order(cluster_with_single_joint):
         # Verify the joint respects the element order
         with pytest.raises(BeamJoiningError):  # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
             TButtJoint.promote_cluster(model, cluster, reordered_elements=elements)
-
 
 
 def test_from_cluster_with_kwargs(cluster_with_single_joint):

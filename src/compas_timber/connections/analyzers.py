@@ -242,4 +242,3 @@ def MaxNCompositeAnalyzer(model, n, max_distance=None):
     analyzers_cls = [lambda m, t, k=k: NBeamKDTreeAnalyzer(m, n=k, max_distance=t) for k in range(n, 1, -1)]
     # Use lambdas to capture k at each step
     return CompositeAnalyzer([cls(model, max_distance) for cls in analyzers_cls])
-
