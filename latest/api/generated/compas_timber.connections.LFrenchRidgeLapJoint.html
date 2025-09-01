@@ -598,7 +598,7 @@ document.write(`
 <h1>LFrenchRidgeLapJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.LFrenchRidgeLapJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LFrenchRidgeLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0327d9d/src/compas_timber/connections/l_french_ridge_lap.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LFrenchRidgeLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/986f470/src/compas_timber/connections/l_french_ridge_lap.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.LapJoint.html#compas_timber.connections.LapJoint" title="compas_timber.connections.lap_joint.LapJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p>
 <p>Represents an L-FrenchRidgeLap type joint which joins two beams at their ends, by lapping them with a ridge.
 The joint can only be created between two beams that are aligned and have the same dimensions.</p>
@@ -642,9 +642,6 @@ The joint can only be created between two beams that are aligned and have the sa
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.check_elements_compatibility.html#compas_timber.connections.LFrenchRidgeLapJoint.check_elements_compatibility" title="compas_timber.connections.LFrenchRidgeLapJoint.check_elements_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_elements_compatibility</span></code></a></p></td>
 <td><p>Checks if the elements are compatible for the creation of the joint.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.restore_beams_from_keys.html#compas_timber.connections.LFrenchRidgeLapJoint.restore_beams_from_keys" title="compas_timber.connections.LFrenchRidgeLapJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
-<td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
-</tr>
 </tbody>
 </table>
 <p class="rubric">Inherited Methods</p>
@@ -674,16 +671,19 @@ The joint can only be created between two beams that are aligned and have the sa
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.promote_joint_candidate.html#compas_timber.connections.LFrenchRidgeLapJoint.promote_joint_candidate" title="compas_timber.connections.LFrenchRidgeLapJoint.promote_joint_candidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_joint_candidate</span></code></a></p></td>
 <td><p>Creates an instance of this joint from a joint candidate.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.sha256.html#compas_timber.connections.LFrenchRidgeLapJoint.sha256" title="compas_timber.connections.LFrenchRidgeLapJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.restore_beams_from_keys.html#compas_timber.connections.LFrenchRidgeLapJoint.restore_beams_from_keys" title="compas_timber.connections.LFrenchRidgeLapJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.sha256.html#compas_timber.connections.LFrenchRidgeLapJoint.sha256" title="compas_timber.connections.LFrenchRidgeLapJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.to_json.html#compas_timber.connections.LFrenchRidgeLapJoint.to_json" title="compas_timber.connections.LFrenchRidgeLapJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.to_json.html#compas_timber.connections.LFrenchRidgeLapJoint.to_json" title="compas_timber.connections.LFrenchRidgeLapJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.to_jsonstring.html#compas_timber.connections.LFrenchRidgeLapJoint.to_jsonstring" title="compas_timber.connections.LFrenchRidgeLapJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.to_jsonstring.html#compas_timber.connections.LFrenchRidgeLapJoint.to_jsonstring" title="compas_timber.connections.LFrenchRidgeLapJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.validate_data.html#compas_timber.connections.LFrenchRidgeLapJoint.validate_data" title="compas_timber.connections.LFrenchRidgeLapJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LFrenchRidgeLapJoint.validate_data.html#compas_timber.connections.LFrenchRidgeLapJoint.validate_data" title="compas_timber.connections.LFrenchRidgeLapJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
