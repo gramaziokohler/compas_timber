@@ -96,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Updated the `__data__` method of `LFrenchRidgeLapJoint` to serialize the `drillhole_diam` value.
 * Changed the `_create_negative_volumes()` method in `LapJoint` to accept `cut_plane_bias` as an argument.
 * Renamed `set_default_values()` to `_update_default_values()` and moved method call from `__init__()` to `add_features()` in `TenonMortiseJoint` to avoid inconsistencies during deserialization.
+* Set minimum `compas_timber` version in CPython GH components to `1.0.0`.
 
 ### Removed
 
