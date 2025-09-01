@@ -40,8 +40,15 @@ class LLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
+    @property
+    def __data__(self):
+        data = super(LLapJoint, self).__data__
+        data["cut_plane_bias"] = self.cut_plane_bias
+        return data
+
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(LLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
+        super(LLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
+        self.cut_plane_bias = cut_plane_bias
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -83,7 +90,7 @@ class LLapJoint(LapJoint):
             self.cross_beam.remove_features(self.features)
 
         # create lap features
-        negative_volume_main, negative_volume_cross = self._create_negative_volumes()
+        negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
         main_lap_feature = Lap.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
         cross_lap_feature = Lap.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
 

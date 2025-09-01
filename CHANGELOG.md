@@ -89,6 +89,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `NBeamKDTreeAnalyzer` now uses `model.joint_candidates` instead of filtering `model.joints`.
 * Fixed element interaction gets removed even if there are still attributes on it.
 * Changed `elements` argument in `promote_joint_candidate` to `reordered_elements` for clarity.
+* Fixed `TStepJoint` deserialization error where `__init__()` was accessing beam properties before beams were restored from GUIDs.
+* Removed the `cut_plane_bias` parameter from the `LapJoint.__init__()` method, as it is not required by all subclasses.
+* Added the `cut_plane_bias` parameter to the constructors of `TLapJoint`, `LLapJoint`, and `XLapJoint`.
+* Updated the `__data__` methods of `TLapJoint`, `LLapJoint`, and `XLapJoint` to serialize the `cut_plane_bias` value.
+* Updated the `__data__` method of `LFrenchRidgeLapJoint` to serialize the `drillhole_diam` value.
+* Changed the `_create_negative_volumes()` method in `LapJoint` to accept `cut_plane_bias` as an argument.
+* Renamed `set_default_values()` to `_update_default_values()` and moved method call from `__init__()` to `add_features()` in `TenonMortiseJoint` to avoid inconsistencies during deserialization.
 
 ### Removed
 
