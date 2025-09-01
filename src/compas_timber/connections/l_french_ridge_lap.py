@@ -127,7 +127,9 @@ class LFrenchRidgeLapJoint(LapJoint):
             )
         # calculate widths and heights of the beams
         dimensions = []
-        ref_side_indices = [cls._get_beam_ref_side_index(*elements, False), cls._get_beam_ref_side_index(*elements[::-1], False)]
+        main_ref_side_index = cls._get_beam_ref_side_index(*elements, flip=False)
+        cross_ref_side_index = cls._get_beam_ref_side_index(*elements[::-1], flip=False)
+        ref_side_indices = [main_ref_side_index, cross_ref_side_index]
         for i, beam in enumerate(elements):
             width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
             dimensions.append((width, height))
