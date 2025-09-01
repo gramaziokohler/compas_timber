@@ -329,16 +329,11 @@ class DirectRule(JointRule):
         error = None
         if self._matches_cluster(cluster):
             try:
-                if not self._comply_element_count(cluster, raise_error=True):
-                    return None, None
-                if not self._comply_topology(cluster, raise_error=True):
-                    return None, None
-                if not self._comply_element_order(cluster, raise_error=True):
-                    return None, None
-                if not self._comply_distance(cluster, raise_error=True, max_distance=max_distance):
-                    return None, None
-                if not self.joint_type.check_elements_compatibility(self.elements, raise_error=True):
-                    return None, None
+                self._comply_element_count(cluster, raise_error=True)
+                self._comply_topology(cluster, raise_error=True)
+                self._comply_element_order(cluster, raise_error=True)
+                self._comply_distance(cluster, raise_error=True, max_distance=max_distance)
+                self.joint_type.check_elements_compatibility(self.elements, raise_error=True)
                 joint = self.joint_type.promote_cluster(model, cluster, reordered_elements=self.elements, **self.kwargs)
             except BeamJoiningError as bje:
                 error = bje
