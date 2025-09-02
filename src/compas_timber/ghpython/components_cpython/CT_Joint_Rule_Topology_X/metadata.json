@@ -13,7 +13,7 @@
         "outputParameters": [
             {
                 "name": "Rule",
-                "description": "List of TopologyRules."
+                "description": "X-Topology Rule."
             }
         ]
     }

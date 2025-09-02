@@ -1,11 +1,11 @@
-# r: compas_timber>=1.0.0
+# r: compas_timber>=0.15.3
 """Generates a direct joint between two elements. This overrides other joint rules."""
 
 import inspect
 
 import Grasshopper  # type: ignore
+from System.Windows.Forms import ToolStripSeparator
 
-from compas_timber.connections import Joint
 from compas_timber.connections import PlateJoint
 from compas_timber.design import DirectRule
 from compas_timber.ghpython import get_leaf_subclasses
@@ -15,12 +15,12 @@ from compas_timber.ghpython import rename_cpython_gh_output
 from compas_timber.ghpython import warning
 
 
-class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
+class DirectPlateJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
-        super(DirectJointRule, self).__init__()
+        super(DirectPlateJointRule, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
-            if cls.MAX_ELEMENT_COUNT == 2 and not issubclass(cls, PlateJoint):
+        for cls in get_leaf_subclasses(PlateJoint):
+            if cls.MAX_ELEMENT_COUNT == 2:
                 self.classes[cls.__name__] = cls
 
         self.joint_type = self.classes.get(self.component.Params.Output[0].NickName, None)
@@ -36,9 +36,10 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             return None
 
         self.component.Message = self.joint_type.__name__
-        beam_a = args[0]
-        beam_b = args[1]
-        if not item_input_valid_cpython(ghenv, beam_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, beam_b, self.arg_names()[1]):
+        plate_a = args[0]
+        plate_b = args[1]
+
+        if not item_input_valid_cpython(ghenv, plate_a, self.arg_names()[0]) or not item_input_valid_cpython(ghenv, plate_b, self.arg_names()[1]):
             return
 
         kwargs = {}
@@ -46,17 +47,17 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             if val is not None:
                 kwargs[self.arg_names()[i + 2]] = val
 
-        Rules = DirectRule(self.joint_type, [beam_a, beam_b], **kwargs)
-        return Rules
+        return DirectRule(self.joint_type, [plate_a, plate_b], **kwargs)
 
     def arg_names(self):
-        return inspect.getargspec(self.joint_type.__init__)[0][1:] + ["max_distance"]
+        return inspect.getargspec(self.joint_type.__init__)[0][1:3] + ["max_distance"]
 
     def AppendAdditionalMenuItems(self, menu):
         for name in self.classes.keys():
             item = menu.Items.Add(name, None, self.on_item_click)
             if self.joint_type and name == self.joint_type.__name__:
                 item.Checked = True
+        menu.Items.Add(ToolStripSeparator())
 
     def on_item_click(self, sender, event_info):
         self.joint_type = self.classes[str(sender)]

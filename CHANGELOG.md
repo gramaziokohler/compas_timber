@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
 * Added new `BTLxProcessingError` to `compas_timber.errors`.
 * Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
+* Added `CategoryPlateJointRule`, `DirectPlateJointRule`, `EdgeEdgeTopologyPlateJointRule`, and `EdgeFaceTopologyPlateJointRule` Plate joint rule GH components.
 * Added `joints_contribution_guide` in docs.
 * Added `PlateJointCandidate` to `generic_joint.py`.
 * Added `Joint.promote_cluster` and `Joint.promote_joint_candidate` constructors to `Joint`.
