@@ -22,20 +22,17 @@ class Slab(Plate, TimberGroupElement):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, outline_a, outline_b, openings=None, interfaces=None, detail_set=None, name=None, **kwargs):
+    def __init__(self, outline_a, outline_b, openings=None, interfaces=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
         super(Slab, self).__init__(outline_a, outline_b, name=name, **kwargs)
-        self.openings = openings
+        for opening in openings:
+            self.add_opening(opening)
+        for interface in interfaces:
+            self.add_interface(interface)
         self.opening_outlines = [opening.outline for opening in self.openings] if openings else []
         self.attributes = {}
         self.attributes.update(kwargs)
-        self._edge_planes = []
-        self.openings = openings if openings is not None else []
-        self.interfaces = interfaces if interfaces is not None else []  # type: list[SlabToSlabInterface]
-        self._elements = []
-        self.joints = []
-        self.populator = None
-        self.detail_set = detail_set
+        self._edge_planes = [] #TODO this goes to plate?
 
     def __repr__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
@@ -52,28 +49,27 @@ class Slab(Plate, TimberGroupElement):
         return True
 
     @property
-    def elements(self):
-        return self._elements + self.openings + self.interfaces
+    def opening_outlines(self):
+        return [opening.outline for opening in self.openings]
 
-    def add_interface(self, interface, frame_is_global=True):
-        """Add an interface to the slab."""
-        if frame_is_global:
-            interface.frame.transform(self.frame.inverse())
-        self.interfaces.append(interface)
-
-    def add_opening(self, opening, frame_is_global=True):
+    def add_opening(self, opening):
         """Add an opening to the slab."""
-        if frame_is_global:
-            opening.frame.transform(self.frame.inverse())
+        self.add_element(opening)
         self.openings.append(opening)
         self.opening_outlines.append(opening.outline)
 
-    def add_interface(self, interface, frame_is_global=True):
+    def remove_opening(self, opening):
+        """Remove an opening from the slab."""
+        self.remove_element(opening)
+        self.openings.remove(opening)
+        self.opening_outlines.remove(opening.outline)
+
+    def add_interface(self, interface):
         """Add an interface to the slab."""
-        if frame_is_global:
-            interface.frame.transform(self.frame.inverse())
+        self.add_element(interface)
         self.interfaces.append(interface)
 
-    def create_joint(self):
-        self.detail_set.create_joints(self)
-
+    def remove_interface(self, interface):
+        """Remove an interface from the slab."""
+        self.remove_element(interface)
+        self.interfaces.remove(interface)

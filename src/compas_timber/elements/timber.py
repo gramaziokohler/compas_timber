@@ -4,8 +4,8 @@ from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
-from compas_model.elements import Group
 
+from compas_timber.model import TimberModel
 
 class TimberElement(Element):
     """Base class for all timber elements.
@@ -333,27 +333,36 @@ class TimberElement(Element):
         return self.width, self.height
 
 
-class TimberGroupElement(Group):
+class TimberGroupElement(TimberElement):
     def __init__(self, features=None, elements=None, **kwargs):
-        super(TimberElement, self).__init__(features=features, **kwargs)
-        self._elements = elements or []
+        super(TimberGroupElement, self).__init__(features=features, **kwargs)
+        self.elements = elements or []
+        self.frame = None
+        self.model = TimberModel()
 
-    def add_element(self, element, transform_element=True, add_to_model=True):
-        if transform_element:
-            element.frame.transform(self.transformation.inverse())
-            self._elements.append(element)
-            if add_to_model and self.model:
-                self.model.add_element(element, parent=self)
-        else:
-            self._elements.append(element)
-        if add_to_model and self.model:
-            self.model.add_element(element, parent=self)
+
+    def add_element(self, element):
+        if element.tree_node:
+            old_parent_transformation = element.tree_node.parent.worldtransformation
+            element.frame.transform(old_parent_transformation.inverse())
+        if self.frame:
+            element.frame.transform(self.worldtransformation.inverse())
+        self.model.add_element(element, parent=self)
 
     def remove_element(self, element, remove_from_model=False):
-        self._elements.remove(element)
         if remove_from_model and self.model:
             self.model.remove_element(element)
 
+    def add_joint(self, joint):
+        self.model.add_joint(joint, parent=self)
+
+    def remove_joint(self, joint):
+        self.model.remove_joint(joint)
+
     @property
     def elements(self):
-        return self._elements
+        return self.model.elements()
+
+    @property
+    def joints(self):
+        return self.model.joints()
