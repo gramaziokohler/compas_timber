@@ -7,7 +7,6 @@ if not compas.IPY:
     from compas.tolerance import Tolerance  # noqa: F401
 
 from compas.geometry import Point
-from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 from compas_model.models import Model
 
@@ -15,6 +14,9 @@ from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
+from compas_timber.connections import PlateConnectionSolver
+from compas_timber.connections import PlateJoint
+from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import WallJoint
 from compas_timber.errors import BeamJoiningError
 
@@ -451,7 +453,7 @@ class TimberModel(Model):
 
         for joint in joints:
             try:
-                joint.check_elements_compatibility()
+                joint.check_elements_compatibility(joint.elements)  # TODO: is this necessary here? This should be done at joint creation.
                 joint.add_extensions()
             except BeamJoiningError as bje:
                 errors.append(bje)
@@ -492,18 +494,44 @@ class TimberModel(Model):
         for pair in pairs:
             beam_a, beam_b = pair
             result = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
-            topology = result.topology
-            beam_a = result.beam_a
-            beam_b = result.beam_b
-            if topology == JointTopology.TOPO_UNKNOWN:
+            if result.topology == JointTopology.TOPO_UNKNOWN:
                 continue
-
             assert beam_a and beam_b
-            p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
-            p1 = Point(*p1) if p1 else None
 
             # Create candidate and add it to the model
-            candidate = JointCandidate(beam_a, beam_b, topology=topology, location=p1)
+            candidate = JointCandidate(
+                result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location
+            )  # use the beam order determined by find_topology to keep main, cross relationship
+            self.add_joint_candidate(candidate)
+
+    def connect_adjacent_plates(self, max_distance=None):
+        """Connects adjacent plates in the model.
+
+        Parameters
+        ----------
+        max_distance : float, optional
+            The maximum distance between plates to consider them adjacent. Default is 0.0.
+        """
+        for joint in self.joints:
+            if isinstance(joint, PlateJoint):
+                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+
+        max_distance = max_distance or TOL.absolute
+        plates = list(self.plates)
+        solver = PlateConnectionSolver()
+        pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)
+        for pair in pairs:
+            plate_a, plate_b = pair
+            result = solver.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance)
+
+            if result.topology is JointTopology.TOPO_UNKNOWN:
+                continue
+            kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
+
+            if result.topology == JointTopology.TOPO_EDGE_EDGE:
+                kwargs["b_segment_index"] = result.b_segment_index
+
+            candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
 
     def connect_adjacent_walls(self, max_distance=None):

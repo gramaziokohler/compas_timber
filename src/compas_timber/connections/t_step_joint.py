@@ -215,25 +215,34 @@ class TStepJoint(Joint):
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
+    @classmethod
+    def check_elements_compatibility(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the TStepJoint.
 
-        Raises
-        ------
-        BeamJoiningError
-            If the elements are not compatible for the creation of the joint.
+        Parameters
+        ----------
+        elements : list of :class:`~compas_timber.model.TimberElement`
+            The cluster of elements to be checked.
+        raise_error : bool, optional
+            Whether to raise an error if the elements are not compatible.
+            If False, the method will return False instead of raising an error.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
 
         """
-        # check if the beams are aligned
-        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
-        for beam in self.elements:
+        cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
+        for beam in elements:
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vect.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoiningError(
-                    self.main_beam,
-                    self.cross_beam,
-                    debug_info="The the two beams are not aligned to create a Step joint.")
+                if not raise_error:
+                    return False
+                raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
+
+        return True
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
