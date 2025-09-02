@@ -13,13 +13,13 @@
                 "name": "plate_a",
                 "description": "Plate A.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "plate_b",
                 "description": "Plate B.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "max_distance",

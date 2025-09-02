@@ -8,7 +8,6 @@ from compas.scene import Scene
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
-from compas_timber.connections.joint import Joint
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRuleSolver
 from compas_timber.design import WallPopulator
