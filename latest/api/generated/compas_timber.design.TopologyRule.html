@@ -598,7 +598,7 @@ document.write(`
 <h1>TopologyRule</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.design.TopologyRule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">TopologyRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c295aa1/src/compas_timber/design/workflow.py#L312"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">TopologyRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/23a8cbb/src/compas_timber/design/workflow.py#L461"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.design.JointRule.html#compas_timber.design.JointRule" title="compas_timber.design.workflow.JointRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointRule</span></code></a></p>
 <p>for a given connection topology type (L,T,X,I,K…), this rule assigns a joint type.</p>
 <dl class="field-list">
@@ -622,25 +622,8 @@ This will override a global max_distance if set.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.TopologyRule.ToString.html#compas_timber.design.TopologyRule.ToString" title="compas_timber.design.TopologyRule.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.TopologyRule.comply.html#compas_timber.design.TopologyRule.comply" title="compas_timber.design.TopologyRule.comply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comply</span></code></a></p></td>
-<td><p>Checks if the given elements comply with this TopologyRule.</p></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Inherited Methods</p>
-<table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.TopologyRule.get_category_rules.html#compas_timber.design.TopologyRule.get_category_rules" title="compas_timber.design.TopologyRule.get_category_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_category_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.TopologyRule.get_direct_rules.html#compas_timber.design.TopologyRule.get_direct_rules" title="compas_timber.design.TopologyRule.get_direct_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_direct_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.TopologyRule.get_topology_rules.html#compas_timber.design.TopologyRule.get_topology_rules" title="compas_timber.design.TopologyRule.get_topology_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_topology_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.TopologyRule.joints_from_beams_and_rules.html#compas_timber.design.TopologyRule.joints_from_beams_and_rules" title="compas_timber.design.TopologyRule.joints_from_beams_and_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">joints_from_beams_and_rules</span></code></a></p></td>
-<td><p>processes joint rules into joint definitions.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.TopologyRule.try_create_joint.html#compas_timber.design.TopologyRule.try_create_joint" title="compas_timber.design.TopologyRule.try_create_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">try_create_joint</span></code></a></p></td>
+<td><p>Returns a Joint if the given cluster's elements comply with this TopologyRule.</p></td>
 </tr>
 </tbody>
 </table>

@@ -603,7 +603,7 @@ document.write(`
 <h1>CompositeAnalyzer.from_model</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.CompositeAnalyzer.from_model">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CompositeAnalyzer.</span></span><span class="sig-name descname"><span class="pre">from_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analyzers_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c295aa1/src/compas_timber/connections/analyzers.py#L204"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CompositeAnalyzer.</span></span><span class="sig-name descname"><span class="pre">from_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analyzers_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/23a8cbb/src/compas_timber/connections/analyzers.py#L202"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Create a CompositeAnalyzer from a TimberModel and a list of analyzers.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -612,7 +612,7 @@ document.write(`
 </dd>
 <dt><strong>analyzers_cls</strong><span class="classifier">list[type[BeamGroupAnalyzer]] | type[BeamGroupAnalyzer]</span></dt><dd><p>A list of analyzer classes to use for finding clusters.</p>
 </dd>
-<dt><strong>tolerance</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.tolerance.Tolerance.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tolerance</span></code></a> | None</span></dt><dd><p>The tolerance to use for the analysis. If None, a default tolerance is used.</p>
+<dt><strong>max_distance</strong><span class="classifier">float | None</span></dt><dd><p>The max distance to use for the analysis. If None, a default max distance is used.</p>
 </dd>
 </dl>
 </dd>

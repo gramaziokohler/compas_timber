@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="JointCandidate.add_features" href="compas_timber.connections.JointCandidate.add_features.html" />
-    <link rel="prev" title="LLapJoint.validate_data" href="compas_timber.connections.LLapJoint.validate_data.html" />
+    <link rel="prev" title="LMiterJoint.validate_data" href="compas_timber.connections.LMiterJoint.validate_data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -598,7 +598,7 @@ document.write(`
 <h1>JointCandidate</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.JointCandidate">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">JointCandidate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c295aa1/src/compas_timber/connections/joint_candidate.py#L5"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">JointCandidate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/23a8cbb/src/compas_timber/connections/joint_candidate.py#L5"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
 <p>A JointCandidate is an information-only joint, which does not add any features to the elements it connects.</p>
 <p>It is used to create a first-pass joinery information which can be later used to perform analysis using <a class="reference internal" href="compas_timber.connections.BeamGroupAnalyzer.html#compas_timber.connections.BeamGroupAnalyzer" title="compas_timber.connections.analyzers.BeamGroupAnalyzer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamGroupAnalyzer</span></code></a>.</p>
@@ -610,6 +610,8 @@ document.write(`
 </dd>
 <dt><strong>element_b</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></span></dt><dd><p>Second element to be joined.</p>
 </dd>
+<dt><strong>distance</strong><span class="classifier">float | None</span></dt><dd><p>Distance between the elements.</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
@@ -617,6 +619,8 @@ document.write(`
 <dt><strong>element_a</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></span></dt><dd><p>First element to be joined.</p>
 </dd>
 <dt><strong>element_b</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></span></dt><dd><p>Second element to be joined.</p>
+</dd>
+<dt><strong>distance</strong><span class="classifier">float | None</span></dt><dd><p>Distance between the elements.</p>
 </dd>
 </dl>
 </dd>
@@ -642,7 +646,7 @@ document.write(`
 <td><p>Adds the extensions defined by this joint to affected beam(s).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.JointCandidate.check_elements_compatibility.html#compas_timber.connections.JointCandidate.check_elements_compatibility" title="compas_timber.connections.JointCandidate.check_elements_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_elements_compatibility</span></code></a></p></td>
-<td><p>Checks if the beams are compatible for the creation of the joint.</p></td>
+<td><p>Checks if the cluster of beams complies with the requirements for the Joint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.JointCandidate.copy.html#compas_timber.connections.JointCandidate.copy" title="compas_timber.connections.JointCandidate.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>

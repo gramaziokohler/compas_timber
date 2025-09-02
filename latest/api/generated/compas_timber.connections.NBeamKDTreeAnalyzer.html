@@ -598,9 +598,9 @@ document.write(`
 <h1>NBeamKDTreeAnalyzer</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.NBeamKDTreeAnalyzer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">NBeamKDTreeAnalyzer</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c295aa1/src/compas_timber/connections/analyzers.py#L84"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">NBeamKDTreeAnalyzer</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/23a8cbb/src/compas_timber/connections/analyzers.py#L84"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.BeamGroupAnalyzer.html#compas_timber.connections.BeamGroupAnalyzer" title="compas_timber.connections.analyzers.BeamGroupAnalyzer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamGroupAnalyzer</span></code></a></p>
-<p>Finds clusters of N beams connected pairwise at the same point within a given tolerance.</p>
+<p>Finds clusters of N beams connected pairwise at the same point within a given max_distance.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -608,7 +608,7 @@ document.write(`
 </dd>
 <dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>The desired cluster size, i.e. the number of beams in a cluster.</p>
 </dd>
-<dt><strong>tolerance</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.tolerance.Tolerance.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tolerance</span></code></a> | None</span></dt><dd><p>The tolerance to use for the analysis. If None, a default tolerance is used.</p>
+<dt><strong>max_distance</strong><span class="classifier">float | None</span></dt><dd><p>The max distance to use for the analysis. If None, a default max distance is used.</p>
 </dd>
 </dl>
 </dd>

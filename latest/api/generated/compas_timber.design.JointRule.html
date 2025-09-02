@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="JointRule.comply" href="compas_timber.design.JointRule.comply.html" />
-    <link rel="prev" title="JointDefinition.match" href="compas_timber.design.JointDefinition.match.html" />
+    <link rel="next" title="SurfaceModel" href="compas_timber.design.SurfaceModel.html" />
+    <link rel="prev" title="DirectRule.try_create_joint" href="compas_timber.design.DirectRule.try_create_joint.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -598,28 +598,21 @@ document.write(`
 <h1>JointRule</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.design.JointRule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">JointRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c295aa1/src/compas_timber/design/workflow.py#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">JointRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/23a8cbb/src/compas_timber/design/workflow.py#L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p class="rubric">Methods</p>
-<table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.JointRule.comply.html#compas_timber.design.JointRule.comply" title="compas_timber.design.JointRule.comply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comply</span></code></a></p></td>
-<td><p>Returns True if the provided elements comply with the rule defined by this instance.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.JointRule.get_category_rules.html#compas_timber.design.JointRule.get_category_rules" title="compas_timber.design.JointRule.get_category_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_category_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.JointRule.get_direct_rules.html#compas_timber.design.JointRule.get_direct_rules" title="compas_timber.design.JointRule.get_direct_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_direct_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.JointRule.get_topology_rules.html#compas_timber.design.JointRule.get_topology_rules" title="compas_timber.design.JointRule.get_topology_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_topology_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.JointRule.joints_from_beams_and_rules.html#compas_timber.design.JointRule.joints_from_beams_and_rules" title="compas_timber.design.JointRule.joints_from_beams_and_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">joints_from_beams_and_rules</span></code></a></p></td>
-<td><p>processes joint rules into joint definitions.</p></td>
-</tr>
-</tbody>
-</table>
+<p>Represents a rule for creating joints between timber elements.
+Parameters
+———-
+joint_type : <code class="xref py py-class docutils literal notranslate"><span class="pre">JointType</span></code></p>
+<blockquote>
+<div><p>The type of joint to create.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>max_distance<span class="classifier">float, optional</span></dt><dd><p>The maximum distance to consider when creating joints. This will override the global max_distance.</p>
+</dd>
+<dt><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs<span class="classifier">dict, optional</span></dt><dd><p>Additional keyword arguments to pass to the joint creation method.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

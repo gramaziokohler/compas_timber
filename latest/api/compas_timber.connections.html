@@ -600,20 +600,38 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.Joint.html" title="compas_timber.connections.Joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Joint</span></code></a></p></td>
 <td><p>Base class for a joint connecting two beams.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LapJoint.html" title="compas_timber.connections.LapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateJoint.html" title="compas_timber.connections.PlateJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateJoint</span></code></a></p></td>
+<td><p>Models a plate to plate interaction.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.LapJoint.html" title="compas_timber.connections.LapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p></td>
 <td><p>Abstract Lap type joint with functions common to L-Lap, T-Lap, and X-Lap Joints.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.ButtJoint.html" title="compas_timber.connections.ButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ButtJoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.ButtJoint.html" title="compas_timber.connections.ButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ButtJoint</span></code></a></p></td>
 <td><p>Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TButtJoint.html" title="compas_timber.connections.TButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TButtJoint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TButtJoint.html" title="compas_timber.connections.TButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TButtJoint</span></code></a></p></td>
 <td><p>Represents a T-Butt type joint which joins the end of a beam along the length of another beam, trimming the main beam.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.LButtJoint.html" title="compas_timber.connections.LButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LButtJoint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LButtJoint.html" title="compas_timber.connections.LButtJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LButtJoint</span></code></a></p></td>
 <td><p>Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TStepJoint.html" title="compas_timber.connections.TStepJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TStepJoint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TStepJoint.html" title="compas_timber.connections.TStepJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TStepJoint</span></code></a></p></td>
 <td><p>Represents an T-Step type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LFrenchRidgeLapJoint.html" title="compas_timber.connections.LFrenchRidgeLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LFrenchRidgeLapJoint</span></code></a></p></td>
+<td><p>Represents an L-FrenchRidgeLap type joint which joins two beams at their ends, by lapping them with a ridge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.LLapJoint.html" title="compas_timber.connections.LLapJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LLapJoint</span></code></a></p></td>
+<td><p>Represents an L-Lap type joint which joins the ends of two beams with a lap.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.LMiterJoint.html" title="compas_timber.connections.LMiterJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LMiterJoint</span></code></a></p></td>
+<td><p>Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane at the bisector angle between the beams' centerlines.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.JointCandidate.html" title="compas_timber.connections.JointCandidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointCandidate</span></code></a></p></td>
+<td><p>A JointCandidate is an information-only joint, which does not add any features to the elements it connects.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.PlateJointCandidate.html" title="compas_timber.connections.PlateJointCandidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlateJointCandidate</span></code></a></p></td>
+<td><p>A PlateJointCandidate is an information-only joint for plate connections.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.TBirdsmouthJoint.html" title="compas_timber.connections.TBirdsmouthJoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TBirdsmouthJoint</span></code></a></p></td>
 <td><p>Represents a T-Birdsmouth type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).</p></td>
@@ -717,13 +735,13 @@ document.write(`
 <td><p>Interface for a beam group analyzer.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.NBeamKDTreeAnalyzer.html" title="compas_timber.connections.NBeamKDTreeAnalyzer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NBeamKDTreeAnalyzer</span></code></a></p></td>
-<td><p>Finds clusters of N beams connected pairwise at the same point within a given tolerance.</p></td>
+<td><p>Finds clusters of N beams connected pairwise at the same point within a given max_distance.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.TripletAnalyzer.html" title="compas_timber.connections.TripletAnalyzer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TripletAnalyzer</span></code></a></p></td>
-<td><p>Finds clusters of 3 beams connected pairwise at the same point within a given tolerance.</p></td>
+<td><p>Finds clusters of 3 beams connected pairwise at the same point within a given max_distance.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_timber.connections.QuadAnalyzer.html" title="compas_timber.connections.QuadAnalyzer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuadAnalyzer</span></code></a></p></td>
-<td><p>Finds clusters of 4 beams connected pairwise at the same point within a given tolerance.</p></td>
+<td><p>Finds clusters of 4 beams connected pairwise at the same point within a given max_distance.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_timber.connections.CompositeAnalyzer.html" title="compas_timber.connections.CompositeAnalyzer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CompositeAnalyzer</span></code></a></p></td>
 <td><p>CompositeAnalyzer combines multiple analyzers to find clusters of beams.</p></td>

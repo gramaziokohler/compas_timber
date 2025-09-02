@@ -603,13 +603,20 @@ document.write(`
 <h1>WallJoint.check_elements_compatibility</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.WallJoint.check_elements_compatibility">
-<span class="sig-prename descclassname"><span class="pre">WallJoint.</span></span><span class="sig-name descname"><span class="pre">check_elements_compatibility</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c295aa1/src/compas_timber/connections/joint.py#L137"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Checks if the beams are compatible for the creation of the joint.
-This is optional and should only be implemented by joints that require it.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamJoiningError</span></code></dt><dd><p>Should be raised whenever the elements did not comply with the requirements of the joint.</p>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WallJoint.</span></span><span class="sig-name descname"><span class="pre">check_elements_compatibility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/23a8cbb/src/compas_timber/connections/joint.py#L257"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Checks if the cluster of beams complies with the requirements for the Joint.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>elements</strong><span class="classifier">list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The beams to check.</p>
+</dd>
+<dt><strong>raise_error</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, raises a <cite>BeamJoiningError</cite> if the requirements are not met.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p>True if the cluster complies with the requirements, False otherwise.</p>
 </dd>
 </dl>
 </dd>

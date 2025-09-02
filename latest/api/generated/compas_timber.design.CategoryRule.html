@@ -598,7 +598,7 @@ document.write(`
 <h1>CategoryRule</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.design.CategoryRule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">CategoryRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c295aa1/src/compas_timber/design/workflow.py#L212"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">CategoryRule</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/23a8cbb/src/compas_timber/design/workflow.py#L345"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.design.JointRule.html#compas_timber.design.JointRule" title="compas_timber.design.workflow.JointRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointRule</span></code></a></p>
 <p>Based on the category attribute attached to the elements, this rule assigns</p>
 <dl class="field-list">
@@ -610,7 +610,8 @@ document.write(`
 </dd>
 <dt><strong>category_b</strong><span class="classifier">str</span></dt><dd><p>The category of the second element.</p>
 </dd>
-<dt><strong>topos</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.connections.JointTopology.html#compas_timber.connections.JointTopology" title="compas_timber.connections.JointTopology"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointTopology</span></code></a>), optional</span></dt><dd><p>The topologies that are supported by this rule.</p>
+<dt><strong>topos</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.connections.JointTopology.html#compas_timber.connections.JointTopology" title="compas_timber.connections.JointTopology"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointTopology</span></code></a>), optional</span></dt><dd><p>The topologies that are supported by this rule.
+TODO: reconsider how to implement this. was meant to filter/override joint application based on topology.</p>
 </dd>
 <dt><strong>max_distance</strong><span class="classifier">float, optional</span></dt><dd><p>The maximum distance to consider two elements as intersecting.</p>
 </dd>
@@ -625,28 +626,8 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.ToString.html#compas_timber.design.CategoryRule.ToString" title="compas_timber.design.CategoryRule.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.comply.html#compas_timber.design.CategoryRule.comply" title="compas_timber.design.CategoryRule.comply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comply</span></code></a></p></td>
-<td><p>Checks if the given elements comply with this CategoryRule.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.reorder.html#compas_timber.design.CategoryRule.reorder" title="compas_timber.design.CategoryRule.reorder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder</span></code></a></p></td>
-<td><p>Returns the given elements in a sorted order.</p></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Inherited Methods</p>
-<table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.get_category_rules.html#compas_timber.design.CategoryRule.get_category_rules" title="compas_timber.design.CategoryRule.get_category_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_category_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.get_direct_rules.html#compas_timber.design.CategoryRule.get_direct_rules" title="compas_timber.design.CategoryRule.get_direct_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_direct_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.get_topology_rules.html#compas_timber.design.CategoryRule.get_topology_rules" title="compas_timber.design.CategoryRule.get_topology_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_topology_rules</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.joints_from_beams_and_rules.html#compas_timber.design.CategoryRule.joints_from_beams_and_rules" title="compas_timber.design.CategoryRule.joints_from_beams_and_rules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">joints_from_beams_and_rules</span></code></a></p></td>
-<td><p>processes joint rules into joint definitions.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.design.CategoryRule.try_create_joint.html#compas_timber.design.CategoryRule.try_create_joint" title="compas_timber.design.CategoryRule.try_create_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">try_create_joint</span></code></a></p></td>
+<td><p>Returns a Joint if the given cluster's elements comply with this CategoryRule.</p></td>
 </tr>
 </tbody>
 </table>
