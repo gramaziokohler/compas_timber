@@ -2,7 +2,7 @@
 Citing
 ********************************************************************************
 
-COMPAS TIMBER is a research project developed at Gramazio Kohler Research at ETH Zurich,
+COMPAS Timber is a research project developed at Gramazio Kohler Research at ETH Zurich,
 and supported by the Swiss National Science Foundation through the National Center of Competence in Research "Digital Fabrication" (`NCCR dfab <https://dfab.ch/>`__) programme.
 It is an open-source project, developed by contributors from academia and industry.
 
