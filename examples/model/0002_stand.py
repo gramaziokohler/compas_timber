@@ -60,12 +60,12 @@ for pair in beam_pairs:
     beam_a, beam_b = pair
 
     # find topology and reorder beams according to roles if needed based on found topology
-    result = solver.find_topology(beam_a, beam_b)
+    topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b)
 
     # join beams accorgind to topology to connection type mapping
-    joint_cls = topo_connection.get(result.topology, None)
+    joint_cls = topo_connection.get(topo, None)
     if joint_cls is not None:
-        joint_cls.create(model, result.beam_a, result.beam_b)
+        joint_cls.create(model, beam_a, beam_b)
 
 model.process_joinery()
 
@@ -78,7 +78,6 @@ for beam in model.beams:
 
 # draw geometry (with features)
 for beam in model.beams:
-    beam: Beam
     viewer.scene.add(beam.geometry)
 
 viewer.show()
