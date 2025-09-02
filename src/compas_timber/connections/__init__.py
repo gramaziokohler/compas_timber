@@ -5,8 +5,8 @@ from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
-from .generic_joint import JointCandidate
-from .generic_joint import PlateJointCandidate
+from .joint_candidate import JointCandidate
+from .joint_candidate import PlateJointCandidate
 from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
@@ -27,17 +27,13 @@ from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
 from .wall_joint import WallJoint
 from .wall_joint import InterfaceLocation
+from .wall_joint import InterfaceRole
 from .plate_joint import PlateJoint
-from .plate_joint import InterfaceRole
-from .plate_joint import PlateToPlateInterface
-from .slab_joint import SlabToSlabInterface
-from .slab_joint import SlabJoint
-from .slab_butt_joint import SlabButtJoint
-from .slab_miter_joint import SlabMiterJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
+from .plate_joint import PlateToPlateInterface
 from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
 from .analyzers import QuadAnalyzer
@@ -45,7 +41,6 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
-from .analyzers import get_clusters_from_model
 
 __all__ = [
     "Joint",
@@ -77,19 +72,14 @@ __all__ = [
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
     "WallJoint",
-    "PlateJoint",
     "InterfaceLocation",
     "InterfaceRole",
     "PlateJoint",
-    "PlateToPlateInterface",
-    "SlabToSlabInterface",
-    "SlabJoint",
-    "SlabButtJoint",
-    "SlabMiterJoint",
     "PlateButtJoint",
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
+    "PlateToPlateInterface",
     "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",
     "QuadAnalyzer",
@@ -97,5 +87,4 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
-    "get_clusters_from_model"
 ]

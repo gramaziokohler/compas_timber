@@ -537,7 +537,7 @@ class StepJointNotch(BTLxProcessing):
                 )
         return geometry
 
-    def add_mortise(self, mortise_width, mortise_height, beam):
+    def add_mortise(self, mortise_width, mortise_height):
         """Add a mortise to the existing StepJointNotch instance.
 
         Parameters
@@ -549,12 +549,7 @@ class StepJointNotch(BTLxProcessing):
         """
         self.mortise = True
         self.mortise_width = mortise_width
-        if mortise_height > beam.height:  # TODO: should this be constrained?
-            self.mortise_height = beam.height
-        elif mortise_height < self.step_depth:
-            self.mortise_height = self.step_depth
-        else:
-            self.mortise_height = mortise_height
+        self.mortise_height = mortise_height if mortise_height > self.step_depth else self.step_depth
 
     def planes_from_params_and_beam(self, beam):
         """Calculates the cutting planes from the machining parameters in this instance and the given beam

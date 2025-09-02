@@ -118,9 +118,6 @@ class TenonMortiseJoint(Joint):
         self.shape = shape
         self.shape_radius = shape_radius
 
-        # assign default values if not provided
-        self.set_default_values()
-
         self.features = []
 
     @property
@@ -155,10 +152,10 @@ class TenonMortiseJoint(Joint):
             raise ValueError("Invalid tenon shape index. Please provide a valid index between 0 and 4.")
         return shape_type
 
-    def set_default_values(self):
-        """Sets default values for attributes if they are not provided."""
+    def _update_unset_values(self):
+        """Updates and sets default property values if they are not provided."""
         width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
-        # assign default values
+
         self.start_y = self.start_y or 0.0
         self.start_depth = self.start_depth or 0.0
         self.rotation = self.rotation or 0.0
@@ -196,7 +193,9 @@ class TenonMortiseJoint(Joint):
         #main_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.translate(-cutting_plane.normal * self.height)
+            main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]
+            offset = self.height or main_width / 2    # in case height is not set this is the default value set when adding features
+            cutting_plane.translate(-cutting_plane.normal * offset)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -217,6 +216,9 @@ class TenonMortiseJoint(Joint):
         if self.features:
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
+
+        # set default values if not provided
+        self._update_unset_values()
 
         # generate  tenon features
         main_feature = Tenon.from_plane_and_beam(

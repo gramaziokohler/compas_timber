@@ -2,9 +2,9 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Vector
-from compas.geometry import Transformation
 from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_plane
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
@@ -51,8 +51,8 @@ class PlateToPlateInterface(object):
     """
 
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None):
+        self.polyline = polyline
         self.frame = frame
-        self.polyline = polyline.transformed(Transformation.from_frame_to_frame(frame, Frame.worldXY()))
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         self.topology = topology  # TODO: don't like this here
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
@@ -130,7 +130,7 @@ class PlateJoint(Joint):
         self.b_segment_index = b_segment_index
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                self.calculate_topology(self.plate_a, self.plate_b)
+                self.calculate_topology()
         self.a_outlines = None
         self.b_outlines = None
         self.a_planes = None
@@ -203,7 +203,7 @@ class PlateJoint(Joint):
 
     def calculate_topology(self, allow_reordering=False):
         """Calculate the topology of the joint based on the plates."""
-        topo_results = PlateConnectionSolver.find_topology(self.plate_a, self.plate_b)
+        topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
         if topo_results.topology == JointTopology.TOPO_UNKNOWN:
             raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
         if self.plate_a != topo_results.plate_a:
@@ -217,16 +217,16 @@ class PlateJoint(Joint):
         return topo_results
 
     @classmethod
-    def from_generic_joint(cls, model, generic_joint, elements=None, **kwargs):
+    def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
         """Creates an instance of this joint from a generic joint.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the elements and this joint belong.
-        from_generic_joint : :class:`~compas_timber.connections.Joint`
+        candidate : :class:`~compas_timber.connections.Joint`
             The generic joint to be converted.
-        elements : list(:class:`~compas_model.elements.Element`), optional
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
             The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
             This is used to explicitly define the element order.
         **kwargs : dict
@@ -238,8 +238,8 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        kwargs.update(generic_joint.__data__)  # pass topology and segment indices from generic joint
-        return super(PlateJoint, cls).from_generic_joint(model, generic_joint, elements=elements, **kwargs)
+        kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
+        return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
 
     def add_features(self):
         """Add features to the plates based on the joint."""
@@ -260,16 +260,19 @@ class PlateJoint(Joint):
             raise ValueError("Plate not part of this joint.")
 
     def reorder_planes_and_outlines(self):
-        """reorders `self.a_planes`, `self.b_planes`, `self.a_outlines`, `self.b_outlines` based on proximity to other plate.
-        closer/inside planes and outlines first."""
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
-            self.b_planes = self.b_planes[::-1]
-            self.b_outlines = self.b_outlines[::-1]
+            self.b_planes = self.plate_b.planes[::-1]
+            self.b_outlines = self.plate_b.outlines[::-1]
+        else:
+            self.b_planes = self.plate_b.planes
+            self.b_outlines = self.plate_b.outlines
 
+        self.a_planes = self.plate_a.planes
+        self.a_outlines = self.plate_a.outlines
         if self.topology == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
-                self.a_planes = self.a_planes[::-1]
-                self.a_outlines = self.a_outlines[::-1]
+                self.a_planes = self.plate_a.planes[::-1]
+                self.a_outlines = self.plate_a.outlines[::-1]
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
@@ -282,3 +285,17 @@ class PlateJoint(Joint):
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid
+
+
+def move_polyline_segment_to_plane(polyline, segment_index, plane):
+    """Move a segment of a polyline to the intersection with a plane."""
+    start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
+    if start_pt:
+        polyline[segment_index] = start_pt
+        if segment_index == 0:
+            polyline[-1] = start_pt
+    end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
+    if end_pt:
+        polyline[segment_index + 1] = end_pt
+        if segment_index + 1 == len(polyline.lines):
+            polyline[0] = end_pt

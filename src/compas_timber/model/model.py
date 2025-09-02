@@ -1,7 +1,5 @@
 import compas
 
-from compas_timber.connections.plate_joint import PlateJoint
-
 if not compas.IPY:
     from typing import Generator  # noqa: F401
     from typing import List  # noqa: F401
@@ -9,17 +7,14 @@ if not compas.IPY:
     from compas.tolerance import Tolerance  # noqa: F401
 
 from compas.geometry import Point
+from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 from compas_model.models import Model
-from compas_model.models import ElementNode
-from compas_model.models import GroupNode
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
-from compas_timber.connections import PlateConnectionSolver
-from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import WallJoint
 from compas_timber.errors import BeamJoiningError
 
@@ -35,8 +30,10 @@ class TimberModel(Model):
         A Generator object of all beams assigned to this model.
     plates : Generator[:class:`~compas_timber.elements.Plate`]
         A Generator object of all plates assigned to this model.
-    joints : Generator[:class:`~compas_timber.connections.Joint`]
-        A Generator object of all joints assigned to this model.
+    joints : set[:class:`~compas_timber.connections.Joint`]
+        A set of all actual joints assigned to this model.
+    joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
+        A set of all joint candidates in the model.
     walls : Generator[:class:`~compas_timber.elements.Wall`]
         A Generator object of all walls assigned to this model.
     center_of_mass : :class:`~compas.geometry.Point`
@@ -51,10 +48,19 @@ class TimberModel(Model):
 
     """
 
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = ["interactions", "candidate"]
+
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
-        for interaction in model.interactions(kind="joint"):  # TODO: allow for contacts as well once they are implemented in compas_timber
+
+        # TODO: this is a workaround to ensure that the graph nodes are not lost during deserialization
+        # TODO: this was fixed in later compas_model release, remove after migrating
+        for graphnode in model._graph.nodes():
+            element = model._graph.node_element(graphnode)  # type: ignore
+            element.graph_node = graphnode  # type: ignore
+
+        for interaction in model.interactions():
             interaction.restore_beams_from_keys(model)  # type: ignore
         return model
 
@@ -62,15 +68,10 @@ class TimberModel(Model):
         super(TimberModel, self).__init__()
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
-        self._graph.update_default_edge_attributes(joints=None, contacts=None)  # update the default edge attributes to include joints and contacts
 
-    def __str__(self):  # TODO: add groups and contacts or use the parent method instead?
+    def __str__(self):
         # type: () -> str
         return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
-
-    # =============================================================================
-    # Attributes
-    # =============================================================================
 
     @property
     def tolerance(self):
@@ -97,9 +98,20 @@ class TimberModel(Model):
     def joints(self):
         # type: () -> set[Joint]
         joints = set()  # some joints might apear on more than one interaction
-        for interaction in self.interactions(kind="joint"):
-            joints.add(interaction)
+        for interaction in self.interactions():
+            if isinstance(interaction, Joint):
+                joints.add(interaction)
         return joints
+
+    @property
+    def joint_candidates(self):
+        # type: () -> set[JointCandidate]
+        candidates = set()
+        for edge in self._graph.edges():
+            candidate = self._graph.edge_attribute(edge, "candidate")
+            if candidate is not None:
+                candidates.add(candidate)
+        return candidates
 
     @property
     def fasteners(self):
@@ -145,10 +157,6 @@ class TimberModel(Model):
         # type: () -> float
         return sum([element.obb.volume for element in self.elements()])
 
-    # =============================================================================
-    # Elements
-    # =============================================================================
-
     def element_by_guid(self, guid):
         # type: (str) -> Beam
         """Get a beam by its unique identifier.
@@ -164,97 +172,23 @@ class TimberModel(Model):
             The element with the specified GUID.
 
         """
-        return self._elements[guid]
+        return self._guid_element[guid]
 
-    def add_element(self, element, parent=None, material=None):
-        # type: (Element, GroupNode | None, Material | None) -> ElementNode
-        """Add an element to the model.
+    def add_element(self, element, parent=None, **kwargs):
+        # resolve parent name to GroupNode object
+        # TODO: upstream this to compas_model
+        if parent and isinstance(parent, str):
+            if not self.has_group(parent):
+                raise ValueError("Group {} not found in model.".format(parent))
+            parent = next((group for group in self._tree.groups if group.name == parent))
+        return super(TimberModel, self).add_element(element, parent, **kwargs)
 
-        Parameters
-        ----------
-        element : :class:`Element`
-            The element to add.
-        parent : :class:`GroupNode`, optional
-            The parent group node of the element.
-            If ``None``, the element will be added directly under the root node.
-        material : :class:`Material`, optional
-            A material to assign to the element.
-            Note that the material should have already been added to the model before it can be assigned.
-
-        Returns
-        -------
-        :class:`Elementnode`
-            The tree node containing the element in the hierarchy.
-
-        Raises
-        ------
-        ValueError
-            If the parent node is not a GroupNode.
-        ValueError
-            If a material is provided that is not part of the model.
-
-        """
-        guid = str(element.guid)
-        if guid in self._guid_element:
-            raise Exception("Element already in the model.")
-        self._guid_element[guid] = element
-
-        element.graph_node = self.graph.add_node(element=element)
-
-        if not parent:
-            parent = self._tree.root  # type: ignore
-
-        if material and not self.has_material(material):
-            raise ValueError("The material is not part of the model: {}".format(material))
-
-
-        if not element.is_group_element:
-            tree_node = ElementNode(element=element)
-            parent.add(tree_node)
-        else:
-            tree_node = GroupNode(name=element.name, element=element)
-            for e in element.elements:
-                self.add_element(e, parent=tree_node)
-        if material:
-            self.assign_material(material=material, element=element)
-        return tree_node
-
-    def add_elements(self, elements, parent=None):
-        # type: (list[Element], GroupNode | None) -> list[Element]
-        """Add multiple elements to the model.
-
-        Parameters
-        ----------
-        elements : list[:class:`~compas_model.elements.Element`]
-            The model elements.
-        parent : :class:`~compas_model.elements.Element`, optional
-            The parent element of the elements to be added to the model.
-            This can be a group element or any other element that can contain other elements.
-            If ``None``, the elements will be added directly under the root node.
-
-        Returns
-        -------
-        list[:class:`~compas_model.elements.Element`]
-            The list of elements that were added to the model.
-
-        """
-        if not isinstance(elements, list):
-            elements = [elements]
-        for element in elements:
-            self.add_element(element, parent=parent)
-        return elements
-
-    # =============================================================================
-    # Groups
-    # =============================================================================
-
-    def add_group_element(self, element, name=None, parent=None):
+    def add_group_element(self, element, name=None):
         """Add an element which shall contain other elements.
 
         The container element is added to the group as well.
 
         TODO: upstream this to compas_model, maybe?
-        TODO: should this allow for assigning it a parent in the future?
 
         Parameters
         ----------
@@ -265,13 +199,12 @@ class TimberModel(Model):
 
         Returns
         -------
-        :class:`~compas_model.elements.Group`
-            The group element that was created and to which the element was added.
+        :class:`~compas_model.models.GroupNode`
+            The group node containing the element.
 
         Raises
         ------
         ValueError
-            If the element is not a group element.
             If the group name is not provided and the element has no name.
             If a group with same name already exists in the model.
 
@@ -287,7 +220,7 @@ class TimberModel(Model):
         True
 
         """
-        # type: (TimberElement, str) -> Group
+        # type: (TimberElement, str) -> GroupNode
         group_name = name or element.name
 
         if not element.is_group_element:
@@ -296,94 +229,65 @@ class TimberModel(Model):
         if not group_name:
             raise ValueError("Group name must be provided or group element must have a name.")
 
-        if self.has_group(element):
+        if self.has_group(group_name):
             raise ValueError("Group {} already exists in model.".format(group_name))
 
-        group = self.add_group(group_name)
-        if parent:
-            self.add_element(element, parent=parent)
-        else:
-            self.add_element(element, parent=self.tree.root)  # add the group element to the root of the tree
-
-        for e in element.elements:
-            self.add_element(e, parent=group)
+        group_node = self.add_group(group_name)
+        self.add_element(element, parent=group_node)
 
         element.name = group_name
-        return group
+        return group_node
 
-    def has_group(self, group_element):
-        # type: (TimberElement) -> bool
-        """Check if a group with `group_element` exists in the model.
-
-        Parameters
-        ----------
-        group_element : class:`~compas_timber.elements.TimberElement`
-            The group element to check for existence.
-
-        Returns
-        -------
-        bool
-            True if the group element exists in the model.
-        """
-        return self.has_element(group_element)
-
-    def get_elements_in_group(self, group_element, filter_=None):
-        """Get all elements in a group element.
+    def has_group(self, group_name):
+        # type: (str) -> bool
+        """Check if a group with `group_name` exists in the model.
 
         TODO: upstream this to compas_model
 
         Parameters
         ----------
-        group_element : :class:`~compas_timber.elements.TimberElement`
-            The group element to query.
+        group_name : str
+            The name of the group to query.
+
+        Returns
+        -------
+        bool
+            True if the group exists in the model.
+        """
+        return group_name in (group.name for group in self._tree.groups)
+
+    def get_elements_in_group(self, group_name, filter_=None):
+        """Get all elements in a group with `group_name`.
+
+        TODO: upstream this to compas_model
+
+        Parameters
+        ----------
+        group_name : str
+            The name of the group to query.
         filter_ : callable, optional
             A filter function to apply to the elements.
 
         Returns
         -------
-        Generator[:class:`~compas_timber.elements.TimberElement`]
+        Generator[:class:`~compas_model.elements.Element`]
             A generator of elements in the group.
 
         """
-        # type: (TimberElement, callable | None) -> Generator[TimberElement, None, None]
-        if not self.has_group(group_element):
-            raise ValueError("Group {} not found in model.".format(group_element.name))
+        # type: (str, Optional[callable]) -> Generator[Element, None, None]
+        if not self.has_group(group_name):
+            raise ValueError("Group {} not found in model.".format(group_name))
 
         filter_ = filter_ or (lambda _: True)
-        group = self._elements[str(group_element.guid)]
-        elements = group.children
+
+        group = next((group for group in self._tree.groups if group.name == group_name))
+        elements = (node.element for node in group.children)
         return filter(filter_, elements)
-
-    # =============================================================================
-    # Interactions
-    # =============================================================================
-
-    def interactions(self, kind=None):
-        # type: (str | None) -> Generator
-        """Yield edge-level relationships, optionally filtered by kind.
-
-        Parameters
-        ----------
-        kind : str or None, optional
-            Filter interactions by type: "joint", "contact", or None for all.
-
-        Yields
-        ------
-        Joint or Contact
-            The interactions of the specified kind.
-        """
-        for (u, v), attr in self._graph.edges(data=True):
-            if kind in (None, "joint"):
-                for joint in attr.get("joints") or []:
-                    yield joint
-            if kind in (None, "contact"):
-                for contact in attr.get("contacts") or []:
-                    yield contact
 
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
         try:
-            return self._graph.edge_attribute(node_pair, "joints")  # TODO: should this be "contacts" as well?
+            return self._graph.edge_interactions(node_pair)
         except KeyError:
             return []
 
@@ -421,11 +325,56 @@ class TimberModel(Model):
         self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
             element_a, element_b = interaction
-            edge = self.add_interaction(element_a, element_b)
-            joints = self._graph.edge_attribute(edge, "joints") or []  # explicitly add the joint to the "joints" attribute
-            joints.append(joint)
-            self._graph.edge_attribute(edge, "joints", value=joints)
+            _ = self.add_interaction(element_a, element_b, joint)
             # TODO: should we create a bidirectional interaction here?
+
+    def add_joint_candidate(self, candidate):
+        # type: (JointCandidate) -> None
+        """Add a joint candidate to the model.
+
+        Joint candidates are stored on the graph edges under the "candidate" attribute,
+        separate from actual joints which are stored under the "interaction" attribute.
+
+        Parameters
+        ----------
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            An instance of a JointCandidate class.
+        """
+        for interaction in candidate.interactions:
+            element_a, element_b = interaction
+            edge = (element_a.graph_node, element_b.graph_node)
+            if edge not in self._graph.edges():
+                self._graph.add_edge(*edge)
+
+                # HACK: calls to `model.joints` expect there to be a "interactions" on any edges
+                self._graph.edge_attribute(edge, "interactions", [])
+
+            # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
+            # (``interactions`` vs. ``candidate``)
+            # TODO: ``interactions`` is a list, should ``candidate`` be a list as well? don't see a reason rn.
+            self._graph.edge_attribute(edge, "candidate", candidate)
+
+    def remove_joint_candidate(self, candidate):
+        # type: (JointCandidate) -> None
+        """Removes this joint candidate from the model.
+
+        Parameters
+        ----------
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            The joint candidate to remove.
+        """
+        for interaction in candidate.interactions:
+            element_a, element_b = interaction
+            edge = (element_a.graph_node, element_b.graph_node)
+
+            if edge in self._graph.edges():
+                stored_candidate = self._graph.edge_attribute(edge, "candidate")
+                if stored_candidate is candidate:
+                    self._graph.unset_edge_attribute(edge, "candidate")
+
+            if not self._is_remaining_attrs_on_edge(edge):
+                # if there's no other timber related attributes on that edge, then remove the edge as well
+                super(TimberModel, self).remove_interaction(element_a, element_b)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -443,9 +392,38 @@ class TimberModel(Model):
         for element in joint.generated_elements:
             self.remove_element(element)
 
-    # =============================================================================
-    # Other Methods
-    # =============================================================================
+    def remove_interaction(self, a, b, _=None):
+        """Remove the interaction between two elements.
+
+        Extends :meth:`Model.remove_interaction` to not remove the edge if there are still other timber related attribute on the same edge.
+
+        Parameters
+        ----------
+        a : :class:`TimberElement`
+        b : :class:`TimberElement`
+
+        Returns
+        -------
+        None
+
+        """
+        edge = (a.graph_node, b.graph_node)
+        if edge not in self._graph.edges():
+            return
+
+        edge_interactions = self._graph.edge_attribute(edge, "interactions")
+        edge_interactions.clear()  # type: ignore
+
+        if not self._is_remaining_attrs_on_edge(edge):
+            # if there's no other timber related attributes on that edge, then remove the edge as well
+            super(TimberModel, self).remove_interaction(a, b)
+
+    def _is_remaining_attrs_on_edge(self, edge):
+        # returns True if any TimeberModel attributes are left on edge
+        for attr in self._TIMBER_GRAPH_EDGE_ATTRIBUTES:
+            if self._graph.edge_attribute(edge, attr):
+                return True
+        return False
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
@@ -472,9 +450,8 @@ class TimberModel(Model):
         joints = self.joints
 
         for joint in joints:
-            if isinstance(joint, JointCandidate):
-                continue
             try:
+                joint.check_elements_compatibility()
                 joint.add_extensions()
             except BeamJoiningError as bje:
                 errors.append(bje)
@@ -482,8 +459,6 @@ class TimberModel(Model):
                     raise bje
 
         for joint in joints:
-            if isinstance(joint, JointCandidate):
-                continue
             try:
                 joint.add_features()
             except BeamJoiningError as bje:
@@ -501,11 +476,16 @@ class TimberModel(Model):
         return errors
 
     def connect_adjacent_beams(self, max_distance=None):
-        for joint in self.joints:
-            if not isinstance(joint, WallJoint) or isinstance(joint, PlateJoint):
+        # Clear existing joint candidates
+        for candidate in list(self.joint_candidates):
+            self.remove_joint_candidate(candidate)
+
+        # Clear existing joints (except WallJoints)
+        for joint in list(self.joints):
+            if not isinstance(joint, WallJoint):
                 self.remove_joint(joint)
 
-        max_distance = max_distance or TOL.absolute
+        max_distance = max_distance or TOL.relative
         beams = list(self.beams)
         solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
@@ -519,32 +499,12 @@ class TimberModel(Model):
                 continue
 
             assert beam_a and beam_b
-            # p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
-            # p1 = Point(*p1) if p1 else None
-            joint = JointCandidate.create(self, beam_a, beam_b, topology=topology, distance=distance, location=pt)
+            p1, _ = intersection_line_line(beam_a.centerline, beam_b.centerline)
+            p1 = Point(*p1) if p1 else None
 
-    def connect_adjacent_plates(self, max_distance=None):
-        for joint in self.joints:
-            if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)
-
-        max_distance = max_distance or TOL.absolute
-        plates = list(self.plates)
-        solver = PlateConnectionSolver()
-        pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)
-        for pair in pairs:
-            plate_a, plate_b = pair
-            topology, p_a, p_b, distance, pt = solver.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance)
-
-            if topology is None:
-                continue
-
-            kwargs = {"topology": topology, "a_segment_index": p_a[1], "distance": distance, "location": pt}
-
-            if topology == JointTopology.TOPO_EDGE_EDGE:
-                kwargs["b_segment_index"] = p_b[1]
-
-            PlateJointCandidate.create(self, p_a[0], p_b[0], **kwargs)
+            # Create candidate and add it to the model
+            candidate = JointCandidate(beam_a, beam_b, topology=topology, location=p1)
+            self.add_joint_candidate(candidate)
 
     def connect_adjacent_walls(self, max_distance=None):
         """Connects adjacent walls in the model.

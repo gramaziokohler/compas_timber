@@ -40,9 +40,14 @@ class LFrenchRidgeLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs):
-        super(LFrenchRidgeLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, drillhole_diam, **kwargs)
+    @property
+    def __data__(self):
+        data = super(LFrenchRidgeLapJoint, self).__data__
+        data["drillhole_diam"] = self.drillhole_diam
+        return data
 
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, drillhole_diam=None, **kwargs):
+        super(LFrenchRidgeLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
         self.drillhole_diam = drillhole_diam
 
     def add_extensions(self):
@@ -93,53 +98,28 @@ class LFrenchRidgeLapJoint(LapJoint):
         # register the features in the joint
         self.features = [main_frl_feature, cross_frl_feature]
 
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model.element_by_guid(self.beam_a_guid)
-        self.beam_b = model.element_by_guid(self.beam_b_guid)
+    def check_elements_compatibility(self):
+        """Checks if the elements are compatible for the creation of the joint.
 
-    @classmethod
-    def comply_elements(cls, elements, raise_error=False):
-        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+        Compared to the LapJoint's `check_elements_compatibility` method, this one additionally checks if dimensions of the beams match.
 
-        Parameters
-        ----------
-        elements : list(:class:`~compas_model.elements.Beam`)
-            The elements to be checked.
-        raise_error : bool, optional
-            If True, raises a :class:`~compas_timber.errors.BeamJoiningError` if the cluster does not comply with the requirements.
-            If False, returns False instead.
-
-        Returns
-        -------
-        bool
-            True if the cluster complies with the requirements, False otherwise.
-
+        Raises
+        ------
+        BeamJoiningError
+            If the elements are not compatible for the creation of the joint.
         """
-        if not are_beams_aligned_with_cross_vector(*elements):
-            if not raise_error:
-                return False
+        if not are_beams_aligned_with_cross_vector(*self.elements):
             raise BeamJoiningError(
-                beams=elements,
-                joint=cls,
-                debug_info="The two beams are not coplanar to create a French Ridge Lap joint.",
-                debug_geometries=[e.shape for e in elements],
+                beams=self.elements,
+                joint=self,
+                debug_info="The two beams are not coplanar to create a Lap joint.",
             )
         # calculate widths and heights of the beams
         dimensions = []
-        ref_side_indices = [cls._get_beam_ref_side_index(*elements, False), cls._get_beam_ref_side_index(*elements[::-1], False)]
-        for i, beam in enumerate(elements):
+        ref_side_indices = [self.main_ref_side_index, self.cross_ref_side_index]
+        for i, beam in enumerate(self.elements):
             width, height = beam.get_dimensions_relative_to_side(ref_side_indices[i])
             dimensions.append((width, height))
         # check if the dimensions of both beams match
         if dimensions[0] != dimensions[1]:
-            if not raise_error:
-                return False
-            raise BeamJoiningError(
-                elements,
-                cls,
-                debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.",
-                debug_geometries=[e.shape for e in elements],
-            )
-
-        return True
+            raise BeamJoiningError(self.elements, self, debug_info="The two beams must have the same dimensions to create a French Ridge Lap joint.")

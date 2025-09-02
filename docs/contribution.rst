@@ -7,5 +7,6 @@ Welcome to the COMPAS Timber developer guide. This section provides comprehensiv
 .. toctree::
     :maxdepth: 1
 
+    contribution/class_diagrams
     contribution/BTLx_contribution_guide
     contribution/joints_contribution_guide

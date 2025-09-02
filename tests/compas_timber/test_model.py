@@ -10,6 +10,9 @@ from compas.tolerance import TOL
 
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import JointCandidate
+from compas_timber.connections import JointTopology
+from compas.geometry import Line
 from compas_timber.elements import Beam
 from compas_timber.elements import Wall
 from compas_timber.elements import Plate
@@ -32,20 +35,6 @@ def test_add_element():
     assert len(list(A.graph.edges())) == 0
     assert list(A.beams)[0] is B
     assert len(list(A.beams)) == 1
-
-
-def test_add_elements():
-    model = TimberModel()
-    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
-    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
-
-    model.add_elements([b1, b2])
-
-    assert len(list(model.beams)) == 2
-    assert list(model.beams)[0] is b1
-    assert list(model.beams)[1] is b2
-    assert len(list(model.graph.nodes())) == 2
-    assert len(list(model.graph.edges())) == 0
 
 
 def test_add_joint():
@@ -288,11 +277,11 @@ def test_beam_graph_node_available_after_serialization():
     beam = Beam(frame, length=1.0, width=0.1, height=0.1)
     model.add_element(beam)
 
-    graph_node = beam.graphnode
+    graph_node = beam.graph_node
     deserialized_model = json_loads(json_dumps(model))
 
     assert graph_node is not None
-    assert list(deserialized_model.beams)[0].graphnode == graph_node
+    assert list(deserialized_model.beams)[0].graph_node == graph_node
 
 
 def test_beam_graph_node_available_after_deepcopying():
@@ -301,8 +290,163 @@ def test_beam_graph_node_available_after_deepcopying():
     beam = Beam(frame, length=1.0, width=0.1, height=0.1)
     model.add_element(beam)
 
-    grap_node = beam.graphnode
+    grap_node = beam.graph_node
     deserialized_model = deepcopy(model)
 
     assert grap_node is not None
-    assert list(deserialized_model.beams)[0].graphnode == grap_node
+    assert list(deserialized_model.beams)[0].graph_node == grap_node
+
+
+def test_joint_candidates_simple():
+    """Test joint candidates with a simple two-beam setup."""
+    # Create a simple model with two intersecting beams
+    model = TimberModel()
+
+    # Create two beams that intersect
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    # Connect adjacent beams to create candidates
+    model.connect_adjacent_beams()
+
+    # Verify that candidates were created
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 1
+
+    candidate = candidates[0]
+    assert isinstance(candidate, JointCandidate)
+    assert candidate.topology == JointTopology.TOPO_X  # Should be X topology
+    assert isinstance(candidate.location, Point)
+
+    # Verify that no actual joints were created
+    assert len(model.joints) == 0
+
+    # Test removing the candidate
+    model.remove_joint_candidate(candidate)
+    assert len(model.joint_candidates) == 0
+
+
+def test_joint_candidates_and_joints_separate():
+    """Test that joint candidates and normal joints stay separate."""
+    # Create a model with three beams
+    model = TimberModel()
+
+    # Create three beams: two that will have a candidate, one that will have a joint
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    line3 = Line(Point(2, 0, 0), Point(2, 1, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+    beam3 = Beam.from_centerline(line3, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+    model.add_element(beam3)
+
+    # Create candidates between beam1 and beam2
+    model.connect_adjacent_beams()
+
+    # Create a joint between beam1 and beam3 (after connect_adjacent_beams)
+    joint = LButtJoint.create(model, beam1, beam3)
+
+    # Verify separation
+    assert len(model.joints) == 1
+    assert len(model.joint_candidates) == 1
+
+    # Verify the joint is the one we created
+    assert list(model.joints)[0] is joint
+
+    # Verify the candidate is between beam1 and beam2
+    candidate = list(model.joint_candidates)[0]
+    assert beam1 in candidate.elements
+    assert beam2 in candidate.elements
+
+    # Verify the joint is between beam1 and beam3
+    assert beam1 in joint.elements
+    assert beam3 in joint.elements
+
+
+def test_remove_joint_candidates():
+    """Test removal of joint candidates."""
+    # Create a model with multiple beams
+    model = TimberModel()
+
+    # Create four beams in a square pattern
+    lines = [
+        Line(Point(0, 0, 0), Point(1, 0, 0)),  # bottom
+        Line(Point(1, 0, 0), Point(1, 1, 0)),  # right
+        Line(Point(1, 1, 0), Point(0, 1, 0)),  # top
+        Line(Point(0, 1, 0), Point(0, 0, 0)),  # left
+    ]
+
+    beams = [Beam.from_centerline(line, 0.1, 0.1) for line in lines]
+    for beam in beams:
+        model.add_element(beam)
+
+    # Create candidates
+    model.connect_adjacent_beams()
+
+    # Should have 4 candidates (one for each edge of the square)
+    initial_candidates = list(model.joint_candidates)
+    assert len(initial_candidates) == 4
+
+    # Remove one candidate
+    candidate_to_remove = initial_candidates[0]
+    model.remove_joint_candidate(candidate_to_remove)
+
+    # Should have 3 candidates left
+    remaining_candidates = list(model.joint_candidates)
+    assert len(remaining_candidates) == 3
+    assert candidate_to_remove not in remaining_candidates
+
+    # Remove all remaining candidates
+    for candidate in remaining_candidates:
+        model.remove_joint_candidate(candidate)
+
+    # Should have no candidates left
+    assert len(model.joint_candidates) == 0
+
+
+def test_remove_joint_candidate_preserves_edge():
+    """Test that removing a joint candidate preserves the edge and other attributes."""
+    # Create a model with two beams
+    model = TimberModel()
+
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    # Create a candidate
+    model.connect_adjacent_beams()
+
+    # Verify candidate was created
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 1
+
+    # Remove the candidate
+    candidate = candidates[0]
+    model.remove_joint_candidate(candidate)
+
+    # Verify candidate is gone
+    assert len(model.joint_candidates) == 0
+
+    # Test that we can add a new candidate to the same edge
+    # This verifies the edge still exists and can accept new candidates
+    new_candidate = JointCandidate(beam1, beam2, topology=JointTopology.TOPO_X, location=Point(0.5, 0, 0))
+    model.add_joint_candidate(new_candidate)
+
+    # Verify the new candidate was added successfully
+    assert len(model.joint_candidates) == 1
+    assert list(model.joint_candidates)[0] is new_candidate
