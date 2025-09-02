@@ -71,8 +71,8 @@ class TStepJoint(Joint):
     # fmt: off
     def __init__(
         self,
-        main_beam,
-        cross_beam,
+        main_beam=None,
+        cross_beam=None,
         step_shape=None,
         step_depth=None,
         heel_depth=None,
@@ -86,24 +86,11 @@ class TStepJoint(Joint):
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
 
-        self.step_shape = 0 if step_shape is None else step_shape
-        self.step_depth, self.heel_depth = self.set_step_depths(step_depth, heel_depth)
-
+        self.step_shape = step_shape
+        self.step_depth = step_depth
+        self.heel_depth = heel_depth
         self.tapered_heel = tapered_heel
         self.tenon_mortise_height = tenon_mortise_height
-
-        # For the main beam, use width or height based on the alignment
-        swap_main_dimensions = self.main_beam_ref_side_index % 2 == 0
-        main_width = self.main_beam.width if swap_main_dimensions else self.main_beam.height
-        main_height = self.main_beam.height if swap_main_dimensions else self.main_beam.width
-        # For the cross beam, use width or height based on the alignment
-        cross_width = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)[0]
-
-        self.start_y = (cross_width - main_width) / 2 if cross_width > main_width else 0.0
-        self.notch_limited = False
-        self.notch_width = main_width
-        self.strut_height = main_height
-        self.tenon_mortise_width = main_width / 4
 
         self.features = []
 
@@ -132,21 +119,21 @@ class TStepJoint(Joint):
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return self.cross_beam.opp_side(ref_side_index)
 
-    def set_step_depths(self, step_depth=None, heel_depth=None):
+    def set_step_depths(self):
         """Sets the default step and heel depths based on the joint type if they are not provided."""
+        self.step_shape = self.step_shape or 0 # Set value for step_shape
+
         if self.step_shape == 0:  # 'step' shape
-            step_depth = step_depth if step_depth is not None else self.cross_beam.height / 4
-            heel_depth = 0.0
+            self.step_depth = self.step_depth or self.cross_beam.height / 4
+            self.heel_depth = 0.0
         elif self.step_shape == 1:  # 'heel' shape
-            step_depth = 0.0
-            heel_depth = heel_depth if heel_depth is not None else self.cross_beam.height / 4
+            self.step_depth = 0.0
+            self.heel_depth = self.heel_depth or self.cross_beam.height / 4
         elif self.step_shape == 2:  # 'double' shape
-            step_depth = step_depth if step_depth is not None else self.cross_beam.height / 6
-            heel_depth = heel_depth if heel_depth is not None else self.cross_beam.height / 4
+            self.step_depth = self.step_depth or self.cross_beam.height / 6
+            self.heel_depth = self.heel_depth or self.cross_beam.height / 4
         else:
             raise ValueError("Step shape must be ether: 0:step, 1:heel, 2:double.")
-
-        return step_depth, heel_depth
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -183,8 +170,15 @@ class TStepJoint(Joint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
+        # get reference sides for main and cross beams
         main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
         cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+
+        # get dimensions for main and cross beams
+        main_height, main_width = self.main_beam.get_dimensions_relative_to_side(main_beam_ref_side)
+        cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(cross_beam_ref_side)
+
+        self.set_step_depths()
 
         # generate step joint features
         main_feature = StepJoint.from_plane_and_beam(
@@ -200,45 +194,55 @@ class TStepJoint(Joint):
         cross_feature = StepJointNotch.from_plane_and_beam(
             main_beam_ref_side,
             self.cross_beam,
-            self.start_y,
-            self.notch_limited,
-            self.notch_width,
-            self.step_depth,
-            self.heel_depth,
-            self.strut_height,
-            self.tapered_heel,
-            self.cross_beam_ref_side_index,
+            start_y=(cross_width - main_width) / 2 if cross_width > main_width else 0.0,
+            notch_width=main_width,
+            step_depth=self.step_depth,
+            heel_depth=self.heel_depth,
+            strut_height=main_height,
+            tapered_heel=self.tapered_heel,
+            ref_side_index=self.cross_beam_ref_side_index,
         )
 
-        # generate tenon and mortise features
+        # add tenon and mortise features
         if self.tenon_mortise_height:
-            cross_feature.add_mortise(self.tenon_mortise_width, self.tenon_mortise_height, self.cross_beam)
-            main_feature.add_tenon(self.tenon_mortise_width, self.tenon_mortise_height)
+            tenon_mortise_width = main_width/4
+            cross_feature.add_mortise(tenon_mortise_width, self.tenon_mortise_height)
+            main_feature.add_tenon(tenon_mortise_width, self.tenon_mortise_height)
+
         # add features to beams
         self.main_beam.add_features(main_feature)
         self.cross_beam.add_features(cross_feature)
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-    def check_elements_compatibility(self):
-        """Checks if the elements are compatible for the creation of the joint.
+    @classmethod
+    def check_elements_compatibility(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the TStepJoint.
 
-        Raises
-        ------
-        BeamJoiningError
-            If the elements are not compatible for the creation of the joint.
+        Parameters
+        ----------
+        elements : list of :class:`~compas_timber.model.TimberElement`
+            The cluster of elements to be checked.
+        raise_error : bool, optional
+            Whether to raise an error if the elements are not compatible.
+            If False, the method will return False instead of raising an error.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
 
         """
-        # check if the beams are aligned
-        cross_vect = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
-        for beam in self.elements:
+        cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
+        for beam in elements:
             beam_normal = beam.frame.normal.unitized()
             dot = abs(beam_normal.dot(cross_vect.unitized()))
             if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                raise BeamJoiningError(
-                    self.main_beam,
-                    self.cross_beam,
-                    debug_info="The the two beams are not aligned to create a Step joint.")
+                if not raise_error:
+                    return False
+                raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
+
+        return True
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

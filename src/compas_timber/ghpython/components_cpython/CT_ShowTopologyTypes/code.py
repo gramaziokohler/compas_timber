@@ -1,7 +1,8 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.0
 """Shows the names of the connection topology types."""
 
 # flake8: noqa
+import re
 import Grasshopper
 import System
 from compas_rhino.conversions import point_to_rhino

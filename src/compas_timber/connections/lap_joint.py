@@ -26,8 +26,6 @@ class LapJoint(Joint):
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
-    cut_plane_bias : float
-        Allows lap to be shifted deeper into one beam or the other. Value should be between 0 and 1.0 without completely cutting through either beam. Default is 0.5.
 
     Attributes
     ----------
@@ -39,8 +37,6 @@ class LapJoint(Joint):
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
-    cut_plane_bias : float
-        Allows lap to be shifted deeper into one beam or the other. Value should be between 0 and 1.0 without completely cutting through either beam. Default is 0.5.
 
     """
 
@@ -50,10 +46,9 @@ class LapJoint(Joint):
         data["main_beam_guid"] = self.main_beam_guid
         data["cross_beam_guid"] = self.cross_beam_guid
         data["flip_lap_side"] = self.flip_lap_side
-        data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, **kwargs):  # TODO this joint does not have main, cross beam roles
         super(LapJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -61,7 +56,6 @@ class LapJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
 
         self.flip_lap_side = flip_lap_side
-        self.cut_plane_bias = cut_plane_bias
         self.features = []
 
         self._main_ref_side_index = None
@@ -168,7 +162,7 @@ class LapJoint(Joint):
             ],
         )
 
-    def _create_negative_volumes(self):
+    def _create_negative_volumes(self, cut_plane_bias):
         assert self.elements
         main_beam, cross_beam = self.elements
 
@@ -205,8 +199,8 @@ class LapJoint(Joint):
         lines.append(Line(pt_a, pt_b))
 
         # Create Polyhedrons
-        negative_polyhedron_main_beam = self._create_polyhedron(plane_b0, lines, self.cut_plane_bias)
-        negative_polyhedron_cross_beam = self._create_polyhedron(plane_a0, lines, self.cut_plane_bias)
+        negative_polyhedron_main_beam = self._create_polyhedron(plane_b0, lines, cut_plane_bias)
+        negative_polyhedron_cross_beam = self._create_polyhedron(plane_a0, lines, cut_plane_bias)
 
         if self.flip_lap_side:
             return negative_polyhedron_cross_beam, negative_polyhedron_main_beam

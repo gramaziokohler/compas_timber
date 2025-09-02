@@ -11,23 +11,51 @@ Joints
     :toctree: generated/
     :nosignatures:
 
-    BallNodeJoint
     Joint
+    PlateJoint
     LapJoint
+    ButtJoint
+    TButtJoint
     LButtJoint
+    TStepJoint
     LFrenchRidgeLapJoint
     LLapJoint
     LMiterJoint
-    GenericJoint
+    JointCandidate
+    PlateJointCandidate
     TBirdsmouthJoint
-    TButtJoint
-    TDovetailJoint
-    TLapJoint
-    TStepJoint
-    TenonMortiseJoint
+    LMiterJoint
     XLapJoint
     XNotchJoint
+    TLapJoint
+    LLapJoint
+    JointCandidate
+    LFrenchRidgeLapJoint
+    JointTopology
+    ConnectionSolver
+    PlateConnectionSolver
+    TDovetailJoint
+    BallNodeJoint
+    TenonMortiseJoint
     YButtJoint
+    TOliGinaJoint
+    WallJoint
+    PlateJoint
+    PlateButtJoint
+    PlateLButtJoint
+    PlateTButtJoint
+    PlateMiterJoint
+
+Joint Interfaces
+=================
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    InterfaceLocation
+    InterfaceRole
+    PlateToPlateInterface
 
 Solvers
 =======
@@ -44,6 +72,7 @@ Solvers
     TripletAnalyzer
     QuadAnalyzer
     CompositeAnalyzer
+    MaxNCompositeAnalyzer
 
 Functions
 =========
@@ -53,6 +82,9 @@ Functions
     :nosignatures:
 
     find_neighboring_elements
+    beam_ref_side_incidence
+    beam_ref_side_incidence_with_vector
+    point_centerline_towards_joint
 
 Exceptions
 ==========

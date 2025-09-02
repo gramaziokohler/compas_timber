@@ -4,6 +4,8 @@ from compas.geometry import Point
 from compas.geometry import distance_point_line
 from compas_model.interactions import Interaction
 
+from compas_timber.errors import BeamJoiningError
+
 from .solver import JointTopology
 
 
@@ -53,9 +55,21 @@ class Joint(Interaction):
     def topology(self):
         return self._topology
 
+    @topology.setter
+    def topology(self, value):
+        """Set the topology of the joint."""
+        self._topology = value
+
     @property
     def location(self):
         return self._location
+
+    @location.setter
+    def location(self, value):
+        """Set the location of the joint."""
+        if not isinstance(value, Point):
+            raise TypeError("Location must be a Point.")
+        self._location = value
 
     @property
     def elements(self):
@@ -129,18 +143,6 @@ class Joint(Interaction):
         """
         pass
 
-    def check_elements_compatibility(self):
-        """Checks if the beams are compatible for the creation of the joint.
-        This is optional and should only be implemented by joints that require it.
-
-        Raises
-        ------
-        :class:`~compas_timber.connections.BeamJoiningError`
-            Should be raised whenever the elements did not comply with the requirements of the joint.
-
-        """
-        pass
-
     def restore_beams_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.
 
@@ -188,3 +190,85 @@ class Joint(Interaction):
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
         return joint
+
+    @classmethod
+    def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
+        """Creates an instance of this joint from a cluster of elements.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the elements and this joint belong.
+        cluster : :class:`~compas_model.clusters.Cluster`
+            The cluster containing the elements to be connected by this joint.
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
+            The elements to be connected by this joint. If not provided, the elements of the cluster will be used.
+            This is used to explicitly define the element order.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        if reordered_elements:
+            if set(reordered_elements) != cluster.elements:
+                raise BeamJoiningError(cls, "Elements of the joint candidate must match the provided elements.", [e.blank for e in reordered_elements])
+        if len(cluster.joints) == 1:
+            elements = reordered_elements or cluster.joints[0].elements
+            return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
+        else:
+            elements = reordered_elements or list(cluster.elements)
+        return cls.create(model, *elements, **kwargs)
+
+    @classmethod
+    def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
+        """Creates an instance of this joint from a joint candidate.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the elements and this joint belong.
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            The joint candidate to be converted.
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
+            The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
+            This is used to explicitly define the element order.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        if reordered_elements:
+            assert set(reordered_elements) == set(candidate.elements), "Elements of the generic joint must match the provided elements."
+            elements = reordered_elements
+        else:
+            elements = candidate.elements
+        kwargs.update({"topology": candidate.topology, "location": candidate.location})  # pass topology, distance and location from candidate
+        joint = cls.create(model, *elements, **kwargs)
+        return joint
+
+    @classmethod
+    def check_elements_compatibility(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the Joint.
+
+        Parameters
+        ----------
+        elements : list of :class:`~compas_timber.parts.Beam`
+            The beams to check.
+        raise_error : bool, optional
+            If True, raises a `BeamJoiningError` if the requirements are not met.
+
+        Returns
+        -------
+        bool
+            True if the cluster complies with the requirements, False otherwise.
+
+        """
+        return True
