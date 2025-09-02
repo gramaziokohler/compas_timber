@@ -71,7 +71,7 @@ def separated_beams():
 def L_beams():
     """
     0 <=> 1:L
-    1 <=> 2:T
+    1 <=> 2:L
     2 <=> 3:L
     3 <=> 0:X
 
@@ -91,7 +91,7 @@ def L_beams():
 def L_beams_separated():
     """
     0 <=> 1:L
-    1 <=> 2:T
+    1 <=> 2:L
     2 <=> 3:L
     3 <=> 0:X
 
@@ -115,8 +115,8 @@ def test_joints_from_beams_and_topo_rules(beams):
     ]
     model = TimberModel()
     model.add_elements(beams)
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(model.joints) == 4
     assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
 
@@ -129,9 +129,9 @@ def test_joints_from_beams_and_rules_with_no_max_distance(separated_beams):
     ]
     model = TimberModel()
     model.add_elements(separated_beams)
-    solver = JointRuleSolver(rules, model)
+    solver = JointRuleSolver(rules)
     with pytest.raises(ValueError):
-        errors, unjoined_clusters = solver.apply_rules_to_model()
+        errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(model.joints) == 0
 
 
@@ -143,8 +143,8 @@ def test_joints_from_beams_and_rules_with_max_distance_rule(separated_beams):
     ]
     model = TimberModel()
     model.add_elements(separated_beams)
-    solver = JointRuleSolver(rules, model)
-    _, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    _, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
     assert len(unjoined_clusters) == 3
 
@@ -159,8 +159,8 @@ def test_joints_from_beams_and_rules_with_max_distance_model(separated_beams):
     ]
     model = TimberModel()
     model.add_elements(separated_beams)
-    solver = JointRuleSolver(rules, model, max_distance=0.15)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules, max_distance=0.15)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 3
     assert len(unjoined_clusters) == 1
 
@@ -182,38 +182,38 @@ def test_direct_rule_get_joint(beams):
     ]
     model = TimberModel()
     model.add_elements(beams)
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    _, _ = solver.apply_rules_to_model(model)
     assert set([j.__class__.__name__ for j in model.joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
 
 
-def test_joint_type_comply_elements(beams):
+def test_joint_type_check_elements_compatibility(beams):
     rules = [DirectRule(LMiterJoint, [beams[0], beams[1]])]
     model = TimberModel()
     model.add_elements(beams)
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
 
 
-def test_joint_type_comply_elements_bad_normal(beams):
+def test_joint_type_check_elements_compatibility_bad_normal(beams):
     rules = [DirectRule(LFrenchRidgeLapJoint, [beams[0], beams[1]])]
     beams[1].frame = Frame(beams[1].frame.point, beams[1].frame.xaxis, Vector(1, 1, 1))
     model = TimberModel()
     model.add_elements(beams)
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(errors) == 1
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 0
 
 
-def test_joint_type_comply_elements_bad_dims(beams):
+def test_joint_type_check_elements_compatibility_bad_dims(beams):
     rules = [DirectRule(LFrenchRidgeLapJoint, [beams[0], beams[1]])]
     beams[1].width = 0.25
     model = TimberModel()
     model.add_elements(beams)
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(errors) == 1
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 0
 
@@ -222,14 +222,14 @@ def test_direct_rule_try_get_joint_max_distance(separated_beams):
     rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.05)
     model = TimberModel()
     model.add_elements(separated_beams)
-    solver = JointRuleSolver([rule], model, max_distance=0.15)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver([rule], max_distance=0.15)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(errors) == 1
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 0
 
     rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.15)
-    solver = JointRuleSolver([rule], model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver([rule])
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(errors) == 0
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
 
@@ -241,18 +241,41 @@ def test_category_rule_try_get_joint(beams):
     rule = CategoryRule(LMiterJoint, "A", "B")
     model = TimberModel()
     model.add_elements(beams)
-    solver = JointRuleSolver([rule], model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver([rule])
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
 
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
+
+
+def test_category_rule_same_category(beams):
+    main = beams[2]
+    cross = beams[1]
+    for beam in beams:
+        beam.attributes["category"] = "A"
+    rule = CategoryRule(TButtJoint, "A", "A")
+    model = TimberModel()
+    model.add_elements([cross, main])
+    solver = JointRuleSolver([rule])
+    _, _ = solver.apply_rules_to_model(model)
+    joint = list(model.joints)[0]
+    assert joint.main_beam == main
+    assert joint.cross_beam == cross
+
+    model = TimberModel()
+    model.add_elements([main, cross])
+    solver = JointRuleSolver([rule])
+    _, _ = solver.apply_rules_to_model(model)
+    joint = list(model.joints)[0]
+    assert joint.main_beam == main
+    assert joint.cross_beam == cross
 
 
 def test_topology_rule_try_get_joint(beams):
     rule = TopologyRule(JointTopology.TOPO_L, LMiterJoint)
     model = TimberModel()
     model.add_elements(beams)
-    solver = JointRuleSolver([rule], model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver([rule])
+    _, _ = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 2
 
 
@@ -263,10 +286,10 @@ def test_mixed_rules(L_beams):
     rules = [DirectRule(LLapJoint, L_beams[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
     model = TimberModel()
     model.add_elements(L_beams)
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 3
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["JointCandidate", "LLapJoint", "LButtJoint", "LMiterJoint"])
+    solver = JointRuleSolver(rules)
+    _, _ = solver.apply_rules_to_model(model)
+    assert len(model.joints) == 3
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint", "LButtJoint", "LMiterJoint"])
 
 
 def test_different_rules_max_distance(L_beams_separated):
@@ -276,18 +299,71 @@ def test_different_rules_max_distance(L_beams_separated):
     rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
     model = TimberModel()
     model.add_elements(L_beams_separated)
-    solver = JointRuleSolver(rules, model)
+    solver = JointRuleSolver(rules)
     with pytest.raises(ValueError):
-        errors, unjoined_clusters = solver.apply_rules_to_model()
+        errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 0
 
+
+def test_different_rules_max_distance_on_topo_rule(L_beams_separated):
+    for beam in L_beams_separated:
+        beam.attributes["category"] = "A"
+    L_beams_separated[1].attributes["category"] = "B"
     rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint, max_distance=0.15)]
     model = TimberModel()
     model.add_elements(L_beams_separated)
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 3
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["JointCandidate", "LMiterJoint"])
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    # TopologyRule overrides CategoryRule when the latter fails to make a joint, but DirectRule raises error and is not overridden
+    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 2
+    assert len(unjoined_clusters) == 2
+    assert len(errors) == 1  # error because DirectRule fails
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LMiterJoint"])  # TopologyRule has generated the joint
+
+
+def test_different_rules_max_distance_on_category_rule(L_beams_separated):
+    for beam in L_beams_separated:
+        beam.attributes["category"] = "A"
+    L_beams_separated[1].attributes["category"] = "B"
+    rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B", max_distance=0.15), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
+    model = TimberModel()
+    model.add_elements(L_beams_separated)
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    assert len(model.joints) == 1
+    assert len(unjoined_clusters) == 3
+    assert len(errors) == 1  # error because CategoryRule fails
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LButtJoint"])  # CategoryRule has generated the joint
+
+
+def test_different_rules_max_distance_on_direct_rule(L_beams_separated):
+    for beam in L_beams_separated:
+        beam.attributes["category"] = "A"
+    L_beams_separated[1].attributes["category"] = "B"
+    rules = [DirectRule(LLapJoint, L_beams_separated[:2], max_distance=0.15), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
+    model = TimberModel()
+    model.add_elements(L_beams_separated)
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    assert len(model.joints) == 1
+    assert len(unjoined_clusters) == 3
+    assert len(errors) == 0  # NO error because DirectRule succeeds
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint"])  # DirectRule has generated the joint
+
+
+def test_different_rules_max_distance_on_rule_solver(L_beams_separated):
+    for beam in L_beams_separated:
+        beam.attributes["category"] = "A"
+    L_beams_separated[1].attributes["category"] = "B"
+    rules = [DirectRule(LLapJoint, L_beams_separated[:2]), CategoryRule(LButtJoint, "A", "B"), TopologyRule(JointTopology.TOPO_L, LMiterJoint)]
+    model = TimberModel()
+    model.add_elements(L_beams_separated)
+    solver = JointRuleSolver(rules, max_distance=0.15)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    assert len(model.joints) == 3
+    assert len(unjoined_clusters) == 1
+    assert len(errors) == 0
+    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LLapJoint", "LButtJoint", "LMiterJoint"])  # All rules have generated the joints
 
 
 def test_plate_topo_rules():
@@ -309,8 +385,8 @@ def test_plate_topo_rules():
     ]
     model = TimberModel()
     model.add_elements([plate_a, plate_b, plate_c])
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, PlateJointCandidate)]) == 3, "Expected three joints"
 
 
@@ -334,8 +410,8 @@ def test_plate_category_rules_reverse_topo():
     ]
     model = TimberModel()
     model.add_elements([plate_a, plate_b, plate_c])
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
 
     assert len([j for j in model.joints if not isinstance(j, PlateJointCandidate)]) == 2, "Expected two joints"
 
@@ -360,8 +436,8 @@ def test_plate_category_rules_correct_topo():
     ]
     model = TimberModel()
     model.add_elements([plate_a, plate_b, plate_c])
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len([j for j in model.joints if not isinstance(j, PlateJointCandidate)]) == 3, "Expected three joints"
 
 
@@ -388,8 +464,8 @@ def test_plate_rules_priority():
     ]
     model = TimberModel()
     model.add_elements([plate_a, plate_b, plate_c])
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(model.joints) == 3, "Expected three joints"
     assert set([j.__class__.__name__ for j in model.joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), (
         "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
@@ -404,8 +480,8 @@ def test_plate_rules_priority():
     ]
     model = TimberModel()
     model.add_elements([plate_a, plate_b, plate_c])
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(model.joints) == 3, "Expected three joints"
     assert set([j.__class__.__name__ for j in model.joints]) == set(["PlateLButtJoint", "PlateTButtJoint"]), "Expected PlateLButtJoint, PlateTButtJoint"
 
@@ -417,8 +493,8 @@ def test_plate_rules_priority():
     ]
     model = TimberModel()
     model.add_elements([plate_a, plate_b, plate_c])
-    solver = JointRuleSolver(rules, model)
-    errors, unjoined_clusters = solver.apply_rules_to_model()
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(model.joints) == 3, "Expected three joints"
     assert set([j.__class__.__name__ for j in model.joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), (
         "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"

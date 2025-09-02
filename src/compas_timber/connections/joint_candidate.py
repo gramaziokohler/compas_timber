@@ -15,6 +15,8 @@ class JointCandidate(Joint):
         First element to be joined.
     element_b : :class:`~compas_timber.elements.TimberElement`
         Second element to be joined.
+    distance : float | None
+        Distance between the elements.
 
     Attributes
     ----------
@@ -22,6 +24,8 @@ class JointCandidate(Joint):
         First element to be joined.
     element_b : :class:`~compas_timber.elements.TimberElement`
         Second element to be joined.
+    distance : float | None
+        Distance between the elements.
 
     """
 

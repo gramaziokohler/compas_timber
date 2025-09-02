@@ -4,6 +4,8 @@ from compas.data import Data
 from compas.geometry import Point
 from compas.geometry import distance_point_line
 
+from compas_timber.errors import BeamJoiningError
+
 from .solver import JointTopology
 
 
@@ -220,7 +222,8 @@ class Joint(Data):
 
         """
         if reordered_elements:
-            assert set(reordered_elements) == cluster.elements, "Elements of the generic joint must match the provided elements."
+            if set(reordered_elements) != cluster.elements:
+                raise BeamJoiningError(cls, "Elements of the joint candidate must match the provided elements.", [e.blank for e in reordered_elements])
         if len(cluster.joints) == 1:
             elements = reordered_elements or cluster.joints[0].elements
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
@@ -260,8 +263,8 @@ class Joint(Data):
         return joint
 
     @classmethod
-    def comply_elements(cls, elements, raise_error=False):
-        """Checks if the cluster of beams complies with the requirements for the LFrenchRidgeLapJoint.
+    def check_elements_compatibility(cls, elements, raise_error=False):
+        """Checks if the cluster of beams complies with the requirements for the Joint.
 
         Parameters
         ----------

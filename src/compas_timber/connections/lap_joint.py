@@ -48,7 +48,7 @@ class LapJoint(Joint):
         data["flip_lap_side"] = self.flip_lap_side
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, **kwargs):  # TODO this joint does not have main, cross beam roles
         super(LapJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam

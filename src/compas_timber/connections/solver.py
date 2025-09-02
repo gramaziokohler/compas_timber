@@ -218,7 +218,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
-        When TOPOLOGY_EDGE_FACE is found, the plates may be returned in reverse order, with the main plate first and the cross plate second.
+        When TOPOLOGY_EDGE_FACE is found, the plates are returned in reverse order, with the main plate first and the cross plate second.
 
         parameters
         ----------
@@ -233,19 +233,17 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Returns
         -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, tuple(:class:`~compas_timber.element.Plate`, int), tuple(`:class:`~compas_timber.element.Plate`, int))
-            The topology of the intersection between the two plates and the two plates themselves, and the indices of the outline segments where the intersection occurs.
-            Format: JointTopology, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+        :class:`~compas_timber.connections.PlateSolverResult`
         """
         plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if plate_a_segment_index is None and plate_b_segment_index is None:
-            return PlateSolverResult(JointTopology.TOPO_UNKNOWN, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_UNKNOWN, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
         if plate_a_segment_index is not None and plate_b_segment_index is None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
         if plate_a_segment_index is None and plate_b_segment_index is not None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_b, plate_a, plate_b_segment_index, plate_a_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_b, plate_a, plate_b_segment_index, plate_a_segment_index, dist, pt)
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_EDGE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_EDGE_EDGE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
 
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
