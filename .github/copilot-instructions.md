@@ -22,7 +22,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
 
 ## Installation & Dependencies
 - **Python Requirements**: Python 3.9+ (supports CPython and IronPython)
-- **Core Dependencies**: compas>=1.17.6, compas_model==0.4.4
+- **Core Dependencies**: compas>=2.0, compas_model==0.4.4
 - **Development Tools**: invoke, pytest, black, sphinx
 - **Development Installation**: `pip install -e .[dev]` (installs package in editable mode)
 
