@@ -27,7 +27,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
 - **Development Installation**: `pip install -e .[dev]` (installs package in editable mode)
 
 ## Code Style & Documentation
-- **Docstring Style**: Use numpy-style docstrings for all functions, classes, and methods, properties docstrings are part of the class's docstring
+- **Docstring Style**: Use numpy-style docstrings for all functions, classes, and methods. Properties docstrings are part of the class's docstring.
 - **Code Formatting**: Use `invoke format` to automatically format code with `black`
 - **Linting**: Use `invoke lint` to check code style with `ruff`
 - **Type Hints**: Include type hints where appropriate for better code clarity, as long as it's compatible with IronPython (comment hints)
