@@ -8,7 +8,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
   - **NOTE**: May fail in environments with restricted network access. If pip times out, dependencies may need manual installation.
 - **NEVER CANCEL**: Set timeout to 300+ seconds for dependency installation in case of slow network.
 - `invoke clean` -- clean all generated artifacts. Takes ~1 second.
-- `invoke lint` -- run flake8 and black linters. Takes ~1 second.
+- `invoke lint` -- run ruff and black linters. Takes ~1 second.
 - `invoke format` -- reformat code with black. Takes ~1 second.  
 - `invoke check` -- comprehensive style and metadata checks. Takes ~2 seconds.
 - `invoke docs` -- build HTML documentation with Sphinx. May take several minutes.
@@ -29,7 +29,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
 ## Code Style & Documentation
 - **Docstring Style**: Use numpy-style docstrings for all functions, classes, and methods. Properties docstrings are part of the class's docstring.
 - **Code Formatting**: Use `invoke format` to automatically format code with `black`
-- **Linting**: Use `invoke lint` to check code style with `ruff`
+- **Linting**: Use `invoke lint` to check code style with `ruff` and `black`
 - **Type Hints**: Include type hints where appropriate for better code clarity, as long as it's compatible with IronPython (comment hints)
 
 ## Build System
