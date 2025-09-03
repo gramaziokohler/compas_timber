@@ -14,3 +14,4 @@ build
 pythonnet
 tomlkit
 pytest-cov
+pre-commit
