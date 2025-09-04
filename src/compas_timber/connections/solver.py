@@ -12,7 +12,6 @@ from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_line_line
-from compas.geometry import subtract_vectors
 from compas.plugins import pluggable
 from compas.tolerance import TOL
 
@@ -211,29 +210,6 @@ class ConnectionSolver(object):
         # TODO: make find topology more generic. break down to find_line_line_topo etc.
         return self.find_topology(wall_a, wall_b, tol, max_distance)
 
-    @staticmethod
-    def _calc_t(line, plane):
-        a, b = line
-        o, n = plane
-        ab = subtract_vectors(b, a)
-        dotv = dot_vectors(n, ab)  # lines parallel to plane (dotv=0) filtered out already
-        oa = subtract_vectors(a, o)
-        t = -dot_vectors(n, oa) / dotv
-        return t
-
-    @staticmethod
-    def _exceed_max_distance(pa, pb, max_distance, tol):
-        d = distance_point_point(pa, pb)
-        if max_distance is not None and d > max_distance:
-            return True
-        if max_distance is None and d > tol:
-            return True
-        return False
-
-    @staticmethod
-    def _is_near_end(t, length, max_distance, tol):
-        return abs(t) * length < max_distance + tol or abs(1.0 - t) * length < max_distance + tol
-
 
 class PlateConnectionSolver(ConnectionSolver):
     """Provides tools for detecting plate intersections and joint topologies."""
@@ -242,6 +218,7 @@ class PlateConnectionSolver(ConnectionSolver):
 
     def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
+        When TOPOLOGY_EDGE_FACE is found, the plates are returned in reverse order, with the main plate first and the cross plate second.
 
         parameters
         ----------
@@ -256,36 +233,32 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Returns
         -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, tuple(:class:`~compas_timber.element.Plate`, int), tuple(`:class:`~compas_timber.element.Plate`, int))
-            The topology of the intersection between the two plates and the two plates themselves, and the indices of the outline segments where the intersection occurs.
-            Format: JointTopology, (plate_a, plate_a_segment_index), (plate_b, plate_b_segment_index)
+        :class:`~compas_timber.connections.PlateSolverResult`
         """
-
-        plate_a_segment_index, plate_b_segment_index = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
-
+        plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if plate_a_segment_index is None and plate_b_segment_index is None:
-            return PlateSolverResult(JointTopology.TOPO_UNKNOWN, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_UNKNOWN, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
         if plate_a_segment_index is not None and plate_b_segment_index is None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
         if plate_a_segment_index is None and plate_b_segment_index is not None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_b, plate_a, plate_b_segment_index, plate_a_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_b, plate_a, plate_b_segment_index, plate_a_segment_index, dist, pt)
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_EDGE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index)
+            return PlateSolverResult(JointTopology.TOPO_EDGE_EDGE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
 
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b`. used to determine connection Topology"""
 
-        indices = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        if indices[0] is not None:
-            return indices
-        index = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        if index is not None:
-            return index, None
-        index = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
-        if index is not None:
-            return None, index
-        return None, None
+        i_a, i_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if i_a is not None:
+            return i_a, i_b, dist, pt
+        i_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if i_a is not None:
+            return i_a, None, dist, pt
+        i_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+        if i_b is not None:
+            return None, i_b, dist, pt
+        return None, None, None, None
 
     @staticmethod
     def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
@@ -297,11 +270,13 @@ class PlateConnectionSolver(ConnectionSolver):
         for pair in itertools.product(plate_a.outlines, plate_b.outlines):
             for i, seg_a in enumerate(pair[0].lines):
                 for j, seg_b in enumerate(pair[1].lines):  # TODO: use rtree?
-                    if distance_point_line(seg_a.point_at(0.5), seg_b) <= max_distance:
+                    seg_a_midpt = seg_a.point_at(0.5)
+                    dist = distance_point_line(seg_a_midpt, seg_b)
+                    if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
-                                return i, j
-        return None, None
+                                return i, j, dist, seg_a_midpt
+        return None, None, None, None
 
     @staticmethod
     def _get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, tol=TOL):
@@ -314,11 +289,13 @@ class PlateConnectionSolver(ConnectionSolver):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
                 line = Line(*intersection_plane_plane(plane_a, plane_b))
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
-                    if distance_point_line(seg_a.point_at(0.5), line) <= max_distance:
+                    seg_a_midpt = seg_a.point_at(0.5)
+                    dist = distance_point_line(seg_a_midpt, line)
+                    if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                return i
-        return None
+                                return i, dist, seg_a_midpt
+        return None, None, None
 
     @staticmethod
     def do_segments_overlap(segment_a, segment_b):
