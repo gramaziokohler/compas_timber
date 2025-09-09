@@ -114,7 +114,7 @@ def main():
     # Create the model
     print("Creating timber stand model...")
     model = create_stand_model()
-    print(f"Model created with {len(list(model.elements()))} elements and {len(model.joints)} joints")
+    print(f"Model created with {len(model.elements())} elements and {len(model.joints)} joints")
 
     # Execute requested actions
     if args.visualize:

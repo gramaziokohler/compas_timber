@@ -72,7 +72,7 @@ def main():
         viewer.scene.add(Tag(text=str(beam.graphnode), position=beam.centerline.midpoint, height=40, color=Color.black()))
 
     tol = Tolerance(absolute=0.01)
-    num_of_beams = len(list(model.beams))
+    num_of_beams = len(model.beams)
 
     ### find triplets only
     # analyzer = TripletAnalyzer(model, tolerance=Tolerance(absolute=0.01))

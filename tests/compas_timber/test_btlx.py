@@ -78,7 +78,7 @@ def test_btlx_parts(resulting_btlx, test_model, namespaces):
 
     # Find all Part elements within the Parts element
     part_elements = parts.findall("d2m:Part", namespaces)
-    assert len(part_elements) == len(list(test_model.beams))
+    assert len(part_elements) == len(test_model.beams)
 
     # Validate each Part element
     for part, beam in zip(part_elements, test_model.beams):
@@ -98,7 +98,7 @@ def test_btlx_processings(resulting_btlx, test_model, namespaces):
 
     # Find all Part elements within the Parts element
     part_elements = parts.findall("d2m:Part", namespaces)
-    assert len(part_elements) == len(list(test_model.beams))
+    assert len(part_elements) == len(test_model.beams)
 
     # Validate the features and processings
     for part, beam in zip(part_elements, test_model.beams):

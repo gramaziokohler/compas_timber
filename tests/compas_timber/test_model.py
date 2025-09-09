@@ -33,8 +33,8 @@ def test_add_element():
     assert B in A.elements()
     assert len(list(A.graph.nodes())) == 1
     assert len(list(A.graph.edges())) == 0
-    assert list(A.beams)[0] is B
-    assert len(list(A.beams)) == 1
+    assert A.beams[0] is B
+    assert len(A.beams) == 1
 
 
 def test_add_elements():
@@ -44,9 +44,9 @@ def test_add_elements():
 
     model.add_elements([b1, b2])
 
-    assert len(list(model.beams)) == 2
-    assert list(model.beams)[0] is b1
-    assert list(model.beams)[1] is b2
+    assert len(model.beams) == 2
+    assert model.beams[0] is b1
+    assert model.beams[1] is b2
     assert len(list(model.graph.nodes())) == 2
     assert len(list(model.graph.edges())) == 0
 
@@ -60,7 +60,7 @@ def test_add_joint():
     model.add_element(b2)
     _ = LButtJoint.create(model, b1, b2)
 
-    assert len(list(model.beams)) == 2
+    assert len(model.beams) == 2
     assert len(list(model.joints)) == 1
 
 
@@ -89,7 +89,7 @@ def test_copy(mocker):
 
     A_copy = A.copy()
     assert A_copy is not A
-    assert list(A_copy.beams)[0] is not list(A.beams)[0]
+    assert A_copy.beams[0] is not A.beams[0]
 
 
 def test_deepcopy(mocker):
@@ -105,7 +105,7 @@ def test_deepcopy(mocker):
 
     A_copy = A.copy()
     assert A_copy is not A
-    assert list(A_copy.beams)[0] is not list(A.beams)[0]
+    assert A_copy.beams[0] is not A.beams[0]
 
 
 def test_beams_have_keys_after_serialization():
@@ -174,9 +174,9 @@ def test_generator_properties():
     wall = Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
     model.add_element(wall)
 
-    assert len(list(model.plates)) == 1
-    assert len(list(model.beams)) == 1
-    assert len(list(model.walls)) == 1
+    assert len(model.plates) == 1
+    assert len(model.beams) == 1
+    assert len(model.walls) == 1
 
 
 def test_type_properties():
@@ -240,7 +240,7 @@ def test_copy_model_with_processing_jackraftercut_proxy():
 
     copied_model = model.copy()
 
-    copied_beams = list(copied_model.beams)
+    copied_beams = copied_model.beams
     assert len(copied_beams) == 1
     assert len(copied_beams[0].features) == 1
     assert isinstance(copied_beams[0].features[0], JackRafterCut)
@@ -295,7 +295,7 @@ def test_beam_graph_node_available_after_serialization():
     deserialized_model = json_loads(json_dumps(model))
 
     assert graph_node is not None
-    assert list(deserialized_model.beams)[0].graphnode == graph_node
+    assert deserialized_model.beams[0].graphnode == graph_node
 
 
 def test_beam_graph_node_available_after_deepcopying():
@@ -308,7 +308,7 @@ def test_beam_graph_node_available_after_deepcopying():
     deserialized_model = deepcopy(model)
 
     assert grap_node is not None
-    assert list(deserialized_model.beams)[0].graphnode == grap_node
+    assert deserialized_model.beams[0].graphnode == grap_node
 
 
 def test_joint_candidates_simple():

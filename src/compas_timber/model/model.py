@@ -17,6 +17,11 @@ from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import WallJoint
+from compas_timber.elements import Beam
+from compas_timber.elements import Fastener
+from compas_timber.elements import Plate
+from compas_timber.elements import Slab
+from compas_timber.elements import Wall
 from compas_timber.errors import BeamJoiningError
 
 
@@ -79,19 +84,28 @@ class TimberModel(Model):
 
     @property
     def beams(self):
-        # type: () -> Generator[Beam, None, None]
-        # TODO: think about using `filter` instead of all these
-        # TODO: add `is_beam`, `is_plate` etc. to avoid using `isinstance`
-        for element in self.elements():
-            if getattr(element, "is_beam", False):
-                yield element
+        # type: () -> List[Beam]
+        return self.find_all_elements_of_type(Beam)
 
     @property
     def plates(self):
-        # type: () -> Generator[Plate, None, None]
-        for element in self.elements():
-            if getattr(element, "is_plate", False):
-                yield element
+        # type: () -> List[Plate]
+        return self.find_all_elements_of_type(Plate)
+
+    @property
+    def walls(self):
+        # type: () -> List[Wall]
+        return self.find_all_elements_of_type(Wall)
+
+    @property
+    def slabs(self):
+        # type: () -> List[Slab]
+        return self.find_all_elements_of_type(Slab)
+
+    @property
+    def fasteners(self):
+        # type: () -> List[Fastener]
+        return self.find_all_elements_of_type(Fastener)
 
     @property
     def joints(self):
@@ -112,27 +126,6 @@ class TimberModel(Model):
             if edge_candidate is not None:
                 candidates.add(edge_candidate)
         return candidates
-
-    @property
-    def fasteners(self):
-        # type: () -> Generator[Fastener, None, None]
-        for element in self.elements():
-            if getattr(element, "is_fastener", False):
-                yield element
-
-    @property
-    def walls(self):
-        # type: () -> Generator[Wall, None, None]
-        for element in self.elements():
-            if getattr(element, "is_wall", False):
-                yield element
-
-    @property
-    def slabs(self):
-        # type: () -> Generator[Slab, None, None]
-        for element in self.elements():
-            if getattr(element, "is_slab", False):
-                yield element
 
     @property
     def topologies(self):
@@ -495,7 +488,7 @@ class TimberModel(Model):
                 self.remove_joint(joint)
 
         max_distance = max_distance or TOL.relative
-        beams = list(self.beams)
+        beams = self.beams
         solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         for pair in pairs:
@@ -524,7 +517,7 @@ class TimberModel(Model):
                 self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
-        plates = list(self.plates)
+        plates = self.plates
         solver = PlateConnectionSolver()
         pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)
         for pair in pairs:
@@ -552,7 +545,7 @@ class TimberModel(Model):
         """
         self._clear_wall_joints()
 
-        walls = list(self.walls)
+        walls = self.walls
 
         if not walls:
             return

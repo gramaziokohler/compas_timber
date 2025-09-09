@@ -30,7 +30,7 @@ model.add_element(Wall(3000, 140, 2000, frame=wall_frame))
 # setup the viewer
 viewer = create_viewer()
 
-wall = list(model.walls)[0]
+wall = model.walls[0]
 
 # draw centerline
 viewer.scene.add(wall.origin)
