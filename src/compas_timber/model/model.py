@@ -49,22 +49,22 @@ class TimberModel(Model):
 
     """
 
-    _TIMBER_GRAPH_EDGE_ATTRIBUTES = ["interactions", "candidate"]
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None}
 
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
-        for interaction in model.interactions(kind="joint"):  # TODO: allow for contacts as well once they are implemented in compas_timber
-            interaction.restore_beams_from_keys(model)  # type: ignore
+        for joint in model.joints:  # TODO: allow for modifiers as well once they are implemented in compas_timber
+            joint.restore_beams_from_keys(model)  # type: ignore
         return model
 
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
-        self._graph.update_default_edge_attributes(joints=None, contacts=None)  # update the default edge attributes to include joints and contacts
+        self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
 
-    def __str__(self):  # TODO: add groups and contacts or use the parent method instead?
+    def __str__(self):
         # type: () -> str
         return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
 
@@ -97,8 +97,10 @@ class TimberModel(Model):
     def joints(self):
         # type: () -> set[Joint]
         joints = set()  # some joints might apear on more than one interaction
-        for interaction in self.interactions(kind="joint"):
-            joints.add(interaction)
+        for edge in self._graph.edges():
+            edge_joints = self._graph.edge_attribute(edge, "joints") or []
+            for joint in edge_joints:
+                joints.add(joint)
         return joints
 
     @property
@@ -106,9 +108,9 @@ class TimberModel(Model):
         # type: () -> set[JointCandidate]
         candidates = set()
         for edge in self._graph.edges():
-            candidate = self._graph.edge_attribute(edge, "candidate")
-            if candidate is not None:
-                candidates.add(candidate)
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            if edge_candidate is not None:
+                candidates.add(edge_candidate)
         return candidates
 
     @property
@@ -177,7 +179,7 @@ class TimberModel(Model):
         return self._elements[guid]
 
     def add_elements(self, elements, parent=None):
-        # type: (list[Element], GroupNode | None) -> list[Element]
+        # type: (list[Element], Element | None) -> list[Element]
         """Add multiple elements to the model.
 
         Parameters
@@ -195,8 +197,11 @@ class TimberModel(Model):
             The list of elements that were added to the model.
 
         """
-        if not isinstance(elements, list):
+        try:
+            elements = list(elements)
+        except TypeError:
             elements = [elements]
+
         for element in elements:
             self.add_element(element, parent=parent)
         return elements
@@ -309,28 +314,6 @@ class TimberModel(Model):
     # Interactions
     # =============================================================================
 
-    def interactions(self, kind=None):
-        # type: (str | None) -> Generator
-        """Yield edge-level relationships, optionally filtered by kind.
-
-        Parameters
-        ----------
-        kind : str or None, optional
-            Filter interactions by type: "joint", "contact", or None for all.
-
-        Yields
-        ------
-        Joint or Contact
-            The interactions of the specified kind.
-        """
-        for (u, v), attr in self._graph.edges(data=True):
-            if kind in (None, "joint"):
-                for joint in attr.get("joints") or []:
-                    yield joint
-            if kind in (None, "contact"):
-                for contact in attr.get("contacts") or []:
-                    yield contact
-
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
         try:
@@ -369,13 +352,14 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
+        # TODO: should we be removing the joint candidate(s) edge attributes when adding an actual joint?
         self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
-            joints = self._graph.edge_attribute(edge, "joints") or []  # explicitly add the joint to the "joints" attribute
+            joints = self._graph.edge_attribute(edge, "joints") or []  # GET
             joints.append(joint)
-            self._graph.edge_attribute(edge, "joints", value=joints)
+            self._graph.edge_attribute(edge, "joints", value=joints)  # SET
             # TODO: should we create a bidirectional interaction here?
 
     def add_joint_candidate(self, candidate):
@@ -392,17 +376,16 @@ class TimberModel(Model):
         """
         for interaction in candidate.interactions:
             element_a, element_b = interaction
-            edge = (element_a.graph_node, element_b.graph_node)
+            edge = (element_a.graphnode, element_b.graphnode)
             if edge not in self._graph.edges():
                 self._graph.add_edge(*edge)
 
-                # HACK: calls to `model.joints` expect there to be a "interactions" on any edges
-                self._graph.edge_attribute(edge, "interactions", [])
+                # HACK: calls to `model.joints` expect there to be a "joints" on any edges
+                self._graph.edge_attribute(edge, "joints", [])
 
             # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
-            # (``interactions`` vs. ``candidate``)
-            # TODO: ``interactions`` is a list, should ``candidate`` be a list as well? don't see a reason rn.
-            self._graph.edge_attribute(edge, "candidate", candidate)
+            # (``joints`` vs. ``candidates``)
+            self._graph.edge_attribute(edge, "candidates", candidate)
 
     def remove_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
@@ -415,12 +398,12 @@ class TimberModel(Model):
         """
         for interaction in candidate.interactions:
             element_a, element_b = interaction
-            edge = (element_a.graph_node, element_b.graph_node)
+            edge = (element_a.graphnode, element_b.graphnode)
 
             if edge in self._graph.edges():
-                stored_candidate = self._graph.edge_attribute(edge, "candidate")
+                stored_candidate = self._graph.edge_attribute(edge, "candidates")
                 if stored_candidate is candidate:
-                    self._graph.unset_edge_attribute(edge, "candidate")
+                    self._graph.unset_edge_attribute(edge, "candidates")
 
             if not self._is_remaining_attrs_on_edge(edge):
                 # if there's no other timber related attributes on that edge, then remove the edge as well
@@ -457,11 +440,11 @@ class TimberModel(Model):
         None
 
         """
-        edge = (a.graph_node, b.graph_node)
+        edge = (a.graphnode, b.graphnode)
         if edge not in self._graph.edges():
             return
 
-        edge_interactions = self._graph.edge_attribute(edge, "interactions")
+        edge_interactions = self._graph.edge_attribute(edge, "joints")
         edge_interactions.clear()  # type: ignore
 
         if not self._is_remaining_attrs_on_edge(edge):
