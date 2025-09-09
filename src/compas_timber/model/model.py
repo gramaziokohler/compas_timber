@@ -178,34 +178,6 @@ class TimberModel(Model):
         """
         return self._elements[guid]
 
-    def add_elements(self, elements, parent=None):
-        # type: (list[Element], Element | None) -> list[Element]
-        """Add multiple elements to the model.
-
-        Parameters
-        ----------
-        elements : list[:class:`~compas_model.elements.Element`]
-            The model elements.
-        parent : :class:`~compas_model.elements.Element`, optional
-            The parent element of the elements to be added to the model.
-            This can be a group element or any other element that can contain other elements.
-            If ``None``, the elements will be added directly under the root node.
-
-        Returns
-        -------
-        list[:class:`~compas_model.elements.Element`]
-            The list of elements that were added to the model.
-
-        """
-        try:
-            elements = list(elements)
-        except TypeError:
-            elements = [elements]
-
-        for element in elements:
-            self.add_element(element, parent=parent)
-        return elements
-
     # =============================================================================
     # Groups
     # =============================================================================
@@ -317,7 +289,7 @@ class TimberModel(Model):
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
         try:
-            return self._graph.edge_attribute(node_pair, "joints")  # TODO: should this be "contacts" as well?
+            return self._graph.edge_attribute(node_pair, "joints")
         except KeyError:
             return []
 
