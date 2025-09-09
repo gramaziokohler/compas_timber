@@ -9,6 +9,7 @@ from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import JointTopology
+from compas.data import json_dump
 
 
 HERE = os.path.dirname(__file__)
@@ -47,25 +48,19 @@ for category, lines in lines.items():
         normal = NORMAL_VERTICALS if category == "verticals" else None
         beam = Beam.from_centerline(centerline=line, height=height, width=width, z_vector=normal)
         beam.attributes["category"] = category
+        beam.name = category
         model.add_element(beam)
 
-# create topology to joint type mapping
-topo_connection = {JointTopology.TOPO_L: LButtJoint, JointTopology.TOPO_T: TButtJoint}
+# analyze connections and create joint candidates
+model.connect_adjacent_beams()
 
-# find neighboring beams
-solver = ConnectionSolver()
-beam_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
-
-for pair in beam_pairs:
-    beam_a, beam_b = pair
-
-    # find topology and reorder beams according to roles if needed based on found topology
-    result = solver.find_topology(beam_a, beam_b)
-
-    # join beams accorgind to topology to connection type mapping
-    joint_cls = topo_connection.get(result.topology, None)
-    if joint_cls is not None:
-        joint_cls.create(model, result.beam_a, result.beam_b)
+# create joints for L and T connections
+for candidate in model.joint_candidates:
+    beam_a, beam_b = candidate.elements
+    if candidate.topology == JointTopology.TOPO_L:
+        LButtJoint.create(model, beam_a, beam_b)
+    elif candidate.topology == JointTopology.TOPO_T:
+        TButtJoint.create(model, beam_a, beam_b)
 
 model.process_joinery()
 
@@ -78,7 +73,6 @@ for beam in model.beams:
 
 # draw geometry (with features)
 for beam in model.beams:
-    beam: Beam
     viewer.scene.add(beam.geometry)
 
 viewer.show()
