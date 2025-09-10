@@ -50,29 +50,24 @@ class Beam(TimberElement):
     height : float
         Height of the cross-section
     shape : :class:`~compas.geometry.Box`
-        A feature-less box representing the parametric geometry of this beam.
+        A feature-less box representing the parametric geometry of this beam in global coordinates.
     blank : :class:`~compas.geometry.Box`
-        A feature-less box representing the material stock geometry to produce this beam.
+        A feature-less box representing the material stock geometry to produce this beam in local coordinates.
+    blank_length : float
+        The length of the blank including any extensions added to the beam.
+    centerline : :class:`~compas.geometry.Line`
+        A line representing the centerline of this beam.
     ref_frame : :class:`~compas.geometry.Frame`
         Reference frame for machining processings according to BTLx standard.
     ref_sides : tuple(:class:`~compas.geometry.Frame`)
         A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.
     ref_edges : tuple(:class:`~compas.geometry.Line`)
         A tuple containing the 4 lines representing the long edges of the beam according to BTLx standard.
-    centerline : :class:`~compas.geometry.Line`
-        A line representing the centerline of this beam.
-    centerline_start : :class:`~compas.geometry.Point`
-        The point at the start of the centerline of this beam.
-    centerline_end : :class:`~compas.geometry.Point`
-        The point at the end of the centerline of this beam.
-    aabb : tuple(float, float, float, float, float, float)
-        An axis-aligned bounding box of this beam as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
-    long_edges : list(:class:`~compas.geometry.Line`)
-        A list containing the 4 lines along the long axis of this beam.
-    midpoint : :class:`~compas.geometry.Point`
-        The point at the middle of the centerline of this beam.
-    key : int, optional
-        Once beam is added to a model, it will have this model-wide-unique integer key.
+    aabb : :class:`~compas.geometry.Box`
+        An axis aligned bounding box of this beam.
+    obb : :class:`~compas.geometry.Box`
+        An oriented bounding box of this beam.
+
 
     """
 
@@ -83,6 +78,7 @@ class Beam(TimberElement):
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
+        data["attributes"] = self.attributes.copy()
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
@@ -100,6 +96,14 @@ class Beam(TimberElement):
         # type: () -> str
         return "Beam(frame={!r}, length={}, width={}, height={})".format(self.frame, self.length, self.width, self.height)
 
+    def __str__(self):
+        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
+            self.width,
+            self.height,
+            self.length,
+            self.frame,
+        )
+
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
@@ -113,18 +117,22 @@ class Beam(TimberElement):
         transformation = super(Beam, self).transformation
         start, _ = self._resolve_blank_extensions()
         extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
-        return extension_transformation * transformation
+        return extension_transformation * transformation  # TODO: should this be instead handled when calling `add_blank_extension` and `remove_blank_extension`?
 
     @property
     def shape(self):
+        """The shape of the beam in global coordinates."""
         # type: () -> Box
-        assert self.frame
-        return self._create_shape()
+        shape = Box(self.length, self.width, self.height)
+        shape.translate(Vector.Xaxis() * self.length * 0.5)
+        return shape.transformed(self.modeltransformation)
 
     @property
     def blank(self):
+        """The blank of the beam in local coordinates."""
         # type: () -> Box
-        return self._create_blank()
+        blank = Box(self.blank_length, self.width, self.height)
+        return blank.translated(Vector.Xaxis() * self.blank_length * 0.5)
 
     @property
     def blank_length(self):
@@ -134,70 +142,32 @@ class Beam(TimberElement):
 
     @property
     def centerline(self):
+        """The centerline of the beam in global coordinates."""
         # type: () -> Line
-        return Line(self.centerline_start, self.centerline_end)
-
-    @property
-    def centerline_start(self):
-        # type: () -> Point
-        assert self.frame
-        return self.frame.point
-
-    @property
-    def centerline_end(self):
-        # type: () -> Point
-        assert self.frame
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
+        line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self.length)
+        return line.transformed(self.modeltransformation)
 
     @property
     def ref_frame(self):
         # type: () -> Frame
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
-        assert self.frame
-        # sort extensions at the start of the beam
-        start, _ = self._resolve_blank_extensions()
-        ref_point = self.frame.point.copy()
-        ref_point += -self.frame.xaxis * start
-
-        ref_point += self.frame.yaxis * self.width * 0.5
-        ref_point -= self.frame.zaxis * self.height * 0.5
-        return Frame(ref_point, self.frame.xaxis, self.frame.zaxis)
-
-    @property
-    def long_edges(self):
-        # TODO: can we replace this with `ref_edges`? --> No because `ref_edges` get affected by blank extensions
-        # type: () -> list[Line]
-        assert self.frame
-        y = self.frame.yaxis
-        z = self.frame.zaxis
-        w = self.width * 0.5
-        h = self.height * 0.5
-        ps = self.centerline_start
-        pe = self.centerline_end
-
-        return [Line(ps + v, pe + v) for v in (y * w + z * h, -y * w + z * h, -y * w - z * h, y * w - z * h)]
-
-    @property
-    def midpoint(self):
-        assert self.frame
-        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
-
-    def __str__(self):
-        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
-            self.width,
-            self.height,
-            self.length,
-            self.frame,
-        )
+        """
+        Reference frame for machining processings according to BTLx standard.
+        The origin is at the bottom far corner of the element.
+        The ref_frame is always in local coordinates.
+        TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
+        """
+        ref_point = Point(0, self.width * 0.5, self.height * 0.5)
+        frame = Frame(ref_point, Vector.Xaxis(), Vector.Zaxis())
+        return frame.transformed(self.modeltransformation)
 
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
 
-    def compute_geometry(self, include_features=True):
+    def compute_elementgeometry(self, include_features=True):
         # type: (bool) -> compas.geometry.Brep
-        """Compute the geometry of the element in global coordinates.
+        """Compute the geometry of the element in local coordinates.
 
         Parameters
         ----------
@@ -214,7 +184,7 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        blank_geo = Brep.from_box(self.blank)  # blank is in global coordinates
+        blank_geo = Brep.from_box(self.blank)  # blank is in local coordinates
         if include_features:
             for feature in self.features:
                 try:
@@ -225,7 +195,7 @@ class Beam(TimberElement):
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
-        """Computes the Axis Aligned Bounding Box (AABB) of the element.
+        """Computes the Axis Aligned Bounding Box (AABB) of the element in global coordinates.
 
         Parameters
         ----------
@@ -238,7 +208,7 @@ class Beam(TimberElement):
             The AABB of the element.
 
         """
-        vertices, _ = self.blank.to_vertices_and_faces()
+        vertices, _ = self.shape.to_vertices_and_faces()
         box = Box.from_bounding_box(bounding_box(vertices))
         box.xsize += inflate
         box.ysize += inflate
@@ -247,7 +217,7 @@ class Beam(TimberElement):
 
     def compute_obb(self, inflate=0.0):
         # type: (float | None) -> compas.geometry.Box
-        """Computes the Oriented Bounding Box (OBB) of the element.
+        """Computes the Oriented Bounding Box (OBB) of the element in global coordinates.
 
         Parameters
         ----------
@@ -260,7 +230,7 @@ class Beam(TimberElement):
             The OBB of the element.
 
         """
-        obb = self.blank.copy()
+        obb = self.shape.copy()
         obb.xsize += inflate
         obb.ysize += inflate
         obb.zsize += inflate
@@ -268,7 +238,7 @@ class Beam(TimberElement):
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
-        """Computes the collision geometry of the element.
+        """Computes the collision geometry of the element in global coordinates.
 
         Returns
         -------
@@ -276,23 +246,7 @@ class Beam(TimberElement):
             The collision geometry of the element.
 
         """
-        return self.blank.to_mesh()
-
-    def _create_shape(self):
-        # type: () -> Box
-        boxframe = self.frame
-        depth_offset = boxframe.xaxis * self.length * 0.5
-        boxframe.point += depth_offset
-        return Box(self.length, self.width, self.height, frame=boxframe)
-
-    def _create_blank(self):
-        # type: () -> Box
-        origin = self.ref_frame.point.copy()
-        # move the origin to the center of the blank box
-        offset = self.ref_frame.xaxis * (self.blank_length / 2) + self.ref_frame.yaxis * (self.height / 2) + self.ref_frame.zaxis * (self.width / 2)
-        origin += offset
-        frame = Frame(origin, self.ref_frame.xaxis, self.ref_frame.zaxis)
-        return Box(self.blank_length, self.width, self.height, frame=frame)
+        return self.shape.to_mesh()
 
     # ==========================================================================
     # Alternative constructors
@@ -419,7 +373,7 @@ class Beam(TimberElement):
             plane = Plane.from_frame(plane)
 
         x = {}
-        for e in self.long_edges:
+        for e in self.ref_edges:
             p, t = intersection_line_plane_param(e, plane)
             x[t] = p
 
@@ -477,8 +431,8 @@ class Beam(TimberElement):
             The second element is the actual endpoint of the beam's centerline which correspond to the result.
 
         """
-        ps = self.centerline_start
-        pe = self.centerline_end
+        ps = self.centerline.start
+        pe = self.centerline.end
         ds = point.distance_to_point(ps)
         de = point.distance_to_point(pe)
 
