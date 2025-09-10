@@ -65,8 +65,8 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         # checks elements compatibility and generates Joints
         JointRules = [j for j in JointRules if j is not None]
 
-        solver = JointRuleSolver(JointRules, Model, max_distance=MaxDistance)
-        joint_errors, unjoined_clusters = solver.apply_rules_to_model()  # TODO: figure out best way to pass out unjoined_clusters
+        solver = JointRuleSolver(JointRules, max_distance=MaxDistance)
+        joint_errors, _ = solver.apply_rules_to_model(Model)  # TODO: figure out best way to pass out unjoined_clusters
 
         for je in joint_errors:
             debug_info.add_joint_error(je)
