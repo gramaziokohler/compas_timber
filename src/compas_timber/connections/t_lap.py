@@ -92,7 +92,7 @@ class TLapJoint(LapJoint):
             self.cross_beam.remove_features(self.features)
 
         # create lap features
-        negative_volume_main, negative_volume_cross = self._create_negative_volumes()
+        negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
         main_lap_feature = Lap.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
         cross_lap_feature = Lap.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
 
