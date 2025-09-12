@@ -401,6 +401,7 @@ class LongitudinalCut(BTLxProcessing):
         if not any([self.start_limited, self.end_limited, self.depth_limited]):
             # if the cut is not limited, trim the geometry with the cutting plane
             cutting_plane = self.plane_from_params_and_beam(beam)
+            cutting_plane.transform(beam._transformation_to_local())
             try:
                 return geometry.trimmed(cutting_plane)
             except BrepTrimmingError:
@@ -408,6 +409,7 @@ class LongitudinalCut(BTLxProcessing):
         else:
             # if the cut is limited, calculate the negative volume representing the cut and subtract it from the geometry
             neg_vol = self.volume_from_params_and_beam(beam)
+            neg_vol.transform(beam._transformation_to_local())
             try:
                 return geometry - neg_vol
             except IndexError:

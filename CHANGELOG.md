@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
 * Modified `TimberElement.__init__()` to remove automatic frame and transformation initialization from constructor.
 * Changed the way the `blank` is computed using the `ref_frame` instead of the depricated `blank_frame` in `compas_timber.elements.Beam`.
+* Changed the `apply()` method in `DoubleCut`, `DovetailMortise`, `DovetailTenon`, `Drilling`, `FrenchRidgeLap`, `JackRafterCut`, `Lap`, `LongitudinalCut`, `Mortise`, `Pocket`, `StepJointNotch`, `StepJoint`, `Tenon` by transforming the computed feature geometry in the element's local space to allow the element geometry computation to happen in local coordinates.
 
 ### Removed
 
