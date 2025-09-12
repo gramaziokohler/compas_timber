@@ -4,6 +4,7 @@ from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
+from compas_model.modifiers import Modifier
 
 
 class TimberElement(Element):
@@ -86,60 +87,73 @@ class TimberElement(Element):
 
     @property
     def geometry(self):
-        """The geometry of the element in its own global coordinates."""
+        """The geometry of the element in the model's global coordinates."""
         if self._geometry is None:
-            self._geometry = self.compute_geometry(include_features=True)
+            self._geometry = self.compute_modelgeometry()
         return self._geometry
 
     # ========================================================================
     # Geometry computation methods
     # ========================================================================
 
-    def compute_geometry(self, include_features=False):
-        # type: (bool) -> compas.geometry.Brep
-        """Compute the geometry of the element in global coordinates.
+    def compute_modeltransformation(self):
+        """Compute the transformation to model coordinates of this element
+        based on its position in the spatial hierarchy of the model.
+        # TODO: this is an override of the base class method. The difference is that it checks for self.model.
+        # TODO: this is done in order to allow for an element to be handled without a model. Check if this is necessary.
 
-        This is the parametric representation of the element,
-        considering its location in the model.
+        Returns
+        -------
+        :class:`compas.geometry.Transformation`
 
-        Parameters
-        ----------
-        include_features : bool, optional
-            If True, the features should be included in the element geometry.
+        """
+        # type: () -> Transformation
+        stack = []
+
+        if self.transformation:
+            stack.append(self.transformation)
+
+        if self.model:
+            parent = self.parent
+
+            while parent:
+                if parent.transformation:
+                    stack.append(parent.transformation)
+                parent = parent.parent
+
+            if self.model.transformation:
+                stack.append(self.model.transformation)
+
+        if stack:
+            result = stack[-1]
+            for t in reversed(stack[:-1]):
+                result = t * result
+            return result
+        return Transformation()
+
+    def compute_modelgeometry(self):
+        """Compute the geometry of the element in model coordinates and taking into account the effect of interactions with connected elements.
+        # TODO: this is an override of the base class method. The difference is that it checks for self.model.
+        # TODO: this is done in order to allow for an element to be handled without a model. Check if this is necessary.
 
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The geometry of the element in global coordinates.
-
-        Raises
-        ------
-        FeatureApplicationError
-            If there is an error applying features to the element.
 
         """
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        # type: () -> compas.geometry.Brep
+        xform = self.modeltransformation
+        modelgeometry = self.elementgeometry.transformed(xform)
 
-    def compute_elementgeometry(self, include_features=False):
-        # type: (bool) -> compas.geometry.Brep
-        """Compute the geometry of the element in local coordinates.
+        if self.model:
+            for nbr in self.model.graph.neighbors_in(self.graphnode):
+                modifiers: list[Modifier] = self.model.graph.edge_attribute((nbr, self.graphnode), name="modifiers")  # type: ignore
+                if modifiers:
+                    source = self.model.graph.node_element(nbr)
+                    for modifier in modifiers:
+                        modelgeometry = modifier.apply(source, modelgeometry)
 
-        This is the parametric representation of the element,
-        without considering its location in the model.
-
-        Parameters
-        ----------
-        include_features : bool, optional
-            If True, the features should be included in the element geometry.
-
-        Returns
-        -------
-        :class:`compas.geometry.Brep`
-
-        """
-        global_geo = self.compute_geometry(include_features=include_features)
-        if global_geo:
-            return global_geo.transformed(self.transformation.inverse())
+        return modelgeometry
 
     # ========================================================================
     # Feature management & Modification methods
@@ -188,6 +202,18 @@ class TimberElement(Element):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
         self._geometry = None  # reset geometry cache
+
+    def _transformation_to_local(self):
+        """Compute the transformation to local coordinates of this element
+        based on its position in the spatial hierarchy of the model.
+
+        Returns
+        -------
+        :class:`compas.geometry.Transformation`
+
+        """
+        # type: () -> Transformation
+        return self.modeltransformation.inverted()
 
     ########################################################################
     # BTLx properties
