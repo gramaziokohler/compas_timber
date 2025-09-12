@@ -8,11 +8,11 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Translation
 from compas.geometry import Vector
-from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
+from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
@@ -154,10 +154,10 @@ class Beam(TimberElement):
         """
         Reference frame for machining processings according to BTLx standard.
         The origin is at the bottom far corner of the element.
-        The ref_frame is always in local coordinates.
+        The ref_frame is always in global coordinates.
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
-        ref_point = Point(0, self.width * 0.5, self.height * 0.5)
+        ref_point = Point(0, self.width * 0.5, -self.height * 0.5)
         frame = Frame(ref_point, Vector.Xaxis(), Vector.Zaxis())
         return frame.transformed(self.modeltransformation)
 
@@ -317,6 +317,7 @@ class Beam(TimberElement):
     # Extensions and Modifications
     # ==========================================================================
 
+    @reset_computed
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
         """Adds a blank extension to the beam.
@@ -336,6 +337,7 @@ class Beam(TimberElement):
             end += e
         self._blank_extensions[joint_key] = (start, end)
 
+    @reset_computed
     def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
         """Removes a blank extension from the beam.
