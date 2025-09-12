@@ -540,7 +540,7 @@ class DovetailMortise(BTLxProcessing):
                     "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
                 )
 
-        # transform dovetail volume to global coordinates of the beam
+        # transform dovetail volume to local coordinates of the beam
         dovetail_volume.transform(beam._transformation_to_local())
 
         # remove tenon volume to geometry
