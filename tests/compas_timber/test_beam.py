@@ -290,7 +290,7 @@ def test_extension_to_frame(beam):
 
 
 def test_reset_computed_when_adding_features(mocker):
-    mocker.patch("compas_timber.elements.Beam.compute_geometry", return_value=mocker.Mock())
+    mocker.patch("compas_timber.elements.Beam.compute_elementgeometry", return_value=mocker.Mock())
     b = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.2)
 
     b.geometry
@@ -311,7 +311,7 @@ def test_compute_geometry_without_features(beam, mocker):
 
     beam.add_feature(mock_feature)
 
-    beam.compute_geometry(include_features=False)
+    beam.compute_elementgeometry(include_features=False)
 
     # Check that apply was not called for this feature
     mock_feature.apply.assert_not_called()
@@ -327,26 +327,7 @@ def test_geometry_with_features(beam, mocker):
 
     beam.add_feature(mock_feature)
 
-    beam.compute_geometry(include_features=True)
+    beam.compute_elementgeometry(include_features=True)
 
     # Check that apply was called for this feature
     mock_feature.apply.assert_called()
-
-
-def test_compute_elementgeometry_applies_transformation(beam, mocker):
-    """Test that elementgeometry calls compute_geometry and applies transformation."""
-    # Mock Brep and its transformed method
-    brep_mock = mocker.Mock(spec=Brep)
-    transformed_brep_mock = mocker.Mock(spec=Brep)
-    brep_mock.transformed.return_value = transformed_brep_mock
-
-    # Mock compute_geometry
-    compute_geometry_mock = mocker.patch.object(beam, "compute_geometry", return_value=brep_mock)
-
-    # Call compute_elementgeometry()
-    result = beam.compute_elementgeometry()
-
-    # Verify the calls
-    compute_geometry_mock.assert_called_once_with(include_features=False)  # compute_geometry() should be called first
-    brep_mock.transformed.assert_called_once_with(beam.transformation.inverse())  # and then transformed to local coordinates
-    assert result == transformed_brep_mock
