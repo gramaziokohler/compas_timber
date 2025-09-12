@@ -15,7 +15,12 @@ from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, top, bottom, openings: System.Collections.Generic.List[object], category: str, updateRefObj: bool):
+    def RunScript(self,
+                  top,
+                  bottom,
+                  openings: System.Collections.Generic.List[object],
+                  category: str,
+                  updateRefObj: bool):
         # minimum inputs required
 
         if not item_input_valid_cpython(ghenv, top, "top") or not item_input_valid_cpython(ghenv, bottom, "bottom"):
@@ -51,6 +56,8 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
         scene.add(plate.shape)
 
         geo = scene.draw()
+
+        return plate, geo
 
     def _get_guid_and_geometry(self, line):  # TODO: move to ghpython_helpers
         # internalized curves and GH geometry will not have persistent GUIDs, referenced Rhino objects will
