@@ -651,6 +651,9 @@ class DovetailTenon(BTLxProcessing):
                     "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
                 )
 
+        # convert geometries to local coordinates of the beam
+        cutting_plane, dovetail_volume = [geometry.transformed(beam._transformation_to_local()) for geometry in [cutting_plane, dovetail_volume]]
+
         # trim geometry with cutting planes
         try:
             geometry.trim(cutting_plane)

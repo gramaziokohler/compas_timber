@@ -666,6 +666,7 @@ class Lap(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         lap_volume = self.volume_from_params_and_beam(beam)
+        lap_volume.transform(beam._transformation_to_local())
 
         # convert mesh to brep
         try:
