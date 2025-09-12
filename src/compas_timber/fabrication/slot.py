@@ -254,8 +254,8 @@ class Slot(BTLxProcessing):
         # 2. find the angle
 
         # find relevant end surface
-        distance_from_start = distance_point_point(plane.point, beam.centerline_start)
-        distance_from_end = distance_point_point(plane.point, beam.centerline_end)
+        distance_from_start = distance_point_point(plane.point, beam.centerline.start)
+        distance_from_end = distance_point_point(plane.point, beam.centerline.end)
         if distance_from_start < distance_from_end:
             ref_side_index = 4
         else:
