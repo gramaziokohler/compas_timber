@@ -25,7 +25,7 @@
                 "name": "openings",
                 "description": "List of openings in the plate.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             },
             {
                 "name": "category",

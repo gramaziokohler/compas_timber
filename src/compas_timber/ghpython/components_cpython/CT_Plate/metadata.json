@@ -13,7 +13,7 @@
                 "name": "outline",
                 "description": "Referenced polyline, Guid of polyline in the active Rhino document.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "thickness",
@@ -31,7 +31,7 @@
                 "name": "openings",
                 "description": "List of openings in the plate.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 0
+                "scriptParamAccess": 1
             },
             {
                 "name": "category",
