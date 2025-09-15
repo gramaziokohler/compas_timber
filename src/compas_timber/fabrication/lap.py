@@ -670,7 +670,7 @@ class Lap(BTLxProcessing):
 
         # convert mesh to brep
         try:
-            lap_volume = Brep.from_mesh(lap_volume)
+            lap_volume = Brep.from_mesh(lap_volume.to_mesh())
         except Exception:
             raise FeatureApplicationError(
                 lap_volume,
