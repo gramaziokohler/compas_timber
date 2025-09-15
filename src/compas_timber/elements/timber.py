@@ -1,3 +1,6 @@
+from functools import reduce
+from operator import mul
+
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
@@ -125,10 +128,7 @@ class TimberElement(Element):
                 stack.append(self.model.transformation)
 
         if stack:
-            result = stack[-1]
-            for t in reversed(stack[:-1]):
-                result = t * result
-            return result
+            return reduce(mul, stack[::-1])
         return Transformation()
 
     def compute_modelgeometry(self):
