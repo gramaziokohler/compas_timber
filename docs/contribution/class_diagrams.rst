@@ -70,41 +70,42 @@ The elements subsystem contains all the core timber elements that can be modeled
          +blank_length : float
          +width : float
          +height : float
+         +blank : Box
          +ref_frame : Frame
          +is_plate : bool = True
-         +compute_geometry()
-         +compute_aabb()
-         +compute_obb()
-      }
-
-      class Slab {
-         +outline : Polyline
-         +thickness : float
-         +openings : list[Opening]
-         +frame : Frame
-         +origin : Point
-         +baseline : Line
-         +centerline : Line
-         +width : float
-         +length : float
-         +height : float
-         +corners : tuple[Point]
-         +faces : tuple[Frame]
-         +end_faces : tuple[Frame]
-         +envelope_faces : tuple[Frame]
-         +is_slab : bool = True
-         +is_group_element : bool = True
-         +from_boundary()
+         +from_outline_thickness()
          +from_brep()
          +compute_geometry()
          +compute_aabb()
          +compute_obb()
-         +rotate()
+         +compute_collision_mesh()
+      }
+
+      class Slab {
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +openings : list[Opening]
+         +frame : Frame
+         +thickness : float
+         +planes : tuple[Plane]
+         +blank_length : float
+         +width : float
+         +height : float
+         +ref_frame : Frame
+         +is_slab : bool = True
+         +is_group_element : bool = True
+         +from_outline_thickness()
+         +from_brep()
+         +compute_geometry()
+         +compute_aabb()
+         +compute_obb()
       }
 
       class Wall {
          +outline : Polyline
          +thickness : float
+         +baseline : Line
+         +centerline : Line
          +openings : list[Polyline]
          +is_wall : bool = True
       }
@@ -137,8 +138,8 @@ The elements subsystem contains all the core timber elements that can be modeled
       Element <|-- TimberElement
       TimberElement <|-- Beam
       TimberElement <|-- Plate
-      TimberElement <|-- Slab
       TimberElement <|-- Fastener
+      Plate <|-- Slab
       Slab <|-- Wall
 
       %% Composition relationships
