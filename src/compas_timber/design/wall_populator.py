@@ -586,7 +586,7 @@ class WallPopulator(object):
         # type: (TimberModel, List[WallPopulatorConfigurationSet]) -> List[WallPopulator]
         """matches configuration sets to walls and returns a list of WallPopulator instances, each per wall"""
         # TODO: make sure number of walls and configuration sets match
-        walls = list(model.slabs)  # TODO: these are anoying, consider making these lists again
+        walls = model.slabs
         if len(walls) != len(configuration_sets):
             raise ValueError("Number of walls and configuration sets do not match")
 

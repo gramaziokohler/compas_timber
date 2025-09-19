@@ -442,6 +442,8 @@ class Mortise(BTLxProcessing):
                     geometry,
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
+        # transform mortise volume to local coordinates of the beam
+        mortise_volume.transform(beam._transformation_to_local())
 
         # remove tenon volume to geometry
         try:

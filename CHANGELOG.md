@@ -9,10 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `PlateJointCandidate` to `generic_joint.py`.
+* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
+* Added `PlateJoint.from_generic_joint` as override.
+* Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
+* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
+* Added explicit `frame` property setter to `TimberElement` that automatically updates the `transformation` when frame is set.
+* Added `transformation` property to `Beam` that accounts for blank extensions at the start of the beam.
+* Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
+
 ### Changed
+
+* Updated `compas_model` version pinning from `0.4.4` to `0.9.0` to align with the latest development.
+* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
+* Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
+* Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
+* Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
+* Changed `joints` and `joint_candidates` properties in `TimberModel` to use direct edge-based lookup instead of interactions.
+* Updated default edge attributes in the model graph to include `joints` and `candidates`.
+* Updated `graph_node` property to `graphnode` following the changes in the parent `compas_model.elements.Element` class.
+* Upstreamed `ref_sides` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
+* Upstreamed `ref_edges` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
+* Upstreamed `front_side`, `back_side`, `opp_side` methods from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `side_as_surface` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
+* Modified `TimberElement.__init__()` to remove automatic frame and transformation initialization from constructor.
+* Changed the way the `blank` is computed using the `ref_frame` instead of the depricated `blank_frame` in `compas_timber.elements.Beam`.
+* Changed the `apply()` method in `DoubleCut`, `DovetailMortise`, `DovetailTenon`, `Drilling`, `FrenchRidgeLap`, `JackRafterCut`, `Lap`, `LongitudinalCut`, `Mortise`, `Pocket`, `StepJointNotch`, `StepJoint`, `Tenon` by transforming the computed feature geometry in the element's local space to allow the element geometry computation to happen in local coordinates.
 
 ### Removed
 
+* Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
+* Removed `interactions` property from `TimberModel` in favor of direct edge-based joint lookup.
+* Removed `blank_frame` property from `compas_timber.elements.Beam` since the ref_frame could serve it's purpose.
+* Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
+* Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
+* Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not needed anymore.
 
 ## [1.0.0] 2025-09-01
 
@@ -67,7 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
 * Added `Cluster.topology`.
 * Added `PlateSolverResult` and `BeamSolverResult` to package results from `PlateConnectionSolver.find_topology()` and `ConnectionSolver.find_topology()`.
-
 * Added `joint_candidates` property to `TimberModel`.
 * Added `add_joint_candidate` method to `TimberModel`.
 * Added `remove_joint_candidate` method to `TimberModel`.

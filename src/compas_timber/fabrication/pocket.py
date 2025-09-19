@@ -523,6 +523,7 @@ class Pocket(BTLxProcessing):
         # type: (Brep, Beam | Plate) -> Brep
         # get the pocket volume as a polyhedron
         polyhedron_volume = self.volume_from_params_and_element(element)
+        polyhedron_volume.transform(element._transformation_to_local())
 
         # convert the polyhedron to a brep
         try:
