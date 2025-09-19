@@ -2,9 +2,9 @@
     "name": "Fastener Beam Interface",
     "nickname": "Interface",
     "category": "COMPAS Timber",
-    "subcategory": "Design",
+    "subcategory": "01 Elements",
     "description": "defines the interface between a fastener and a beam.",
-    "exposure": 4,
+    "exposure": 8,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

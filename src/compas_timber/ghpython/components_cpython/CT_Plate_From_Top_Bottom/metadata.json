@@ -2,9 +2,9 @@
     "name": "Plate From Top and Bottom",
     "nickname": "PlateFromTopBottom",
     "category": "COMPAS Timber",
-    "subcategory": "Elements",
+    "subcategory": "01 Elements",
     "description": "Creates a Plate from two Polylines.",
-    "exposure": 2,
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
