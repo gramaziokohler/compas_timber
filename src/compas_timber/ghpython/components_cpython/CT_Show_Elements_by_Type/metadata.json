@@ -2,9 +2,9 @@
     "name": "ShowElementsByType",
     "nickname": "ElementTypes",
     "category": "COMPAS Timber",
-    "subcategory": "Show",
+    "subcategory": "08 Show",
     "description": "allows user to filter element geometries by type.",
-    "exposure": 2,
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

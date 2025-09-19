@@ -2,7 +2,7 @@
     "name": "RemoveAttributes",
     "nickname": "RemoveAttributes",
     "category": "COMPAS Timber",
-    "subcategory": "Attributes",
+    "subcategory": "02 Attributes",
     "description": "Remove indicated attributes or clear all (if not attribute names specified) encoded in the referenced objects's name.",
     "exposure": 4,
     "ghpython": {

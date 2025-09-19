@@ -2,7 +2,7 @@
     "name": "CheckAttributes",
     "nickname": "CheckAttributes",
     "category": "COMPAS Timber",
-    "subcategory": "Attributes",
+    "subcategory": "02 Attributes",
     "description": "Check standard attributes (zvector, height, width, category) if they are set and correctly encoded in the referenced object's name.",
     "exposure": 4,
     "ghpython": {

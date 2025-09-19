@@ -2,7 +2,7 @@
     "name": "WallPopulatorConfigSet",
     "nickname": "WallPopulatorConfigSet",
     "category": "COMPAS Timber",
-    "subcategory": "Containers",
+    "subcategory": "03 Containers",
     "description": "Defines options for the WallPopulator.",
     "exposure": 2,
     "ghpython": {

@@ -2,7 +2,7 @@
     "name": "L Topological Joint Rules",
     "nickname": "L_Topo_Joint",
     "category": "COMPAS Timber",
-    "subcategory": "Joint Rules",
+    "subcategory": "04 Beam Joint Rules",
     "description": "makes rule to apply joint type to L topology. Defualts to LMiterJoint",
     "exposure": 4,
     "ghpython": {

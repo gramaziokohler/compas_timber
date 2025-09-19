@@ -2,9 +2,9 @@
     "name": "Direct Plate Joint Rules",
     "nickname": "DirectPlateJoints",
     "category": "COMPAS Timber",
-    "subcategory": "Joint Rules",
+    "subcategory": "05 Plate Joint Rules",
     "description": "Generates a direct joint between two plates. This overrides other joint rules.",
-    "exposure": 8,
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
