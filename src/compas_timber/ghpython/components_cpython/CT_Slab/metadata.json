@@ -2,7 +2,7 @@
     "name": "Slab",
     "nickname": "Slab",
     "category": "COMPAS Timber",
-    "subcategory": "Containers",
+    "subcategory": "03 Containers",
     "description": "Creates a Slab from a Surface.",
     "exposure": 2,
     "ghpython": {

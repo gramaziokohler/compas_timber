@@ -2,7 +2,7 @@
     "name": "Direct Joint Rules",
     "nickname": "DirectJoints",
     "category": "COMPAS Timber",
-    "subcategory": "Joint Rules",
+    "subcategory": "04 Beam Joint Rules",
     "description": "Generates a direct joint between two elements. This overrides other joint rules.",
     "exposure": 8,
     "ghpython": {

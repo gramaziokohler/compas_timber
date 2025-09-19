@@ -2,9 +2,9 @@
     "name": "ShowJoiningErrors",
     "nickname": "JoiningErrors",
     "category": "COMPAS Timber",
-    "subcategory": "Show",
+    "subcategory": "08 Show",
     "description": "Shows information useful for debugging errors that occurred while attempting to join beams.",
-    "exposure": 4,
+    "exposure": 8,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

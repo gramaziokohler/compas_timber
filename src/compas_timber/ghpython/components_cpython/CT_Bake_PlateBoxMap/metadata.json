@@ -2,9 +2,9 @@
     "name": "BakePlatesWithBoxMap",
     "nickname": "BakeWPlatesithBoxMap",
     "category": "COMPAS Timber",
-    "subcategory": "Utils",
+    "subcategory": "09 Utils",
     "description": "Bakes Plate objects with a BoxMapping (by default the material is applied 'by layer' and has to be defined in the layer the objects are baked to).",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
