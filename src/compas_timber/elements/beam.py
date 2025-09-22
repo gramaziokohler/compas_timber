@@ -1,3 +1,4 @@
+import copy
 import math
 
 from compas.geometry import Box
@@ -78,7 +79,7 @@ class Beam(TimberElement):
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
-        data["attributes"] = self.attributes.copy()
+        data["attributes"] = copy.deepcopy(self.attributes)
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
@@ -129,10 +130,11 @@ class Beam(TimberElement):
 
     @property
     def blank(self):
-        """The blank of the beam in local coordinates."""
+        """The blank of the beam in global coordinates."""
         # type: () -> Box
         blank = Box(self.blank_length, self.width, self.height)
-        return blank.translated(Vector.Xaxis() * self.blank_length * 0.5)
+        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
+        return blank.transformed(self.modeltransformation)
 
     @property
     def blank_length(self):
@@ -184,14 +186,17 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        blank_geo = Brep.from_box(self.blank)  # blank is in local coordinates
+        blank = Box(self.blank_length, self.width, self.height)
+        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
+
+        geometry = Brep.from_box(blank)
         if include_features:
             for feature in self.features:
                 try:
-                    blank_geo = feature.apply(blank_geo, self)
+                    geometry = feature.apply(geometry, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return blank_geo
+        return geometry
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
@@ -208,7 +213,7 @@ class Beam(TimberElement):
             The AABB of the element.
 
         """
-        vertices, _ = self.shape.to_vertices_and_faces()
+        vertices, _ = self.blank.to_vertices_and_faces()
         box = Box.from_bounding_box(bounding_box(vertices))
         box.xsize += inflate
         box.ysize += inflate
@@ -230,7 +235,7 @@ class Beam(TimberElement):
             The OBB of the element.
 
         """
-        obb = self.shape.copy()
+        obb = self.blank.copy()
         obb.xsize += inflate
         obb.ysize += inflate
         obb.zsize += inflate
@@ -246,7 +251,7 @@ class Beam(TimberElement):
             The collision geometry of the element.
 
         """
-        return self.shape.to_mesh()
+        return self.blank.to_mesh()
 
     # ==========================================================================
     # Alternative constructors

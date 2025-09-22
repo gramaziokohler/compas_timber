@@ -1,3 +1,6 @@
+from functools import reduce
+from operator import mul
+
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
@@ -125,10 +128,7 @@ class TimberElement(Element):
                 stack.append(self.model.transformation)
 
         if stack:
-            result = stack[-1]
-            for t in reversed(stack[:-1]):
-                result = t * result
-            return result
+            return reduce(mul, stack[::-1])
         return Transformation()
 
     def compute_modelgeometry(self):
@@ -203,7 +203,7 @@ class TimberElement(Element):
             self._features = [f for f in self._features if f not in features]
         self._geometry = None  # reset geometry cache
 
-    def _transformation_to_local(self):
+    def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
         based on its position in the spatial hierarchy of the model.
 
