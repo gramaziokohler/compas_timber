@@ -338,7 +338,6 @@ class TimberGroupElement(TimberElement):
         super(TimberGroupElement, self).__init__(features=features, **kwargs)
         self.elements = elements or []
         self.frame = None
-        self.model = TimberModel()
 
 
     def add_element(self, element):
