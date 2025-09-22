@@ -1,4 +1,4 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.0
 """Shows the names of the connection topology types."""
 
 # flake8: noqa
@@ -7,6 +7,8 @@ import Grasshopper
 import System
 from compas_rhino.conversions import point_to_rhino
 from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import GenericJoint
+from compas_timber.connections import MaxNCompositeAnalyzer
 
 from compas_timber.connections import JointTopology
 from compas_timber.utils import intersection_line_line_param
@@ -21,14 +23,13 @@ class ShowTopologyTypes(Grasshopper.Kernel.GH_ScriptInstance):
         if not item_input_valid_cpython(ghenv, model, "model"):
             return
 
-        topologies = []
-        solver = ConnectionSolver()
-        found_pairs = solver.find_intersecting_pairs(list(model.beams), rtree=True)
-        for pair in found_pairs:
-            result = solver.find_topology(*pair)
-            if not result.topology == JointTopology.TOPO_UNKNOWN:
-                self.pt.append(point_to_rhino(result.point))
-                self.txt.append(JointTopology.get_name(result.topology))
+        # TODO: can we cash the clusters in the model?
+        analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())))
+        clusters = analyzer.find()
+
+        for cluster in clusters:
+            self.pt.append(cluster.joints[0].location)
+            self.txt.append(cluster.joints[0].topology)
 
     def DrawViewportWires(self, arg):
         if ghenv.Component.Locked:

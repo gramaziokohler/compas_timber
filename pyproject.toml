@@ -13,7 +13,10 @@ authors = [
     { name = "Oliver Appling Bucklin", email = "bucklin@arch.ethz.ch" },
     { name = "Aurèle L. Gheyselinck", email = "gheyselinck@arch.ethz.ch" },
     { name = "Panayiotis Papacharalambous", email = "papacharalambous@arch.ethz.ch" },
-    { name = "Anastasiia Stryzhevska", email = "astryzhevska@arch.ethz.ch" }
+    { name = "Anastasiia Stryzhevska", email = "astryzhevska@arch.ethz.ch" },
+    { name = "Jelle Feringa", email = "jelleferinga@gmail.com" },
+    { name = "Joseph Kenny", email = "jk6372@princeton.edu" },
+    { name = "Beverly Lytle", email = "lytle@arch.ethz.ch" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -57,7 +60,7 @@ where = ["src"]
 # ============================================================================
 
 [tool.bumpversion]
-current_version = "0.16.2"
+current_version = "1.0.0"
 message = "Bump version to {new_version}"
 commit = true
 tag = true

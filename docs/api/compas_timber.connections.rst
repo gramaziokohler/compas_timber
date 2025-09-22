@@ -12,11 +12,17 @@ Joints
     :nosignatures:
 
     Joint
+    PlateJoint
     LapJoint
     ButtJoint
     TButtJoint
     LButtJoint
     TStepJoint
+    LFrenchRidgeLapJoint
+    LLapJoint
+    LMiterJoint
+    JointCandidate
+    PlateJointCandidate
     TBirdsmouthJoint
     LMiterJoint
     XLapJoint

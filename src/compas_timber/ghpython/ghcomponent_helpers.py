@@ -267,7 +267,7 @@ def list_input_valid_cpython(ghenv, Param, name):
 
 
 def item_input_valid_cpython(ghenv, Param, name):
-    if not Param:
+    if not Param and Param != 0:
         ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Input parameter %s failed to collect data" % name)
     else:
         return True

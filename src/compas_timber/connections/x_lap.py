@@ -36,8 +36,15 @@ class XLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
+    @property
+    def __data__(self):
+        data = super(XLapJoint, self).__data__()
+        data["cut_plane_bias"] = self.cut_plane_bias
+        return data
+
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(XLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
+        super(XLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
+        self.cut_plane_bias = cut_plane_bias
 
     def add_features(self):
         """Adds the required extension and trimming features to both beams.

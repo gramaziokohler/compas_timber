@@ -1,5 +1,4 @@
 import math
-from typing import List
 
 import compas.geometry
 import compas.tolerance  # noqa: F401
@@ -9,7 +8,6 @@ from compas.tolerance import TOL
 
 import compas_timber.connections  # noqa: F401
 import compas_timber.elements  # noqa: F401
-from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 
 
@@ -79,12 +77,12 @@ class BeamGroupAnalyzer(object):
     """Interface for a beam group analyzer."""
 
     def find(self, exclude=None):
-        """Finds clusters of beams connected pairwise at the same point within a given tolerance."""
+        """Finds clusters of beams connected pairwise at the same point within a given max_distance."""
         raise NotImplementedError
 
 
 class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
-    """Finds clusters of N beams connected pairwise at the same point within a given tolerance.
+    """Finds clusters of N beams connected pairwise at the same point within a given max_distance.
 
     Parameters
     ----------
@@ -92,24 +90,23 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
         The TimberModel to analyze.
     n : int
         The desired cluster size, i.e. the number of beams in a cluster.
-    tolerance : :class:`~compas.tolerance.Tolerance` | None
-        The tolerance to use for the analysis. If None, a default tolerance is used.
+    max_distance : float | None
+        The max distance to use for the analysis. If None, a default max distance is used.
     """
 
-    def __init__(self, model, n=2, tolerance=None):
+    def __init__(self, model, n=2, max_distance=None):
         super(NBeamKDTreeAnalyzer, self).__init__()
-        # ignore any joints that are not `JointCandidate` as we cannot guarantee they hold the appropriate information
-        self._joints = list(filter(lambda joint: isinstance(joint, JointCandidate), model.joints))
+        self._joints = list(model.joint_candidates)
         if not self._joints:
-            raise ValueError("The model has no joints to analyze. Forgot to call `model.connect_adjacent_beams()`?")
+            raise ValueError("The model has no joint candidates to analyze. Forgot to call `model.connect_adjacent_beams()`?")
 
         self._kdtree = KDTree([joint.location for joint in self._joints])
         self._n = n
-        self._tolerance = tolerance or TOL
+        self.max_distance = max_distance or TOL.absolute
 
         # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
 
-    def find(self, exclude=None) -> List[Cluster]:
+    def find(self, exclude=None):
         """Finds clusters of N beams connected pairwise at the same point within a given tolerance.
 
         Parameters
@@ -124,7 +121,6 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
         """
         # type: (set[compas_timber.connections.Joint] | None) -> list[Cluster]
         exclude = exclude or set()  # TODO: uuid clusters so that they can be excluded
-        tol = self._tolerance.absolute
         visited = set()
         neighbors_count = math.comb(self._n, 2) + 1  # +1 for the joint itself
         clusters = []
@@ -138,9 +134,8 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
             visited.add(index)
 
             neighbors = self._kdtree.nearest_neighbors(joint.location, neighbors_count, distance_sort=True)
-
             for _, idx, distance in neighbors:
-                if idx is None or idx in visited or distance > tol or idx == index:
+                if idx is None or idx in visited or distance > self.max_distance or idx == index:
                     continue
 
                 n_joint = self._joints[idx]
@@ -155,16 +150,16 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
         return clusters
 
 
-def TripletAnalyzer(model, tolerance=None):
-    """Finds clusters of 3 beams connected pairwise at the same point within a given tolerance."""
-    # type: (compas_timber.model.TimberModel, compas.tolerance.Tolerance | None) -> BeamGroupAnalyzer
-    return NBeamKDTreeAnalyzer(model, n=3, tolerance=tolerance)
+def TripletAnalyzer(model, max_distance=None):
+    """Finds clusters of 3 beams connected pairwise at the same point within a given max_distance."""
+    # type: (compas_timber.model.TimberModel, float | None) -> BeamGroupAnalyzer
+    return NBeamKDTreeAnalyzer(model, n=3, max_distance=max_distance)
 
 
-def QuadAnalyzer(model, tolerance=None):
-    """Finds clusters of 4 beams connected pairwise at the same point within a given tolerance."""
-    # type: (compas_timber.model.TimberModel, compas.tolerance.Tolerance | None) -> BeamGroupAnalyzer
-    return NBeamKDTreeAnalyzer(model, n=4, tolerance=tolerance)
+def QuadAnalyzer(model, max_distance=None):
+    """Finds clusters of 4 beams connected pairwise at the same point within a given max_distance."""
+    # type: (compas_timber.model.TimberModel, float | None) -> BeamGroupAnalyzer
+    return NBeamKDTreeAnalyzer(model, n=4, max_distance=max_distance)
 
 
 class CompositeAnalyzer:
@@ -205,7 +200,7 @@ class CompositeAnalyzer:
         return results
 
     @classmethod
-    def from_model(cls, model, analyzers_cls, tolerance=None):
+    def from_model(cls, model, analyzers_cls, max_distance=None):
         """Create a CompositeAnalyzer from a TimberModel and a list of analyzers.
 
         Parameters
@@ -214,8 +209,8 @@ class CompositeAnalyzer:
             The TimberModel to analyze.
         analyzers_cls : list[type[BeamGroupAnalyzer]] | type[BeamGroupAnalyzer]
             A list of analyzer classes to use for finding clusters.
-        tolerance : :class:`~compas.tolerance.Tolerance` | None
-            The tolerance to use for the analysis. If None, a default tolerance is used.
+        max_distance : float | None
+            The max distance to use for the analysis. If None, a default max distance is used.
 
         Returns
         -------
@@ -224,10 +219,10 @@ class CompositeAnalyzer:
         """
         if not isinstance(analyzers_cls, list):
             analyzers_cls = [analyzers_cls]
-        return cls([analyzer(model, tolerance) for analyzer in analyzers_cls])
+        return cls([analyzer(model, max_distance=max_distance) for analyzer in analyzers_cls])
 
 
-def MaxNCompositeAnalyzer(model, n, tolerance=None):
+def MaxNCompositeAnalyzer(model, n, max_distance=None):
     """Finds clusters of up to n beams (minimum 2), preferring larger clusters first.
 
     Parameters
@@ -244,6 +239,6 @@ def MaxNCompositeAnalyzer(model, n, tolerance=None):
     CompositeAnalyzer
         An instance of CompositeAnalyzer that finds clusters of size n down to 2.
     """
-    analyzers_cls = [lambda m, t, k=k: NBeamKDTreeAnalyzer(m, n=k, tolerance=t) for k in range(n, 1, -1)]
+    analyzers_cls = [lambda m, t, k=k: NBeamKDTreeAnalyzer(m, n=k, max_distance=t) for k in range(n, 1, -1)]
     # Use lambdas to capture k at each step
-    return CompositeAnalyzer([cls(model, tolerance) for cls in analyzers_cls])
+    return CompositeAnalyzer([cls(model, max_distance) for cls in analyzers_cls])

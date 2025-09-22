@@ -24,12 +24,11 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.design import CategoryRule
+from compas_timber.design import DirectRule
 from compas_timber.elements import Beam
 from compas_timber.elements import OpeningType
 from compas_timber.elements import Plate
 from compas_timber.elements.features import BrepSubtraction
-
-from .workflow import JointDefinition
 
 
 class WallSelector(object):
@@ -612,7 +611,7 @@ class WallPopulator(object):
         elements = self.elements
         return elements
 
-    def create_joint_definitions(self, elements, max_distance=None):
+    def create_joints(self, elements, max_distance=None):
         beams = [element for element in elements if element.is_beam]
         solver = ConnectionSolver()
         found_pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=self.dist_tolerance)
@@ -633,7 +632,7 @@ class WallPopulator(object):
                 if rule.comply(pair, model_max_distance=max_distance) and rule.joint_type.SUPPORTED_TOPOLOGY == detected_topo:
                     if rule.joint_type == LButtJoint:
                         beam_a, beam_b = rule.reorder([beam_a, beam_b])
-                    joint_definitions.append(JointDefinition(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
+                    joint_definitions.append(DirectRule(rule.joint_type, [beam_a, beam_b], **rule.kwargs))
                     # break # ?
         return joint_definitions
 

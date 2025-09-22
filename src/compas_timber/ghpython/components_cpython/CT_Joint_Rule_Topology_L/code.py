@@ -1,4 +1,4 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.0
 # flake8: noqa
 import inspect
 
@@ -29,18 +29,13 @@ class L_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
             ghenv.Component.Message = "Default: LMiterJoint"
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "LMiterJoint is default, change in context menu (right click)")
             return TopologyRule(JointTopology.TOPO_L, LMiterJoint)
-        else:
-            ghenv.Component.Message = self.joint_type.__name__
-            kwargs = {}
-            for i, val in enumerate(args):
-                if val is not None:
-                    kwargs[self.arg_names()[i]] = val
-            supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-            if not isinstance(supported_topo, list):
-                supported_topo = [supported_topo]
-            if JointTopology.TOPO_L not in supported_topo:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Joint type does not match topology. Joint may not be generated.")
-            return TopologyRule(JointTopology.TOPO_L, self.joint_type, **kwargs)
+
+        ghenv.Component.Message = self.joint_type.__name__
+        kwargs = {}
+        for i, val in enumerate(args):
+            if val is not None:
+                kwargs[self.arg_names()[i]] = val
+        return TopologyRule(JointTopology.TOPO_L, self.joint_type, **kwargs)
 
     def arg_names(self):
         names = inspect.getargspec(self.joint_type.__init__)[0][3:]

@@ -1,4 +1,4 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.0
 # flake8: noqa
 import inspect
 
@@ -25,22 +25,17 @@ class X_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
     def RunScript(self, *args):
-        if not self.clicked:
+        if not self.joint_type:
             ghenv.Component.Message = "Default: XLapJoint"
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "XLapJoint is default, change in context menu (right click)")
             return TopologyRule(JointTopology.TOPO_X, XLapJoint)
-        else:
-            ghenv.Component.Message = self.joint_type.__name__
-            kwargs = {}
-            for i, val in enumerate(args):
-                if val is not None:
-                    kwargs[self.arg_names()[i]] = val
-            supported_topo = self.joint_type.SUPPORTED_TOPOLOGY
-            if not isinstance(supported_topo, list):
-                supported_topo = [supported_topo]
-            if JointTopology.TOPO_X not in supported_topo:
-                ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Joint type does not match topology. Joint may not be generated.")
-            return TopologyRule(JointTopology.TOPO_X, self.joint_type, **kwargs)
+
+        ghenv.Component.Message = self.joint_type.__name__
+        kwargs = {}
+        for i, val in enumerate(args):
+            if val is not None:
+                kwargs[self.arg_names()[i]] = val
+        return TopologyRule(JointTopology.TOPO_X, self.joint_type, **kwargs)
 
     def arg_names(self):
         names = inspect.getargspec(self.joint_type.__init__)[0][3:]

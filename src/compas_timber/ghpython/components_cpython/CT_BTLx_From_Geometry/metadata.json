@@ -2,9 +2,9 @@
     "name": "BTLx From Geometry",
     "nickname": "BTLxFromGeo",
     "category": "COMPAS Timber",
-    "subcategory": "Features",
+    "subcategory": "06 Features",
     "description": "Generates a feature from BTLx type and input geometry.",
-    "exposure": 4,
+    "exposure": 2,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

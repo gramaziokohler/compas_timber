@@ -1,4 +1,4 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.0
 """Creates a Beam from a LineCurve."""
 
 # flake8: noqa
@@ -15,11 +15,17 @@ from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, top, bottom, openings: System.Collections.Generic.List[object], category: str, updateRefObj: bool):
+    def RunScript(self,
+                  top,
+                  bottom,
+                  openings: System.Collections.Generic.List[object],
+                  category: str,
+                  updateRefObj: bool):
         # minimum inputs required
 
         if not item_input_valid_cpython(ghenv, top, "top") or not item_input_valid_cpython(ghenv, bottom, "bottom"):
             return
+
         scene = Scene()
 
         t_guid, t_geometry = self._get_guid_and_geometry(top)
@@ -28,6 +34,7 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
         b_rhino_polyline = rs.coercecurve(b_geometry)
         top_line = polyline_to_compas(t_rhino_polyline.ToPolyline())
         bottom_line = polyline_to_compas(b_rhino_polyline.ToPolyline())
+
         o = []
         if openings:
             for o_outline in openings:
@@ -35,6 +42,7 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
                     o_guid, o_geometry = self._get_guid_and_geometry(o_outline)
                     o_rhino_polyline = rs.coercecurve(o_geometry)
                     o.append(polyline_to_compas(o_rhino_polyline.ToPolyline()))
+
         plate = CTPlate(top_line, bottom_line, openings=o)
         plate.attributes["rhino_guid_a"] = str(t_guid) if t_guid else None
         plate.attributes["rhino_guid_b"] = str(b_guid) if b_guid else None
