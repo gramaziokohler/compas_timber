@@ -203,7 +203,7 @@ class TimberElement(Element):
             self._features = [f for f in self._features if f not in features]
         self._geometry = None  # reset geometry cache
 
-    def _transformation_to_local(self):
+    def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
         based on its position in the spatial hierarchy of the model.
 
