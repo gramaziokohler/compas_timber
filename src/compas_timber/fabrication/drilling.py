@@ -263,7 +263,6 @@ class Drilling(BTLxProcessing):
         # if it is, return True
         # otherwise, return False
         blank = element.blank
-        blank.transform(element.modeltransformation)  # element.blank is in local space
         return is_point_in_polyhedron(line.end, blank.to_polyhedron())
 
     @staticmethod
