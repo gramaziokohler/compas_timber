@@ -358,7 +358,7 @@ class StepJoint(BTLxProcessing):
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
-        cutting_planes = [plane.transformed(beam._transformation_to_local()) for plane in cutting_planes]
+        cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
 
         if self.step_shape == StepShapeType.STEP:
             for cutting_plane in cutting_planes:
@@ -430,7 +430,7 @@ class StepJoint(BTLxProcessing):
         if self.tenon and self.step_shape != StepShapeType.DOUBLE:  # TODO: check if tenon applies only to step in BTLx
             # create tenon volume and subtract from brep
             tenon_volume = self.tenon_volume_from_params_and_beam(beam)
-            tenon_volume.transform(beam._transformation_to_local())
+            tenon_volume.transform(beam.transformation_to_local())
             cutting_planes[0].normal = cutting_planes[0].normal * -1
             if self.step_shape == StepShapeType.STEP:
                 # trim tenon volume with cutting plane

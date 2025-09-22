@@ -338,7 +338,7 @@ class DoubleCut(BTLxProcessing):
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
         # convert to the local coordinates of the beam
-        cutting_planes = [plane.transformed(beam._transformation_to_local()) for plane in cutting_planes]
+        cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
 
         if self.is_concave:
             trim_volume = geometry.copy()

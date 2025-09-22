@@ -247,7 +247,7 @@ class JackRafterCut(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         cutting_plane = self.plane_from_params_and_beam(beam)
-        cutting_plane.transform(beam._transformation_to_local())
+        cutting_plane.transform(beam.transformation_to_local())
         try:
             return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:
@@ -435,7 +435,7 @@ class JackRafterCutProxy(object):
         """
         # type: (Brep, Beam) -> Brep
         cutting_plane = self.plane
-        cutting_plane = cutting_plane.transformed(beam._transformation_to_local())
+        cutting_plane = cutting_plane.transformed(beam.transformation_to_local())
         try:
             return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:

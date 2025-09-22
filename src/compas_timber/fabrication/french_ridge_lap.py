@@ -288,7 +288,7 @@ class FrenchRidgeLap(BTLxProcessing):
         # type: (Brep, Beam) -> Brep
         # trim the beam geometry with the cutting frame
         trimming_frame = self.frame_from_params_and_beam(beam)
-        trimming_frame.transform(beam._transformation_to_local())
+        trimming_frame.transform(beam.transformation_to_local())
 
         if not TOL.is_zero(self.angle - 90):
             try:
@@ -301,7 +301,7 @@ class FrenchRidgeLap(BTLxProcessing):
                 )
         # subtract the lap volume from the beam geometry
         subtracting_volume = self.lap_volume_from_params_and_beam(beam)
-        subtracting_volume.transform(beam._transformation_to_local())
+        subtracting_volume.transform(beam.transformation_to_local())
         try:
             return geometry - subtracting_volume
         except IndexError:

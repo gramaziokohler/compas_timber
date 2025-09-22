@@ -541,7 +541,7 @@ class DovetailMortise(BTLxProcessing):
                 )
 
         # transform dovetail volume to local coordinates of the beam
-        dovetail_volume.transform(beam._transformation_to_local())
+        dovetail_volume.transform(beam.transformation_to_local())
 
         # remove tenon volume to geometry
         try:

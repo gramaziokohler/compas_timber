@@ -325,7 +325,7 @@ class Drilling(BTLxProcessing):
 
         """
         drill_geometry = Brep.from_cylinder(self.cylinder_from_params_and_element(element))
-        drill_geometry.transform(element._transformation_to_local())
+        drill_geometry.transform(element.transformation_to_local())
 
         try:
             return geometry - drill_geometry
