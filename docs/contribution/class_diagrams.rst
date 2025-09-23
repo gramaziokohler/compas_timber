@@ -24,12 +24,20 @@ The elements subsystem contains all the core timber elements that can be modeled
          +is_beam : bool
          +is_plate : bool
          +is_wall : bool
-         +is_group_element : bool
          +is_fastener : bool
          +reset()
          +add_features(features)
          +remove_features(features)
          +remove_blank_extension()
+      }
+
+      class ContainerElement {
+         <<abstract>>
+         +elements : list[TimberElement or ContainerElement]
+         +debug_info : list
+         +is_slab : bool
+         +is_fastener : bool
+         +reset()
       }
 
       class Beam {
@@ -60,6 +68,7 @@ The elements subsystem contains all the core timber elements that can be modeled
          +compute_collision_mesh()
       }
 
+
       class Plate {
          +outline_a : Polyline
          +outline_b : Polyline
@@ -88,7 +97,7 @@ The elements subsystem contains all the core timber elements that can be modeled
          +frame : Frame
          +thickness : float
          +planes : tuple[Plane]
-         +blank_length : float
+         +length : float
          +width : float
          +height : float
          +ref_frame : Frame
@@ -99,15 +108,29 @@ The elements subsystem contains all the core timber elements that can be modeled
          +compute_geometry()
          +compute_aabb()
          +compute_obb()
+         +compute_collision_mesh()
+         +type() : str { "wall" or "floor" or "roof"}
       }
 
-      class Wall {
-         +outline : Polyline
+      class PlateLike {
+         <<abstract>>
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +openings : list[Opening]
+         +frame : Frame
          +thickness : float
-         +baseline : Line
-         +centerline : Line
-         +openings : list[Polyline]
-         +is_wall : bool = True
+         +planes : tuple[Plane]
+         +length : float
+         +width : float
+         +height : float
+         +ref_frame : Frame
+         +from_outline_thickness()
+         +from_brep()
+         +compute_geometry()
+         +compute_aabb()
+         +compute_obb()
+         +compute_collision_mesh()
+         +type() : str {"wall", "floor", or "roof"}
       }
 
       class Fastener {
@@ -139,8 +162,9 @@ The elements subsystem contains all the core timber elements that can be modeled
       TimberElement <|-- Beam
       TimberElement <|-- Plate
       TimberElement <|-- Fastener
-      Plate <|-- Slab
-      Slab <|-- Wall
+      PlateLike <|-- Plate
+      PlateLike <|-- Slab
+      ContainerElement <|-- Slab
 
       %% Composition relationships
       Slab ..> Opening : contains
