@@ -124,6 +124,7 @@ classDiagram
         <<abstract>> PlateLike
         <<abstract>> TimberElement
 
+        %% Inheritance relationships
         Element <|-- ContainerElement
         Element <|-- TimberElement
         TimberElement <|-- Beam
