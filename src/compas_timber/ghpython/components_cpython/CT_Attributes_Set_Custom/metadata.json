@@ -2,7 +2,7 @@
     "name": "SetAttributesCustom",
     "nickname": "SetAttributesCustom",
     "category": "COMPAS Timber",
-    "subcategory": "Attributes",
+    "subcategory": "02 Attributes",
     "description": "Set custom attributes to the referenced object by encoding them in the objects's name.",
     "exposure": 4,
     "ghpython": {

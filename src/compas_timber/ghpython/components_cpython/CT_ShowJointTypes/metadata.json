@@ -2,9 +2,9 @@
     "name": "ShowJointTypes",
     "nickname": "ShowJointTypes",
     "category": "COMPAS Timber",
-    "subcategory": "Show",
+    "subcategory": "08 Show",
     "description": "Shows the names of the defined Joints.",
-    "exposure": 8,
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

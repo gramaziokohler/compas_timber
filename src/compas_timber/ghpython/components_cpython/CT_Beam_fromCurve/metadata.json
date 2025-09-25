@@ -2,7 +2,7 @@
     "name": "Beam",
     "nickname": "Beam",
     "category": "COMPAS Timber",
-    "subcategory": "Elements",
+    "subcategory": "01 Elements",
     "description": "Creates a Beam from a LineCurve.",
     "exposure": 2,
     "ghpython": {
