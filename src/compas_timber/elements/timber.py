@@ -49,18 +49,6 @@ class TimberElement(Element):
         return False
 
     @property
-    def is_wall(self):
-        return False
-
-    @property
-    def is_group_element(self):
-        return False
-
-    @property
-    def is_fastener(self):
-        return False
-
-    @property
     def frame(self):
         # type: () -> Frame | None
         """The local coordinate system of the element."""
