@@ -1,8 +1,9 @@
+from re import S
 from .slab import Slab
 from compas.geometry import Frame
 from compas.geometry import Polyline
 
-class Wall(object):
+class Wall(Slab):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 

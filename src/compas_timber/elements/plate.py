@@ -68,7 +68,7 @@ class Plate(Sheet, TimberElement):
         return super(Plate, self).__data__
 
     def __init__(self, outline_a=None, outline_b=None, openings=None, frame=None, **kwargs):
-        Sheet.__init__(self,outline_a, outline_b, openings=openings, frame=frame)
+        Sheet.__init__(self, outline_a, outline_b, openings=openings, frame=frame)
         TimberElement.__init__(self, **kwargs)
         self._outline_feature = None
         self._opening_features = None

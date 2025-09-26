@@ -178,6 +178,64 @@ class TimberModel(Model):
     # Groups
     # =============================================================================
 
+    def add_group_element(self, element, name=None):
+        """Add an element which shall contain other elements.
+
+        The container element is added to the group as well.
+
+        TODO: upstream this to compas_model, maybe?
+        TODO: should this allow for assigning it a parent in the future?
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.TimberElement`
+            The element to add to the group.
+        name : str, optional
+            The name of the group to add the element to. If not provided, the element's name is used.
+
+        Returns
+        -------
+        :class:`~compas_model.elements.Group`
+            The group element that was created and to which the element was added.
+
+        Raises
+        ------
+        ValueError
+            If the element is not a group element.
+            If the group name is not provided and the element has no name.
+            If a group with same name already exists in the model.
+
+        Examples
+        --------
+        >>> from compas_timber.elements import Beam, Wall
+        >>> from compas_timber.model import TimberModel
+        >>> model = TimberModel()
+        >>> wall1_group = model.add_group_element(Wall(5000, 200, 3000, name="wall1"))
+        >>> beam_a = Beam(Frame.worldXY(), 100, 200, 300)
+        >>> model.add_element(beam_a, parent=wall1_group)
+        >>> model.has_group("wall1")
+        True
+
+        """
+        # type: (TimberElement, str) -> Group
+        group_name = name or element.name
+
+        if not element.is_group_element:
+            raise ValueError("Element {} is not a group element.".format(element))
+
+        if not group_name:
+            raise ValueError("Group name must be provided or group element must have a name.")
+
+        if self.has_group(element):
+            raise ValueError("Group {} already exists in model.".format(group_name))
+
+        group = self.add_group(group_name)
+        self.add_element(element, parent=group)
+
+        element.name = group_name
+        return group
+
+
     def add_container_element(self, element, parent=None):
         """Add an element which shall contain other elements.
 
