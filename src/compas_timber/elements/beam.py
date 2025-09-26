@@ -1,19 +1,18 @@
-import copy
 import math
 
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Translation
 from compas.geometry import Vector
+from compas.geometry import add_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
-from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
@@ -51,40 +50,50 @@ class Beam(TimberElement):
     height : float
         Height of the cross-section
     shape : :class:`~compas.geometry.Box`
-        A feature-less box representing the parametric geometry of this beam in global coordinates.
+        A feature-less box representing the parametric geometry of this beam.
     blank : :class:`~compas.geometry.Box`
-        A feature-less box representing the material stock geometry to produce this beam in local coordinates.
-    blank_length : float
-        The length of the blank including any extensions added to the beam.
-    centerline : :class:`~compas.geometry.Line`
-        A line representing the centerline of this beam.
+        A feature-less box representing the material stock geometry to produce this beam.
     ref_frame : :class:`~compas.geometry.Frame`
         Reference frame for machining processings according to BTLx standard.
     ref_sides : tuple(:class:`~compas.geometry.Frame`)
         A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.
     ref_edges : tuple(:class:`~compas.geometry.Line`)
         A tuple containing the 4 lines representing the long edges of the beam according to BTLx standard.
-    aabb : :class:`~compas.geometry.Box`
-        An axis aligned bounding box of this beam.
-    obb : :class:`~compas.geometry.Box`
-        An oriented bounding box of this beam.
-
+    faces : list(:class:`~compas.geometry.Frame`)
+        A list of frames representing the 6 faces of this beam.
+        0: +y (side's frame normal is equal to the beam's Y positive direction)
+        1: +z
+        2: -y
+        3: -z
+        4: -x (side at the starting end)
+        5: +x (side at the end of the beam)
+    centerline : :class:`~compas.geometry.Line`
+        A line representing the centerline of this beam.
+    centerline_start : :class:`~compas.geometry.Point`
+        The point at the start of the centerline of this beam.
+    centerline_end : :class:`~compas.geometry.Point`
+        The point at the end of the centerline of this beam.
+    aabb : tuple(float, float, float, float, float, float)
+        An axis-aligned bounding box of this beam as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
+    long_edges : list(:class:`~compas.geometry.Line`)
+        A list containing the 4 lines along the long axis of this beam.
+    midpoint : :class:`~compas.geometry.Point`
+        The point at the middle of the centerline of this beam.
+    key : int, optional
+        Once beam is added to a model, it will have this model-wide-unique integer key.
 
     """
 
     @property
     def __data__(self):
         data = super(Beam, self).__data__
-        data["frame"] = self.frame
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
-        data["attributes"] = copy.deepcopy(self.attributes)
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(**kwargs)
-        self.frame = frame
+        super(Beam, self).__init__(frame=frame, **kwargs)
         self.width = width
         self.height = height
         self.length = length
@@ -97,14 +106,6 @@ class Beam(TimberElement):
         # type: () -> str
         return "Beam(frame={!r}, length={}, width={}, height={})".format(self.frame, self.length, self.width, self.height)
 
-    def __str__(self):
-        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
-            self.width,
-            self.height,
-            self.length,
-            self.frame,
-        )
-
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
@@ -114,27 +115,15 @@ class Beam(TimberElement):
         return True
 
     @property
-    def transformation(self):
-        transformation = super(Beam, self).transformation
-        start, _ = self._resolve_blank_extensions()
-        extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
-        return extension_transformation * transformation  # TODO: should this be instead handled when calling `add_blank_extension` and `remove_blank_extension`?
-
-    @property
     def shape(self):
-        """The shape of the beam in global coordinates."""
         # type: () -> Box
-        shape = Box(self.length, self.width, self.height)
-        shape.translate(Vector.Xaxis() * self.length * 0.5)
-        return shape.transformed(self.modeltransformation)
+        assert self.frame
+        return self._create_shape(self.frame, self.length, self.width, self.height)
 
     @property
     def blank(self):
-        """The blank of the beam in global coordinates."""
         # type: () -> Box
-        blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
-        return blank.transformed(self.modeltransformation)
+        return self._create_shape(self.blank_frame, self.blank_length, self.width, self.height)
 
     @property
     def blank_length(self):
@@ -143,51 +132,172 @@ class Beam(TimberElement):
         return self.length + start + end
 
     @property
-    def centerline(self):
-        """The centerline of the beam in global coordinates."""
-        # type: () -> Line
-        line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self.length)
-        return line.transformed(self.modeltransformation)
+    def blank_frame(self):
+        # type: () -> Frame
+        # TODO: could be replaced by `ref_frame`?
+        assert self.frame
+        start, _ = self._resolve_blank_extensions()
+        frame = self.frame.copy()
+        frame.point += -frame.xaxis * start  # "extension" to the start edge
+        return frame
 
+    @property
+    def ref_frame(self):
+        # type: () -> Frame
+        ref_point = self.blank_frame.point.copy()
+        ref_point += self.blank_frame.yaxis * self.width * 0.5
+        ref_point -= self.blank_frame.zaxis * self.height * 0.5
+        return Frame(ref_point, self.blank_frame.xaxis, self.blank_frame.zaxis)
+
+    @property
+    def faces(self):
+        # type: () -> list[Frame]
+        assert self.frame
+        return [
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
+            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
+            Frame(
+                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
+                self.frame.yaxis,
+                self.frame.zaxis,
+            ),  # small face at end point
+        ]
+
+    @property
+    def ref_sides(self):
+        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        # TODO: cache these
+        rs1_point = self.ref_frame.point
+        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
+        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
+        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
+        rs5_point = rs1_point
+        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
+        return (
+            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
+            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
+            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
+            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
+            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
+            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
+        )
+
+    @property
+    def ref_edges(self):
+        # type: () -> tuple[Line, Line, Line, Line]
+        # so tuple is not created every time
+        ref_sides = self.ref_sides
+        return (
+            Line(ref_sides[0].point, ref_sides[0].point + ref_sides[0].xaxis * self.blank_length, name="RE_1"),
+            Line(ref_sides[1].point, ref_sides[1].point + ref_sides[1].xaxis * self.blank_length, name="RE_2"),
+            Line(ref_sides[2].point, ref_sides[2].point + ref_sides[2].xaxis * self.blank_length, name="RE_3"),
+            Line(ref_sides[3].point, ref_sides[3].point + ref_sides[3].xaxis * self.blank_length, name="RE_4"),
+        )
+
+    @property
+    def centerline(self):
+        # type: () -> Line
+        return Line(self.centerline_start, self.centerline_end)
+
+    @property
+    def centerline_start(self):
+        # type: () -> Point
+        assert self.frame
+        return self.frame.point
+
+    @property
+    def centerline_end(self):
+        # type: () -> Point
+        assert self.frame
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length))
+
+    @property
+    def long_edges(self):
+        # type: () -> list[Line]
+        assert self.frame
+        y = self.frame.yaxis
+        z = self.frame.zaxis
+        w = self.width * 0.5
+        h = self.height * 0.5
+        ps = self.centerline_start
+        pe = self.centerline_end
+
+        return [Line(ps + v, pe + v) for v in (y * w + z * h, -y * w + z * h, -y * w - z * h, y * w - z * h)]
+
+    @property
+    def midpoint(self):
+        assert self.frame
+        return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
+
+    @property
+    def has_features(self):
+        # TODO: consider removing, this is not used anywhere
+        return len(self.features) > 0
+
+    @property
+    def key(self):
+        # type: () -> int | None
+        return self.graph_node
+
+    def __str__(self):
+        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
+            self.width,
+            self.height,
+            self.length,
+            self.frame,
+        )
 
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================
 
-    def compute_elementgeometry(self, include_features=True):
+    def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.geometry.Brep
-        """Compute the geometry of the element in local coordinates.
+        """Compute the geometry of the element.
 
         Parameters
         ----------
         include_features : bool, optional
-            If True, the features should be included in the element geometry.
+            If ``True``, include the features in the computed geometry.
+            If ``False``, return only the base geometry.
 
         Returns
         -------
         :class:`compas.geometry.Brep`
 
-        Raises
-        ------
-        :class:`compas_timber.errors.FeatureApplicationError`
-            If there is an error applying features to the element.
-
         """
-        blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
-
-        geometry = Brep.from_box(blank)
+        blank_geo = Brep.from_box(self.blank)
         if include_features:
             for feature in self.features:
                 try:
-                    geometry = feature.apply(geometry, self)
+                    blank_geo = feature.apply(blank_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return geometry
+        return blank_geo  # type: ignore
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
-        """Computes the Axis Aligned Bounding Box (AABB) of the element in global coordinates.
+        """Computes the Axis Aligned Bounding Box (AABB) of the element.
 
         Parameters
         ----------
@@ -209,7 +319,7 @@ class Beam(TimberElement):
 
     def compute_obb(self, inflate=0.0):
         # type: (float | None) -> compas.geometry.Box
-        """Computes the Oriented Bounding Box (OBB) of the element in global coordinates.
+        """Computes the Oriented Bounding Box (OBB) of the element.
 
         Parameters
         ----------
@@ -230,7 +340,7 @@ class Beam(TimberElement):
 
     def compute_collision_mesh(self):
         # type: () -> compas.datastructures.Mesh
-        """Computes the collision geometry of the element in global coordinates.
+        """Computes the collision geometry of the element.
 
         Returns
         -------
@@ -305,11 +415,18 @@ class Beam(TimberElement):
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector)
 
+    @staticmethod
+    def _create_shape(frame, xsize, ysize, zsize):
+        # type: (Frame, float, float, float) -> Box
+        boxframe = frame.copy()
+        depth_offset = boxframe.xaxis * xsize * 0.5
+        boxframe.point += depth_offset
+        return Box(xsize, ysize, zsize, frame=boxframe)
+
     # ==========================================================================
-    # Extensions and Modifications
+    # Featrues
     # ==========================================================================
 
-    @reset_computed
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
         """Adds a blank extension to the beam.
@@ -329,7 +446,6 @@ class Beam(TimberElement):
             end += e
         self._blank_extensions[joint_key] = (start, end)
 
-    @reset_computed
     def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
         """Removes a blank extension from the beam.
@@ -345,16 +461,50 @@ class Beam(TimberElement):
         else:
             del self._blank_extensions[joint_key]
 
-    def extension_to_plane(self, plane):
+    def side_as_surface(self, side_index):
+        # type: (int) -> compas.geometry.PlanarSurface
+        """Returns the requested side of the beam as a parametric planar surface.
+
+        Parameters
+        ----------
+        side_index : int
+            The index of the reference side to be returned. 0 to 5.
+
+        """
+        # TODO: maybe this should be the default representation of the ref sides?
+        ref_side = self.ref_sides[side_index]
+        if side_index in (0, 2):  # top + bottom
+            xsize = self.blank_length
+            ysize = self.width
+        elif side_index in (1, 3):  # sides
+            xsize = self.blank_length
+            ysize = self.height
+        elif side_index in (4, 5):  # ends
+            xsize = self.width
+            ysize = self.height
+        return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
+
+    def _resolve_blank_extensions(self):
+        # type: () -> tuple[float, float]
+        """Returns the max amount by which to extend the beam at both ends."""
+        start = 0.0
+        end = 0.0
+        for s, e in self._blank_extensions.values():
+            start = max(start, s)
+            end = max(end, e)
+        return start, end
+
+    def extension_to_plane(self, pln):
         # type: (Frame) -> tuple[float, float]
         """Returns the amount by which to extend the beam in each direction using metric units.
 
+        TODO: verify this is true
         The extension is the minimum amount which allows all long faces of the beam to pass through
         the given plane.
 
         Parameters
         ----------
-        plane : :class:`~compas.geometry.Frame` or :class:`~compas.geometry.Plane`
+        pln : :class:`~compas.geometry.Frame`
             The plane to which the beam should be extended.
 
         Returns
@@ -363,15 +513,13 @@ class Beam(TimberElement):
             Extension amount at start of beam, Extension amount at end of beam
 
         """
-        if isinstance(plane, Frame):
-            plane = Plane.from_frame(plane)
-
         x = {}
-        for e in self.ref_edges:
-            p, t = intersection_line_plane_param(e, plane)
+        pln = Plane.from_frame(pln)  # type: ignore
+        for e in self.long_edges:
+            p, t = intersection_line_plane_param(e, pln)
             x[t] = p
 
-        px = intersection_line_plane_param(self.centerline, plane)[0]
+        px = intersection_line_plane_param(self.centerline, pln)[0]
         if px is None:
             raise ValueError("The plane does not intersect with the centerline of the beam.")
         side, _ = self.endpoint_closest_to_point(px)
@@ -385,20 +533,6 @@ class Beam(TimberElement):
             tmax = max(x.keys())
             de = (tmax - 1.0) * self.length
         return -ds, de
-
-    def _resolve_blank_extensions(self):
-        # type: () -> tuple[float, float]
-        """Returns the max amount by which to extend the beam at both ends."""
-        start = 0.0
-        end = 0.0
-        for s, e in self._blank_extensions.values():
-            start = max(start, s)
-            end = max(end, e)
-        return start, end
-
-    # ==========================================================================
-    # Utility Methods
-    # ==========================================================================
 
     @staticmethod
     def _calculate_z_vector_from_centerline(centerline_vector):
@@ -425,8 +559,8 @@ class Beam(TimberElement):
             The second element is the actual endpoint of the beam's centerline which correspond to the result.
 
         """
-        ps = self.centerline.start
-        pe = self.centerline.end
+        ps = self.centerline_start
+        pe = self.centerline_end
         ds = point.distance_to_point(ps)
         de = point.distance_to_point(pe)
 
@@ -434,3 +568,74 @@ class Beam(TimberElement):
             return "start", ps
         else:
             return "end", pe
+
+    def get_dimensions_relative_to_side(self, ref_side_index):
+        # type: (int) -> tuple[float, float]
+        """Returns the perpendicular and parallel dimensions of the beam to the given reference side.
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the dimensions should be calculated.
+
+        Returns
+        -------
+        tuple(float, float)
+            The perpendicular and parallel dimensions of the beam to the reference side.
+                - Perpendicular dimension: The measurement normal to the reference side.
+                - Parallel dimension: The measurement along y-axis of reference side.
+        """
+        if ref_side_index in [1, 3]:
+            return self.height, self.width
+        return self.width, self.height
+
+    def front_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the front side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the front side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 1) % 4]
+
+    def back_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the back side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the back side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index - 1) % 4]
+
+    def opp_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the opposite side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the opposite side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 2) % 4]
