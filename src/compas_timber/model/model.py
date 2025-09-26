@@ -1,7 +1,6 @@
-from typing import Container
 import compas
 
-from compas_timber.elements.container import ContainerElement
+from compas_timber.elements import ContainerElement
 
 if not compas.IPY:
     from typing import Generator  # noqa: F401
@@ -174,6 +173,46 @@ class TimberModel(Model):
         """
         return self._elements[guid]
 
+    def add_container_element(self, element, parent=None):
+        """Add an element which shall contain other elements.
+
+        The container element is added to the group as well.
+
+        TODO: upstream this to compas_model, maybe?
+        TODO: should this allow for assigning it a parent in the future?
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.ContainerElement`
+            The element to add to the group.
+
+        Raises
+        ------
+        ValueError
+            If the element is not a ContainerElement.
+
+        TODO: add example
+
+        """
+
+        if not isinstance(element, ContainerElement):
+            raise ValueError("Container element must have a name.")
+
+        self.add_element(element, parent=parent)
+
+        for child in element.children:
+            if child not in list(self.elements()): #if child not in model
+                if isinstance(child, ContainerElement):  # if child is also a group element
+                    self.add_container_element(child, parent=element)
+                else:
+                    self.add_element(element, parent=element)
+            else:
+                if child.parent is not element:
+                    child.parent = element  # update parent if necessary TODO: check if this works.
+                    element.add(child.tree_node) #NOTE no freakin idea how this works
+        return element
+
+
     # =============================================================================
     # Groups
     # =============================================================================
@@ -185,6 +224,10 @@ class TimberModel(Model):
 
         TODO: upstream this to compas_model, maybe?
         TODO: should this allow for assigning it a parent in the future?
+        NOTE: This function seems to create a group, and then add the element to that group. the Group element is not at the same
+        node as the element itself. In the tree, the element is then a child of the Group. I think it would make more sense to
+        directly set the TreeNode of the element instead of creating a Group object. It may be useful to have a `set_parent()`
+        method in compas_model.
 
         Parameters
         ----------
@@ -234,58 +277,6 @@ class TimberModel(Model):
 
         element.name = group_name
         return group
-
-
-    def add_container_element(self, element, parent=None):
-        """Add an element which shall contain other elements.
-
-        The container element is added to the group as well.
-
-        TODO: upstream this to compas_model, maybe?
-        TODO: should this allow for assigning it a parent in the future?
-
-        Parameters
-        ----------
-        element : :class:`~compas_timber.elements.ContainerElement`
-            The element to add to the group.
-
-        Raises
-        ------
-        ValueError
-            If the element is not a group element.
-            If the group name is not provided and the element has no name.
-            If a group with same name already exists in the model.
-
-        Examples
-        --------
-        >>> from compas_timber.elements import Beam, Wall
-        >>> from compas_timber.model import TimberModel
-        >>> model = TimberModel()
-        >>> wall1_group = model.add_group_element(Wall(5000, 200, 3000, name="wall1"))
-        >>> beam_a = Beam(Frame.worldXY(), 100, 200, 300)
-        >>> model.add_element(beam_a, parent=wall1_group)
-        >>> model.has_group("wall1")
-        True
-
-        """
-
-        if not element.name:
-            raise ValueError("Container element must have a name.")
-
-        self.add_element(element, parent=parent)
-
-        for child in element.children:
-            if child not in list(self.elements()):
-                if isinstance(child, ContainerElement):  # if child is also a group element
-                    self.add_container_element(child, parent=element)
-                else:
-                    self.add_element(element, parent=element)
-            else:
-                if child.parent is not element:
-                    child.parent = element  # update parent if necessary
-        return element
-
-
 
     def has_group(self, group_element):
         # type: (TimberElement) -> bool

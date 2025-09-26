@@ -151,7 +151,7 @@ class ContainerElement(Element):
     @reset_computed
     def add_element(self, element):
         # type: (Feature | list[Feature]) -> None
-        """Adds one or more features to the beam.
+        """Adds an element to the container. This will change the element frame to be relative to this container.
 
         Parameters
         ----------
@@ -159,11 +159,15 @@ class ContainerElement(Element):
             The feature to be added.
 
         """
-        if not element.model:
-            self.model.add_element(element, parent=self)  # add the element to the model if it is not already part of one. this sets the element.frame to global Frame
-        self._elements.append(element)  # add the element to this container
-        element.frame = self.modeltransformation.inverse()*element.modeltransformation # set the frame of the element being added relative to this container
-
+        self._children.append(element)  # add the element to this container
+        if self.model:  #if the container is already in a model, add the element to it.
+            if not element.model:
+                self.model.add_element(element, parent=self)  # add the element to the model if it is not already part of one. this sets the element.frame to global Frame
+            element.frame = Frame.from_transformation(self.modeltransformation.inverse()*element.modeltransformation) # set the frame of the element being added relative to this container
+        else:
+            element.frame.transform(self.transformation.inverse())  # set the frame of the element being added to global Frame
+   
+   
     def remove_element(self, element):
         # type: (Feature) -> None
         """Removes a feature from the beam.

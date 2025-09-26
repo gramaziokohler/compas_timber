@@ -3,6 +3,7 @@ from .plate import Plate
 from .opening import Opening
 from .opening import OpeningType
 from .slab import Slab
+from .container import ContainerElement
 from .wall import Wall
 from .fastener import Fastener
 from .fastener import FastenerTimberInterface
@@ -30,4 +31,5 @@ __all__ = [
     "OpeningType",
     "Slab",
     "Wall",
+    "ContainerElement",
 ]
