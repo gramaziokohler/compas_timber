@@ -21,12 +21,14 @@ class Slab(Sheet, ContainerElement):
     @property
     def __data__(self):
         data = super(Slab, self).__data__
+
         data["name"] = self.name
         data["attributes"] = self.attributes
         return data
 
     def __init__(self, outline_a, outline_b, openings=None, frame=None, name=None, **kwargs):
-        super(Slab, self).__init__(outline_a, outline_b, openings=openings, frame=frame, **kwargs)
+        Sheet.__init__(self,outline_a, outline_b, openings=openings, frame=frame)
+        ContainerElement.__init__(self, **kwargs)
         self.name = name or "Slab"
         self.attributes = {}
         self.attributes.update(kwargs)

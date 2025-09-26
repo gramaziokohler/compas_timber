@@ -38,6 +38,7 @@ class TimberElement(Element):
         super(TimberElement, self).__init__(**kwargs)
         self._features = features or []
         self._geometry = None
+        self._ref_frame = None
         self.debug_info = []
 
     @property
@@ -212,8 +213,9 @@ class TimberElement(Element):
         # type: () -> Frame
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
         """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
-
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        if not self._ref_frame:
+            self._ref_frame = Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
+        return self._ref_frame
 
     @property
     def ref_sides(self):

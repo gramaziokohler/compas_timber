@@ -68,13 +68,12 @@ class Plate(Sheet, TimberElement):
         return super(Plate, self).__data__
 
     def __init__(self, outline_a=None, outline_b=None, openings=None, frame=None, **kwargs):
-        super(Plate, self).__init__(outline_a=outline_a, outline_b=outline_b, openings=openings, frame=frame)
-        Plate.check_outlines(outline_a, outline_b)
+        Sheet.__init__(self,outline_a, outline_b, openings=openings, frame=frame)
+        TimberElement.__init__(self, **kwargs)
         self._outline_feature = None
         self._opening_features = None
         self.attributes = {}
         self.attributes.update(kwargs)
-        self._ref_frame = None
         self._blank = None
         self.debug_info = []
 
@@ -106,31 +105,7 @@ class Plate(Sheet, TimberElement):
     def blank_length(self):
         return self.blank.xsize
 
-    @property
-    def ref_frame(self):
-        if not self._ref_frame:
-            self._ref_frame = Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
-        return self._ref_frame
 
-    @property
-    def ref_sides(self):
-        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
-        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        # TODO: cache these
-        rs1_point = self.ref_frame.point
-        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
-        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
-        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
-        rs5_point = rs1_point
-        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
-        return (
-            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
-            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
-            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
-            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
-            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
-            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
-        )
 
 
     @property
