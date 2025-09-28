@@ -8,7 +8,7 @@ class OpeningType(object):
 
 
 class Opening(Element):
-    """An opening in a sheet geometry, defined by one or two polylines.
+    """An opening in a PlateGeometry, defined by one or two polylines.
     Parameters
     ----------
     outline_a : :class:`compas.geometry.Polyline`

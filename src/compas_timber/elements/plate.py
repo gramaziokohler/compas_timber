@@ -20,9 +20,9 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import is_polyline_clockwise
 
 from .timber import TimberElement
-from .sheet import Sheet
+from .plate_geometry import PlateGeometry
 
-class Plate(Sheet, TimberElement):
+class Plate(PlateGeometry, TimberElement):
     """
     A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.
 
@@ -68,7 +68,7 @@ class Plate(Sheet, TimberElement):
         return super(Plate, self).__data__
 
     def __init__(self, outline_a=None, outline_b=None, openings=None, frame=None, **kwargs):
-        Sheet.__init__(self, outline_a, outline_b, openings=openings, frame=frame)
+        PlateGeometry.__init__(self, outline_a, outline_b, openings=openings, frame=frame)
         TimberElement.__init__(self, **kwargs)
         self._outline_feature = None
         self._opening_features = None
@@ -95,18 +95,18 @@ class Plate(Sheet, TimberElement):
 
     @property
     def blank(self):
-        if not self._blank:
-            self._blank = self.obb.copy()
-            self._blank.xsize += 2 * self.attributes.get("blank_extension", 0.0)
-            self._blank.ysize += 2 * self.attributes.get("blank_extension", 0.0)
-        return self._blank
+        _blank = self.obb.copy()
+        _blank.xsize += 2 * self.attributes.get("blank_extension", 0.0)
+        _blank.ysize += 2 * self.attributes.get("blank_extension", 0.0)
+        return _blank
 
     @property
     def blank_length(self):
         return self.blank.xsize
 
-
-
+    @property
+    def ref_frame(self):
+        return Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
 
     @property
     def features(self):

@@ -1,5 +1,5 @@
 from .container import ContainerElement
-from .sheet import Sheet
+from .plate_geometry import PlateGeometry
 
 class SlabType(object):
     WALL = "wall"
@@ -7,7 +7,7 @@ class SlabType(object):
     ROOF = "roof"
     GENERIC = "generic"
 
-class Slab(Sheet, ContainerElement):
+class Slab(PlateGeometry, ContainerElement):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 
@@ -27,7 +27,7 @@ class Slab(Sheet, ContainerElement):
         return data
 
     def __init__(self, outline_a, outline_b, openings=None, frame=None, name=None, **kwargs):
-        Sheet.__init__(self,outline_a, outline_b, openings=openings, frame=frame)
+        PlateGeometry.__init__(self,outline_a, outline_b, openings=openings, frame=frame)
         ContainerElement.__init__(self, **kwargs)
         self.name = name or "Slab"
         self.attributes = {}

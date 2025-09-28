@@ -18,7 +18,7 @@ from compas_timber.utils import is_polyline_clockwise
 
 
 
-class Sheet(object):
+class PlateGeometry(object):
     """
     A class to represent plate-like objects (plate, slab, etc.) defined by polylines on top and bottom faces of shape.
 
@@ -64,16 +64,16 @@ class Sheet(object):
 
     @property
     def __data__(self):
-        data = super(Sheet, self).__data__
+        data = super(PlateGeometry, self).__data__
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
         data["openings"] = self.openings
         return data
 
     def __init__(self, outline_a=None, outline_b=None, openings=None, frame=None):
-        Sheet.check_outlines(outline_a, outline_b)
+        PlateGeometry.check_outlines(outline_a, outline_b)
         self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
-        self.frame = frame or self.get_frame(outline_a, outline_b) or Frame.worldXY()
+        self.frame = frame or self.get_frame(outline_a, outline_b)
         self.local_outlines = ((outline_a.transformed(self.transformation.inverse())), (outline_b.transformed(self.transformation.inverse())))
         self.outline_a = Polyline(outline_a.points)
         self.outline_b = Polyline(outline_b.points)
@@ -190,28 +190,28 @@ class Sheet(object):
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
         """
-        Constructs a sheet from a polyline outline and a thickness.
-        The outline is the top face of the sheet, and the thickness is the distance to the bottom face.
+        Constructs a PlateGeometry from a polyline outline and a thickness.
+        The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
 
         Parameters
         ----------
         outline : :class:`~compas.geometry.Polyline`
-            A polyline representing the outline of the sheet.
+            A polyline representing the outline of the plate geometry.
         thickness : float
-            The thickness of the sheet.
+            The thickness of the plate geometry.
         vector : :class:`~compas.geometry.Vector`, optional
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
         openings : list(:class:`compas_timber.elements.Opening`), optional
-            A list of openings to be added to the sheet.
+            A list of openings to be added to the plate geometry.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
         Returns
         -------
-        :class:`~compas_timber.elements.Sheet`
-            A Sheet object representing the sheet with the given outline and thickness.
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate geometry with the given outline and thickness.
         """
-        # this ensure the sheet's geometry can always be computed
+        # this ensure the plate geometry can always be computed
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
         # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
