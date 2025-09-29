@@ -15,6 +15,7 @@ from compas_model.elements import reset_computed
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import get_polyline_segment_perpendicular_vector
 
 
 
@@ -24,10 +25,12 @@ class PlateGeometry(object):
 
     Parameters
     ----------
+    frame : :class:`~compas.geometry.Frame`
+        The coordinate system (frame) of this plate. Must be coplanar with outline_a.
     outline_a : :class:`~compas.geometry.Polyline`                                                  TODO: add support for NurbsCurve
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate. This should have the same number of points as outline_a.
+        A line representing the associated outline of this plate. This should have the same number of points as outline_a. must be parallel to outline_a. must be in the +Z direction of the frame.
     openings : list(:class:`~compas_timber.elements.Opening`), optional
         A list of Opening objects representing openings in this plate.
     **kwargs : dict, optional
@@ -70,13 +73,11 @@ class PlateGeometry(object):
         data["openings"] = self.openings
         return data
 
-    def __init__(self, outline_a=None, outline_b=None, openings=None, frame=None):
+    def __init__(self, outline_a=None, outline_b=None, openings=None):
         PlateGeometry.check_outlines(outline_a, outline_b)
-        self._input_outlines = (Polyline(outline_a.points), Polyline(outline_b.points))
-        self.frame = frame or self.get_frame(outline_a, outline_b)
-        self.local_outlines = ((outline_a.transformed(self.transformation.inverse())), (outline_b.transformed(self.transformation.inverse())))
-        self.outline_a = Polyline(outline_a.points)
-        self.outline_b = Polyline(outline_b.points)
+        self.local_outlines = (outline_a, outline_b)
+        self.outline_a = outline_a.transformed(self.transformation)
+        self.outline_b = outline_b.transformed(self.transformation)
         self.interfaces = []
         self._planes = None
         self._edge_planes = []
@@ -101,7 +102,7 @@ class PlateGeometry(object):
 
     @property
     def thickness(self):
-        return self.obb.width
+        return self.width
 
     @property
     def planes(self):
@@ -127,18 +128,6 @@ class PlateGeometry(object):
         return self.frame.normal
 
 
-    def get_frame(self, outline_a, outline_b):
-        """The slab_populator frame in global space."""
-        frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
-        if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
-            frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
-        transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-        rebased_pts = [pt.transformed(transform_to_world_xy) for pt in outline_a.points + outline_b.points]
-        frame_offset = bounding_box_xy(rebased_pts)[0]
-        translate_vector = frame.xaxis * frame_offset[0] + frame.yaxis * frame_offset[1]
-        frame.translate(translate_vector)
-        return frame
-
     @property
     def edge_planes(self):
         if not self._edge_planes:
@@ -152,40 +141,49 @@ class PlateGeometry(object):
     @reset_computed
     def reset(self):
         """Resets the element outlines to their initial state."""
-        self.outline_a = Polyline(self._input_outlines[0].points)
-        self.outline_b = Polyline(self._input_outlines[1].points)
+        self.outline_a = self.local_outlines[0].transformed(self.transformation)
+        self.outline_b = self.local_outlines[1].transformed(self.transformation)
         self._edge_planes = []
 
     def add_interface(self, interface):
         self.interfaces.append(interface)
 
-    def check_outlines(outline_a, outline_b):
-        # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
-        """Checks if the outlines are valid.
-
-        Parameters
-        ----------
-        outline_a : :class:`~compas.geometry.Polyline`
-            A line representing the principal outline of this plate.
-        outline_b : :class:`~compas.geometry.Polyline`
-            A line representing the associated outline of this plate.
-
-        Returns
-        -------
-        bool
-            True if the outlines are valid, False otherwise.
-
-        """
-        if not TOL.is_allclose(outline_a[0], outline_a[-1]):
-            raise ValueError("The outline_a is not closed.")
-        if not TOL.is_allclose(outline_b[0], outline_b[-1]):
-            raise ValueError("The outline_b is not closed.")
-        if len(outline_a) != len(outline_b):
-            raise ValueError("The outlines must have the same number of points.")
 
     # ==========================================================================
     # Alternate constructors
     # ==========================================================================
+
+    @classmethod
+    def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
+        """
+        Constructs a PlateGeometry from a polyline outline and a thickness.
+        The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
+
+        Parameters
+        ----------
+        outline : :class:`~compas.geometry.Polyline`
+            A polyline representing the outline of the plate geometry.
+        thickness : float
+            The thickness of the plate geometry.
+        vector : :class:`~compas.geometry.Vector`, optional
+            The direction of the thickness vector. If None, the thickness vector is determined from the outline.
+        openings : list(:class:`compas_timber.elements.Opening`), optional
+            A list of openings to be added to the plate geometry.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate geometry with the given outline and thickness.
+        """
+
+        cls.check_outlines(outline_a, outline_b)
+        frame = cls.get_frame_from_outlines(outline_a, outline_b)
+        xform_to_local = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+        openings = openings or []
+
+        return cls(frame, outline_a.transformed(xform_to_local), outline_b.transformed(xform_to_local), openings=[o.transformed(xform_to_local) for o in openings], **kwargs)
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
@@ -227,7 +225,7 @@ class PlateGeometry(object):
         offset_vector.unitize()
         offset_vector *= thickness
         outline_b = Polyline(outline).translated(offset_vector)
-        return cls(outline, outline_b, openings=openings, **kwargs)
+        return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
     def from_brep(cls, brep, thickness, vector=None, **kwargs):
@@ -271,9 +269,6 @@ class PlateGeometry(object):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    @property
-    def transformation(self):
-        return Transformation.from_frame(self.frame)
 
     @property
     def shape(self):
@@ -355,3 +350,46 @@ class PlateGeometry(object):
 
         """
         return self.obb.to_mesh()
+
+    # ==========================================================================
+    #  static methods
+    # ==========================================================================
+
+    @staticmethod
+    def get_frame_from_outlines(outline_a, outline_b):
+        """The slab_populator frame in global space."""
+        frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
+        if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
+            frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
+        transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+        rebased_pts = [pt.transformed(transform_to_world_xy) for pt in outline_a.points + outline_b.points]
+        frame_offset = bounding_box_xy(rebased_pts)[0]
+        translate_vector = frame.xaxis * frame_offset[0] + frame.yaxis * frame_offset[1]
+        frame.translate(translate_vector)
+        return frame
+
+
+    @staticmethod
+    def check_outlines(outline_a, outline_b):
+        # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
+        """Checks if the outlines are valid.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            A line representing the principal outline of this plate.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A line representing the associated outline of this plate.
+
+        Returns
+        -------
+        bool
+            True if the outlines are valid, False otherwise.
+
+        """
+        if not TOL.is_allclose(outline_a[0], outline_a[-1]):
+            raise ValueError("The outline_a is not closed.")
+        if not TOL.is_allclose(outline_b[0], outline_b[-1]):
+            raise ValueError("The outline_b is not closed.")
+        if len(outline_a) != len(outline_b):
+            raise ValueError("The outlines must have the same number of points.")

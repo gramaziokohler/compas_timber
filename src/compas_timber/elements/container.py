@@ -36,7 +36,7 @@ class ContainerElement(Element):
 
     def __init__(self, frame=None,elements=None, **kwargs):
         super(ContainerElement, self).__init__(**kwargs)
-        self._transformation = Transformation.from_frame(frame) if frame else Frame.worldXY()
+        self._frame = frame or Frame.worldXY()
         self._elements = elements or []
         self._geometry = None
         self.debug_info = []
@@ -51,6 +51,15 @@ class ContainerElement(Element):
         return True
 
     @property
+    def frame(self):
+        return self._frame
+
+    @frame.setter
+    def frame(self, frame):
+        self._frame = frame
+
+
+    @property
     def elements(self):
         # type: () -> list[Element]
         """A list of elements contained within this container."""
@@ -63,6 +72,16 @@ class ContainerElement(Element):
         if self._geometry is None:
             self._geometry = self.compute_modelgeometry()
         return self._geometry
+
+    @property
+    def transformation(self):
+        return Transformation.from_frame(self.frame)
+
+    @transformation.setter
+    @reset_computed
+    def transformation(self, transformation):
+        self._transformation = transformation
+        self.frame = Frame.from_transformation(transformation)
 
     # ========================================================================
     # Geometry computation methods

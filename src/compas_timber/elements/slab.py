@@ -26,9 +26,9 @@ class Slab(PlateGeometry, ContainerElement):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, outline_a, outline_b, openings=None, frame=None, name=None, **kwargs):
-        PlateGeometry.__init__(self,outline_a, outline_b, openings=openings, frame=frame)
-        ContainerElement.__init__(self, **kwargs)
+    def __init__(self, frame, outline_a, outline_b, openings=None, name=None, **kwargs):
+        ContainerElement.__init__(self, frame=frame, **kwargs)
+        PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
         self.name = name or "Slab"
         self.attributes = {}
         self.attributes.update(kwargs)

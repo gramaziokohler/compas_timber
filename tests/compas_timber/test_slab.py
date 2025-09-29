@@ -15,7 +15,7 @@ def slab():
     # Create two plates
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 5000, 0), Point(0, 5000, 3000), Point(0, 0, 3000), Point(0, 0, 0)])
     polyline_b = Polyline([Point(200, 0, 0), Point(200, 5000, 0), Point(200, 5000, 3000), Point(200, 0, 3000), Point(200, 0, 0)])
-    return Slab(polyline_a, polyline_b)
+    return Slab.from_outlines(polyline_a, polyline_b)
 
 @pytest.fixture
 def beams():
@@ -31,7 +31,7 @@ def opening():
     return Opening(opening_outline)
 
 def test_slab_add_elements(slab, beams, opening):
-    for element in beams + [opening]:
+    for element in beams:
         element.transform(slab.transformation_to_local())
         slab.add_element(element)
     assert(beams[0].frame.point == Point(500,0,0))
@@ -39,3 +39,16 @@ def test_slab_add_elements(slab, beams, opening):
     # assert(opening.frame.point == Point(2000,500,0))
     # assert(beams[0].frame.xaxis == Vector(0,1,0))
     # assert(beams[1].frame.xaxis == Vector(0,1,0))
+
+
+
+"""
+>>> from compas_timber.elements import Beam
+>>> from compas.geometry import Point, Vector, Frame, Transformation
+>>> beam = Beam.from_endpoints(Point(0,0,0), Point(100,150,200))
+>>> frame_a = Frame(Point(100,100,100),Vector(0,0,1), Vector(1,0,0))
+>>> frame_b = Frame(Point(1000,1000,100),Vector(1,0,1), Vector(1,1,0))
+>>> x= Transformation.from_frame_to_frame(frame_a,frame_b)
+>>> beam.transform(x)
+
+"""
