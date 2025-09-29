@@ -1,9 +1,8 @@
-from re import S
-from .slab import Slab
+from .slab import ContainerElement
 from compas.geometry import Frame
 from compas.geometry import Polyline
 
-class Wall(Slab):
+class Wall(ContainerElement):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 
@@ -24,6 +23,7 @@ class Wall(Slab):
         return data
 
     def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
+        super(Wall, self).__init__(frame=frame, name=name)
         self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
@@ -44,6 +44,14 @@ class Wall(Slab):
     @property
     def is_wall(self):
         return True
+
+    @property
+    def is_beam(self):
+        return False
+
+    @property
+    def is_plate(self):
+        return False
 
     @classmethod
     def from_boundary(cls, polyline, normal, thickness, openings=None, **kwargs):

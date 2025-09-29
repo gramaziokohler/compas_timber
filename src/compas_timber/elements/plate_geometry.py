@@ -77,7 +77,7 @@ class PlateGeometry(object):
         self.local_outlines = ((outline_a.transformed(self.transformation.inverse())), (outline_b.transformed(self.transformation.inverse())))
         self.outline_a = Polyline(outline_a.points)
         self.outline_b = Polyline(outline_b.points)
-        self._frame = None
+        self.interfaces = []
         self._planes = None
         self._edge_planes = []
 

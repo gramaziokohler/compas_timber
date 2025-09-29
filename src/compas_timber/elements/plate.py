@@ -1,23 +1,9 @@
-from compas.geometry import Box
-from compas.geometry import Brep
-from compas.geometry import Frame
-from compas.geometry import NurbsCurve
-from compas.geometry import Plane
-from compas.geometry import Polyline
-from compas.geometry import Transformation
-from compas.geometry import Vector
-from compas.geometry import Point
-from compas.geometry import distance_point_plane
-from compas.geometry import dot_vectors
-from compas.geometry import bounding_box_xy
-from compas.tolerance import TOL
 from compas_model.elements import reset_computed
+from compas.geometry import Frame
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
-from compas_timber.utils import correct_polyline_direction
-from compas_timber.utils import get_polyline_segment_perpendicular_vector
-from compas_timber.utils import is_polyline_clockwise
+
 
 from .timber import TimberElement
 from .plate_geometry import PlateGeometry
@@ -74,7 +60,6 @@ class Plate(PlateGeometry, TimberElement):
         self._opening_features = None
         self.attributes = {}
         self.attributes.update(kwargs)
-        self._blank = None
         self.debug_info = []
 
 
@@ -107,6 +92,7 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def ref_frame(self):
         return Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
+
 
     @property
     def features(self):
