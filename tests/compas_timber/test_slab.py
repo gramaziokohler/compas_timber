@@ -18,7 +18,7 @@ def slab():
     return Slab(polyline_a, polyline_b)
 
 @pytest.fixture
-def beam():
+def beams():
     """Create a basic TimberModel with two plates."""
     beam_a = Beam(Frame(Point(100, 500, 0)),3000,50,200)
     beam_b = Beam(Frame(Point(100, 4500, 0)),3000,50,200)
@@ -32,5 +32,10 @@ def opening():
 
 def test_slab_add_elements(slab, beams, opening):
     for element in beams + [opening]:
+        element.transform(slab.transformation_to_local())
         slab.add_element(element)
-    assert(beams[0].frame.point == Point(500,0,))
+    assert(beams[0].frame.point == Point(500,0,0))
+    # assert(beams[1].frame.point == Point(4500,0,0))
+    # assert(opening.frame.point == Point(2000,500,0))
+    # assert(beams[0].frame.xaxis == Vector(0,1,0))
+    # assert(beams[1].frame.xaxis == Vector(0,1,0))

@@ -34,8 +34,10 @@ class TimberElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, features=None, **kwargs):
+    def __init__(self, frame, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
+        self._frame = frame or Frame.worldXY()
+        self._transformation = Transformation.from_frame(frame)
         self._features = features or []
         self._geometry = None
         self.debug_info = []
@@ -65,17 +67,6 @@ class TimberElement(Element):
         # type: () -> Frame | None
         """The local coordinate system of the element."""
         return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        # type: (Frame) -> None
-        self._frame = frame
-
-    @property
-    def transformation(self):
-        # type: () -> Transformation
-        """The transformation that transforms the element's geometry to the model's coordinate system."""
-        return Transformation.from_frame(self.frame) if self.frame else Transformation()
 
     @property
     def features(self):

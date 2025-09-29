@@ -34,8 +34,9 @@ class ContainerElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, elements=None, **kwargs):
+    def __init__(self, frame=None,elements=None, **kwargs):
         super(ContainerElement, self).__init__(**kwargs)
+        self._transformation = Transformation.from_frame(frame) if frame else Frame.worldXY()
         self._elements = elements or []
         self._geometry = None
         self.debug_info = []
@@ -50,32 +51,11 @@ class ContainerElement(Element):
         return True
 
     @property
-    def frame(self):
-        # type: () -> Frame | None
-        """The local coordinate system of the element."""
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        # type: (Frame) -> None
-        self._frame = frame
-
-    @property
-    def transformation(self):
-        # type: () -> Transformation
-        """The transformation that transforms the element's geometry to the model's coordinate system."""
-        return Transformation.from_frame(self.frame) if self.frame else Transformation()
-
-    @property
     def elements(self):
         # type: () -> list[Element]
         """A list of elements contained within this container."""
         return self._elements
 
-    @elements.setter
-    @reset_computed
-    def elements(self, elements):
-        self._elements = elements
 
     @property
     def geometry(self):
@@ -151,7 +131,7 @@ class ContainerElement(Element):
     @reset_computed
     def add_element(self, element):
         # type: (Feature | list[Feature]) -> None
-        """Adds an element to the container. This will change the element frame to be relative to this container.
+        """Adds an element to the container. The element being added should be located in reference to the container's frame.
 
         Parameters
         ----------
@@ -159,18 +139,15 @@ class ContainerElement(Element):
             The feature to be added.
 
         """
-        self._children.append(element)  # add the element to this container
-        if self.model:  #if the container is already in a model, add the element to it.
-            if not element.model:
-                self.model.add_element(element, parent=self)  # add the element to the model if it is not already part of one. this sets the element.frame to global Frame
-            element.frame = Frame.from_transformation(self.modeltransformation.inverse()*element.modeltransformation) # set the frame of the element being added relative to this container
-        else:
-            element.frame.transform(self.transformation.inverse())  # set the frame of the element being added to global Frame
-   
-   
+        self._elements.append(element)  # add the element to this container
+        if self.model:
+            if element.model:
+                element.model.remove_element(element)  # remove the element from its previous model.
+            self.model.add_element(element, parent=self)  # add the element to this container's model.
+
     def remove_element(self, element):
         # type: (Feature) -> None
-        """Removes a feature from the beam.
+        """Removes an element from the container.
 
         Parameters
         ----------
@@ -178,9 +155,10 @@ class ContainerElement(Element):
             The feature to be removed.
 
         """
-        element.frame = Frame.from_transformation(element.modeltransformation)  # set the frame of the element being removed to global Frame
         self._elements.remove(element)
-
+        if self.model:
+            self.model.remove_element(element)  # remove the element from its model.
+            self.model.add_element(element)  # add the element to the model without a parent aka at root. TODO: is this the desired behaviour? TODO: can/should I just set the treenode directly?
 
     def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
@@ -192,5 +170,5 @@ class ContainerElement(Element):
 
         """
         # type: () -> Transformation
-        return self.modeltransformation.inverted()
+        return self.modeltransformation.inverse()
 
