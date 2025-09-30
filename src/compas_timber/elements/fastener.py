@@ -71,13 +71,14 @@ class Fastener(Element):
         """returns the geometry of the fastener in the model"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
 
-    @property
-    # HACK: this is a hack/workaround to allow fasteners to be used without a model
-    def frame(self):
-        if self.model:
-            return super(Fastener, self).frame
-        else:
-            return Frame.from_transformation(self.transformation)
+    #TODO: this is necessary when we merge PR #454 compas_model_update
+    # @property
+    # # HACK: this is a hack/workaround to allow fasteners to be used without a model
+    # def frame(self):
+    #     if self.model:
+    #         return super(Fastener, self).frame
+    #     else:
+    #         return Frame.from_transformation(self.transformation)
 
 class FastenerTimberInterface(Data):
     """A class to represent the interface between a fastener and a timber element.
