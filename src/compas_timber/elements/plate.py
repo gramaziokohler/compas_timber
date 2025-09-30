@@ -56,7 +56,7 @@ class Plate(PlateGeometry, TimberElement):
     def __init__(self, frame, outline_a, outline_b, openings=None, **kwargs):
         TimberElement.__init__(self, frame=frame, **kwargs)
         PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
-
+        self.frame = frame
         self._outline_feature = None
         self._opening_features = None
         self.attributes = {}
@@ -90,6 +90,19 @@ class Plate(PlateGeometry, TimberElement):
     def blank_length(self):
         return self.blank.xsize
 
+    #NOTE: length, width, height are only used for BTLx creation. Names are IMHO rather confusing. Keeping for now for backward compatibility.
+    @property
+    def length(self):
+        return self.blank.xsize
+
+    @property
+    def width(self):
+        return self.blank.zsize
+
+    @property
+    def height(self):
+        return self.blank.ysize
+
     @property
     def ref_frame(self):
         return Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
@@ -98,9 +111,9 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
-            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.local_outlines[0], self.local_outlines[1], self, interior=False)
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self._local_outlines[0], self._local_outlines[1], self, interior=False)
         if not self._opening_features:
-            self._opening_features = [FreeContour.from_top_bottom_and_elements(o.outline_a, o.outline_b, self, interior=True) for o in self.openings]
+            self._opening_features = [FreeContour.from_polyline_and_element(o, self, interior=True) for o in self.openings]
         return [self._outline_feature] + self._opening_features + self._features
 
     @features.setter
@@ -176,4 +189,3 @@ class Plate(PlateGeometry, TimberElement):
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return plate_geo
-

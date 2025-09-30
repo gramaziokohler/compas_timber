@@ -34,8 +34,9 @@ class TimberElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, features=None, **kwargs):
+    def __init__(self, frame=None, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
+        self._frame = frame or Frame.worldXY()
         self._features = features or []
         self._geometry = None
         self.debug_info = []
@@ -80,7 +81,7 @@ class TimberElement(Element):
     @transformation.setter
     @reset_computed
     def transformation(self, transformation):
-        self._frame=Frame.from_transformation(transformation)
+        self._frame = Frame.from_transformation(transformation)
 
     @property
     def features(self):

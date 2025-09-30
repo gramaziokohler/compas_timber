@@ -1,3 +1,4 @@
+from calendar import c
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -75,13 +76,11 @@ class PlateGeometry(object):
 
     def __init__(self, outline_a=None, outline_b=None, openings=None):
         PlateGeometry.check_outlines(outline_a, outline_b)
-        self.local_outlines = (outline_a, outline_b)
+        self._local_outlines = (outline_a, outline_b)
         self.outline_a = outline_a.transformed(self.transformation)
         self.outline_b = outline_b.transformed(self.transformation)
         self.interfaces = []
         self._planes = None
-        self._edge_planes = []
-
         self.openings = openings or []
 
     def __repr__(self):
@@ -111,18 +110,6 @@ class PlateGeometry(object):
         return self._planes
 
     @property
-    def length(self):
-        return self.obb.xsize
-
-    @property
-    def width(self):
-        return self.obb.zsize
-
-    @property
-    def height(self):
-        return self.obb.ysize
-
-    @property
     def normal(self):
         """Normal vector of the plate."""
         return self.frame.normal
@@ -130,28 +117,55 @@ class PlateGeometry(object):
 
     @property
     def edge_planes(self):
-        if not self._edge_planes:
-            for i in range(len(self.local_outlines[0]) - 1):
-                plane = Frame.from_points(self.local_outlines[0][i], self.local_outlines[0][i + 1], self.local_outlines[1][i])
-                if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.local_outlines[0], i)) < 0:
-                    plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
-                self._edge_planes.append(plane)
-        return self._edge_planes
+        edge_planes = []
+        for i in range(len(self.outlines_a) - 1):
+            plane = Frame.from_points(self.outlines_a[i], self.outlines_a[i + 1], self.outlines_b[i])
+            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outlines_a, i)) < 0:
+                plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
+            edge_planes.append(plane)
+        return edge_planes
 
     @reset_computed
     def reset(self):
         """Resets the element outlines to their initial state."""
-        self.outline_a = self.local_outlines[0].transformed(self.transformation)
-        self.outline_b = self.local_outlines[1].transformed(self.transformation)
+        self.outline_a = self._local_outlines[0].transformed(self.transformation)
+        self.outline_b = self._local_outlines[1].transformed(self.transformation)
         self._edge_planes = []
 
     def add_interface(self, interface):
         self.interfaces.append(interface)
 
-
     # ==========================================================================
     # Alternate constructors
     # ==========================================================================
+
+    @classmethod
+    def from_dimensions(cls, length, width, thickness, frame=None, **kwargs):
+        """
+        Constructs a PlateGeometry from length, width, and height.
+
+        Parameters
+        ----------
+        length : float
+            The length of the plate geometry.
+        width : float
+            The width of the plate geometry.
+        thickness : float
+            The thickness of the plate geometry.
+        frame : :class:`~compas.geometry.Frame`, optional
+            The frame of the plate geometry. If None, the world XY frame is used.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate geometry with the given dimensions.
+        """
+        outline_a = Polyline([(0, 0, 0), (length, 0, 0), (length, width, 0), (0, width, 0), (0, 0, 0)])
+        outline_b = Polyline([(0, 0, thickness), (length, 0, thickness), (length, width, thickness), (0, width, thickness), (0, 0, thickness)])
+        frame = frame or Frame.worldXY()
+        return cls(frame, outline_a, outline_b, **kwargs)
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
@@ -182,7 +196,6 @@ class PlateGeometry(object):
         frame = cls.get_frame_from_outlines(outline_a, outline_b)
         xform_to_local = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         openings = openings or []
-
         return cls(frame, outline_a.transformed(xform_to_local), outline_b.transformed(xform_to_local), openings=[o.transformed(xform_to_local) for o in openings], **kwargs)
 
     @classmethod
@@ -332,7 +345,7 @@ class PlateGeometry(object):
 
         """
 
-        obb = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
+        obb = Box.from_points(self._local_outlines[0].points + self._local_outlines[1].points)
         obb.xsize += inflate
         obb.ysize += inflate
         obb.zsize += inflate
