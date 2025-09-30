@@ -31,14 +31,25 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
+        data["frame"] = self.frame
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, features=None, **kwargs):
+    def __init__(self, frame=None, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
         self._features = features or []
+        self._frame = frame or Frame.worldXY()
         self._geometry = None
         self.debug_info = []
+
+    @reset_computed
+    def _reset_computed_dummy(self):
+        """Dummy method to trigger reset_computed decorator."""
+        pass
+
+    def reset_computed_properties(self):
+        """Reset all computed/cached properties."""
+        self._reset_computed_dummy()
 
     @property
     def is_beam(self):
@@ -63,7 +74,7 @@ class TimberElement(Element):
     @property
     def frame(self):
         # type: () -> Frame | None
-        """The local coordinate system of the element."""
+        """The local frame of the element defining its position and orientation in space."""
         return self._frame
 
     @frame.setter
@@ -74,8 +85,17 @@ class TimberElement(Element):
     @property
     def transformation(self):
         # type: () -> Transformation
-        """The transformation that transforms the element's geometry to the model's coordinate system."""
+        """The local transformation of the element defining its position and orientation in space.
+        This property returns the transformation computed from the frame when used as a getter,
+        and updates the frame by converting the transformation back to a frame when used as a setter.
+        """
         return Transformation.from_frame(self.frame) if self.frame else Transformation()
+
+    @transformation.setter
+    @reset_computed
+    def transformation(self, transformation):
+        # type: (Transformation) -> None
+        self._frame = Frame.from_transformation(transformation)
 
     @property
     def features(self):

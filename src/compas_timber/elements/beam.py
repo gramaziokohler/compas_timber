@@ -120,6 +120,10 @@ class Beam(TimberElement):
         extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
         return extension_transformation * transformation  # TODO: should this be instead handled when calling `add_blank_extension` and `remove_blank_extension`?
 
+    @transformation.setter
+    def transformation(self, transformation):
+        super(Beam, self.__class__).transformation.__set__(self, transformation)
+
     @property
     def shape(self):
         """The shape of the beam in global coordinates."""
