@@ -77,6 +77,11 @@ class TimberElement(Element):
         """The transformation that transforms the element's geometry to the model's coordinate system."""
         return Transformation.from_frame(self.frame) if self.frame else Transformation()
 
+    @transformation.setter
+    @reset_computed
+    def transformation(self, transformation):
+        self._frame = Frame.from_transformation(transformation)
+
     @property
     def features(self):
         # type: () -> list[Feature]
