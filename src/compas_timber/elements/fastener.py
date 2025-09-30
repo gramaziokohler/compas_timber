@@ -5,12 +5,12 @@ from compas.geometry import Line
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.elements.timber import TimberElement
+from compas_model.elements import Element
 from compas_timber.fabrication import Drilling
 from compas_timber.utils import intersection_line_beam_param
 
 
-class Fastener(TimberElement):
+class Fastener(Element):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
@@ -37,7 +37,7 @@ class Fastener(TimberElement):
         super(Fastener, self).__init__(**kwargs)
         self._shape = shape
         self.interfaces = []
-        self.frame = frame
+        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -49,14 +49,6 @@ class Fastener(TimberElement):
     def __str__(self):
         # type: () -> str
         return "<Fastener {}>".format(self.name)
-
-    @property
-    def frame(self):
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        self._frame = frame
 
     @property
     def is_fastener(self):
@@ -79,6 +71,12 @@ class Fastener(TimberElement):
         """returns the geometry of the fastener in the model"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
 
+    @property
+    def frame(self):
+        if self.model:
+            return super(Fastener, self).frame
+        else:
+            return Frame.from_transformation(self.transformation)
 
 class FastenerTimberInterface(Data):
     """A class to represent the interface between a fastener and a timber element.
