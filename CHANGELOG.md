@@ -119,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `WallPopulator.create_joint_definitions()` to `WallPopulator.create_joints()`, which now returns `DirectRule` instances.
 * Changed `tolerance` argument to `max_distance` in `NBeamKDTreeAnalyzer` for clarity and consisten naming. 
 * Changed `Joint.check_elements_compatibility()` to a class method to check Joint-type specific requirements before instantiation. 
+* Changed `Fastener` to inherit from `compas_timber.Element` instead of `TimberElement`.
 
 ### Removed
 
