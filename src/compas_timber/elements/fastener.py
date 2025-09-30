@@ -37,7 +37,7 @@ class Fastener(Element):
         super(Fastener, self).__init__(**kwargs)
         self._shape = shape
         self.interfaces = []
-        self.frame = frame
+        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -49,14 +49,6 @@ class Fastener(Element):
     def __str__(self):
         # type: () -> str
         return "<Fastener {}>".format(self.name)
-
-    @property
-    def frame(self):
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        self._frame = frame
 
     @property
     def is_fastener(self):
@@ -78,6 +70,14 @@ class Fastener(Element):
     def compute_geometry(self):
         """returns the geometry of the fastener in the model"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
+
+    @property
+    # HACK: this is a hack/workaround to allow fasteners to be used without a model
+    def frame(self):
+        if self.model:
+            return super(Fastener, self).frame
+        else:
+            return Frame.from_transformation(self.transformation)
 
 
 class FastenerTimberInterface(Data):
