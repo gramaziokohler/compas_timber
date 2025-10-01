@@ -17,6 +17,7 @@ from compas_model.elements import reset_computed
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
+from compas_timber.errors import FeatureApplicationError
 
 
 
@@ -101,7 +102,7 @@ class PlateGeometry(object):
 
     @property
     def thickness(self):
-        return self.width
+        return self.obb.zsize
 
     @property
     def planes(self):
@@ -283,6 +284,34 @@ class PlateGeometry(object):
     # ==========================================================================
 
 
+    def compute_elementgeometry(self, include_features=True):
+        # type: (bool) -> compas.geometry.Brep
+        """Compute the geometry of the element in local coordinates.
+
+        Parameters
+        ----------
+        include_features : bool, optional
+            If True, the features should be included in the element geometry.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+
+        Raises
+        ------
+        :class:`compas_timber.errors.FeatureApplicationError`
+            If there is an error applying features to the element.
+
+        """
+        geometry = self.shape
+        if include_features:
+            for feature in self.features:
+                try:
+                    geometry = feature.apply(geometry, self)
+                except FeatureApplicationError as error:
+                    self.debug_info.append(error)
+        return geometry
+
     @property
     def shape(self):
         # type: () -> compas.geometry.Brep
@@ -294,8 +323,8 @@ class PlateGeometry(object):
             The shape of the element.
 
         """
-        outline_a = correct_polyline_direction(self.outline_a, self.frame.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self.outline_b, self.frame.normal, clockwise=True)
+        outline_a = correct_polyline_direction(self._local_outlines[0], self.frame.normal, clockwise=True)
+        outline_b = correct_polyline_direction(self._local_outlines[1], self.frame.normal, clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for opening in self.openings:

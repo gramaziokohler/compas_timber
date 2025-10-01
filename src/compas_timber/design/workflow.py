@@ -616,6 +616,7 @@ def get_clusters_from_model(model, max_distance=None):
     """
     model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
     model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
+    model.connect_adjacent_slabs(max_distance=max_distance)  # ensure that the model is connected before analyzing
     analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())), max_distance=max_distance)
     clusters = analyzer.find()
     return clusters
