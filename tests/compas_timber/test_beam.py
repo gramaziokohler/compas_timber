@@ -284,6 +284,54 @@ def test_extension_to_frame(beam):
     assert ref_frame_before_extension.point != beam.ref_frame.point  # ref_frame should change after extension
 
 
+def test_frame_from_transformation_sync():
+    """Test that setting transformation updates the frame accordingly."""
+    beam = Beam(frame=Frame.worldXY(), length=1000.0, width=100.0, height=60.0)
+
+    # Create a transformation and set it
+    new_transformation = Transformation.from_frame(Frame(Point(100, 200, 300), Vector(0, 1, 0), Vector(0, 0, 1)))
+    beam.transformation = new_transformation
+
+    # Frame should be updated to match the transformation
+    expected_frame = Frame.from_transformation(new_transformation)
+    assert beam.frame == expected_frame
+
+
+def test_frame_after_transform(beam):
+    """Test that frame updates correctly after setting transformation."""
+    initial_frame = beam.frame.copy()
+    initial_transformation = beam.transformation.copy()
+
+    # Set a new transformation
+    new_transformation = Translation.from_vector(Vector(10, 20, 30))
+    beam.transform(new_transformation)
+
+    expected_frame = initial_frame.transformed(new_transformation)
+    expected_transformation = initial_transformation * new_transformation
+
+    assert beam.frame == expected_frame
+    assert beam.transformation == expected_transformation
+
+
+def test_frame_unchanged_by_blank_extensions(beam):
+    """Test that beam.frame is NOT affected by blank extensions (core beam definition preserved)."""
+    original_frame = beam.frame.copy()
+    original_transformation = beam.transformation.copy()
+
+    # Add blank extensions (simulating joining operations)
+    beam.add_blank_extension(50.0, 30.0, joint_key=1)
+    beam.add_blank_extension(25.0, 15.0, joint_key=2)
+
+    start, _ = beam._resolve_blank_extensions()
+
+    # Transformation changes due to extensions
+    assert beam.transformation != original_transformation
+    assert beam.transformation == original_transformation * Translation.from_vector(-beam.frame.xaxis * start)
+
+    # Frame should remain completely unchanged
+    assert beam.frame == original_frame
+
+
 # ==========================================================================
 # Geometry Computation Tests
 # ==========================================================================
