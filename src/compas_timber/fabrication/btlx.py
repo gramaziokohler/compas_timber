@@ -422,8 +422,7 @@ class BTLxPart(object):
     @property
     def et_transformations(self):
         transformations = ET.Element("Transformations")
-        guid = "{" + str(uuid.uuid4()) + "}"
-        transformation = ET.SubElement(transformations, "Transformation", GUID=guid)
+        transformation = ET.SubElement(transformations, "Transformation", GUID=self.part_guid)
         position = ET.SubElement(transformation, "Position")
         position.append(ET.Element("ReferencePoint", self.et_point_vals(self.frame.point)))
         position.append(ET.Element("XVector", self.et_point_vals(self.frame.xaxis)))
