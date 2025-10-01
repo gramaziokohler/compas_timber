@@ -7,7 +7,6 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
@@ -127,7 +126,7 @@ class Beam(TimberElement):
         # type: () -> Box
         start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
-        return blank.translated(Vector.Xaxis() * ((self.blank_length * 0.5)-start))
+        return blank.translated(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
 
     @property
     def blank_length(self):

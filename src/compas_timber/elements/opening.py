@@ -1,5 +1,6 @@
+from compas.geometry import Frame
+from compas.geometry import Transformation
 from compas_model.elements import Element
-from compas.geometry import Frame, Transformation
 
 
 class OpeningType(object):
@@ -30,6 +31,7 @@ class Opening(Element):
     opening_type : OpeningType
         The type of the opening (e.g., door, window, generic).
     """
+
     @property
     def __data__(self):
         return {
@@ -56,6 +58,6 @@ class Opening(Element):
         else:
             return Frame.from_transformation(self.transformation)
 
-    #===============================================================================
+    # ===============================================================================
     # class methods
-    #===============================================================================
+    # ===============================================================================

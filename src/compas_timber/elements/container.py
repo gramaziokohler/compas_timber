@@ -2,8 +2,6 @@ from functools import reduce
 from operator import mul
 
 from compas.geometry import Frame
-from compas.geometry import Line
-from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
@@ -34,13 +32,12 @@ class ContainerElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame=None,elements=None, **kwargs):
+    def __init__(self, frame=None, elements=None, **kwargs):
         super(ContainerElement, self).__init__(**kwargs)
         self._frame = frame or Frame.worldXY()
         self._elements = elements or []
         self._geometry = None
         self.debug_info = []
-
 
     @property
     def is_wall(self):
@@ -58,13 +55,11 @@ class ContainerElement(Element):
     def frame(self, frame):
         self._frame = frame
 
-
     @property
     def elements(self):
         # type: () -> list[Element]
         """A list of elements contained within this container."""
         return self._elements
-
 
     @property
     def geometry(self):
@@ -146,7 +141,6 @@ class ContainerElement(Element):
     # Feature management & Modification methods
     # ========================================================================
 
-
     @reset_computed
     def add_element(self, element):
         # type: (Feature | list[Feature]) -> None
@@ -159,8 +153,8 @@ class ContainerElement(Element):
 
         """
         self._elements.append(element)  # add the element to this container
-        print("element.frame",element.frame)
-        print("slab.frame",self.frame)
+        print("element.frame", element.frame)
+        print("slab.frame", self.frame)
         if self.model:
             if element.model:
                 element.model.remove_element(element)  # remove the element from its previous model.
@@ -179,7 +173,9 @@ class ContainerElement(Element):
         self._elements.remove(element)
         if self.model:
             self.model.remove_element(element)  # remove the element from its model.
-            self.model.add_element(element)  # add the element to the model without a parent aka at root. TODO: is this the desired behaviour? TODO: can/should I just set the treenode directly?
+            self.model.add_element(
+                element
+            )  # add the element to the model without a parent aka at root. TODO: is this the desired behaviour? TODO: can/should I just set the treenode directly?
 
     def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
@@ -192,4 +188,3 @@ class ContainerElement(Element):
         """
         # type: () -> Transformation
         return self.modeltransformation.inverse()
-

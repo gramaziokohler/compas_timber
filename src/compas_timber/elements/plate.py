@@ -1,12 +1,12 @@
-from compas_model.elements import reset_computed
 from compas.geometry import Frame
+from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
 
-
-from .timber import TimberElement
 from .plate_geometry import PlateGeometry
+from .timber import TimberElement
+
 
 class Plate(PlateGeometry, TimberElement):
     """
@@ -63,7 +63,6 @@ class Plate(PlateGeometry, TimberElement):
         self.attributes.update(kwargs)
         self.debug_info = []
 
-
     def __repr__(self):
         # type: () -> str
         return "Plate(outline_a={!r}, outline_b={!r})".format(self.outline_a, self.outline_b)
@@ -90,7 +89,7 @@ class Plate(PlateGeometry, TimberElement):
     def blank_length(self):
         return self.blank.xsize
 
-    #NOTE: length, width, height are only used for BTLx creation. Names are IMHO rather confusing. Keeping for now for backward compatibility.
+    # NOTE: length, width, height are only used for BTLx creation. Names are IMHO rather confusing. Keeping for now for backward compatibility.
     @property
     def length(self):
         return self.blank.xsize
@@ -107,7 +106,6 @@ class Plate(PlateGeometry, TimberElement):
     def ref_frame(self):
         return Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
 
-
     @property
     def features(self):
         if not self._outline_feature:
@@ -122,23 +120,18 @@ class Plate(PlateGeometry, TimberElement):
         """Sets the features of the plate."""
         self._features = features
 
-
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        super(Plate, self).reset() #reset outline_a and outline_b
+        super(Plate, self).reset()  # reset outline_a and outline_b
         self._features = []
         self._outline_feature = None
         self._opening_features = None
         self.debug_info = []
 
-
-
     # ==========================================================================
     #  Implementation of abstract methods
     # ==========================================================================
-
-
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep

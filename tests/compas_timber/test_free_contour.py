@@ -3,7 +3,6 @@ import math
 
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Frame
 from compas.tolerance import TOL
 from compas_timber.fabrication import BTLxWriter
 

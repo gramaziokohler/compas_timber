@@ -201,7 +201,7 @@ class TimberModel(Model):
         self.add_element(element, parent=parent)
 
         for child in element.children:
-            if child not in list(self.elements()): #if child not in model
+            if child not in list(self.elements()):  # if child not in model
                 if isinstance(child, ContainerElement):  # if child is also a group element
                     self.add_container_element(child, parent=element)
                 else:
@@ -209,9 +209,8 @@ class TimberModel(Model):
             else:
                 if child.parent is not element:
                     child.parent = element  # update parent if necessary TODO: check if this works.
-                    element.add(child.tree_node) #NOTE no freakin idea how this works
+                    element.add(child.tree_node)  # NOTE no freakin idea how this works
         return element
-
 
     # =============================================================================
     # Groups

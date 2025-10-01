@@ -1,6 +1,8 @@
-from .slab import ContainerElement
 from compas.geometry import Frame
 from compas.geometry import Polyline
+
+from .slab import ContainerElement
+
 
 class Wall(ContainerElement):
     """Represents a single timber wall element.
@@ -70,6 +72,7 @@ class Wall(ContainerElement):
         xaxis.unitize()
         yaxis = normal.cross(xaxis)
         return Frame(points[0], xaxis, yaxis)
+
 
 def _oriented_polyline(polyline, normal):
     # returns a polyline that is oriented consistently ccw around the normal

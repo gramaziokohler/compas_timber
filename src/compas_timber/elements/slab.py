@@ -1,11 +1,13 @@
 from .container import ContainerElement
 from .plate_geometry import PlateGeometry
 
+
 class SlabType(object):
     WALL = "wall"
     FLOOR = "floor"
     ROOF = "roof"
     GENERIC = "generic"
+
 
 class Slab(PlateGeometry, ContainerElement):
     """Represents a single timber wall element.
