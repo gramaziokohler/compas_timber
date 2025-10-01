@@ -152,9 +152,9 @@ class Beam(TimberElement):
         The ref_frame is always in global coordinates.
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
-        ref_point = Point(0, self.width * 0.5, -self.height * 0.5)
-        frame = Frame(ref_point, Vector.Xaxis(), Vector.Zaxis())
-        return frame.transformed(self.modeltransformation)
+
+        ref_frame = Frame(self.blank.points[0], Vector.Xaxis(), Vector.Yaxis())
+        return ref_frame.transformed(self.modeltransformation)
 
     # ==========================================================================
     # Implementations of abstract methods
