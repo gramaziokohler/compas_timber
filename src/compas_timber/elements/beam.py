@@ -127,7 +127,8 @@ class Beam(TimberElement):
         # type: () -> Box
         start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
-        return blank.translated(Vector.Xaxis() * ((self.blank_length * 0.5)-start))
+        blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5)-start))
+        return blank.transformed(self.transformation)
 
     @property
     def blank_length(self):
@@ -153,8 +154,7 @@ class Beam(TimberElement):
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
 
-        ref_frame = Frame(self.blank.points[0], Vector.Xaxis(), Vector.Yaxis())
-        return ref_frame.transformed(self.modeltransformation)
+        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
 
     # ==========================================================================
     # Implementations of abstract methods
@@ -179,7 +179,7 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        geometry = Brep.from_box(self.blank)
+        geometry = Brep.from_box(self.blank.transformed(self.transformation_to_local()))
         if include_features:
             for feature in self.features:
                 try:

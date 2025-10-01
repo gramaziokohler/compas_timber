@@ -325,8 +325,7 @@ def test_frame_unchanged_by_blank_extensions(beam):
     start, _ = beam._resolve_blank_extensions()
 
     # Transformation changes due to extensions
-    assert beam.transformation != original_transformation
-    assert beam.transformation == original_transformation * Translation.from_vector(-beam.frame.xaxis * start)
+    assert beam.transformation == original_transformation
 
     # Frame should remain completely unchanged
     assert beam.frame == original_frame
