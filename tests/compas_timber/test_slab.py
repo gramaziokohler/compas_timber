@@ -42,13 +42,4 @@ def test_slab_add_elements(slab, beams, opening):
 
 
 
-"""
->>> from compas_timber.elements import Beam
->>> from compas.geometry import Point, Vector, Frame, Transformation
->>> beam = Beam.from_endpoints(Point(0,0,0), Point(100,150,200))
->>> frame_a = Frame(Point(100,100,100),Vector(0,0,1), Vector(1,0,0))
->>> frame_b = Frame(Point(1000,1000,100),Vector(1,0,1), Vector(1,1,0))
->>> x= Transformation.from_frame_to_frame(frame_a,frame_b)
->>> beam.transform(x)
 
-"""
