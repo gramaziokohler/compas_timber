@@ -199,7 +199,6 @@ def test_transformation_with_start_extension(beam):
     expected_translation = Translation.from_vector(-beam.frame.xaxis * 0.1)
 
     assert transformation_before == transformation_after
-    # assert transformation_after == transformation_before * expected_translation
 
 
 def test_transformation_with_end_extension_only(beam):
@@ -233,7 +232,6 @@ def test_transformation_with_multiple_extensions(beam):
     expected_translation = Translation.from_vector(-beam.frame.xaxis * 0.15)
 
     assert transformation_after == transformation_before
-    # assert transformation_after == transformation_before * expected_translation
 
 
 def test_transformation_when_removing_extensions(beam):
