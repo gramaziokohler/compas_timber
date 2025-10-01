@@ -1,5 +1,4 @@
 import os
-import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
