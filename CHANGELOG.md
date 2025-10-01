@@ -17,8 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
 * Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
 * Added explicit `frame` property setter to `TimberElement` that automatically updates the `transformation` when frame is set.
-* Added `transformation` property to `Beam` that accounts for blank extensions at the start of the beam.
+* Added `transformation` property to `TimberElement` that computes from `frame` and updates `frame` when set, enabling bidirectional frame-transformation synchronization.
+* Added `transformation` property to `Beam` with custom getter that accounts for blank extensions and setter that delegates to parent class for proper inheritance.
 * Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
+* Added `reset_computed_properties()` method to `TimberElement` to provide interface for invalidating `@reset_computed` decorated properties.
+* Added `transform()` method override to `TimberModel` to properly invalidate element caches when model transformation is applied, fixing inconsistent element transformation behavior.
 
 ### Changed
 
