@@ -106,7 +106,7 @@ class SurfaceModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
                     debug_info.add_feature_error(element.debug_info)
         else:
             for element in model.elements():
-                scene.add(element.shape)
+                scene.add(element.blank)
 
         if debug_info.has_errors:
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Error found during joint creation. See DebugInfo output for details.")

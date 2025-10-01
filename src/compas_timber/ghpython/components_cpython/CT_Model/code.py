@@ -143,7 +143,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
                     debug_info.add_feature_error(element.debug_info)
             else:
                 if isinstance(element, Beam) or isinstance(element, Plate):
-                    scene.add(element.shape)
+                    scene.add(element.blank)
                 else:
                     scene.add(element.geometry)
 
