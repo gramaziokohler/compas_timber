@@ -323,9 +323,10 @@ class PlateGeometry(object):
             The shape of the element.
 
         """
-        outline_a = correct_polyline_direction(self._local_outlines[0], self.frame.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self._local_outlines[1], self.frame.normal, clockwise=True)
+        outline_a = correct_polyline_direction(self.outline_a, self.frame.normal, clockwise=True)
+        outline_b = correct_polyline_direction(self.outline_b, self.frame.normal, clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
+        plate_geo.transform(self.transformation_to_local())
         plate_geo.cap_planar_holes()
         for opening in self.openings:
             if not TOL.is_allclose(opening.outline_a[0], opening.outline_a[-1]):
