@@ -20,8 +20,8 @@ class Slab(PlateGeometry, ContainerElement):
 
     @property
     def __data__(self):
-        data = super(Slab, self).__data__
-
+        data = ContainerElement.__data__(self)
+        data.update(PlateGeometry.__data__(self))
         data["name"] = self.name
         data["attributes"] = self.attributes
         return data

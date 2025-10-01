@@ -159,6 +159,8 @@ class ContainerElement(Element):
 
         """
         self._elements.append(element)  # add the element to this container
+        print("element.frame",element.frame)
+        print("slab.frame",self.frame)
         if self.model:
             if element.model:
                 element.model.remove_element(element)  # remove the element from its previous model.

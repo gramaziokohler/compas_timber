@@ -1,9 +1,11 @@
 from compas_model.elements import Element
+from compas.geometry import Frame, Transformation
 
 
 class OpeningType(object):
     DOOR = "door"
     WINDOW = "window"
+    SERVICE = "service"
     GENERIC = "generic"
 
 
@@ -36,8 +38,9 @@ class Opening(Element):
             "opening_type": self.opening_type,
         }
 
-    def __init__(self, outline_a, outline_b=None, opening_type=None, **kwargs):
+    def __init__(self, frame, outline_a, outline_b=None, opening_type=None, **kwargs):
         super(Opening, self).__init__(**kwargs)
+        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
         self.outline_a = outline_a
         self.outline_b = outline_b
         self.opening_type = opening_type
@@ -45,5 +48,14 @@ class Opening(Element):
     def __repr__(self):
         return "Opening(type={})".format(self.opening_type)
 
+    @property
+    # HACK: this is a hack/workaround to allow fasteners to be used without a model
+    def frame(self):
+        if self.model:
+            return super(Opening, self).frame
+        else:
+            return Frame.from_transformation(self.transformation)
 
-
+    #===============================================================================
+    # class methods
+    #===============================================================================
