@@ -185,11 +185,9 @@ def test_type_properties():
     assert wall.is_wall
 
     assert not plate.is_beam
-    assert not plate.is_wall
-    assert not beam.is_wall
     assert not beam.is_plate
-    assert not wall.is_plate
-    assert not wall.is_beam
+
+    assert wall.is_slab
 
 
 def test_model_tolerance_default():

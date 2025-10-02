@@ -1,6 +1,6 @@
-from compas_model.elements import Element
-from compas.geometry import Point
 from compas.geometry import Frame
+from compas.geometry import Line
+from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 
@@ -115,43 +115,7 @@ class TimberElement(Element):
     @property
     def ref_frame(self):
         # type: () -> Frame
-        ref_point = self.blank_frame.point.copy()
-        ref_point += self.blank_frame.yaxis * self.width * 0.5
-        ref_point -= self.blank_frame.zaxis * self.height * 0.5
-        return Frame(ref_point, self.blank_frame.xaxis, self.blank_frame.zaxis)
-
-    @property
-    def faces(self):
-        # type: () -> list[Frame]
-        assert self.frame
-        return [
-            Frame(
-                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
-                self.frame.xaxis,
-                -self.frame.zaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
-                self.frame.xaxis,
-                -self.frame.yaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
-                self.frame.xaxis,
-                self.frame.zaxis,
-            ),
-            Frame(
-                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
-                self.frame.xaxis,
-                self.frame.yaxis,
-            ),
-            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
-            Frame(
-                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
-                self.frame.yaxis,
-                self.frame.zaxis,
-            ),  # small face at end point
-        ]
+        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
 
     @property
     def ref_sides(self):

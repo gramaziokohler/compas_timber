@@ -5,10 +5,9 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polyline
 from compas.geometry import bounding_box
+from compas_model.elements import Element
 
 from compas_timber.utils import classify_polyline_segments
-
-from .timber import TimberElement
 
 
 class OpeningType(object):
@@ -36,7 +35,7 @@ class Opening(Data):
         self.polyline = _oriented_polyline(self.polyline, normal)
 
 
-class Slab(TimberElement):
+class Slab(Element):
     """Represents a single timber wall element.
     Serves as container for beams joints and other related elements and groups them together to form a wall.
 
@@ -75,6 +74,18 @@ class Slab(TimberElement):
 
     @property
     def is_slab(self):
+        return True
+
+    @property
+    def is_wall(self):
+        return True
+
+    @property
+    def is_floor(self):
+        return True
+
+    @property
+    def is_roof(self):
         return True
 
     @property

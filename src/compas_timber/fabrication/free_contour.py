@@ -130,7 +130,8 @@ class FreeContour(BTLxProcessing):
         """
         if len(top_polyline) != len(bottom_polyline):
             raise ValueError("The top and bottom polylines should have the same number of points.")
-
+        print("top_polyline", top_polyline)
+        print("bottom_polyline", bottom_polyline)
         if not ref_side_index:
             ref_side_index = cls.get_ref_face_index(top_polyline, element)
 
@@ -201,8 +202,10 @@ class FreeContour(BTLxProcessing):
     @staticmethod
     def get_ref_face_index(contour_points, element):
         # type: (Polyline, Plate) -> int
+        print(contour_points)
         curve_frame = Frame.from_points(contour_points[0], contour_points[1], contour_points[-2])
         for i, ref_side in enumerate(element.ref_sides):
+            print("dist to plane", distance_point_plane(contour_points[0], Plane.from_frame(ref_side)))
             if TOL.is_zero(distance_point_plane(contour_points[0], Plane.from_frame(ref_side)), tol=1e-6) and TOL.is_zero(
                 angle_vectors(ref_side.normal, curve_frame.zaxis, deg=True) % 180.0, 1e-6
             ):

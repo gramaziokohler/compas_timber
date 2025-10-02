@@ -1,4 +1,3 @@
-from threading import local
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -9,15 +8,12 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import closest_point_on_plane
 from compas.geometry import dot_vectors
-from compas.geometry import bounding_box_xy
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
-
 from compas_timber.utils import correct_polyline_direction
-from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
-
+from compas_timber.utils import is_polyline_clockwise
 
 
 class PlateGeometry(object):
@@ -29,9 +25,10 @@ class PlateGeometry(object):
     frame : :class:`~compas.geometry.Frame`
         The coordinate system (frame) of this plate. Must be coplanar with outline_a.
     outline_a : :class:`~compas.geometry.Polyline`                                                  TODO: add support for NurbsCurve
-        A line representing the principal outline of this plate.
+        A line representing the principal outline of this plate. This should be declared in the local frame of the plate, aka projected on worldXY.
     outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate. This should have the same number of points as outline_a. must be parallel to outline_a. must be in the +Z direction of the frame.
+        A line representing the associated outline of this plate. This should have the same number of points as outline_a.
+        must be parallel to outline_a. must be in the +Z direction of the frame.
     openings : list(:class:`~compas_timber.elements.Opening`), optional
         A list of Opening objects representing openings in this plate.
     **kwargs : dict, optional
@@ -76,13 +73,8 @@ class PlateGeometry(object):
 
     def __init__(self, outline_a=None, outline_b=None, openings=None):
         self._local_outlines = (outline_a, outline_b)
-        print("frame", self.frame)
-        print("outline_a", outline_a)
-        print("outline_b", outline_b)
         self.outline_a = outline_a.transformed(Transformation.from_frame(self.frame))
-        print("outline_a", self.outline_a)
         self.outline_b = outline_b.transformed(Transformation.from_frame(self.frame))
-        print("outline_b", self.outline_b)
         self.interfaces = []
         self._planes = None
         self.openings = openings or []
@@ -97,7 +89,6 @@ class PlateGeometry(object):
     # ==========================================================================
     # Computed attributes
     # ==========================================================================
-
 
     @property
     def outlines(self):
@@ -117,7 +108,6 @@ class PlateGeometry(object):
     def normal(self):
         """Normal vector of the plate."""
         return self.frame.normal
-
 
     @property
     def edge_planes(self):
@@ -143,7 +133,6 @@ class PlateGeometry(object):
     # Alternate constructors
     # ==========================================================================
 
-
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
@@ -168,7 +157,13 @@ class PlateGeometry(object):
         :class:`~compas_timber.elements.PlateGeometry`
             A PlateGeometry object representing the plate geometry with the given outline and thickness.
         """
-        frame, length, width, thickness,  = PlateGeometry._get_frame_and_dims_from_outlines(outline_a, outline_b)
+        (
+            frame,
+            length,
+            width,
+            thickness,
+        ) = PlateGeometry._get_frame_and_dims_from_outlines(outline_a, outline_b)
+        print(frame)
         xform_to_local = Transformation.from_frame(frame).inverse()
         local_outline_a = outline_a.transformed(xform_to_local)
         local_outline_b = outline_b.transformed(xform_to_local)
@@ -260,7 +255,6 @@ class PlateGeometry(object):
     #  Implementation of abstract methods
     # ==========================================================================
 
-
     @property
     def shape(self):
         # type: () -> compas.geometry.Brep
@@ -288,7 +282,6 @@ class PlateGeometry(object):
             brep.cap_planar_holes()
             plate_geo -= brep
         return plate_geo
-
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
@@ -376,8 +369,6 @@ class PlateGeometry(object):
         frame.translate(translate_vector)
         return frame, box.xsize, box.ysize, box.zsize
 
-
-
     @staticmethod
     def _check_outlines(outline_a, outline_b):
         # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
@@ -402,7 +393,7 @@ class PlateGeometry(object):
             raise ValueError("The outline_b is not closed.")
         if len(outline_a) != len(outline_b):
             raise ValueError("The outlines must have the same number of points.")
-        if all(not p[2]==0 for p in outline_a.points):
+        if all(not p[2] == 0 for p in outline_a.points):
             raise ValueError("outline_a must be planar.")
-        if all(not p[2]==outline_b[0][2] for p in outline_b.points):
+        if all(not p[2] == outline_b[0][2] for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")

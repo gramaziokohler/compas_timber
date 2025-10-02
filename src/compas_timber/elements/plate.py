@@ -1,16 +1,15 @@
-from compas_model.elements import reset_computed
-from compas.geometry import Frame
-from compas.geometry import Point
 from compas.geometry import Box
+from compas.geometry import Point
 from compas.geometry import Polyline
-
+from compas.geometry import Transformation
+from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
 
-
-from .timber import TimberElement
 from .plate_geometry import PlateGeometry
+from .timber import TimberElement
+
 
 class Plate(PlateGeometry, TimberElement):
     """
@@ -68,7 +67,6 @@ class Plate(PlateGeometry, TimberElement):
         self.attributes.update(kwargs)
         self.debug_info = []
 
-
     def __repr__(self):
         # type: () -> str
         return "Plate(outline_a={!r}, outline_b={!r})".format(self.outline_a, self.outline_b)
@@ -86,7 +84,8 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def blank(self):
-        box = Box(self.frame, self.length, self.width, self.height)
+        box = Box(self.length, self.width, self.height, self.frame)
+        box.translate(self.frame.point - box.points[0])
         box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
         box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
         return box
@@ -98,9 +97,9 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
-            self._outline_feature = FreeContour.from_top_bottom_and_elements(self._local_outlines[0], self._local_outlines[1], self, interior=False)
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:
-            self._opening_features = [FreeContour.from_polyline_and_element(o, self, interior=True) for o in self.openings]
+            self._opening_features = [FreeContour.from_polyline_and_element(o.transformed(Transformation.from_frame(self.frame)), self, interior=True) for o in self.openings]
         return [self._outline_feature] + self._opening_features + self._features
 
     @features.setter
@@ -109,23 +108,18 @@ class Plate(PlateGeometry, TimberElement):
         """Sets the features of the plate."""
         self._features = features
 
-
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        PlateGeometry.reset(self) #reset outline_a and outline_b
+        PlateGeometry.reset(self)  # reset outline_a and outline_b
         self._features = []
         self._outline_feature = None
         self._opening_features = None
         self.debug_info = []
 
-
-
     # ==========================================================================
     #  Implementation of abstract methods
     # ==========================================================================
-
-
 
     def compute_geometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
