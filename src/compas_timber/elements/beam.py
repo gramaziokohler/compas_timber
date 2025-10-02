@@ -208,11 +208,6 @@ class Beam(TimberElement):
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
 
     @property
-    def has_features(self):
-        # TODO: consider removing, this is not used anywhere
-        return len(self.features) > 0
-
-    @property
     def key(self):
         # type: () -> int | None
         return self.graph_node

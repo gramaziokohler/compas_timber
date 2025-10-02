@@ -78,15 +78,15 @@ class Slab(Element):
 
     @property
     def is_wall(self):
-        return True
+        return False
 
     @property
     def is_floor(self):
-        return True
+        return False
 
     @property
     def is_roof(self):
-        return True
+        return False
 
     @property
     def is_group_element(self):

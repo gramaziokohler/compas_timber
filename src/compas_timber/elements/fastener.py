@@ -37,7 +37,7 @@ class Fastener(Element):
         super(Fastener, self).__init__(**kwargs)
         self._shape = shape
         self.interfaces = []
-        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
+        self.frame = frame or Frame.worldXY()
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -70,16 +70,6 @@ class Fastener(Element):
     def compute_geometry(self):
         """returns the geometry of the fastener in the model"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
-
-    # TODO: this is necessary when we merge PR #454 compas_model_update
-    # @property
-    # # HACK: this is a hack/workaround to allow fasteners to be used without a model
-    # def frame(self):
-    #     if self.model:
-    #         return super(Fastener, self).frame
-    #     else:
-    #         return Frame.from_transformation(self.transformation)
-
 
 class FastenerTimberInterface(Data):
     """A class to represent the interface between a fastener and a timber element.
@@ -138,7 +128,7 @@ class FastenerTimberInterface(Data):
         self.outline_points = outline_points
         self.thickness = thickness
         self.holes = holes or []
-        self.frame = frame or Frame.worldXY()
+        self.frame = frame
         self.element = element
         self.shapes = shapes or []
         self.features = []

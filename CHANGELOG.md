@@ -119,7 +119,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `WallPopulator.create_joint_definitions()` to `WallPopulator.create_joints()`, which now returns `DirectRule` instances.
 * Changed `tolerance` argument to `max_distance` in `NBeamKDTreeAnalyzer` for clarity and consisten naming. 
 * Changed `Joint.check_elements_compatibility()` to a class method to check Joint-type specific requirements before instantiation. 
-* Changed `Fastener` to inherit from `compas_timber.Element` instead of `TimberElement`.
+* Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_timber.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
+* Moved BTLx-specific properties and methods `ref_frame`, `ref_sides`, `ref_edges` to `TimberElement`.
+* Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height).
 
 ### Removed
 

@@ -77,14 +77,10 @@ def test_get_elements_in_group_filter(model, beam_list, wall1, wall2):
 
     assert model.has_group("wall1")
     assert model.has_group("wall2")
-    assert list(model.get_elements_in_group("wall1", filter_=lambda b: isinstance(b, Beam))) == [
-        beam_a,
-        beam_b,
-    ]  # NOTE: changed to isinstance because is_beam, is_plate, are TimberElement properties
-    assert list(model.get_elements_in_group("wall2", filter_=lambda b: isinstance(b, Beam))) == [
-        beam_c,
-        beam_d,
-    ]  # NOTE: I am presuming we want to include various element types in groups...
+    assert list(model.get_elements_in_group("wall1", filter_=lambda b: isinstance(b, Beam))) == [beam_a, beam_b]
+    assert list(model.get_elements_in_group("wall2", filter_=lambda b: isinstance(b, Beam))) == [beam_c, beam_d]
+    # NOTE: changed to isinstance because is_beam, is_plate, are TimberElement properties
+    # NOTE: I am presuming we want to include various element types in groups, not just TimberElements and don't want to have to add is_* properties to all elements
 
 
 def test_group_does_not_exist(model):
