@@ -2,7 +2,9 @@ import argparse
 import os
 
 from compas.data import json_load
+from compas.geometry import Translation
 from compas.geometry import Vector
+from compas.tolerance import TOL
 from compas_viewer.viewer import Viewer
 
 from compas_timber.connections import JointTopology
@@ -15,6 +17,8 @@ from compas_timber.model import TimberModel
 HERE = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(HERE), "..", "data")
 LINES = os.path.join(HERE, "stand.json")
+
+TOL.absolute = 1e-3
 
 
 def create_viewer():
@@ -77,6 +81,8 @@ def visualize_model(model):
     for beam in model.beams:
         viewer.scene.add(beam.centerline)
 
+    model.transform(Translation.from_vector(Vector(0, 0, 5000)))
+
     # draw geometry (with features)
     for beam in model.beams:
         viewer.scene.add(beam.geometry)
@@ -116,11 +122,6 @@ def main():
     model = create_stand_model()
     print(f"Model created with {len(list(model.elements()))} elements and {len(model.joints)} joints")
 
-    # Execute requested actions
-    if args.visualize:
-        print("Visualizing model...")
-        visualize_model(model)
-
     if args.serialize:
         print("Serializing model...")
         output_path = None if args.serialize == "default" else args.serialize
@@ -130,6 +131,11 @@ def main():
         print("Exporting to BTLx...")
         output_path = None if args.export_btlx == "default" else args.export_btlx
         export_btlx(model, output_path)
+
+        # Execute requested actions
+    if args.visualize:
+        print("Visualizing model...")
+        visualize_model(model)
 
     # If no arguments provided, show help
     if not any([args.visualize, args.serialize, args.export_btlx]):

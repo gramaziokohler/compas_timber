@@ -5,6 +5,7 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.geometry import Translation
 from compas.tolerance import Tolerance
 from compas.tolerance import TOL
 
@@ -464,3 +465,20 @@ def test_remove_joint_candidate_preserves_edge():
     # Verify the new candidate was added successfully
     assert len(model.joint_candidates) == 1
     assert list(model.joint_candidates)[0] is new_candidate
+
+
+def test_model_transform_and_cache_invalidation():
+    """Test that TimberModel.transform() properly transforms elements and invalidates caches."""
+    beam = Beam(Frame(Point(1, 2, 3), Vector(1, 0, 0), Vector(0, 1, 0)), length=1.0, width=0.1, height=0.1)
+    original_transformation = beam.modeltransformation  # computed property
+
+    model = TimberModel()
+    model.add_element(beam)
+
+    # Create a translation transformation
+    translation = Translation.from_vector(Vector(5, 10, 15))
+    # Apply transformation to the model
+    model.transform(translation)
+
+    assert original_transformation != beam.modeltransformation
+    assert beam.modeltransformation == translation * original_transformation

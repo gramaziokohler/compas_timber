@@ -427,6 +427,13 @@ class TimberModel(Model):
     # Other Methods
     # =============================================================================
 
+    def transform(self, transformation):
+        """Transform the model and reset all computed properties of all elements."""
+        # Override the base method to also reset computed properties of elements
+        super().transform(transformation)
+        for element in self.elements():
+            element.reset_computed_properties()
+
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
