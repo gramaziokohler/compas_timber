@@ -37,7 +37,7 @@ class Fastener(Element):
         super(Fastener, self).__init__(**kwargs)
         self._shape = shape
         self.interfaces = []
-        self.frame = frame or Frame.worldXY()
+        self.frame = frame
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -57,7 +57,7 @@ class Fastener(Element):
     @property
     def key(self):
         # type: () -> int | None
-        return self.graphnode
+        return self.graph_node
 
     @property
     def __data__(self):
@@ -128,7 +128,7 @@ class FastenerTimberInterface(Data):
         self.outline_points = outline_points
         self.thickness = thickness
         self.holes = holes or []
-        self.frame = frame
+        self.frame = frame or Frame.worldXY()
         self.element = element
         self.shapes = shapes or []
         self.features = []
