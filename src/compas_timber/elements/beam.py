@@ -123,6 +123,10 @@ class Beam(TimberElement):
     # def transformation(self, transformation):
     #     super(Beam, self.__class__).transformation.__set__(self, transformation)
 
+    @transformation.setter
+    def transformation(self, transformation):
+        super(Beam, self.__class__).transformation.__set__(self, transformation)
+
     @property
     def shape(self):
         """The shape of the beam in global coordinates."""

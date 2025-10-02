@@ -37,6 +37,7 @@ class TimberElement(Element):
 
     def __init__(self, frame=None, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
+        self._frame = frame or Frame.worldXY()
         self._features = features or []
         self.transformation = Transformation.from_frame(frame) if frame else Transformation()
         self._geometry = None
