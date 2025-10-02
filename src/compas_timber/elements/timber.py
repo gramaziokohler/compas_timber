@@ -250,9 +250,14 @@ class TimberElement(Element):
     def ref_frame(self):
         # type: () -> Frame
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
+        """
+        Reference frame for machining processings according to BTLx standard.
+        The origin is at the bottom far corner of the element.
+        The ref_frame is always in global coordinates.
+        TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
+        """
 
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
 
     @property
     def ref_sides(self):

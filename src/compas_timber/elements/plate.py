@@ -1,5 +1,9 @@
 from compas_model.elements import reset_computed
 from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Box
+from compas.geometry import Polyline
+
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
@@ -55,6 +59,8 @@ class Plate(PlateGeometry, TimberElement):
 
     def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None, **kwargs):
         TimberElement.__init__(self, frame=frame, length=length, width=width, height=thickness, **kwargs)
+        outline_a = outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
+        outline_b = outline_b or Polyline([Point(p[0], p[1], thickness) for p in outline_a.points])
         PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
         self.frame = frame
         self._outline_feature = None
@@ -81,31 +87,16 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def blank(self):
-        _blank = self.obb.copy()
-        _blank.xsize += 2 * self.attributes.get("blank_extension", 0.0)
-        _blank.ysize += 2 * self.attributes.get("blank_extension", 0.0)
-        return _blank
+        frame = Frame.worldXY()
+        length = self.length + 2 * self.attributes.get("blank_extension", 0.0)
+        width = self.width + 2 * self.attributes.get("blank_extension", 0.0)
+        frame.point = Point(length / 2, width / 2, 0)
+        box = Box(self.frame, length, width, self.height)
+        return box.transformed(self.modeltransformation)
 
     @property
     def blank_length(self):
         return self.blank.xsize
-
-    #NOTE: length, width, height are only used for BTLx creation. Names are IMHO rather confusing. Keeping for now for backward compatibility.
-    @property
-    def length(self):
-        return self.blank.xsize
-
-    @property
-    def width(self):
-        return self.blank.zsize
-
-    @property
-    def height(self):
-        return self.blank.ysize
-
-    @property
-    def ref_frame(self):
-        return Frame(self.blank.points[0], self.frame.xaxis, self.frame.yaxis)
 
 
     @property

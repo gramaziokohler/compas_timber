@@ -197,9 +197,10 @@ class PlateGeometry(object):
 
         cls.check_outlines(outline_a, outline_b)
         frame = cls.get_frame_from_outlines(outline_a, outline_b)
+        length, width, thickness = cls.plate_dimensions_from_points(outline_a.points + outline_b.points, frame=frame)
         xform_to_local = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         openings = openings or []
-        return cls(frame, outline_a.transformed(xform_to_local), outline_b.transformed(xform_to_local), openings=[o.transformed(xform_to_local) for o in openings], **kwargs)
+        return cls(frame, length, width, thickness, outline_a.transformed(xform_to_local), outline_b.transformed(xform_to_local), openings=[o.transformed(xform_to_local) for o in openings], **kwargs)
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
