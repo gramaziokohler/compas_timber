@@ -122,11 +122,12 @@ class Beam(TimberElement):
 
     @property
     def blank(self):
-        """The blank of the beam in global coordinates."""
+        """The blank of the beam in local coordinates."""
         # type: () -> Box
+        start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
-        return blank.transformed(self.modeltransformation)
+        blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5)-start))
+        return blank.transformed(self.transformation)
 
     @property
     def blank_length(self):
@@ -177,10 +178,7 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
-
-        geometry = Brep.from_box(blank)
+        geometry = Brep.from_box(self.blank.transformed(self.transformation_to_local()))
         if include_features:
             for feature in self.features:
                 try:
@@ -371,7 +369,9 @@ class Beam(TimberElement):
             plane = Plane.from_frame(plane)
 
         x = {}
-        for e in self.ref_edges:
+        pts = self.shape.points
+        edges = [Line(pts[0], pts[3]), Line(pts[1], pts[2]), Line(pts[4], pts[5]), Line(pts[7], pts[6])]
+        for e in edges:
             p, t = intersection_line_plane_param(e, plane)
             x[t] = p
 
