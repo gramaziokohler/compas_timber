@@ -1,4 +1,6 @@
 from compas_model.elements import Element
+from compas.geometry import Point
+from compas.geometry import Frame
 from compas_model.elements import reset_computed
 
 
@@ -23,11 +25,19 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
+        data["frame"] = self.frame
+        data["length"] = self.length
+        data["width"] = self.width
+        data["height"] = self.height
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, features=None, **kwargs):
+    def __init__(self, frame, length, width, height, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
+        self.frame = frame
+        self.length = length
+        self.width = width
+        self.height = height
         self._features = features or []
         self.debug_info = []
 
@@ -101,3 +111,76 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
+
+    @property
+    def ref_frame(self):
+        # type: () -> Frame
+        ref_point = self.blank_frame.point.copy()
+        ref_point += self.blank_frame.yaxis * self.width * 0.5
+        ref_point -= self.blank_frame.zaxis * self.height * 0.5
+        return Frame(ref_point, self.blank_frame.xaxis, self.blank_frame.zaxis)
+
+    @property
+    def faces(self):
+        # type: () -> list[Frame]
+        assert self.frame
+        return [
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                -self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                -self.frame.yaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, -self.frame.yaxis * self.width * 0.5)),
+                self.frame.xaxis,
+                self.frame.zaxis,
+            ),
+            Frame(
+                Point(*add_vectors(self.midpoint, self.frame.zaxis * self.height * 0.5)),
+                self.frame.xaxis,
+                self.frame.yaxis,
+            ),
+            Frame(self.frame.point, -self.frame.yaxis, self.frame.zaxis),  # small face at start point
+            Frame(
+                Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length)),
+                self.frame.yaxis,
+                self.frame.zaxis,
+            ),  # small face at end point
+        ]
+
+    @property
+    def ref_sides(self):
+        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        # TODO: cache these
+        rs1_point = self.ref_frame.point
+        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
+        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
+        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
+        rs5_point = rs1_point
+        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
+        return (
+            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
+            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
+            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
+            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
+            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
+            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
+        )
+
+    @property
+    def ref_edges(self):
+        # type: () -> tuple[Line, Line, Line, Line]
+        # so tuple is not created every time
+        ref_sides = self.ref_sides
+        return (
+            Line(ref_sides[0].point, ref_sides[0].point + ref_sides[0].xaxis * self.blank_length, name="RE_1"),
+            Line(ref_sides[1].point, ref_sides[1].point + ref_sides[1].xaxis * self.blank_length, name="RE_2"),
+            Line(ref_sides[2].point, ref_sides[2].point + ref_sides[2].xaxis * self.blank_length, name="RE_3"),
+            Line(ref_sides[3].point, ref_sides[3].point + ref_sides[3].xaxis * self.blank_length, name="RE_4"),
+        )

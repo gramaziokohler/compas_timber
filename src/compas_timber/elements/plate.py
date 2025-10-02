@@ -62,7 +62,6 @@ class Plate(PlateGeometry, TimberElement):
         outline_a = outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         outline_b = outline_b or Polyline([Point(p[0], p[1], thickness) for p in outline_a.points])
         PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
-        self.frame = frame
         self._outline_feature = None
         self._opening_features = None
         self.attributes = {}
@@ -87,17 +86,14 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def blank(self):
-        frame = Frame.worldXY()
-        length = self.length + 2 * self.attributes.get("blank_extension", 0.0)
-        width = self.width + 2 * self.attributes.get("blank_extension", 0.0)
-        frame.point = Point(length / 2, width / 2, 0)
-        box = Box(self.frame, length, width, self.height)
-        return box.transformed(self.modeltransformation)
+        box = Box(self.frame, self.length, self.width, self.height)
+        box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
+        box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
+        return box
 
     @property
     def blank_length(self):
         return self.blank.xsize
-
 
     @property
     def features(self):
@@ -117,7 +113,7 @@ class Plate(PlateGeometry, TimberElement):
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        super(Plate, self).reset() #reset outline_a and outline_b
+        PlateGeometry.reset(self) #reset outline_a and outline_b
         self._features = []
         self._outline_feature = None
         self._opening_features = None
