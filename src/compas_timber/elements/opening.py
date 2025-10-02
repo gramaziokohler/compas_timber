@@ -42,7 +42,7 @@ class Opening(Element):
 
     def __init__(self, frame, outline_a, outline_b=None, opening_type=None, **kwargs):
         super(Opening, self).__init__(**kwargs)
-        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
+        self.transformation = Transformation.from_frame(frame)
         self.outline_a = outline_a
         self.outline_b = outline_b
         self.opening_type = opening_type

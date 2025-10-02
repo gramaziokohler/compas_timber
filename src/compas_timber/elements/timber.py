@@ -89,6 +89,8 @@ class TimberElement(Element):
         This property returns the transformation computed from the frame when used as a getter,
         and updates the frame by converting the transformation back to a frame when used as a setter.
         """
+        if self.treenode and self.parent:
+            return self.parent.transformation.inverted() * (Transformation.from_frame(self.frame) if self.frame else Transformation())
         return Transformation.from_frame(self.frame) if self.frame else Transformation()
 
     @transformation.setter
