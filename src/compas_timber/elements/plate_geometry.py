@@ -74,12 +74,8 @@ class PlateGeometry(object):
         data["openings"] = self.openings
         return data
 
-    def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None):
+    def __init__(self, outline_a=None, outline_b=None, openings=None):
         self._local_outlines = (outline_a, outline_b)
-        self.frame = frame
-        self.length = length
-        self.width = width
-        self.thickness = thickness
         self.outline_a = outline_a.transformed(self.transformation)
         self.outline_b = outline_b.transformed(self.transformation)
         self.interfaces = []
@@ -146,7 +142,7 @@ class PlateGeometry(object):
     def from_dimensions(cls, length, width, thickness, frame=None, **kwargs):
         """
         Constructs a PlateGeometry from length, width, and height.
-
+`
         Parameters
         ----------
         length : float
