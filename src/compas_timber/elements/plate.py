@@ -56,7 +56,6 @@ class Plate(PlateGeometry, TimberElement):
     def __init__(self, frame, outline_a, outline_b, openings=None, **kwargs):
         TimberElement.__init__(self, frame=frame, **kwargs)
         PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
-        self.frame = frame
         self._outline_feature = None
         self._opening_features = None
         self.attributes = {}

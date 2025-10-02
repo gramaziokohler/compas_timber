@@ -112,21 +112,6 @@ class Beam(TimberElement):
     def is_beam(self):
         return True
 
-    # @property
-    # def transformation(self):
-    #     transformation = super(Beam, self).transformation
-    #     start, _ = self._resolve_blank_extensions()
-    #     extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
-    #     return extension_transformation * transformation  # TODO: should this be instead handled when calling `add_blank_extension` and `remove_blank_extension`?
-
-    # @transformation.setter
-    # def transformation(self, transformation):
-    #     super(Beam, self.__class__).transformation.__set__(self, transformation)
-
-    @transformation.setter
-    def transformation(self, transformation):
-        super(Beam, self.__class__).transformation.__set__(self, transformation)
-
     @property
     def shape(self):
         """The shape of the beam in global coordinates."""
@@ -167,9 +152,7 @@ class Beam(TimberElement):
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
 
-        ref_point = Point(0, self.width * 0.5, -self.height * 0.5)
-        frame = Frame(ref_point, Vector.Xaxis(), Vector.Zaxis())
-        return frame.transformed(self.modeltransformation)
+        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
 
     # ==========================================================================
     # Implementations of abstract methods
