@@ -130,6 +130,7 @@ class FreeContour(BTLxProcessing):
         """
         if len(top_polyline) != len(bottom_polyline):
             raise ValueError("The top and bottom polylines should have the same number of points.")
+
         if not ref_side_index:
             ref_side_index = cls.get_ref_face_index(top_polyline, element)
 
