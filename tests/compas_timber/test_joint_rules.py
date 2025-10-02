@@ -197,8 +197,8 @@ def test_joint_type_check_elements_compatibility(beams):
 
 
 def test_joint_type_check_elements_compatibility_bad_normal(beams):
+    beams[1] = Beam(Frame(beams[1].frame.point, beams[1].frame.xaxis, Vector(1, 0, 1)), beams[1].length, beams[1].width, beams[1].height)
     rules = [DirectRule(LFrenchRidgeLapJoint, [beams[0], beams[1]])]
-    beams[1].frame = Frame(beams[1].frame.point, beams[1].frame.xaxis, Vector(1, 1, 1))
     model = TimberModel()
     model.add_elements(beams)
     solver = JointRuleSolver(rules)

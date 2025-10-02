@@ -44,7 +44,7 @@ class Fastener(Element):
 
     def __repr__(self):
         # type: () -> str
-        return "Fastener(frame={!r}, name={})".format(self.frame, self.name)
+        return "Fastener(frame={!r}, name={})".format(Frame.from_transformation(self.transformation), self.name)
 
     def __str__(self):
         # type: () -> str
