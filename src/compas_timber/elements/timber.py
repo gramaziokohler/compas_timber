@@ -38,7 +38,7 @@ class TimberElement(Element):
     def __init__(self, frame=None, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
         self._features = features or []
-        self._frame = frame or Frame.worldXY()
+        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
         self._geometry = None
         self.debug_info = []
 
@@ -70,32 +70,6 @@ class TimberElement(Element):
     @property
     def is_fastener(self):
         return False
-
-    @property
-    def frame(self):
-        # type: () -> Frame | None
-        """The local frame of the element defining its position and orientation in space."""
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        # type: (Frame) -> None
-        self._frame = frame
-
-    @property
-    def transformation(self):
-        # type: () -> Transformation
-        """The local transformation of the element defining its position and orientation in space.
-        This property returns the transformation computed from the frame when used as a getter,
-        and updates the frame by converting the transformation back to a frame when used as a setter.
-        """
-        return Transformation.from_frame(self.frame) if self.frame else Transformation()
-
-    @transformation.setter
-    @reset_computed
-    def transformation(self, transformation):
-        # type: (Transformation) -> None
-        self._frame = Frame.from_transformation(transformation)
 
     @property
     def features(self):

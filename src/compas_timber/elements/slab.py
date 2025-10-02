@@ -59,14 +59,14 @@ class Slab(TimberElement):
 
     def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(name=name)
+        super(Slab, self).__init__(frame=frame,name=name)
         self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
         self.attributes = {}
         self.attributes.update(kwargs)
 
-        self._frame = frame
+        # self._frame = frame
         self._faces = None
         self._corners = None
 
@@ -83,12 +83,12 @@ class Slab(TimberElement):
     def is_group_element(self):
         return True
 
-    @property
-    def frame(self):
-        """The frame of the slab."""
-        if self._frame is None:
-            self._frame = Slab._frame_from_polyline(self.outline, self.normal)
-        return self._frame
+    # @property
+    # def frame(self):
+    #     """The frame of the slab."""
+    #     if self._frame is None:
+    #         self._frame = Slab._frame_from_polyline(self.outline, self.normal)
+    #     return self._frame
 
     @property
     def normal(self):

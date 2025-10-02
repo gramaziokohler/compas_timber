@@ -50,13 +50,13 @@ class Fastener(TimberElement):
         # type: () -> str
         return "<Fastener {}>".format(self.name)
 
-    @property
-    def frame(self):
-        return self._frame
+    # @property
+    # def frame(self):
+    #     return self._frame
 
-    @frame.setter
-    def frame(self, frame):
-        self._frame = frame
+    # @frame.setter
+    # def frame(self, frame):
+    #     self._frame = frame
 
     @property
     def is_fastener(self):

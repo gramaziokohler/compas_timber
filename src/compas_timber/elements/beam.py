@@ -83,8 +83,7 @@ class Beam(TimberElement):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(**kwargs)
-        self.frame = frame
+        super(Beam, self).__init__(frame,**kwargs)
         self.width = width
         self.height = height
         self.length = length
@@ -113,16 +112,16 @@ class Beam(TimberElement):
     def is_beam(self):
         return True
 
-    @property
-    def transformation(self):
-        transformation = super(Beam, self).transformation
-        start, _ = self._resolve_blank_extensions()
-        extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
-        return extension_transformation * transformation  # TODO: should this be instead handled when calling `add_blank_extension` and `remove_blank_extension`?
+    # @property
+    # def transformation(self):
+    #     transformation = super(Beam, self).transformation
+    #     start, _ = self._resolve_blank_extensions()
+    #     extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
+    #     return extension_transformation * transformation  # TODO: should this be instead handled when calling `add_blank_extension` and `remove_blank_extension`?
 
-    @transformation.setter
-    def transformation(self, transformation):
-        super(Beam, self.__class__).transformation.__set__(self, transformation)
+    # @transformation.setter
+    # def transformation(self, transformation):
+    #     super(Beam, self.__class__).transformation.__set__(self, transformation)
 
     @property
     def shape(self):
@@ -163,6 +162,7 @@ class Beam(TimberElement):
         The ref_frame is always in global coordinates.
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
+
         ref_point = Point(0, self.width * 0.5, -self.height * 0.5)
         frame = Frame(ref_point, Vector.Xaxis(), Vector.Zaxis())
         return frame.transformed(self.modeltransformation)

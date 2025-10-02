@@ -77,7 +77,6 @@ class Plate(TimberElement):
         self.outline_b = Polyline(outline_b.points)
         self._outline_feature = None
         self._opening_features = None
-        self._frame = None
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -162,13 +161,13 @@ class Plate(TimberElement):
         """Sets the features of the plate."""
         self._features = features
 
-    @property
-    def frame(self):
-        if not self._frame:
-            self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
-            if dot_vectors(Vector.from_start_end(self.outline_a[0], self.outline_b[0]), self._frame.normal) < 0:
-                self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
-        return self._frame
+    # @property
+    # def frame(self):
+    #     if not self._frame:
+    #         self._frame = Frame.from_points(self.outline_a[0], self.outline_a[1], self.outline_a[-2])
+    #         if dot_vectors(Vector.from_start_end(self.outline_a[0], self.outline_b[0]), self._frame.normal) < 0:
+    #             self._frame = Frame.from_points(self.outline_a[0], self.outline_a[-2], self.outline_a[1])
+    #     return self._frame
 
     @reset_computed
     def reset(self):
