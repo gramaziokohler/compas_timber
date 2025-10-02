@@ -74,9 +74,12 @@ class PlateGeometry(object):
         data["openings"] = self.openings
         return data
 
-    def __init__(self, outline_a=None, outline_b=None, openings=None):
-        PlateGeometry.check_outlines(outline_a, outline_b)
+    def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None):
         self._local_outlines = (outline_a, outline_b)
+        self.frame = frame
+        self.length = length
+        self.width = width
+        self.thickness = thickness
         self.outline_a = outline_a.transformed(self.transformation)
         self.outline_b = outline_b.transformed(self.transformation)
         self.interfaces = []
@@ -367,6 +370,26 @@ class PlateGeometry(object):
     # ==========================================================================
     #  static methods
     # ==========================================================================
+    @staticmethod
+    def plate_dimensions_from_points(points, frame=None, inflate=0.0):
+        # type: (list[compas.geometry.Point], compas.geometry.Frame | None, float) -> tuple[float, float, float]
+        """Computes the Oriented Bounding Box (OBB) of the element.
+
+        Returns
+        -------
+        :class:`compas.geometry.Box`
+            The OBB of the element.
+
+        """
+        if not frame:
+            frame = Frame.worldXY()
+        transform_to_local = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+        local_points = [pt.transformed(transform_to_local) for pt in points]
+        obb = Box.from_points(local_points)
+        obb.xsize += inflate
+        obb.ysize += inflate
+        obb.zsize += inflate
+        return obb.xsize, obb.ysize, obb.zsize
 
     @staticmethod
     def get_frame_from_outlines(outline_a, outline_b):

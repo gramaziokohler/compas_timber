@@ -31,12 +31,19 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
+        data["frame"] = self.frame
+        data["width"] = self.width
+        data["height"] = self.height
+        data["length"] = self.length
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame=None, features=None, **kwargs):
+    def __init__(self, frame=None, length=None, width=None, height=None, features=None, **kwargs):
         super(TimberElement, self).__init__(**kwargs)
         self._frame = frame or Frame.worldXY()
+        self.length = length
+        self.width = width
+        self.height = height
         self._features = features or []
         self._geometry = None
         self.debug_info = []

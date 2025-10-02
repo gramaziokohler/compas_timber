@@ -53,8 +53,8 @@ class Plate(PlateGeometry, TimberElement):
     def __data__(self):
         return super(Plate, self).__data__
 
-    def __init__(self, frame, outline_a, outline_b, openings=None, **kwargs):
-        TimberElement.__init__(self, frame=frame, **kwargs)
+    def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None, **kwargs):
+        TimberElement.__init__(self, frame=frame, length=length, width=width, height=thickness, **kwargs)
         PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
         self.frame = frame
         self._outline_feature = None
