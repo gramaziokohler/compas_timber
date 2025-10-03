@@ -71,6 +71,7 @@ class Fastener(Element):
         """returns the geometry of the fastener in the model"""
         return self.shape.transformed(Transformation.from_frame(self.frame))
 
+
 class FastenerTimberInterface(Data):
     """A class to represent the interface between a fastener and a timber element.
 

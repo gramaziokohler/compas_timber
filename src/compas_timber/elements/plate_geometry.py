@@ -163,7 +163,6 @@ class PlateGeometry(object):
             width,
             thickness,
         ) = PlateGeometry._get_frame_and_dims_from_outlines(outline_a, outline_b)
-        print(frame)
         xform_to_local = Transformation.from_frame(frame).inverse()
         local_outline_a = outline_a.transformed(xform_to_local)
         local_outline_b = outline_b.transformed(xform_to_local)

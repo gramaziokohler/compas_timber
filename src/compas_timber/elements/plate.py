@@ -138,30 +138,6 @@ class Plate(PlateGeometry, TimberElement):
         """
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        return self.compute_elementgeometry(include_features=include_features)
-        #return plate_geo.transformed(Transformation.from_frame(self.frame))
-
-    def compute_elementgeometry(self, include_features=True):
-        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
-        """Compute the geometry of the element.
-
-        Parameters
-        ----------
-        include_features : bool, optional
-            If True, the features should be included in the element geometry.
-
-        Returns
-        -------
-        :class:`compas.geometry.Brep`
-
-        Raises
-        ------
-        :class:`compas_timber.errors.FeatureApplicationError`
-            If there is an error applying features to the element.
-
-        """
-
-        # TODO: consider if Brep.from_curves(curves) is faster/better
         plate_geo = self.shape
         if include_features:
             for feature in self._features:
