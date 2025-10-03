@@ -271,13 +271,11 @@ class PlateGeometry(object):
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for opening in self.openings:
-            if not TOL.is_allclose(opening.outline_a[0], opening.outline_a[-1]):
-                raise ValueError("Opening polyline is not closed.", opening.outline_a[0][0], opening.outline_a[0][-1])
-            polyline_a = correct_polyline_direction(opening.outline_a, self.frame.normal, clockwise=True)
-            if not opening.outline_b:
-                polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in opening.outline_a]
-            else:
-                polyline_b = correct_polyline_direction(opening.outline_b, self.frame.normal, clockwise=True)
+            if not TOL.is_allclose(opening[0], opening[-1]):
+                raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
+            op = opening.transformed(Transformation.from_frame(self.frame))
+            polyline_a = correct_polyline_direction(op, self.frame.normal, clockwise=True)
+            polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
             brep.cap_planar_holes()
             plate_geo -= brep

@@ -138,8 +138,8 @@ class Plate(PlateGeometry, TimberElement):
         """
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = self.compute_elementgeometry(include_features=include_features)
-        return plate_geo.transformed(self.transformation)
+        return self.compute_elementgeometry(include_features=include_features)
+        #return plate_geo.transformed(Transformation.from_frame(self.frame))
 
     def compute_elementgeometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
