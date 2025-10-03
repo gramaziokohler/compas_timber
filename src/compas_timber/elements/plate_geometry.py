@@ -22,44 +22,36 @@ class PlateGeometry(object):
 
     Parameters
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this plate. Must be coplanar with outline_a.
-    outline_a : :class:`~compas.geometry.Polyline`                                                  TODO: add support for NurbsCurve
+    outline_a : :class:`~compas.geometry.Polyline`
         A line representing the principal outline of this plate. This should be declared in the local frame of the plate, aka projected on worldXY.
     outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
-        must be parallel to outline_a. must be in the +Z direction of the frame.
-    openings : list(:class:`~compas_timber.elements.Opening`), optional
+        Must be parallel to outline_a. Must be in the +Z direction of the frame.
+    openings : list[:class:`~compas_timber.elements.Opening`], optional
         A list of Opening objects representing openings in this plate.
-    **kwargs : dict, optional
-        Additional keyword arguments to be passed to the constructor of :class:`~compas_timber.elements.TimberElement`.
 
     Attributes
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this plate.
     outline_a : :class:`~compas.geometry.Polyline`
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate.
-    blank_length : float
-        Length of the plate blank.
-    width : float
-        Thickness of the plate material.
-    height : float
-        Height of the plate blank.
+    outlines : tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
+        A tuple containing both outline_a and outline_b.
+    thickness : float
+        Thickness of the plate (same as height).
+    planes : tuple[:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`]
+        The top and bottom planes of the plate.
+    normal : :class:`~compas.geometry.Vector`
+        Normal vector of the plate.
+    edge_planes : list[:class:`~compas.geometry.Frame`]
+        Frames representing the edge planes of the plate.
     shape : :class:`~compas.geometry.Brep`
         The geometry of the Plate before other machining features are applied.
-    blank : :class:`~compas.geometry.Box`
-        A feature-less box representing the material stock geometry to produce this plate.
-    ref_frame : :class:`~compas.geometry.Frame`
-        Reference frame for machining processings according to BTLx standard.
-    ref_sides : tuple(:class:`~compas.geometry.Frame`)
-        A tuple containing the 6 frames representing the sides of the plate according to BTLx standard.
-    aabb : tuple(float, float, float, float, float, float)
-        An axis-aligned bounding box of this plate as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
-    key : int, optional
-        Once plate is added to a model, it will have this model-wide-unique integer key.
+    interfaces : list
+        List of interfaces associated with this plate.
+    openings : list[:class:`~compas_timber.elements.Opening`]
+        A list of Opening objects representing openings in this plate.
 
     """
 
@@ -71,7 +63,7 @@ class PlateGeometry(object):
         data["openings"] = self.openings
         return data
 
-    def __init__(self, outline_a=None, outline_b=None, openings=None):
+    def __init__(self, outline_a, outline_b, openings=None):
         self._local_outlines = (outline_a, outline_b)
         self.outline_a = outline_a.transformed(Transformation.from_frame(self.frame))
         self.outline_b = outline_b.transformed(Transformation.from_frame(self.frame))
@@ -92,14 +84,35 @@ class PlateGeometry(object):
 
     @property
     def outlines(self):
+        """The outlines of the plate.
+        
+        Returns
+        -------
+        tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
+            A tuple containing outline_a and outline_b.
+        """
         return (self.outline_a, self.outline_b)
 
     @property
     def thickness(self):
+        """The thickness of the plate.
+        
+        Returns
+        -------
+        float
+            The thickness of the plate (same as height).
+        """
         return self.height
 
     @property
     def planes(self):
+        """The top and bottom planes of the plate.
+        
+        Returns
+        -------
+        tuple[:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`]
+            The top and bottom planes of the plate.
+        """
         if not self._planes:
             self._planes = (Plane.from_frame(self.frame), Plane.from_frame(self.frame.translated(self.thickness * self.frame.normal)))
         return self._planes
@@ -111,6 +124,13 @@ class PlateGeometry(object):
 
     @property
     def edge_planes(self):
+        """Frames representing the edge planes of the plate.
+        
+        Returns
+        -------
+        list[:class:`~compas.geometry.Frame`]
+            A list of frames representing the edge planes of the plate.
+        """
         edge_planes = []
         for i in range(len(self.outlines_a) - 1):
             plane = Frame.from_points(self.outlines_a[i], self.outlines_a[i + 1], self.outlines_b[i])
@@ -127,6 +147,13 @@ class PlateGeometry(object):
         self._edge_planes = []
 
     def add_interface(self, interface):
+        """Add an interface to the plate.
+        
+        Parameters
+        ----------
+        interface : object
+            The interface to add to the plate.
+        """
         self.interfaces.append(interface)
 
     # ==========================================================================
@@ -136,18 +163,16 @@ class PlateGeometry(object):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
-        Constructs a PlateGeometry from a polyline outline and a thickness.
-        The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
+        Constructs a PlateGeometry from two polyline outlines.
 
         Parameters
         ----------
-        outline : :class:`~compas.geometry.Polyline`
-            A polyline representing the outline of the plate geometry.
-        thickness : float
-            The thickness of the plate geometry.
-        vector : :class:`~compas.geometry.Vector`, optional
-            The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        openings : list(:class:`compas_timber.elements.Opening`), optional
+        outline_a : :class:`~compas.geometry.Polyline`
+            A polyline representing the principal outline of the plate geometry.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A polyline representing the associated outline of the plate geometry. 
+            This should have the same number of points as outline_a.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of openings to be added to the plate geometry.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
@@ -155,7 +180,7 @@ class PlateGeometry(object):
         Returns
         -------
         :class:`~compas_timber.elements.PlateGeometry`
-            A PlateGeometry object representing the plate geometry with the given outline and thickness.
+            A PlateGeometry object representing the plate geometry with the given outlines.
         """
         (
             frame,
@@ -184,7 +209,7 @@ class PlateGeometry(object):
             The thickness of the plate geometry.
         vector : :class:`~compas.geometry.Vector`, optional
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        openings : list(:class:`compas_timber.elements.Opening`), optional
+        openings : list[:class:`~compas_timber.elements.Opening`], optional
             A list of openings to be added to the plate geometry.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
@@ -218,20 +243,20 @@ class PlateGeometry(object):
 
         Parameters
         ----------
-        brep : :class:`compas.geometry.Brep`
+        brep : :class:`~compas.geometry.Brep`
             The brep of the plate.
         thickness : float
             The thickness of the plate.
-        vector : :class:`compas.geometry.Vector`
-            The vector in which the plate is extruded.(optional)
-        kwargs : dict
+        vector : :class:`~compas.geometry.Vector`, optional
+            The vector in which the plate is extruded.
+        **kwargs : dict, optional
             Additional keyword arguments.
-            These are passed to the :class:`compas_timber.elements.Slab` constructor.
+            These are passed to the :class:`~compas_timber.elements.PlateGeometry` constructor.
 
         Returns
         -------
-        :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate with the given brep and thickness.
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate with the given brep and thickness.
         """
 
         if len(brep.faces) > 1:
@@ -273,6 +298,7 @@ class PlateGeometry(object):
             if not TOL.is_allclose(opening[0], opening[-1]):
                 raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
             op = opening.transformed(Transformation.from_frame(self.frame))
+            #TODO: should we do this in global or local coords?
             polyline_a = correct_polyline_direction(op, self.frame.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
@@ -335,26 +361,23 @@ class PlateGeometry(object):
     # ==========================================================================
     #  static methods
     # ==========================================================================
-    @staticmethod
-    def _plate_dimensions_from_points(points, inflate=0.0):
-        # type: (list[compas.geometry.Point], compas.geometry.Frame | None, float) -> tuple[float, float, float]
-        """Computes the Oriented Bounding Box (OBB) of the element.
-
-        Returns
-        -------
-        :class:`compas.geometry.Box`
-            The OBB of the element.
-
-        """
-        obb = Box.from_points(points)
-        obb.xsize += inflate
-        obb.ysize += inflate
-        obb.zsize += inflate
-        return obb.xsize, obb.ysize, obb.zsize
 
     @staticmethod
     def _get_frame_and_dims_from_outlines(outline_a, outline_b):
-        """The slab_populator frame in global space."""
+        """Get the frame and dimensions from two outlines.
+        
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            The principal outline of the plate.
+        outline_b : :class:`~compas.geometry.Polyline`
+            The associated outline of the plate.
+            
+        Returns
+        -------
+        tuple[:class:`~compas.geometry.Frame`, float, float, float]
+            A tuple containing the frame, length, width, and thickness.
+        """
         frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
             frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
@@ -368,7 +391,7 @@ class PlateGeometry(object):
 
     @staticmethod
     def _check_outlines(outline_a, outline_b):
-        # type: (compas.geometry.Polyline, compas.geometry.Polyline) -> bool
+        # type: (Polyline, Polyline) -> bool
         """Checks if the outlines are valid. Outlines should already be at the plate's local frame.
 
         Parameters

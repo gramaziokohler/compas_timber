@@ -17,11 +17,22 @@ class Plate(PlateGeometry, TimberElement):
 
     Parameters
     ----------
-    outline_a : :class:`~compas.geometry.Polyline`                                                  TODO: add support for NurbsCurve
+    frame : :class:`~compas.geometry.Frame`
+        The coordinate system (frame) of this plate.
+    length : float
+        Length of the plate.
+    width : float
+        Width of the plate.
+    thickness : float
+        Thickness of the plate.
+    outline_a : :class:`~compas.geometry.Polyline`, optional
         A line representing the principal outline of this plate.
-    outline_b : :class:`~compas.geometry.Polyline`
+    outline_b : :class:`~compas.geometry.Polyline`, optional
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
-
+    openings : list[:class:`~compas_timber.elements.Opening`], optional
+        A list of Opening objects representing openings in this plate.
+    **kwargs : dict, optional
+        Additional keyword arguments.
 
     Attributes
     ----------
@@ -31,22 +42,28 @@ class Plate(PlateGeometry, TimberElement):
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate.
-    blank_length : float
-        Length of the plate blank.
+    length : float
+        Length of the plate.
     width : float
-        Thickness of the plate material.
+        Width of the plate.
     height : float
-        Height of the plate blank.
-    shape : :class:`~compas.geometry.Brep`
-        The geometry of the Plate before other machining features are applied.
+        Height of the plate (same as thickness).
+    thickness : float
+        Thickness of the plate.
+    is_plate : bool
+        Always True for plates.
     blank : :class:`~compas.geometry.Box`
         A feature-less box representing the material stock geometry to produce this plate.
+    blank_length : float
+        Length of the plate blank.
+    features : list[:class:`~compas_timber.fabrication.Feature`]
+        List of features applied to this plate.
+    shape : :class:`~compas.geometry.Brep`
+        The geometry of the Plate before other machining features are applied.
     ref_frame : :class:`~compas.geometry.Frame`
         Reference frame for machining processings according to BTLx standard.
-    ref_sides : tuple(:class:`~compas.geometry.Frame`)
+    ref_sides : tuple[:class:`~compas.geometry.Frame`, ...]
         A tuple containing the 6 frames representing the sides of the plate according to BTLx standard.
-    aabb : tuple(float, float, float, float, float, float)
-        An axis-aligned bounding box of this plate as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).
     key : int, optional
         Once plate is added to a model, it will have this model-wide-unique integer key.
 
@@ -80,10 +97,24 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def is_plate(self):
+        """Check if this element is a plate.
+        
+        Returns
+        -------
+        bool
+            Always True for plates.
+        """
         return True
 
     @property
     def blank(self):
+        """A feature-less box representing the material stock geometry to produce this plate.
+        
+        Returns
+        -------
+        :class:`~compas.geometry.Box`
+            The blank box of the plate.
+        """
         box = Box(self.length, self.width, self.height, self.frame)
         box.translate(self.frame.point - box.points[0])
         box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
@@ -92,10 +123,24 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def blank_length(self):
+        """Length of the plate blank.
+        
+        Returns
+        -------
+        float
+            The length of the blank.
+        """
         return self.blank.xsize
 
     @property
     def features(self):
+        """All features of the plate including outline, openings, and user-defined features.
+        
+        Returns
+        -------
+        list[:class:`~compas_timber.fabrication.Feature`]
+            A list of all features applied to this plate.
+        """
         if not self._outline_feature:
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:

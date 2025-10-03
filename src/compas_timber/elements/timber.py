@@ -33,6 +33,23 @@ class TimberElement(Element):
         return data
 
     def __init__(self, frame, length, width, height, features=None, **kwargs):
+        """Initialize a TimberElement.
+        
+        Parameters
+        ----------
+        frame : :class:`~compas.geometry.Frame`
+            The coordinate system (frame) of this timber element.
+        length : float
+            Length of the timber element.
+        width : float
+            Width of the timber element.
+        height : float
+            Height of the timber element.
+        features : list[:class:`~compas_timber.fabrication.Feature`], optional
+            List of features to apply to this element.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+        """
         super(TimberElement, self).__init__(**kwargs)
         self.frame = frame
         self.length = length
@@ -43,18 +60,46 @@ class TimberElement(Element):
 
     @property
     def is_beam(self):
+        """Check if this element is a beam.
+        
+        Returns
+        -------
+        bool
+            False for the base TimberElement class.
+        """
         return False
 
     @property
     def is_plate(self):
+        """Check if this element is a plate.
+        
+        Returns
+        -------
+        bool
+            False for the base TimberElement class.
+        """
         return False
 
     @property
     def is_group_element(self):
+        """Check if this element can be used as a container for other elements.
+        
+        Returns
+        -------
+        bool
+            False for the base TimberElement class.
+        """
         return False
 
     @property
     def features(self):
+        """List of features applied to this element.
+        
+        Returns
+        -------
+        list[:class:`~compas_timber.fabrication.Feature`]
+            The features applied to this element.
+        """
         # type: () -> list[Feature]
         return self._features
 
@@ -63,6 +108,10 @@ class TimberElement(Element):
         self._features = features
 
     def remove_blank_extension(self):
+        """Remove blank extension from the element.
+        
+        This method is intended to be overridden by subclasses.
+        """
         pass
 
     def reset(self):
@@ -74,12 +123,12 @@ class TimberElement(Element):
     @reset_computed
     def add_features(self, features):
         # type: (Feature | list[Feature]) -> None
-        """Adds one or more features to the beam.
+        """Adds one or more features to the element.
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be added.
+        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`]
+            The features to be added.
 
         """
         if not isinstance(features, list):
@@ -89,12 +138,12 @@ class TimberElement(Element):
     @reset_computed
     def remove_features(self, features=None):
         # type: (None | Feature | list[Feature]) -> None
-        """Removes a feature from the beam.
+        """Removes features from the element.
 
         Parameters
         ----------
-        feature : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be removed. If None, all features will be removed.
+        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`], optional
+            The features to be removed. If None, all features will be removed.
 
         """
         if features is None:
@@ -106,11 +155,25 @@ class TimberElement(Element):
 
     @property
     def ref_frame(self):
+        """Reference frame for machining processing according to BTLx standard.
+        
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+            The reference frame of the element.
+        """
         # type: () -> Frame
         return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
 
     @property
     def ref_sides(self):
+        """The 6 frames representing the sides of the element according to BTLx standard.
+        
+        Returns
+        -------
+        tuple[:class:`~compas.geometry.Frame`, ...]
+            A tuple containing the 6 frames representing the sides of the element.
+        """
         # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
         # TODO: cache these
@@ -131,6 +194,13 @@ class TimberElement(Element):
 
     @property
     def ref_edges(self):
+        """The 4 lines representing the long edges of the element according to BTLx standard.
+        
+        Returns
+        -------
+        tuple[:class:`~compas.geometry.Line`, ...]
+            A tuple containing the 4 lines representing the long edges of the element.
+        """
         # type: () -> tuple[Line, Line, Line, Line]
         # so tuple is not created every time
         ref_sides = self.ref_sides
