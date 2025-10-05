@@ -6,6 +6,19 @@ from .plate_geometry import PlateGeometry
 
 
 class SlabType(object):
+    """Constants for different types of slabs.
+    
+    Attributes
+    ----------
+    WALL : str
+        Constant for wall slabs.
+    FLOOR : str
+        Constant for floor slabs.
+    ROOF : str
+        Constant for roof slabs.
+    GENERIC : str
+        Constant for generic slabs.
+    """
     WALL = "wall"
     FLOOR = "floor"
     ROOF = "roof"
@@ -13,13 +26,61 @@ class SlabType(object):
 
 
 class Slab(PlateGeometry, Element):
-    """Represents a single timber wall element.
-    Serves as container for beams joints and other related elements and groups them together to form a wall.
+    """Represents a timber slab element (wall, floor, roof, etc.).
+    
+    Serves as container for beams, joints and other related elements and groups them together to form a slab.
+    A slab is often a single unit of prefabricated timber element.
+    It is often referred to as an enveloping body.
 
-    Wall is often a single unit of prefabricated timber wall element.
-    It is often refered to as an enveloping body.
+    Parameters
+    ----------
+    frame : :class:`~compas.geometry.Frame`
+        The coordinate system (frame) of this slab.
+    length : float
+        Length of the slab.
+    width : float
+        Width of the slab.
+    thickness : float
+        Thickness of the slab.
+    outline_a : :class:`~compas.geometry.Polyline`, optional
+        A polyline representing the principal outline of this slab.
+    outline_b : :class:`~compas.geometry.Polyline`, optional
+        A polyline representing the associated outline of this slab.
+    openings : list[:class:`~compas_timber.elements.Opening`], optional
+        A list of Opening objects representing openings in this slab.
+    name : str, optional
+        Name of the slab. Defaults to "Slab".
+    **kwargs : dict, optional
+        Additional keyword arguments.
 
-    TODO: complete this docstring
+    Attributes
+    ----------
+    frame : :class:`~compas.geometry.Frame`
+        The coordinate system (frame) of this slab.
+    length : float
+        Length of the slab.
+    width : float
+        Width of the slab.
+    height : float
+        Height (thickness) of the slab.
+    thickness : float
+        Thickness of the slab.
+    name : str
+        Name of the slab.
+    interfaces : list
+        List of interfaces associated with this slab.
+    attributes : dict
+        Dictionary of additional attributes.
+    is_slab : bool
+        Always True for slabs.
+    is_wall : bool
+        False for base Slab class.
+    is_floor : bool
+        False for base Slab class.
+    is_roof : bool
+        False for base Slab class.
+    is_group_element : bool
+        Always True for slabs as they can contain other elements.
 
     """
 
@@ -53,20 +114,55 @@ class Slab(PlateGeometry, Element):
 
     @property
     def is_slab(self):
+        """Check if this element is a slab.
+        
+        Returns
+        -------
+        bool
+            Always True for slabs.
+        """
         return True
 
     @property
     def is_wall(self):
+        """Check if this element is a wall.
+        
+        Returns
+        -------
+        bool
+            False for the base Slab class.
+        """
         return False
 
     @property
     def is_floor(self):
+        """Check if this element is a floor.
+        
+        Returns
+        -------
+        bool
+            False for the base Slab class.
+        """
         return False
 
     @property
     def is_roof(self):
+        """Check if this element is a roof.
+        
+        Returns
+        -------
+        bool
+            False for the base Slab class.
+        """
         return False
 
     @property
     def is_group_element(self):
+        """Check if this element can be used as a container for other elements.
+        
+        Returns
+        -------
+        bool
+            Always True for slabs as they can contain other elements.
+        """
         return True
