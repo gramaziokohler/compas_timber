@@ -101,7 +101,7 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def is_plate(self):
         """Check if this element is a plate.
-        
+
         Returns
         -------
         bool
@@ -112,7 +112,7 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def blank(self):
         """A feature-less box representing the material stock geometry to produce this plate.
-        
+
         Returns
         -------
         :class:`~compas.geometry.Box`
@@ -127,7 +127,7 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def blank_length(self):
         """Length of the plate blank.
-        
+
         Returns
         -------
         float
@@ -138,7 +138,7 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def features(self):
         """All features of the plate including outline, openings, and user-defined features.
-        
+
         Returns
         -------
         list[:class:`~compas_timber.fabrication.Feature`]

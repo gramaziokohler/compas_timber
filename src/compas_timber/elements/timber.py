@@ -34,7 +34,7 @@ class TimberElement(Element):
 
     def __init__(self, frame, length, width, height, features=None, **kwargs):
         """Initialize a TimberElement.
-        
+
         Parameters
         ----------
         frame : :class:`~compas.geometry.Frame`
@@ -61,7 +61,7 @@ class TimberElement(Element):
     @property
     def is_beam(self):
         """Check if this element is a beam.
-        
+
         Returns
         -------
         bool
@@ -72,7 +72,7 @@ class TimberElement(Element):
     @property
     def is_plate(self):
         """Check if this element is a plate.
-        
+
         Returns
         -------
         bool
@@ -83,7 +83,7 @@ class TimberElement(Element):
     @property
     def is_group_element(self):
         """Check if this element can be used as a container for other elements.
-        
+
         Returns
         -------
         bool
@@ -94,7 +94,7 @@ class TimberElement(Element):
     @property
     def features(self):
         """List of features applied to this element.
-        
+
         Returns
         -------
         list[:class:`~compas_timber.fabrication.Feature`]
@@ -109,7 +109,7 @@ class TimberElement(Element):
 
     def remove_blank_extension(self):
         """Remove blank extension from the element.
-        
+
         This method is intended to be overridden by subclasses.
         """
         pass
@@ -156,7 +156,7 @@ class TimberElement(Element):
     @property
     def ref_frame(self):
         """Reference frame for machining processing according to BTLx standard.
-        
+
         Returns
         -------
         :class:`~compas.geometry.Frame`
@@ -168,7 +168,7 @@ class TimberElement(Element):
     @property
     def ref_sides(self):
         """The 6 frames representing the sides of the element according to BTLx standard.
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Frame`, ...]
@@ -195,7 +195,7 @@ class TimberElement(Element):
     @property
     def ref_edges(self):
         """The 4 lines representing the long edges of the element according to BTLx standard.
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Line`, ...]
