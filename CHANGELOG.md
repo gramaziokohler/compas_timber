@@ -122,6 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_timber.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Moved BTLx-specific properties and methods `ref_frame`, `ref_sides`, `ref_edges` to `TimberElement`.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height).
+* Changed `Slab` to inherit from `PlateGeometry`
+* Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 
 ### Removed
 
@@ -133,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `JointDefinition`. 
 * Removed `FeatureDefinition`. 
 * Removed redundant checks in `TopologyRule` GH components.
+
 
 ## [0.16.2] 2025-05-07
 
