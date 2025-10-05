@@ -7,7 +7,7 @@ from .plate_geometry import PlateGeometry
 
 class SlabType(object):
     """Constants for different types of slabs.
-    
+
     Attributes
     ----------
     WALL : str
@@ -19,6 +19,7 @@ class SlabType(object):
     GENERIC : str
         Constant for generic slabs.
     """
+
     WALL = "wall"
     FLOOR = "floor"
     ROOF = "roof"
@@ -27,7 +28,7 @@ class SlabType(object):
 
 class Slab(PlateGeometry, Element):
     """Represents a timber slab element (wall, floor, roof, etc.).
-    
+
     Serves as container for beams, joints and other related elements and groups them together to form a slab.
     A slab is often a single unit of prefabricated timber element.
     It is often referred to as an enveloping body.
@@ -115,7 +116,7 @@ class Slab(PlateGeometry, Element):
     @property
     def is_slab(self):
         """Check if this element is a slab.
-        
+
         Returns
         -------
         bool
@@ -126,7 +127,7 @@ class Slab(PlateGeometry, Element):
     @property
     def is_wall(self):
         """Check if this element is a wall.
-        
+
         Returns
         -------
         bool
@@ -137,7 +138,7 @@ class Slab(PlateGeometry, Element):
     @property
     def is_floor(self):
         """Check if this element is a floor.
-        
+
         Returns
         -------
         bool
@@ -148,7 +149,7 @@ class Slab(PlateGeometry, Element):
     @property
     def is_roof(self):
         """Check if this element is a roof.
-        
+
         Returns
         -------
         bool
@@ -159,7 +160,7 @@ class Slab(PlateGeometry, Element):
     @property
     def is_group_element(self):
         """Check if this element can be used as a container for other elements.
-        
+
         Returns
         -------
         bool

@@ -11,7 +11,7 @@ from .slab import Slab
 
 class OpeningType(object):
     """Constants for different types of openings in walls.
-    
+
     Attributes
     ----------
     DOOR : str
@@ -19,13 +19,14 @@ class OpeningType(object):
     WINDOW : str
         Constant for window openings.
     """
+
     DOOR = "door"
     WINDOW = "window"
 
 
 class Opening(Data):
     """Represents an opening in a wall (door, window, etc.).
-    
+
     Parameters
     ----------
     polyline : :class:`~compas.geometry.Polyline`
@@ -34,7 +35,7 @@ class Opening(Data):
         The type of opening (e.g., "door", "window").
     **kwargs : dict, optional
         Additional keyword arguments.
-        
+
     Attributes
     ----------
     polyline : :class:`~compas.geometry.Polyline`
@@ -42,7 +43,7 @@ class Opening(Data):
     opening_type : str
         The type of opening.
     """
-    
+
     @property
     def __data__(self):
         return {
@@ -60,7 +61,7 @@ class Opening(Data):
 
     def orient_polyline(self, normal):
         """Orient the polyline consistently with the given normal vector.
-        
+
         Parameters
         ----------
         normal : :class:`~compas.geometry.Vector`
@@ -71,7 +72,7 @@ class Opening(Data):
 
 class Wall(Slab):
     """Represents a single timber wall element.
-    
+
     Serves as container for beams, joints and other related elements and groups them together to form a wall.
     Wall is often a single unit of prefabricated timber wall element.
     It is often referred to as an enveloping body.
@@ -156,7 +157,7 @@ class Wall(Slab):
     @property
     def is_wall(self):
         """Check if this element is a wall.
-        
+
         Returns
         -------
         bool
@@ -167,7 +168,7 @@ class Wall(Slab):
     @property
     def origin(self):
         """The origin point of the wall frame.
-        
+
         Returns
         -------
         :class:`~compas.geometry.Point`
@@ -179,9 +180,9 @@ class Wall(Slab):
     @property
     def centerline(self):
         """The centerline of the wall.
-        
+
         This is an alias for baseline to maintain compatibility with topology finding algorithms.
-        
+
         Returns
         -------
         :class:`~compas.geometry.Line`
@@ -193,7 +194,7 @@ class Wall(Slab):
     @property
     def baseline(self):
         """The baseline of the wall from first to second point of outline.
-        
+
         Returns
         -------
         :class:`~compas.geometry.Line`
@@ -206,7 +207,7 @@ class Wall(Slab):
     @property
     def corners(self):
         """The 8 corner points of the wall bounding box.
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Point`, ...]
@@ -230,7 +231,7 @@ class Wall(Slab):
     @property
     def faces(self):
         """The 6 faces of the wall as frames.
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Frame`, ...]
@@ -251,7 +252,7 @@ class Wall(Slab):
     @property
     def end_faces(self):
         """The back and front faces of the wall.
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Frame`, :class:`~compas.geometry.Frame`]
@@ -262,7 +263,7 @@ class Wall(Slab):
     @property
     def envelope_faces(self):
         """The envelope faces of the wall (bottom, left, top, right).
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Frame`, ...]
@@ -272,12 +273,12 @@ class Wall(Slab):
 
     def compute_geometry(self, _=False):
         """Compute the geometry of the wall.
-        
+
         Parameters
         ----------
         _ : bool, optional
             Unused parameter for compatibility. Defaults to False.
-            
+
         Returns
         -------
         :class:`~compas.geometry.Brep`
@@ -290,12 +291,12 @@ class Wall(Slab):
 
     def compute_aabb(self, inflate_by=0.1):
         """Compute the Axis Aligned Bounding Box (AABB) of the wall.
-        
+
         Parameters
         ----------
         inflate_by : float, optional
             Amount to inflate the bounding box by. Defaults to 0.1.
-            
+
         Returns
         -------
         :class:`~compas.geometry.Box`
@@ -306,12 +307,12 @@ class Wall(Slab):
 
     def compute_obb(self, inflate_by=0.0):
         """Compute the Oriented Bounding Box (OBB) of the wall.
-        
+
         Parameters
         ----------
         inflate_by : float, optional
             Amount to inflate the bounding box by. Defaults to 0.0.
-            
+
         Returns
         -------
         :class:`~compas.geometry.Box`
@@ -327,7 +328,7 @@ class Wall(Slab):
 
     def rotate(self):
         """Rotate the wall by shifting the outline points and updating the frame.
-        
+
         This method rotates the wall outline by one position and updates the frame accordingly.
         """
         assert self.frame
@@ -339,14 +340,14 @@ class Wall(Slab):
     @staticmethod
     def _frame_from_polyline(polyline, normal):
         """Create a frame from a polyline and normal vector.
-        
+
         Parameters
         ----------
         polyline : :class:`~compas.geometry.Polyline`
             The polyline to create the frame from.
         normal : :class:`~compas.geometry.Vector`
             The normal vector for the frame.
-            
+
         Returns
         -------
         :class:`~compas.geometry.Frame`
@@ -361,25 +362,25 @@ class Wall(Slab):
 
 def _oriented_polyline(polyline, normal):
     """Return a polyline that is oriented consistently counterclockwise around the normal.
-    
+
     Parameters
     ----------
     polyline : :class:`~compas.geometry.Polyline`
         The input polyline to orient.
     normal : :class:`~compas.geometry.Vector`
         The normal vector to orient around.
-        
+
     Returns
     -------
     :class:`~compas.geometry.Polyline`
         A polyline oriented counterclockwise around the normal.
-        
+
     Notes
     -----
     The function assumes a specific orientation:
-    
+
     .. code-block:: text
-    
+
         ^  3 ---- 2
         |  |      |
         z  0 ---- 1
