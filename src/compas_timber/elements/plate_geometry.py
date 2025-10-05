@@ -85,7 +85,7 @@ class PlateGeometry(object):
     @property
     def outlines(self):
         """The outlines of the plate.
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
@@ -96,7 +96,7 @@ class PlateGeometry(object):
     @property
     def thickness(self):
         """The thickness of the plate.
-        
+
         Returns
         -------
         float
@@ -107,7 +107,7 @@ class PlateGeometry(object):
     @property
     def planes(self):
         """The top and bottom planes of the plate.
-        
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`]
@@ -125,7 +125,7 @@ class PlateGeometry(object):
     @property
     def edge_planes(self):
         """Frames representing the edge planes of the plate.
-        
+
         Returns
         -------
         list[:class:`~compas.geometry.Frame`]
@@ -148,7 +148,7 @@ class PlateGeometry(object):
 
     def add_interface(self, interface):
         """Add an interface to the plate.
-        
+
         Parameters
         ----------
         interface : object
@@ -170,7 +170,7 @@ class PlateGeometry(object):
         outline_a : :class:`~compas.geometry.Polyline`
             A polyline representing the principal outline of the plate geometry.
         outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the plate geometry. 
+            A polyline representing the associated outline of the plate geometry.
             This should have the same number of points as outline_a.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of openings to be added to the plate geometry.
@@ -298,7 +298,7 @@ class PlateGeometry(object):
             if not TOL.is_allclose(opening[0], opening[-1]):
                 raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
             op = opening.transformed(Transformation.from_frame(self.frame))
-            #TODO: should we do this in global or local coords?
+            # TODO: should we do this in global or local coords?
             polyline_a = correct_polyline_direction(op, self.frame.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
@@ -365,14 +365,14 @@ class PlateGeometry(object):
     @staticmethod
     def _get_frame_and_dims_from_outlines(outline_a, outline_b):
         """Get the frame and dimensions from two outlines.
-        
+
         Parameters
         ----------
         outline_a : :class:`~compas.geometry.Polyline`
             The principal outline of the plate.
         outline_b : :class:`~compas.geometry.Polyline`
             The associated outline of the plate.
-            
+
         Returns
         -------
         tuple[:class:`~compas.geometry.Frame`, float, float, float]

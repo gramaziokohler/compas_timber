@@ -1,8 +1,9 @@
-from compas_model.elements import Element
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas_model.elements import Element
 
 from .plate_geometry import PlateGeometry
+
 
 class SlabType(object):
     WALL = "wall"
@@ -27,7 +28,7 @@ class Slab(PlateGeometry, Element):
         data = Element.__data__(self)
         data.update(PlateGeometry.__data__(self))
         data["name"] = self.name
-        data["interfaces"]=self.interfaces
+        data["interfaces"] = self.interfaces
         data["attributes"] = self.attributes
         return data
 
@@ -49,7 +50,6 @@ class Slab(PlateGeometry, Element):
 
     def __str__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
-
 
     @property
     def is_slab(self):
