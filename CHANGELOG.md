@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joint_candidates` property to `TimberModel`.
 * Added `add_joint_candidate` method to `TimberModel`.
 * Added `remove_joint_candidate` method to `TimberModel`.
+* Added `PlateGeometry` class.
 
 ### Changed
 
@@ -121,7 +122,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Joint.check_elements_compatibility()` to a class method to check Joint-type specific requirements before instantiation. 
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_timber.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Moved BTLx-specific properties and methods `ref_frame`, `ref_sides`, `ref_edges` to `TimberElement`.
-* Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height).
+* Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b`
+  optional arguments.
+* Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
+* Changed `Slab` to inherit from `PlateGeometry`
+* Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 
 ### Removed
 
@@ -133,6 +138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `JointDefinition`. 
 * Removed `FeatureDefinition`. 
 * Removed redundant checks in `TopologyRule` GH components.
+
 
 ## [0.16.2] 2025-05-07
 

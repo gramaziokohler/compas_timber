@@ -65,7 +65,7 @@ class Fastener(Element):
     @property
     def is_fastener(self):
         """Check if this element is a fastener.
-        
+
         Returns
         -------
         bool
@@ -76,7 +76,7 @@ class Fastener(Element):
     @property
     def key(self):
         """The graph node key of this fastener.
-        
+
         Returns
         -------
         int or None
@@ -95,7 +95,7 @@ class Fastener(Element):
 
     def compute_geometry(self):
         """Returns the geometry of the fastener in the model.
-        
+
         Returns
         -------
         :class:`~compas.geometry.Geometry`
@@ -197,12 +197,12 @@ class FastenerTimberInterface(Data):
 
     def get_features(self, element):
         """Get features to be applied to a timber element.
-        
+
         Parameters
         ----------
         element : :class:`~compas_timber.elements.TimberElement`
             The timber element to apply features to.
-            
+
         Returns
         -------
         list[:class:`~compas_timber.fabrication.Feature`]
@@ -220,14 +220,14 @@ class FastenerTimberInterface(Data):
     def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element. Goes through the element.
         If depth is required, holes should be added as Drilling features to the interface.
-        
+
         Parameters
         ----------
         hole : dict
             Dictionary containing hole information with keys: "point", "diameter", and optionally "vector".
         element : :class:`~compas_timber.elements.TimberElement`
             The timber element to drill through.
-            
+
         Returns
         -------
         :class:`~compas_timber.fabrication.Drilling`
