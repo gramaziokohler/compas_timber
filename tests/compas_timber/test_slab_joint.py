@@ -21,9 +21,12 @@ def test_simple_joint_and_reset():
     joint.add_features()
     assert isinstance(joint, SlabMiterJoint), "Expected joint to be a SlabMiterJoint"
     assert any([slab_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(slab_a.outline_a.points))]), "Expected joint to change outline_a"
+    assert len(joint.interfaces) == 2, "Expected two interfaces to be created"
+    assert len(slab_a.interfaces) == 1, "Expected slab_a to have the first interface"
+    assert len(slab_b.interfaces) == 1, "Expected slab_b to have the second interface"
     slab_a.reset()
     assert all([slab_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(slab_a.outline_a.points))]), "Expected joint to reset outline_a"
-
+    assert len(slab_a.interfaces) == 0, "Expected slab_a to have no interfaces after reset" 
 
 def test_simple_joint_and_reset_no_kwargs():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -65,10 +68,12 @@ def test_three_plate_joints():
             joints.append(SlabMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
             joints.append(SlabTButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
-
+    for j in joints:
+        j.add_extensions()
+        j.add_features()
     assert len(joints) == 3, "Expected three joints"
     assert all(isinstance(j, SlabMiterJoint) for j in joints), "Expected L-joints to be SlabMiterJoint"
-
+    assert all([len(s.interfaces) == 2 for s in [slab_a, slab_b, slab_c]]), "Expected each slab to have two interfaces"
 
 def test_three_plate_joints_mix_topo():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -97,8 +102,11 @@ def test_three_plate_joints_mix_topo():
             joints.append(SlabMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
             joints.append(SlabTButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
-
+    for j in joints:
+        j.add_extensions()
+        j.add_features()
     assert len(joints) == 3, "Expected three joints"
     assert isinstance(joints[0], SlabTButtJoint), "Expected L-joints to be SlabButtJoint"
     assert isinstance(joints[1], SlabMiterJoint), "Expected L-joints to be SlabMiterJoint"
     assert isinstance(joints[2], SlabMiterJoint), "Expected L-joints to be SlabMiterJoint"
+    assert all([len(s.interfaces) == 2 for s in [slab_a, slab_b, slab_c]]), "Expected each slab to have two interfaces"

@@ -9,13 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+
 ### Changed
 
 * Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
 * Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
 
 ### Removed
-
+* Removed `PlateToPlateInterface`, as plates will take `BTLxProcessing` features.
 
 ## [1.0.0] 2025-09-01
 
@@ -75,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `add_joint_candidate` method to `TimberModel`.
 * Added `remove_joint_candidate` method to `TimberModel`.
 * Added `PlateGeometry` class.
+* Added `SlabJoint`, `SlabMiterJoint`, `SlabButtJoint`, `SlabLButtJoint`, `SlabTButtJoint`.
 
 ### Changed
 
@@ -127,6 +129,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
 * Changed `Slab` to inherit from `PlateGeometry`
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
+* Changed `PlateJoint.add_features` functionality to `PlateJoint.add_extensions`.
+* Changed `PlateJoint.add_features` to create BTLx Processings on the plate to be implemented as needed in subclasses.
 
 ### Removed
 

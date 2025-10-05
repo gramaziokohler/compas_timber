@@ -145,15 +145,6 @@ class PlateGeometry(object):
         self.outline_b = self._local_outlines[1].transformed(Transformation.from_frame(self.frame))
         self._edge_planes = []
 
-    def add_interface(self, interface):
-        """Add an interface to the plate.
-
-        Parameters
-        ----------
-        interface : object
-            The interface to add to the plate.
-        """
-        self.interfaces.append(interface)
 
     # ==========================================================================
     # Alternate constructors
@@ -192,7 +183,6 @@ class PlateGeometry(object):
         local_outline_b = outline_b.transformed(xform_to_local)
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
         openings = [o.transformed(xform_to_local) for o in openings] if openings else None
-        print("openings", openings)
         return cls(frame, length, width, thickness, outline_a=local_outline_a, outline_b=local_outline_b, openings=openings, **kwargs)
 
     @classmethod

@@ -1,6 +1,7 @@
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas_model.elements import Element
+from compas_model.elements import reset_computed
 
 from .plate_geometry import PlateGeometry
 
@@ -112,6 +113,14 @@ class Slab(PlateGeometry, Element):
 
     def __str__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
+
+    @reset_computed
+    def reset(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        PlateGeometry.reset(self)  # reset outline_a and outline_b
+        self.interfaces = []
+        self.debug_info = []
+
 
     @property
     def is_slab(self):
