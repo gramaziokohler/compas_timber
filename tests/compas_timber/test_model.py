@@ -157,7 +157,7 @@ def test_generator_properties():
     beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
     model.add_element(beam)
 
-    wall = Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
+    wall = Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis())
     model.add_element(wall)
 
     assert len(list(model.plates)) == 1
@@ -178,7 +178,7 @@ def test_type_properties():
 
     plate = Plate.from_outline_thickness(polyline, 10.0, Vector(1, 0, 0))
     beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
-    wall = Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
+    wall = Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis())
 
     assert plate.is_plate
     assert beam.is_beam

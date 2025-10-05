@@ -67,7 +67,6 @@ class PlateGeometry(object):
         self._local_outlines = (outline_a, outline_b)
         self.outline_a = outline_a.transformed(Transformation.from_frame(self.frame))
         self.outline_b = outline_b.transformed(Transformation.from_frame(self.frame))
-        self.interfaces = []
         self._planes = None
         self.openings = openings or []
 
@@ -193,6 +192,7 @@ class PlateGeometry(object):
         local_outline_b = outline_b.transformed(xform_to_local)
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
         openings = [o.transformed(xform_to_local) for o in openings] if openings else None
+        print("openings", openings)
         return cls(frame, length, width, thickness, outline_a=local_outline_a, outline_b=local_outline_b, openings=openings, **kwargs)
 
     @classmethod

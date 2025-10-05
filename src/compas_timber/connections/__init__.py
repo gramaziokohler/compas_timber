@@ -29,11 +29,15 @@ from .wall_joint import WallJoint
 from .wall_joint import InterfaceLocation
 from .wall_joint import InterfaceRole
 from .plate_joint import PlateJoint
+from .slab_joint import SlabJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
-from .plate_joint import PlateToPlateInterface
+from .slab_butt_joint import SlabButtJoint
+from .slab_butt_joint import SlabLButtJoint
+from .slab_butt_joint import SlabTButtJoint
+from .slab_miter_joint import SlabMiterJoint
 from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
 from .analyzers import QuadAnalyzer
@@ -75,10 +79,15 @@ __all__ = [
     "InterfaceLocation",
     "InterfaceRole",
     "PlateJoint",
+    "SlabJoint",
     "PlateButtJoint",
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
+    "SlabButtJoint",
+    "SlabLButtJoint",
+    "SlabTButtJoint",
+    "SlabMiterJoint",
     "PlateToPlateInterface",
     "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",

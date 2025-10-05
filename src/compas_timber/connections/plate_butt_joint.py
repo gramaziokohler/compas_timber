@@ -94,25 +94,6 @@ class PlateButtJoint(PlateJoint):
             for polyline in self.cross_outlines:
                 move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
 
-    @property
-    def interface_main(self):
-        return self.interface_a
-
-    @property
-    def interface_cross(self):
-        return self.interface_a
-
-    @property
-    def interface_a(self):
-        self._plate_a_interface = super(PlateButtJoint, self).interface_a
-        self._plate_a_interface.interface_role = InterfaceRole.MAIN
-        return self._plate_a_interface
-
-    @property
-    def interface_b(self):
-        self._plate_b_interface = super(PlateButtJoint, self).interface_b
-        self._plate_b_interface.interface_role = InterfaceRole.CROSS
-        return self._plate_b_interface
 
 
 class PlateLButtJoint(PlateButtJoint):

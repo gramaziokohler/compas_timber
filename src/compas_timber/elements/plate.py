@@ -29,8 +29,8 @@ class Plate(PlateGeometry, TimberElement):
         A line representing the principal outline of this plate.
     outline_b : :class:`~compas.geometry.Polyline`, optional
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
-    openings : list[:class:`~compas_timber.elements.Opening`], optional
-        A list of Opening objects representing openings in this plate.
+    openings : list[:class:`~compas.geometry.Polyline`], optional
+        A list of Polylines representing openings in this plate.
     **kwargs : dict, optional
         Additional keyword arguments.
 
