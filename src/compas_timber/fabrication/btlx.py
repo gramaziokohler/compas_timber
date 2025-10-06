@@ -211,14 +211,16 @@ class BTLxWriter(object):
         raw_part = BTLxRawpart(stock, order_number=order_number, scale_factor=scale_factor)
 
         raw_part_element = ET.Element("Rawpart", raw_part.attr)
-        raw_part_element.extend([raw_part.et_transformations, raw_part.et_grain_direction, raw_part.et_reference_side, raw_part.et_shape])
+        raw_part_element.extend([raw_part.et_transformations, raw_part.et_grain_direction, raw_part.et_reference_side])
 
         # Add part references if any beams are assigned to this stock
         if stock.beam_data:
-            position_frame = Frame.worldXY()
+            x_position = 0.0
             for beam_guid, beam_length in stock.beam_data.items():
+                position_frame = Frame.worldXY()
+                position_frame.point.x = x_position
                 raw_part.add_part_ref(beam_guid, position_frame)
-                position_frame.point.x += beam_length + stock.cutting_tolerance
+                x_position += beam_length + stock.cutting_tolerance
 
         raw_part_element.append(raw_part.et_part_refs)
         return raw_part_element
@@ -364,7 +366,6 @@ class BTLxGenericPart(object):
         self.width = width * scale_factor
         self.height = height * scale_factor
         self._scale_factor = scale_factor
-        self._shape_strings = None
 
     @property
     def part_guid(self):
@@ -373,10 +374,6 @@ class BTLxGenericPart(object):
     @property
     def frame(self):
         raise NotImplementedError("Subclasses must implement frame property.")
-
-    @property
-    def shape(self):
-        raise NotImplementedError("Subclasses must implement shape property.")
 
     def et_point_vals(self, point):
         """Returns the ET point values for a given point.
@@ -410,75 +407,12 @@ class BTLxGenericPart(object):
     @property
     def et_transformations(self):
         transformations = ET.Element("Transformations")
-        transformation = ET.SubElement(transformations, "Transformation", GUID=self.part_guid)
+        transformation = ET.SubElement(transformations, "Transformation", GUID="{" + self.part_guid + "}")
         position = ET.SubElement(transformation, "Position")
         position.append(ET.Element("ReferencePoint", self.et_point_vals(self.frame.point)))
         position.append(ET.Element("XVector", self.et_point_vals(self.frame.xaxis)))
         position.append(ET.Element("YVector", self.et_point_vals(self.frame.yaxis)))
         return transformations
-
-    @property
-    def et_shape(self):
-        shape = ET.Element("Shape")
-        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex=self.shape_strings[0])
-        indexed_face_set.append(ET.Element("Coordinate", {"point": self.shape_strings[1]}))
-        return shape
-
-    @property
-    def shape_strings(self):
-        """Generates the shape strings for the BTLxPart. Only works in environments where the element.geometry Brep is available.
-
-        returns
-        -------
-        list
-            A list of two strings, the first string is the brep indices string, the second string is the brep vertices string.
-        """
-
-        if not self._shape_strings:
-            brep_vertex_points = []
-            brep_indices = []
-            for face in self.shape.faces:
-                pts = []
-                frame = face.surface.frame_at(0.5, 0.5)
-                edges = face.boundary.edges[1:]
-                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
-                overflow = len(edges)
-                while edges and overflow > 0:
-                    for i, edge in enumerate(edges):
-                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
-                            edges.pop(i)
-                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
-                            pts.append(edges.pop(i).end_vertex.point)
-                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
-                            pts.append(edges.pop(i).start_vertex.point)
-                    overflow -= 1
-                pts = correct_polyline_direction(pts, frame.normal)
-
-                if len(pts) != len(face.edges):
-                    print("edge count doesnt match point count, BTLxPart shape will be incorrect")
-
-                if len(pts) > 2:
-                    for pt in pts:
-                        if pt in brep_vertex_points:
-                            brep_indices.append(brep_vertex_points.index(pt))
-                        else:
-                            brep_indices.append(len(brep_vertex_points))
-                            brep_vertex_points.append(pt)
-                    brep_indices.append(-1)
-
-            brep_indices_string = ""
-            for index in brep_indices:
-                brep_indices_string += str(index) + " "
-
-            brep_vertices_string = ""
-            for point in brep_vertex_points:
-                xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
-                point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
-                brep_vertices_string = brep_vertices_string.replace("-", "")
-
-            self._shape_strings = [brep_indices_string, brep_vertices_string]
-        return self._shape_strings
 
     @property
     def base_attr(self):
@@ -560,10 +494,6 @@ class BTLxRawpart(BTLxGenericPart):
         return Frame.worldXY().scaled(self._scale_factor)
 
     @property
-    def shape(self):
-        return self.stock.geometry.scaled(self._scale_factor)
-
-    @property
     def attr(self):
         """Return the attributes dictionary for the rawpart XML element."""
         attr = self.base_attr.copy()
@@ -572,7 +502,7 @@ class BTLxRawpart(BTLxGenericPart):
                 "PlaningLength": "0",
                 "StartOffset": "0",
                 "EndOffset": "0",
-                "PartType": "nesting",
+                # "PartType": "nesting",
             }
         )
         return attr
@@ -597,7 +527,7 @@ class BTLxRawpart(BTLxGenericPart):
 
         part_refs_element = ET.Element("PartRefs")
         for part_ref in self.part_refs:
-            part_ref_element = ET.SubElement(part_refs_element, "PartRef", GUID=part_ref["guid"])
+            part_ref_element = ET.SubElement(part_refs_element, "PartRef", GUID="{" + part_ref["guid"] + "}")
             position = ET.SubElement(part_ref_element, "Position")
             frame = part_ref["frame"]
             position.append(ET.Element("ReferencePoint", self.et_point_vals(frame.point)))
@@ -641,6 +571,7 @@ class BTLxPart(BTLxGenericPart):
         super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, scale_factor)
         self.element = element
         self.processings = []
+        self._shape_strings = None
 
     @property
     def part_guid(self):
@@ -650,10 +581,6 @@ class BTLxPart(BTLxGenericPart):
     @property
     def frame(self):
         return self.element.ref_frame.scaled(self._scale_factor)
-
-    @property
-    def shape(self):
-        return self.element.geometry.scaled(self._scale_factor)
 
     @property
     def attr(self):
@@ -681,6 +608,70 @@ class BTLxPart(BTLxGenericPart):
             if TOL.is_zero(angle):
                 return index + 1  # in BTLx face indices are one-based
         raise ValueError("Given element face does not match any of the reference surfaces.")
+
+    @property
+    def et_shape(self):
+        shape = ET.Element("Shape")
+        indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex=self.shape_strings[0])
+        indexed_face_set.append(ET.Element("Coordinate", {"point": self.shape_strings[1]}))
+        return shape
+
+    @property
+    def shape_strings(self):
+        """Generates the shape strings for the BTLxPart. Only works in environments where the element.geometry Brep is available.
+
+        returns
+        -------
+        list
+            A list of two strings, the first string is the brep indices string, the second string is the brep vertices string.
+        """
+
+        if not self._shape_strings:
+            brep_vertex_points = []
+            brep_indices = []
+            scaled_geometry = self.element.geometry.scaled(self._scale_factor)
+            for face in scaled_geometry.faces:
+                pts = []
+                frame = face.surface.frame_at(0.5, 0.5)
+                edges = face.boundary.edges[1:]
+                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
+                overflow = len(edges)
+                while edges and overflow > 0:
+                    for i, edge in enumerate(edges):
+                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
+                            edges.pop(i)
+                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
+                            pts.append(edges.pop(i).end_vertex.point)
+                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
+                            pts.append(edges.pop(i).start_vertex.point)
+                    overflow -= 1
+                pts = correct_polyline_direction(pts, frame.normal)
+
+                if len(pts) != len(face.edges):
+                    print("edge count doesnt match point count, BTLxPart shape will be incorrect")
+
+                if len(pts) > 2:
+                    for pt in pts:
+                        if pt in brep_vertex_points:
+                            brep_indices.append(brep_vertex_points.index(pt))
+                        else:
+                            brep_indices.append(len(brep_vertex_points))
+                            brep_vertex_points.append(pt)
+                    brep_indices.append(-1)
+
+            brep_indices_string = ""
+            for index in brep_indices:
+                brep_indices_string += str(index) + " "
+
+            brep_vertices_string = ""
+            for point in brep_vertex_points:
+                xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
+                point.transform(xform)
+                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
+                brep_vertices_string = brep_vertices_string.replace("-", "")
+
+            self._shape_strings = [brep_indices_string, brep_vertices_string]
+        return self._shape_strings
 
 
 def contour_to_xml(contour):
