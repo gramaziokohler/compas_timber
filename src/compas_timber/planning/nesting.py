@@ -143,7 +143,7 @@ class Stock(Data):
         if not self.can_fit_beam(beam):
             raise ValueError(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self.waste}")
         # Add beam by its GUID and blank length
-        self.beam_data[beam.guid] = beam.blank_length
+        self.beam_data[str(beam.guid)] = beam.blank_length
 
     def copy_empty(self):
         """Create a copy of this stock with no beams assigned."""
