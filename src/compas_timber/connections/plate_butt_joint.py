@@ -1,4 +1,3 @@
-from compas_timber.connections import InterfaceRole
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
@@ -93,7 +92,6 @@ class PlateButtJoint(PlateJoint):
         if self.topology == JointTopology.TOPO_EDGE_EDGE:
             for polyline in self.cross_outlines:
                 move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
-
 
 
 class PlateLButtJoint(PlateButtJoint):

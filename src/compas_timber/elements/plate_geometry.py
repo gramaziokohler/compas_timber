@@ -145,7 +145,6 @@ class PlateGeometry(object):
         self.outline_b = self._local_outlines[1].transformed(Transformation.from_frame(self.frame))
         self._edge_planes = []
 
-
     # ==========================================================================
     # Alternate constructors
     # ==========================================================================

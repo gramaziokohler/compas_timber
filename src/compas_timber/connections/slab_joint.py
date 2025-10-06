@@ -5,8 +5,8 @@ from compas.geometry import Vector
 from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 
-from .plate_joint import PlateJoint
 from .joint import JointTopology
+from .plate_joint import PlateJoint
 
 
 class InterfaceRole(object):
@@ -26,6 +26,7 @@ class InterfaceRole(object):
     MAIN = "MAIN"
     CROSS = "CROSS"
     NONE = "NONE"
+
 
 class SlabConnectionInterface(object):
     """
@@ -51,11 +52,11 @@ class SlabConnectionInterface(object):
         self.topology = topology  # TODO: don't like this here
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
 
-    def __repr__(self):
-        return "SlabConnectionInterface({0}, {1})".format(
-            self.interface_role,
-            JointTopology.get_name(self.topology),
-        )
+    # def __repr__(self):
+    #     return "SlabConnectionInterface({0}, {1})".format(
+    #         self.interface_role,
+    #         JointTopology.get_name(self.topology),
+    #     )
 
     def as_plane(self):
         """Returns the interface as a plane.
@@ -109,7 +110,7 @@ class SlabJoint(PlateJoint):
     @property
     def __data__(self):
         data = super(SlabJoint, self).__data__
-        data["inerfaces"]=self.interfaces
+        data["interfaces"] = self.interfaces
         return data
 
     def __init__(self, slab_a=None, slab_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
@@ -123,14 +124,14 @@ class SlabJoint(PlateJoint):
     @property
     def slabs(self):
         return self.elements
-    
+
     @property
     def slab_a(self):
         return self.plate_a
-     
+
     @property
     def slab_b(self):
-        return self.plate_b   
+        return self.plate_b
 
     @property
     def geometry(self):
@@ -138,7 +139,7 @@ class SlabJoint(PlateJoint):
 
     @property
     def interfaces(self):
-        return self.interface_a, self.interface_b if self.interface_a and self.interface_b else None
+        return [self.interface_a, self.interface_b] if self.interface_a and self.interface_b else None
 
     def create_interfaces(self):
         a_interface_polyline = Polyline(
@@ -181,7 +182,7 @@ class SlabJoint(PlateJoint):
         return interface_a, interface_b
 
     def add_features(self):
-        #NOTE: I called this add_features to fit with joint workflow, as interface is the slab equivalent of feature.
+        # NOTE: I called this add_features to fit with joint workflow, as interface is the slab equivalent of feature.
         """Add features to the plates based on the joint."""
         if self.interface_a and self.interface_b:
             self.slab_a.interfaces.remove(self.interface_a)

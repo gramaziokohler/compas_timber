@@ -1,8 +1,8 @@
 from .joint import JointTopology
-from .slab_joint import SlabJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
+from .slab_joint import SlabJoint
 
 
 class SlabButtJoint(SlabJoint, PlateButtJoint):
@@ -34,4 +34,3 @@ class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
 
     def __repr__(self):
         return "SlabTButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
-

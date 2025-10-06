@@ -26,7 +26,8 @@ def test_simple_joint_and_reset():
     assert len(slab_b.interfaces) == 1, "Expected slab_b to have the second interface"
     slab_a.reset()
     assert all([slab_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(slab_a.outline_a.points))]), "Expected joint to reset outline_a"
-    assert len(slab_a.interfaces) == 0, "Expected slab_a to have no interfaces after reset" 
+    assert len(slab_a.interfaces) == 0, "Expected slab_a to have no interfaces after reset"
+
 
 def test_simple_joint_and_reset_no_kwargs():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -75,6 +76,7 @@ def test_three_plate_joints():
     assert all(isinstance(j, SlabMiterJoint) for j in joints), "Expected L-joints to be SlabMiterJoint"
     assert all([len(s.interfaces) == 2 for s in [slab_a, slab_b, slab_c]]), "Expected each slab to have two interfaces"
 
+
 def test_three_plate_joints_mix_topo():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
 
@@ -110,3 +112,42 @@ def test_three_plate_joints_mix_topo():
     assert isinstance(joints[1], SlabMiterJoint), "Expected L-joints to be SlabMiterJoint"
     assert isinstance(joints[2], SlabMiterJoint), "Expected L-joints to be SlabMiterJoint"
     assert all([len(s.interfaces) == 2 for s in [slab_a, slab_b, slab_c]]), "Expected each slab to have two interfaces"
+
+
+def test_slab_remove_interfaces():
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    slab_a = Slab.from_outline_thickness(polyline_a, 1)
+
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    slab_b = Slab.from_outline_thickness(polyline_b, 1)
+
+    polyline_c = Polyline([Point(10, 0, 0), Point(20, 0, 10), Point(20, 20, 10), Point(10, 10, 0), Point(10, 0, 0)])
+    slab_c = Slab.from_outline_thickness(polyline_c, 1)
+
+    cs = PlateConnectionSolver()
+    topo_results = []
+    topo_results.append(cs.find_topology(slab_a, slab_b))
+    topo_results.append(cs.find_topology(slab_c, slab_b))
+    topo_results.append(cs.find_topology(slab_a, slab_c))
+
+    joints = []
+    for _a, _b in [[slab_a, slab_b], [slab_c, slab_b], [slab_a, slab_c]]:
+        tr = cs.find_topology(_a, _b)
+        joints.append(SlabMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
+
+    for j in joints:
+        j.add_extensions()
+        j.add_features()
+
+    assert len(joints) == 3, "Expected three joints"
+    assert all([len(s.interfaces) == 2 for s in [slab_a, slab_b, slab_c]]), "Expected each slab to have two interfaces"
+
+    slab_a.remove_interfaces(joints[0].interfaces)
+    assert len(slab_a.interfaces) == 1, "Expected slab_a to have one interface after removing one"
+    assert len(slab_b.interfaces) == 2, "Expected slab_b to still have two interfaces"
+    slab_b.remove_interfaces()
+    assert len(slab_b.interfaces) == 0, "Expected slab_b to have no interfaces after removing all"
+    assert len(slab_c.interfaces) == 2, "Expected slab_c to still have two interfaces"
+    slab_c.remove_interfaces(joints[1].interfaces + joints[2].interfaces)
+    assert len(slab_c.interfaces) == 0, "Expected slab_c to have no interfaces after removing both"
+    assert len(slab_a.interfaces) == 1, "Expected slab_a to still have one interface"

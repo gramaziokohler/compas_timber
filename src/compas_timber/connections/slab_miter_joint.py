@@ -8,4 +8,3 @@ class SlabMiterJoint(SlabJoint, PlateMiterJoint):
 
     def __repr__(self):
         return "SlabMiterJoint({0}, {1}, {2})".format(self.slab_a, self.slab_b, JointTopology.get_name(self.topology))
-

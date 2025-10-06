@@ -121,6 +121,23 @@ class Slab(PlateGeometry, Element):
         self.interfaces = []
         self.debug_info = []
 
+    @reset_computed
+    def remove_interfaces(self, interfaces=None):
+        # type: (None | SlabConnectionInterface | list[SlabConnectionInterface]) -> None
+        """Removes interfaces from the element.
+
+        Parameters
+        ----------
+        interfaces : :class:`~compas_timber.elements.SlabConnectionInterface` | list[:class:`~compas_timber.elements.SlabConnectionInterface`], optional
+            The interfaces to be removed. If None, all interfaces will be removed.
+
+        """
+        if interfaces is None:
+            self.interfaces = []
+        else:
+            if not isinstance(interfaces, list):
+                interfaces = [interfaces]
+            self.interfaces = [i for i in self.interfaces if i not in interfaces]
 
     @property
     def is_slab(self):

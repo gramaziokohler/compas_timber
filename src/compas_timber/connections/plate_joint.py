@@ -1,8 +1,3 @@
-from compas.geometry import Frame
-from compas.geometry import Plane
-from compas.geometry import Polyline
-from compas.geometry import Vector
-from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 
@@ -82,7 +77,6 @@ class PlateJoint(Joint):
     def elements(self):
         return self.plate_a, self.plate_b
 
-   
     def calculate_topology(self, allow_reordering=False):
         """Calculate the topology of the joint based on the plates."""
         topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
@@ -129,7 +123,7 @@ class PlateJoint(Joint):
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
             self.reorder_planes_and_outlines()
-            self._adjust_plate_outlines() 
+            self._adjust_plate_outlines()
 
     def add_features(self):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""
