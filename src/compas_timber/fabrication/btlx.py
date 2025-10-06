@@ -527,7 +527,7 @@ class BTLxRawpart(BTLxGenericPart):
 
         part_refs_element = ET.Element("PartRefs")
         for part_ref in self.part_refs:
-            part_ref_element = ET.SubElement(part_refs_element, "PartRef", GUID="{" + part_ref["guid"] + "}")
+            part_ref_element = ET.SubElement(part_refs_element, "PartRef", GUID="{" + str(part_ref["guid"]) + "}")
             position = ET.SubElement(part_ref_element, "Position")
             frame = part_ref["frame"]
             position.append(ET.Element("ReferencePoint", self.et_point_vals(frame.point)))
