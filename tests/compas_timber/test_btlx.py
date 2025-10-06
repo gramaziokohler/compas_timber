@@ -233,4 +233,4 @@ def test_BTLxPart_GUID_is_the_same_as_Beam_GUID(test_model, resulting_btlx, name
 
         # Get the GUID from the Transformation element
         part_guid = transformation.get("GUID")
-        assert part_guid == str(beam.guid)
+        assert part_guid == "{" + str(beam.guid) + "}"
