@@ -2,6 +2,7 @@ from warnings import warn
 
 from compas.data import Data
 from compas.geometry import Box
+from compas.geometry import Brep
 
 
 class Stock(Data):
@@ -86,9 +87,8 @@ class Stock(Data):
 
     @property
     def geometry(self):
-        """""" ""
-        # TODO: is it really needed?
-        return Box(self.length, self.cross_section[0], self.cross_section[1])
+        """Get a Brep geometry representing the stock piece."""
+        return Brep.from_box(Box(self.length, self.cross_section[0], self.cross_section[1]))
 
     def section_matches(self, beam):
         """
