@@ -215,12 +215,13 @@ class BTLxWriter(object):
 
         # Add part references if any beams are assigned to this stock
         if stock.beam_data:
-            x_position = 0.0
-            for beam_guid, beam_length in stock.beam_data.items():
-                position_frame = Frame.worldXY()
-                position_frame.point.x = x_position
+            for beam_guid, beam_info in stock.beam_data.items():
+                # Get the pre-computed frame from the beam data
+                position_frame = beam_info["frame"]
+                # Apply scale factor to the frame
+                if scale_factor != 1.0:
+                    position_frame = position_frame.scaled(scale_factor)
                 raw_part.add_part_ref(beam_guid, position_frame)
-                x_position += beam_length + stock.cutting_tolerance
 
         raw_part_element.append(raw_part.et_part_refs)
         return raw_part_element
@@ -476,8 +477,8 @@ class BTLxRawpart(BTLxGenericPart):
         super(BTLxRawpart, self).__init__(
             order_number,
             stock.length,
-            stock.cross_section[1],  # width (larger dimension)
-            stock.cross_section[0],  # height (smaller dimension)
+            stock.cross_section[0],
+            stock.cross_section[1],
             scale_factor,
         )
         self.stock = stock
@@ -502,7 +503,7 @@ class BTLxRawpart(BTLxGenericPart):
                 "PlaningLength": "0",
                 "StartOffset": "0",
                 "EndOffset": "0",
-                # "PartType": "nesting",
+                # "PartType": "nesting", # TODO!: although specified in the docs, BTLx Viewer throws an error when this is included
             }
         )
         return attr

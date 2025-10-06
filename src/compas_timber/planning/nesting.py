@@ -1,6 +1,7 @@
 from warnings import warn
 
 from compas.data import Data
+from compas.geometry import Frame
 
 
 class Stock(Data):
@@ -25,8 +26,10 @@ class Stock(Data):
         Cross-section dimensions sorted in ascending order for consistent comparison
     cutting_tolerance : float, optional
         Tolerance for cutting operations (kerf width, etc.)
-    beam_data : dict[str, float]
-        Dictionary mapping beam GUIDs to their blank lengths
+    beam_data : dict[str, dict]
+        Dictionary mapping beam GUIDs to beam info containing "length" and "frame"
+    utilized_length : float
+        Total utilized length including cutting tolerances
     waste : float
         Remaining unused length of the stock piece
     """
@@ -36,11 +39,11 @@ class Stock(Data):
         self.length = length
         # Store cross-section as sorted tuple for orientation-independent comparison
         if isinstance(cross_section, (list, tuple)) and len(cross_section) == 2:
-            self.cross_section = tuple(sorted(cross_section))
+            self.cross_section = tuple(cross_section)
         else:
             raise ValueError("cross_section must be a tuple or list of 2 dimensions")
 
-        self.beam_data = {}  # {guid: blank_length}
+        self.beam_data = {}  # {guid: {"length": float, "frame": Frame}}
         self._cutting_tolerance = 0.0
 
     @property
@@ -68,20 +71,23 @@ class Stock(Data):
         self._cutting_tolerance = value
 
     @property
+    def utilized_length(self):
+        """Get the total utilized length including cutting tolerances."""
+        if not self.beam_data:
+            return 0.0
+        current_length = sum(beam_info["length"] for beam_info in self.beam_data.values())
+        cuts_so_far = len(self.beam_data)
+        return current_length + (cuts_so_far * self.cutting_tolerance)
+
+    @property
     def waste(self):
         """Get remaining unused length of the stock piece."""
-        beam_lengths = list(self.beam_data.values())  # TODO: will break IronPython
-        if not beam_lengths:
-            return self.length
-
-        total_beam_length = sum(beam_lengths)
-        remaining_length = self.length - total_beam_length
-        return remaining_length - self.cutting_tolerance * (len(beam_lengths) - 1)
+        return self.length - self.utilized_length
 
     @property
     def beam_guids(self):
         """Get list of beam GUIDs for BTLx integration."""
-        return list(self.beam_data.keys())  # TODO: will break IronPython
+        return list(self.beam_data.keys())
 
     def section_matches(self, beam):
         """
@@ -101,7 +107,32 @@ class Stock(Data):
             True if cross-sections are identical, False otherwise
         """
         beam_cross_section = tuple(sorted([beam.width, beam.height]))
-        return beam_cross_section == self.cross_section
+        return beam_cross_section == tuple(sorted(self.cross_section))
+
+    def _get_position_frame(self, beam):
+        """
+        Get the position frame for a beam based on its orientation vs stock cross-section.
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam to get the position frame for
+        x_position : float
+            The position along the stock length where the beam should be placed.
+        Returns
+        -------
+        :class:`Frame`
+            The position frame for the beam.
+        """
+        beam_cross_section = tuple([beam.width, beam.height])
+        # scenario where beam cross-section matches stock exactly
+        if beam_cross_section == self.cross_section:
+            position_frame = Frame.worldXY()
+        # scenario where beam cross-section is rotated 90 degrees vs stock
+        else:
+            position_frame = Frame([0, 0, 0], [1, 0, 0], [0, 0, 1])
+            position_frame.point.y = self.cross_section[1]  # offset to avoid negative coordinates
+        position_frame.point.x = self.utilized_length
+        return position_frame
 
     def can_fit_beam(self, beam):
         """
@@ -135,8 +166,10 @@ class Stock(Data):
         """
         if not self.can_fit_beam(beam):
             raise ValueError(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self.waste}")
-        # Add beam by its GUID and blank length
-        self.beam_data[beam.guid] = beam.blank_length
+        # Get position frame based on orientation
+        position_frame = self._get_position_frame(beam)
+        # Store beam data with both length and frame
+        self.beam_data[beam.guid] = {"length": beam.blank_length, "frame": position_frame}
 
     def copy_empty(self):
         """Create a copy of this stock with no beams assigned."""
@@ -221,7 +254,7 @@ class BeamNester(object):
         self.stock_catalog = stock_catalog if isinstance(stock_catalog, list) else [stock_catalog]
         self.cutting_tolerance = cutting_tolerance
 
-    def sort_beams_by_stock(self):
+    def _sort_beams_by_stock(self):
         """
         Sort all beams in the model by their compatible stock types.
 
@@ -276,22 +309,22 @@ class BeamNester(object):
             Nesting result containing stocks with assigned beams and metadata
         """
         nesting_stocks = []
-        stock_beam_map = self.sort_beams_by_stock()
+        stock_beam_map = self._sort_beams_by_stock()
         for stock_type, compatible_beams in stock_beam_map.items():
             if not compatible_beams:
                 continue
             # Apply selected algorithm
             if fast:
-                stocks = self.first_fit_decreasing(compatible_beams, stock_type, self.cutting_tolerance)
+                stocks = self._first_fit_decreasing(compatible_beams, stock_type, self.cutting_tolerance)
             else:
-                stocks = self.best_fit_decreasing(compatible_beams, stock_type, self.cutting_tolerance)
+                stocks = self._best_fit_decreasing(compatible_beams, stock_type, self.cutting_tolerance)
             # Add to overall result
             nesting_stocks.extend(stocks)
 
         return NestingResult(nesting_stocks)
 
     @staticmethod
-    def first_fit_decreasing(beams, stock, cutting_tolerance=0.0):
+    def _first_fit_decreasing(beams, stock, cutting_tolerance=0.0):
         """
         Apply First Fit Decreasing algorithm for a single stock type.
 
@@ -332,7 +365,7 @@ class BeamNester(object):
         return stocks
 
     @staticmethod
-    def best_fit_decreasing(beams, stock, cutting_tolerance=0.0):
+    def _best_fit_decreasing(beams, stock, cutting_tolerance=0.0):
         """
         Apply Best Fit Decreasing algorithm for a single stock type.
 
