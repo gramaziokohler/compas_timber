@@ -1,23 +1,29 @@
 {
-    "name": "Plate",
-    "nickname": "Plate",
+    "name": "Plate From Top and Bottom",
+    "nickname": "PlateFromTopBottom",
     "category": "COMPAS Timber",
-    "subcategory": "Elements",
-    "description": "Creates a Plate from a Polyline.",
-    "exposure": 2,
+    "subcategory": "01 Elements",
+    "description": "Creates a Plate from two Polylines.",
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
         "inputParameters": [
             {
-                "name": "Top",
+                "name": "top",
                 "description": "Top outline of plate. Referenced polyline, Guid of polyline in the active Rhino document.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
-                "name": "Bottom",
+                "name": "bottom",
                 "description": "Bottom outline of plate. Referenced polyline, Guid of polyline in the active Rhino document.",
+                "typeHintID": "ghdoc",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "openings",
+                "description": "List of openings in the plate.",
                 "typeHintID": "ghdoc",
                 "scriptParamAccess": 1
             },
@@ -25,7 +31,7 @@
                 "name": "category",
                 "description": "Category of a beam.",
                 "typeHintID": "str",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "updateRefObj",

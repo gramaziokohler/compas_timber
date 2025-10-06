@@ -4,13 +4,13 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas_model.elements import Element
 
-from compas_timber.elements.timber import TimberElement
 from compas_timber.fabrication import Drilling
 from compas_timber.utils import intersection_line_beam_param
 
 
-class Fastener(TimberElement):
+class Fastener(Element):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
@@ -19,17 +19,29 @@ class Fastener(TimberElement):
 
     Parameters
     ----------
-    geometry : :class:`~compas.geometry.Geometry`
+    shape : :class:`~compas.geometry.Geometry`, optional
         The geometry of the fastener.
-    frame : :class:`~compas.geometry.Frame`
+    frame : :class:`~compas.geometry.Frame`, optional
         The frame of the fastener.
+    **kwargs : dict, optional
+        Additional keyword arguments.
 
     Attributes
     ----------
-    geometry : :class:`~compas.geometry.Geometry`
+    shape : :class:`~compas.geometry.Geometry`
         The geometry of the fastener.
     frame : :class:`~compas.geometry.Frame`
         The frame of the fastener.
+    interfaces : list
+        A list of interfaces associated with this fastener.
+    attributes : dict
+        Dictionary of attributes for this fastener.
+    debug_info : list
+        A list of debug information.
+    is_fastener : bool
+        Always True for fasteners.
+    key : int or None
+        The graph node key of this fastener.
 
     """
 
@@ -51,19 +63,25 @@ class Fastener(TimberElement):
         return "<Fastener {}>".format(self.name)
 
     @property
-    def frame(self):
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        self._frame = frame
-
-    @property
     def is_fastener(self):
+        """Check if this element is a fastener.
+
+        Returns
+        -------
+        bool
+            Always True for fasteners.
+        """
         return True
 
     @property
     def key(self):
+        """The graph node key of this fastener.
+
+        Returns
+        -------
+        int or None
+            The graph node key, or None if not set.
+        """
         # type: () -> int | None
         return self.graphnode
 
@@ -76,7 +94,13 @@ class Fastener(TimberElement):
         }
 
     def compute_geometry(self):
-        """returns the geometry of the fastener in the model"""
+        """Returns the geometry of the fastener in the model.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Geometry`
+            The transformed geometry of the fastener.
+        """
         return self.shape.transformed(Transformation.from_frame(self.frame))
 
 
@@ -91,11 +115,11 @@ class FastenerTimberInterface(Data):
 
     Parameters
     ----------
-    outline_points : List of :class:`~compas.geometry.Point`
+    outline_points : list[:class:`~compas.geometry.Point`], optional
         The points of the polyline outline of the fastener geometry.
-    thickness : float
+    thickness : float, optional
         The thickness of the fastener plate.
-    holes : list of dict, optional
+    holes : list[dict], optional
         The holes of the fastener. Structure is as follows:
         {
         "point": compas.geometry.Point,
@@ -103,20 +127,22 @@ class FastenerTimberInterface(Data):
         "vector": compas.geometry.Vector, optional, if none, the hole is assumed to be perpendicular to the frame
         "through": bool, optional, if True, the hole goes through the timber element
         }
-    frame : :class:`~compas.geometry.Frame`
-        The frame of the instance of the fastener that is applied to the model.
-    shapes : :class:`~compas.geometry.Geometry`
+    shapes : list[:class:`~compas.geometry.Geometry`], optional
         Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.
-    features : list of :class:`~compas_timber.fabrication.BTLxFromGeometryDefinition`
+    frame : :class:`~compas.geometry.Frame`, optional
+        The frame of the instance of the fastener that is applied to the model.
+    element : object, optional
+        The timber element this interface is associated with.
+    features : list[:class:`~compas_timber.fabrication.BTLxFromGeometryDefinition`], optional
         The features that are applied by this interface to the timber element. The features are defined in world coordinates.
 
     Attributes
     ----------
-    outline_points : List of :class:`~compas.geometry.Point`
+    outline_points : list[:class:`~compas.geometry.Point`]
         The points of the polyline outline of the fastener geometry.
     thickness : float
         The thickness of the fastener plate.
-    holes : list of dict, optional
+    holes : list[dict]
         The holes of the fastener. Structure is as follows:
         {
         "point": compas.geometry.Point,
@@ -126,9 +152,12 @@ class FastenerTimberInterface(Data):
         }
     frame : :class:`~compas.geometry.Frame`
         The frame of the instance of the fastener that is applied to the model.
-    features : list of :class:`~compas_timber.fabrication.BTLxFromGeometryDefinition`
+    element : object
+        The timber element this interface is associated with.
+    shapes : list[:class:`~compas.geometry.Geometry`]
+        Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.
+    features : list[:class:`~compas_timber.fabrication.BTLxFromGeometryDefinition`]
         The features that are applied by this interface to the timber element. This returns the features in world coordinates.
-
 
     """
 
@@ -167,7 +196,18 @@ class FastenerTimberInterface(Data):
         }
 
     def get_features(self, element):
-        """Add a feature to the interface."""
+        """Get features to be applied to a timber element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.TimberElement`
+            The timber element to apply features to.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.fabrication.Feature`]
+            A list of features to be applied to the element.
+        """
         features = []
         for hole in self.holes:
             features.append(self._get_hole_feature(hole, element))
@@ -179,7 +219,20 @@ class FastenerTimberInterface(Data):
 
     def _get_hole_feature(self, hole, element):
         """Get the line that goes through the timber element. Goes through the element.
-        If depth is required, holes should be added as Drilling features to the interface."""
+        If depth is required, holes should be added as Drilling features to the interface.
+
+        Parameters
+        ----------
+        hole : dict
+            Dictionary containing hole information with keys: "point", "diameter", and optionally "vector".
+        element : :class:`~compas_timber.elements.TimberElement`
+            The timber element to drill through.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Drilling`
+            A drilling feature for the hole.
+        """
         vector = hole.get("vector", None) or Vector(0.0, 0.0, 1.0)
         drill_line = Line.from_point_and_vector(hole["point"], vector)
         drill_line.transform(Transformation.from_frame(self.frame))

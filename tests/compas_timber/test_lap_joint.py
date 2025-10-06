@@ -187,3 +187,29 @@ def test_lap_joint_architecture_separation():
         assert hasattr(joint, "flip_lap_side")
         assert hasattr(joint, "main_beam_guid")
         assert hasattr(joint, "cross_beam_guid")
+
+
+def test_create_negative_volumes_with_cut_plane_bias(mocker):
+    """Test that add_features() calls _create_negative_volumes() properly with the correct cut_plane_bias parameter."""
+    # mock the fabrication classes to avoid creating actual geometry features
+    mocker.patch("compas_timber.fabrication.LapProxy.from_volume_and_beam", return_value=mocker.Mock())
+
+    line1 = Line(Point(0, 0, 0), Point(100, 0, 0))
+    line2 = Line(Point(50, -50, 0), Point(50, 50, 0))
+
+    beam1 = Beam.from_centerline(line1, width=20.0, height=20.0)
+    beam2 = Beam.from_centerline(line2, width=20.0, height=20.0)
+
+    model = TimberModel()
+    model.add_elements([beam1, beam2])
+
+    tlap = TLapJoint.create(model, beam1, beam2, cut_plane_bias=0.3)
+    xlap = XLapJoint.create(model, beam1, beam2, cut_plane_bias=0.5)
+    llap = LLapJoint.create(model, beam1, beam2, cut_plane_bias=0.7)
+
+    for lap in [tlap, xlap, llap]:
+        mock_negative_volumes = mocker.patch.object(lap, "_create_negative_volumes", return_value=(mocker.Mock(), mocker.Mock()))
+        # Should internally call _create_negative_volumes with the cut_plane_bias
+        lap.add_features()
+        # Verify that _create_negative_volumes was called exactly once with the correct cut_plane_bias
+        mock_negative_volumes.assert_called_once_with(lap.cut_plane_bias)

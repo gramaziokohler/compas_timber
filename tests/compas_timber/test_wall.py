@@ -18,17 +18,17 @@ def model():
 
 @pytest.fixture
 def wall1():
-    return Wall.from_boundary(polyline=Polyline([[0, 0, 0], [0, 100, 0], [100, 100, 0], [100, 0, 0], [0, 0, 0]]), normal=Vector.Zaxis(), thickness=10, name="wall1")
+    return Wall.from_outline_thickness(Polyline([[0, 0, 0], [0, 100, 0], [100, 100, 0], [100, 0, 0], [0, 0, 0]]), thickness=10, vector=Vector.Zaxis(), name="wall1")
 
 
 @pytest.fixture
 def wall2():
-    return Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10, name="wall2")
+    return Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis(), name="wall2")
 
 
 @pytest.fixture
 def nameless_wall():
-    return Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
+    return Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis())
 
 
 @pytest.fixture

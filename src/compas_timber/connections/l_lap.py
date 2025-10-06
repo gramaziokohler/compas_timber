@@ -1,8 +1,8 @@
 from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import JackRafterCut
-from compas_timber.fabrication import Lap
+from compas_timber.fabrication import JackRafterCutProxy
+from compas_timber.fabrication import LapProxy
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
@@ -91,12 +91,12 @@ class LLapJoint(LapJoint):
 
         # create lap features
         negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
-        main_lap_feature = Lap.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
-        cross_lap_feature = Lap.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
+        main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
+        cross_lap_feature = LapProxy.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
 
         # create cutoff features
-        main_cut_feature = JackRafterCut.from_plane_and_beam(self.main_cutting_plane, self.main_beam)
-        cross_cut_feature = JackRafterCut.from_plane_and_beam(self.cross_cutting_plane, self.cross_beam)
+        main_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.main_cutting_plane, self.main_beam)
+        cross_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.cross_cutting_plane, self.cross_beam)
 
         main_features = [main_cut_feature, main_lap_feature]
         cross_features = [cross_cut_feature, cross_lap_feature]

@@ -83,11 +83,8 @@ class Beam(TimberElement):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(**kwargs)
-        self.frame = frame
-        self.width = width
-        self.height = height
-        self.length = length
+        super(Beam, self).__init__(frame=frame, length=length, width=width, height=height, **kwargs)
+
         self.attributes = {}
         self.attributes.update(kwargs)
         self._blank_extensions = {}

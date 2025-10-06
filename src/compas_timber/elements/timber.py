@@ -1,3 +1,5 @@
+from compas.geometry import Frame
+from compas.geometry import Line
 from functools import reduce
 from operator import mul
 
@@ -32,11 +34,35 @@ class TimberElement(Element):
     def __data__(self):
         data = super(TimberElement, self).__data__
         data["frame"] = self.frame
+        data["length"] = self.length
+        data["width"] = self.width
+        data["height"] = self.height
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame=None, features=None, **kwargs):
+    def __init__(self, frame, length, width, height, features=None, **kwargs):
+        """Initialize a TimberElement.
+
+        Parameters
+        ----------
+        frame : :class:`~compas.geometry.Frame`
+            The coordinate system (frame) of this timber element.
+        length : float
+            Length of the timber element.
+        width : float
+            Width of the timber element.
+        height : float
+            Height of the timber element.
+        features : list[:class:`~compas_timber.fabrication.Feature`], optional
+            List of features to apply to this element.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+        """
         super(TimberElement, self).__init__(**kwargs)
+        self.frame = frame
+        self.length = length
+        self.width = width
+        self.height = height
         self._features = features or []
         self._frame = frame or Frame.worldXY()
         self._geometry = None
@@ -53,14 +79,24 @@ class TimberElement(Element):
 
     @property
     def is_beam(self):
+        """Check if this element is a beam.
+
+        Returns
+        -------
+        bool
+            False for the base TimberElement class.
+        """
         return False
 
     @property
     def is_plate(self):
-        return False
+        """Check if this element is a plate.
 
-    @property
-    def is_wall(self):
+        Returns
+        -------
+        bool
+            False for the base TimberElement class.
+        """
         return False
 
     @property
@@ -99,6 +135,13 @@ class TimberElement(Element):
 
     @property
     def features(self):
+        """List of features applied to this element.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.fabrication.Feature`]
+            The features applied to this element.
+        """
         # type: () -> list[Feature]
         """A list of features applied to the element."""
         return self._features
@@ -180,6 +223,10 @@ class TimberElement(Element):
     # ========================================================================
 
     def remove_blank_extension(self):
+        """Remove blank extension from the element.
+
+        This method is intended to be overridden by subclasses.
+        """
         pass
 
     def reset(self):
@@ -191,12 +238,12 @@ class TimberElement(Element):
     @reset_computed
     def add_features(self, features):
         # type: (Feature | list[Feature]) -> None
-        """Adds one or more features to the beam.
+        """Adds one or more features to the element.
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be added.
+        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`]
+            The features to be added.
 
         """
         if not isinstance(features, list):
@@ -207,12 +254,12 @@ class TimberElement(Element):
     @reset_computed
     def remove_features(self, features=None):
         # type: (None | Feature | list[Feature]) -> None
-        """Removes a feature from the beam.
+        """Removes features from the element.
 
         Parameters
         ----------
-        feature : :class:`~compas_timber.parts.Feature` | list(:class:`~compas_timber.parts.Feature`)
-            The feature to be removed. If None, all features will be removed.
+        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`], optional
+            The features to be removed. If None, all features will be removed.
 
         """
         if features is None:
@@ -221,7 +268,7 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
-        self._geometry = None  # reset geometry cache
+
 
     def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
@@ -238,14 +285,17 @@ class TimberElement(Element):
     ########################################################################
     # BTLx properties
     ########################################################################
-
     @property
     def ref_frame(self):
-        # type: () -> Frame
-        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
+        """Reference frame for machining processing according to BTLx standard.
 
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+            The reference frame of the element.
+        """
+        # type: () -> Frame
+        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
 
     @property
     def ref_sides(self):
