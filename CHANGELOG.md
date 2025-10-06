@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added new `compas_timber.planning.Stock` class for representing raw material stock pieces with beam assignment tracking and waste calculation.
+* Added new `compas_timber.planning.BeamNester` class for automated beam nesting with first-fit and best-fit decreasing algorithms.
+* Added new `compas_timber.planning.NestingResult` class as a serializable wrapper for nesting results with analysis properties.
+
 ### Changed
 
 * Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
