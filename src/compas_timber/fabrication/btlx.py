@@ -1,4 +1,5 @@
 import os
+import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -68,7 +69,7 @@ class BTLxWriter(object):
     def errors(self):
         return self._errors
 
-    def write(self, model, file_path):
+    def write(self, model, file_path, nesting_result=None):
         """Writes the BTLx file to the given file path.
 
         Parameters
@@ -77,6 +78,8 @@ class BTLxWriter(object):
             The model object.
         file_path : str
             The file path to write the BTLx file to.
+        nesting_result : :class:`~compas_timber.planning.NestingResult`, optional
+            The nesting result object. If provided, raw parts will be created for each stock in the nesting result.
 
         Returns
         -------
@@ -90,18 +93,20 @@ class BTLxWriter(object):
         """
         if not file_path.endswith(".btlx"):
             file_path += ".btlx"
-        btlx_string = self.model_to_xml(model)
+        btlx_string = self.model_to_xml(model, nesting_result)
         with open(file_path, "w") as file:
             file.write(btlx_string)
         return btlx_string
 
-    def model_to_xml(self, model):
+    def model_to_xml(self, model, nesting_result=None):
         """Converts the model to an XML string.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model object.
+        nesting_result : :class:`~compas_timber.planning.NestingResult`, optional
+            The nesting result object. If provided, raw parts will be created for each stock in the nesting result.
 
         Returns
         -------
@@ -122,7 +127,7 @@ class BTLxWriter(object):
         # first child -> file_history
         file_history_element = self._create_file_history()
         # second child -> project
-        project_element = self._create_project_element(model)
+        project_element = self._create_project_element(model, nesting_result)
         root_element.extend([file_history_element, project_element])
         return MD.parseString(ET.tostring(root_element)).toprettyxml(indent="   ")
 
@@ -159,7 +164,7 @@ class BTLxWriter(object):
         )
         return file_history_attributes
 
-    def _create_project_element(self, model):
+    def _create_project_element(self, model, nesting_result=None):
         """Creates the project element. This method creates the parts element and appends it to the project element.
 
         Returns
@@ -170,6 +175,14 @@ class BTLxWriter(object):
         """
         # create project element
         project_element = ET.Element("Project", Name=self._project_name)
+        # create raw parts element if nesting result is provided
+        if nesting_result:
+            # create raw parts elements for each beam
+            raw_parts_element = ET.SubElement(project_element, "Rawparts")
+            for i, stock in enumerate(nesting_result.stocks):
+                raw_part = self._create_rawpart(stock, order_number=i)
+                raw_parts_element.append(raw_part)
+
         # create parts element
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
@@ -179,12 +192,43 @@ class BTLxWriter(object):
             parts_element.append(part_element)
         return project_element
 
+    def _create_rawpart(self, stock, order_number):
+        """Creates a raw part element from a stock object.
+
+        Parameters
+        ----------
+        stock : :class:`~compas_timber.planning.Stock`
+            The stock object.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The raw part element.
+        """
+        assert self._tolerance
+        # create raw part element
+        scale_factor = 1000.0 if self._tolerance.unit == "M" else 1.0
+        raw_part = BTLxRawpart(stock, order_number=order_number, scale_factor=scale_factor)
+
+        raw_part_element = ET.Element("Rawpart", raw_part.attr)
+        raw_part_element.extend([raw_part.et_transformations, raw_part.et_grain_direction, raw_part.et_reference_side, raw_part.et_shape])
+
+        # Add part references if any beams are assigned to this stock
+        if stock.beam_data:
+            position_frame = Frame.worldXY()
+            for beam_guid, beam_length in stock.beam_data.items():
+                raw_part.add_part_ref(beam_guid, position_frame)
+                position_frame.point.x += beam_length + stock.cutting_tolerance
+
+        raw_part_element.append(raw_part.et_part_refs)
+        return raw_part_element
+
     def _create_part(self, element, order_num):
         """Creates a part element. This method creates the processing elements and appends them to the part element.
 
         Parameters
         ----------
-        element : :class:`~compas_model.elements.Element` # TODO: not really
+        element : :class:`~compas_timber.elements.TimberElement` # TODO: not really
             The element object.
         num : int
             The order number of the part.
@@ -295,108 +339,44 @@ class BTLxWriter(object):
         cls.SERIALIZERS[type_] = serializer
 
 
-class BTLxPart(object):
-    """Class representing a BTLx part. This acts as a wrapper for an Element object.
+class BTLxGenericPart(object):
+    """Base class for BTLx parts (both raw parts and fabricated parts).
+
+    Contains common functionality for dimensions, transformations, and XML generation.
 
     Parameters
     ----------
-    element : :class:`~compas_model.elements.Element`  # TODO: not really, make BTLx Element parent class
-        The element object.
     order_num : int
         The order number of the part.
-    scale_factor : float, optional
-        The scale factor to apply to the part's dimensions. Used when the design unit is anything other than mm. Defaults to 1.0.
-
-    Attributes
-    ----------
-    attr : dict
-        The attributes of the BTLx part.
-    element : :class:`~compas_model.elements.Element`
-        The element object.
     length : float
-        The length of the element.
+        The length of the part.
     width : float
-        The width of the element.
+        The width of the part.
     height : float
-        The height of the element.
-    frame : :class:`~compas.geometry.Frame`
-        The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
-    processings : list
-        A list of the processings applied to the element.
-
+        The height of the part.
+    scale_factor : float, optional
+        The scale factor to apply to the part's dimensions. Defaults to 1.0.
     """
 
-    def __init__(self, element, order_num, scale_factor=1.0):
-        self.element = element
+    def __init__(self, order_num, length, width, height, scale_factor=1.0):
         self.order_num = order_num
-        self.length = element.blank_length * scale_factor
-        self.width = element.width * scale_factor
-        self.height = element.height * scale_factor
-        self.frame = element.ref_frame.scaled(scale_factor)
-        self.processings = []
-        self._et_element = None
-        self._shape_strings = None
+        self.length = length * scale_factor
+        self.width = width * scale_factor
+        self.height = height * scale_factor
         self._scale_factor = scale_factor
+        self._shape_strings = None
 
     @property
     def part_guid(self):
-        return str(self.element.guid)
+        raise NotImplementedError("Subclasses must implement part_guid property.")
 
     @property
-    def et_grain_direction(self):
-        return ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no")
+    def frame(self):
+        raise NotImplementedError("Subclasses must implement frame property.")
 
     @property
-    def et_reference_side(self):
-        return ET.Element("ReferenceSide", Side="1", Align="no")
-
-    def ref_side_from_face(self, element_face):
-        """Finds the one-based index of the reference side with normal that matches the normal of the given element face.
-
-        This essentially translates between the element face reference system to the BTLx side reference system.
-
-        Parameters
-        ----------
-        element_face : :class:`~compas.geometry.Frame`
-            The frame of an element face from element.faces.
-
-        Returns
-        -------
-        key : str
-            The key(index 1-6) of the reference surface.
-
-        """
-        for index, ref_side in enumerate(self.element.ref_sides):
-            angle = angle_vectors(ref_side.normal, element_face.normal, deg=True)
-            if TOL.is_zero(angle):
-                return index + 1  # in BTLx face indices are one-based
-        raise ValueError("Given element face does not match any of the reference surfaces.")
-
-    @property
-    def attr(self):
-        return {
-            "SingleMemberNumber": str(self.order_num),
-            "AssemblyNumber": "",
-            "OrderNumber": str(self.order_num),
-            "Designation": "",
-            "Annotation": "",
-            "Storey": "",
-            "Group": "",
-            "Package": "",
-            "Material": "",
-            "TimberGrade": "",
-            "QualityGrade": "",
-            "Count": "1",
-            "Length": "{:.{prec}f}".format(self.length, prec=BTLxWriter.POINT_PRECISION),
-            "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
-            "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
-            "Weight": "0",
-            "ProcessingQuality": "automatic",
-            "StoreyType": "",
-            "ElementNumber": "00",
-            "Layer": "0",
-            "ModuleNumber": "",
-        }
+    def shape(self):
+        raise NotImplementedError("Subclasses must implement shape property.")
 
     def et_point_vals(self, point):
         """Returns the ET point values for a given point.
@@ -410,13 +390,22 @@ class BTLxPart(object):
         -------
         dict
             The ET point values formatted for the ET element.
-
         """
         return {
             "X": "{:.{prec}f}".format(point.x, prec=BTLxWriter.POINT_PRECISION),
             "Y": "{:.{prec}f}".format(point.y, prec=BTLxWriter.POINT_PRECISION),
             "Z": "{:.{prec}f}".format(point.z, prec=BTLxWriter.POINT_PRECISION),
         }
+
+    @property
+    def et_grain_direction(self):
+        """Create the grain direction XML element."""
+        return ET.Element("GrainDirection", X="1", Y="0", Z="0", Align="no")
+
+    @property
+    def et_reference_side(self):
+        """Create the reference side XML element."""
+        return ET.Element("ReferenceSide", Side="1", Align="no")
 
     @property
     def et_transformations(self):
@@ -448,8 +437,7 @@ class BTLxPart(object):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
-            scaled_geometry = self.element.geometry.scaled(self._scale_factor)
-            for face in scaled_geometry.faces:
+            for face in self.shape.faces:
                 pts = []
                 frame = face.surface.frame_at(0.5, 0.5)
                 edges = face.boundary.edges[1:]
@@ -491,6 +479,208 @@ class BTLxPart(object):
 
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
+
+    @property
+    def base_attr(self):
+        """Return the base attributes dictionary common to all parts."""
+        return {
+            "SingleMemberNumber": str(self.order_num),
+            "AssemblyNumber": "",
+            "OrderNumber": str(self.order_num),
+            "Designation": "",
+            "Annotation": "",
+            "Storey": "",
+            "Group": "",
+            "Package": "",
+            "Material": "",
+            "TimberGrade": "",
+            "QualityGrade": "",
+            "Count": "1",
+            "Length": "{:.{prec}f}".format(self.length, prec=BTLxWriter.POINT_PRECISION),
+            "Height": "{:.{prec}f}".format(self.height, prec=BTLxWriter.POINT_PRECISION),
+            "Width": "{:.{prec}f}".format(self.width, prec=BTLxWriter.POINT_PRECISION),
+            "Weight": "0",
+            "ProcessingQuality": "automatic",
+            "StoreyType": "",
+            "ElementNumber": "00",
+            "Layer": "0",
+            "ModuleNumber": "",
+        }
+
+
+class BTLxRawpart(BTLxGenericPart):
+    """Class representing a BTLx Rawpart. This acts as a wrapper for raw material information.
+
+    Parameters
+    ----------
+    stock : :class:`~compas_timber.planning.Stock`
+        The stock object representing the raw material.
+    order_number : int
+        The order number for the rawpart.
+    scale_factor : float, optional
+        The scale factor to apply to dimensions. Defaults to 1.0.
+
+    Attributes
+    ----------
+    stock : :class:`~compas_timber.planning.Stock`
+        The stock object.
+    attr : dict
+        The attributes of the BTLx rawpart.
+    length : float
+        The length of the rawpart.
+    width : float
+        The width of the rawpart.
+    height : float
+        The height of the rawpart.
+    frame : :class:`~compas.geometry.Frame`
+        The frame of the BTLxRawpart.
+    part_refs : list
+        List of part references that are nested in this rawpart.
+    """
+
+    def __init__(self, stock, order_number, scale_factor=1.0):
+        super(BTLxRawpart, self).__init__(
+            order_number,
+            stock.length,
+            stock.cross_section[1],  # width (larger dimension)
+            stock.cross_section[0],  # height (smaller dimension)
+            scale_factor,
+        )
+        self.stock = stock
+        self.part_refs = []
+        self._part_guid = str(uuid.uuid4())  # Cache the GUID
+
+    @property
+    def part_guid(self):
+        """Return the cached GUID for this rawpart."""
+        return self._part_guid
+
+    @property
+    def frame(self):
+        return Frame.worldXY().scaled(self._scale_factor)
+
+    @property
+    def shape(self):
+        return self.stock.geometry.scaled(self._scale_factor)
+
+    @property
+    def attr(self):
+        """Return the attributes dictionary for the rawpart XML element."""
+        attr = self.base_attr.copy()
+        attr.update(
+            {
+                "PlaningLength": "0",
+                "StartOffset": "0",
+                "EndOffset": "0",
+                "PartType": "nesting",
+            }
+        )
+        return attr
+
+    def add_part_ref(self, part_guid, position_frame):
+        """Add a part reference to this rawpart.
+
+        Parameters
+        ----------
+        part_guid : str
+            The GUID of the part to reference.
+        position_frame : :class:`~compas.geometry.Frame`
+            The position frame of the part within the rawpart.
+        """
+        self.part_refs.append({"guid": part_guid, "frame": position_frame})
+
+    @property
+    def et_part_refs(self):
+        """Create the part references XML element."""
+        if not self.part_refs:
+            return None
+
+        part_refs_element = ET.Element("PartRefs")
+        for part_ref in self.part_refs:
+            part_ref_element = ET.SubElement(part_refs_element, "PartRef", GUID=part_ref["guid"])
+            position = ET.SubElement(part_ref_element, "Position")
+            frame = part_ref["frame"]
+            position.append(ET.Element("ReferencePoint", self.et_point_vals(frame.point)))
+            position.append(ET.Element("XVector", self.et_point_vals(frame.xaxis)))
+            position.append(ET.Element("YVector", self.et_point_vals(frame.yaxis)))
+        return part_refs_element
+
+
+class BTLxPart(BTLxGenericPart):
+    """Class representing a BTLx part. This acts as a wrapper for an Element object.
+
+    Parameters
+    ----------
+    element : :class:`~compas_model.elements.Element` # TODO: not really, make BTLx Element parent class
+        The element object.
+    order_num : int
+        The order number of the part.
+    scale_factor : float, optional
+        The scale factor to apply to the part's dimensions. Used when the design unit is anything other than mm. Defaults to 1.0.
+
+    Attributes
+    ----------
+    attr : dict
+        The attributes of the BTLx part.
+    element : :class:`~compas_model.elements.Element`
+        The element object.
+    length : float
+        The length of the element.
+    width : float
+        The width of the element.
+    height : float
+        The height of the element.
+    frame : :class:`~compas.geometry.Frame`
+        The frame of the BTLxPart at the corner of the blank box that puts the blank geometry in positive coordinates.
+    processings : list
+        A list of the processings applied to the element.
+
+    """
+
+    def __init__(self, element, order_num, scale_factor=1.0):
+        super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, scale_factor)
+        self.element = element
+        self.processings = []
+
+    @property
+    def part_guid(self):
+        """Return the GUID of the element."""
+        return str(self.element.guid)
+
+    @property
+    def frame(self):
+        return self.element.ref_frame.scaled(self._scale_factor)
+
+    @property
+    def shape(self):
+        return self.element.geometry.scaled(self._scale_factor)
+
+    @property
+    def attr(self):
+        """Return the attributes dictionary for the part XML element."""
+        return self.base_attr
+
+    def ref_side_from_face(self, element_face):
+        """Finds the one-based index of the reference side with normal that matches the normal of the given element face.
+
+        This essentially translates between the element face reference system to the BTLx side reference system.
+
+        Parameters
+        ----------
+        element_face : :class:`~compas.geometry.Frame`
+            The frame of an element face from element.faces.
+
+        Returns
+        -------
+        key : str
+            The key(index 1-6) of the reference surface.
+
+        """
+        for index, ref_side in enumerate(self.element.ref_sides):
+            angle = angle_vectors(ref_side.normal, element_face.normal, deg=True)
+            if TOL.is_zero(angle):
+                return index + 1  # in BTLx face indices are one-based
+        raise ValueError("Given element face does not match any of the reference surfaces.")
 
 
 def contour_to_xml(contour):
