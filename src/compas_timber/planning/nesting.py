@@ -1,8 +1,6 @@
 from warnings import warn
 
 from compas.data import Data
-from compas.geometry import Box
-from compas.geometry import Brep
 
 
 class Stock(Data):
@@ -85,11 +83,6 @@ class Stock(Data):
         """Get list of beam GUIDs for BTLx integration."""
         return list(self.beam_data.keys())  # TODO: will break IronPython
 
-    @property
-    def geometry(self):
-        """Get a Brep geometry representing the stock piece."""
-        return Brep.from_box(Box(self.length, self.cross_section[0], self.cross_section[1]))
-
     def section_matches(self, beam):
         """
         Check if a beam has identical cross-section to this stock.
@@ -143,7 +136,7 @@ class Stock(Data):
         if not self.can_fit_beam(beam):
             raise ValueError(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self.waste}")
         # Add beam by its GUID and blank length
-        self.beam_data[str(beam.guid)] = beam.blank_length
+        self.beam_data[beam.guid] = beam.blank_length
 
     def copy_empty(self):
         """Create a copy of this stock with no beams assigned."""
