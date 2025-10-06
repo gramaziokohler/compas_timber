@@ -206,3 +206,31 @@ def test_processing_scaled_not_called_for_millimeter_units(mocker):
     spy = mocker.spy(processing, "scaled")
     writer.model_to_xml(model)
     spy.assert_not_called()
+
+
+def test_BTLxPart_GUID_is_the_same_as_Beam_GUID(test_model, resulting_btlx, namespaces):
+    # Find the Project element
+    project = resulting_btlx.find("d2m:Project", namespaces)
+    assert project is not None
+
+    # Find the Parts element within the Project element
+    parts = project.find("d2m:Parts", namespaces)
+    assert parts is not None
+
+    # Find all Part elements within the Parts element
+    part_elements = parts.findall("d2m:Part", namespaces)
+    assert len(part_elements) == len(list(test_model.beams))
+
+    # Validate each Part element's GUID matches the corresponding Beam's GUID
+    for part, beam in zip(part_elements, test_model.beams):
+        # Find the Transformations element within the Part
+        transformations = part.find("d2m:Transformations", namespaces)
+        assert transformations is not None
+
+        # Find the Transformation element within Transformations
+        transformation = transformations.find("d2m:Transformation", namespaces)
+        assert transformation is not None
+
+        # Get the GUID from the Transformation element
+        part_guid = transformation.get("GUID")
+        assert part_guid == str(beam.guid)
