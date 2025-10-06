@@ -65,8 +65,8 @@ class PlateGeometry(object):
 
     def __init__(self, outline_a, outline_b, openings=None):
         self._local_outlines = (outline_a, outline_b)
-        self.outline_a = outline_a.transformed(Transformation.from_frame(self.frame))
-        self.outline_b = outline_b.transformed(Transformation.from_frame(self.frame))
+        self.outline_a = outline_a.transformed(self.transformation)
+        self.outline_b = outline_b.transformed(self.transformation)
         self._planes = None
         self.openings = openings or []
 
@@ -370,6 +370,7 @@ class PlateGeometry(object):
         frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
             frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
+        print("frame type in _get_frame_and_dims_from_outlines =", frame.__class__.__name__)
 
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         rebased_pts = [pt.transformed(transform_to_world_xy) for pt in outline_a.points + outline_b.points]

@@ -1,5 +1,6 @@
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -96,10 +97,13 @@ class Slab(PlateGeometry, Element):
         return data
 
     def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None, name=None, **kwargs):
-        Element.__init__(self, frame=frame, **kwargs)
+        Element.__init__(self, **kwargs)
+        self._frame = frame
+        self.transformation = Transformation.from_frame(frame)
         outline_a = outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         outline_b = outline_b or Polyline([Point(p[0], p[1], thickness) for p in outline_a.points])
         PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
+
         self.length = length
         self.width = width
         self.height = thickness
@@ -107,6 +111,13 @@ class Slab(PlateGeometry, Element):
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
+
+    @property
+    def frame(self):
+        if self.model:
+            return Element.frame.fget(self)
+        else:
+            return self._frame
 
     def __repr__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)

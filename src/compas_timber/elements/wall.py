@@ -334,7 +334,7 @@ class Wall(Slab):
         assert self.frame
         self.outline = Polyline(self.outline.points[1:] + [self.outline.points[1]])
         assert self.outline.is_closed
-        self.frame = self._frame_from_polyline(self.outline, self.frame.normal)
+        self._frame = self._frame_from_polyline(self.outline, self.frame.normal)
         assert len(self.outline) == 5
 
     @staticmethod

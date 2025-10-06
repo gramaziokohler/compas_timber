@@ -78,10 +78,10 @@ def test_get_elements_in_group_filter(model, beam_list, wall1, wall2):
 
     assert model.has_group(wall1)
     assert model.has_group(wall2)
-    assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: b.is_beam)) == [beam_a, beam_b]
-    assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: b.is_beam)) == [beam_c, beam_d]
-    assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: b.is_wall)) == [wall1]
-    assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: b.is_wall)) == [wall2]
+    assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: isinstance(b, Beam))) == [beam_a, beam_b]
+    assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: isinstance(b, Beam))) == [beam_c, beam_d]
+    assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: isinstance(b, Wall))) == [wall1]
+    assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: isinstance(b, Wall))) == [wall2]
     assert list(model.get_elements_in_group(wall1_group, filter_=lambda b: b.is_group_element)) == [wall1]
     assert list(model.get_elements_in_group(wall2_group, filter_=lambda b: b.is_group_element)) == [wall2]
 

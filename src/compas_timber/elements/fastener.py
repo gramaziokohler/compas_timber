@@ -47,16 +47,23 @@ class Fastener(Element):
 
     def __init__(self, shape=None, frame=None, **kwargs):
         super(Fastener, self).__init__(**kwargs)
+        self._frame = frame
+        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
         self._shape = shape
         self.interfaces = []
-        self.frame = frame
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
 
+    def frame(self):
+        if self.model:
+            return Frame.from_transformation(self.transformation)
+        else:
+            return self._frame
+
     def __repr__(self):
         # type: () -> str
-        return "Fastener(frame={!r}, name={})".format(self.frame, self.name)
+        return "Fastener(frame={!r}, name={})".format(self._frame, self.name)
 
     def __str__(self):
         # type: () -> str

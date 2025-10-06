@@ -1,5 +1,3 @@
-from compas.geometry import Frame
-from compas.geometry import Line
 from functools import reduce
 from operator import mul
 

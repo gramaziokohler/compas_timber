@@ -48,11 +48,10 @@ class PlateFastener(Fastener):
     """
 
     def __init__(self, outline=None, thickness=None, interfaces=None, frame=None, angle=math.pi / 2, topology=None, cutouts=None, **kwargs):
-        super(PlateFastener, self).__init__(**kwargs)
+        super(PlateFastener, self).__init__(frame=frame, **kwargs)
         self.outline = outline
         self.thickness = thickness
         self.interfaces = interfaces
-        self.frame = frame or Frame.worldXY()
         self.angle = angle
         self.topology = topology
         self.cutouts = cutouts

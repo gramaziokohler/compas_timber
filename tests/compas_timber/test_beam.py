@@ -195,9 +195,6 @@ def test_transformation_with_start_extension(beam):
     # Get transformation after extension
     transformation_after = beam.transformation
 
-    # The difference should be a translation along negative x-axis
-    expected_translation = Translation.from_vector(-beam.frame.xaxis * 0.1)
-
     assert transformation_before == transformation_after
 
 
@@ -227,9 +224,6 @@ def test_transformation_with_multiple_extensions(beam):
     beam.add_blank_extension(0.0, 5.0, joint_key=3)
 
     transformation_after = beam.transformation
-
-    # The difference should be based on max start extension (0.15)
-    expected_translation = Translation.from_vector(-beam.frame.xaxis * 0.15)
 
     assert transformation_after == transformation_before
 
