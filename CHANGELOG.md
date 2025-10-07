@@ -12,12 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.planning.Stock` class for representing raw material stock pieces with beam assignment tracking and waste calculation.
 * Added new `compas_timber.planning.BeamNester` class for automated beam nesting with first-fit and best-fit decreasing algorithms.
 * Added new `compas_timber.planning.NestingResult` class as a serializable wrapper for nesting results with analysis properties.
+* Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
+* Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 
 ### Changed
 
 * Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
 * Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
 * Changed `BTLxPart` transformation GUID to use the `TimberElement`'s GUID instead of generating a random UUID in `compas_timber.fabrication.BTLxPart`.
+* Updated the `write()` and `model_to_xml()` methods of the `BTLxWriter` class to optionally accept a `NestingResult` object, enabling inclusion of beam nesting information in the BTLx output.
 
 ### Removed
 
