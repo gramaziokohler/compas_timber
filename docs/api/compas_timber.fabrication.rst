@@ -13,6 +13,7 @@ Core
 
     BTLxWriter
     BTLxPart
+    BTLxRawpart
     BTLxProcessing
     BTLxFromGeometryDefinition
 
