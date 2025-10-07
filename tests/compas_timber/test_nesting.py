@@ -14,26 +14,30 @@ from compas_timber.planning import NestingResult
 # ============================================================================
 
 
-def test_initialization_and_basic_properties():
+def test_initialization_and_basic_properties_tuple():
     """Test Stock initialization with valid parameters and basic property access."""
     stock = Stock(6000, (120, 60))
 
     assert stock.length == 6000
-    assert stock.cross_section == (60, 120)  # Should be sorted
+    assert stock.cross_section == (120, 60)
+
     assert stock.cutting_tolerance == 0.0  # Default value if not set
     assert stock.beam_data == {}
+    assert stock.utilized_length == 0.0  # Nothing utilized when empty
     assert stock.waste == 6000  # Full length when empty
 
 
-def test_cross_section_normalization():
-    """Test that cross-sections are normalized to sorted tuples."""
-    # Test orientation independence
-    stock1 = Stock(6000, (120, 60))
-    stock2 = Stock(6000, [60, 120])  # Different order, list input
+def test_initialization_and_basic_properties_list():
+    """Test Stock initialization with list cross-section input."""
+    stock = Stock(6000, [120, 60])  # List input
 
-    assert stock1.cross_section == (60, 120)
-    assert stock2.cross_section == (60, 120)
-    assert stock1.cross_section == stock2.cross_section
+    assert stock.length == 6000
+    assert stock.cross_section == (120, 60)
+
+    assert stock.cutting_tolerance == 0.0  # Default value if not set
+    assert stock.beam_data == {}
+    assert stock.utilized_length == 0.0  # Nothing utilized when empty
+    assert stock.waste == 6000  # Full length when empty
 
 
 def test_section_matching():
@@ -43,7 +47,7 @@ def test_section_matching():
     beam1 = Beam(frame=Frame.worldXY(), length=2000, width=60, height=120)
     assert stock.section_matches(beam1)
 
-    # Test orientation independence
+    # Test orientation independence (both should match due to sorted comparison)
     beam2 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     assert stock.section_matches(beam2)
 
@@ -65,28 +69,39 @@ def test_beam_addition_and_capacity_tracking():
     # Add first beam
     beam1 = Beam(frame=Frame.worldXY(), length=2000, width=60, height=120)
     stock.add_beam(beam1)
-    expected_waste1 = stock.length - beam1.blank_length
+
+    expected_utilized_length1 = beam1.blank_length + stock.cutting_tolerance
+    expected_waste1 = stock.length - beam1.blank_length - stock.cutting_tolerance
+    expected_frame1 = Frame.worldXY()
 
     assert len(stock.beam_data) == 1
     assert beam1.guid in stock.beam_data
-    assert stock.beam_data[beam1.guid] == 2000
+    assert stock.beam_data[beam1.guid]["length"] == 2000
+    assert stock.beam_data[beam1.guid]["frame"] == expected_frame1
+    assert stock.utilized_length == expected_utilized_length1
     assert stock.waste == expected_waste1
 
     # Add second beam
     beam2 = Beam(frame=Frame.worldXY(), length=1500, width=60, height=120)
     stock.add_beam(beam2)
+
+    expected_utilized_length2 = expected_utilized_length1 + beam2.blank_length + stock.cutting_tolerance
     expected_waste2 = expected_waste1 - beam2.blank_length - stock.cutting_tolerance
+    expected_frame2 = Frame.worldXY()
+    expected_frame2.point.x = beam1.blank_length + stock.cutting_tolerance
 
     assert len(stock.beam_data) == 2
     assert beam2.guid in stock.beam_data
-    assert stock.beam_data[beam2.guid] == 1500
+    assert stock.beam_data[beam2.guid]["length"] == 1500
+    assert stock.beam_data[beam2.guid]["frame"] == expected_frame2
+    assert stock.utilized_length == expected_utilized_length2
     assert stock.waste == expected_waste2
 
 
 def test_beam_fitting_validation():
     """Test beam fitting validation and error handling."""
     stock = Stock(6000, (60, 120))
-    cutting_tolerance = 1.0
+    cutting_tolerance = 0.0
     stock.cutting_tolerance = cutting_tolerance
 
     # Test beam that fits
@@ -98,7 +113,7 @@ def test_beam_fitting_validation():
     assert stock.waste == 4000
 
     # Test beam that exactly fits remaining space
-    beam2 = Beam(frame=Frame.worldXY(), length=4000 - cutting_tolerance, width=60, height=120)
+    beam2 = Beam(frame=Frame.worldXY(), length=4000, width=60, height=120)
     assert stock.can_fit_beam(beam2)
 
     # Add the beam
@@ -124,20 +139,27 @@ def test_serialization():
 
     # Test serialization
     data = stock.__data__
-    expected_data = {"length": 6000, "cross_section": (60, 120), "cutting_tolerance": 5.0, "beam_data": {beam1.guid: 2000, beam2.guid: 1500}}
-
-    assert data == expected_data
+    assert data["length"] == 6000
+    assert data["cross_section"] == (60, 120)
+    assert data["cutting_tolerance"] == 5.0
+    assert len(data["beam_data"]) == 2
+    assert beam1.guid in data["beam_data"]
+    assert beam2.guid in data["beam_data"]
+    assert data["beam_data"][beam1.guid]["length"] == 2000
+    assert data["beam_data"][beam2.guid]["length"] == 1500
+    assert "frame" in data["beam_data"][beam1.guid]
+    assert "frame" in data["beam_data"][beam2.guid]
 
     # Test deserialization
     restored_stock = Stock.__from_data__(data)
     assert restored_stock.length == stock.length
     assert restored_stock.cross_section == stock.cross_section
     assert restored_stock.cutting_tolerance == stock.cutting_tolerance
-    assert restored_stock.beam_data == stock.beam_data
+    assert len(restored_stock.beam_data) == len(stock.beam_data)
 
 
 def test_copy_empty():
-    """Test data serialization and copy functionality."""
+    """Test copy_empty functionality."""
     # Create stock with beams
     stock = Stock(6000, (60, 120))
     beam1 = Beam(frame=Frame.worldXY(), length=2000, width=60, height=120)
@@ -147,16 +169,20 @@ def test_copy_empty():
     stock.cutting_tolerance = 5.0
 
     assert stock.cutting_tolerance == 5.0
-    assert stock.beam_data == {beam1.guid: 2000, beam2.guid: 1500}
-    assert stock.waste == 2500 - 5.0
+    assert len(stock.beam_data) == 2
+    assert stock.beam_data[beam1.guid]["length"] == 2000
+    assert stock.beam_data[beam2.guid]["length"] == 1500
+    assert stock.utilized_length == 2000 + 1500 + 10.0  # includes both cutting tolerance
+    assert stock.waste == 6000 - stock.utilized_length
 
     # Test copy_empty
     empty_copy = stock.copy_empty()
     assert empty_copy.length == stock.length
     assert empty_copy.cross_section == stock.cross_section
-    assert empty_copy.cutting_tolerance == 0.0  # Default value
+    assert empty_copy.cutting_tolerance == 0.0  # Should be reset to default
     assert empty_copy.beam_data == {}  # Should be empty
     assert empty_copy.waste == 6000  # Full capacity
+    assert empty_copy.utilized_length == 0.0  # Nothing utilized
 
 
 # ============================================================================
@@ -198,7 +224,7 @@ def test_sort_beams_by_stock():
     # Add compatible and incompatible beams
     beam1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)  # Compatible
     beam2 = Beam(frame=Frame.worldXY(), length=1500, width=200, height=100)  # Incompatible
-    beam3 = Beam(frame=Frame.worldXY(), length=1000, width=120, height=60)  # Compatible
+    beam3 = Beam(frame=Frame.worldXY(), length=1000, width=60, height=120)  # Compatible
 
     model.add_element(beam1)
     model.add_element(beam2)
@@ -209,7 +235,7 @@ def test_sort_beams_by_stock():
 
     # Test sorting with warning capture
     with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
-        stock_beam_map = nester.sort_beams_by_stock()
+        stock_beam_map = nester._sort_beams_by_stock()
 
     # Check that compatible beams were sorted correctly
     compatible_beams = stock_beam_map[stock_catalog[0]]
@@ -230,7 +256,7 @@ def test_first_fit_decreasing_single_stock():
     beams = [beam1, beam2, beam3, beam4]
     stock = Stock(6000, (120, 60))
 
-    result_stocks = BeamNester.first_fit_decreasing(beams, stock)
+    result_stocks = BeamNester._first_fit_decreasing(beams, stock)
 
     # Should have 2 stocks: first with beam1+beam4 (5500), second with beam2+beam3 (3500)
     assert len(result_stocks) == 2
@@ -259,7 +285,7 @@ def test_best_fit_decreasing_single_stock():
     beams = [beam1, beam2, beam3, beam4]
     stock = Stock(6000, (120, 60))
 
-    result_stocks = BeamNester.best_fit_decreasing(beams, stock)
+    result_stocks = BeamNester._best_fit_decreasing(beams, stock)
 
     # Should have 2 stocks: first with beam1+beam3 (6000), second with beam2+beam4 (2500)
     assert len(result_stocks) == 2

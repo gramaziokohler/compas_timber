@@ -167,6 +167,13 @@ class BTLxWriter(object):
     def _create_project_element(self, model, nesting_result=None):
         """Creates the project element. This method creates the parts element and appends it to the project element.
 
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model object.
+        nesting_result : :class:`~compas_timber.planning.NestingResult`, optional
+            The nesting result object. If provided, raw parts will be created for each stock in the nesting result.
+
         Returns
         -------
         :class:`~xml.etree.ElementTree.Element`
@@ -199,6 +206,8 @@ class BTLxWriter(object):
         ----------
         stock : :class:`~compas_timber.planning.Stock`
             The stock object.
+        order_number : int
+            The order number of the raw part.
 
         Returns
         -------
@@ -233,7 +242,7 @@ class BTLxWriter(object):
         ----------
         element : :class:`~compas_timber.elements.TimberElement` # TODO: not really
             The element object.
-        num : int
+        order_num : int
             The order number of the part.
 
         Returns
