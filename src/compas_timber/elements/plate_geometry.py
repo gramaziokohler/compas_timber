@@ -64,11 +64,12 @@ class PlateGeometry(object):
         return data
 
     def __init__(self, outline_a, outline_b, openings=None):
-        self._local_outlines = (outline_a, outline_b)
+        self._original_outlines = (outline_a, outline_b)
         self.outline_a = outline_a.transformed(self.transformation)
         self.outline_b = outline_b.transformed(self.transformation)
         self._planes = None
         self.openings = openings or []
+        self.test=[]
 
     def __repr__(self):
         # type: () -> str
@@ -122,6 +123,11 @@ class PlateGeometry(object):
         return self.frame.normal
 
     @property
+    def local_outlines(self):
+        """Returns the local outlines of the plate."""
+        return (self.outline_a.transformed(self.transformation.inverse()), self.outline_b.transformed(self.transformation.inverse()))
+
+    @property
     def edge_planes(self):
         """Frames representing the edge planes of the plate.
 
@@ -131,19 +137,29 @@ class PlateGeometry(object):
             A list of frames representing the edge planes of the plate.
         """
         edge_planes = []
-        for i in range(len(self.outlines_a) - 1):
-            plane = Frame.from_points(self.outlines_a[i], self.outlines_a[i + 1], self.outlines_b[i])
-            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outlines_a, i)) < 0:
+        for i in range(len(self.outline_a) - 1):
+            plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
+            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a, i)) < 0:
                 plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
             edge_planes.append(plane)
         return edge_planes
+
+    @property
+    def local_edge_planes(self):
+        """Frames representing the edge planes of the plate in local coordinates.
+
+        Returns
+        -------
+        list[:class:`~compas.geometry.Frame`]
+            A list of frames representing the edge planes of the plate in local coordinates.
+        """
+        return [ep.transformed(self.transformation.inverse()) for ep in self.edge_planes]
 
     @reset_computed
     def reset(self):
         """Resets the element outlines to their initial state."""
         self.outline_a = self._local_outlines[0].transformed(Transformation.from_frame(self.frame))
         self.outline_b = self._local_outlines[1].transformed(Transformation.from_frame(self.frame))
-        self._edge_planes = []
 
     # ==========================================================================
     # Alternate constructors
@@ -370,13 +386,10 @@ class PlateGeometry(object):
         frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
             frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
-        print("frame type in _get_frame_and_dims_from_outlines =", frame.__class__.__name__)
-
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         rebased_pts = [pt.transformed(transform_to_world_xy) for pt in outline_a.points + outline_b.points]
         box = Box.from_points(rebased_pts)
-        translate_vector = frame.xaxis * -box.points[0][0] + frame.yaxis * -box.points[0][1] + frame.normal * -box.points[0][2]
-        frame.translate(translate_vector)
+        frame.point.translate(frame.xaxis * box.xmin)
         return frame, box.xsize, box.ysize, box.zsize
 
     @staticmethod
@@ -403,7 +416,7 @@ class PlateGeometry(object):
             raise ValueError("The outline_b is not closed.")
         if len(outline_a) != len(outline_b):
             raise ValueError("The outlines must have the same number of points.")
-        if all(not p[2] == 0 for p in outline_a.points):
-            raise ValueError("outline_a must be planar.")
-        if all(not p[2] == outline_b[0][2] for p in outline_b.points):
+        if all(not TOL.is_close(p[2], 0) for p in outline_a.points):
+            raise ValueError("outline_a must be planar. Polyline: {}".format(outline_a))
+        if all(not TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")
