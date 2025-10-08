@@ -75,9 +75,9 @@ def create_stand_model():
 
 def generate_nesting(model):
     """Generate nesting for the given timber model."""
-    stock_catalog = [Stock(5000, (120, 120)), Stock(5000, (120, 60))]
+    stock_catalog = [Stock(6000, (120, 120)), Stock(6000, (120, 60))]
     nester = BeamNester(model, stock_catalog, cutting_tolerance=3.0)
-    return nester.nest()
+    return nester.nest(fast=False)
 
 
 def visualize_model(model):
@@ -96,19 +96,19 @@ def visualize_model(model):
     viewer.show()
 
 
-def serialize_model(model, output_path=None):
-    """Serialize the model to JSON."""
+def serialize_nesting(nesting_result, output_path=None):
+    """Serialize the nesting result to JSON."""
     if output_path is None:
-        output_path = os.path.join(DATA_DIR, "model_nesting_test.json")
+        output_path = os.path.join(DATA_DIR, "nesting_test.json")
 
-    model.to_json(output_path, pretty=True)
-    print(f"Model written to {output_path}")
+    nesting_result.to_json(output_path, pretty=True)
+    print(f"Nesting result written to {output_path}")
 
 
 def export_btlx(model, output_path=None, nesting_result=None):
     """Export the model to BTLx format."""
     if output_path is None:
-        output_path = os.path.join(DATA_DIR, "model_nesting_test.btlx")
+        output_path = os.path.join(DATA_DIR, "nesting_test.btlx")
     writer = BTLxWriter()
     writer.write(model, output_path, nesting_result=nesting_result)
     print(f"BTLx exported to {output_path}")
@@ -133,9 +133,9 @@ def main():
     print(f"Nesting generated with {len(nesting_result.stocks)} stocks")
 
     if args.serialize:
-        print("Serializing model...")
+        print("Serializing nesting result...")
         output_path = None if args.serialize == "default" else args.serialize
-        serialize_model(model, output_path)
+        serialize_nesting(nesting_result, output_path)
 
     if args.export_btlx:
         print("Exporting to BTLx...")
