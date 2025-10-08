@@ -75,9 +75,9 @@ def test_beam_addition_and_capacity_tracking():
     expected_frame1 = Frame.worldXY()
 
     assert len(stock.beam_data) == 1
-    assert beam1.guid in stock.beam_data
-    assert stock.beam_data[beam1.guid]["length"] == 2000
-    assert stock.beam_data[beam1.guid]["frame"] == expected_frame1
+    assert str(beam1.guid) in stock.beam_data
+    assert stock.beam_data[str(beam1.guid)]["length"] == 2000
+    assert stock.beam_data[str(beam1.guid)]["frame"] == expected_frame1
     assert stock.utilized_length == expected_utilized_length1
     assert stock.waste == expected_waste1
 
@@ -91,9 +91,9 @@ def test_beam_addition_and_capacity_tracking():
     expected_frame2.point.x = beam1.blank_length + stock.cutting_tolerance
 
     assert len(stock.beam_data) == 2
-    assert beam2.guid in stock.beam_data
-    assert stock.beam_data[beam2.guid]["length"] == 1500
-    assert stock.beam_data[beam2.guid]["frame"] == expected_frame2
+    assert str(beam2.guid) in stock.beam_data
+    assert stock.beam_data[str(beam2.guid)]["length"] == 1500
+    assert stock.beam_data[str(beam2.guid)]["frame"] == expected_frame2
     assert stock.utilized_length == expected_utilized_length2
     assert stock.waste == expected_waste2
 
@@ -143,12 +143,12 @@ def test_serialization():
     assert data["cross_section"] == (60, 120)
     assert data["cutting_tolerance"] == 5.0
     assert len(data["beam_data"]) == 2
-    assert beam1.guid in data["beam_data"]
-    assert beam2.guid in data["beam_data"]
-    assert data["beam_data"][beam1.guid]["length"] == 2000
-    assert data["beam_data"][beam2.guid]["length"] == 1500
-    assert "frame" in data["beam_data"][beam1.guid]
-    assert "frame" in data["beam_data"][beam2.guid]
+    assert str(beam1.guid) in data["beam_data"]
+    assert str(beam2.guid) in data["beam_data"]
+    assert data["beam_data"][str(beam1.guid)]["length"] == 2000
+    assert data["beam_data"][str(beam2.guid)]["length"] == 1500
+    assert "frame" in data["beam_data"][str(beam1.guid)]
+    assert "frame" in data["beam_data"][str(beam2.guid)]
 
     # Test deserialization
     restored_stock = Stock.__from_data__(data)
@@ -170,8 +170,8 @@ def test_copy_empty():
 
     assert stock.cutting_tolerance == 5.0
     assert len(stock.beam_data) == 2
-    assert stock.beam_data[beam1.guid]["length"] == 2000
-    assert stock.beam_data[beam2.guid]["length"] == 1500
+    assert stock.beam_data[str(beam1.guid)]["length"] == 2000
+    assert stock.beam_data[str(beam2.guid)]["length"] == 1500
     assert stock.utilized_length == 2000 + 1500 + 10.0  # includes both cutting tolerance
     assert stock.waste == 6000 - stock.utilized_length
 
@@ -263,14 +263,14 @@ def test_first_fit_decreasing_single_stock():
 
     # Check first stock - gets beam1 (3000) + beam4 (2500) = 5500
     assert len(result_stocks[0].beam_data) == 2
-    assert beam1.guid in result_stocks[0].beam_data
-    assert beam4.guid in result_stocks[0].beam_data
+    assert str(beam1.guid) in result_stocks[0].beam_data
+    assert str(beam4.guid) in result_stocks[0].beam_data
     assert result_stocks[0].waste == 500  # 6000 - 3000 - 2500
 
     # Check second stock - gets beam2 (2000) + beam3 (1500) = 3500
     assert len(result_stocks[1].beam_data) == 2
-    assert beam2.guid in result_stocks[1].beam_data
-    assert beam3.guid in result_stocks[1].beam_data
+    assert str(beam2.guid) in result_stocks[1].beam_data
+    assert str(beam3.guid) in result_stocks[1].beam_data
     assert result_stocks[1].waste == 2500  # 6000 - 2000 - 1500
 
 
@@ -292,14 +292,14 @@ def test_best_fit_decreasing_single_stock():
 
     # Check first stock (beam1 + beam3)
     assert len(result_stocks[0].beam_data) == 2
-    assert beam1.guid in result_stocks[0].beam_data
-    assert beam3.guid in result_stocks[0].beam_data
+    assert str(beam1.guid) in result_stocks[0].beam_data
+    assert str(beam3.guid) in result_stocks[0].beam_data
     assert result_stocks[0].waste == 0  # 6000 - 3000 - 3000
 
     # Check second stock (beam2 + beam4)
     assert len(result_stocks[1].beam_data) == 2
-    assert beam2.guid in result_stocks[1].beam_data
-    assert beam4.guid in result_stocks[1].beam_data
+    assert str(beam2.guid) in result_stocks[1].beam_data
+    assert str(beam4.guid) in result_stocks[1].beam_data
     assert result_stocks[1].waste == 3500  # 6000 - 2000 - 500
 
 
@@ -397,7 +397,7 @@ def test_nest_method_basic_functionality():
     for stock in nesting_result.stocks:
         all_beam_guids.update(stock.beam_guids)
 
-    expected_guids = {beam1.guid, beam2.guid, beam3.guid}
+    expected_guids = {str(beam1.guid), str(beam2.guid), str(beam3.guid)}
     assert all_beam_guids == expected_guids
 
 
@@ -422,8 +422,8 @@ def test_nest_method_with_incompatible_beams():
     # Should have one stock with only the compatible beam
     assert isinstance(nesting_result, NestingResult)
     assert len(nesting_result.stocks) == 1
-    assert beam1.guid in nesting_result.stocks[0].beam_data
-    assert beam2.guid not in nesting_result.stocks[0].beam_data
+    assert str(beam1.guid) in nesting_result.stocks[0].beam_data
+    assert str(beam2.guid) not in nesting_result.stocks[0].beam_data
 
 
 # ============================================================================

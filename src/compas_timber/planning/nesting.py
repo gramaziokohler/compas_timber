@@ -169,7 +169,7 @@ class Stock(Data):
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
         # Store beam data with both length and frame
-        self.beam_data[beam.guid] = {"length": beam.blank_length, "frame": position_frame}
+        self.beam_data[str(beam.guid)] = {"length": beam.blank_length, "frame": position_frame}
 
     def copy_empty(self):
         """Create a copy of this stock with no beams assigned."""
