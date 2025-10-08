@@ -114,7 +114,7 @@ class Beam(TimberElement):
 
     @property
     def shape(self):
-        """The shape of the beam in global space."""
+        """The shape of the beam in model space."""
         # type: () -> Box
         shape = Box(self.length, self.width, self.height)
         shape.translate(Vector.Xaxis() * self.length * 0.5)
@@ -122,12 +122,12 @@ class Beam(TimberElement):
 
     @property
     def blank(self):
-        """The blank of the beam in parent space."""
+        """The blank of the beam in model space."""
         # type: () -> Box
         start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
         blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5)-start))
-        return blank.transformed(self.transformation)
+        return blank.transformed(self.modeltransformation)
 
     @property
     def blank_length(self):
@@ -137,7 +137,7 @@ class Beam(TimberElement):
 
     @property
     def centerline(self):
-        """The centerline of the beam in global coordinates."""
+        """The centerline of the beam in model space."""
         # type: () -> Line
         line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self.length)
         return line.transformed(self.modeltransformation)
@@ -149,7 +149,7 @@ class Beam(TimberElement):
         """
         Reference frame for machining processings according to BTLx standard.
         The origin is at the bottom far corner of the element.
-        The ref_frame is always in global coordinates.
+        The ref_frame is always in model coordinates.
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
 
@@ -178,7 +178,7 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        geometry = Brep.from_box(self.blank.transformed(self.transformation.inverse()))
+        geometry = Brep.from_box(self.blank.transformed(self.transformation_to_local))
         if include_features:
             for feature in self.features:
                 try:
