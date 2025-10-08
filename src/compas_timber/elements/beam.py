@@ -7,7 +7,6 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
@@ -115,7 +114,7 @@ class Beam(TimberElement):
 
     @property
     def shape(self):
-        """The shape of the beam in global coordinates."""
+        """The shape of the beam in global space."""
         # type: () -> Box
         shape = Box(self.length, self.width, self.height)
         shape.translate(Vector.Xaxis() * self.length * 0.5)
@@ -123,7 +122,7 @@ class Beam(TimberElement):
 
     @property
     def blank(self):
-        """The blank of the beam in local coordinates."""
+        """The blank of the beam in parent space."""
         # type: () -> Box
         start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
@@ -179,7 +178,7 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        geometry = Brep.from_box(self.blank.transformed(self.transformation_to_local()))
+        geometry = Brep.from_box(self.blank.transformed(self.transformation.inverse()))
         if include_features:
             for feature in self.features:
                 try:
