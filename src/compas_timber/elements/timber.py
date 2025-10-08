@@ -182,6 +182,7 @@ class TimberElement(Element):
 
             while parent:
                 if parent.transformation:
+                    print("Parent transformation:\n{}".format(parent.transformation))
                     stack.append(parent.transformation)
                 parent = parent.parent
 
@@ -279,6 +280,22 @@ class TimberElement(Element):
         """
         # type: () -> Transformation
         return self.modeltransformation.inverted()
+
+    def transform(self, transformation):
+        """Apply a transformation to the element's frame.
+
+        Parameters
+        ----------
+        transformation : :class:`~compas.geometry.Transformation`
+            The transformation to apply.
+
+        """
+        # type: (Transformation) -> None
+        print("Transforming element {} with transformation:\n{}".format(self.name, transformation))
+        self.frame.transform(transformation)
+        self.transformation = Transformation.from_frame(self.frame)
+        print("New frame:\n{}".format(self.frame))
+
 
     ########################################################################
     # BTLx properties

@@ -194,6 +194,7 @@ class PlateGeometry(object):
             thickness,
         ) = PlateGeometry._get_frame_and_dims_from_outlines(outline_a, outline_b)
         xform_to_local = Transformation.from_frame(frame).inverse()
+        print(frame)
         local_outline_a = outline_a.transformed(xform_to_local)
         local_outline_b = outline_b.transformed(xform_to_local)
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
@@ -389,8 +390,8 @@ class PlateGeometry(object):
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         rebased_pts = [pt.transformed(transform_to_world_xy) for pt in outline_a.points + outline_b.points]
         box = Box.from_points(rebased_pts)
-        frame.point.translate(frame.xaxis * box.xmin)
-        return frame, box.xsize, box.ysize, box.zsize
+        frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
+        return frame.transformed(transform_to_world_xy.inverse()), box.xsize, box.ysize, box.zsize
 
     @staticmethod
     def _check_outlines(outline_a, outline_b):
