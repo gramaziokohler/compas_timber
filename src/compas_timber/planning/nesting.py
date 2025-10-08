@@ -260,7 +260,7 @@ class BeamNester(object):
 
         Returns
         -------
-        dict[:class:`Stock`, list[:class:`~compas_timber.elements.Beam
+        dict[:class:`Stock`, list[:class:`~compas_timber.elements.Beam`]]
             A mapping of stock types to lists of compatible beams.
 
         Warns
