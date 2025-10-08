@@ -77,7 +77,7 @@ class Stock(Data):
             return 0.0
         current_length = sum(beam_info["length"] for beam_info in self.beam_data.values())
         cuts_so_far = len(self.beam_data)
-        return current_length + (cuts_so_far * self.cutting_tolerance)
+        return current_length + (cuts_so_far * self._cutting_tolerance)
 
     @property
     def waste(self):
@@ -249,10 +249,10 @@ class BeamNester(object):
         Cutting tolerance
     """
 
-    def __init__(self, model, stock_catalog, cutting_tolerance=0.0):
+    def __init__(self, model, stock_catalog, cutting_tolerance=None):
         self.model = model
         self.stock_catalog = stock_catalog if isinstance(stock_catalog, list) else [stock_catalog]
-        self.cutting_tolerance = cutting_tolerance
+        self.cutting_tolerance = cutting_tolerance or 0.0
 
     def _sort_beams_by_stock(self):
         """
