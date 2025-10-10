@@ -1,5 +1,6 @@
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -163,7 +164,8 @@ class TimberElement(Element):
             The reference frame of the element.
         """
         # type: () -> Frame
-        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
+        #NOTE: changed to be generated from blank to ensure compatibility with Plate.blank including release 2.0/after updating to compas_model
+        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
 
     @property
     def ref_sides(self):
