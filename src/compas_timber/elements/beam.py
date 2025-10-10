@@ -7,7 +7,6 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
@@ -114,19 +113,8 @@ class Beam(TimberElement):
         return True
 
     @property
-    def transformation(self):
-        transformation = super(Beam, self).transformation
-        start, _ = self._resolve_blank_extensions()
-        extension_transformation = Translation.from_vector(-self.frame.xaxis * start)
-        return extension_transformation * transformation  # TODO: should this be instead handled when calling `add_blank_extension` and `remove_blank_extension`?
-
-    @transformation.setter
-    def transformation(self, transformation):
-        super(Beam, self.__class__).transformation.__set__(self, transformation)
-
-    @property
     def shape(self):
-        """The shape of the beam in global coordinates."""
+        """The shape of the beam in model space."""
         # type: () -> Box
         shape = Box(self.length, self.width, self.height)
         shape.translate(Vector.Xaxis() * self.length * 0.5)
@@ -134,10 +122,11 @@ class Beam(TimberElement):
 
     @property
     def blank(self):
-        """The blank of the beam in global coordinates."""
+        """The blank of the beam in model space."""
         # type: () -> Box
+        start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
+        blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5)-start))
         return blank.transformed(self.modeltransformation)
 
     @property
@@ -148,7 +137,7 @@ class Beam(TimberElement):
 
     @property
     def centerline(self):
-        """The centerline of the beam in global coordinates."""
+        """The centerline of the beam in model space."""
         # type: () -> Line
         line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self.length)
         return line.transformed(self.modeltransformation)
@@ -160,12 +149,12 @@ class Beam(TimberElement):
         """
         Reference frame for machining processings according to BTLx standard.
         The origin is at the bottom far corner of the element.
-        The ref_frame is always in global coordinates.
+        The ref_frame is always in model coordinates.
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
-        ref_point = Point(0, self.width * 0.5, -self.height * 0.5)
-        frame = Frame(ref_point, Vector.Xaxis(), Vector.Zaxis())
-        return frame.transformed(self.modeltransformation)
+        #NOTE: This does not work with self.frame because self.frame is in parent space, and ref_frame needs to be in model space(for now)
+        #NOTE: compas_model.Element.frame is in the global/model space, and would work, but it is not yet implemented in TimberElement.
+        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
 
     # ==========================================================================
     # Implementations of abstract methods
@@ -190,10 +179,7 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * self.blank_length * 0.5)
-
-        geometry = Brep.from_box(blank)
+        geometry = Brep.from_box(self.blank.transformed(self.transformation_to_local))
         if include_features:
             for feature in self.features:
                 try:
@@ -384,7 +370,9 @@ class Beam(TimberElement):
             plane = Plane.from_frame(plane)
 
         x = {}
-        for e in self.ref_edges:
+        pts = self.shape.points
+        edges = [Line(pts[0], pts[3]), Line(pts[1], pts[2]), Line(pts[4], pts[5]), Line(pts[7], pts[6])]
+        for e in edges:
             p, t = intersection_line_plane_param(e, plane)
             x[t] = p
 
