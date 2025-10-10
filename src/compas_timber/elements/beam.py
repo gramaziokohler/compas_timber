@@ -177,7 +177,7 @@ class Beam(TimberElement):
             If there is an error applying features to the element.
 
         """
-        geometry = Brep.from_box(self.blank.transformed(self.transformation_to_local))
+        geometry = Brep.from_box(self.blank.transformed(self.transformation_to_local()))
         if include_features:
             for feature in self.features:
                 try:
