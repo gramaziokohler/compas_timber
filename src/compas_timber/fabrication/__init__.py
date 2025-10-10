@@ -30,6 +30,8 @@ from .btlx import BTLxFromGeometryDefinition
 from .btlx import Contour
 from .btlx import DualContour
 from .longitudinal_cut import LongitudinalCut
+from .house import House
+from .house_mortise import HouseMortise
 
 __all__ = [
     "BTLxWriter",
@@ -64,4 +66,6 @@ __all__ = [
     "Contour",
     "DualContour",
     "LongitudinalCut",
+    "House",
+    "HouseMortise",
 ]

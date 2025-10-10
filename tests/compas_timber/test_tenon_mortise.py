@@ -81,7 +81,7 @@ EXPECTED_TENON_PARAMS = [
             ("StartDepth", "-1.961"),
             ("Angle", "78.961"),
             ("Inclination", "67.521"),
-            ("Rotation", "105.000"),
+            ("Rotation", "90.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
             ("Length", "80.000"),
@@ -105,7 +105,7 @@ EXPECTED_TENON_PARAMS = [
             ("StartDepth", "7.940"),
             ("Angle", "62.265"),
             ("Inclination", "79.392"),
-            ("Rotation", "96.000"),
+            ("Rotation", "90.000"),
             ("LengthLimitedTop", "yes"),
             ("LengthLimitedBottom", "yes"),
             ("Length", "110.000"),
@@ -165,7 +165,7 @@ EXPECTED_MORTISE_PARAMS = [
 
 
 @pytest.mark.parametrize(
-    "test_index, expected_tenon_params, tenon_cutting_frames, start_y, start_depth, rotation, length, width, height, shape, shape_radius, ref_side_index",
+    "test_index, expected_tenon_params, tenon_cutting_frames, start_y, start_depth,length, width, height, shape, shape_radius, ref_side_index",
     [
         (
             0,
@@ -173,7 +173,6 @@ EXPECTED_MORTISE_PARAMS = [
             TENON_CUTTING_FRAMES,
             -5.0,
             -5.0,
-            15.0,
             80.0,
             30.0,
             60.0,
@@ -187,7 +186,6 @@ EXPECTED_MORTISE_PARAMS = [
             TENON_CUTTING_FRAMES,
             -7.0,
             2,
-            -6.0,
             110.0,
             40.0,
             60.0,
@@ -204,7 +202,6 @@ def test_tenon_params(
     tenon_cutting_frames,
     start_y,
     start_depth,
-    rotation,
     length,
     width,
     height,
@@ -213,12 +210,11 @@ def test_tenon_params(
     ref_side_index,
 ):
     # Create the Tenon
-    tenon = Tenon.from_plane_and_beam(
-        plane=tenon_cutting_frames[test_index],
+    tenon = Tenon.from_frame_and_beam(
+        frame=tenon_cutting_frames[test_index],
         beam=main_beams[test_index],
         start_y=start_y,
         start_depth=start_depth,
-        rotation=rotation,
         length=length,
         width=width,
         height=height,
@@ -234,13 +230,12 @@ def test_tenon_params(
 
 
 @pytest.mark.parametrize(
-    "test_index, expected_mortise_params, mortise_cutting_frames, start_depth, length, width, depth, shape, shape_radius, ref_side_index",
+    "test_index, expected_mortise_params, mortise_cutting_frames, length, width, depth, shape, shape_radius, ref_side_index",
     [
         (
             0,
             EXPECTED_MORTISE_PARAMS,
             MORTISE_CUTTING_FRAMES,
-            0.0,
             80.0,
             30.0,
             60.0,
@@ -252,7 +247,6 @@ def test_tenon_params(
             1,
             EXPECTED_MORTISE_PARAMS,
             MORTISE_CUTTING_FRAMES,
-            0.0,
             110.0,
             40.0,
             60.0,
@@ -267,7 +261,6 @@ def test_mortise_params(
     mortise_cutting_frames,
     test_index,
     expected_mortise_params,
-    start_depth,
     length,
     width,
     depth,
@@ -277,15 +270,14 @@ def test_mortise_params(
 ):
     # Create the mortise
     mortise = Mortise.from_frame_and_beam(
-        mortise_cutting_frames[test_index],
-        cross_beam,
-        start_depth,
-        length,
-        width,
-        depth,
-        shape,
-        shape_radius,
-        ref_side_index,
+        frame=mortise_cutting_frames[test_index],
+        beam=cross_beam,
+        length=length,
+        width=width,
+        depth=depth,
+        shape=shape,
+        shape_radius=shape_radius,
+        ref_side_index=ref_side_index,
     )
 
     # Validate generated parameters

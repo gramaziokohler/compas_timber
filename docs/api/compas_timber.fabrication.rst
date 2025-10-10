@@ -28,6 +28,8 @@ Processings
     DovetailMortise
     Drilling
     FrenchRidgeLap
+    House
+    HouseMortise
     JackRafterCut
     Lap
     LongitudinalCut
@@ -70,4 +72,3 @@ Upon creating a BTLx file, these are converted to their respective processings.
     JackRafterCutProxy
     PocketProxy
     LapProxy
-

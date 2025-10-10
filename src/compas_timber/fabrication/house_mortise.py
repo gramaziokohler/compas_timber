@@ -1,15 +1,9 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
-from compas.geometry import Rotation
-from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
-from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
@@ -21,8 +15,8 @@ from .btlx import OrientationType
 from .btlx import TenonShapeType
 
 
-class Mortise(BTLxProcessing):
-    """Represents a Mortise feature to be made on a beam.
+class HouseMortise(BTLxProcessing):
+    """Represents a House Mortise feature to be made on a beam.
 
     Parameters
     ----------
@@ -52,14 +46,16 @@ class Mortise(BTLxProcessing):
         The shape of the cut. Must be either 'automatic', 'square', 'round', 'rounded', or 'radius'.
     shape_radius : float
         The radius of the shape of the cut. 0.0 < shape_radius < 1000.0.
+    mortise: :class:`~compas_timber.fabrication.Mortise` or :class:`~compas_timber.fabrication.DovetailMortise`
+        The mortise instance that is made in conjunction with this house mortise.
 
     """
 
-    PROCESSING_NAME = "Mortise"  # type: ignore
+    PROCESSING_NAME = "HouseMortise"  # type: ignore
 
     @property
     def __data__(self):
-        data = super(Mortise, self).__data__
+        data = super(HouseMortise, self).__data__
         data["start_x"] = self.start_x
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
@@ -73,6 +69,7 @@ class Mortise(BTLxProcessing):
         data["depth"] = self.depth
         data["shape"] = self.shape
         data["shape_radius"] = self.shape_radius
+        data["mortise"] = self.mortise
         return data
 
     # fmt: off
@@ -91,9 +88,10 @@ class Mortise(BTLxProcessing):
         depth=28.0,
         shape=TenonShapeType.AUTOMATIC,
         shape_radius=20.0,
+        mortise=None,
         **kwargs
     ):
-        super(Mortise, self).__init__(**kwargs)
+        super(HouseMortise, self).__init__(**kwargs)
         self._start_x = None
         self._start_y = None
         self._start_depth = None
@@ -107,6 +105,7 @@ class Mortise(BTLxProcessing):
         self._depth = None
         self._shape = None
         self._shape_radius = None
+        self._mortise = None
 
         self.start_x = start_x
         self.start_y = start_y
@@ -121,14 +120,15 @@ class Mortise(BTLxProcessing):
         self.depth = depth
         self.shape = shape
         self.shape_radius = shape_radius
+        self.mortise = mortise
 
     ########################################################################
     # Properties
     ########################################################################
 
     @property
-    def params(self):
-        return MortiseParams(self)
+    def params_dict(self):
+        return HouseMortiseParams(self).as_dict()
 
     @property
     def start_x(self):
@@ -266,93 +266,71 @@ class Mortise(BTLxProcessing):
             raise ValueError("ShapeRadius must be between 0.0 and 1000.0")
         self._shape_radius = shape_radius
 
+    @property
+    def mortise(self):
+        return self._mortise
+
+    @mortise.setter
+    def mortise(self, mortise):
+        if mortise.__class__.__name__ not in ["Mortise", "DovetailMortise"]:
+            raise ValueError("Mortise must be an instance of Mortise or DovetailMortise.")
+        self._mortise = mortise
+        self.add_subprocessing(mortise)
+
     ########################################################################
     # Alternative constructors
     ########################################################################
 
     @classmethod
-    def from_frame_and_beam(
-        cls,
-        frame,
-        beam,
-        length=80.0,
-        width=40.0,
-        depth=28.0,
-        shape=TenonShapeType.AUTOMATIC,
-        shape_radius=20.0,
-        ref_side_index=0,
-    ):
-        """Create a Mortise instance from a cutting frame and the beam it should cut. This could be the ref_side of the main beam of a Joint and the cross beam.
+    def from_mortise_and_beam(cls, mortise, beam, offset, length, width, depth):
+        """Create a House instance from a Mortise or DovetailMortise instance.
 
         Parameters
         ----------
-        frame : :class:`~compas.geometry.Frame` or :class:`~compas.geometry.Plane`
-            The cutting frame.
+        mortise : :class:`~compas_timber.fabrication.Mortise` or :class:`~compas_timber.fabrication.DovetailMortise`
+            The mortise feature that is made in conjunction with this HouseMortise feature.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
-        angle : float, optional
-            The angle of the cut.
-        length : float, optional
-            The length of the mortise.
-        width : float, optional
-            The width of the mortise.
-        depth : float, optional
-            The depth of the mortise. The equivalent value of the Tenon BTLxProcessing is the height.
-        shape : str, optional
-            The shape of the mortise in regards to it's edges. Default is 'automatic'.
-        shape_radius : float, optional
-            The radius of the shape of the mortise. Default is 20.0.
-        ref_side_index : int, optional
-            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+        offset : float
+            The offset from the start of the mortise to the start of the house mortise.
+        length : float
+            The length of the house mortise.
+        width : float
+            The width of the house mortise.
+        depth : float
+            The depth of the house mortise.
 
         Returns
         -------
-        :class:`~compas_timber.fabrication.Mortise`
-
+        :class:`~compas_timber.fabrication.HouseMortise`
         """
-        # type: (Frame|Plane, Beam, float, float, float, float, float, str, float, int) -> Mortise
-        if isinstance(frame, Plane):
-            frame = Frame.from_plane(frame)
+        # type: (Mortise, float, float, float) -> HouseMortise
+        # get the ref_side from the mortise
+        ref_side = beam.ref_sides[mortise.ref_side_index]
+        # get the cutting_frame from the mortise and beam
+        cutting_frame = mortise.frame_from_params_and_beam(beam)
 
-        # define ref_side & ref_edge
-        ref_side = beam.ref_sides[ref_side_index]
-        ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-
-        # calculate orientation
-        orientation = cls._calculate_orientation(ref_side, frame)
-
-        # calclulate start_x and start_y
-        start_x = cls._calculate_start_x(ref_side, ref_edge, frame)
-        start_y = cls._calculate_start_y(ref_side, frame)
-
-        # define angle
-        angle = cls._calculate_angle(ref_side, frame, orientation)
-
-        # define slope and inclination
-        # TODO: In which cases do you want indiferent slope and inclination or start_depth?
-        start_depth = 0.0
-        slope = 90.0
-        inclination = 90.0
-
-        # determine if the top and bottom length of the cut is limited
-        length_limited_top = True
-        length_limited_bottom = True
+        orientation = cls._calculate_orientation(ref_side, cutting_frame)
+        if orientation == OrientationType.END:
+            offset = -offset
+        start_x = mortise.start_x + offset
 
         return cls(
             start_x,
-            start_y,
-            start_depth,
-            angle,
-            slope,
-            inclination,
-            length_limited_top,
-            length_limited_bottom,
+            mortise.start_y,
+            mortise.start_depth,
+            mortise.angle,
+            mortise.slope,
+            mortise.inclination,
+            True,
+            mortise.length_limited_bottom,
             length,
             width,
             depth,
-            shape,
-            shape_radius,
-            ref_side_index=ref_side_index,
+            TenonShapeType.SQUARE,
+            mortise.shape_radius,
+            mortise=mortise,
+            ref_side_index=mortise.ref_side_index,
         )
 
     @staticmethod
@@ -364,33 +342,6 @@ class Mortise(BTLxProcessing):
             return OrientationType.END
         else:
             return OrientationType.START
-
-    @staticmethod
-    def _calculate_start_x(ref_side, ref_edge, cutting_frame):
-        # calculate the start_x of the cut based on the ref_side, ref_edge and cutting_frame
-        perp_plane = Plane(cutting_frame.point, ref_side.xaxis)
-        point_start_x = intersection_line_plane(ref_edge, perp_plane)
-        if point_start_x is None:
-            raise ValueError("Plane does not intersect with beam.")
-        start_x = distance_point_point(ref_side.point, point_start_x)
-        return start_x
-
-    @staticmethod
-    def _calculate_start_y(ref_side, cutting_frame):
-        # calculate the start_y from the distance between the ref_side and the cutting frame in the y-axis direction of the ref_side
-        direction = ref_side.yaxis.unitized()
-        vector = cutting_frame.point - ref_side.point
-        return abs(vector.dot(direction))
-
-    @staticmethod
-    def _calculate_angle(ref_side, cutting_frame, orientation):
-        # calculate the angle of the cut based on the ref_side and cutting_frame
-        if orientation == OrientationType.START:
-            angle = angle_vectors_signed(ref_side.xaxis, -cutting_frame.xaxis, ref_side.normal, deg=True)
-            return (angle - 90.0) % 180
-        else:
-            angle = angle_vectors_signed(ref_side.xaxis, cutting_frame.xaxis, ref_side.normal, deg=True)
-            return (angle + 90.0) % 180
 
     ########################################################################
     # Methods
@@ -420,32 +371,48 @@ class Mortise(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
 
-        # get mortise volume from params and beam
+        # get house mortise volume from params and beam
         try:
-            mortise_volume = self.volume_from_params_and_beam(beam)
+            house_mortise_volume = self.volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate mortise mortise volume from parameters and beam: {}".format(str(e))
+                None, geometry, "Failed to generate house mortise volume from parameters and beam: {}".format(str(e))
             )
 
-        # fillet the edges of the mortise volume based on the shape
+        # fillet the edges of the house mortise volume based on the shape
         if self.shape is not TenonShapeType.SQUARE:
             try:
-                edges = mortise_volume.edges[:8]
-                mortise_volume.fillet(self.shape_radius, edges)
+                edges = house_mortise_volume.edges[:8]
+                house_mortise_volume.fillet(self.shape_radius, edges)
             except Exception as e:
                 raise FeatureApplicationError(
-                    mortise_volume,
+                    house_mortise_volume,
                     geometry,
-                    "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
+                    "Failed to fillet the edges of the house_mortise volume based on the shape: {}".format(str(e)),
                 )
+
+        # get mortise volume from mortise instance
+        try:
+            mortise_volume = self.mortise.volume_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate mortise volume from mortise instance: {}".format(str(e))
+            )
+
+        # add mortise volume to house mortise volume
+        try:
+            house_mortise_volume += mortise_volume
+        except Exception as e:
+            raise FeatureApplicationError(
+                mortise_volume, geometry, "Failed to add mortise volume to house_mortise volume: {}".format(str(e))
+            )
 
         # remove tenon volume to geometry
         try:
-            return geometry - mortise_volume
+            return geometry - house_mortise_volume
         except Exception as e:
             raise FeatureApplicationError(
-                mortise_volume, geometry, "Failed to remove mortise volume from geometry: {}".format(str(e))
+                mortise_volume, geometry, "Failed to remove house mortise volume from geometry: {}".format(str(e))
             )
 
     def frame_from_params_and_beam(self, beam):
@@ -470,16 +437,11 @@ class Mortise(BTLxProcessing):
         ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
         cutting_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
-
-        # rotate the cutting frame based on the angle
-        angle_rotation = Rotation.from_axis_and_angle(
-            cutting_frame.normal, math.radians(self.angle + 90), cutting_frame.point
-        )
-        cutting_frame.transform(angle_rotation)
+        cutting_frame.rotate(math.radians(self.angle), cutting_frame.normal, point=cutting_frame.point)
         return cutting_frame
 
     def volume_from_params_and_beam(self, beam):
-        """Calculates the mortise volume from the machining parameters in this instance and the given beam.
+        """Calculates the house mortise volume from the machining parameters in this instance and the given beam.
 
         Parameters
         ----------
@@ -489,7 +451,7 @@ class Mortise(BTLxProcessing):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The mortise volume.
+            The house mortise volume.
 
         """
         # type: (Beam) -> Brep
@@ -498,72 +460,51 @@ class Mortise(BTLxProcessing):
         assert self.depth is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
-        # translate the cutting frame to the center of the mortise
-        translation_vector = (-cutting_frame.normal * self.depth - cutting_frame.yaxis * self.length)
+
+        translation_vector = (-cutting_frame.normal * self.depth + cutting_frame.xaxis * self.length)
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
-        tenon_box = Box(self.width, self.length, self.depth, cutting_frame)
-        return Brep.from_box(tenon_box)
-
-    def scale(self, factor):
-        """Scale the parameters of this processing by a given factor.
-
-        Note
-        ----
-        Only distances are scaled, angles remain unchanged.
-
-        Parameters
-        ----------
-        factor : float
-            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
-
-        """
-        self.start_x *= factor
-        self.start_y *= factor
-        self.start_depth *= factor
-        self.length *= factor
-        self.width *= factor
-        self.depth *= factor
-        self.shape_radius *= factor
+        house_mortise_box = Box(self.length, self.width, self.depth, cutting_frame)
+        return Brep.from_box(house_mortise_box)
 
 
-class MortiseParams(BTLxProcessingParams):
-    """A class to store the parameters of a Mortise feature.
+class HouseMortiseParams(BTLxProcessingParams):
+    """A class to store the parameters of a HouseMortise feature.
 
     Parameters
     ----------
-    instance : :class:`~compas_timber.fabrication.Mortise`
-        The instance of the Mortise feature.
+    instance : :class:`~compas_timber.fabrication.HouseMortise`
+        The instance of the HouseMortise feature.
     """
 
     def __init__(self, instance):
-        # type: (Mortise) -> None
-        super(MortiseParams, self).__init__(instance)
+        # type: (HouseMortise) -> None
+        super(HouseMortiseParams, self).__init__(instance)
 
     def as_dict(self):
-        """Returns the parameters of the Mortise feature as a dictionary.
+        """Returns the parameters of the HouseMortise feature as a dictionary.
 
         Returns
         -------
         dict
-            The parameters of the Mortise as a dictionary.
+            The parameters of the HouseMortise as a dictionary.
         """
         # type: () -> OrderedDict
 
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        # result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
+        result = super(HouseMortiseParams, self).as_dict()
+        result["StartX"] = "{:.{prec}f}".format(self._instance.start_x, prec=TOL.precision)
+        result["StartY"] = "{:.{prec}f}".format(self._instance.start_y, prec=TOL.precision)
+        result["StartDepth"] = "{:.{prec}f}".format(self._instance.start_depth, prec=TOL.precision)
+        result["Angle"] = "{:.{prec}f}".format(self._instance.angle, prec=TOL.precision)
+        result["Slope"] = "{:.{prec}f}".format(self._instance.slope, prec=TOL.precision)
+        # result["Inclination"] = "{:.{prec}f}".format(self._instance.inclination, prec=TOL.precision)
         #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
         result["LengthLimitedTop"] = "yes" if self._instance.length_limited_top else "no"
         result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
+        result["Length"] = "{:.{prec}f}".format(self._instance.length, prec=TOL.precision)
+        result["Width"] = "{:.{prec}f}".format(self._instance.width, prec=TOL.precision)
+        result["Depth"] = "{:.{prec}f}".format(self._instance.depth, prec=TOL.precision)
         result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
+        result["ShapeRadius"] = "{:.{prec}f}".format(self._instance.shape_radius, prec=TOL.precision)
         return result

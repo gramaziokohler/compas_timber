@@ -1,11 +1,14 @@
+import math
+
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import House
+from compas_timber.fabrication import HouseMortise
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import TenonShapeType
 
 from .joint import Joint
 from .solver import JointTopology
-from .utilities import beam_ref_side_incidence
 
 
 class TenonMortiseJoint(Joint):
@@ -27,8 +30,6 @@ class TenonMortiseJoint(Joint):
         Start position of the tenon along the y-axis of the main beam.
     start_depth : float
         Depth of the tenon from the surface of the main beam.
-    rotation : float
-        Rotation of the tenon around the main beam's axis.
     length : float
         Length of the tenon along the main beam.
     width : float
@@ -39,6 +40,10 @@ class TenonMortiseJoint(Joint):
         The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
+    house_type : int
+        The type of the house, represented by an integer index: 0: None, 1: OFFSET, 2: FULL, 3: SHOULDER
+    house_depth : float
+        The depth of the house, if applicable.
 
 
     Attributes
@@ -55,8 +60,6 @@ class TenonMortiseJoint(Joint):
         Start position of the tenon along the y-axis of the main beam.
     start_depth : float
         Depth of the tenon from the surface of the main beam.
-    rotation : float
-        Rotation of the tenon around the main beam's axis.
     length : float
         Length of the tenon along the main beam.
     width : float
@@ -67,6 +70,10 @@ class TenonMortiseJoint(Joint):
         The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
+    house_type : int
+        The type of the house, represented by an integer index: 0: None, 1: OFFSET, 2: FULL, 3: SHOULDER
+    house_depth : float
+        The depth of the house, if applicable.
     features : list
         List of features or machining processings applied to the elements.
     """
@@ -80,12 +87,13 @@ class TenonMortiseJoint(Joint):
         data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
-        data["rotation"] = self.rotation
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
         data["shape"] = self.shape
         data["shape_radius"] = self.shape_radius
+        data["house_type"] = self.house_type
+        data["house_depth"] = self.house_depth
         return data
 
     # fmt: off
@@ -95,12 +103,13 @@ class TenonMortiseJoint(Joint):
         cross_beam,
         start_y=None,
         start_depth=None,
-        rotation=None,
         length=None,
         width=None,
         height=None,
         shape=None,
         shape_radius=None,
+        house_type=None,
+        house_depth=None,
         **kwargs
     ):
         super(TenonMortiseJoint, self).__init__(**kwargs)
@@ -111,12 +120,13 @@ class TenonMortiseJoint(Joint):
 
         self.start_y = start_y
         self.start_depth = start_depth
-        self.rotation = rotation
         self.length = length
         self.width = width
         self.height = height
         self.shape = shape
         self.shape_radius = shape_radius
+        self.house_type = house_type
+        self.house_depth = house_depth
 
         self.features = []
 
@@ -133,7 +143,7 @@ class TenonMortiseJoint(Joint):
     @property
     def main_beam_ref_side_index(self):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     @property
@@ -155,15 +165,36 @@ class TenonMortiseJoint(Joint):
     def _update_unset_values(self):
         """Updates and sets default property values if they are not provided."""
         width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
-
+        # assign default values
         self.start_y = self.start_y or 0.0
         self.start_depth = self.start_depth or 0.0
-        self.rotation = self.rotation or 0.0
-        self.length = self.length or height
-        self.width = self.width or width / 2
-        self.height = self.height or width / 2
+        self.length = self.length or height * 0.75
+        self.width = self.width or self.length * 0.33
+        self.height = self.height or width * 0.5
         self.shape = self.shape or 2  # Default shape: ROUND
-        self.shape_radius = self.shape_radius or width / 4
+        self.shape_radius = self.shape_radius or width * 0.15
+
+    def get_house_dimensions(self, tenon):
+        """Calculates the dimensions of the house and house mortise from the tenon."""
+        beam_width, beam_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
+
+        # default values # HouseType: FULL
+        tenon_offset = 0.0
+        mortise_offset = tenon.start_depth / math.sin(math.radians(tenon.inclination))
+        length = beam_height / math.sin(math.radians(tenon.inclination))
+        width = beam_width / math.sin(math.radians(tenon.angle)) + tenon.start_y
+
+        if self.house_type == 1: # HouseType: OFFSET
+            tenon_offset_top = tenon.start_depth/2
+            tenon_offset_bottom = (length - tenon.start_depth - tenon.length)/2
+            tenon_offset = min(tenon_offset_top, tenon_offset_bottom)
+            mortise_offset -= tenon_offset / math.sin(math.radians(tenon.inclination))
+            length -= (tenon_offset * 2 / math.sin(math.radians(tenon.inclination)))
+            width = (beam_width - abs(tenon_offset) * 2) / math.sin(math.radians(tenon.angle))
+        elif self.house_type == 2: # HouseType: SHOULDER
+            length = tenon.length + tenon.start_depth/math.sin(math.radians(tenon.inclination))
+
+        return tenon_offset, mortise_offset, length, width
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -181,7 +212,8 @@ class TenonMortiseJoint(Joint):
 
         #cross_beam
         try:
-            cutting_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
+            opposing_ref_side = self.main_beam.opposing_side_index(self.main_beam_ref_side_index)
+            cutting_plane = self.main_beam.ref_sides[opposing_ref_side]
             start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -193,9 +225,7 @@ class TenonMortiseJoint(Joint):
         #main_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]
-            offset = self.height or main_width / 2    # in case height is not set this is the default value set when adding features
-            cutting_plane.translate(-cutting_plane.normal * offset)
+            cutting_plane.translate(-cutting_plane.normal * self.height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -217,16 +247,14 @@ class TenonMortiseJoint(Joint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        # set default values if not provided
         self._update_unset_values()
 
         # generate  tenon features
-        main_feature = Tenon.from_plane_and_beam(
-            plane=self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
+        main_feature = Tenon.from_frame_and_beam(
+            frame=self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
             beam=self.main_beam,
             start_y=self.start_y,
             start_depth=self.start_depth,
-            rotation=self.rotation,
             length=self.length,
             width=self.width,
             height=self.height,
@@ -239,7 +267,6 @@ class TenonMortiseJoint(Joint):
         cross_feature = Mortise.from_frame_and_beam(
             frame=main_feature.frame_from_params_and_beam(self.main_beam),
             beam=self.cross_beam,
-            start_depth=0.0,  # TODO: to be updated once housing is implemented
             length=main_feature.length,
             width=main_feature.width,
             depth=main_feature.height,
@@ -247,6 +274,14 @@ class TenonMortiseJoint(Joint):
             shape_radius=main_feature.shape_radius,
             ref_side_index=self.cross_beam_ref_side_index,
         )
+
+        # convert to house and house mortise if tenon should be housed
+        if self.house_depth:
+            # get house dimensions
+            tenon_offset, mortise_offset, length, width = self.get_house_dimensions(main_feature)
+            # create house features
+            main_feature = House.from_tenon_and_beam(main_feature, self.main_beam, tenon_offset, length, width, self.house_depth)
+            cross_feature = HouseMortise.from_mortise_and_beam(cross_feature, self.cross_beam, mortise_offset, length, width, self.house_depth)
 
         # add features to beams
         self.main_beam.add_features(main_feature)
