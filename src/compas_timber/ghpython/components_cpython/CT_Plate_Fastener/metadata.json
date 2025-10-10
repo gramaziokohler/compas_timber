@@ -2,9 +2,9 @@
     "name": "Plate Fastener",
     "nickname": "PlateFastener",
     "category": "COMPAS Timber",
-    "subcategory": "Design",
+    "subcategory": "01 Elements",
     "description": "Defines a plate fastener.",
-    "exposure": 4,
+    "exposure": 8,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

@@ -1,10 +1,10 @@
 {
-    "name": "Plate",
-    "nickname": "Plate",
+    "name": "Plate From Outline and Thickness",
+    "nickname": "PlateFromThickness",
     "category": "COMPAS Timber",
-    "subcategory": "Elements",
-    "description": "Creates a Plate from a Polyline.",
-    "exposure": 2,
+    "subcategory": "01 Elements",
+    "description": "Creates a Plate from a Polyline and Thickness.",
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
@@ -13,25 +13,31 @@
                 "name": "outline",
                 "description": "Referenced polyline, Guid of polyline in the active Rhino document.",
                 "typeHintID": "ghdoc",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "thickness",
                 "description": "Thickness of the plate material.",
                 "typeHintID": "float",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "vector",
                 "description": "Determines direction of the plate extrusion",
                 "typeHintID": "vector",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "openings",
+                "description": "List of openings in the plate.",
+                "typeHintID": "ghdoc",
                 "scriptParamAccess": 1
             },
             {
                 "name": "category",
                 "description": "Category of a beam.",
                 "typeHintID": "str",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             },
             {
                 "name": "updateRefObj",

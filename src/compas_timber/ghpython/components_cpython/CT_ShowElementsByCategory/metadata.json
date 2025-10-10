@@ -2,9 +2,9 @@
     "name": "ShowBeamsByCategory",
     "nickname": "ShowBeamType",
     "category": "COMPAS Timber",
-    "subcategory": "Show",
+    "subcategory": "08 Show",
     "description": "allows user to visualize beam categories in timber model.",
-    "exposure": 2,
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,

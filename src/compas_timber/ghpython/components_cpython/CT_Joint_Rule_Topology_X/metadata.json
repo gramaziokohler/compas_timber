@@ -2,7 +2,7 @@
     "name": "X Topological Joint Rules",
     "nickname": "X_Topo_Joint",
     "category": "COMPAS Timber",
-    "subcategory": "Joint Rules",
+    "subcategory": "04 Beam Joint Rules",
     "description": "makes rule to apply joint type to X topology. Defualts to XLapJoint",
     "exposure": 4,
     "ghpython": {
@@ -13,7 +13,7 @@
         "outputParameters": [
             {
                 "name": "Rule",
-                "description": "List of TopologyRules."
+                "description": "X-Topology Rule."
             }
         ]
     }
