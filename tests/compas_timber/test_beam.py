@@ -12,6 +12,7 @@ from compas.geometry import Transformation
 from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import close
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import JackRafterCut
@@ -184,54 +185,32 @@ def test_resolve_blank_extensions_no_extensions(beam):
     assert end == 0.0
 
 
-def test_transformation_with_start_extension(beam):
-    """Test beam transformation includes negative translation along x-axis for start extension."""
-    # Get transformation before extension
-    transformation_before = beam.transformation
+def test_start_blank_extension_updates_blank(beam):
+    """Test that adding start extension properly updates the blank geometry."""
+    blank_before = beam.blank.copy()
+    extension_amount = 50.0
 
-    # Add start extension
-    beam.add_blank_extension(0.1, 0.0, joint_key=1)
+    beam.add_blank_extension(extension_amount, 0.0, joint_key=1)
+    blank_after = beam.blank.copy()
 
-    # Get transformation after extension
-    transformation_after = beam.transformation
+    # The blank length should increase by the extension amount
+    expected_new_length = beam.length + extension_amount
+    assert TOL.is_close(blank_after.xsize, expected_new_length)
 
-    # The difference should be a translation along negative x-axis
-    expected_translation = Translation.from_vector(-beam.frame.xaxis * 0.1)
+    # Width and height should remain unchanged
+    assert TOL.is_close(blank_after.ysize, blank_before.ysize)
+    assert TOL.is_close(blank_after.zsize, blank_before.zsize)
 
-    assert transformation_before == transformation_after
+    # The blank should shift to accommodate the start extension
+    # Start extension moves the blank backward along the beam's x-axis
+    expected_shift = extension_amount * 0.5  # Half the extension since blank is centered
+    shift_vector = beam.frame.xaxis * expected_shift
+    expected_center = blank_before.frame.point - shift_vector
 
+    assert TOL.is_zero(blank_after.frame.point.distance_to_point(expected_center))
 
-def test_transformation_with_end_extension_only(beam):
-    """Test beam transformation doesn't change for end extension only."""
-    # Get transformation before extension
-    transformation_before = beam.transformation
-
-    # Add end extension only
-    beam.add_blank_extension(0.0, 0.2, joint_key=1)
-
-    # Get transformation after extension
-    transformation_after = beam.transformation
-
-    # Should be the same (no start extension)
-    assert transformation_before == transformation_after
-
-
-def test_transformation_with_multiple_extensions(beam):
-    """Test beam transformation uses max start value from multiple extensions."""
-    # Get transformation before extensions
-    transformation_before = beam.transformation
-
-    # Add multiple extensions with different start values
-    beam.add_blank_extension(0.1, 0.0, joint_key=1)
-    beam.add_blank_extension(0.15, 0.0, joint_key=2)  # This has the max start
-    beam.add_blank_extension(0.0, 5.0, joint_key=3)
-
-    transformation_after = beam.transformation
-
-    # The difference should be based on max start extension (0.15)
-    expected_translation = Translation.from_vector(-beam.frame.xaxis * 0.15)
-
-    assert transformation_after == transformation_before
+    # Verify blank_length property is updated correctly
+    assert TOL.is_close(beam.blank_length, expected_new_length)
 
 
 def test_transformation_when_removing_extensions(beam):
