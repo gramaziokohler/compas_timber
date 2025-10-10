@@ -451,17 +451,6 @@ class House(BTLxProcessing):
                 None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
 
-        # fillet the edges of the tenon volume based on the tenon shape
-        if self.tenon.shape is not TenonShapeType.SQUARE:
-            try:
-                edges = tenon_volume.edges[:8]
-                tenon_volume.fillet(self.tenon.shape_radius, edges)
-            except Exception as e:
-                raise FeatureApplicationError(
-                    tenon_volume,
-                    geometry,
-                    "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
-                )
         # add tenon volume to house volume
         try:
             house_volume += tenon_volume

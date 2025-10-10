@@ -399,18 +399,6 @@ class HouseMortise(BTLxProcessing):
                 None, geometry, "Failed to generate mortise volume from mortise instance: {}".format(str(e))
             )
 
-        # fillet the edges of the mortise volume based on the shape
-        if self.mortise.shape is not TenonShapeType.SQUARE:
-            try:
-                edges = mortise_volume.edges[:8]
-                mortise_volume.fillet(self.mortise.shape_radius, edges)
-            except Exception as e:
-                raise FeatureApplicationError(
-                    mortise_volume,
-                    geometry,
-                    "Failed to fillet the edges of the mortise volume based on the shape: {}".format(str(e)),
-                )
-
         # add mortise volume to house mortise volume
         try:
             house_mortise_volume += mortise_volume
