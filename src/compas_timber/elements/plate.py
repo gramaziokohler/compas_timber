@@ -75,6 +75,7 @@ class Plate(PlateGeometry, TimberElement):
         data["outline_a"] = self.outline_a
         data["outline_b"] = self.outline_b
         data["openings"] = [o.__data__ for o in self.openings]
+        return data
 
     def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None, **kwargs):
         TimberElement.__init__(self, frame=frame, length=length, width=width, height=thickness, **kwargs)
