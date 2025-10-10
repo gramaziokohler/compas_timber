@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added `PlateGeometry` class.
+* Added `SlabJoint`, `SlabMiterJoint`, `SlabButtJoint`, `SlabLButtJoint`, `SlabTButtJoint`.
 
 ### Changed
 
@@ -81,7 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joint_candidates` property to `TimberModel`.
 * Added `add_joint_candidate` method to `TimberModel`.
 * Added `remove_joint_candidate` method to `TimberModel`.
-* Added `SlabJoint`, `SlabMiterJoint`, `SlabButtJoint`, `SlabLButtJoint`, `SlabTButtJoint`.
 
 ### Changed
 
