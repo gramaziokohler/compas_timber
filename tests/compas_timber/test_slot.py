@@ -8,6 +8,7 @@ from compas.geometry import Vector
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Slot
+from compas_timber.fabrication import OrientationType
 
 
 @pytest.fixture
@@ -51,8 +52,9 @@ def test_horizontal_slot_negative_angle(beam):
     )
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
-
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
 
 
 def test_horizontal_slot_positive_angle(beam):
@@ -89,7 +91,9 @@ def test_horizontal_slot_positive_angle(beam):
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
 
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
 
 
 def test_vertical_slot_positive_angle(beam):
@@ -126,7 +130,9 @@ def test_vertical_slot_positive_angle(beam):
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
 
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
 
 
 def test_vertical_slot_negative_angle(beam):
@@ -163,4 +169,23 @@ def test_vertical_slot_negative_angle(beam):
 
     slot = Slot.from_plane_and_beam(slot_frame, beam, slot_depth, slot_thickness)
 
-    assert slot.params_dict == expected_values
+    params = slot.params.header_attributes
+    params.update(slot.params.as_dict())
+    assert params == expected_values
+
+
+def test_slot_scaled():
+    slot = Slot(orientation=OrientationType.START, start_x=14.23, start_y=0.22, start_depth=42.0, angle=23.5, inclination=95.2, length=100.0, depth=10.0, thickness=5.0)
+
+    scaled_slot = slot.scaled(2.0)
+
+    assert scaled_slot.orientation == slot.orientation
+    assert scaled_slot.start_x == slot.start_x * 2.0
+    assert scaled_slot.start_y == slot.start_y * 2.0
+    assert scaled_slot.start_depth == slot.start_depth * 2.0
+    assert scaled_slot.angle == slot.angle
+    assert scaled_slot.inclination == slot.inclination
+    assert scaled_slot.length == slot.length * 2.0
+    assert scaled_slot.depth == slot.depth * 2.0
+    assert scaled_slot.thickness == slot.thickness * 2.0
+    assert scaled_slot.ref_side_index == slot.ref_side_index

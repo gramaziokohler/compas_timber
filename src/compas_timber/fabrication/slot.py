@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -15,10 +17,28 @@ from .btlx import OrientationType
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
 
+    @property
+    def __data__(self):
+        data = super(Slot, self).__data__
+        data["orientation"] = self.orientation
+        data["start_x"] = self.start_x
+        data["start_y"] = self.start_y
+        data["start_depth"] = self.start_depth
+        data["angle"] = self.angle
+        data["inclination"] = self.inclination
+        data["length"] = self.length
+        data["depth"] = self.depth
+        data["thickness"] = self.thickness
+        data["angle_ref_point"] = self.angle_ref_point
+        data["angle_opp_point"] = self.angle_opp_point
+        data["add_angle_opp_point"] = self.add_angle_opp_point
+        data["machining_limits"] = self.machining_limits
+        return data
+
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation=OrientationType.START,
         start_x=0.0,
         start_y=0.0,
         start_depth=0.0,
@@ -67,8 +87,8 @@ class Slot(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return SlotParams(self).as_dict()
+    def params(self):
+        return SlotParams(self)
 
     @property
     def orientation(self):
@@ -330,6 +350,26 @@ class Slot(BTLxProcessing):
         # type: (Brep, Beam) -> Brep
         return geometry.copy()
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.start_depth *= factor
+        self.length *= factor
+        self.depth *= factor
+        self.thickness *= factor
+
 
 class SlotParams(BTLxProcessingParams):
     """A class to store the parameters of a Slot feature.
@@ -354,7 +394,7 @@ class SlotParams(BTLxProcessingParams):
             The parameters of the Slot feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(SlotParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)

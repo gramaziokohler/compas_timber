@@ -1,6 +1,8 @@
 class FeatureApplicationError(Exception):
     """Raised when a feature cannot be applied to an element geometry.
 
+    # TODO: perhaps should be renamed to ProcessingVisualizationError or something similar.
+
     Attributes
     ----------
     feature_geometry : :class:`~compas.geometry.Geometry`
@@ -17,6 +19,10 @@ class FeatureApplicationError(Exception):
         self.feature_geometry = feature_geometry
         self.element_geometry = element_geometry
         self.message = message
+
+    def __reduce__(self):
+        # without this the error cannot be deepcopied
+        return (FeatureApplicationError, (self.feature_geometry, self.element_geometry, self.message))
 
 
 class BeamJoiningError(Exception):
@@ -39,11 +45,15 @@ class BeamJoiningError(Exception):
     """
 
     def __init__(self, beams, joint, debug_info=None, debug_geometries=None):
-        super(BeamJoiningError, self).__init__()
+        super(BeamJoiningError, self).__init__(debug_info)
         self.beams = beams
         self.joint = joint
         self.debug_info = debug_info
         self.debug_geometries = debug_geometries or []
+
+    def __reduce__(self):
+        # without this the error cannot be deepcopied
+        return (BeamJoiningError, (self.beams, self.joint, self.debug_info, self.debug_geometries))
 
 
 class FastenerApplicationError(Exception):
@@ -66,9 +76,48 @@ class FastenerApplicationError(Exception):
         self.fastener = fastener
         self.message = message
 
+    def __reduce__(self):
+        # without this the error cannot be deepcopied
+        return (FastenerApplicationError, (self.elements, self.fastener, self.message))
+
+
+class BTLxProcessingError(Exception):
+    """Exception raised when an error occurs while writing a Processing to BTLx file.
+
+    TODO: some work here to figure out the different types of feature/processing related errors.
+    TODO: this one is somewhat similar to FeatureApplicationError, but only relevant when processing is created from its proxy.
+    TOOD: also BTLxProcessingError is never throws but rather collected to form some sort of a report for the user.
+
+    Parameters
+    ----------
+    message : str
+        The error message.
+    part : :class:`BTLxPart`
+        The part that caused the error.
+    failed_processing : :class:`BTLxProcessing`
+        The processing that caused the error.
+
+    Attributes
+    ----------
+    message : str
+        The error message.
+    part : :class:`BTLxPart`
+        The part that caused the error.
+    failed_processing : :class:`BTLxProcessing`
+        The processing that caused the error.
+
+    """
+
+    def __init__(self, message, part, failed_processing):
+        super(BTLxProcessingError, self).__init__(message)
+        self.message = message
+        self.part = part
+        self.failed_processing = failed_processing
+
 
 __all__ = [
-    "FeatureApplicationError",
     "BeamJoiningError",
+    "BTLxProcessingError",
+    "FastenerApplicationError",
     "FeatureApplicationError",
 ]

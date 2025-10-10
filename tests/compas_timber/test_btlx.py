@@ -171,7 +171,7 @@ def test_btlx_should_skip_feature():
 
 def test_float_formatting_of_param_dicts():
     test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
-    params_dict = test_processing.params_dict
+    params_dict = test_processing.params.as_dict()
 
     assert params_dict["Orientation"] == "end"
     assert params_dict["StartX"] == "{:.3f}".format(test_processing.start_x)
@@ -179,32 +179,30 @@ def test_float_formatting_of_param_dicts():
     assert params_dict["StartDepth"] == "{:.3f}".format(test_processing.start_depth)
     assert params_dict["Angle"] == "{:.3f}".format(test_processing.angle)
     assert params_dict["Inclination"] == "{:.3f}".format(test_processing.inclination)
-    assert params_dict["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
+    assert test_processing.params.header_attributes["ReferencePlaneID"] == "{:.0f}".format(test_processing.ref_side_index + 1)
 
 
-def test_create_processing_with_dict_params():
-    class MockProcessing:
-        PROCESSING_NAME = "MockProcessing"
-        header_attributes = {"Name": "MockProcessing", "Priority": "1", "Process": "yes", "ProcessID": "1", "ReferencePlaneID": "1"}
-        params_dict = {"Param1": "Value1", "Param2": {"SubParam1": "SubValue1", "SubParam2": "SubValue2"}, "Param3": "Value3"}
-        subprocessings = []
-
+def test_processing_scaled_called_for_meter_units(mocker):
     writer = BTLxWriter()
-    processing = MockProcessing()
-    processing_element = writer._create_processing(processing)
+    model = TimberModel(Tolerance(unit="M", absolute=1e-3, relative=1e-3))
+    beam = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    processing = JackRafterCut(OrientationType.END, 0.01, 0.02, 0.005, 45.0, 90.0, ref_side_index=0)
+    beam.add_features(processing)
+    model.add_element(beam)
 
-    assert processing_element.tag == "MockProcessing"
-    assert processing_element.attrib == processing.header_attributes
+    spy = mocker.spy(processing, "scaled")
+    writer.model_to_xml(model)
+    spy.assert_called_once_with(1000.0)
 
-    param1 = processing_element.find("Param1")
-    assert param1 is not None
-    assert param1.text == "Value1"
 
-    param2 = processing_element.find("Param2")
-    assert param2 is not None
-    assert param2.get("SubParam1") == "SubValue1"
-    assert param2.get("SubParam2") == "SubValue2"
+def test_processing_scaled_not_called_for_millimeter_units(mocker):
+    writer = BTLxWriter()
+    model = TimberModel(Tolerance(unit="MM", absolute=1e-3, relative=1e-3))
+    beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=100.0)
+    processing = JackRafterCut(OrientationType.END, 10.0, 20.0, 5.0, 45.0, 90.0, ref_side_index=0)
+    beam.add_features(processing)
+    model.add_element(beam)
 
-    param3 = processing_element.find("Param3")
-    assert param3 is not None
-    assert param3.text == "Value3"
+    spy = mocker.spy(processing, "scaled")
+    writer.model_to_xml(model)
+    spy.assert_not_called()

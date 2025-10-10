@@ -173,7 +173,8 @@ def test_double_cut_params(
     double_cut = DoubleCut.from_planes_and_beam(cutting_planes, main_beams[test_index], ref_side_index)
 
     # Validate generated parameters
-    generated_params = double_cut.params_dict
+    generated_params = double_cut.params.header_attributes
+    generated_params.update(double_cut.params.as_dict())
     for key, value in expected_double_cut_params.items():
         assert generated_params[key] == value
 
@@ -229,3 +230,27 @@ def test_double_cut_planes_from_params(
         assert generated.normal.x == pytest.approx(expected.normal.x, abs=TOL.approximation)
         assert generated.normal.y == pytest.approx(expected.normal.y, abs=TOL.approximation)
         assert generated.normal.z == pytest.approx(expected.normal.z, abs=TOL.approximation)
+
+
+def test_doublecut_scaled():
+    doublecut = DoubleCut(
+        orientation="end",
+        start_x=1985.301,
+        start_y=30.003,
+        angle_1=46.889,
+        inclination_1=93.332,
+        angle_2=134.670,
+        inclination_2=56.374,
+        ref_side_index=1,
+    )
+
+    scaled = doublecut.scaled(2.0)
+
+    assert scaled.orientation == doublecut.orientation
+    assert scaled.start_x == doublecut.start_x * 2.0
+    assert scaled.start_y == doublecut.start_y * 2.0
+    assert scaled.angle_1 == doublecut.angle_1
+    assert scaled.inclination_1 == doublecut.inclination_1
+    assert scaled.angle_2 == doublecut.angle_2
+    assert scaled.inclination_2 == doublecut.inclination_2
+    assert scaled.ref_side_index == doublecut.ref_side_index

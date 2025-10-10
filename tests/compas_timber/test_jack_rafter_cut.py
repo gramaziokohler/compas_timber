@@ -105,7 +105,8 @@ def test_jack_rafter_cut_data(tol):
 def test_jack_rafter_params_obj():
     instance = JackRafterCut(OrientationType.START, 14.23, 0.22, 42, 123.555, 95.2, ref_side_index=3)
 
-    params = instance.params_dict
+    params = instance.params.header_attributes
+    params.update(instance.params.as_dict())
 
     assert params["Name"] == "JackRafterCut"
     assert params["Process"] == "yes"
@@ -119,3 +120,16 @@ def test_jack_rafter_params_obj():
     assert params["StartDepth"] == "42.000"
     assert params["Angle"] == "123.555"
     assert params["Inclination"] == "95.200"
+
+
+def test_jack_rafter_cut_scaled(tol):
+    instance = JackRafterCut(OrientationType.START, 14.23, 0.22, 42, 123.555, 95.2, ref_side_index=3)
+
+    scaled_instance = instance.scaled(2.0)
+
+    assert scaled_instance.orientation == instance.orientation
+    assert scaled_instance.start_x == instance.start_x * 2.0
+    assert scaled_instance.start_y == instance.start_y * 2.0
+    assert scaled_instance.angle == instance.angle
+    assert scaled_instance.inclination == instance.inclination
+    assert scaled_instance.ref_side_index == instance.ref_side_index

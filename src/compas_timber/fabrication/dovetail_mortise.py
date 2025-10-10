@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -149,8 +150,8 @@ class DovetailMortise(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DovetailMortiseParams(self).as_dict()
+    def params(self):
+        return DovetailMortiseParams(self)
 
     @property
     def start_x(self):
@@ -337,6 +338,7 @@ class DovetailMortise(BTLxProcessing):
         shape=TenonShapeType.AUTOMATIC,
         shape_radius=20.0,
         ref_side_index=0,
+        **kwargs
     ):
         """Create a DovetailMortise instance from a cutting surface and the beam it should cut. This could be the ref_side of the cross beam of a Joint and the cross beam.
 
@@ -420,6 +422,7 @@ class DovetailMortise(BTLxProcessing):
             shape,
             shape_radius,
             ref_side_index=ref_side_index,
+            **kwargs,
         )
 
     @staticmethod
@@ -698,6 +701,27 @@ class DovetailMortise(BTLxProcessing):
 
         return dovetail_volume
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self._start_x *= factor
+        self._start_y *= factor
+        self._start_depth *= factor
+        self._length *= factor
+        self._width *= factor
+        self._depth *= factor
+        self._shape_radius *= factor
+
 
 class DovetailMortiseParams(BTLxProcessingParams):
     """A class to store the parameters of a Dovetail Mortise feature.
@@ -722,7 +746,7 @@ class DovetailMortiseParams(BTLxProcessingParams):
         """
         # type: () -> OrderedDict
 
-        result = super(DovetailMortiseParams, self).as_dict()
+        result = OrderedDict()
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
         result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)

@@ -11,6 +11,293 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
+* Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
+* Renamed `dovetail_volume_from_params_and_beam` to `volume_from_params_and_beam` in `DovetailTenon` and `DovetailMortise`.
+* Renamed `from_plane_and_beam` method in `compas_timber.fabrication.Tenon` to `from_frame_and_beam`.
+* Updated the alternative constructor of`compas_timber.fabrication.Tenon` so that the rotation parameter is calculated automatically.
+* Updated `TDovetailJoint` and `TenonMortiseJoint` from `compas_timber.connections` so that they use `House` and `HouseMortise`if needed.
+
+### Removed
+
+
+## [1.0.0] 2025-09-01
+
+### Added
+
+* Added attribute `tolerance` to `TimberModel`.
+* Added `scaled` method to `compas_timber.fabrication.BTLxProcessing` to scale the BTLx parameters.
+* Added `scaled` method to `compas_timber.fabrication.BTLxPart` to scale the BTLx parameters.
+* Added `scale` method to `compas_timber.fabrication.JackRafterCut`.
+* Added `scale` method to `compas_timber.fabrication.Drilling`.
+* Added `scale` method to `compas_timber.fabrication.DoubleCut`.
+* Added `scale` method to `compas_timber.fabrication.Lap`.
+* Added `scale` method to `compas_timber.fabrication.FrenchRidgeLap`.
+* Added `scale` method to `compas_timber.fabrication.Tenon`.
+* Added `scale` method to `compas_timber.fabrication.Mortise`.
+* Added `scale` method to `compas_timber.fabrication.StepJoint`.
+* Added `scale` method to `compas_timber.fabrication.StepJointNotch`.
+* Added `scale` method to `compas_timber.fabrication.DovetailTenon`.
+* Added `scale` method to `compas_timber.fabrication.DovetailMortise`.
+* Added `scale` method to `compas_timber.fabrication.Slot`.
+* Added `scale` method to `compas_timber.fabrication.Pocket`.
+* Added `scale` method to `compas_timber.fabrication.Text`.
+* Added `is_joinery` flag to `BTLxProcessing` to indicate if the processing is a result of joinery operation.
+* Added new `compas_timber.fabrication.LongitudinalCut`.
+* Added tasks `update-gh-header` to update the version in the header of the GH components.
+* Added new `compas_timber.connections.XNotchJoint`.
+* Added a proxy class for `Pocket` BTLx processing for performance optimization. 
+* Added `topology` to class `Joint`.
+* Added `location` to class `Joint`.
+* Added `NBeamKDTreeAnalyzer` to `compas_timber.connections`.
+* Added `TripletAnalyzer` to `compas_timber.connections`.
+* Added `QuadAnalyzer` to `compas_timber.connections`.
+* Added `CompositeAnalyzer` to `compas_timber.connections`.
+* Added method `connect_adjacent_beams` to `TimberModel`.
+* Added `PlateJoint`.
+* Added `PlateButtJoint`.
+* Added `PlateMiterJoint`.
+* Added `PlateConnectionSolver`.
+* Added generic `ButtJoint` class from which `TButtJoint` and `LButtJoint` inherit.
+* Added new `BTLxProcessingError` to `compas_timber.errors`.
+* Added `errors` property to `BTLxWriter` class which can be used after call to `write()` to check for errors.
+* Added `CategoryPlateJointRule`, `DirectPlateJointRule`, `EdgeEdgeTopologyPlateJointRule`, and `EdgeFaceTopologyPlateJointRule` Plate joint rule GH components.
+* Added `joints_contribution_guide` in docs.
+* Added `PlateJointCandidate` to `generic_joint.py`.
+* Added `Joint.promote_cluster` and `Joint.promote_joint_candidate` constructors to `Joint`.
+* Added `PlateJoint.promote_joint_candidate` as override.
+* Added `joints_contribution_guide` in docs.
+* Added `JointRuleSolver` class.
+* Added `JointTopology.TOPO_Y` for Beam Connections.
+* Added `JointTopology.TOPO_K` for Beam Connections.
+* Added `JointTopology.TOPO_EDGE_EDGE` for Plate Connections.
+* Added `JointTopology.TOPO_EDGE_FACE` for Plate Connections.
+* Added `Cluster.topology`.
+* Added `PlateSolverResult` and `BeamSolverResult` to package results from `PlateConnectionSolver.find_topology()` and `ConnectionSolver.find_topology()`.
+
+* Added `joint_candidates` property to `TimberModel`.
+* Added `add_joint_candidate` method to `TimberModel`.
+* Added `remove_joint_candidate` method to `TimberModel`.
+
+### Changed
+
+* BTLx Write now considers the `TimberModel.tolerance` attribute and scales parts and processings it when units are set to meters.
+* Added missing `__data__` to `compas_timber.fabrication.Drilling`.
+* Added missing `__data__` to `compas_timber.fabrication.Slot`.
+* Fixed `TypeError` when deepcopying beams with `debug_info` on them.
+* Processings which are not the result of joinery are now serialized with `TimberElement`.
+* Fixed visualization bug in `Plate` due to loft resulting in flipped volume.
+* Fixed a few bugs in the `WallPopulator` workflow including GH component updates.
+* Renamed `NullJoint` to `JointCandidate`.
+* Fixed bug in show_ref_faces GH component.
+* `BTLxProcessing.ref_side_index` defaults to `0` if not set, instead of the invalid `None`.
+* Updated `BTLx_contribution_guide` in docs.
+* Fixed several GH Components for Rhino8 compatibility.
+* Fixed `graph_node` is `None` after deserializing a `TimberModel`.
+* Fixed a bug in `BeamsFromMesh` GH Component.
+* Fixed attribute error when creating a `TButtJoint`.
+* Changed default value for `modify_cross` to `True` for `LButtJoint`.
+* Minor fixes to GH Components.
+* Fixed `elements` and geometry creation for `BallNodeJoint`.
+* Changed `PlateConnectionSolver.find_topology()` to solve for `TOPO_EDGE_EDGE` or `TOPO_EDGE_FACE`.
+* Changed `PlateConnectionSolver.find_topology()` to return a `PlateSolverResult` instance.
+* Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
+* Changed `ConnectionSolver.find_topology()` to return a `BeamSolverResult` instance.
+* Removed `topology`, `a_segment_index` and `b_segment_index` from `PlateJoint` subclass `__init__()` methods. These can now be passed as kwargs.
+* `Platejoint`s can now be isntantiated with just 2 Plates as arguments. If no topology or segment index data is in kwargs, the joint will solve for those. 
+* Fixed ironpython compatibility issues.
+* `NBeamKDTreeAnalyzer` now uses `model.joint_candidates` instead of filtering `model.joints`.
+* Fixed element interaction gets removed even if there are still attributes on it.
+* Changed `elements` argument in `promote_joint_candidate` to `reordered_elements` for clarity.
+* Fixed `TStepJoint` deserialization error where `__init__()` was accessing beam properties before beams were restored from GUIDs.
+* Removed the `cut_plane_bias` parameter from the `LapJoint.__init__()` method, as it is not required by all subclasses.
+* Added the `cut_plane_bias` parameter to the constructors of `TLapJoint`, `LLapJoint`, and `XLapJoint`.
+* Updated the `__data__` methods of `TLapJoint`, `LLapJoint`, and `XLapJoint` to serialize the `cut_plane_bias` value.
+* Updated the `__data__` method of `LFrenchRidgeLapJoint` to serialize the `drillhole_diam` value.
+* Changed the `_create_negative_volumes()` method in `LapJoint` to accept `cut_plane_bias` as an argument.
+* Renamed `set_default_values()` to `_update_default_values()` and moved method call from `__init__()` to `add_features()` in `TenonMortiseJoint` to avoid inconsistencies during deserialization.
+* Set minimum `compas_timber` version in CPython GH components to `1.0.0`.
+* Reworked `ConnectionSolver.find_topology()` for readability and to implement `TOPO_I`.
+* Changed `JointRule.joints_from_beams_and_rules()` to `JointRule.apply_rules_to_model` which now adds `Joint`s to the
+  `TimberModel` directly.
+* Changed `WallPopulator.create_joint_definitions()` to `WallPopulator.create_joints()`, which now returns `DirectRule` instances.
+* Changed `tolerance` argument to `max_distance` in `NBeamKDTreeAnalyzer` for clarity and consisten naming. 
+* Changed `Joint.check_elements_compatibility()` to a class method to check Joint-type specific requirements before instantiation. 
+
+### Removed
+
+* Removed Grasshopper after-install plugin. Components should be installed via Rhino's Plugin Manager.
+* Removed `get_face_most_towards_beam` from `Joint` as not used anywhere.
+* Removed `get_face_most_ortho_to_beam` from `Joint` as not used anywhere.
+* Removed `angle_vectors_projected` from `compas_timber.utils` since this has been upstreamed to core.
+* Removed `comply()` from JointRule and its child classes.
+* Removed `JointDefinition`. 
+* Removed `FeatureDefinition`. 
+* Removed redundant checks in `TopologyRule` GH components.
+
+## [0.16.2] 2025-05-07
+
+### Added
+
+### Changed
+
+* Fixed max recursion depth error when copying `TimberModel`/`Beam` with proxy processings.
+
+### Removed
+
+
+
+## [0.16.1] 2025-04-30
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.16.0] 2025-04-30
+
+### Added
+
+* Added new `compas_timber.fabrication.Pocket`.
+* Added `front_side`, `back_side`, `opp_side` methods to the `Beam` class for retrieving specific sides relative to a reference side.
+* Added processing `Text` to `compas_timber.fabrication`.
+* Added `TextParams` to `compas_timber.fabrication`.
+* Added new Grasshopper components for Rhino8/cpython. 
+* Added new methods to handle adaptive GH_component parameters using cpython.
+
+### Changed
+
+* Fixed `AttributeError` when deserializing a model with Lap joints.
+* Fixed a bug in `compas_timber.fabrication.Lap` where `ref_side_index` failed for `0` by checking for `None` instead.
+* Fixed a bug in `compas_timber.fabrication.Lap` to handle the case when the vectors used to calculate the `inclination` angle are perpendicular.
+
+### Removed
+
+
+## [0.15.3] 2025-03-25
+
+### Added
+
+* Added `DualContour` BTLx Contour type for ruled surface Swarf contours.
+
+### Changed
+
+* Removed `main_ref_side_index` property from `TBirdsmouthJoint` since it's now defined in the `DoubleCut` BTLxProcessing.
+* Added `mill_depth` argument in `TBirdsmouthJoint` for creating pockets on the cross_beam if asked.
+* Refactored the `check_element_compatibility` method in `YButtJoint` so that it checks for coplanarity and dimensioning of the cross elements.
+* Enhanced `DoubleCut.from_planes_and_beam` to verify that provided planes are not parallel and raise a `ValueError` if they are.
+* Adjusted `process_joinery` method to catch `ValueError` exceptions during `BTLxProcessing` generation and wrap them in `BeamJoiningError` objects.
+* Refactored and renamed `are_beams_coplanar` function to `are_beams_aligned_with_cross_vector`.
+* Refactored `_create_negative_volumes()` in `LapJoint` so that it generates box-like volumes. 
+* Refactored `XLapJoint`, `LLapJoint`, `TLapJoint` so that they use the `_create_negative_volumes()` method to get the negative volumes and use the alt constructor `Lap.from_volume_and_beam()`.
+* Fixed an error occuring in `BTLxPart.shape_strings` by ensuring the polyline is always closed.
+* Implemented `Inclination` in the `FreeContour` BTLx Processing.
+* Changed `Plate` element to be defined by top and bottom contours instead of one contour and thickness. 
+
+### Removed
+
+* Removed `check_elements_compatibility` method from the parent `LapJoint` since non co-planar lap joints can be achieved.
+* Removed the `is_pocket` argument in `Lap.from_plane_and_beam()` since this class method will now only serve for pockets in Butt joints.
+* Removed `opposing_side_index` and `OPPOSING_SIDE_MAP` from `Beam` class since they have now been replaced by `front_side`, `back_side`, `opp_side` methods.
+* Removed the deprecated `main_beam_opposing_side_index` property from `LButtJoint` and `TButtJoint` as it is no longer in use.
+
+## [0.15.2] 2025-03-05
+
+### Added
+
+### Changed
+
+* Fixed `ValueError` occurring when connecting just a slab to the GH model component.
+
+### Removed
+
+
+## [0.15.1] 2025-03-04
+
+### Added
+
+### Changed
+
+* Fixed "No intersection found between walls" error when walls connect in unsupported topology.
+* Implemented slab perimeter offset workaround.
+
+### Removed
+
+
+## [0.15.0] 2025-03-04
+
+### Added
+
+* Added `BTLx_From_Params` GH component which contains the definiton for class `DeferredBTLxProcessing` to allow directly defining BTLx parameters and passing them to the model.
+* Added `Shape` to BTLx output, showing finished element geometry in BTLx Viewer instead of just blank.
+* Added `as_plane()` to `WallToWallInterface`.
+* Added optional argument `max_distance` to `WallPopulator.create_joint_definitions()`.
+
+### Changed
+
+* Added `max_distance` to `TimberModel.connect_adjacent_walls()`.
+* Fixed plate doesn't get properly extended to the end of an L detail.
+* Fixed detail edge beams don't get LButt.
+* Fixed walls might not be considered connecting depending on the surface's orientation.
+
+### Removed
+
+
+## [0.14.2] 2025-02-17
+
+### Added
+
+### Changed
+
+* Adjusted `LMiterJoint` so that it now applies an extra cut to elements when the `cutoff` flag is enabled.
+
+### Removed
+
+
+## [0.14.1] 2025-02-17
+
+### Added
+
+* Added missing arguments in configuration set component.
+* Added `FlipDirection` flag to flip stud direction of a slab.
+
+### Changed
+
+* Fixed rotating stud direction in slab causes breaks plates and connections.
+* Restructured some Gh Toolboxes & added Icons for Walls & Slabs
+
+### Removed
+
+
+## [0.14.0] 2025-02-17
+
+### Added
+
+* Added `distance_segment_segment` to `compas_timber.utils`
+* Added `BTLxFromGeometryDefinition` class to replace the depricated `FeatureDefinition`. This allows deferred calculation of BTLx processings.
+* Added `from_shapes_and_element` class method to `Drilling`, `JackRafterCut`, and `DoubleCut` as a wrapper for their geometry based constructors for use with `BTLxFromGeometryDefinition`.
+* Added `YButtJoint` which joins the ends of three joints where the `cross_beams` get a miter cut and the `main_beam` gets a double cut.
+* Added `JackRafterCutProxy` to allow for deferred calculation of the `JackRafterCut` geometry thus improving visualization performance.
+* Added class "WallPopulator" to `compas_timber.design`.
+* Added class "WallPopulatorConfigurationSet" to `compas_timber.design`.
+* Added class "WallSelector" to `compas_timber.design`.
+* Added class "AnyWallSelector" to `compas_timber.design`.
+* Added class "LConnectionDetailA" to `compas_timber.design`.
+* Added class "LConnectionDetailB" to `compas_timber.design`.
+* Added class "TConnectionDetailA" to `compas_timber.design`.
+* Added `from_brep` to `compas_timber.elements.Wall.
+* Added `from_polyline` to `compas_timber.elements.Wall.
+* Added `WallJoint` to `compas_timber.connections`.
+* Added error handling when BTLx processing from geometry fails in GH.
+* Added new `Slab` class to `compas_timber.elements`.
+* Added `Slab` GH component.
+* Added `FreeContour` BTLx processing and applied it to the `Plate` type so that plates can be machined.
+
+### Changed
+
+* Updated Grasshopper Toolbox and Icons
 * Fixed `ValueErrorException` in `as_dict()` method of `BTLxProcessingParams` class by ensuring precision specifiers are used with floats.
 * Removed model argument from `BTLxWriter` in the GH component and updated it to always return the BTLx string.
 * Fixed a bug in `compas_timber.Fabrication.StepJointNotch` related to the `orientation` and `strut_inclination` parameters.
@@ -23,10 +310,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactored `compas_timber.connections.LapJoint` to comply with the new system.
 * Changed `THalfLapJoint`, `LHalfLapJoint`, `XHalfLapJoint` from `compas_timber.connections` so that they use the `Lap` BTLx processing.
 * Renamed all `X/T/LHalfLapJoint` classes to `X/T/LLapJoint`.
-* Renamed `dovetail_volume_from_params_and_beam` to `volume_from_params_and_beam` in `DovetailTenon` and `DovetailMortise`.
-* Renamed `from_plane_and_beam` method in `compas_timber.fabrication.Tenon` to `from_frame_and_beam`.
-* Updated the alternative constructor of`compas_timber.fabrication.Tenon` so that the rotation parameter is calculated automatically.
-* Updated `TDovetailJoint` and `TenonMortiseJoint` from `compas_timber.connections` so that they use `House` and `HouseMortise`if needed.
+* Enhanced lap behavior for optimal beam orientation in `LapJoint` class.
+* Fixed `restore_beams_from_keys` in `LMiterJoint` to use the correct variable names.
+* Reworked `DoubleCut` to more reliably produce the feature and geometry with the `from_planes_and_element` class method.
+* Renamed `intersection_box_line()` to `intersection_beam_line_param()`, which now take a beam input and outputs the intersecting ref_face_index.
+* Added `max_distance` argument to `JointRule` subclasses and GH components so that max_distance can be set for each joint rule individually.
+* Changed referenced to `beam` in `Drilling` to `element`. 
+* Changed `Drill Hole` and `Trim Feature` GH components to generate the relevant `BTLxProcessing` type rather than the deprecated `FeatureDefinition` type.
+* Changed `Show_beam_faces` gh component to `Show_ref_sides`, which now takes an `int` index and shows the corresponding face including origin corner.
+* Bug fixes after adding `max_distance` to joint defs.
+* Using new `JackRafterCutProxy` in LMiterJoint, LButtJoint and TButtJoint.
+* Changed input type from `Element` to `Beam` in components that currently only support beams.
+* Fixed drilling GH component not taking diameter as a string.
+* Reworked `Wall` class to be defined with a standard polyline, frame and thickness.
+* Changed labels in `Show_ref_sides` GH component to be 1-based to match the spec.
 
 ### Removed
 
@@ -113,6 +410,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber._fabrication.Slot`.
 * Added new `compas_timber._fabrication.SlotParams`.
 
+ 
+
 ### Changed
 
 * Changed incorrect import of `compas.geometry.intersection_line_plane()` to `compas_timber.utils.intersection_line_plane()`
@@ -151,8 +450,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed module `compas_timber.connections.french_ridge_lap`.
 * Removed module `compas_timber.fabrication.joint_factories.french_ridge_factory`.
 * Removed module `compas_timber.fabrication.btlx_processes.btlx_french_ridge_lap`.
-
-
 
 ## [0.11.0] 2024-09-17
 

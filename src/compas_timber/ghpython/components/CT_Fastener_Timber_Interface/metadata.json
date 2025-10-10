@@ -2,9 +2,9 @@
     "name": "Fastener Beam Interface",
     "nickname": "Interface",
     "category": "COMPAS Timber",
-    "subcategory": "design",
+    "subcategory": "Design",
     "description": "defines the interface between a fastener and a beam.",
-    "exposure": 2,
+    "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
         "iconDisplay": 0,
@@ -34,16 +34,18 @@
                 "scriptParamAccess": 1
             },
             {
-                "name": "Extra Shapes",
-                "description": "Breps defining additional shapes to boolean union with the plate to define the fastener shape.",
+                "name": "Shapes",
+                "description": "Breps defining shapes to boolean union with the plate to define the fastener shape.",
                 "typeHintID": "brep",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten": true
             },
             {
                 "name": "Features",
                 "description": "Features defining operation to be applied to the beam.",
                 "typeHintID": "none",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 1,
+                "flatten": true
             }
         ],
         "outputParameters": [

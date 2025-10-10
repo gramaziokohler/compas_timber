@@ -10,6 +10,8 @@ from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
+from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication import TenonShapeType
 
 from compas.tolerance import TOL
 
@@ -312,7 +314,8 @@ def test_dovetailtenon_params(
         ref_side_index=ref_side_index,
     )
     # Validate generated parameters
-    generated_params = dovetail_tenon.params_dict
+    generated_params = dovetail_tenon.params.header_attributes
+    generated_params.update(dovetail_tenon.params.as_dict())
     for key, value in expected_tenon_params.items():
         assert generated_params[key] == value
 
@@ -400,7 +403,8 @@ def test_dovetailmortise_params(
     )
 
     # Validate generated parameters
-    generated_params = dovetail_mortise.params_dict
+    generated_params = dovetail_mortise.params.header_attributes
+    generated_params.update(dovetail_mortise.params.as_dict())
     for key, value in expected_mortise_params.items():
         assert generated_params[key] == value
 
@@ -463,3 +467,46 @@ def test_dovetailtenon_frame_from_params(
     assert generated_frame.normal.x == pytest.approx(expected_frame.normal.x, abs=TOL.approximation)
     assert generated_frame.normal.y == pytest.approx(expected_frame.normal.y, abs=TOL.approximation)
     assert generated_frame.normal.z == pytest.approx(expected_frame.normal.z, abs=TOL.approximation)
+
+
+def test_dovetailtenon_scaled():
+    tenon = DovetailTenon(
+        orientation=OrientationType.END,
+        start_x=0.0,
+        start_y=0.0,
+        start_depth=0.0,
+        angle=90.0,
+        inclination=90.0,
+        rotation=90.0,
+        length_limited_top=True,
+        length_limited_bottom=True,
+        length=80.0,
+        width=50.0,
+        height=28.0,
+        cone_angle=7.0,
+        use_flank_angle=False,
+        flank_angle=15.0,
+        shape=TenonShapeType.SQUARE,
+        shape_radius=22.497,
+        ref_side_index=1,
+    )
+
+    scaled = tenon.scaled(2.0)
+
+    assert scaled.start_x == tenon.start_x * 2.0
+    assert scaled.start_y == tenon.start_y * 2.0
+    assert scaled.start_depth == tenon.start_depth * 2.0
+    assert scaled.angle == tenon.angle
+    assert scaled.inclination == tenon.inclination
+    assert scaled.rotation == tenon.rotation
+    assert scaled.length_limited_top == tenon.length_limited_top
+    assert scaled.length_limited_bottom == tenon.length_limited_bottom
+    assert scaled.length == tenon.length * 2.0
+    assert scaled.width == tenon.width * 2.0
+    assert scaled.height == tenon.height * 2.0
+    assert scaled.cone_angle == tenon.cone_angle
+    assert scaled.use_flank_angle == tenon.use_flank_angle
+    assert scaled.flank_angle == tenon.flank_angle
+    assert scaled.shape == tenon.shape
+    assert scaled.shape_radius == tenon.shape_radius * 2.0
+    assert scaled.ref_side_index == tenon.ref_side_index

@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -66,7 +67,7 @@ class StepJoint(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation=OrientationType.START,
         start_x=0.0,
         strut_inclination=90.0,
         step_depth=20.0,
@@ -103,8 +104,8 @@ class StepJoint(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return StepJointParams(self).as_dict()
+    def params(self):
+        return StepJointParams(self)
 
     @property
     def orientation(self):
@@ -680,6 +681,26 @@ class StepJoint(BTLxProcessing):
         return tenon_brep
 
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.step_depth *= factor
+        self.heel_depth *= factor
+        self.tenon_width *= factor
+        self.tenon_height *= factor
+
+
 class StepJointParams(BTLxProcessingParams):
     """A class to store the parameters of a Step Joint feature.
 
@@ -702,7 +723,7 @@ class StepJointParams(BTLxProcessingParams):
             The parameters of the Step Joint as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(StepJointParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StrutInclination"] = "{:.{prec}f}".format(float(self._instance.strut_inclination), prec=TOL.precision)

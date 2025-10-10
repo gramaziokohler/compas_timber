@@ -5,8 +5,12 @@ compas_invocations2
 invoke >=0.14
 ruff
 sphinx_compas2_theme
+sphinxcontrib-mermaid
 twine
 build
 wheel
 pytest-mock
--e .
+build
+pythonnet
+tomlkit
+pytest-cov

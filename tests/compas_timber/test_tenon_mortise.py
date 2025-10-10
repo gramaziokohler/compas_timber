@@ -11,6 +11,8 @@ from compas.geometry import distance_point_point
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
+from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication import TenonShapeType
 
 from compas.tolerance import Tolerance
 
@@ -221,7 +223,8 @@ def test_tenon_params(
         ref_side_index=ref_side_index,
     )
     # Validate generated parameters
-    generated_params = tenon.params_dict
+    generated_params = tenon.params.header_attributes
+    generated_params.update(tenon.params.as_dict())
     for key, value in expected_tenon_params[test_index].items():
         assert generated_params[key] == value
 
@@ -278,7 +281,8 @@ def test_mortise_params(
     )
 
     # Validate generated parameters
-    generated_params = mortise.params_dict
+    generated_params = mortise.params.header_attributes
+    generated_params.update(mortise.params.as_dict())
     for key, value in expected_mortise_params[test_index].items():
         assert generated_params[key] == value
 
@@ -338,3 +342,39 @@ def test_tenon_frame_from_params(
     assert tol.is_close(generated_frame.normal.x, mortise_cutting_frames[test_index].normal.x)
     assert tol.is_close(generated_frame.normal.y, mortise_cutting_frames[test_index].normal.y)
     assert tol.is_close(generated_frame.normal.z, mortise_cutting_frames[test_index].normal.z)
+
+
+def test_tenon_scaled():
+    tenon = Tenon(
+        orientation=OrientationType.START,
+        start_x=10.0,
+        start_y=20.0,
+        start_depth=30.0,
+        angle=40.0,
+        inclination=50.0,
+        rotation=60.0,
+        length_limited_top=True,
+        length_limited_bottom=True,
+        length=70.0,
+        width=80.0,
+        height=90.0,
+        shape=TenonShapeType.ROUND,
+        shape_radius=100.0,
+    )
+
+    scaled = tenon.scaled(2.0)
+
+    assert scaled.orientation == tenon.orientation
+    assert scaled.start_x == tenon.start_x * 2.0
+    assert scaled.start_y == tenon.start_y * 2.0
+    assert scaled.start_depth == tenon.start_depth * 2.0
+    assert scaled.angle == tenon.angle
+    assert scaled.inclination == tenon.inclination
+    assert scaled.rotation == tenon.rotation
+    assert scaled.length_limited_top == tenon.length_limited_top
+    assert scaled.length_limited_bottom == tenon.length_limited_bottom
+    assert scaled.length == tenon.length * 2.0
+    assert scaled.width == tenon.width * 2.0
+    assert scaled.height == tenon.height * 2.0
+    assert scaled.shape == tenon.shape
+    assert scaled.shape_radius == tenon.shape_radius * 2.0

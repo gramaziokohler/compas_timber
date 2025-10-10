@@ -1,14 +1,11 @@
-from compas.geometry import Frame
+from compas.tolerance import TOL
 
-from compas_timber.elements.features import CutFeature
-from compas_timber.elements.features import MillVolume
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import JackRafterCut
-from compas_timber.fabrication import Lap
+from compas_timber.fabrication import JackRafterCutProxy
+from compas_timber.fabrication import LapProxy
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
-from .utilities import are_beams_coplanar
 
 
 class LLapJoint(LapJoint):
@@ -43,8 +40,15 @@ class LLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
+    @property
+    def __data__(self):
+        data = super(LLapJoint, self).__data__
+        data["cut_plane_bias"] = self.cut_plane_bias
+        return data
+
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(LLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
+        super(LLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
+        self.cut_plane_bias = cut_plane_bias
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -69,8 +73,9 @@ class LLapJoint(LapJoint):
             raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
-        self.main_beam.add_blank_extension(start_main, end_main, self.main_beam_guid)
-        self.cross_beam.add_blank_extension(start_cross, end_cross, self.cross_beam_guid)
+        tol = TOL.absolute
+        self.main_beam.add_blank_extension(start_main + tol, end_main + tol, self.main_beam_guid)
+        self.cross_beam.add_blank_extension(start_cross + tol, end_cross + tol, self.cross_beam_guid)
 
     def add_features(self):
         """Adds the required joint features to both beams.
@@ -84,63 +89,21 @@ class LLapJoint(LapJoint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        if are_beams_coplanar(*self.elements):  # TODO: this is a temporal solution to allow the vizualization of non-coplanar lap joints.
-            # calculate the lap length and depth for each beam
-            main_lap_length, cross_lap_length = self._get_lap_lengths()
-            main_lap_depth, cross_lap_depth = self._get_lap_depths()
+        # create lap features
+        negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
+        main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
+        cross_lap_feature = LapProxy.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
 
-            ## main_beam
-            # lap feature on main_beam
-            main_lap_feature = Lap.from_plane_and_beam(
-                self.main_cutting_plane,
-                self.main_beam,
-                main_lap_length,
-                main_lap_depth,
-                ref_side_index=self.main_ref_side_index,
-            )
-            # cutoff feature for main_beam
-            main_cut_feature = JackRafterCut.from_plane_and_beam(self.main_cutting_plane, self.main_beam)
-            main_features = [main_cut_feature, main_lap_feature]
-            self.main_beam.add_features(main_features)
-            self.features.extend(main_features)
+        # create cutoff features
+        main_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.main_cutting_plane, self.main_beam)
+        cross_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.cross_cutting_plane, self.cross_beam)
 
-            ## cross_beam
-            # lap feature on cross_beam
-            cross_lap_feature = Lap.from_plane_and_beam(
-                self.cross_cutting_plane,
-                self.cross_beam,
-                cross_lap_length,
-                cross_lap_depth,
-                ref_side_index=self.cross_ref_side_index,
-            )
-            # cutoff feature for beam_b
-            cross_cut_feature = JackRafterCut.from_plane_and_beam(self.cross_cutting_plane, self.cross_beam)
-            cross_features = [cross_cut_feature, cross_lap_feature]
-            self.cross_beam.add_features(cross_features)
-            self.features.extend(cross_features)
+        main_features = [main_cut_feature, main_lap_feature]
+        cross_features = [cross_cut_feature, cross_lap_feature]
 
-        else:
-            # TODO: this is a temporal solution to avoid the error if beams are not coplanar and allow the visualization of the joint.
-            # TODO: this solution does not generate machining features and therefore will be ignored in the fabrication process.
-            # TODO: once the Lap BTLx processing implimentation allows for non-coplanar beams, this should be removed.
-            try:
-                main_cutting_frame = self.get_main_cutting_frame()
-                cross_cutting_frame = self.get_cross_cutting_frame()
-                negative_brep_main_beam, negative_brep_cross_beam = self._create_negative_volumes()
-            except Exception as ex:
-                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
+        # add processings to beams
+        self.main_beam.add_features(main_features)
+        self.cross_beam.add_features(cross_features)
 
-            main_volume = MillVolume(negative_brep_main_beam)
-            cross_volume = MillVolume(negative_brep_cross_beam)
-
-            self.main_beam.add_features(main_volume)
-            self.cross_beam.add_features(cross_volume)
-
-            f_cross = CutFeature(cross_cutting_frame)
-            self.cross_beam.add_features(f_cross)
-
-            trim_frame = Frame(main_cutting_frame.point, main_cutting_frame.xaxis, -main_cutting_frame.yaxis)
-            f_main = CutFeature(trim_frame)
-            self.main_beam.add_features(f_main)
-
-            self.features = [main_volume, cross_volume, f_main, f_cross]
+        # register processings to the joint
+        self.features.extend(main_features + cross_features)

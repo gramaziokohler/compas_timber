@@ -1,0 +1,32 @@
+{
+    "name": "Show Beam Reference Side",
+    "nickname": "ShowBeamSides",
+    "category": "COMPAS Timber",
+    "subcategory": "Show",
+    "description": "Shows the Beam side based on ref_side_index. Text labels are located at the reference side origins and oriented to the reference side frame.",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "Beam",
+                "description": "Beam",
+                "typeHintID": "none",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "Reference Side Index",
+                "description": "integer 0-5 corresponding to reference side.",
+                "typeHintID": "int",
+                "scriptParamAccess": 1
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "Reference Side",
+                "description": "Reference Side as surface."
+            }
+        ]
+    }
+}

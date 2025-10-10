@@ -1,12 +1,18 @@
+from copy import deepcopy
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import JointCandidate
+from compas_timber.connections import JointTopology
+from compas.geometry import Line
 from compas_timber.elements import Beam
 from compas_timber.elements import Wall
 from compas_timber.elements import Plate
@@ -145,13 +151,13 @@ def test_generator_properties():
         ]
     )
 
-    plate = Plate(polyline, 10.0, Vector(1, 0, 0))
+    plate = Plate.from_outline_thickness(polyline, 10.0, Vector(1, 0, 0))
     model.add_element(plate)
 
     beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
     model.add_element(beam)
 
-    wall = Wall(10.0, 10.0, 10.0, Frame.worldXY())
+    wall = Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
     model.add_element(wall)
 
     assert len(list(model.plates)) == 1
@@ -170,9 +176,9 @@ def test_type_properties():
         ]
     )
 
-    plate = Plate(polyline, 10.0, Vector(1, 0, 0))
+    plate = Plate.from_outline_thickness(polyline, 10.0, Vector(1, 0, 0))
     beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
-    wall = Wall(10.0, 10.0, 10.0, Frame.worldXY())
+    wall = Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
 
     assert plate.is_plate
     assert beam.is_beam
@@ -184,3 +190,263 @@ def test_type_properties():
     assert not beam.is_plate
     assert not wall.is_plate
     assert not wall.is_beam
+
+
+def test_model_tolerance_default():
+    model = TimberModel()
+
+    assert model.tolerance == TOL
+
+
+def test_model_tolerance_provided():
+    meters = Tolerance(unit="M", absolute=1e-6, relative=1e-3)
+
+    model = TimberModel(tolerance=meters)
+
+    assert model.tolerance == meters
+
+
+def test_copy_model_with_processing_jackraftercut_proxy():
+    from compas_timber.fabrication import JackRafterCutProxy
+    from compas_timber.fabrication import JackRafterCut
+
+    # Create a TimberModel instance
+    model = TimberModel()
+
+    # Add a beam to the model
+    height, width, length = 200.11, 100.05, 2001.12
+    frame = Frame(point=Point(x=390.000, y=780.000, z=0.000), xaxis=Vector(x=0.989, y=0.145, z=0.000), yaxis=Vector(x=-0.145, y=0.989, z=-0.000))
+    beam = Beam(frame, length=length, width=width, height=height)
+    model.add_element(beam)
+
+    cutting_plane = Frame(point=Point(x=627.517, y=490.000, z=-187.681), xaxis=Vector(x=0.643, y=0.000, z=0.766), yaxis=Vector(x=0.000, y=1.000, z=-0.000))
+
+    # Create a processing proxy for the model
+    beam.add_feature(JackRafterCutProxy.from_plane_and_beam(cutting_plane, beam))
+
+    copied_model = model.copy()
+
+    copied_beams = list(copied_model.beams)
+    assert len(copied_beams) == 1
+    assert len(copied_beams[0].features) == 1
+    assert isinstance(copied_beams[0].features[0], JackRafterCut)
+
+
+def test_error_deepcopy_feature():
+    from copy import deepcopy
+    from compas_timber.errors import FeatureApplicationError
+
+    error = FeatureApplicationError("mama", "papa", "dog")
+
+    error = deepcopy(error)
+
+    assert error.feature_geometry == "mama"
+    assert error.element_geometry == "papa"
+    assert error.message == "dog"
+
+
+def test_error_deepcopy_fastener():
+    from copy import deepcopy
+    from compas_timber.errors import FastenerApplicationError
+
+    error = FastenerApplicationError("mama", "papa", "dog")
+
+    error = deepcopy(error)
+
+    assert error.elements == "mama"
+    assert error.fastener == "papa"
+    assert error.message == "dog"
+
+
+def test_error_deepcopy_joint():
+    from compas_timber.errors import BeamJoiningError
+
+    error = BeamJoiningError("mama", "papa", "dog", "cucumber")
+
+    error = deepcopy(error)
+
+    assert error.beams == "mama"
+    assert error.joint == "papa"
+    assert error.debug_info == "dog"
+    assert error.debug_geometries == "cucumber"
+
+
+def test_beam_graph_node_available_after_serialization():
+    model = TimberModel()
+    frame = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    beam = Beam(frame, length=1.0, width=0.1, height=0.1)
+    model.add_element(beam)
+
+    graph_node = beam.graph_node
+    deserialized_model = json_loads(json_dumps(model))
+
+    assert graph_node is not None
+    assert list(deserialized_model.beams)[0].graph_node == graph_node
+
+
+def test_beam_graph_node_available_after_deepcopying():
+    model = TimberModel()
+    frame = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    beam = Beam(frame, length=1.0, width=0.1, height=0.1)
+    model.add_element(beam)
+
+    grap_node = beam.graph_node
+    deserialized_model = deepcopy(model)
+
+    assert grap_node is not None
+    assert list(deserialized_model.beams)[0].graph_node == grap_node
+
+
+def test_joint_candidates_simple():
+    """Test joint candidates with a simple two-beam setup."""
+    # Create a simple model with two intersecting beams
+    model = TimberModel()
+
+    # Create two beams that intersect
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    # Connect adjacent beams to create candidates
+    model.connect_adjacent_beams()
+
+    # Verify that candidates were created
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 1
+
+    candidate = candidates[0]
+    assert isinstance(candidate, JointCandidate)
+    assert candidate.topology == JointTopology.TOPO_X  # Should be X topology
+    assert isinstance(candidate.location, Point)
+
+    # Verify that no actual joints were created
+    assert len(model.joints) == 0
+
+    # Test removing the candidate
+    model.remove_joint_candidate(candidate)
+    assert len(model.joint_candidates) == 0
+
+
+def test_joint_candidates_and_joints_separate():
+    """Test that joint candidates and normal joints stay separate."""
+    # Create a model with three beams
+    model = TimberModel()
+
+    # Create three beams: two that will have a candidate, one that will have a joint
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    line3 = Line(Point(2, 0, 0), Point(2, 1, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+    beam3 = Beam.from_centerline(line3, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+    model.add_element(beam3)
+
+    # Create candidates between beam1 and beam2
+    model.connect_adjacent_beams()
+
+    # Create a joint between beam1 and beam3 (after connect_adjacent_beams)
+    joint = LButtJoint.create(model, beam1, beam3)
+
+    # Verify separation
+    assert len(model.joints) == 1
+    assert len(model.joint_candidates) == 1
+
+    # Verify the joint is the one we created
+    assert list(model.joints)[0] is joint
+
+    # Verify the candidate is between beam1 and beam2
+    candidate = list(model.joint_candidates)[0]
+    assert beam1 in candidate.elements
+    assert beam2 in candidate.elements
+
+    # Verify the joint is between beam1 and beam3
+    assert beam1 in joint.elements
+    assert beam3 in joint.elements
+
+
+def test_remove_joint_candidates():
+    """Test removal of joint candidates."""
+    # Create a model with multiple beams
+    model = TimberModel()
+
+    # Create four beams in a square pattern
+    lines = [
+        Line(Point(0, 0, 0), Point(1, 0, 0)),  # bottom
+        Line(Point(1, 0, 0), Point(1, 1, 0)),  # right
+        Line(Point(1, 1, 0), Point(0, 1, 0)),  # top
+        Line(Point(0, 1, 0), Point(0, 0, 0)),  # left
+    ]
+
+    beams = [Beam.from_centerline(line, 0.1, 0.1) for line in lines]
+    for beam in beams:
+        model.add_element(beam)
+
+    # Create candidates
+    model.connect_adjacent_beams()
+
+    # Should have 4 candidates (one for each edge of the square)
+    initial_candidates = list(model.joint_candidates)
+    assert len(initial_candidates) == 4
+
+    # Remove one candidate
+    candidate_to_remove = initial_candidates[0]
+    model.remove_joint_candidate(candidate_to_remove)
+
+    # Should have 3 candidates left
+    remaining_candidates = list(model.joint_candidates)
+    assert len(remaining_candidates) == 3
+    assert candidate_to_remove not in remaining_candidates
+
+    # Remove all remaining candidates
+    for candidate in remaining_candidates:
+        model.remove_joint_candidate(candidate)
+
+    # Should have no candidates left
+    assert len(model.joint_candidates) == 0
+
+
+def test_remove_joint_candidate_preserves_edge():
+    """Test that removing a joint candidate preserves the edge and other attributes."""
+    # Create a model with two beams
+    model = TimberModel()
+
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    # Create a candidate
+    model.connect_adjacent_beams()
+
+    # Verify candidate was created
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 1
+
+    # Remove the candidate
+    candidate = candidates[0]
+    model.remove_joint_candidate(candidate)
+
+    # Verify candidate is gone
+    assert len(model.joint_candidates) == 0
+
+    # Test that we can add a new candidate to the same edge
+    # This verifies the edge still exists and can accept new candidates
+    new_candidate = JointCandidate(beam1, beam2, topology=JointTopology.TOPO_X, location=Point(0.5, 0, 0))
+    model.add_joint_candidate(new_candidate)
+
+    # Verify the new candidate was added successfully
+    assert len(model.joint_candidates) == 1
+    assert list(model.joint_candidates)[0] is new_candidate

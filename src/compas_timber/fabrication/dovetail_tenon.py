@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -94,7 +95,7 @@ class DovetailTenon(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation,
+        orientation = OrientationType.START,
         start_x=0.0,
         start_y=50.0,
         start_depth=50.0,
@@ -155,8 +156,8 @@ class DovetailTenon(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return DovetailTenonParams(self).as_dict()
+    def params(self):
+        return DovetailTenonParams(self)
 
     @property
     def orientation(self):
@@ -829,6 +830,28 @@ class DovetailTenon(BTLxProcessing):
 
         return dovetail_volume
 
+    def scale(self, factor):
+        """Scale the parameters of the processing by the given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        # type: (float) -> None
+        self.start_x *= factor
+        self.start_y *= factor
+        self.start_depth *= factor
+        self.length *= factor
+        self.width *= factor
+        self.height *= factor
+        self.shape_radius *= factor
+
 
 class DovetailTenonParams(BTLxProcessingParams):
     """A class to store the parameters of a Dovetail Tenon feature.
@@ -852,7 +875,7 @@ class DovetailTenonParams(BTLxProcessingParams):
             The parameters of the Dovetail Tenon as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(DovetailTenonParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)

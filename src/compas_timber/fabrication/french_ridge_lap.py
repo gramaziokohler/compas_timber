@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -56,7 +57,7 @@ class FrenchRidgeLap(BTLxProcessing):
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
-    def __init__(self, orientation, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0, **kwargs):
+    def __init__(self, orientation=OrientationType.START, start_x=0.0, angle=90.0, ref_position=EdgePositionType.REFEDGE, drillhole=False, drillhole_diam=0.0, **kwargs):
         super(FrenchRidgeLap, self).__init__(**kwargs)
         self._orientation = None
         self._start_x = None
@@ -77,8 +78,8 @@ class FrenchRidgeLap(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return FrenchRidgeLapParams(self).as_dict()
+    def params(self):
+        return FrenchRidgeLapParams(self)
 
     @property
     def orientation(self):
@@ -427,6 +428,23 @@ class FrenchRidgeLap(BTLxProcessing):
             subtraction_volume += Brep.from_cylinder(drill_cylinder)
         return subtraction_volume
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        # type: (float) -> None
+        self.start_x *= factor
+        self.drillhole_diam *= factor
+
 
 class FrenchRidgeLapParams(BTLxProcessingParams):
     """A class to store the parameters of a French Ridge Lap feature.
@@ -450,7 +468,7 @@ class FrenchRidgeLapParams(BTLxProcessingParams):
             The parameters of the French Ridge Lap feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(FrenchRidgeLapParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)

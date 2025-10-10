@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
@@ -52,9 +53,9 @@ class JackRafterCut(BTLxProcessing):
         data["inclination"] = self.inclination
         return data
 
-    def __init__(self, orientation, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
+    def __init__(self, orientation=OrientationType.START, start_x=0.0, start_y=0.0, start_depth=0.0, angle=90.0, inclination=90.0, **kwargs):
         super(JackRafterCut, self).__init__(**kwargs)
-        self._orientation = None
+        self._orientation = orientation
         self._start_x = None
         self._start_y = None
         self._start_depth = None
@@ -73,8 +74,8 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
 
     @property
-    def params_dict(self):
-        return JackRafterCutParams(self).as_dict()
+    def params(self):
+        return JackRafterCutParams(self)
 
     @property
     def orientation(self):
@@ -141,7 +142,7 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=0, **kwargs):
         """Create a JackRafterCut instance from a cutting plane and the beam it should cut.
 
         Parameters
@@ -173,7 +174,28 @@ class JackRafterCut(BTLxProcessing):
         start_x = distance_point_point(ref_edge.point, point_start_x)
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
-        return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index)
+        return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index, **kwargs)
+
+    @classmethod
+    def from_shapes_and_element(cls, plane, element, **kwargs):
+        """Construct a drilling process from a shape and a beam.
+
+        Parameters
+        ----------
+        plane : :class:`compas.geometry.Plane` or :class:`compas.geometry.Frame`
+            The cutting plane.
+        element : :class:`compas_timber.elements.Element`
+            The element to be cut.
+
+        Returns
+        -------
+        :class:`compas_timber.fabrication.JackRafterCut`
+            The constructed Jack Rafter Cut process.
+
+        """
+        if isinstance(plane, list):
+            plane = plane[0]
+        return cls.from_plane_and_beam(plane, element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, cutting_plane):
@@ -277,6 +299,23 @@ class JackRafterCut(BTLxProcessing):
             plane_normal = -cutting_plane.xaxis
         return Plane(cutting_plane.point, plane_normal)
 
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self._start_x *= factor
+        self._start_y *= factor
+        self._start_depth *= factor
+
 
 class JackRafterCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Jack Rafter Cut feature.
@@ -300,7 +339,7 @@ class JackRafterCutParams(BTLxProcessingParams):
             The parameters of the Jack Rafter Cut feature as a dictionary.
         """
         # type: () -> OrderedDict
-        result = super(JackRafterCutParams, self).as_dict()
+        result = OrderedDict()
         result["Orientation"] = self._instance.orientation
         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
         result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
@@ -308,3 +347,102 @@ class JackRafterCutParams(BTLxProcessingParams):
         result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
         result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
         return result
+
+
+class JackRafterCutProxy(object):
+    """This object behaves like a JackRafterCut except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+    ----------
+    plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+        The cutting plane.
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam that is cut by this instance.
+    ref_side_index : int, optional
+        The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+    """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxt as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
+
+    def __init__(self, plane, beam, ref_side_index=0):
+        self.plane = plane
+        self.beam = beam
+        self.ref_side_index = ref_side_index
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCut`
+
+        """
+        if not self._processing:
+            self._processing = JackRafterCut.from_plane_and_beam(self.plane, self.beam, self.ref_side_index)
+        return self._processing
+
+    @classmethod
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
+        """Create a JackRafterCutProxy instance from a cutting plane and the beam it should cut.
+
+        Parameters
+        ----------
+        plane : :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+            The cutting plane.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        ref_side_index : int, optional
+            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCutProxy`
+
+        """
+        return cls(plane, beam, ref_side_index)
+
+    def apply(self, geometry, _):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to be cut.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the cutting plane does not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing
+
+        """
+        # type: (Brep, Beam) -> Brep
+        cutting_plane = self.plane
+        try:
+            return geometry.trimmed(cutting_plane)
+        except BrepTrimmingError:
+            raise FeatureApplicationError(
+                cutting_plane,
+                geometry,
+                "The cutting plane does not intersect with beam geometry.",
+            )
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)

@@ -16,7 +16,7 @@ The plugin is built on top of the COMPAS Timber python library and provides addi
 
 .. note::
     You can also use the COMPAS Timber python library in Grasshopper using the ghPython componenent.
-    See COMPAS Timber :doc:`api` and :doc:`examples` for more details.
+    See COMPAS Timber :doc:`api` for more details.
 
 To get an overall idea how to use it, start with :doc:`tutorials/grasshopper/workflow`.
 Then, the following sections explain in detail the concepts and tools:
@@ -27,6 +27,7 @@ Then, the following sections explain in detail the concepts and tools:
     :maxdepth: 1
     :titlesonly:
 
+    tutorials/grasshopper/installation
     tutorials/grasshopper/workflow
     tutorials/grasshopper/attributes
     tutorials/grasshopper/beams
@@ -38,4 +39,3 @@ Then, the following sections explain in detail the concepts and tools:
     tutorials/grasshopper/show
     tutorials/grasshopper/utils
     tutorials/grasshopper/examples
-    tutorials/BTLx_contribution_guide

@@ -1,11 +1,22 @@
+import pytest
+
 from compas.tolerance import TOL
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.geometry import Polyline
+from compas.geometry import angle_vectors
 
 from compas_timber.utils import intersection_line_line_param
 from compas_timber.utils import intersection_line_plane_param
+from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import is_point_in_polyline
+from compas_timber.utils import get_polyline_segment_perpendicular_vector
+from compas_timber.utils import do_segments_overlap
+from compas_timber.utils import distance_segment_segment
+from compas_timber.utils import get_segment_overlap
 
 
 def test_intersection_line_line_param():
@@ -40,3 +51,178 @@ def test_intersection_line_plane_param():
 
     assert TOL.is_allclose(expected_point, intersection_point)
     assert TOL.is_close(expected_t, t)
+
+
+def test_is_polyline_clockwise():
+    pline_ccw = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
+
+    assert not is_polyline_clockwise(pline_ccw, [0, 0, 1])
+    assert is_polyline_clockwise(pline_cw, [0, 0, 1])
+
+
+def test_correct_polyline_direction():
+    pline_ccw = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
+
+    pline_ccw_corrected = correct_polyline_direction(pline_ccw, [0, 0, 1], clockwise=True)
+    pline_cw_corrected = correct_polyline_direction(pline_cw, [0, 0, 1], clockwise=False)
+
+    assert pline_ccw == pline_cw_corrected
+    assert pline_cw == pline_ccw_corrected
+
+
+@pytest.fixture
+def polyline():
+    points = [[0, 0, 0], [2, 0, 0], [2, 1, 0], [1, 2, 0], [0, 2, 0], [0, 0, 0]]
+    return Polyline(points)
+
+
+@pytest.fixture
+def polyline_perp_vectors():
+    return [
+        Vector(0, -1, 0),
+        Vector(1, 0, 0),
+        Vector(1, 1, 0),
+        Vector(0, 1, 0),
+        Vector(-1, 0, 0),
+    ]
+
+
+@pytest.fixture
+def polyline_with_concave():
+    points = [[0, 0, 0], [2, 0, 0], [2, 1, 0], [3, 1, 0], [3, 0, 0], [4, 0, 0], [4, 2, 0], [0, 2, 0], [0, 0, 0]]
+    return Polyline(points)
+
+
+@pytest.fixture
+def concave_polyline_perp_vectors():
+    return [
+        Vector(0, -1, 0),
+        Vector(1, 0, 0),
+        Vector(0, -1, 0),
+        Vector(-1, 0, 0),
+        Vector(0, -1, 0),
+        Vector(1, 0, 0),
+        Vector(0, 1, 0),
+        Vector(-1, 0, 0),
+    ]
+
+
+def test_is_point_in_polyline(polyline, polyline_with_concave):
+    test_point_inside = Point(1, 1, 0)
+    test_point_outside = Point(3, 3, 0)
+    test_point_in_concave = Point(2.5, 0.5, 0)  # Inside the concave area aka outside the polyline
+
+    assert is_point_in_polyline(test_point_inside, polyline)
+    assert not is_point_in_polyline(test_point_outside, polyline)
+    assert is_point_in_polyline(test_point_inside, polyline_with_concave)
+    assert not is_point_in_polyline(test_point_outside, polyline_with_concave)
+    assert not is_point_in_polyline(test_point_in_concave, polyline_with_concave)
+
+
+def test_get_polyline_segment_perpendicular_vector(polyline, polyline_perp_vectors):
+    for i, expected_vector in enumerate(polyline_perp_vectors):
+        assert TOL.is_angle_zero(angle_vectors(get_polyline_segment_perpendicular_vector(polyline, i), expected_vector))
+
+
+def test_get_polyline_segment_perpendicular_vector_concave(polyline_with_concave, concave_polyline_perp_vectors):
+    for i, expected_vector in enumerate(concave_polyline_perp_vectors):
+        assert TOL.is_angle_zero(angle_vectors(get_polyline_segment_perpendicular_vector(polyline_with_concave, i), expected_vector))
+
+
+def test_is_point_in_polyline_reversed(polyline, polyline_with_concave):
+    test_point_inside = Point(1, 1, 0)
+    test_point_outside = Point(3, 3, 0)
+    test_point_in_concave = Point(2.5, 0.5, 0)  # Inside the concave area aka outside the polyline
+    polyline = Polyline(polyline.points[::-1])
+    polyline_with_concave = Polyline(polyline_with_concave.points[::-1])
+
+    assert is_point_in_polyline(test_point_inside, polyline)
+    assert not is_point_in_polyline(test_point_outside, polyline)
+    assert is_point_in_polyline(test_point_inside, polyline_with_concave)
+    assert not is_point_in_polyline(test_point_outside, polyline_with_concave)
+    assert not is_point_in_polyline(test_point_in_concave, polyline_with_concave)
+
+
+def test_get_polyline_segment_perpendicular_vector_reversed(polyline, polyline_perp_vectors):
+    polyline = Polyline(polyline.points[::-1])
+    polyline_perp_vectors = polyline_perp_vectors[::-1]
+    for i, expected_vector in enumerate(polyline_perp_vectors):
+        assert TOL.is_angle_zero(angle_vectors(get_polyline_segment_perpendicular_vector(polyline, i), expected_vector))
+
+
+def test_get_polyline_segment_perpendicular_vector_concave_reversed(polyline_with_concave, concave_polyline_perp_vectors):
+    polyline_with_concave = Polyline(polyline_with_concave.points[::-1])
+    concave_polyline_perp_vectors = concave_polyline_perp_vectors[::-1]
+    for i, expected_vector in enumerate(concave_polyline_perp_vectors):
+        assert TOL.is_angle_zero(angle_vectors(get_polyline_segment_perpendicular_vector(polyline_with_concave, i), expected_vector))
+
+
+def test_do_segments_overlap():
+    segment_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    overlapping = [
+        Line(Point(5, 0, 0), Point(15, 0, 0)),
+        Line(Point(9, 1, 0), Point(10, 10, 0)),
+        Line(Point(2, 0, 0), Point(8, 0, 0)),
+        Line(Point(-2, 0, 0), Point(12, 0, 0)),
+        Line(Point(0, 0, 0), Point(10, 0, 0)),
+    ]
+    non_overlapping = [
+        Line(Point(11, 0, 0), Point(20, 0, 0)),
+        Line(Point(10, 1, 0), Point(20, 10, 0)),
+        Line(Point(-10, 0, 0), Point(0, 0, 0)),
+        Line(Point(10, 0, 0), Point(15, 0, 0)),
+        Line(Point(11, 0, 0), Point(21, 0, 0)),
+    ]
+
+    for segment_b in overlapping:
+        assert do_segments_overlap(segment_a, segment_b)
+    for segment_b in non_overlapping:
+        assert not do_segments_overlap(segment_a, segment_b)
+
+
+def test_distance_segment_segment():
+    segment_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    segments = [
+        Line(Point(5, 0, 0), Point(15, 0, 0)),  # Overlapping parallel segment
+        Line(Point(9, 1, 0), Point(10, 10, 0)),  # Overlapping non-parallel segment
+        Line(Point(2, 1, 0), Point(8, 1, 0)),  # Overlapping parallel segment internal to segment_a
+        Line(Point(13, 4, 0), Point(15, 6, 0)),  # Non-overlapping segment
+        Line(Point(15, -5, 0), Point(15, 5, 0)),  # crossing perpendicular segment
+        Line(Point(5, -5, 0), Point(5, 5, 0)),  # crossing perpendicular segment
+        Line(Point(5, -5, 1), Point(5, 5, 1)),  # crossing non-intersecting perpendicular segment
+    ]
+    results = [0.0, 1.0, 1.0, 5.0, 5.0, 0.0, 1.0]
+    # Distance between non-overlapping segments
+    for seg, result in zip(segments, results):
+        assert TOL.is_close(distance_segment_segment(segment_a, seg), result)
+
+
+def test_get_segment_overlap():
+    seg_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    segs = [
+        Line(Point(0, 0, 0), Point(10, 0, 0)),
+        Line(Point(-1, 0, 0), Point(9, 0, 0)),
+        Line(Point(1, 0, 0), Point(11, 0, 0)),
+        Line(Point(1, 0, 0), Point(9, 0, 0)),
+        Line(Point(-1, 0, 0), Point(11, 0, 0)),
+        Line(Point(-11, 0, 0), Point(-1, 0, 0)),
+        Line(Point(11, 0, 0), Point(21, 0, 0)),
+        Line(Point(10, 0, 0), Point(20, 0, 0)),
+        Line(Point(-10, 0, 0), Point(0, 0, 0)),
+    ]
+    expected_overlaps = [
+        (0, 10),
+        (0, 9),
+        (1, 10),
+        (1, 9),
+        (0, 10),
+        None,
+        None,
+        None,
+        None,
+    ]
+
+    for seg_b, o in zip(segs, expected_overlaps):
+        assert get_segment_overlap(seg_a, seg_b) == o

@@ -1,13 +1,10 @@
-from compas.geometry import Plane
-from compas.geometry import distance_point_line
-from compas.geometry import intersection_plane_plane_plane
-
-from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DoubleCut
+from compas_timber.fabrication import Lap
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
 
 
 class TBirdsmouthJoint(Joint):
@@ -21,17 +18,19 @@ class TBirdsmouthJoint(Joint):
     ----------
     main_beam : :class:`~compas_timber.parts.Beam`
         First beam to be joined.
-
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    mill_depth : float
+        The depth of the pockets to be milled on the cross beam.
 
     Attributes
     ----------
     main_beam : :class:`~compas_timber.parts.Beam`
         First beam to be joined.
-
     cross_beam : :class:`~compas_timber.parts.Beam`
         Second beam to be joined.
+    mill_depth : float
+        The depth of the pockets to be milled on the cross beam.
 
     """
 
@@ -42,14 +41,16 @@ class TBirdsmouthJoint(Joint):
         data = super(TBirdsmouthJoint, self).__data__
         data["main_beam_guid"] = self.main_beam_guid
         data["cross_beam_guid"] = self.cross_beam_guid
+        data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, main_beam, cross_beam, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, **kwargs):
         super(TBirdsmouthJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.mill_depth = mill_depth
 
         self.features = []
 
@@ -58,19 +59,16 @@ class TBirdsmouthJoint(Joint):
         return [self.main_beam, self.cross_beam]
 
     @property
-    def cross_beam_ref_side_indices(self):
+    def cross_ref_side_indices(self):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
         ref_side_indices = sorted(ref_side_dict, key=ref_side_dict.get)[:2]
         return ref_side_indices
 
-    @property
-    def main_beam_ref_side_index(self):
-        distance_dict = {}
-        cutting_frames = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indices]
-        for i, ref_side in enumerate(self.main_beam.ref_sides[0:4]):
-            intercection_pt = intersection_plane_plane_plane(Plane.from_frame(cutting_frames[0]), Plane.from_frame(cutting_frames[1]), Plane.from_frame(ref_side))
-            distance_dict[i] = distance_point_line(intercection_pt, self.main_beam.centerline)
-        return min(distance_dict.keys(), key=distance_dict.get)
+    def _get_cutting_planes(self):
+        cutting_planes = [self.cross_beam.ref_sides[index] for index in self.cross_ref_side_indices]
+        if self.mill_depth:
+            cutting_planes = [plane.translated(-plane.normal * self.mill_depth) for plane in cutting_planes]
+        return cutting_planes
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -86,8 +84,11 @@ class TBirdsmouthJoint(Joint):
         assert self.main_beam and self.cross_beam
         start_a, end_a = None, None
 
-        face_index = self.cross_beam_ref_side_indices[1]
+        face_index = self.cross_ref_side_indices[1]
         plane = self.cross_beam.ref_sides[face_index]
+
+        if self.mill_depth:
+            plane.translate(-plane.normal * self.mill_depth)
 
         try:
             start_a, end_a = self.main_beam.extension_to_plane(plane)
@@ -108,15 +109,42 @@ class TBirdsmouthJoint(Joint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        cross_beam_ref_sides = [self.cross_beam.ref_sides[index] for index in self.cross_beam_ref_side_indices]
+        cutting_planes = self._get_cutting_planes()
 
-        # generate step joint features
-        main_feature = DoubleCut.from_planes_and_beam(cross_beam_ref_sides, self.main_beam, self.main_beam_ref_side_index)
+        # generate double cut feature
+        main_feature = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam)
 
-        # add features to beams
+        # register main feature to beam and joint
         self.main_beam.add_features(main_feature)
-        # add features to joint
-        self.features = main_feature
+        self.features.append(main_feature)
+
+        if self.mill_depth:
+            main_ref_side_index = main_feature.ref_side_index
+            lap_cutting_plane = self.main_beam.ref_sides[main_ref_side_index]
+            lap_length = self.main_beam.get_dimensions_relative_to_side(main_ref_side_index)[1]
+
+            # generate lap feature for each side of the cross beam that intersects the main beam
+            # TODO: replace with Pocket once implemented in order to get a better fit
+            cross_feature_1 = Lap.from_plane_and_beam(
+                lap_cutting_plane,
+                self.cross_beam,
+                lap_length,
+                self.mill_depth,
+                is_pocket=True,
+                ref_side_index=self.cross_ref_side_indices[0],
+            )
+            cross_feature_2 = Lap.from_plane_and_beam(
+                lap_cutting_plane,
+                self.cross_beam,
+                lap_length,
+                self.mill_depth,
+                is_pocket=True,
+                ref_side_index=self.cross_ref_side_indices[1],
+            )
+
+            # register cross features to beam and joint
+            self.cross_beam.add_features([cross_feature_1, cross_feature_2])
+            self.features.extend([cross_feature_1, cross_feature_2])
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

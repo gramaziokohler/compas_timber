@@ -14,8 +14,6 @@ Classes
     CategoryRule
     DebugInfomation
     DirectRule
-    FeatureDefinition
-    JointDefinition
     JointRule
     SurfaceModel
     TopologyRule

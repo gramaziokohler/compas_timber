@@ -4,30 +4,75 @@ compas_timber.connections
 
 .. currentmodule:: compas_timber.connections
 
-Classes
+Joints
+======
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    Joint
+    PlateJoint
+    LapJoint
+    ButtJoint
+    TButtJoint
+    LButtJoint
+    TStepJoint
+    LFrenchRidgeLapJoint
+    LLapJoint
+    LMiterJoint
+    JointCandidate
+    PlateJointCandidate
+    TBirdsmouthJoint
+    LMiterJoint
+    XLapJoint
+    XNotchJoint
+    TLapJoint
+    LLapJoint
+    JointCandidate
+    LFrenchRidgeLapJoint
+    JointTopology
+    ConnectionSolver
+    PlateConnectionSolver
+    TDovetailJoint
+    BallNodeJoint
+    TenonMortiseJoint
+    YButtJoint
+    TOliGinaJoint
+    WallJoint
+    PlateJoint
+    PlateButtJoint
+    PlateLButtJoint
+    PlateTButtJoint
+    PlateMiterJoint
+
+Joint Interfaces
+=================
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    InterfaceLocation
+    InterfaceRole
+    PlateToPlateInterface
+
+Solvers
 =======
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    BallNodeJoint
     ConnectionSolver
-    Joint
     JointTopology
-    LapJoint
-    LButtJoint
-    LFrenchRidgeLapJoint
-    LLapJoint
-    LMiterJoint
-    NullJoint
-    TBirdsmouthJoint
-    TButtJoint
-    TDovetailJoint
-    TLapJoint
-    TStepJoint
-    TenonMortiseJoint
-    XLapJoint
+    Cluster
+    BeamGroupAnalyzer
+    NBeamKDTreeAnalyzer
+    TripletAnalyzer
+    QuadAnalyzer
+    CompositeAnalyzer
+    MaxNCompositeAnalyzer
 
 Functions
 =========
@@ -36,7 +81,10 @@ Functions
     :toctree: generated/
     :nosignatures:
 
-    find_neighboring_beams
+    find_neighboring_elements
+    beam_ref_side_incidence
+    beam_ref_side_incidence_with_vector
+    point_centerline_towards_joint
 
 Exceptions
 ==========

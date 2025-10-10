@@ -233,7 +233,21 @@ PROCESS_PARAMS_DICT = [
 def test_drilling(beam, drill_line, process_params_dict):
     diameter = 10.0
 
-    drilling = Drilling.from_line_and_beam(drill_line, diameter, beam)
+    drilling = Drilling.from_line_and_element(drill_line, beam, diameter)
 
+    generated_params = drilling.params.header_attributes
+    generated_params.update(drilling.params.as_dict())
     for key, value in process_params_dict.items():
-        assert drilling.params_dict[key] == value
+        assert generated_params[key] == value
+
+
+def test_drilling_scaled():
+    drilling = Drilling(start_x=10.0, start_y=20.0, angle=30.0, inclination=40.0, diameter=50.0, depth=60.0, ref_side_index=1)
+
+    scaled = drilling.scaled(2.0)
+
+    assert scaled.start_x == drilling.start_x * 2.0
+    assert scaled.start_y == drilling.start_y * 2.0
+    assert scaled.angle == drilling.angle
+    assert scaled.inclination == drilling.inclination
+    assert scaled.diameter == drilling.diameter * 2.0
