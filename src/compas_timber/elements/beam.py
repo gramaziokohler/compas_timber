@@ -124,7 +124,7 @@ class Beam(TimberElement):
         start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
         blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
-        return blank.transformed(self.transformation)
+        return blank.transformed(self.modeltransformation)
 
     @property
     def blank_length(self):

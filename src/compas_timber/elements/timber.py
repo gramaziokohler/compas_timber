@@ -2,6 +2,7 @@ from functools import reduce
 from operator import mul
 
 from compas.geometry import Frame
+from compas.geometry import Vector
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
@@ -182,7 +183,6 @@ class TimberElement(Element):
 
             while parent:
                 if parent.transformation:
-                    print("Parent transformation:\n{}".format(parent.transformation))
                     stack.append(parent.transformation)
                 parent = parent.parent
 
@@ -282,7 +282,7 @@ class TimberElement(Element):
         return self.modeltransformation.inverted()
 
     def transform(self, transformation):
-        """Apply a transformation to the element's frame.
+        """Apply a transformation to the element's frame. IMPORTANT: This transformation occurs in the parent's local coordinate system.
 
         Parameters
         ----------
@@ -291,11 +291,21 @@ class TimberElement(Element):
 
         """
         # type: (Transformation) -> None
-        print("Transforming element {} with transformation:\n{}".format(self.name, transformation))
         self.frame.transform(transformation)
         self.transformation = Transformation.from_frame(self.frame)
-        print("New frame:\n{}".format(self.frame))
 
+    def translate(self, vector):
+        """Apply a translation to the element's frame. IMPORTANT: This translation occurs in the parent's local coordinate system.
+
+        Parameters
+        ----------
+        transformation : :class:`~compas.geometry.Transformation`
+            The transformation to apply.
+
+        """
+        # type: (Transformation) -> None
+        self.frame.translate(vector)
+        self.transformation = Transformation.from_frame(self.frame)
 
     ########################################################################
     # BTLx properties
@@ -310,7 +320,7 @@ class TimberElement(Element):
             The reference frame of the element.
         """
         # type: () -> Frame
-        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
+        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
 
     @property
     def ref_sides(self):

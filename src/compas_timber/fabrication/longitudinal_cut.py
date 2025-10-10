@@ -7,6 +7,8 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Polyline
+
+from compas.geometry import dot_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
@@ -367,7 +369,7 @@ class LongitudinalCut(BTLxProcessing):
         for i, ref_side in enumerate(beam.ref_sides[:4]):
             width, _ = beam.get_dimensions_relative_to_side(i)
             y_seg = Line.from_point_and_vector(ref_side.point, ref_side.yaxis * width)
-            if intersection_segment_plane(y_seg, plane):  # check if the plane intersects with the reference side
+            if intersection_segment_plane(y_seg, plane,tol=TOL.absolute) and dot_vectors(ref_side.normal, plane.normal) > 0:  # check if the plane intersects with the reference side
                 angle = angle_vectors(plane.normal, ref_side.normal)
                 angles[i] = angle
         return min(angles, key=angles.get)
@@ -435,11 +437,12 @@ class LongitudinalCut(BTLxProcessing):
         assert self.inclination is not None
 
         ref_side = beam.side_as_surface(self.ref_side_index)
+        print("ref_side = ", ref_side)  # --- IGNORE ---
+        print("ref_side_index = ", self.ref_side_index)  # --- IGNORE ---
         p_origin = ref_side.point_at(self.start_x, self.start_y)
 
         frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
         frame.rotate(math.radians(self.inclination), ref_side.xaxis, p_origin)
-
         return Plane.from_frame(frame)
 
     def volume_from_params_and_beam(self, beam):

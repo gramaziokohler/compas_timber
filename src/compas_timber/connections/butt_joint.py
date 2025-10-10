@@ -1,5 +1,5 @@
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import JackRafterCutProxy
+from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 
 from .joint import Joint
@@ -164,7 +164,7 @@ class ButtJoint(Joint):
                 cutting_plane.translate(cutting_plane.normal * self.mill_depth)
 
         # apply the cut on the main beam
-        main_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
+        main_feature = JackRafterCut.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
         self.main_beam.add_features(main_feature)
         # store the feature
         self.features = [main_feature]
@@ -189,7 +189,7 @@ class ButtJoint(Joint):
                 modification_plane = self.back_plane
             else:
                 modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
-            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
+            cross_refinement_feature = JackRafterCut.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
 
