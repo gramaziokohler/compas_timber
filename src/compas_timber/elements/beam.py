@@ -152,8 +152,9 @@ class Beam(TimberElement):
         The ref_frame is always in model coordinates.
         TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
         """
-
-        return Frame(self.blank.points[1], self.frame.xaxis, self.frame.zaxis)
+        #NOTE: This does not work with self.frame because self.frame is in parent space, and ref_frame needs to be in model space(for now)
+        #NOTE: compas_model.Element.frame is in the global/model space, and would work, but it is not yet implemented in TimberElement.
+        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
 
     # ==========================================================================
     # Implementations of abstract methods
