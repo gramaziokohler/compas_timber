@@ -24,12 +24,12 @@ class Stock(Data):
         Length of the stock piece
     cross_section : tuple of float
         Cross-section dimensions sorted in ascending order for consistent comparison
-    cutting_tolerance : float, optional
-        Tolerance for cutting operations (kerf width, etc.)
+    spacing : float, optional
+        Spacing tolerance for cutting operations (kerf width, etc.)
     beam_data : dict[str, dict]
         Dictionary mapping beam GUIDs to beam info containing "length" and "frame"
     utilized_length : float
-        Total utilized length including cutting tolerances
+        Total utilized length including spacing tolerances
     waste : float
         Remaining unused length of the stock piece
     """
@@ -44,40 +44,40 @@ class Stock(Data):
             raise ValueError("cross_section must be a tuple or list of 2 dimensions")
 
         self.beam_data = {}  # {guid: {"length": float, "frame": Frame}}
-        self._cutting_tolerance = 0.0
+        self._spacing = 0.0
 
     @property
     def __data__(self):
         return {
             "length": self.length,
             "cross_section": self.cross_section,
-            "cutting_tolerance": self.cutting_tolerance,
+            "spacing": self.spacing,
             "beam_data": self.beam_data,
         }
 
     @classmethod
     def __from_data__(cls, data):
         stock = cls(length=data["length"], cross_section=data["cross_section"])
-        stock.cutting_tolerance = data.get("cutting_tolerance", 0.0)
+        stock.spacing = data.get("spacing", 0.0)
         stock.beam_data = data.get("beam_data", {})
         return stock
 
     @property
-    def cutting_tolerance(self):
-        return self._cutting_tolerance
+    def spacing(self):
+        return self._spacing
 
-    @cutting_tolerance.setter
-    def cutting_tolerance(self, value):
-        self._cutting_tolerance = value
+    @spacing.setter
+    def spacing(self, value):
+        self._spacing = value
 
     @property
     def utilized_length(self):
-        """Get the total utilized length including cutting tolerances."""
+        """Get the total utilized length including spacing tolerances."""
         if not self.beam_data:
             return 0.0
         current_length = sum(beam_info["length"] for beam_info in self.beam_data.values())
         cuts_so_far = len(self.beam_data)
-        return current_length + (cuts_so_far * self._cutting_tolerance)
+        return current_length + (cuts_so_far * self._spacing)
 
     @property
     def waste(self):
@@ -236,8 +236,8 @@ class BeamNester(object):
         The timber model containing beams to nest
     stock_catalog : list[:class:`Stock`]
         Available stock pieces for nesting
-    cutting_tolerance : float, optional
-        Tolerance for cutting operations (kerf width, etc.)
+    spacing : float, optional
+        Spacing tolerance for cutting operations (kerf width, etc.)
 
     Attributes
     ----------
@@ -245,14 +245,14 @@ class BeamNester(object):
         The timber model
     stock_catalog : list[:class:`Stock`]
         Available stock pieces for nesting
-    cutting_tolerance : float
-        Cutting tolerance
+    spacing : float
+        Spacing tolerance for cutting operations (kerf width, etc.)
     """
 
-    def __init__(self, model, stock_catalog, cutting_tolerance=None):
+    def __init__(self, model, stock_catalog, spacing=None):
         self.model = model
         self.stock_catalog = stock_catalog if isinstance(stock_catalog, list) else [stock_catalog]
-        self.cutting_tolerance = cutting_tolerance or 0.0
+        self.spacing = spacing or 0.0
 
     def _sort_beams_by_stock(self):
         """
@@ -315,16 +315,16 @@ class BeamNester(object):
                 continue
             # Apply selected algorithm
             if fast:
-                stocks = self._first_fit_decreasing(compatible_beams, stock_type, self.cutting_tolerance)
+                stocks = self._first_fit_decreasing(compatible_beams, stock_type, self.spacing)
             else:
-                stocks = self._best_fit_decreasing(compatible_beams, stock_type, self.cutting_tolerance)
+                stocks = self._best_fit_decreasing(compatible_beams, stock_type, self.spacing)
             # Add to overall result
             nesting_stocks.extend(stocks)
 
         return NestingResult(nesting_stocks)
 
     @staticmethod
-    def _first_fit_decreasing(beams, stock, cutting_tolerance=0.0):
+    def _first_fit_decreasing(beams, stock, spacing=0.0):
         """
         Apply First Fit Decreasing algorithm for a single stock type.
 
@@ -351,7 +351,7 @@ class BeamNester(object):
             # Try to fit in existing stocks
             fitted = False
             for stock_piece in stocks:
-                stock_piece.cutting_tolerance = cutting_tolerance  # Set cutting tolerance
+                stock_piece.spacing = spacing  # Set spacing tolerance
                 if stock_piece.can_fit_beam(beam):
                     stock_piece.add_beam(beam)
                     fitted = True
@@ -365,7 +365,7 @@ class BeamNester(object):
         return stocks
 
     @staticmethod
-    def _best_fit_decreasing(beams, stock, cutting_tolerance=0.0):
+    def _best_fit_decreasing(beams, stock, spacing=0.0):
         """
         Apply Best Fit Decreasing algorithm for a single stock type.
 
@@ -394,7 +394,7 @@ class BeamNester(object):
             best_waste = float("inf")
 
             for stock_piece in stocks:
-                stock_piece.cutting_tolerance = cutting_tolerance  # Set cutting tolerance
+                stock_piece.spacing = spacing  # Set spacing tolerance
                 if stock_piece.can_fit_beam(beam) and stock_piece.waste < best_waste:
                     best_waste = stock_piece.waste
                     best_stock = stock_piece

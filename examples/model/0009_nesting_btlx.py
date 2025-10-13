@@ -76,7 +76,7 @@ def create_stand_model():
 def generate_nesting(model):
     """Generate nesting for the given timber model."""
     stock_catalog = [Stock(6000, (120, 120)), Stock(6000, (120, 60))]
-    nester = BeamNester(model, stock_catalog, cutting_tolerance=3.0)
+    nester = BeamNester(model, stock_catalog, spacing=3.0)
     return nester.nest(fast=False)
 
 
