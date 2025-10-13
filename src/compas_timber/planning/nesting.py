@@ -106,8 +106,8 @@ class Stock(Data):
         bool
             True if cross-sections are identical, False otherwise
         """
-        beam_cross_section = tuple(sorted([beam.width, beam.height]))
-        return beam_cross_section == tuple(sorted(self.cross_section))
+        beam_cross_section = [beam.width, beam.height]
+        return set(beam_cross_section) == set(self.cross_section)
 
     def _get_position_frame(self, beam):
         """
