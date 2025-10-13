@@ -111,11 +111,13 @@ class Stock(Data):
 
     def _get_position_frame(self, beam):
         """
-        Get the position frame for a beam based on its orientation vs stock cross-section.
+        Get the position frame for a beam that is being added to this stock.
+        The frame is oriented based on the beam's cross-section relative to the stock's.
+
         Parameters
         ----------
         beam : :class:`~compas_timber.elements.Beam`
-            The beam to get the position frame for
+            The beam to get the position frame for.
         x_position : float
             The position along the stock length where the beam should be placed.
         Returns
@@ -124,13 +126,13 @@ class Stock(Data):
             The position frame for the beam.
         """
         beam_cross_section = tuple([beam.width, beam.height])
-        # scenario where beam cross-section matches stock exactly
+        # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
         if beam_cross_section == self.cross_section:
             position_frame = Frame.worldXY()
-        # scenario where beam cross-section is rotated 90 degrees vs stock
+        # scenario where beam cross-section values are the same but orientation is rotated 90 degrees
         else:
             position_frame = Frame([0, 0, 0], [1, 0, 0], [0, 0, 1])
-            position_frame.point.y = self.cross_section[1]  # offset to avoid negative coordinates
+            position_frame.point.y = self.cross_section[1]  # offset in Y by stock height
         position_frame.point.x = self.utilized_length
         return position_frame
 
