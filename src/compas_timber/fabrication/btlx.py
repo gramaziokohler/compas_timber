@@ -512,7 +512,7 @@ class BTLxRawpart(BTLxGenericPart):
                 "PlaningLength": "0",
                 "StartOffset": "0",
                 "EndOffset": "0",
-                # "PartType": "nesting", # TODO!: although specified in the docs, BTLx Viewer throws an error when this is included
+                # "PartType": "beam",  # TODO: PartType attribute causes BTLx Viewer validation error despite being in schema. Enable when viewer supports it.
             }
         )
         return attr
