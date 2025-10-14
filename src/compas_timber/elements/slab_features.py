@@ -35,6 +35,66 @@ class Opening(SlabFeature):
         plate_geo.cap_planar_holes()
         return plate_geo
 
+class OpeningType(object):
+    """Constants for different types of openings in walls.
+
+    Attributes
+    ----------
+    DOOR : str
+        Constant for door openings.
+    WINDOW : str
+        Constant for window openings.
+    """
+
+    DOOR = "door"
+    WINDOW = "window"
+
+
+# class Opening(Data):
+#     """Represents an opening in a wall (door, window, etc.).
+
+#     Parameters
+#     ----------
+#     polyline : :class:`~compas.geometry.Polyline`
+#         The polyline defining the boundary of the opening.
+#     opening_type : str
+#         The type of opening (e.g., "door", "window").
+#     **kwargs : dict, optional
+#         Additional keyword arguments.
+
+#     Attributes
+#     ----------
+#     polyline : :class:`~compas.geometry.Polyline`
+#         The polyline defining the boundary of the opening.
+#     opening_type : str
+#         The type of opening.
+#     """
+
+#     @property
+#     def __data__(self):
+#         return {
+#             "polyline": self.polyline,
+#             "opening_type": self.opening_type,
+#         }
+
+#     def __init__(self, polyline, opening_type, **kwargs):
+#         super(Opening, self).__init__(**kwargs)
+#         self.polyline = polyline
+#         self.opening_type = opening_type
+
+#     def __repr__(self):
+#         return "Opening(type={})".format(self.opening_type)
+
+#     def orient_polyline(self, normal):
+#         """Orient the polyline consistently with the given normal vector.
+
+#         Parameters
+#         ----------
+#         normal : :class:`~compas.geometry.Vector`
+#             The normal vector to orient the polyline with.
+#         """
+#         self.polyline = _oriented_polyline(self.polyline, normal)
+
 
 class InterfaceRole(object):
     """
@@ -53,14 +113,13 @@ class InterfaceRole(object):
     MAIN = "MAIN"
     CROSS = "CROSS"
     NONE = "NONE"
-    
+
 class SlabConnectionInterface(object):
-    def __init__(self, polyline, frame, edge_index, topology, opposite_slab_planes, interface_role=None):
+    def __init__(self, polyline, frame, edge_index, topology, interface_role=None):
         self.polyline = polyline
         self.frame = frame
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         self.topology = topology  # TODO: don't like this here
-        self.opposite_slab_planes = opposite_slab_planes  # planes of the opposite slab at the interface
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
 
 

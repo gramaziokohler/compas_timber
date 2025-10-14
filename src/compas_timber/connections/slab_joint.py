@@ -6,6 +6,8 @@ from compas.geometry import Transformation
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
+from compas_timber.elements import SlabConnectionInterface
+
 
 class SlabJoint(PlateJoint):
     """Models a plate to plate interaction.

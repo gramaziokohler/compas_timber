@@ -1,7 +1,5 @@
 from .beam import Beam
 from .plate import Plate
-from .wall import Opening
-from .wall import OpeningType
 from .slab import Slab
 from .wall import Wall
 from .fastener import Fastener
@@ -10,10 +8,18 @@ from .features import BrepSubtraction
 from .features import CutFeature
 from .features import DrillFeature
 from .features import MillVolume
-from .fasteners.ball_node_fastener import BallNodeFastener
-from .fasteners.plate_fastener import PlateFastener
+
 from .timber import TimberElement
 from .plate_geometry import PlateGeometry
+from .slab_features import SlabFeature
+from .slab_features import SlabConnectionInterface
+from .slab_features import InterfaceRole
+from .slab_features import Opening
+from .slab_features import OpeningType
+from .slab_features import LinearService
+from .slab_features import VolumetricService
+from .fasteners.ball_node_fastener import BallNodeFastener
+from .fasteners.plate_fastener import PlateFastener
 
 __all__ = [
     "Beam",
@@ -32,4 +38,9 @@ __all__ = [
     "Slab",
     "Wall",
     "PlateGeometry",
+    "SlabFeature",
+    "SlabConnectionInterface",
+    "InterfaceRole",
+    "LinearService",
+    "VolumetricService",
 ]

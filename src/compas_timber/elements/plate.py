@@ -169,7 +169,7 @@ class Plate(PlateGeometry, TimberElement):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    def compute_geometry(self, include_features=True):
+    def compute_elementgeometry(self, include_features=True):
         # type: (bool) -> compas.geometry.Brep
         """Compute the geometry of the element in global coordinates.
 
@@ -198,3 +198,4 @@ class Plate(PlateGeometry, TimberElement):
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return plate_geo
+
