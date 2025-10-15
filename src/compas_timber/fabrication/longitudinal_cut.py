@@ -437,8 +437,6 @@ class LongitudinalCut(BTLxProcessing):
         assert self.inclination is not None
 
         ref_side = beam.side_as_surface(self.ref_side_index)
-        print("ref_side = ", ref_side)  # --- IGNORE ---
-        print("ref_side_index = ", self.ref_side_index)  # --- IGNORE ---
         p_origin = ref_side.point_at(self.start_x, self.start_y)
 
         frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)

@@ -205,6 +205,8 @@ class TimberElement(Element):
         """
         # type: () -> compas.geometry.Brep
         xform = self.modeltransformation
+        if self.__class__.__name__ == "Plate":
+            print(xform)
         modelgeometry = self.elementgeometry.transformed(xform)
 
         if self.model:

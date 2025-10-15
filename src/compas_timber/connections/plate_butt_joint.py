@@ -81,16 +81,7 @@ class PlateButtJoint(PlateJoint):
 
     def _adjust_plate_outlines(self):
         """Adjust the outlines of the plates to match the joint."""
-
-        assert self.main_plate
-        assert self.cross_plate
-
-        for polyline in self.main_outlines:
-            move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
-
-        if self.topology == JointTopology.TOPO_EDGE_EDGE:
-            for polyline in self.cross_outlines:
-                move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
+        raise NotImplementedError
 
 
 class PlateLButtJoint(PlateButtJoint):

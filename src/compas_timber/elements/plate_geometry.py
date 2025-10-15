@@ -65,6 +65,7 @@ class PlateGeometry(object):
 
     def __init__(self, outline_a, outline_b, openings=None):
         self._original_outlines = (outline_a, outline_b)
+        self._mutable_outlines = (outline_a.copy(), outline_b.copy)
         self.outline_a = outline_a.transformed(self.transformation)
         self.outline_b = outline_b.transformed(self.transformation)
         self._planes = None
@@ -194,7 +195,6 @@ class PlateGeometry(object):
             thickness,
         ) = PlateGeometry._get_frame_and_dims_from_outlines(outline_a, outline_b)
         xform_to_local = Transformation.from_frame(frame).inverse()
-        print(frame)
         local_outline_a = outline_a.transformed(xform_to_local)
         local_outline_b = outline_b.transformed(xform_to_local)
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
@@ -296,21 +296,22 @@ class PlateGeometry(object):
             The shape of the element.
 
         """
-        outline_a = correct_polyline_direction(self.outline_a, self.frame.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self.outline_b, self.frame.normal, clockwise=True)
+        outline_a = correct_polyline_direction(self.local_outlines[0], self.frame.normal, clockwise=True)
+        outline_b = correct_polyline_direction(self.local_outlines[1], self.frame.normal, clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for opening in self.openings:
             if not TOL.is_allclose(opening[0], opening[-1]):
                 raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
-            op = opening.transformed(Transformation.from_frame(self.frame))
-            # TODO: should we do this in global or local coords?
-            polyline_a = correct_polyline_direction(op, self.frame.normal, clockwise=True)
+            polyline_a = correct_polyline_direction(opening, self.frame.normal, clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
             brep.cap_planar_holes()
             plate_geo -= brep
         return plate_geo
+
+    def compute_elementgeometry(self):
+        return self.shape
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box

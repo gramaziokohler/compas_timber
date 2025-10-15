@@ -5,6 +5,7 @@ from compas.geometry import Plane
 
 from compas.data import Data
 
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 
 class SlabFeature(Data):
@@ -13,6 +14,9 @@ class SlabFeature(Data):
 
     def __data__(self):
         return {"name": self.name}
+
+    # def apply(self, slab, detail_set):
+    #     detail_set.populate_details(self, slab)
 
 class Opening(SlabFeature):
     def __init__(self, outline_a, outline_b, name=None):
@@ -48,52 +52,6 @@ class OpeningType(object):
 
     DOOR = "door"
     WINDOW = "window"
-
-
-# class Opening(Data):
-#     """Represents an opening in a wall (door, window, etc.).
-
-#     Parameters
-#     ----------
-#     polyline : :class:`~compas.geometry.Polyline`
-#         The polyline defining the boundary of the opening.
-#     opening_type : str
-#         The type of opening (e.g., "door", "window").
-#     **kwargs : dict, optional
-#         Additional keyword arguments.
-
-#     Attributes
-#     ----------
-#     polyline : :class:`~compas.geometry.Polyline`
-#         The polyline defining the boundary of the opening.
-#     opening_type : str
-#         The type of opening.
-#     """
-
-#     @property
-#     def __data__(self):
-#         return {
-#             "polyline": self.polyline,
-#             "opening_type": self.opening_type,
-#         }
-
-#     def __init__(self, polyline, opening_type, **kwargs):
-#         super(Opening, self).__init__(**kwargs)
-#         self.polyline = polyline
-#         self.opening_type = opening_type
-
-#     def __repr__(self):
-#         return "Opening(type={})".format(self.opening_type)
-
-#     def orient_polyline(self, normal):
-#         """Orient the polyline consistently with the given normal vector.
-
-#         Parameters
-#         ----------
-#         normal : :class:`~compas.geometry.Vector`
-#             The normal vector to orient the polyline with.
-#         """
-#         self.polyline = _oriented_polyline(self.polyline, normal)
 
 
 class InterfaceRole(object):
