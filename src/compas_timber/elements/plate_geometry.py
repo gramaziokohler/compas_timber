@@ -8,14 +8,13 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import closest_point_on_plane
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
-from compas_timber.utils import move_polyline_segment_to_plane
 from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import move_polyline_segment_to_plane
 
 
 class PlateGeometry(object):
@@ -67,13 +66,13 @@ class PlateGeometry(object):
 
     def __init__(self, local_outline_a, local_outline_b, openings=None):
         self._original_outlines = (local_outline_a, local_outline_b)
-        self._mutable_outlines = (local_outline_a.copy(), local_`outline_b.copy())
+        self._mutable_outlines = (local_outline_a.copy(), local_outline_b.copy())
         self._edge_frames = {}
 
         self._planes = None
         self.openings = openings or []
         self._extension_planes = {}
-        self.test=[]
+        self.test = []
 
     def __repr__(self):
         # type: () -> str
@@ -106,7 +105,7 @@ class PlateGeometry(object):
         :class:`~compas.geometry.Polyline`
             The principal outline of the plate.
         """
-        return self._mutable_outlines[0].transformed(self.transformation)
+        return self._mutable_outlines[0].transformed(Transformation.from_frame(self.frame))
 
     @property
     def outline_b(self):
@@ -117,7 +116,7 @@ class PlateGeometry(object):
         :class:`~compas.geometry.Polyline`
             The associated outline of the plate.
         """
-        return self._mutable_outlines[1].transformed(self.transformation)
+        return self._mutable_outlines[1].transformed(Transformation.from_frame(self.frame))
 
     @property
     def thickness(self):
@@ -153,8 +152,6 @@ class PlateGeometry(object):
         """Returns the local outlines of the plate."""
         return self._mutable_outlines
 
-
-
     @property
     def edge_planes(self):
         """Frames representing the edge planes of the plate.
@@ -164,17 +161,17 @@ class PlateGeometry(object):
         dict:
             A dict of frames representing the edge planes of the plate.
         """
-        _edge_planes={}
+        _edge_planes = {}
         for i in range(len(self._mutable_outlines[0]) - 1):
-            frame = self._extension_planes.get(i,None)
+            frame = self._extension_planes.get(i, None)
             if not frame:
                 frame = Frame.from_points(self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i])
-                frame=self.corrected_edge_plane(i,frame)
+                frame = self.corrected_edge_plane(i, frame)
             _edge_planes[i] = Plane.from_frame(frame)
         return _edge_planes
 
     def set_extension_plane(self, edge_index, plane):
-        self._extension_planes[edge_index]=self.corrected_edge_plane(edge_index, plane)
+        self._extension_planes[edge_index] = self.corrected_edge_plane(edge_index, plane)
 
     def corrected_edge_plane(self, edge_index, plane):
         if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self._mutable_outlines[0], edge_index)) < 0:
@@ -184,8 +181,7 @@ class PlateGeometry(object):
     def apply_edge_extensions(self):
         for edge_index, plane in self._extension_planes.items():
             for polyline in self._mutable_outlines:
-                move_polyline_segment_to_plane(polyline,edge_index,plane)
-
+                move_polyline_segment_to_plane(polyline, edge_index, plane)
 
     @property
     def local_edge_planes(self):
@@ -463,4 +459,3 @@ class PlateGeometry(object):
             raise ValueError("outline_a must be planar. Polyline: {}".format(outline_a))
         if all(not TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")
-
