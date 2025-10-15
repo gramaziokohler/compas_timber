@@ -6,13 +6,13 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
 
-from compas_timber.connections import TenonMortiseJoint
+from compas_timber.connections import TTenonMortiseJoint
 from compas_timber.fabrication import Text
 
 from .utilities import beam_ref_side_incidence_with_vector
 
 
-class TOliGinaJoint(TenonMortiseJoint):
+class TOliGinaJoint(TTenonMortiseJoint):
     TEXT_HEIGHT_FACTOR = 0.4
 
     # fmt: off
