@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
 * Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
+* Fixed a bug in `TStepJoint` where beam dimensions were calculated incorrectly for certain reference side orientations. 
 
 ### Removed
 
