@@ -451,7 +451,7 @@ class CategoryRule(JointRule):
         if not self.joint_type.check_elements_compatibility(list(cluster.elements)):
             return None, None
         try:
-            elements = list(cluster.elements)
+            elements = list(cluster.joints[0].elements)
             if elements[0].attributes["category"] != self.category_a:
                 elements.reverse()
             joint = self.joint_type.promote_cluster(model, cluster, reordered_elements=elements, **self.kwargs)

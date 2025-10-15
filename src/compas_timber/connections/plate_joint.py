@@ -238,8 +238,8 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        if candidate.elements[0] != reordered_elements[0]: # plates are in different order, reverse segment indices
-            kwargs.update({"a_segment_index": candidate.b_segment_index, "b_segment_index": candidate.a_segment_index})
+        if reordered_elements and candidate.elements[0] != reordered_elements[0]: # plates are in different order, reverse segment indices
+            kwargs.update({"a_segment_index": candidate.b_segment_index, "b_segment_index": candidate.a_segment_index})  # pass reversed segment indices from candidate
         else:
             kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
         return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
