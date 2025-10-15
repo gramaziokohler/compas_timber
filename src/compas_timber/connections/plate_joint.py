@@ -147,6 +147,14 @@ class PlateJoint(Joint):
                 self.a_planes = self.plate_a.planes[::-1]
                 self.a_outlines = self.plate_a.outlines[::-1]
 
+    def restore_beams_from_keys(self, *args, **kwargs):
+        # TODO: this is just to keep the peace. change once we know where this is going.
+        self.restore_plates_from_keys(*args, **kwargs)
+
+    def restore_plates_from_keys(self, model):
+        self.plate_a = model.element_by_guid(self.plate_a_guid)
+        self.plate_b = model.element_by_guid(self.plate_b_guid)
+
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid
