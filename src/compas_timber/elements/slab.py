@@ -95,11 +95,11 @@ class Slab(PlateGeometry, Element):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None, name=None, **kwargs):
+    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
         Element.__init__(self, frame=frame, **kwargs)
-        outline_a = outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
-        outline_b = outline_b or Polyline([Point(p[0], p[1], thickness) for p in outline_a.points])
-        PlateGeometry.__init__(self, outline_a, outline_b, openings=openings)
+        local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
+        local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
+        PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
         self.length = length
         self.width = width
         self.height = thickness
