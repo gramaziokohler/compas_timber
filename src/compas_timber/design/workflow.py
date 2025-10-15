@@ -127,7 +127,6 @@ class JointRuleSolver(object):
                     promoted = True
                     break
                 if error:
-                    print("Error: {}".format(error))
                     self.joining_errors.append(error)  # should only happen with direct rules
                     break
             if not promoted:
@@ -452,7 +451,10 @@ class CategoryRule(JointRule):
         if not self.joint_type.check_elements_compatibility(list(cluster.elements)):
             return None, None
         try:
-            joint = self.joint_type.promote_cluster(model, cluster, **self.kwargs)
+            elements = list(cluster.elements)
+            if elements[0].attributes["category"] != self.category_a:
+                elements.reverse()
+            joint = self.joint_type.promote_cluster(model, cluster, reordered_elements=elements, **self.kwargs)
         except BeamJoiningError as bje:
             error = bje
         return joint, error
