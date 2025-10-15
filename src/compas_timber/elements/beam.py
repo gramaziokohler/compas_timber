@@ -93,10 +93,8 @@ class Beam(TimberElement):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(frame=frame, **kwargs)
-        self.width = width
-        self.height = height
-        self.length = length
+        super(Beam, self).__init__(frame=frame, length=length, width=width, height=height, **kwargs)
+
         self.attributes = {}
         self.attributes.update(kwargs)
         self._blank_extensions = {}
@@ -142,14 +140,6 @@ class Beam(TimberElement):
         return frame
 
     @property
-    def ref_frame(self):
-        # type: () -> Frame
-        ref_point = self.blank_frame.point.copy()
-        ref_point += self.blank_frame.yaxis * self.width * 0.5
-        ref_point -= self.blank_frame.zaxis * self.height * 0.5
-        return Frame(ref_point, self.blank_frame.xaxis, self.blank_frame.zaxis)
-
-    @property
     def faces(self):
         # type: () -> list[Frame]
         assert self.frame
@@ -181,38 +171,6 @@ class Beam(TimberElement):
                 self.frame.zaxis,
             ),  # small face at end point
         ]
-
-    @property
-    def ref_sides(self):
-        # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
-        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        # TODO: cache these
-        rs1_point = self.ref_frame.point
-        rs2_point = rs1_point + self.ref_frame.yaxis * self.height
-        rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width
-        rs4_point = rs1_point + self.ref_frame.zaxis * self.width
-        rs5_point = rs1_point
-        rs6_point = rs1_point + self.ref_frame.xaxis * self.blank_length + self.ref_frame.yaxis * self.height
-        return (
-            Frame(rs1_point, self.ref_frame.xaxis, self.ref_frame.zaxis, name="RS_1"),
-            Frame(rs2_point, self.ref_frame.xaxis, -self.ref_frame.yaxis, name="RS_2"),
-            Frame(rs3_point, self.ref_frame.xaxis, -self.ref_frame.zaxis, name="RS_3"),
-            Frame(rs4_point, self.ref_frame.xaxis, self.ref_frame.yaxis, name="RS_4"),
-            Frame(rs5_point, self.ref_frame.zaxis, self.ref_frame.yaxis, name="RS_5"),
-            Frame(rs6_point, self.ref_frame.zaxis, -self.ref_frame.yaxis, name="RS_6"),
-        )
-
-    @property
-    def ref_edges(self):
-        # type: () -> tuple[Line, Line, Line, Line]
-        # so tuple is not created every time
-        ref_sides = self.ref_sides
-        return (
-            Line(ref_sides[0].point, ref_sides[0].point + ref_sides[0].xaxis * self.blank_length, name="RE_1"),
-            Line(ref_sides[1].point, ref_sides[1].point + ref_sides[1].xaxis * self.blank_length, name="RE_2"),
-            Line(ref_sides[2].point, ref_sides[2].point + ref_sides[2].xaxis * self.blank_length, name="RE_3"),
-            Line(ref_sides[3].point, ref_sides[3].point + ref_sides[3].xaxis * self.blank_length, name="RE_4"),
-        )
 
     @property
     def centerline(self):
@@ -248,11 +206,6 @@ class Beam(TimberElement):
     def midpoint(self):
         assert self.frame
         return Point(*add_vectors(self.frame.point, self.frame.xaxis * self.length * 0.5))
-
-    @property
-    def has_features(self):
-        # TODO: consider removing, this is not used anywhere
-        return len(self.features) > 0
 
     @property
     def key(self):
