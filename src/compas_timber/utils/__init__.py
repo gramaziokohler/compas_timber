@@ -498,6 +498,20 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
     return (dots[0], dots[1])
 
 
+def move_polyline_segment_to_plane(polyline, segment_index, plane):
+    """Move a segment of a polyline to the intersection with a plane."""
+    start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
+    if start_pt:
+        polyline[segment_index] = start_pt
+        if segment_index == 0:
+            polyline[-1] = start_pt
+    end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
+    if end_pt:
+        polyline[segment_index + 1] = end_pt
+        if segment_index + 1 == len(polyline.lines):
+            polyline[0] = end_pt
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -510,4 +524,5 @@ __all__ = [
     "is_point_in_polyline",
     "do_segments_overlap",
     "get_segment_overlap",
+    "move_polyline_segment_to_plane",
 ]

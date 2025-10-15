@@ -17,17 +17,17 @@ def model():
 
 @pytest.fixture
 def wall1():
-    return Wall.from_boundary(polyline=Polyline([[0, 0, 0], [0, 100, 0], [100, 100, 0], [100, 0, 0], [0, 0, 0]]), normal=Vector.Zaxis(), thickness=10, name="wall1")
+    return Wall.from_outline_thickness(Polyline([[0, 0, 0], [0, 100, 0], [100, 100, 0], [100, 0, 0], [0, 0, 0]]), thickness=10, vector=Vector.Zaxis(), name="wall1")
 
 
 @pytest.fixture
 def wall2():
-    return Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10, name="wall2")
+    return Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis(), name="wall2")
 
 
 @pytest.fixture
 def nameless_wall():
-    return Wall.from_boundary(polyline=Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), normal=Vector.Zaxis(), thickness=10)
+    return Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis())
 
 
 @pytest.fixture
@@ -77,8 +77,10 @@ def test_get_elements_in_group_filter(model, beam_list, wall1, wall2):
 
     assert model.has_group("wall1")
     assert model.has_group("wall2")
-    assert list(model.get_elements_in_group("wall1", filter_=lambda b: b.is_beam)) == [beam_a, beam_b]
-    assert list(model.get_elements_in_group("wall2", filter_=lambda b: b.is_beam)) == [beam_c, beam_d]
+    assert list(model.get_elements_in_group("wall1", filter_=lambda b: isinstance(b, Beam))) == [beam_a, beam_b]
+    assert list(model.get_elements_in_group("wall2", filter_=lambda b: isinstance(b, Beam))) == [beam_c, beam_d]
+    # NOTE: changed to isinstance because is_beam, is_plate, are TimberElement properties
+    # NOTE: I am presuming we want to include various element types in groups, not just TimberElements and don't want to have to add is_* properties to all elements
 
 
 def test_group_does_not_exist(model):

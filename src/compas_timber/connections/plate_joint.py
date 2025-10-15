@@ -247,9 +247,9 @@ class PlateJoint(Joint):
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
             self.reorder_planes_and_outlines()
-            self._adjust_plate_outlines()
-            self.plate_a.add_interface(self.interface_a)
-            self.plate_b.add_interface(self.interface_b)
+            self.set_edge_planes()
+            for plate in self.plates:
+                plate.apply_edge_extensions()
 
     def get_interface_for_plate(self, plate):
         if plate is self.plate_a:
