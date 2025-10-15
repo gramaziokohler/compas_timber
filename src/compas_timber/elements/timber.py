@@ -2,10 +2,10 @@ from functools import reduce
 from operator import mul
 
 from compas.geometry import Frame
-from compas.geometry import Vector
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 from compas_model.modifiers import Modifier
@@ -281,7 +281,7 @@ class TimberElement(Element):
 
         """
         # type: () -> Transformation
-        return self.modeltransformation.inverted()
+        return self.modeltransformation.inverse()
 
     def transform(self, transformation):
         """Apply a transformation to the element's frame. IMPORTANT: This transformation occurs in the parent's local coordinate system.

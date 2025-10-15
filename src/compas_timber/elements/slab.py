@@ -150,13 +150,18 @@ class Slab(PlateGeometry, Element):
                 interfaces = [interfaces]
             self.interfaces = [i for i in self.interfaces if i not in interfaces]
 
-    @property
-    def is_slab(self):
-        return True
 
-    @property
-    def is_group_element(self):
-        return True
+    def transformation_to_local(self):
+        """Compute the transformation to local coordinates of this element
+        based on its position in the spatial hierarchy of the model.
+
+        Returns
+        -------
+        :class:`compas.geometry.Transformation`
+
+        """
+        # type: () -> Transformation
+        return self.modeltransformation.inverse()
 
     @property
     def origin(self):
@@ -167,6 +172,28 @@ class Slab(PlateGeometry, Element):
     def centerline(self):
         # TODO: temp hack to make this compatible with `find_topology`.
         return self.baseline
+
+    @property
+    def is_slab(self):
+        """Check if this element is a roof.
+
+        Returns
+        -------
+        bool
+            False for the base Slab class.
+        """
+        return True
+
+    @property
+    def is_wall(self):
+        """Check if this element is a wall.
+
+        Returns
+        -------
+        bool
+            False for the base Slab class.
+        """
+        return False
 
     @property
     def is_floor(self):

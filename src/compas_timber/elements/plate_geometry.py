@@ -8,11 +8,13 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import closest_point_on_plane
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
+from compas_timber.utils import move_polyline_segment_to_plane
 from compas_timber.utils import is_polyline_clockwise
 
 
@@ -22,10 +24,10 @@ class PlateGeometry(object):
 
     Parameters
     ----------
-    outline_a : :class:`~compas.geometry.Polyline`
+    local_outline_a : :class:`~compas.geometry.Polyline`
         A line representing the principal outline of this plate. This should be declared in the local frame of the plate, aka projected on worldXY.
-    outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate. This should have the same number of points as outline_a.
+    local_outline_b : :class:`~compas.geometry.Polyline`
+        A line representing the associated outline of this plate. This should be declared in the local frame of the plate and have the same number of points as outline_a.
         Must be parallel to outline_a. Must be in the +Z direction of the frame.
     openings : list[:class:`~compas_timber.elements.Opening`], optional
         A list of Opening objects representing openings in this plate.
@@ -33,9 +35,9 @@ class PlateGeometry(object):
     Attributes
     ----------
     outline_a : :class:`~compas.geometry.Polyline`
-        A line representing the principal outline of this plate.
+        A line representing the principal outline of this plate in parent space.
     outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate.
+        A line representing the associated outline of this plate in parent space.
     outlines : tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
         A tuple containing both outline_a and outline_b.
     thickness : float
@@ -63,13 +65,14 @@ class PlateGeometry(object):
         data["openings"] = self.openings
         return data
 
-    def __init__(self, outline_a, outline_b, openings=None):
-        self._original_outlines = (outline_a, outline_b)
-        self._mutable_outlines = (outline_a.copy(), outline_b.copy)
-        self.outline_a = outline_a.transformed(self.transformation)
-        self.outline_b = outline_b.transformed(self.transformation)
+    def __init__(self, local_outline_a, local_outline_b, openings=None):
+        self._original_outlines = (local_outline_a, local_outline_b)
+        self._mutable_outlines = (local_outline_a.copy(), local_`outline_b.copy())
+        self._edge_frames = {}
+
         self._planes = None
         self.openings = openings or []
+        self._extension_planes = {}
         self.test=[]
 
     def __repr__(self):
@@ -93,6 +96,28 @@ class PlateGeometry(object):
             A tuple containing outline_a and outline_b.
         """
         return (self.outline_a, self.outline_b)
+
+    @property
+    def outline_a(self):
+        """The principal outline of the plate.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Polyline`
+            The principal outline of the plate.
+        """
+        return self._mutable_outlines[0].transformed(self.transformation)
+
+    @property
+    def outline_b(self):
+        """The associated outline of the plate.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Polyline`
+            The associated outline of the plate.
+        """
+        return self._mutable_outlines[1].transformed(self.transformation)
 
     @property
     def thickness(self):
@@ -126,7 +151,9 @@ class PlateGeometry(object):
     @property
     def local_outlines(self):
         """Returns the local outlines of the plate."""
-        return (self.outline_a.transformed(self.transformation.inverse()), self.outline_b.transformed(self.transformation.inverse()))
+        return self._mutable_outlines
+
+
 
     @property
     def edge_planes(self):
@@ -134,16 +161,31 @@ class PlateGeometry(object):
 
         Returns
         -------
-        list[:class:`~compas.geometry.Frame`]
-            A list of frames representing the edge planes of the plate.
+        dict:
+            A dict of frames representing the edge planes of the plate.
         """
-        edge_planes = []
-        for i in range(len(self.outline_a) - 1):
-            plane = Frame.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
-            if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self.outline_a, i)) < 0:
-                plane = Frame(plane.point, plane.xaxis, -plane.yaxis)
-            edge_planes.append(plane)
-        return edge_planes
+        _edge_planes={}
+        for i in range(len(self._mutable_outlines[0]) - 1):
+            frame = self._extension_planes.get(i,None)
+            if not frame:
+                frame = Frame.from_points(self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i])
+                frame=self.corrected_edge_plane(i,frame)
+            _edge_planes[i] = Plane.from_frame(frame)
+        return _edge_planes
+
+    def set_extension_plane(self, edge_index, plane):
+        self._extension_planes[edge_index]=self.corrected_edge_plane(edge_index, plane)
+
+    def corrected_edge_plane(self, edge_index, plane):
+        if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self._mutable_outlines[0], edge_index)) < 0:
+            return Plane(plane.point, -plane.normal)
+        return plane
+
+    def apply_edge_extensions(self):
+        for edge_index, plane in self._extension_planes.items():
+            for polyline in self._mutable_outlines:
+                move_polyline_segment_to_plane(polyline,edge_index,plane)
+
 
     @property
     def local_edge_planes(self):
@@ -159,8 +201,7 @@ class PlateGeometry(object):
     @reset_computed
     def reset(self):
         """Resets the element outlines to their initial state."""
-        self.outline_a = self._local_outlines[0].transformed(Transformation.from_frame(self.frame))
-        self.outline_b = self._local_outlines[1].transformed(Transformation.from_frame(self.frame))
+        self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
 
     # ==========================================================================
     # Alternate constructors
@@ -174,9 +215,9 @@ class PlateGeometry(object):
         Parameters
         ----------
         outline_a : :class:`~compas.geometry.Polyline`
-            A polyline representing the principal outline of the plate geometry.
+            A polyline representing the principal outline of the plate geometry in parent space.
         outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the plate geometry.
+            A polyline representing the associated outline of the plate geometry in parent space.
             This should have the same number of points as outline_a.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of openings to be added to the plate geometry.
@@ -199,7 +240,7 @@ class PlateGeometry(object):
         local_outline_b = outline_b.transformed(xform_to_local)
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
         openings = [o.transformed(xform_to_local) for o in openings] if openings else None
-        return cls(frame, length, width, thickness, outline_a=local_outline_a, outline_b=local_outline_b, openings=openings, **kwargs)
+        return cls(frame, length, width, thickness, local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings, **kwargs)
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
@@ -296,8 +337,8 @@ class PlateGeometry(object):
             The shape of the element.
 
         """
-        outline_a = correct_polyline_direction(self.local_outlines[0], self.frame.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self.local_outlines[1], self.frame.normal, clockwise=True)
+        outline_a = correct_polyline_direction(self._mutable_outlines[0], self.frame.normal, clockwise=True)
+        outline_b = correct_polyline_direction(self._mutable_outlines[1], self.frame.normal, clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for opening in self.openings:
@@ -346,7 +387,7 @@ class PlateGeometry(object):
 
         """
 
-        obb = Box.from_points(self._local_outlines[0].points + self._local_outlines[1].points)
+        obb = Box.from_points(self._mutable_outlines[0].points + self._mutable_outlines[1].points)
         obb.xsize += inflate
         obb.ysize += inflate
         obb.zsize += inflate
@@ -422,3 +463,4 @@ class PlateGeometry(object):
             raise ValueError("outline_a must be planar. Polyline: {}".format(outline_a))
         if all(not TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")
+

@@ -1,12 +1,13 @@
 from compas.geometry import Frame
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import dot_vectors
-from compas.geometry import Transformation
+
+from compas_timber.elements import SlabConnectionInterface
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
-from compas_timber.elements import SlabConnectionInterface
 
 
 class SlabJoint(PlateJoint):

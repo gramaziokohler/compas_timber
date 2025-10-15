@@ -1,8 +1,6 @@
-from pyexpat import model
 import pytest
 
 from compas.geometry import Point, Frame
-from compas.geometry import Polyline
 from compas.tolerance import TOL
 
 from compas_timber.elements import Plate, Beam
