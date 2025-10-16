@@ -251,7 +251,7 @@ class Drilling(BTLxProcessing):
             raise FeatureApplicationError(
                 message="The drill line must intersect with at lease one of the element's reference sides.",
                 feature_geometry=line,
-                element_geometry=element.blank,
+                element_geometry=element.geometry,
             )
 
         ref_side_index = min(intersections, key=lambda i: intersections[i].distance_to_point(line.start))
@@ -262,7 +262,8 @@ class Drilling(BTLxProcessing):
         # check if the end point of the line is within the element
         # if it is, return True
         # otherwise, return False
-        return is_point_in_polyhedron(line.end, element.blank.to_polyhedron())
+        blank = element.blank
+        return is_point_in_polyhedron(line.end, blank.to_polyhedron())
 
     @staticmethod
     def _xy_to_ref_side_space(point, ref_surface):
@@ -323,6 +324,8 @@ class Drilling(BTLxProcessing):
 
         """
         drill_geometry = Brep.from_cylinder(self.cylinder_from_params_and_element(element))
+        drill_geometry.transform(element.transformation_to_local())
+
         try:
             return geometry - drill_geometry
         except IndexError:

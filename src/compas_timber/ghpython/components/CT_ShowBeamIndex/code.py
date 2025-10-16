@@ -12,7 +12,7 @@ class ShowBeamIndex(component):
         if not model:
             return None
         for beam in model.beams:
-            self.pt.append(point_to_rhino(beam.midpoint))
+            self.pt.append(point_to_rhino(beam.centerline.midpoint))
             self.txt.append(str(beam.key))
 
     def DrawViewportWires(self, arg):

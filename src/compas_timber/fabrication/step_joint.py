@@ -358,6 +358,7 @@ class StepJoint(BTLxProcessing):
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
+        cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
 
         if self.step_shape == StepShapeType.STEP:
             for cutting_plane in cutting_planes:
@@ -429,6 +430,7 @@ class StepJoint(BTLxProcessing):
         if self.tenon and self.step_shape != StepShapeType.DOUBLE:  # TODO: check if tenon applies only to step in BTLx
             # create tenon volume and subtract from brep
             tenon_volume = self.tenon_volume_from_params_and_beam(beam)
+            tenon_volume.transform(beam.transformation_to_local())
             cutting_planes[0].normal = cutting_planes[0].normal * -1
             if self.step_shape == StepShapeType.STEP:
                 # trim tenon volume with cutting plane
@@ -493,17 +495,13 @@ class StepJoint(BTLxProcessing):
         assert self.strut_inclination is not None
         assert self.step_shape is not None
 
-        # Get the reference side as a PlanarSurface for the first cut
+        # first cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        # Get the opposite side as a PlanarSurface for the second cut and calculate the additional displacement along the xaxis
+        # second cut
         opp_side = beam.side_as_surface((self.ref_side_index + 2) % 4)
 
-        # Determine whether to use the beam's width or height based on the alignment of the reference side normal.
-        # If the reference side normal and the frame normal are aligned, use the beam's height as the "width" for calculations.
-        if abs(beam.ref_sides[self.ref_side_index].normal.dot(beam.frame.normal)) > 0.0:
-            beam_width = beam.height
-        else:
-            beam_width = beam.width
+        _, beam_width = beam.get_dimensions_relative_to_side(self.ref_side_index)
+
         # Calculate the displacements for the cutting planes along the y-axis and x-axis
         y_displacement_end = self._calculate_y_displacement_end(beam_width, self.strut_inclination)
         x_displacement_end = self._calculate_x_displacement_end(beam_width, self.strut_inclination, self.orientation)

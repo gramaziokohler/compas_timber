@@ -529,6 +529,9 @@ class Tenon(BTLxProcessing):
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
+
+        cutting_plane.transform(beam.transformation_to_local())
+
         # trim geometry with cutting plane
         try:
             geometry.trim(cutting_plane)
@@ -554,6 +557,9 @@ class Tenon(BTLxProcessing):
                     geometry,
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
+
+        tenon_volume.transform(beam.transformation_to_local())
+
         # remove any parts of the volume that exceed the beam geometry. Fails silently.
         for frame in beam.ref_sides[:4]:
             try:

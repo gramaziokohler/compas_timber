@@ -94,13 +94,13 @@ class YButtJoint(Joint):
         parallel = False
         if px_a is None or px_b is None:  # beams are parallel
             parallel = True
-            px_a = beam_a.endpoint_closest_to_point(beam_b.midpoint)[1]
-            px_b = beam_b.endpoint_closest_to_point(beam_a.midpoint)[1]
+            px_a = beam_a.endpoint_closest_to_point(beam_b.centerline.midpoint)[1]
+            px_b = beam_b.endpoint_closest_to_point(beam_a.centerline.midpoint)[1]
 
         p = (px_a + px_b) * 0.5
         # makes sure they point outward of a joint point
-        va = Vector.from_start_end(beam_a.endpoint_closest_to_point(p)[1], beam_a.midpoint)
-        vb = Vector.from_start_end(beam_b.endpoint_closest_to_point(p)[1], beam_b.midpoint)
+        va = Vector.from_start_end(beam_a.endpoint_closest_to_point(p)[1], beam_a.centerline.midpoint)
+        vb = Vector.from_start_end(beam_b.endpoint_closest_to_point(p)[1], beam_b.centerline.midpoint)
 
         va.unitize()
         vb.unitize()
@@ -184,7 +184,7 @@ class YButtJoint(Joint):
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             planes.append(cutting_plane)
         for pl, b in zip(planes, self.cross_beams):
-            pl.point = pl.closest_point(b.midpoint)
+            pl.point = pl.closest_point(b.centerline.midpoint)
         if TOL.is_close(dot_vectors(planes[0].normal, planes[1].normal), 1.0):
             main_feature = JackRafterCut.from_plane_and_beam(Plane(planes[0].point, -planes[0].normal), self.main_beam)
         else:

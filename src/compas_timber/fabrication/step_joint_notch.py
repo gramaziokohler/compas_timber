@@ -457,6 +457,8 @@ class StepJointNotch(BTLxProcessing):
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
 
+        [plane.transform(beam.transformation_to_local()) for plane in cutting_planes]
+
         # get notch volume
         subtraction_volume = geometry.copy()
         if self.step_shape == StepShapeType.DOUBLE:
@@ -513,17 +515,19 @@ class StepJointNotch(BTLxProcessing):
             # create mortise box and convert to Brep
             mortise_box = self.mortise_volume_from_params_and_beam(beam)
             mortise_volume = Brep.from_box(mortise_box)
+            mortise_volume.transform(beam.transformation_to_local())
+
             # trim mortise volume at step
             origin = intersection_plane_plane(cutting_planes[0], cutting_planes[1])[0]
             normal = mortise_box.frame.xaxis
             if self.step_shape != StepShapeType.STEP:
                 normal = -normal
-            cuttin_plane_step = Plane(origin, normal)
+            cutting_plane_step = Plane(origin, normal)
             try:
-                mortise_volume.trim(cuttin_plane_step)
+                mortise_volume.trim(cutting_plane_step)
             except Exception as e:
                 raise FeatureApplicationError(
-                    cuttin_plane_step,
+                    cutting_plane_step,
                     mortise_volume,
                     "Failed to trim mortise volume with step cutting plane: {}".format(str(e)),
                 )

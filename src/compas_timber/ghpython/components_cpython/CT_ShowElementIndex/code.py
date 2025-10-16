@@ -14,8 +14,11 @@ class ShowElementIndex(Grasshopper.Kernel.GH_ScriptInstance):
 
         if not list_input_valid_cpython(ghenv, model, "Model"):
             return
-        for element in model.beams + model.plates:
-            self.pt.append(point_to_rhino(element.midpoint))
+        for element in model.beams:
+            self.pt.append(point_to_rhino(element.centerline.midpoint))
+            self.txt.append(str(element.key))
+        for element in model.plates:
+            self.pt.append(point_to_rhino(element.frame.point))
             self.txt.append(str(element.key))
 
     def DrawViewportWires(self, arg):
