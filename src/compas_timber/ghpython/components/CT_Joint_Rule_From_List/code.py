@@ -4,9 +4,8 @@ from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Error
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import Joint
 from compas_timber.design import DirectRule
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import get_createable_joints
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
@@ -15,7 +14,7 @@ class JointRuleFromList(component):
     def __init__(self):
         super(JointRuleFromList, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
+        for cls in get_createable_joints():
             self.classes[cls.__name__] = cls
 
         if ghenv.Component.Params.Output[0].NickName == "Rule":

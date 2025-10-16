@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `TimberElement.add_feature` to override the `Element` method.
+
+* Added new GH helper `get_createable_joints` to get all createable Joint classes.
 
 ### Changed
 

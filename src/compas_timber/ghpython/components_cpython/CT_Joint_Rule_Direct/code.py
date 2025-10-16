@@ -5,10 +5,9 @@ import inspect
 
 import Grasshopper  # type: ignore
 
-from compas_timber.connections import Joint
 from compas_timber.connections import PlateJoint
 from compas_timber.design import DirectRule
-from compas_timber.ghpython import get_leaf_subclasses
+from compas_timber.ghpython import get_createable_joints
 from compas_timber.ghpython import item_input_valid_cpython
 from compas_timber.ghpython import manage_cpython_dynamic_params
 from compas_timber.ghpython import rename_cpython_gh_output
@@ -19,7 +18,7 @@ class DirectJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
         super(DirectJointRule, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
+        for cls in get_createable_joints():
             if cls.MAX_ELEMENT_COUNT == 2 and not issubclass(cls, PlateJoint):
                 self.classes[cls.__name__] = cls
 

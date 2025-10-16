@@ -88,6 +88,48 @@ def get_leaf_subclasses(cls):
     return subclasses
 
 
+def get_createable_joints():
+    """Returns the list of creatable joint types.
+
+    TODO: this is currently hardcoded but can be done duynamically, however, a better distinction should be made first between abstract and concrete joints.
+    TOOD: a typical way of doing that would be to declare the non-creatable base classes abstract and filter those.
+    """
+    from compas_timber.connections import BallNodeJoint
+    from compas_timber.connections import LButtJoint
+    from compas_timber.connections import LFrenchRidgeLapJoint
+    from compas_timber.connections import LLapJoint
+    from compas_timber.connections import LMiterJoint
+    from compas_timber.connections import OliGinaJoint
+    from compas_timber.connections import TBirdsmouthJoint
+    from compas_timber.connections import TButtJoint
+    from compas_timber.connections import TDovetailJoint
+    from compas_timber.connections import TenonMortiseJoint
+    from compas_timber.connections import TLapJoint
+    from compas_timber.connections import TStepJoint
+    from compas_timber.connections import XLapJoint
+    from compas_timber.connections import XNotchJoint
+    from compas_timber.connections import YButtJoint
+
+    return [
+        TButtJoint,
+        LButtJoint,
+        TButtJoint,
+        TStepJoint,
+        TBirdsmouthJoint,
+        LMiterJoint,
+        XLapJoint,
+        XNotchJoint,
+        TLapJoint,
+        LLapJoint,
+        LFrenchRidgeLapJoint,
+        TDovetailJoint,
+        BallNodeJoint,
+        TenonMortiseJoint,
+        YButtJoint,
+        OliGinaJoint,
+    ]
+
+
 def add_gh_param(
     name, io, ghenv, index=None
 ):  # we could also make beam_names a dict with more info e.g. NickName, Description, Access, hints, etc. this would be defined in joint_options components

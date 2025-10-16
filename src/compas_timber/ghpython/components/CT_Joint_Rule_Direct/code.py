@@ -3,9 +3,8 @@ import inspect
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import Joint
 from compas_timber.design import DirectRule
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import get_createable_joints
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
@@ -14,7 +13,7 @@ class DirectJointRule(component):
     def __init__(self):
         super(DirectJointRule, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
+        for cls in get_createable_joints():
             if cls.MAX_ELEMENT_COUNT == 2:
                 self.classes[cls.__name__] = cls
 
