@@ -1,4 +1,4 @@
-# r: compas_timber>=0.15.3
+# r: compas_timber>=1.0.1
 # flake8: noqa
 import inspect
 from System.Windows.Forms import ToolStripSeparator

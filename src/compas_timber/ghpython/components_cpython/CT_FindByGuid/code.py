@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.0
+# r: compas_timber>=1.0.1
 # flake8: noqa
 import Grasshopper
 import System

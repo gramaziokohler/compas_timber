@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.0
+# r: compas_timber>=1.0.1
 """Defines which Joint type will be applied in the Automatic Joints component for connecting Beams with the given Category attributes. This overrides Topological Joint rules and is overriden by Direct joint rules"""
 
 # flake8: noqa
