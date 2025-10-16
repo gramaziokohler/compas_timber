@@ -1,5 +1,4 @@
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_plane
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
@@ -58,16 +57,39 @@ class PlateJoint(Joint):
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
-        self.a_outlines = None
-        self.b_outlines = None
-        self.a_planes = None
-        self.b_planes = None
+
+        self._reverse_a = False
+        self._reverse_b = False
 
         self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
         self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
+
+    @property
+    def a_outlines(self):
+        if self._reverse_a:
+            return self.plate_a.outlines[::-1]
+        return self.plate_a.outlines
+
+    @property
+    def b_outlines(self):
+        if self._reverse_b:
+            return self.plate_b.outlines[::-1]
+        return self.plate_b.outlines
+
+    @property
+    def a_planes(self):
+        if self._reverse_a:
+            return self.plate_a.planes[::-1]
+        return self.plate_a.planes
+
+    @property
+    def b_planes(self):
+        if self._reverse_b:
+            return self.plate_b.planes[::-1]
+        return self.plate_b.planes
 
     @property
     def plates(self):
@@ -134,18 +156,14 @@ class PlateJoint(Joint):
 
     def reorder_planes_and_outlines(self):
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
-            self.b_planes = self.plate_b.planes[::-1]
-            self.b_outlines = self.plate_b.outlines[::-1]
+            self._reverse_b = True
         else:
-            self.b_planes = self.plate_b.planes
-            self.b_outlines = self.plate_b.outlines
-
-        self.a_planes = self.plate_a.planes
-        self.a_outlines = self.plate_a.outlines
+            self._reverse_b = False
         if self.topology == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
-                self.a_planes = self.plate_a.planes[::-1]
-                self.a_outlines = self.plate_a.outlines[::-1]
+                self._reverse_a = True
+            else:
+                self._reverse_a = False
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.

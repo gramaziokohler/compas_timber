@@ -4,6 +4,8 @@ from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
+from compas_timber.elements.slab_features import Opening
+
 from .plate_geometry import PlateGeometry
 
 
@@ -125,6 +127,33 @@ class Slab(PlateGeometry, Element):
     def __str__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
 
+    def transformation_to_local(self):
+        """Compute the transformation to local coordinates of this element
+        based on its position in the spatial hierarchy of the model.
+
+        Returns
+        -------
+        :class:`compas.geometry.Transformation`
+
+        """
+        # type: () -> Transformation
+        return self.modeltransformation.inverse()
+
+    @property
+    def modeltransformation(self):
+        """Compute the transformation of this element based on its position in the spatial hierarchy of the model.
+
+        Returns
+        -------
+        :class:`compas.geometry.Transformation`
+
+        """
+        # type: () -> Transformation
+        if self.model:
+            return Element.modeltransformation.fget(self)
+        else:
+            return self.transformation
+
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
@@ -149,6 +178,21 @@ class Slab(PlateGeometry, Element):
             if not isinstance(interfaces, list):
                 interfaces = [interfaces]
             self.interfaces = [i for i in self.interfaces if i not in interfaces]
+
+
+    def add_opening_from_outline(self, outline, horizontal_sill=False, name=None):
+        # type: (Opening) -> None
+        """Adds an opening to the slab.
+
+        Parameters
+        ----------
+        opening : :class:`~compas_timber.elements.Opening`
+            The opening to be added.
+
+        """
+        opening = Opening.from_outline_slab(outline, self, horizontal_sill=horizontal_sill, name=name)
+        self.add_feature(opening)
+
 
     @property
     def is_slab(self):

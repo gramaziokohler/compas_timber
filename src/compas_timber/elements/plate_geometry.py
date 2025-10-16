@@ -92,7 +92,7 @@ class PlateGeometry(object):
         tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
             A tuple containing outline_a and outline_b.
         """
-        return (self.outline_a, self.outline_b)
+        return [self.outline_a, self.outline_b]
 
     @property
     def outline_a(self):
@@ -224,8 +224,11 @@ class PlateGeometry(object):
         local_outline_a = outline_a.transformed(xform_to_local)
         local_outline_b = outline_b.transformed(xform_to_local)
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
-        openings = [o.transformed(xform_to_local) for o in openings] if openings else None
-        return cls(frame, length, width, thickness, local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings, **kwargs)
+        plate_geo = cls(frame, length, width, thickness, local_outline_a=local_outline_a, local_outline_b=local_outline_b, **kwargs)
+        if openings:
+            for opening in openings:
+                plate_geo.add_opening_from_outline(opening.transformed(xform_to_local), horizontal_sill=True)
+        return plate_geo
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
@@ -322,22 +325,21 @@ class PlateGeometry(object):
             The shape of the element.
 
         """
-        outline_a = correct_polyline_direction(self._mutable_outlines[0], self.frame.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self._mutable_outlines[1], self.frame.normal, clockwise=True)
+        positive_vector = Vector.from_start_end(self._mutable_outlines[0][0], self._mutable_outlines[1][0])
+        outline_a = correct_polyline_direction(self._mutable_outlines[0], positive_vector, clockwise=True)
+        outline_b = correct_polyline_direction(self._mutable_outlines[1], positive_vector, clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
-        for opening in self.openings:
-            if not TOL.is_allclose(opening[0], opening[-1]):
-                raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
-            polyline_a = correct_polyline_direction(opening, self.frame.normal, clockwise=True)
-            polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
-            brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
-            brep.cap_planar_holes()
-            plate_geo -= brep
+        for feature in self.features:
+            if feature.__class__.__name__ == "Opening":
+                plate_geo -= feature.shape
         return plate_geo
 
     def compute_elementgeometry(self):
         return self.shape
+
+    def compute_modelgeometry(self):
+        return self.shape.transformed(self.modeltransformation)
 
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box

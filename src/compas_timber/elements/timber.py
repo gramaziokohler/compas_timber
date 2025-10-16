@@ -206,8 +206,6 @@ class TimberElement(Element):
         """
         # type: () -> compas.geometry.Brep
         xform = self.modeltransformation
-        if self.__class__.__name__ == "Plate":
-            print(xform)
         modelgeometry = self.elementgeometry.transformed(xform)
 
         if self.model:
@@ -282,7 +280,7 @@ class TimberElement(Element):
 
         """
         # type: () -> Transformation
-        return self.modeltransformation.inverted()
+        return self.modeltransformation.inverse()
 
     def transform(self, transformation):
         """Apply a transformation to the element's frame. IMPORTANT: This transformation occurs in the parent's local coordinate system.

@@ -1,3 +1,4 @@
+import copy
 from compas.geometry import Frame
 from compas.geometry import Polyline
 from compas.geometry import Vector
@@ -87,15 +88,17 @@ class SlabJoint(PlateJoint):
             ]
         )
         frame_a = Frame.from_points(a_interface_polyline.points[0], a_interface_polyline.points[1], a_interface_polyline.points[-2])
-        a_interface_polyline.transform(Transformation.from_frame(frame_a).inverse())    #set polyline to local frame
         if dot_vectors(frame_a.normal, Vector.from_start_end(self.b_planes[1].point, self.b_planes[0].point)) < 0:
             frame_a = Frame.from_points(a_interface_polyline.points[1], a_interface_polyline.points[0], a_interface_polyline.points[2])
+        a_interface_polyline.transform(Transformation.from_frame(frame_a).inverse())    #set polyline to local frame
+        frame_a.transform(self.slab_a.transformation_to_local()) #set frame to slab space
         interface_a = SlabConnectionInterface(
             a_interface_polyline,
             frame_a,
             self.a_segment_index,
             self.topology,
         )
+
 
         b_interface_polyline = Polyline(
             [
@@ -107,9 +110,10 @@ class SlabJoint(PlateJoint):
             ]
         )
         frame_b = Frame.from_points(b_interface_polyline.points[0], b_interface_polyline.points[1], b_interface_polyline.points[-2])
-        b_interface_polyline.transform(Transformation.from_frame(frame_b).inverse())    #set polyline to local frame
         if dot_vectors(frame_b.normal, Vector.from_start_end(self.b_planes[0].point, self.b_planes[1].point)) < 0:
             frame_b = Frame.from_points(b_interface_polyline.points[1], b_interface_polyline.points[0], b_interface_polyline.points[2])
+        b_interface_polyline.transform(Transformation.from_frame(frame_b).inverse())    #set polyline to local frame
+        frame_b.transform(self.slab_b.transformation_to_local()) #set frame to slab space
         interface_b = SlabConnectionInterface(
             b_interface_polyline,
             frame_b,
