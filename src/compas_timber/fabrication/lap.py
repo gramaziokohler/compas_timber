@@ -8,6 +8,7 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
+from compas.geometry import Scale
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_projected
 from compas.geometry import angle_vectors_signed
@@ -977,7 +978,14 @@ class LapProxy(object):
         """
         # type: (Brep, Beam) -> Brep
         try:
-            return geometry - self.volume
+            # TODO: this is a workaround for a visual artifact where a tiny sliver of the original geometry remains after subtraction.
+            # NOTE: This is likely due to numerical precision issues in the boolean operation.
+            # NOTE: Ideally we just make the volume construction in LLapJoint longer at the edges but that would likely require a rework
+            # NOTE: the volume construction which seems significant.
+            scaling_factor = 1 + TOL.approximation
+            frame_at_centroid = Frame(self.volume.centroid, self.volume.frame.xaxis, self.volume.frame.yaxis)
+            inflated_brep = self.volume.transformed(Scale.from_factors([scaling_factor, scaling_factor, scaling_factor], frame=frame_at_centroid))
+            return geometry - inflated_brep
         except IndexError:
             raise FeatureApplicationError(
                 self.volume,

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
 * Renamed `TOliGinaJoint` to `OliginaJoint` for consistency wrt to the supported topology.
 * Replaced `get_leaf_subclasses(Joint)` with `get_createable_joints()` in the relevant GH components.
+* Added inflation of the negative volume in `LapProxy` to fix boolean difference artifact.
 
 ### Removed
 
