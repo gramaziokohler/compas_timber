@@ -4,12 +4,12 @@ import inspect
 
 import Grasshopper
 
-from compas_timber.connections import Joint
+
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import XLapJoint
 from compas_timber.design import TopologyRule
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import get_createable_joints
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
 
@@ -18,7 +18,7 @@ class X_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
         super(X_TopologyJointRule, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
+        for cls in get_createable_joints():
             supported_topo = cls.SUPPORTED_TOPOLOGY if isinstance(cls.SUPPORTED_TOPOLOGY, list) else [cls.SUPPORTED_TOPOLOGY]
             if JointTopology.TOPO_X in supported_topo and not issubclass(cls, PlateJoint):
                 self.classes[cls.__name__] = cls

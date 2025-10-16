@@ -2,6 +2,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Vector
+from compas.geometry import Line
 from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
@@ -135,7 +136,6 @@ class PlateJoint(Joint):
         self.b_outlines = None
         self.a_planes = None
         self.b_planes = None
-
         self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
         self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 
@@ -238,7 +238,10 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
+        if reordered_elements and candidate.elements[0] != reordered_elements[0]: # plates are in different order, reverse segment indices
+            kwargs.update({"a_segment_index": candidate.b_segment_index, "b_segment_index": candidate.a_segment_index})  # pass reversed segment indices from candidate
+        else:
+            kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
         return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
 
     def add_features(self):

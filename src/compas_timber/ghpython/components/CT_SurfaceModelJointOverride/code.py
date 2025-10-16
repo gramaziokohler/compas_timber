@@ -5,10 +5,9 @@ from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 from System.Windows.Forms import ToolStripMenuItem
 from System.Windows.Forms import ToolStripSeparator
 
-from compas_timber.connections import Joint
 from compas_timber.design import CategoryRule
 from compas_timber.design import SurfaceModel
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import get_createable_joints
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
@@ -19,7 +18,7 @@ class SurfaceModelJointRule(component):
         self.cat_a = None
         self.cat_b = None
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
+        for cls in get_createable_joints():
             self.classes[cls.__name__] = cls
 
         if ghenv.Component.Params.Output[0].NickName == "Rule":
