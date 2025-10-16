@@ -17,35 +17,56 @@ The elements subsystem contains all the core timber elements that can be modeled
 
    classDiagram
 
+      class Element {
+         <<abstract>>
+         +frame : Frame
+      }
+
       class TimberElement {
          <<abstract>>
+         +length : float
+         +width : float
+         +height : float
          +features : list[Feature]
          +debug_info : list
-         +is_beam : bool
-         +is_plate : bool
-         +is_wall : bool
-         +is_group_element : bool
-         +is_fastener : bool
+         +is_beam() : bool
+         +is_plate() : bool
+         +is_group_element() : bool
          +reset()
          +add_features(features)
          +remove_features(features)
          +remove_blank_extension()
+         +ref_frame : Frame
+         +ref_sides : tuple[Frame]
+         +ref_edges : tuple[Line]
+      }
+
+      class PlateGeometry {
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +openings : list[Polyline]
+         +outlines : tuple[Polyline, Polyline]
+         +thickness : float
+         +planes : tuple[Plane, Plane]
+         +normal : Vector
+         +edge_planes : list[Frame]
+         +reset()
+         +from_outlines()
+         +from_outline_thickness()
+         +from_brep()
+         +shape : Brep
+         +compute_aabb()
+         +compute_obb()
+         +compute_collision_mesh()
       }
 
       class Beam {
          +attributes : dict
-         +width : float
-         +height : float
-         +length : float
-         +frame : Frame
          +shape : Box
          +blank : Box
          +blank_length : float
          +blank_frame : Frame
-         +ref_frame : Frame
          +faces : list[Frame]
-         +ref_sides : tuple[Frame]
-         +ref_edges : tuple[Line]
          +centerline : Line
          +centerline_start : Point
          +centerline_end : Point
@@ -58,55 +79,42 @@ The elements subsystem contains all the core timber elements that can be modeled
          +compute_aabb()
          +compute_obb()
          +compute_collision_mesh()
+         +add_blank_extension()
+         +remove_blank_extension()
       }
 
       class Plate {
-         +outline_a : Polyline
-         +outline_b : Polyline
-         +openings : list[Polyline]
-         +frame : Frame
-         +thickness : float
-         +planes : tuple[Plane]
-         +blank_length : float
-         +width : float
-         +height : float
-         +ref_frame : Frame
          +is_plate : bool = True
+         +blank : Box
+         +blank_length : float
+         +features : list[Feature]
          +compute_geometry()
-         +compute_aabb()
-         +compute_obb()
       }
 
       class Slab {
-         +outline : Polyline
-         +thickness : float
-         +openings : list[Opening]
-         +frame : Frame
-         +origin : Point
-         +baseline : Line
-         +centerline : Line
-         +width : float
-         +length : float
-         +height : float
-         +corners : tuple[Point]
-         +faces : tuple[Frame]
-         +end_faces : tuple[Frame]
-         +envelope_faces : tuple[Frame]
+         +name : str
+         +interfaces : list
+         +attributes : dict
          +is_slab : bool = True
          +is_group_element : bool = True
-         +from_boundary()
-         +from_brep()
-         +compute_geometry()
-         +compute_aabb()
-         +compute_obb()
-         +rotate()
+         +reset()
+         +remove_interfaces()
       }
 
       class Wall {
          +outline : Polyline
-         +thickness : float
-         +openings : list[Polyline]
+         +origin : Point
+         +baseline : Line
+         +centerline : Line
+         +corners : tuple[Point]
+         +faces : tuple[Frame]
+         +end_faces : tuple[Frame, Frame]
+         +envelope_faces : tuple[Frame]
          +is_wall : bool = True
+         +compute_geometry()
+         +compute_aabb()
+         +compute_obb()
+         +rotate()
       }
 
       class Fastener {
@@ -135,10 +143,12 @@ The elements subsystem contains all the core timber elements that can be modeled
 
       %% Inheritance relationships
       Element <|-- TimberElement
-      TimberElement <|-- Beam
+      Element <|-- Fastener
+      PlateGeometry <|-- Plate
       TimberElement <|-- Plate
-      TimberElement <|-- Slab
-      TimberElement <|-- Fastener
+      TimberElement <|-- Beam
+      PlateGeometry <|-- Slab
+      Element <|-- Slab
       Slab <|-- Wall
 
       %% Composition relationships
