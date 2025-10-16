@@ -170,19 +170,15 @@ class TStepJoint(Joint):
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
 
-        # get reference sides for main and cross beams
-        main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
-        cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-
         # get dimensions for main and cross beams
-        main_height, main_width = self.main_beam.get_dimensions_relative_to_side(main_beam_ref_side)
-        cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(cross_beam_ref_side)
+        main_width, main_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
+        cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
 
         self.set_step_depths()
 
         # generate step joint features
         main_feature = StepJoint.from_plane_and_beam(
-            cross_beam_ref_side,
+            self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
             self.main_beam,
             self.step_depth,
             self.heel_depth,
@@ -192,7 +188,7 @@ class TStepJoint(Joint):
 
         # generate step joint notch features
         cross_feature = StepJointNotch.from_plane_and_beam(
-            main_beam_ref_side,
+            self.main_beam.ref_sides[self.main_beam_ref_side_index],
             self.cross_beam,
             start_y=(cross_width - main_width) / 2 if cross_width > main_width else 0.0,
             notch_width=main_width,
